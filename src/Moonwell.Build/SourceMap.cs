@@ -10,11 +10,12 @@ namespace Moonwell.Build
         private const MapFiles ScriptFiles = MapFiles.Info | MapFiles.Units | MapFiles.UnitObjectData | MapFiles.Doodads
             | MapFiles.Regions | MapFiles.Cameras | MapFiles.Sounds | MapFiles.Environment | MapFiles.TriggerStrings;
 
-        /// <summary>Opens the project's map without its GUI triggers and applies the map class's settings.</summary>
+        /// <summary>Opens the project's map without its GUI triggers and applies the map class's settings, its game data option among them.</summary>
         /// <param name="project">The map project.</param>
         /// <param name="settings">The settings read from the map class; empty ones keep World Editor's values.</param>
+        /// <param name="log">The build log; a game data option the map class changes is noted in it.</param>
         /// <returns>The opened map, its script language set to Lua.</returns>
-        public static War3Net.Build.Map Open(MapProject project, MapSettings settings)
+        public static War3Net.Build.Map Open(MapProject project, MapSettings settings, TextWriter log)
         {
             War3Net.Build.Map map;
             try
@@ -28,6 +29,15 @@ namespace Moonwell.Build
 
             var info = map.Info ?? throw new BuildException(@"no World Editor map: map\war3map.w3i is missing");
             info.ScriptLanguage = ScriptLanguage.Lua;
+            var set = info.GameDataSet;
+            var version = info.GameDataVersion;
+            var data = GameData.Of(settings.DataSet, settings.DataVersion);
+            data.Apply(info);
+            if (info.GameDataSet != set || info.GameDataVersion != version)
+            {
+                log.WriteLine($"note: the map's game data option {GameData.Describe(set, version)} is replaced by {data}");
+            }
+
             if (settings.Name.Length > 0)
             {
                 info.MapName = settings.Name;

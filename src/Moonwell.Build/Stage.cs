@@ -5,20 +5,60 @@ namespace Moonwell.Build
     /// <summary>Writes the staged map folder: the files the archive holds.</summary>
     public static class Stage
     {
-        // The script and info files are regenerated. The trigger files stay: World Editor needs them to open the map, so they are copied unparsed.
-        private static readonly string[] IgnoredMapFiles =
-        {
-            "war3map.lua",
-            "war3map.j",
-            "war3map.w3i",
-        };
+        // The object files are written by ObjectFiles, or copied as they are when the map does not use Moonwell.Objects.
+        private static readonly string[] ObjectFileNames = ObjectKinds.All
+            .Select(kind => ObjectKinds.MainName(kind.Extension))
+            .Concat(ObjectKinds.All.Select(kind => ObjectKinds.SkinName(kind.Extension)))
+            .ToArray();
 
-        /// <summary>Deletes the staged folder and writes it anew from the map's files, the info file, the script and the assets.</summary>
+        // The script and info files are regenerated. The trigger files stay: World Editor needs them to open the map, so they are copied unparsed.
+        private static readonly string[] IgnoredMapFiles = new[] { "war3map.lua", "war3map.j", "war3map.w3i" }.Concat(ObjectFileNames).ToArray();
+
+        /// <summary>Stages a map project that does not use <c>Moonwell.Objects</c>: the source map's object files are copied as they are, with no note about them.</summary>
         /// <param name="project">The map project.</param>
         /// <param name="map">The opened source map, with the script set.</param>
         /// <param name="log">Where notes for the modder go.</param>
         /// <exception cref="BuildException">The map has no script.</exception>
-        public static void Write(MapProject project, War3Net.Build.Map map, TextWriter log)
+        public static void WriteWithoutObjects(MapProject project, War3Net.Build.Map map, TextWriter log)
+        {
+            Write(
+                project,
+                map,
+                staged =>
+                {
+                    foreach (var file in ObjectFileNames)
+                    {
+                        if (File.Exists(Path.Combine(project.MapFolder, file)))
+                        {
+                            Copy(project.MapFolder, file, staged);
+                        }
+                    }
+                },
+                log);
+        }
+
+        /// <summary>Deletes the staged folder and writes it anew from the map's files, the info file, the script, the object files and the assets.</summary>
+        /// <param name="project">The map project.</param>
+        /// <param name="map">The opened source map, with the script set.</param>
+        /// <param name="objects">The declared objects, for <see cref="ObjectFiles.Write"/>.</param>
+        /// <param name="ids">The object id of each declared class and carrier.</param>
+        /// <param name="standardClassIds">The standard id of each standard class a declared list or reference names.</param>
+        /// <param name="standard">The standard data.</param>
+        /// <param name="log">Where notes and warnings for the modder go.</param>
+        /// <exception cref="BuildException">The map has no script, or a declared list names a class that has no object.</exception>
+        public static void Write(
+            MapProject project,
+            War3Net.Build.Map map,
+            IReadOnlyList<DeclaredObject> objects,
+            IReadOnlyDictionary<string, string> ids,
+            IReadOnlyDictionary<string, string> standardClassIds,
+            StandardData standard,
+            TextWriter log)
+        {
+            Write(project, map, staged => ObjectFiles.Write(project, objects, ids, standardClassIds, standard, staged, log), log);
+        }
+
+        private static void Write(MapProject project, War3Net.Build.Map map, Action<string> writeObjectFiles, TextWriter log)
         {
             var script = map.Script ?? throw new BuildException("the map has no script to stage");
 
@@ -45,6 +85,7 @@ namespace Moonwell.Build
             }
 
             File.WriteAllText(Path.Combine(project.StagedFolder, "war3map.lua"), script);
+            writeObjectFiles(project.StagedFolder);
 
             if (Directory.Exists(project.AssetsFolder))
             {

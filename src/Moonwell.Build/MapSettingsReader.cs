@@ -1,7 +1,6 @@
-using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.Loader;
 
 namespace Moonwell.Build
 {
@@ -45,7 +44,7 @@ namespace Moonwell.Build
                 var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
                 if (methods.Any(method => method.Name == "Main"))
                 {
-                    throw new BuildException($"{Describe(type)}.Main: a map declares no Main; the build writes it");
+                    throw new BuildException($"{MapClasses.Describe(type)}.Main: a map declares no Main; the build writes it");
                 }
             }
 
@@ -57,11 +56,11 @@ namespace Moonwell.Build
 
             if (maps.Count > 1)
             {
-                throw new BuildException("more than one map class: " + string.Join(", ", maps.Select(Describe)));
+                throw new BuildException("more than one map class: " + string.Join(", ", maps.Select(MapClasses.Describe)));
             }
 
             var mapType = maps[0];
-            var name = Describe(mapType);
+            var name = MapClasses.Describe(mapType);
             if (mapType.GetConstructor(Type.EmptyTypes) == null)
             {
                 throw new BuildException($"{name} needs a public constructor without parameters");
@@ -74,7 +73,7 @@ namespace Moonwell.Build
             }
             catch (TargetInvocationException wrapped) when (wrapped.InnerException != null)
             {
-                throw ConstructionError(wrapped.InnerException, name, project);
+                throw MapClasses.ConstructionError(wrapped.InnerException, name, project);
             }
 
             return new MapSettings(
@@ -82,12 +81,9 @@ namespace Moonwell.Build
                 ReadSetting(map, "Name"),
                 ReadSetting(map, "Author"),
                 ReadSetting(map, "Description"),
-                ReadSetting(map, "RecommendedPlayers"));
-        }
-
-        private static string Describe(Type type)
-        {
-            return type.FullName!.Replace('+', '.');
+                ReadSetting(map, "RecommendedPlayers"),
+                ReadNumber(map, "DataSet"),
+                ReadNumber(map, "DataVersion"));
         }
 
         private static bool IsMapClass(Type type)
@@ -110,84 +106,25 @@ namespace Moonwell.Build
 
         private static string ReadSetting(object map, string property)
         {
-            // Read from the Moonwell.Map base type, so that a property the class hides with new is not asked for.
+            return (string?)SettingOf(map, property).GetValue(map) ?? string.Empty;
+        }
+
+        // The enum crosses the load context as its number.
+        private static int ReadNumber(object map, string property)
+        {
+            return Convert.ToInt32(SettingOf(map, property).GetValue(map), CultureInfo.InvariantCulture);
+        }
+
+        // Read from the Moonwell.Map base type, so that a property the class hides with new is not asked for.
+        private static PropertyInfo SettingOf(object map, string property)
+        {
             var baseType = map.GetType().BaseType!;
             while (baseType.FullName != MapBaseName)
             {
                 baseType = baseType.BaseType!;
             }
 
-            var info = baseType.GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!;
-            return (string?)info.GetValue(map) ?? string.Empty;
-        }
-
-        private static BuildException ConstructionError(Exception inner, string name, MapProject project)
-        {
-            // A static field or a static constructor that throws surfaces as the type initializer's failure.
-            while (inner is TypeInitializationException { InnerException: not null })
-            {
-                inner = inner.InnerException!;
-            }
-
-            var place = FirstLineInProject(inner, project);
-            var prefix = place == null ? string.Empty : place + ": ";
-            if (inner is BadImageFormatException)
-            {
-                return new BuildException($"{prefix}{name} calls the game while it is declared; game work starts from a reaction or the game's start");
-            }
-
-            return new BuildException($"{prefix}{name}'s constructor threw: {inner.Message}");
-        }
-
-        private static string? FirstLineInProject(Exception exception, MapProject project)
-        {
-            var root = project.Folder + Path.DirectorySeparatorChar;
-            foreach (var frame in new StackTrace(exception, true).GetFrames())
-            {
-                var file = frame.GetFileName();
-                if (file != null && file.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-                {
-                    return $"{Path.GetRelativePath(project.Folder, file)}:{frame.GetFileLineNumber()}";
-                }
-            }
-
-            return null;
-        }
-
-        // Loads from bytes, so that no file stays locked, and finds the map's own copies of Moonwell beside it.
-        private sealed class MapLoadContext : AssemblyLoadContext
-        {
-            private readonly string folder;
-
-            public MapLoadContext(string folder)
-                : base("moonwell-map", true)
-            {
-                this.folder = folder;
-            }
-
-            public Assembly Open(string path)
-            {
-                return Read(path);
-            }
-
-            protected override Assembly? Load(AssemblyName assemblyName)
-            {
-                var path = Path.Combine(folder, assemblyName.Name + ".dll");
-                return File.Exists(path) ? Read(path) : null;
-            }
-
-            private Assembly Read(string path)
-            {
-                using var assembly = new MemoryStream(File.ReadAllBytes(path));
-                var symbols = Path.ChangeExtension(path, ".pdb");
-                if (File.Exists(symbols))
-                {
-                    using var pdb = new MemoryStream(File.ReadAllBytes(symbols));
-                    return LoadFromStream(assembly, pdb);
-                }
-
-                return LoadFromStream(assembly);
-            }
+            return baseType.GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!;
         }
     }
 }

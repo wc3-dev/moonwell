@@ -17,17 +17,17 @@ namespace Moonwell.Build
             var targetPath = DotnetBuild.Run(project, options.Release, log);
             PackageSources.Check(project);
             var settings = MapSettingsReader.Read(targetPath, project);
-            var map = SourceMap.Open(project, settings);
-            EntryWriter.Write(project, settings);
-            LuaCompiler.Compile(project, map, targetPath, options.Release);
+            var map = SourceMap.Open(project, settings, log);
 
-            try
+            // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly.
+            if (Declarations.UsesObjects(targetPath))
             {
-                Stage.Write(project, map, log);
+                var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
+                BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
             }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            else
             {
-                throw CannotWrite(project, project.StagedFolder, error);
+                BuildWithoutObjects(project, settings, map, targetPath, options, log);
             }
 
             try
@@ -41,6 +41,57 @@ namespace Moonwell.Build
 
             log.WriteLine($@"moonwell: built build\{project.Name}.w3x");
             return project.ArchivePath;
+        }
+
+        // The map uses Moonwell.Objects: its declarations, ids, Lua, registry and object files are part of the build.
+        private static void BuildWithObjects(
+            MapProject project,
+            MapSettings settings,
+            War3Net.Build.Map map,
+            string targetPath,
+            string objectsDll,
+            BuildOptions options,
+            TextWriter log)
+        {
+            var data = GameData.Of(settings.DataSet, settings.DataVersion);
+            var standard = StandardData.Read(objectsDll);
+            var declarations = Declarations.Read(targetPath, project, standard, data.ValueSet);
+            BalanceCheck.Run(declarations, standard, data);
+
+            var ids = ObjectIds.Assign(project, declarations.Objects, standard.AllIds(), MapObjectIds.Defined(project), MapObjectIds.Placed(map), log);
+            EntryWriter.Write(project, settings, true);
+            RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids);
+            LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet);
+            StageWith(project, () => Stage.Write(project, map, declarations.Objects, ids, declarations.StandardClassIds, standard, log));
+        }
+
+        // The map does not reference Moonwell.Objects: its own object files are used as they are.
+        private static void BuildWithoutObjects(MapProject project, MapSettings settings, War3Net.Build.Map map, string targetPath, BuildOptions options, TextWriter log)
+        {
+            // A registry or stubs left by an earlier build would not compile any more.
+            var registry = Path.Combine(project.GeneratedFolder, "ObjectRegistry.g.cs");
+            if (File.Exists(registry))
+            {
+                File.Delete(registry);
+            }
+
+            ObjectStubs.Delete(project);
+
+            EntryWriter.Write(project, settings);
+            LuaCompiler.Compile(project, map, targetPath, options.Release);
+            StageWith(project, () => Stage.WriteWithoutObjects(project, map, log));
+        }
+
+        private static void StageWith(MapProject project, Action stage)
+        {
+            try
+            {
+                stage();
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                throw CannotWrite(project, project.StagedFolder, error);
+            }
         }
 
         private static BuildException CannotWrite(MapProject project, string path, Exception error)

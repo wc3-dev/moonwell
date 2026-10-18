@@ -60,6 +60,8 @@ namespace Moonwell.Build.Tests
         public void jass_source_map_becomes_lua()
         {
             var folder = folders.TemporaryCopyOfSample();
+            // Compiled without the objects' stubs, so the copy declares no object.
+            File.Delete(Path.Combine(folder, "Objects.cs"));
             var infoPath = Path.Combine(folder, "map", "war3map.w3i");
             MapInfo info;
             using (var reader = new BinaryReader(File.OpenRead(infoPath)))
@@ -82,7 +84,7 @@ namespace Moonwell.Build.Tests
             var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
             var settings = MapSettingsReader.Read(assembly, project);
 
-            var map = SourceMap.Open(project, settings);
+            var map = SourceMap.Open(project, settings, TextWriter.Null);
 
             Assert.Equal(ScriptLanguage.Lua, map.Info!.ScriptLanguage);
             Assert.Equal("Sample map", map.Info.MapName);
@@ -138,6 +140,17 @@ namespace Moonwell.Build.Tests
 
             Assert.Contains("named argument is not support at dynamic", error.Message);
             Assert.DoesNotContain("unexpected error", error.Message);
+        }
+
+        [Fact]
+        public void map_without_terrain_is_an_error()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            File.Delete(Path.Combine(folder, "map", "war3map.w3e"));
+
+            var error = Assert.Throws<BuildException>(() => MapBuild.Run(folder, new BuildOptions(), TextWriter.Null));
+
+            Assert.Equal(@"the script has no main: map\war3map.w3e is missing (save the map in World Editor)", error.Message);
         }
 
         [Fact]

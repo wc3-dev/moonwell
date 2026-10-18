@@ -17,7 +17,7 @@ namespace Moonwell.Build.Tests
                 var project = MapProject.Find(TestFolders.Fixture("Sample"));
                 var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
                 var settings = MapSettingsReader.Read(assembly, project);
-                var map = SourceMap.Open(project, settings);
+                var map = SourceMap.Open(project, settings, TextWriter.Null);
                 EntryWriter.Write(project, settings);
                 LuaCompiler.Compile(project, map, assembly, false);
                 return (project, map);
@@ -32,7 +32,7 @@ namespace Moonwell.Build.Tests
             var before = Hashes(project.MapFolder).Concat(Hashes(project.AssetsFolder)).ToList();
             Assert.NotEmpty(before);
 
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
             Archive.Pack(project.StagedFolder, project.ArchivePath);
 
             var after = Hashes(project.MapFolder).Concat(Hashes(project.AssetsFolder)).ToList();
@@ -44,7 +44,7 @@ namespace Moonwell.Build.Tests
         {
             var (project, map) = CompiledSample.Value;
 
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
 
             var staged = RelativeFiles(project.StagedFolder);
             foreach (var dropped in DroppedFiles)
@@ -84,7 +84,7 @@ namespace Moonwell.Build.Tests
         {
             var (project, map) = CompiledSample.Value;
 
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
 
             using var reader = new BinaryReader(File.OpenRead(Path.Combine(project.StagedFolder, "war3map.w3i")));
             var info = reader.ReadMapInfo();
@@ -100,10 +100,10 @@ namespace Moonwell.Build.Tests
         {
             var project = MapProject.Find(folders.TemporaryCopyOfSample());
             var settings = new MapSettings("Sample.SampleMap", string.Empty, string.Empty, string.Empty, string.Empty);
-            var map = SourceMap.Open(project, settings);
+            var map = SourceMap.Open(project, settings, TextWriter.Null);
             map.Script = "-- script";
 
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
 
             Assert.Equal(
                 File.ReadAllBytes(Path.Combine(project.MapFolder, "war3map.w3i")),
@@ -118,10 +118,53 @@ namespace Moonwell.Build.Tests
             File.WriteAllText(Path.Combine(project.AssetsFolder, "war3map.wts"), "STRING 1 { replaced }");
             var log = new StringWriter();
 
-            Stage.Write(project, map, log);
+            Stage.WriteWithoutObjects(project, map, log);
 
             Assert.Equal("STRING 1 { replaced }", File.ReadAllText(Path.Combine(project.StagedFolder, "war3map.wts")));
             Assert.Contains(@"note: assets\war3map.wts replaces the map's file", log.ToString());
+        }
+
+        [Fact]
+        public void object_files_are_written_by_object_files()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            var fixture = TestFolders.Fixture("WorldEditorObjects");
+            foreach (var name in new[] { "war3map.w3u", "war3mapSkin.w3u" })
+            {
+                File.Copy(Path.Combine(fixture, name), Path.Combine(project.MapFolder, name));
+            }
+
+            // A map that does not use Moonwell.Objects has its object files come through unchanged, with no word about them.
+            var log = new StringWriter();
+            Stage.WriteWithoutObjects(project, map, log);
+
+            foreach (var name in new[] { "war3map.w3u", "war3mapSkin.w3u" })
+            {
+                Assert.Equal(File.ReadAllBytes(Path.Combine(fixture, name)), File.ReadAllBytes(Path.Combine(project.StagedFolder, name)));
+            }
+
+            Assert.Equal(string.Empty, log.ToString());
+
+            // A declared object is written beside them.
+            var declared = new DeclaredObject(
+                "Objects.Peasant",
+                "unit",
+                "hpea",
+                false,
+                null,
+                new SortedDictionary<string, object?>(),
+                Array.Empty<string>());
+            Stage.Write(
+                project,
+                map,
+                new[] { declared },
+                new Dictionary<string, string> { ["Objects.Peasant"] = "h001" },
+                new Dictionary<string, string>(),
+                StandardData.Empty,
+                TextWriter.Null);
+
+            Assert.NotEqual(File.ReadAllBytes(Path.Combine(fixture, "war3map.w3u")), File.ReadAllBytes(Path.Combine(project.StagedFolder, "war3map.w3u")));
         }
 
         [Fact]
@@ -129,12 +172,12 @@ namespace Moonwell.Build.Tests
         {
             var project = MapProject.Find(folders.TemporaryCopyOfSample());
             var map = OpenWithPlaceholderScript(project);
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
             Archive.Pack(project.StagedFolder, project.ArchivePath);
             Assert.True(File.Exists(Path.Combine(project.StagedFolder, "Moonwell", "hello.txt")));
 
             File.Delete(Path.Combine(project.AssetsFolder, "Moonwell", "hello.txt"));
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
             Archive.Pack(project.StagedFolder, project.ArchivePath);
 
             Assert.False(File.Exists(Path.Combine(project.StagedFolder, "Moonwell", "hello.txt")));
@@ -148,7 +191,7 @@ namespace Moonwell.Build.Tests
         {
             var project = MapProject.Find(folders.TemporaryCopyOfSample());
             var map = OpenWithPlaceholderScript(project);
-            Stage.Write(project, map, TextWriter.Null);
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
 
             Archive.Pack(project.StagedFolder, project.ArchivePath);
 
@@ -187,7 +230,7 @@ namespace Moonwell.Build.Tests
         private static War3Net.Build.Map OpenWithPlaceholderScript(MapProject project)
         {
             var settings = new MapSettings("Sample.SampleMap", "Sample map", "Moonwell", "Built by the tests.", "Any");
-            var map = SourceMap.Open(project, settings);
+            var map = SourceMap.Open(project, settings, TextWriter.Null);
             map.Script = "-- script";
             return map;
         }
