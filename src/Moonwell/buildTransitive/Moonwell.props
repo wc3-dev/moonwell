@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    Added to every project that references the Moonwell package.
+    Moonwell.dll and Moonwell.Natives.dll must sit next to the map's assembly: the build reads the Lua they carry.
+    (Moonwell.targets keeps build/ out of the compile; that needs the SDK's default items, which come after this file.)
+  -->
+  <PropertyGroup>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+</Project>
