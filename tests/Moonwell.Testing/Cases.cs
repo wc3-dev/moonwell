@@ -19,6 +19,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "collections.map-remove", Run = CollectionCases.MapRemove });
             list.Add(new Case { Name = "errors.log-line", Run = ErrorCases.LogLine });
             list.Add(new Case { Name = "errors.screen-line", Run = ErrorCases.ScreenLine });
+            list.Add(new Case { Name = "errors.log-line-where", Run = ErrorCases.LogLineWhere });
+            list.Add(new Case { Name = "errors.screen-line-where", Run = ErrorCases.ScreenLineWhere });
             list.Add(new Case { Name = "errors.shows-at", Run = ErrorCases.ShowsAt });
             list.Add(new Case { Name = "errors.report-throttles", Run = ErrorCases.ReportThrottles });
             list.Add(new Case { Name = "errors.report-many-keys", Run = ErrorCases.ReportManyKeys });
@@ -58,6 +60,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "game.dispatch-removal", Run = ActorCases.GameDispatchRemoval });
             list.Add(new Case { Name = "players.get", Run = ActorCases.PlayersGet });
             list.Add(new Case { Name = "players.existing-out-of-range", Run = ActorCases.ExistingOutOfRange });
+            list.Add(new Case { Name = "local.runs-for-local-player", Run = LocalCases.RunsForLocalPlayer });
+            list.Add(new Case { Name = "local.skips-other-players", Run = LocalCases.SkipsOtherPlayers });
             list.Add(new Case { Name = "map.components-in-order", Run = MapCases.ComponentsInOrder });
             list.Add(new Case { Name = "map.components-not-added-early", Run = MapCases.ComponentsNotAddedEarly });
             list.Add(new Case { Name = "map.settings-default-empty", Run = MapCases.SettingsDefaultEmpty });
