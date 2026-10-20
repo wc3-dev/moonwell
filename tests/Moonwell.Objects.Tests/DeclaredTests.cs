@@ -72,7 +72,7 @@ namespace Moonwell.Objects.Tests
     {
         public Barracks()
         {
-            Trains.Remove<Moonwell.Objects.Units.Human.Footman>();
+            Trains.Remove<Moonwell.Objects.Human.Units.Footman>();
             Trains.Add<Arthas>();
         }
     }
@@ -184,6 +184,83 @@ namespace Moonwell.Objects.Tests
         }
 
         [Fact]
+        public void set_replaces_in_order()
+        {
+            var list = new ObjectList<Moonwell.Unit>();
+            list.Add<Footman>();
+
+            list.Set<Arthas, Knight, Sir>();
+
+            Assert.Equal(new[] { typeof(Arthas), typeof(Knight), typeof(Sir) }, list.Types);
+        }
+
+        [Fact]
+        public void set_drops_standard_entries()
+        {
+            StandardValues.Read = (id, field, level) => id == "Hpal" && field == "utra" && level == 0 ? "hfoo,zzzz" : null;
+            var trains = new Paladin().Trains;
+
+            trains.Set<Arthas>();
+
+            Assert.Equal(new object[] { typeof(Arthas) }, trains.Entries);
+        }
+
+        [Fact]
+        public void set_twice_keeps_first_place()
+        {
+            var list = new ObjectList<Moonwell.Unit>();
+
+            list.Set<Arthas, Knight, Arthas>();
+
+            Assert.Equal(new[] { typeof(Arthas), typeof(Knight) }, list.Types);
+        }
+
+        [Fact]
+        public void set_takes_eight()
+        {
+            var list = new ObjectList<Moonwell.Unit>();
+
+            list.Set<Arthas, Knight, Sir, Footman, Paladin, Uther, Scholar, Captain>();
+
+            Assert.Equal(
+                new[] { typeof(Arthas), typeof(Knight), typeof(Sir), typeof(Footman), typeof(Paladin), typeof(Uther), typeof(Scholar), typeof(Captain) },
+                list.Types);
+        }
+
+        [Fact]
+        public void replace_keeps_the_position()
+        {
+            var list = new ObjectList<Moonwell.Unit>();
+            list.Set<Footman, Arthas, Knight>();
+
+            list.Replace<Arthas, Sir>();
+
+            Assert.Equal(new[] { typeof(Footman), typeof(Sir), typeof(Knight) }, list.Types);
+        }
+
+        [Fact]
+        public void replace_of_absent_changes_nothing()
+        {
+            var list = new ObjectList<Moonwell.Unit>();
+            list.Add<Footman>();
+
+            list.Replace<Arthas, Sir>();
+
+            Assert.Equal(new[] { typeof(Footman) }, list.Types);
+        }
+
+        [Fact]
+        public void replace_with_present_removes_old()
+        {
+            var list = new ObjectList<Moonwell.Unit>();
+            list.Set<Footman, Arthas, Sir>();
+
+            list.Replace<Footman, Sir>();
+
+            Assert.Equal(new[] { typeof(Arthas), typeof(Sir) }, list.Types);
+        }
+
+        [Fact]
         public void list_keeps_order_once()
         {
             var trains = new Trainer().Trains;
@@ -204,10 +281,10 @@ namespace Moonwell.Objects.Tests
             var trains = new Paladin().Trains;
 
             Assert.Equal(3, trains.Count);
-            Assert.Equal(new object[] { typeof(Moonwell.Objects.Units.Human.Footman), "zzzz", typeof(Moonwell.Objects.Units.Human.Paladin) }, trains.Entries);
+            Assert.Equal(new object[] { typeof(Moonwell.Objects.Human.Units.Footman), "zzzz", typeof(Moonwell.Objects.Human.Units.Paladin) }, trains.Entries);
             Assert.Equal(trains.Entries, trains.Standard);
-            Assert.Equal(new[] { typeof(Moonwell.Objects.Units.Human.Footman), typeof(Moonwell.Objects.Units.Human.Paladin) }, trains.Types);
-            Assert.True(trains.Contains<Moonwell.Objects.Units.Human.Footman>());
+            Assert.Equal(new[] { typeof(Moonwell.Objects.Human.Units.Footman), typeof(Moonwell.Objects.Human.Units.Paladin) }, trains.Types);
+            Assert.True(trains.Contains<Moonwell.Objects.Human.Units.Footman>());
         }
 
         [Fact]
@@ -218,8 +295,8 @@ namespace Moonwell.Objects.Tests
             var trains = new Barracks().Trains;
 
             Assert.Equal(new object[] { "zzzz", typeof(Arthas) }, trains.Entries);
-            Assert.Equal(new object[] { typeof(Moonwell.Objects.Units.Human.Footman), "zzzz" }, trains.Standard);
-            Assert.False(trains.Contains<Moonwell.Objects.Units.Human.Footman>());
+            Assert.Equal(new object[] { typeof(Moonwell.Objects.Human.Units.Footman), "zzzz" }, trains.Standard);
+            Assert.False(trains.Contains<Moonwell.Objects.Human.Units.Footman>());
         }
 
         [Fact]
@@ -229,7 +306,7 @@ namespace Moonwell.Objects.Tests
 
             var trains = new Paladin().Trains;
 
-            Assert.Equal(new object[] { typeof(Moonwell.Objects.Units.Human.Footman) }, trains.Entries);
+            Assert.Equal(new object[] { typeof(Moonwell.Objects.Human.Units.Footman) }, trains.Entries);
         }
 
         [Fact]

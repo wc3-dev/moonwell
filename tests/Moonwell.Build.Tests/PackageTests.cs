@@ -57,7 +57,7 @@ namespace Moonwell.Build.Tests
             using var archive = ZipFile.OpenRead(packed.ObjectsPackage);
             var names = archive.Entries.Select(entry => entry.FullName).ToList();
             Assert.Contains("contentFiles/cs/net10.0/Moonwell.Objects/Core/Declared.cs", names);
-            Assert.Contains(names, name => name.StartsWith("contentFiles/cs/net10.0/Moonwell.Objects/Generated/Units/", StringComparison.Ordinal) && name.EndsWith(".cs", StringComparison.Ordinal));
+            Assert.Contains(names, name => name.StartsWith("contentFiles/cs/net10.0/Moonwell.Objects/Generated/Human/", StringComparison.Ordinal) && name.EndsWith(".cs", StringComparison.Ordinal));
             Assert.Contains(names, name => name.StartsWith("lib/", StringComparison.Ordinal) && name.EndsWith("/Moonwell.Objects.dll", StringComparison.Ordinal));
             Assert.DoesNotContain(names, name => name.Contains("/obj/") || name.Contains("/bin/"));
 
@@ -112,7 +112,6 @@ namespace Moonwell.Build.Tests
             Assert.Contains("namespace.class(\"Paladin\"", script);
             Assert.Contains("[\"Sample.Arthas\"]", script);
             Assert.DoesNotContain("Archmage", script);
-            Assert.True(File.Exists(Path.Combine(copy, "ids.json")));
         }
 
         [Fact]
@@ -170,9 +169,6 @@ namespace Moonwell.Build.Tests
             Assert.Contains("Name = \"Keep\";", File.ReadAllText(Path.Combine(map, "Map.cs")));
             var script = File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua"));
             Assert.Contains("[\"Keep.Champion\"]", script);
-            var ids = File.ReadAllText(Path.Combine(map, "ids.json"));
-            Assert.Contains("\"Keep.Champion\"", ids);
-            Assert.Contains("\"Keep.Smite\"", ids);
         }
 
         [Fact]
@@ -211,7 +207,6 @@ namespace Moonwell.Build.Tests
             if (!withObjects)
             {
                 File.Delete(Path.Combine(copy, "Objects.cs"));
-                File.Delete(Path.Combine(copy, "ids.json"));
             }
 
             if (withoutOwnRemove)
