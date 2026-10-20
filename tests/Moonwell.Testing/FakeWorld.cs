@@ -21,6 +21,18 @@ namespace Moonwell.Testing
         /// <summary>The lines printed on the screen.</summary>
         public List<string> Printed = new List<string>();
 
+        /// <summary>The slot of each line printed to a player, -1 for a line printed to everyone.</summary>
+        public List<int> PrintedSlots = new List<int>();
+
+        /// <summary>The facing the last unit made by SpawnUnit was given.</summary>
+        public float LastFacing;
+
+        /// <summary>Each line printed to a player or to everyone.</summary>
+        public List<string> PrintedTexts = new List<string>();
+
+        /// <summary>The seconds of each line printed to a player or to everyone; below 0 for the game's own time.</summary>
+        public List<float> PrintedSeconds = new List<float>();
+
         /// <summary>The lines appended to the log.</summary>
         public List<string> Logged = new List<string>();
 
@@ -83,6 +95,15 @@ namespace Moonwell.Testing
 
         /// <summary>The y of each player slot's start location, for the slots that have one set.</summary>
         private readonly Dictionary<int, float> startYs = new Dictionary<int, float>();
+
+        /// <summary>The states set on players, by slot times 16 plus the state.</summary>
+        private readonly Dictionary<int, int> states = new Dictionary<int, int>();
+
+        /// <summary>The slot state of each slot SetSlot set.</summary>
+        private readonly Dictionary<int, int> slotStates = new Dictionary<int, int>();
+
+        /// <summary>Who controls each slot SetSlot set.</summary>
+        private readonly Dictionary<int, int> controllers = new Dictionary<int, int>();
 
         /// <summary>The slot of each player made.</summary>
         private readonly Dictionary<player, int> slots = new Dictionary<player, int>();
@@ -221,6 +242,54 @@ namespace Moonwell.Testing
             Printed.Add(text);
         }
 
+        /// <summary>The slot state of a player; Empty until SetSlot sets it.</summary>
+        public int SlotStateOf(player player)
+        {
+            return slotStates.TryGetValue(SlotOf(player), out var state) ? state : 0;
+        }
+
+        /// <summary>Who controls a player; User until SetSlot sets it.</summary>
+        public int ControllerOf(player player)
+        {
+            return controllers.TryGetValue(SlotOf(player), out var control) ? control : 0;
+        }
+
+        /// <summary>Sets a slot's state and who controls it.</summary>
+        public void SetSlot(int slot, SlotState state, Controller controller)
+        {
+            PlayerAt(slot);
+            slotStates[slot] = (int)state;
+            controllers[slot] = (int)controller;
+        }
+
+        /// <summary>A state of a player; 0 until it is set.</summary>
+        public int StateOf(player player, PlayerState state)
+        {
+            return states.TryGetValue(SlotOf(player) * 16 + (int)state, out var value) ? value : 0;
+        }
+
+        /// <summary>Sets a state of a player.</summary>
+        public void SetState(player player, PlayerState state, int value)
+        {
+            states[SlotOf(player) * 16 + (int)state] = value;
+        }
+
+        /// <summary>Records a line printed to one player.</summary>
+        public void PrintTo(player player, string text, float seconds)
+        {
+            PrintedSlots.Add(SlotOf(player));
+            PrintedTexts.Add(text);
+            PrintedSeconds.Add(seconds);
+        }
+
+        /// <summary>Records a line printed to everyone.</summary>
+        public void PrintToAll(string text, float seconds)
+        {
+            PrintedSlots.Add(-1);
+            PrintedTexts.Add(text);
+            PrintedSeconds.Add(seconds);
+        }
+
         /// <summary>Records a line appended to the log.</summary>
         public void Log(string text)
         {
@@ -312,9 +381,10 @@ namespace Moonwell.Testing
             return new List<destructable>(PlacedDestructables);
         }
 
-        /// <summary>Makes a unit owned by the owner's slot; the place and facing are not kept.</summary>
+        /// <summary>Makes a unit owned by the owner's slot, and keeps the facing in LastFacing; the place is not kept.</summary>
         public unit SpawnUnit(player owner, int typeId, float x, float y, float facing)
         {
+            LastFacing = facing;
             return NewUnit(typeId, SlotOf(owner));
         }
 

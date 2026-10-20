@@ -100,6 +100,56 @@ public class LocalTests
     }
 
     [Fact]
+    public void who_is_playing_reads_inside()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                var playing = Player.Playing.Count + Player.Users.Count;
+                var left = p.SlotState == SlotState.Left || p.Controller == Controller.Computer;
+            });
+            """));
+    }
+
+    [Fact]
+    public void printing_is_allowed_inside()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                p.Print("hi");
+                p.Print("hi", 5f);
+                Game.Print("everyone");
+            });
+            """));
+    }
+
+    [Fact]
+    public void reading_gold_inside_is_fine()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                var gold = p.Gold + p.Lumber + p.FoodUsed;
+            });
+            """));
+    }
+
+    [Fact]
+    public void setting_gold_inside_is_rejected()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                p.Gold = 1000;
+                p.Lumber += 5;
+            });
+            """);
+
+        Assert.Equal(new[] { "MW0001: p.Gold", "MW0001: p.Lumber" }, found);
+    }
+
+    [Fact]
     public void map_methods_are_followed()
     {
         var found = MapCode.Check(

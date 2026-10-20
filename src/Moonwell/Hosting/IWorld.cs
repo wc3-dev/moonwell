@@ -20,6 +20,12 @@ namespace Moonwell.Hosting
         /// <summary>Shows a line on every player's screen.</summary>
         void Print(string text);
 
+        /// <summary>Shows a line to one player, for the seconds, or for the game's own time when the seconds are below 0.</summary>
+        void PrintTo(player player, string text, float seconds);
+
+        /// <summary>Shows a line to every player, for the seconds, or for the game's own time when the seconds are below 0.</summary>
+        void PrintToAll(string text, float seconds);
+
         /// <summary>Appends a line to CustomMapData\Moonwell\log.txt.</summary>
         void Log(string text);
 
@@ -88,6 +94,18 @@ namespace Moonwell.Hosting
 
         /// <summary>The player that owns a unit; null a while after the game has removed it.</summary>
         player OwnerOf(unit unit);
+
+        /// <summary>The slot state of a player, as SlotState counts it (0 empty, 1 playing, 2 left).</summary>
+        int SlotStateOf(player player);
+
+        /// <summary>Who controls a player, as Controller counts it (0 user, 1 computer, 2 rescuable, 3 neutral, 4 creep, 5 none).</summary>
+        int ControllerOf(player player);
+
+        /// <summary>A state of a player: its gold, lumber, food or upkeep.</summary>
+        int StateOf(player player, PlayerState state);
+
+        /// <summary>Sets a state of a player.</summary>
+        void SetState(player player, PlayerState state, int value);
 
         /// <summary>The level a player has of an upgrade; 0 when the player has none.</summary>
         int UpgradeLevel(player p, int upgradeId);
