@@ -19,16 +19,16 @@ namespace Moonwell.Objects
                 ["fefl"] = typeof(string),
                 ["fefs"] = typeof(string),
                 ["feft"] = typeof(string),
-                ["flig"] = typeof(string),
+                ["flig"] = typeof(global::Moonwell.Objects.LightningEffect),
                 ["fmac"] = typeof(float),
                 ["fmat"] = typeof(string),
                 ["fmho"] = typeof(bool),
                 ["fmsp"] = typeof(int),
                 ["fnam"] = typeof(string),
                 ["fnsf"] = typeof(string),
-                ["frac"] = typeof(string),
+                ["frac"] = typeof(global::Moonwell.Objects.UnitRace),
                 ["fsat"] = typeof(string),
-                ["fspd"] = typeof(string),
+                ["fspd"] = typeof(global::Moonwell.Objects.SpellDetail),
                 ["fspt"] = typeof(string),
                 ["fta0"] = typeof(string),
                 ["fta1"] = typeof(string),
@@ -45,13 +45,13 @@ namespace Moonwell.Objects
         private global::Moonwell.Objects.Declared? declared;
 
         /// <summary>The declared values of this object, created on first use.</summary>
-        protected global::Moonwell.Objects.Declared Fields => declared ??= new global::Moonwell.Objects.Declared();
+        protected global::Moonwell.Objects.Declared Fields => declared ??= new global::Moonwell.Objects.Declared(this);
 
         /// <summary>The values put on this object so far, by field id; the build reads them.</summary>
         internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;
 
         /// <summary>The field <c>fart</c>.</summary>
-        [global::Moonwell.Objects.Field("fart")]
+        [global::Moonwell.Objects.Field("fart", Label = "Icon")]
         public string Icon
         {
             get { return Fields.Get<string>(this, "fart"); }
@@ -59,7 +59,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>feat</c>.</summary>
-        [global::Moonwell.Objects.Field("feat")]
+        [global::Moonwell.Objects.Field("feat", Label = "Effect")]
         public string Effect
         {
             get { return Fields.Get<string>(this, "feat"); }
@@ -67,7 +67,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>feff</c>.</summary>
-        [global::Moonwell.Objects.Field("feff")]
+        [global::Moonwell.Objects.Field("feff", Label = "Is an Effect")]
         public bool IsAnEffect
         {
             get { return Fields.Get<bool>(this, "feff"); }
@@ -75,7 +75,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fefl</c>.</summary>
-        [global::Moonwell.Objects.Field("fefl")]
+        [global::Moonwell.Objects.Field("fefl", Label = "Effect Sound (Looping)")]
         public string EffectSoundLooping
         {
             get { return Fields.Get<string>(this, "fefl"); }
@@ -83,7 +83,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fefs</c>.</summary>
-        [global::Moonwell.Objects.Field("fefs")]
+        [global::Moonwell.Objects.Field("fefs", Label = "Effect Sound")]
         public string EffectSound
         {
             get { return Fields.Get<string>(this, "fefs"); }
@@ -91,7 +91,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>feft</c>.</summary>
-        [global::Moonwell.Objects.Field("feft")]
+        [global::Moonwell.Objects.Field("feft", Label = "Effect Attachment Point")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string EffectAttachmentPoint
         {
             get { return Fields.Get<string>(this, "feft"); }
@@ -99,15 +100,16 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>flig</c>.</summary>
-        [global::Moonwell.Objects.Field("flig")]
-        public string Lightning
+        [global::Moonwell.Objects.Field("flig", Label = "Lightning")]
+        public global::Moonwell.Objects.LightningEffect Lightning
         {
-            get { return Fields.Get<string>(this, "flig"); }
+            get { return Fields.Get<global::Moonwell.Objects.LightningEffect>(this, "flig"); }
             protected set { Fields.Put("flig", value); }
         }
 
         /// <summary>The field <c>fmac</c>.</summary>
-        [global::Moonwell.Objects.Field("fmac")]
+        [global::Moonwell.Objects.Field("fmac", Label = "Missile Arc")]
+        [global::Moonwell.Objects.Limits(0, 1)]
         public float MissileArc
         {
             get { return Fields.Get<float>(this, "fmac"); }
@@ -115,7 +117,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fmat</c>.</summary>
-        [global::Moonwell.Objects.Field("fmat")]
+        [global::Moonwell.Objects.Field("fmat", Label = "Missile Art")]
         public string MissileArt
         {
             get { return Fields.Get<string>(this, "fmat"); }
@@ -123,7 +125,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fmho</c>.</summary>
-        [global::Moonwell.Objects.Field("fmho")]
+        [global::Moonwell.Objects.Field("fmho", Label = "Missile Homing Enabled")]
         public bool MissileHomingEnabled
         {
             get { return Fields.Get<bool>(this, "fmho"); }
@@ -131,7 +133,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fmsp</c>.</summary>
-        [global::Moonwell.Objects.Field("fmsp")]
+        [global::Moonwell.Objects.Field("fmsp", Label = "Missile Speed")]
+        [global::Moonwell.Objects.Limits(0, 10000)]
         public int MissileSpeed
         {
             get { return Fields.Get<int>(this, "fmsp"); }
@@ -139,7 +142,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fnam</c>.</summary>
-        [global::Moonwell.Objects.Field("fnam")]
+        [global::Moonwell.Objects.Field("fnam", Label = "Name (Editor Only)")]
         public string Name
         {
             get { return Fields.Get<string>(this, "fnam"); }
@@ -147,7 +150,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fnsf</c>.</summary>
-        [global::Moonwell.Objects.Field("fnsf")]
+        [global::Moonwell.Objects.Field("fnsf", Label = "Editor Suffix")]
+        [global::Moonwell.Objects.MaxLength(50)]
         public string EditorSuffix
         {
             get { return Fields.Get<string>(this, "fnsf"); }
@@ -155,15 +159,15 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>frac</c>.</summary>
-        [global::Moonwell.Objects.Field("frac")]
-        public string Race
+        [global::Moonwell.Objects.Field("frac", Label = "Race")]
+        public global::Moonwell.Objects.UnitRace Race
         {
-            get { return Fields.Get<string>(this, "frac"); }
+            get { return Fields.Get<global::Moonwell.Objects.UnitRace>(this, "frac"); }
             protected set { Fields.Put("frac", value); }
         }
 
         /// <summary>The field <c>fsat</c>.</summary>
-        [global::Moonwell.Objects.Field("fsat")]
+        [global::Moonwell.Objects.Field("fsat", Label = "Special")]
         public string Special
         {
             get { return Fields.Get<string>(this, "fsat"); }
@@ -171,15 +175,16 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fspd</c>.</summary>
-        [global::Moonwell.Objects.Field("fspd")]
-        public string RequiredSpellDetail
+        [global::Moonwell.Objects.Field("fspd", Label = "Required Spell Detail")]
+        public global::Moonwell.Objects.SpellDetail RequiredSpellDetail
         {
-            get { return Fields.Get<string>(this, "fspd"); }
+            get { return Fields.Get<global::Moonwell.Objects.SpellDetail>(this, "fspd"); }
             protected set { Fields.Put("fspd", value); }
         }
 
         /// <summary>The field <c>fspt</c>.</summary>
-        [global::Moonwell.Objects.Field("fspt")]
+        [global::Moonwell.Objects.Field("fspt", Label = "Special Attachment Point")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string SpecialAttachmentPoint
         {
             get { return Fields.Get<string>(this, "fspt"); }
@@ -187,7 +192,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fta0</c>.</summary>
-        [global::Moonwell.Objects.Field("fta0")]
+        [global::Moonwell.Objects.Field("fta0", Label = "Target Attachment Point 1")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint1
         {
             get { return Fields.Get<string>(this, "fta0"); }
@@ -195,7 +201,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fta1</c>.</summary>
-        [global::Moonwell.Objects.Field("fta1")]
+        [global::Moonwell.Objects.Field("fta1", Label = "Target Attachment Point 2")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint2
         {
             get { return Fields.Get<string>(this, "fta1"); }
@@ -203,7 +210,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fta2</c>.</summary>
-        [global::Moonwell.Objects.Field("fta2")]
+        [global::Moonwell.Objects.Field("fta2", Label = "Target Attachment Point 3")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint3
         {
             get { return Fields.Get<string>(this, "fta2"); }
@@ -211,7 +219,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fta3</c>.</summary>
-        [global::Moonwell.Objects.Field("fta3")]
+        [global::Moonwell.Objects.Field("fta3", Label = "Target Attachment Point 4")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint4
         {
             get { return Fields.Get<string>(this, "fta3"); }
@@ -219,7 +228,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fta4</c>.</summary>
-        [global::Moonwell.Objects.Field("fta4")]
+        [global::Moonwell.Objects.Field("fta4", Label = "Target Attachment Point 5")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint5
         {
             get { return Fields.Get<string>(this, "fta4"); }
@@ -227,7 +237,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fta5</c>.</summary>
-        [global::Moonwell.Objects.Field("fta5")]
+        [global::Moonwell.Objects.Field("fta5", Label = "Target Attachment Point 6")]
+        [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint6
         {
             get { return Fields.Get<string>(this, "fta5"); }
@@ -235,7 +246,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>ftac</c>.</summary>
-        [global::Moonwell.Objects.Field("ftac")]
+        [global::Moonwell.Objects.Field("ftac", Label = "Target Attachments")]
+        [global::Moonwell.Objects.Limits(0, 6)]
         public int TargetAttachments
         {
             get { return Fields.Get<int>(this, "ftac"); }
@@ -243,7 +255,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>ftat</c>.</summary>
-        [global::Moonwell.Objects.Field("ftat")]
+        [global::Moonwell.Objects.Field("ftat", Label = "Target")]
         public string Target
         {
             get { return Fields.Get<string>(this, "ftat"); }
@@ -251,7 +263,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>ftip</c>.</summary>
-        [global::Moonwell.Objects.Field("ftip")]
+        [global::Moonwell.Objects.Field("ftip", Label = "Tooltip")]
         public string Tooltip
         {
             get { return Fields.Get<string>(this, "ftip"); }
@@ -259,7 +271,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>fube</c>.</summary>
-        [global::Moonwell.Objects.Field("fube")]
+        [global::Moonwell.Objects.Field("fube", Label = "Tooltip - Extended")]
         public string TooltipExtended
         {
             get { return Fields.Get<string>(this, "fube"); }
@@ -287,7 +299,7 @@ namespace Moonwell.Objects
         /// <summary>Puts the value of one level of a field by its field id; a value of another type is an error naming the field.</summary>
         protected void Set(string field, int level, object value)
         {
-            Fields.Put(field + ":" + level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardBuff", fieldTypes, this, field, level, value));
+            Fields.PutLevel(field, level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardBuff", fieldTypes, this, field, level, value));
         }
     }
 }

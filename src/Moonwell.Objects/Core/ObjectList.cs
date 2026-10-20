@@ -7,10 +7,16 @@ namespace Moonwell.Objects
     /// <summary>A list of declared classes a field holds, in order, each once; it starts as the standard object's list.</summary>
     /// @CSharpLua.Ignore
     public sealed class ObjectList<T>
+#if !MOONWELL_LUA
+        : IObjectList
+#endif
     {
         // Each entry is a Type, or the id text of a standard object that has no standard class.
         private readonly List<object> entries;
         private readonly object[] standard;
+
+        /// <summary>Called with the number of entries after the list grew, to check it against its field's rules; null for none.</summary>
+        internal Action<int>? Grew { get; set; }
 
         /// <summary>Makes an empty list.</summary>
         public ObjectList()
@@ -56,6 +62,20 @@ namespace Moonwell.Objects
             if (!entries.Contains(typeof(TObject)))
             {
                 entries.Add(typeof(TObject));
+                Grew?.Invoke(entries.Count);
+            }
+        }
+
+        /// <summary>
+        /// Adds the standard object of an id with no standard class of the list's kind to the end; one already there stays
+        /// where it is. A standard class's constructor writes such an entry so; a map's class names classes.
+        /// </summary>
+        internal void Add(string id)
+        {
+            if (!entries.Contains(id))
+            {
+                entries.Add(id);
+                Grew?.Invoke(entries.Count);
             }
         }
 
@@ -180,6 +200,8 @@ namespace Moonwell.Objects
                     entries.Add(type);
                 }
             }
+
+            Grew?.Invoke(entries.Count);
         }
 
         /// <summary>Whether the list holds this class.</summary>

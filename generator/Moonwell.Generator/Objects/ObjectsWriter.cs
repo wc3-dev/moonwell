@@ -8,7 +8,8 @@ namespace Moonwell.Generator.Objects;
 /// <remarks>
 /// <para>
 /// A kind base (<c>StandardUnit</c>, <c>StandardHero</c>, <c>StandardItem</c>, ...) carries a property for each field
-/// of its kind that every object of the kind can have; a standard class is empty except for an ability's own fields.
+/// of its kind that every object of the kind can have; a standard class has a constructor that sets the object's values
+/// (<see cref="StandardConstructors"/>) and, for an ability, a property for each of its own fields.
 /// Every type name in the source is spelled in full (<c>global::Moonwell.Unit</c>), so that a class named like a
 /// namespace part cannot shadow it.
 /// </para>
@@ -78,7 +79,7 @@ public static class ObjectsWriter
         text.Append("            };\n\n");
         text.Append($"        private {Root}.Declared? declared;\n\n");
         text.Append("        /// <summary>The declared values of this object, created on first use.</summary>\n");
-        text.Append($"        protected {Root}.Declared Fields => declared ??= new {Root}.Declared();\n\n");
+        text.Append($"        protected {Root}.Declared Fields => declared ??= new {Root}.Declared(this);\n\n");
         text.Append("        /// <summary>The values put on this object so far, by field id; the build reads them.</summary>\n");
         text.Append("        internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;\n");
         foreach (var field in common)
@@ -99,7 +100,7 @@ public static class ObjectsWriter
         text.Append($"            Fields.Put(field, {Root}.FieldChecks.Value({Literal(name)}, fieldTypes, this, field, value));\n        }}\n\n");
         text.Append("        /// <summary>Puts the value of one level of a field by its field id; a value of another type is an error naming the field.</summary>\n");
         text.Append("        protected void Set(string field, int level, object value)\n        {\n");
-        text.Append($"            Fields.Put(field + \":\" + level, {Root}.FieldChecks.LevelValue({Literal(name)}, fieldTypes, this, field, level, value));\n        }}\n");
+        text.Append($"            Fields.PutLevel(field, level, {Root}.FieldChecks.LevelValue({Literal(name)}, fieldTypes, this, field, level, value));\n        }}\n");
         text.Append("    }\n}\n");
         return text.ToString();
     }
@@ -109,12 +110,18 @@ public static class ObjectsWriter
     /// partial classes of the group and the kind (<c>Human</c>, then <c>Units</c>) in namespace <c>Moonwell.Objects</c>.
     /// The class inherits its kind base (heroes <c>StandardHero</c>), has the object's id in <c>[Standard]</c>, and for
     /// an ability has a property for each field specific to the ability's code. A property cannot be named like its
-    /// class, so such a field gets its id appended (<c>HealingModifierHem1</c>).
+    /// class, so such a field gets its id appended (<c>HealingModifierHem1</c>). With <paramref name="constructors"/>,
+    /// a class whose object has values gets a constructor that sets them, before its properties.
     /// </summary>
     /// <param name="outer">The namespace and the classes the objects are nested in, dotted (<c>Moonwell.Objects.Human.Units</c>).</param>
     /// <param name="classes">The objects and their class names; every class name's outer is <paramref name="outer"/>.</param>
     /// <param name="fields">The fields of the abilities (used only for ability classes).</param>
-    public static string Group(string outer, IEnumerable<(StandardObject Object, ClassName Name)> classes, IReadOnlyList<Field> fields)
+    /// <param name="constructors">The constructors' lines; null for classes without constructors.</param>
+    public static string Group(
+        string outer,
+        IEnumerable<(StandardObject Object, ClassName Name)> classes,
+        IReadOnlyList<Field> fields,
+        StandardConstructors? constructors = null)
     {
         var ordered = classes.OrderBy(c => c.Name.Name, StringComparer.Ordinal).ToList();
         var byCode = new Dictionary<string, List<Field>>(StringComparer.Ordinal);
@@ -171,9 +178,22 @@ public static class ObjectsWriter
             text.Append($"{indent}{Ignore}\n");
             text.Append($"{indent}[{Root}.Standard({Literal(obj.Id)})]\n");
             text.Append($"{indent}public class {name.Name} : {Root}.{KindBase(obj.Kind, obj.IsHero)}\n{indent}{{\n");
+            var lines = constructors?.Lines(obj, own) ?? Array.Empty<string>();
+            if (lines.Count > 0)
+            {
+                text.Append($"{indent}    /// <summary>Makes the object with the values of the base tables, World Editor's Default.</summary>\n");
+                text.Append($"{indent}    public {name.Name}()\n{indent}    {{\n");
+                foreach (var line in lines)
+                {
+                    text.Append($"{indent}        {line}\n");
+                }
+
+                text.Append($"{indent}    }}\n");
+            }
+
             for (var p = 0; p < own.Count; p++)
             {
-                if (p > 0)
+                if (p > 0 || lines.Count > 0)
                 {
                     text.Append('\n');
                 }
@@ -207,7 +227,76 @@ public static class ObjectsWriter
     }
 
     /// <summary>
-    /// The JSON of a kind's standard values: <c>fields</c> (id, type, perLevel, pointer, skin, store), one per line, then
+    /// The source of the enums of the choice types, ordered by name, in namespace <c>Moonwell.Objects</c>. Each member
+    /// has the game's text in <c>[GameValue]</c>, then the other spellings the game's data uses; a flags type is a
+    /// <c>[Flags]</c> enum. Each enum is <c>@CSharpLua.Ignore</c>: the map's Lua has the members' numbers, not the enum.
+    /// </summary>
+    public static string Choices(IEnumerable<ChoiceType> choices)
+    {
+        var text = new StringBuilder();
+        text.Append("namespace Moonwell.Objects\n{\n");
+        var first = true;
+        foreach (var choice in choices.OrderBy(c => c.Name, StringComparer.Ordinal))
+        {
+            text.Append(first ? "" : "\n");
+            first = false;
+            text.Append($"    /// <summary>{ChoiceSummary(choice)}</summary>\n");
+            text.Append($"    {Ignore}\n");
+            if (choice.Flags)
+            {
+                text.Append("    [global::System.Flags]\n");
+            }
+
+            text.Append($"    public enum {choice.Name}\n    {{\n");
+            for (var m = 0; m < choice.Members.Count; m++)
+            {
+                var member = choice.Members[m];
+                var texts = string.Join(", ", new[] { member.Text }.Concat(member.Alternates).Select(Literal));
+                text.Append(m > 0 ? "\n" : "");
+                text.Append($"        /// <summary>{MemberSummary(choice, member)}</summary>\n");
+                text.Append($"        [{Root}.GameValue({texts})]\n");
+                text.Append($"        {member.Name} = {member.Value.ToString(CultureInfo.InvariantCulture)},\n");
+            }
+
+            text.Append("    }\n");
+        }
+
+        text.Append("}\n");
+        return text.ToString();
+    }
+
+    // Ruling R15: an enum's numbers are Moonwell's (World Editor's list), not the natives'.
+    private const string NotNatives =
+        " Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.";
+
+    private static string ChoiceSummary(ChoiceType choice)
+    {
+        switch (choice.Form)
+        {
+            case ChoiceForm.List:
+                return $"Any of the values of the metadata type <c>{Xml(choice.Type)}</c>, as World Editor offers them; the object file holds a comma list of their texts, and 0 is none of them.{NotNatives}";
+            case ChoiceForm.Bits:
+                return $"Any of the values of the metadata type <c>{Xml(choice.Type)}</c>, as World Editor offers them; the object file holds the number whose bits they are, and 0 is none of them.{NotNatives}";
+            default:
+                return $"A value of the metadata type <c>{Xml(choice.Type)}</c>, as World Editor offers it.{NotNatives}";
+        }
+    }
+
+    private static string MemberSummary(ChoiceType choice, ChoiceMember member)
+    {
+        var shown = Xml(member.Label.Length > 0 ? member.Label : member.Text) + ".";
+        if (choice.Flags && member.Value != 0 && member.Name == "None")
+        {
+            // Targets.None is World Editor's target "none", one of the values; no flags at all is 0.
+            return $"{shown} World Editor's \"{Xml(member.Text)}\", a value of its own: no values at all is 0, not this.";
+        }
+
+        return shown;
+    }
+
+    /// <summary>
+    /// The JSON of a kind's standard values: <c>fields</c> (id, type, perLevel, pointer, skin, store, and for a choice
+    /// the enum's name in <c>choice</c>), one per line, then
     /// <c>objects</c> by id, one per line, each with its <c>values</c>, the <c>sets</c> that differ and, only when
     /// there are any, the <c>missingFrom</c> sets. Keys are in ordinal order. A key whose value is the empty string in
     /// a set is a key the set has no value for.
@@ -225,6 +314,11 @@ public static class ObjectsWriter
             text.Append(",\"pointer\":").Append(field.DataPointer.ToString(CultureInfo.InvariantCulture));
             text.Append(",\"skin\":").Append(field.Skin ? "true" : "false");
             text.Append(",\"store\":").Append(Json(field.Store));
+            if (field.Choice != null)
+            {
+                text.Append(",\"choice\":").Append(Json(field.Choice.Name));
+            }
+
             text.Append(i + 1 < fields.Count ? "},\n" : "}\n");
         }
 
@@ -271,7 +365,13 @@ public static class ObjectsWriter
         var id = Literal(field.Id);
         var element = ElementType(field);
         text.Append($"{indent}/// <summary>The field <c>{Xml(field.Id)}</c>.</summary>\n");
-        text.Append($"{indent}[{Root}.Field({id})]\n");
+        var label = field.Rules.Label == null ? "" : $", Label = {Literal(field.Rules.Label)}";
+        text.Append($"{indent}[{Root}.Field({id}{label})]\n");
+        foreach (var rule in RuleAttributes(field))
+        {
+            text.Append(indent).Append(rule).Append('\n');
+        }
+
         text.Append($"{indent}public {PropertyType(field)} {field.Name}\n{indent}{{\n");
         if (field.Type == FieldType.ObjectList)
         {
@@ -291,7 +391,55 @@ public static class ObjectsWriter
         text.Append($"{indent}}}\n");
     }
 
-    /// <summary>The type of a field's value: the object type for a list or a reference, else <c>int</c>, <c>float</c>, <c>bool</c> or <c>string</c>.</summary>
+    /// <summary>
+    /// The rule attributes of a field's property, in this order and only those the field has: <c>[Limits]</c> for a
+    /// number field (or a number list held as text) with a <c>minVal</c> or <c>maxVal</c>; <c>[NonNegative]</c> for one
+    /// that allows no negative (<see cref="FieldRules.NoNegative"/>); <c>[Required]</c>; <c>[MaxLength]</c>;
+    /// <c>[MaxEntries]</c>. A choice has none: its enum is its rule.
+    /// </summary>
+    private static List<string> RuleAttributes(Field field)
+    {
+        var rules = field.Rules;
+        var attributes = new List<string>();
+        var limited = rules.Min.HasValue || rules.Max.HasValue;
+        var number = field.Type == FieldType.Int || field.Type == FieldType.Float || (field.Type == FieldType.String && limited);
+        if (number && limited)
+        {
+            attributes.Add(LimitsAttribute(rules.Min, rules.Max));
+        }
+
+        if (number && rules.NoNegative)
+        {
+            attributes.Add($"[{Root}.NonNegative]");
+        }
+
+        if (rules.Required)
+        {
+            attributes.Add($"[{Root}.Required]");
+        }
+
+        if (rules.MaxLength.HasValue)
+        {
+            attributes.Add($"[{Root}.MaxLength({rules.MaxLength.Value.ToString(CultureInfo.InvariantCulture)})]");
+        }
+
+        if (rules.MaxEntries.HasValue)
+        {
+            attributes.Add($"[{Root}.MaxEntries({rules.MaxEntries.Value.ToString(CultureInfo.InvariantCulture)})]");
+        }
+
+        return attributes;
+    }
+
+    /// <summary>The <c>[Limits]</c> attribute of a range; a missing end is an infinity (<c>double.NegativeInfinity</c>).</summary>
+    public static string LimitsAttribute(double? min, double? max)
+    {
+        var low = min.HasValue ? min.Value.ToString("R", CultureInfo.InvariantCulture) : "double.NegativeInfinity";
+        var high = max.HasValue ? max.Value.ToString("R", CultureInfo.InvariantCulture) : "double.PositiveInfinity";
+        return $"[{Root}.Limits({low}, {high})]";
+    }
+
+    /// <summary>The type of a field's value: the object type for a list or a reference, the enum for a choice, else <c>int</c>, <c>float</c>, <c>bool</c> or <c>string</c>.</summary>
     private static string ElementType(Field field)
     {
         switch (field.Type)
@@ -304,6 +452,8 @@ public static class ObjectsWriter
                 return "bool";
             case FieldType.String:
                 return "string";
+            case FieldType.Choice:
+                return $"{Root}.{field.Choice!.Name}";
             default:
                 return field.ListOf == null || field.ListOf == "object" ? "object" : $"{Runtime}.{field.ListOf}";
         }

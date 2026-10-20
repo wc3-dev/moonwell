@@ -132,6 +132,33 @@ namespace Moonwell.Build.Tests
             Assert.Equal(200, arthas.Changed["uhpm"]);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("melee_v0")]
+        [InlineData("custom_v0")]
+        [InlineData("custom_v1")]
+        public void what_a_standard_class_sets_is_no_change_under_any_set(string? set)
+        {
+            // The Paladin's and the Immolation's constructors set the base tables' values; the sets differ from them
+            // (the Paladin's speed is 270 in melee_v0, 300 in the base tables), and none of it is the map's change.
+            var objects = built.Read(set).Objects;
+
+            Assert.Equal(new[] { "uabi", "ugol", "uhab", "uhpm", "unam" }, Find(objects, "Objects.Arthas").Changed.Keys);
+            Assert.Equal(new[] { "fnam" }, Find(objects, "Objects.Burn").Changed.Keys);
+            Assert.Equal(new[] { "bnam" }, Find(objects, "Objects.Gate").Changed.Keys);
+        }
+
+        [Fact]
+        public void a_standard_value_outside_world_editors_limits_builds()
+        {
+            // The Demonic Gate's build time is 0 in the base tables, which its constructor sets; World Editor allows 1 to 298.
+            Assert.Equal("0", built.Standard.Value("ATg1", "bbut", 0, null));
+
+            var gate = Find(built.Read(null).Objects, "Objects.Gate");
+
+            Assert.Equal("Gate", gate.Changed["bnam"]);
+        }
+
         [Fact]
         public void chain_merges()
         {
@@ -208,6 +235,23 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_choice_is_kept_as_its_number_and_one_the_same_as_the_standard_is_not()
+        {
+            var objects = built.Read(null).Objects;
+
+            var mage = Find(objects, "Objects.Mage");
+            Assert.Equal(6, mage.Changed["ua1t"]);
+            Assert.Equal(1 | 32, mage.Changed["ua1g"]);
+            Assert.Equal(1, mage.Changed["udea"]);
+            // The footman moves on foot and is targeted as ground: the mage's same choices are not changes.
+            Assert.False(mage.Changed.ContainsKey("umvt"));
+            Assert.False(mage.Changed.ContainsKey("utar"));
+
+            var zap = Find(objects, "Objects.Zap");
+            Assert.Equal(new object?[] { 1 | 32, 64, 64 | 1048576 }, new[] { zap.Changed["atar:1"], zap.Changed["atar:2"], zap.Changed["atar:3"] });
+        }
+
+        [Fact]
         public void ordered_by_class_name()
         {
             var names = built.Read(null).Objects.Select(one => one.ClassName).ToList();
@@ -216,8 +260,8 @@ namespace Moonwell.Build.Tests
                 new[]
                 {
                     "Objects.Arthas", "Objects.Burn", "Objects.Claws", "Objects.DarkArthas", "Objects.Drilled", "Objects.Duelist",
-                    "Objects.Elemental", "Objects.Firebolt", "Objects.Forge", "Objects.Gate", "Objects.Portal",
-                    "Objects.Rock", "Objects.StrongFootman", "Objects.Tuned",
+                    "Objects.Elemental", "Objects.Firebolt", "Objects.Forge", "Objects.Gate", "Objects.Mage", "Objects.Portal",
+                    "Objects.Rock", "Objects.StrongFootman", "Objects.Tuned", "Objects.Zap",
                 },
                 names);
         }
@@ -299,9 +343,41 @@ namespace Moonwell.Build.Tests
 
             Assert.Equal(standard.Fields("unit"), standard.Fields("hero"));
             Assert.Contains(new StandardData.ObjectField("Htb1", "float", true, 1, false, "unreal"), standard.Fields("ability"));
+            var attack = standard.Fields("unit").Single(field => field.Id == "ua1t");
+            Assert.Equal("choice", attack.Type);
+            Assert.Equal("AttackType", attack.Choice!.Name);
+            Assert.False(attack.Choice.Flags);
+            Assert.Equal(new[] { "unknown", "normal", "pierce", "siege", "spells", "chaos", "magic", "hero" }, attack.Choice.Members.Select(member => member.Text));
+            var targets = standard.Fields("ability").Single(field => field.Id == "atar").Choice!;
+            Assert.True(targets.Flags);
+            Assert.Equal(new[] { "alive", "aliv" }, targets.Members.Where(member => member.Number == 2).Select(member => new[] { member.Text }.Concat(member.Alternates)).Single());
             Assert.Contains("Hpal", standard.Ids("hero"));
             Assert.Contains("AHtb", standard.Ids("ability"));
             Assert.DoesNotContain("AHtb", standard.Ids("unit"));
+        }
+
+        [Theory]
+        [InlineData("unit", "ua1t", "magic", 6)]
+        [InlineData("unit", "ua1t", "MAGIC", 6)]
+        [InlineData("unit", "ua1t", " hero ", 7)]
+        [InlineData("unit", "ua1t", "3", 3)]
+        [InlineData("unit", "ua1t", "nonsense", 0)]
+        [InlineData("unit", "ua1t", null, 0)]
+        [InlineData("unit", "ua1g", "air,enemies", 1 | 32)]
+        [InlineData("unit", "ua1g", "aliv", 2)]
+        [InlineData("unit", "ua1g", "air, alli ,ally", 1 | 4)]
+        [InlineData("unit", "ua1g", "0", 0)]
+        [InlineData("unit", "ua1g", "", 0)]
+        [InlineData("unit", "ua1g", "air,nothing", 1)]
+        [InlineData("unit", "utyp", "undead,Mechanical", 2 | 8)]
+        [InlineData("unit", "udea", "3", 3)]
+        [InlineData("ability", "Eme2", "5", 5)]
+        public void a_standard_choice_reads_as_the_net_side_reads_it(string kind, string field, string? text, int expected)
+        {
+            // The same texts as ChoicesTests in Moonwell.Objects.Tests: the Lua's numbers are the ones .NET reads.
+            var choice = built.Standard.Fields(kind).Single(one => one.Id == field).Choice!;
+
+            Assert.Equal(expected, choice.Number(text));
         }
 
         [Fact]
@@ -413,6 +489,71 @@ namespace Moonwell.Build.Tests
             AssertFails(
                 "GameCall",
                 "Objects.cs:13: GameCall.Lucky calls the game while it is declared; game work starts from a reaction or the game's start");
+        }
+
+        [Fact]
+        public void a_value_out_of_range_names_the_line_of_the_assignment()
+        {
+            AssertFails(
+                "OutOfRange",
+                "Objects.cs:13: Giant.HitPoints is 600000; Hit Points Maximum (Base) (uhpm) allows 1 to 500000; [BeyondLimits] goes past it");
+        }
+
+        [Fact]
+        public void a_value_out_of_range_set_by_id_names_the_line_of_the_set_with_forward_slashes()
+        {
+            AssertFails(
+                "OutOfRangeById",
+                "Heroes/Objects.cs:13: Giant.HitPoints is 600000; Hit Points Maximum (Base) (uhpm) allows 1 to 500000; [BeyondLimits] goes past it");
+        }
+
+        [Fact]
+        public void a_formula_out_of_range_at_a_level_names_the_level_and_the_line_it_was_put_on()
+        {
+            // Storm Bolt has 3 levels: 1300 and 2600 are allowed, 3900 is not. The formula is worked out after the constructor.
+            AssertFails(
+                "OutOfRangeLevel",
+                "Objects.cs:13: Bolt.Cooldown at level 3 is 3900; Cooldown (acdn) allows 0 to 3600; [BeyondLimits] goes past it");
+        }
+
+        [Fact]
+        public void an_empty_name_names_the_line()
+        {
+            AssertFails("EmptyRequired", "Objects.cs:13: Nobody.Name is \"\"; Name (unam) allows any text that is not empty");
+        }
+
+        [Fact]
+        public void beyond_limits_builds_a_value_past_the_range()
+        {
+            var project = MapProject.Find(Path.Combine(TestFolders.Fixture("ObjectErrors"), "BeyondLimits"));
+            var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
+
+            var declared = Declarations.Read(assembly, project, built.Standard, null);
+
+            Assert.Equal(600000, Find(declared.Objects, "BeyondLimits.Giant").Changed["uhpm"]);
+        }
+
+        [Fact]
+        public void beyond_limits_never_lets_a_negative_through()
+        {
+            AssertFails(
+                "BeyondLimitsNegative",
+                "Objects.cs:15: Hollow.CollisionSize is -5; Collision Size (ucol) allows 0 or more, even with [BeyondLimits]");
+        }
+
+        [Fact]
+        public void dotnet_build_stops_at_a_value_out_of_range_with_the_analyzers_error()
+        {
+            // The other ObjectErrors fixtures turn MW0009 off to test the build's own check; this one keeps it on.
+            var project = MapProject.Find(Path.Combine(TestFolders.Fixture("ObjectErrors"), "AnalyzerStops"));
+            var log = new StringWriter();
+
+            var error = Assert.Throws<BuildException>(() => DotnetBuild.Run(project, false, log));
+
+            Assert.Equal("dotnet build failed", error.Message);
+            Assert.Contains(
+                "error MW0009: Giant.HitPoints is 600000; Hit Points Maximum (Base) (uhpm) allows 1 to 500000; [BeyondLimits] goes past it",
+                log.ToString());
         }
 
         private static DeclaredObject Find(IReadOnlyList<DeclaredObject> declared, string className)

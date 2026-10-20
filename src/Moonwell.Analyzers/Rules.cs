@@ -90,6 +90,29 @@ public static class Rules
         isEnabledByDefault: true,
         description: "A handle constant used through the import makes CSharp.lua stop with a NullReferenceException, and Player.Get(0) fails with CS0119 because Natives.Player(int) wins.");
 
+    public static readonly DiagnosticDescriptor ChoiceNames = new(
+        "MW0010",
+        "Name of a Moonwell.Objects enum",
+        "'{0}' needs the names of {1}, which the game's Lua does not have: there a choice is only its number (AttackType.Magic shows as 6) and Enum.GetValues stops; compare with its members, or show (int) of it",
+        LuaCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "The enums of Moonwell.Objects (AttackType, Targets, ...) are ignored by CSharp.lua: the game's Lua has their numbers only. ToString, a string joined or interpolated with one, and Enum methods given one (GetValues, GetNames, GetName, IsDefined, Parse, TryParse, Format, ToObject) give the number where .NET gives the name, or stop. Comparing, |, & and HasFlag work.");
+
     /// <summary>The rules of C# that CSharp.lua cannot compile.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(CollectionExpression, StaticNatives);
+    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(CollectionExpression, StaticNatives, ChoiceNames);
+
+    private const string ObjectsCategory = "Objects";
+
+    public static readonly DiagnosticDescriptor FieldRule = new(
+        "MW0009",
+        "Value World Editor does not allow",
+        "{0}",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "A constant a class puts on a field of a standard object (an assignment, an argument of Levels, a Set by field id) is outside what World Editor allows: a number outside its range, a negative where none is allowed, an empty required name, a text or list that is too long, or a choice that is no value of its enum. The message is the one the build gives. [BeyondLimits(nameof(Property))] on the class goes past a range or a length; it never allows a negative, an empty name or a wrong choice. It also reports a [BeyondLimits] name that is no property, which lifts nothing.");
+
+    /// <summary>The rules for the values a map's classes put on object fields.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> Objects { get; } = ImmutableArray.Create(FieldRule);
 }

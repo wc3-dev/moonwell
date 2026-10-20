@@ -20,15 +20,15 @@ namespace Moonwell.Objects
                 ["gba4"] = typeof(float),
                 ["gbpx"] = typeof(int),
                 ["gbpy"] = typeof(int),
-                ["gcls"] = typeof(string),
+                ["gcls"] = typeof(global::Moonwell.Objects.UpgradeClass),
                 ["gco1"] = typeof(string),
                 ["gco2"] = typeof(string),
                 ["gco3"] = typeof(string),
                 ["gco4"] = typeof(string),
-                ["gef1"] = typeof(string),
-                ["gef2"] = typeof(string),
-                ["gef3"] = typeof(string),
-                ["gef4"] = typeof(string),
+                ["gef1"] = typeof(global::Moonwell.Objects.UpgradeEffect),
+                ["gef2"] = typeof(global::Moonwell.Objects.UpgradeEffect),
+                ["gef3"] = typeof(global::Moonwell.Objects.UpgradeEffect),
+                ["gef4"] = typeof(global::Moonwell.Objects.UpgradeEffect),
                 ["gglb"] = typeof(int),
                 ["gglm"] = typeof(int),
                 ["ghk1"] = typeof(global::Moonwell.Objects.Levels<string>),
@@ -43,7 +43,7 @@ namespace Moonwell.Objects
                 ["gmo4"] = typeof(float),
                 ["gnam"] = typeof(global::Moonwell.Objects.Levels<string>),
                 ["gnsf"] = typeof(global::Moonwell.Objects.Levels<string>),
-                ["grac"] = typeof(string),
+                ["grac"] = typeof(global::Moonwell.Objects.UnitRace),
                 ["greq"] = typeof(global::Moonwell.Objects.ObjectList<object>),
                 ["grqc"] = typeof(global::Moonwell.Objects.Levels<string>),
                 ["gtib"] = typeof(int),
@@ -55,13 +55,13 @@ namespace Moonwell.Objects
         private global::Moonwell.Objects.Declared? declared;
 
         /// <summary>The declared values of this object, created on first use.</summary>
-        protected global::Moonwell.Objects.Declared Fields => declared ??= new global::Moonwell.Objects.Declared();
+        protected global::Moonwell.Objects.Declared Fields => declared ??= new global::Moonwell.Objects.Declared(this);
 
         /// <summary>The values put on this object so far, by field id; the build reads them.</summary>
         internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;
 
         /// <summary>The field <c>gar1</c>.</summary>
-        [global::Moonwell.Objects.Field("gar1")]
+        [global::Moonwell.Objects.Field("gar1", Label = "Icon")]
         public global::Moonwell.Objects.Levels<string> Icon
         {
             get { return Fields.GetLevels<string>(this, "gar1"); }
@@ -69,7 +69,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gba1</c>.</summary>
-        [global::Moonwell.Objects.Field("gba1")]
+        [global::Moonwell.Objects.Field("gba1", Label = "Effect 1 - Base")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect1Base
         {
             get { return Fields.Get<float>(this, "gba1"); }
@@ -77,7 +78,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gba2</c>.</summary>
-        [global::Moonwell.Objects.Field("gba2")]
+        [global::Moonwell.Objects.Field("gba2", Label = "Effect 2 - Base")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect2Base
         {
             get { return Fields.Get<float>(this, "gba2"); }
@@ -85,7 +87,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gba3</c>.</summary>
-        [global::Moonwell.Objects.Field("gba3")]
+        [global::Moonwell.Objects.Field("gba3", Label = "Effect 3 - Base")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect3Base
         {
             get { return Fields.Get<float>(this, "gba3"); }
@@ -93,7 +96,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gba4</c>.</summary>
-        [global::Moonwell.Objects.Field("gba4")]
+        [global::Moonwell.Objects.Field("gba4", Label = "Effect 4 - Base")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect4Base
         {
             get { return Fields.Get<float>(this, "gba4"); }
@@ -101,7 +105,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gbpx</c>.</summary>
-        [global::Moonwell.Objects.Field("gbpx")]
+        [global::Moonwell.Objects.Field("gbpx", Label = "Button Position (X)")]
+        [global::Moonwell.Objects.Limits(0, 3)]
         public int ButtonPositionX
         {
             get { return Fields.Get<int>(this, "gbpx"); }
@@ -109,7 +114,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gbpy</c>.</summary>
-        [global::Moonwell.Objects.Field("gbpy")]
+        [global::Moonwell.Objects.Field("gbpy", Label = "Button Position (Y)")]
+        [global::Moonwell.Objects.Limits(0, 2)]
         public int ButtonPositionY
         {
             get { return Fields.Get<int>(this, "gbpy"); }
@@ -117,15 +123,16 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gcls</c>.</summary>
-        [global::Moonwell.Objects.Field("gcls")]
-        public string Class
+        [global::Moonwell.Objects.Field("gcls", Label = "Class")]
+        public global::Moonwell.Objects.UpgradeClass Class
         {
-            get { return Fields.Get<string>(this, "gcls"); }
+            get { return Fields.Get<global::Moonwell.Objects.UpgradeClass>(this, "gcls"); }
             protected set { Fields.Put("gcls", value); }
         }
 
         /// <summary>The field <c>gco1</c>.</summary>
-        [global::Moonwell.Objects.Field("gco1")]
+        [global::Moonwell.Objects.Field("gco1", Label = "Effect 1 - Code")]
+        [global::Moonwell.Objects.MaxLength(32)]
         public string Effect1Code
         {
             get { return Fields.Get<string>(this, "gco1"); }
@@ -133,7 +140,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gco2</c>.</summary>
-        [global::Moonwell.Objects.Field("gco2")]
+        [global::Moonwell.Objects.Field("gco2", Label = "Effect 2 - Code")]
+        [global::Moonwell.Objects.MaxLength(32)]
         public string Effect2Code
         {
             get { return Fields.Get<string>(this, "gco2"); }
@@ -141,7 +149,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gco3</c>.</summary>
-        [global::Moonwell.Objects.Field("gco3")]
+        [global::Moonwell.Objects.Field("gco3", Label = "Effect 3 - Code")]
+        [global::Moonwell.Objects.MaxLength(32)]
         public string Effect3Code
         {
             get { return Fields.Get<string>(this, "gco3"); }
@@ -149,7 +158,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gco4</c>.</summary>
-        [global::Moonwell.Objects.Field("gco4")]
+        [global::Moonwell.Objects.Field("gco4", Label = "Effect 4 - Code")]
+        [global::Moonwell.Objects.MaxLength(32)]
         public string Effect4Code
         {
             get { return Fields.Get<string>(this, "gco4"); }
@@ -157,39 +167,40 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gef1</c>.</summary>
-        [global::Moonwell.Objects.Field("gef1")]
-        public string Effect1
+        [global::Moonwell.Objects.Field("gef1", Label = "Effect 1")]
+        public global::Moonwell.Objects.UpgradeEffect Effect1
         {
-            get { return Fields.Get<string>(this, "gef1"); }
+            get { return Fields.Get<global::Moonwell.Objects.UpgradeEffect>(this, "gef1"); }
             protected set { Fields.Put("gef1", value); }
         }
 
         /// <summary>The field <c>gef2</c>.</summary>
-        [global::Moonwell.Objects.Field("gef2")]
-        public string Effect2
+        [global::Moonwell.Objects.Field("gef2", Label = "Effect 2")]
+        public global::Moonwell.Objects.UpgradeEffect Effect2
         {
-            get { return Fields.Get<string>(this, "gef2"); }
+            get { return Fields.Get<global::Moonwell.Objects.UpgradeEffect>(this, "gef2"); }
             protected set { Fields.Put("gef2", value); }
         }
 
         /// <summary>The field <c>gef3</c>.</summary>
-        [global::Moonwell.Objects.Field("gef3")]
-        public string Effect3
+        [global::Moonwell.Objects.Field("gef3", Label = "Effect 3")]
+        public global::Moonwell.Objects.UpgradeEffect Effect3
         {
-            get { return Fields.Get<string>(this, "gef3"); }
+            get { return Fields.Get<global::Moonwell.Objects.UpgradeEffect>(this, "gef3"); }
             protected set { Fields.Put("gef3", value); }
         }
 
         /// <summary>The field <c>gef4</c>.</summary>
-        [global::Moonwell.Objects.Field("gef4")]
-        public string Effect4
+        [global::Moonwell.Objects.Field("gef4", Label = "Effect 4")]
+        public global::Moonwell.Objects.UpgradeEffect Effect4
         {
-            get { return Fields.Get<string>(this, "gef4"); }
+            get { return Fields.Get<global::Moonwell.Objects.UpgradeEffect>(this, "gef4"); }
             protected set { Fields.Put("gef4", value); }
         }
 
         /// <summary>The field <c>gglb</c>.</summary>
-        [global::Moonwell.Objects.Field("gglb")]
+        [global::Moonwell.Objects.Field("gglb", Label = "Gold Base")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public int GoldBase
         {
             get { return Fields.Get<int>(this, "gglb"); }
@@ -197,7 +208,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gglm</c>.</summary>
-        [global::Moonwell.Objects.Field("gglm")]
+        [global::Moonwell.Objects.Field("gglm", Label = "Gold Increment")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public int GoldIncrement
         {
             get { return Fields.Get<int>(this, "gglm"); }
@@ -205,7 +217,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>ghk1</c>.</summary>
-        [global::Moonwell.Objects.Field("ghk1")]
+        [global::Moonwell.Objects.Field("ghk1", Label = "Hotkey")]
         public global::Moonwell.Objects.Levels<string> Hotkey
         {
             get { return Fields.GetLevels<string>(this, "ghk1"); }
@@ -213,7 +225,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>ginh</c>.</summary>
-        [global::Moonwell.Objects.Field("ginh")]
+        [global::Moonwell.Objects.Field("ginh", Label = "Transfer with Unit Ownership")]
         public bool TransferWithUnitOwnership
         {
             get { return Fields.Get<bool>(this, "ginh"); }
@@ -221,7 +233,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>glmb</c>.</summary>
-        [global::Moonwell.Objects.Field("glmb")]
+        [global::Moonwell.Objects.Field("glmb", Label = "Lumber Base")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public int LumberBase
         {
             get { return Fields.Get<int>(this, "glmb"); }
@@ -229,7 +242,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>glmm</c>.</summary>
-        [global::Moonwell.Objects.Field("glmm")]
+        [global::Moonwell.Objects.Field("glmm", Label = "Lumber Increment")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public int LumberIncrement
         {
             get { return Fields.Get<int>(this, "glmm"); }
@@ -237,7 +251,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>glob</c>.</summary>
-        [global::Moonwell.Objects.Field("glob")]
+        [global::Moonwell.Objects.Field("glob", Label = "Applies to All Units")]
         public bool AppliesToAllUnits
         {
             get { return Fields.Get<bool>(this, "glob"); }
@@ -245,7 +259,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>glvl</c>.</summary>
-        [global::Moonwell.Objects.Field("glvl")]
+        [global::Moonwell.Objects.Field("glvl", Label = "Levels")]
+        [global::Moonwell.Objects.Limits(1, 100)]
         public int LevelCount
         {
             get { return Fields.Get<int>(this, "glvl"); }
@@ -253,7 +268,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gmo1</c>.</summary>
-        [global::Moonwell.Objects.Field("gmo1")]
+        [global::Moonwell.Objects.Field("gmo1", Label = "Effect 1 - Mod")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect1Mod
         {
             get { return Fields.Get<float>(this, "gmo1"); }
@@ -261,7 +277,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gmo2</c>.</summary>
-        [global::Moonwell.Objects.Field("gmo2")]
+        [global::Moonwell.Objects.Field("gmo2", Label = "Effect 2 - Mod")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect2Mod
         {
             get { return Fields.Get<float>(this, "gmo2"); }
@@ -269,7 +286,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gmo3</c>.</summary>
-        [global::Moonwell.Objects.Field("gmo3")]
+        [global::Moonwell.Objects.Field("gmo3", Label = "Effect 3 - Mod")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect3Mod
         {
             get { return Fields.Get<float>(this, "gmo3"); }
@@ -277,7 +295,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gmo4</c>.</summary>
-        [global::Moonwell.Objects.Field("gmo4")]
+        [global::Moonwell.Objects.Field("gmo4", Label = "Effect 4 - Mod")]
+        [global::Moonwell.Objects.Limits(0, 99999)]
         public float Effect4Mod
         {
             get { return Fields.Get<float>(this, "gmo4"); }
@@ -285,7 +304,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gnam</c>.</summary>
-        [global::Moonwell.Objects.Field("gnam")]
+        [global::Moonwell.Objects.Field("gnam", Label = "Name")]
+        [global::Moonwell.Objects.Required]
         public global::Moonwell.Objects.Levels<string> Name
         {
             get { return Fields.GetLevels<string>(this, "gnam"); }
@@ -293,7 +313,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gnsf</c>.</summary>
-        [global::Moonwell.Objects.Field("gnsf")]
+        [global::Moonwell.Objects.Field("gnsf", Label = "Editor Suffix")]
+        [global::Moonwell.Objects.MaxLength(50)]
         public global::Moonwell.Objects.Levels<string> EditorSuffix
         {
             get { return Fields.GetLevels<string>(this, "gnsf"); }
@@ -301,22 +322,22 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>grac</c>.</summary>
-        [global::Moonwell.Objects.Field("grac")]
-        public string Race
+        [global::Moonwell.Objects.Field("grac", Label = "Race")]
+        public global::Moonwell.Objects.UnitRace Race
         {
-            get { return Fields.Get<string>(this, "grac"); }
+            get { return Fields.Get<global::Moonwell.Objects.UnitRace>(this, "grac"); }
             protected set { Fields.Put("grac", value); }
         }
 
         /// <summary>The field <c>greq</c>.</summary>
-        [global::Moonwell.Objects.Field("greq")]
+        [global::Moonwell.Objects.Field("greq", Label = "Requirements")]
         public global::Moonwell.Objects.ObjectList<object> Requires
         {
             get { return Fields.GetList<object>(this, "greq"); }
         }
 
         /// <summary>The field <c>grqc</c>.</summary>
-        [global::Moonwell.Objects.Field("grqc")]
+        [global::Moonwell.Objects.Field("grqc", Label = "Requirements - Levels")]
         public global::Moonwell.Objects.Levels<string> RequirementsLevels
         {
             get { return Fields.GetLevels<string>(this, "grqc"); }
@@ -324,7 +345,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gtib</c>.</summary>
-        [global::Moonwell.Objects.Field("gtib")]
+        [global::Moonwell.Objects.Field("gtib", Label = "Time Base")]
+        [global::Moonwell.Objects.Limits(0, 300)]
         public int TimeBase
         {
             get { return Fields.Get<int>(this, "gtib"); }
@@ -332,7 +354,8 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gtim</c>.</summary>
-        [global::Moonwell.Objects.Field("gtim")]
+        [global::Moonwell.Objects.Field("gtim", Label = "Time Increment")]
+        [global::Moonwell.Objects.Limits(0, 300)]
         public int TimeIncrement
         {
             get { return Fields.Get<int>(this, "gtim"); }
@@ -340,7 +363,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gtp1</c>.</summary>
-        [global::Moonwell.Objects.Field("gtp1")]
+        [global::Moonwell.Objects.Field("gtp1", Label = "Tooltip")]
         public global::Moonwell.Objects.Levels<string> Tooltip
         {
             get { return Fields.GetLevels<string>(this, "gtp1"); }
@@ -348,7 +371,7 @@ namespace Moonwell.Objects
         }
 
         /// <summary>The field <c>gub1</c>.</summary>
-        [global::Moonwell.Objects.Field("gub1")]
+        [global::Moonwell.Objects.Field("gub1", Label = "Tooltip - Extended")]
         public global::Moonwell.Objects.Levels<string> TooltipExtended
         {
             get { return Fields.GetLevels<string>(this, "gub1"); }
@@ -376,7 +399,7 @@ namespace Moonwell.Objects
         /// <summary>Puts the value of one level of a field by its field id; a value of another type is an error naming the field.</summary>
         protected void Set(string field, int level, object value)
         {
-            Fields.Put(field + ":" + level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardUpgrade", fieldTypes, this, field, level, value));
+            Fields.PutLevel(field, level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardUpgrade", fieldTypes, this, field, level, value));
         }
     }
 }

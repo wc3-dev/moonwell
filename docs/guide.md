@@ -73,6 +73,13 @@ public sealed class Champion : Human.Units.Paladin
 ```
 
 - A field with levels takes `Levels(75f, 150f, 225f)`, or `PerLevel(level => ...)` to compute each level.
+- A field World Editor offers a list of values for holds an enum of them, named as the game's data spells them:
+  `AttackType = AttackType.Magic`. One that takes several, such as the targets, holds flags:
+  `Attack1TargetsAllowed = Targets.Air | Targets.Ground`. A flags field of 0 has none of them; `Targets.None` is
+  World Editor's target "none", a value of its own. The numbers are Moonwell's, in World Editor's order, not the
+  natives' (JASS's `ATTACK_TYPE_MAGIC` is 4, `AttackType.Magic` is 6): never cast one to or from a native's value.
+  In the game an enum has its numbers only, no names: `ToString`, a string made with one and `Enum.GetValues` are
+  rejected as error MW0010; compare with its members, `|`, `&` and `HasFlag`.
 - A list takes `Set<A, B, C>()` (the whole list, in order), `Replace<Old, New>()` (in the old one's place), `Add<T>()`
   and `Remove<T>()`.
 - The tooltips are World Editor's four: `Tooltip` (Tooltip - Normal), `TooltipExtended` (Tooltip - Normal - Extended),
@@ -84,6 +91,21 @@ public sealed class Champion : Human.Units.Paladin
   `[Replaces]`.
 - `[Replaces]` makes the class the game's object itself: every unit of that type is made as the class.
 - `Unit.Create<Champion>(player, x, y)` makes one in the game, facing 270 degrees unless a facing follows.
+
+Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
+a constant is marked in the editor as error MW0009:
+
+```
+Heroes/Giant.cs:12: Giant.HitPoints is 600000; Hit Points Maximum (Base) (uhpm) allows 1 to 500000; [BeyondLimits] goes past it
+```
+
+`[BeyondLimits(nameof(HitPoints))]` on the class goes past a range on purpose. It lifts ranges, lengths and counts
+only: an empty name, a negative on a field the game never lets go below 0, and a choice that is none of the enum's
+values still fail. The values a standard class has are the game's, and are never checked.
+
+To see a standard object's values, go to its class (Go to Definition on `Paladin`): its constructor sets each value
+of the base tables, World Editor's Default. A map on another data set plays that set's values for the fields it leaves
+unset.
 
 ## Components and reactions
 
@@ -115,6 +137,38 @@ public sealed class KillCounter : UnitComponent
 - `Timer.After(seconds, action)` and `Timer.Every(seconds, action)` run code later. A timer, buff or component
   belongs to whatever made it, and ends with it.
 - Game work starts in a reaction. Top-level code and static fields make nothing in the game.
+
+## Damage
+
+`OnDamaged` sees a hit after armor. For more, add the `Moonwell.Damage` package to the project, at the same version as
+Moonwell; the build starts it, and a map without it carries none of its code. Its reactions come through interfaces,
+which a unit's class, its components and buffs implement, writing only the methods they need as public methods:
+
+```csharp
+public sealed class Shield : Buff, IDamageTarget
+{
+    public void OnTaken(Hit hit) { hit.Amount *= 0.5f; }
+}
+```
+
+| Stage | When | `IDamageSource` | `IDamageTarget` | `IDamageWatch` |
+|---|---|---|---|---|
+| Before armor | the hit starts | `OnDealing` | `OnTaking` | `OnBeforeArmor` |
+| After armor | armor has counted | `OnDealt` | `OnTaken` | `OnAfterArmor` |
+| Lethal | the hit would kill | `OnKilling` | `OnLethal` | `OnLethal` |
+| Landed | 0 s later, the life has dropped | `OnLanded` | `OnHurt` | `OnLanded` |
+| Burst | 0 s later, once per source | `OnBurst` | | `OnBurst` |
+
+- Each stage runs the source and its components, then the target and its components, then the game's and the
+  players' components that implement `IDamageWatch`. `OnDamaged` and `OnDealtDamage` still run, first in the
+  after-armor stage.
+- A `Hit` has the amount, `Original`, `IsAttack`, `IsSpell`, `IsMelee`, `IsRanged`, `IsCode` and `Tag`. Before armor
+  a reaction may also change `DamageKind`, `WeaponSound` and the target's `Armor` for this hit. In the lethal stage
+  `hit.Spare()` keeps the target alive; `hit.Killed` tells in the landed stage.
+- `source.Damage(target, 10f, DamageKind.Fire, tag: MyTag.Firebolt)` deals damage from code and returns the `Hit`.
+- Damage dealt from a reaction belongs to the hit it reacted to; a chain of 8 such hits ends with an error, so two
+  units that hit each other back never loop.
+- A hit spell immunity stops runs before armor only.
 
 ## Players
 
@@ -154,7 +208,9 @@ game with it. Both make a development build: it checks the values Moonwell recei
 `--release` makes the release build. `moonwell run --game <exe>` names the game when it is not in its usual place.
 
 The build also rejects what CSharp.lua cannot compile: collection expressions, `[1, 2]` (write `new List<int> { 1, 2 }`),
-and `using static Moonwell.Natives` (write `Natives.X`).
+and `using static Moonwell.Natives` (write `Natives.X`). It does not catch a `Dictionary` keyed by a map's own class
+that has a static field with a value: the map can stop while it loads, with nothing on the screen. Key by the handle,
+or set the field on first use. Moonwell's classes, `Unit` and the rest, are safe keys.
 
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps

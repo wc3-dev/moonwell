@@ -30,12 +30,20 @@ namespace Moonwell.Build
         /// <returns>True when it references the library.</returns>
         public static bool UsesObjects(string assemblyPath)
         {
+            return References(assemblyPath, ObjectsAssemblyName);
+        }
+
+        /// <summary>Whether a built assembly references an assembly by name; the compiler keeps only the references the code uses.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <param name="assemblyName">The name of the referenced assembly, such as <c>Moonwell.Damage</c>.</param>
+        public static bool References(string assemblyPath, string assemblyName)
+        {
             using var stream = File.OpenRead(assemblyPath);
             using var pe = new PEReader(stream);
             var metadata = pe.GetMetadataReader();
             foreach (var handle in metadata.AssemblyReferences)
             {
-                if (metadata.GetString(metadata.GetAssemblyReference(handle).Name) == ObjectsAssemblyName)
+                if (metadata.GetString(metadata.GetAssemblyReference(handle).Name) == assemblyName)
                 {
                     return true;
                 }
@@ -76,12 +84,12 @@ namespace Moonwell.Build
             var map = context.Open(assemblyPath);
             if (!map.GetReferencedAssemblies().Any(name => name.Name == ObjectsAssemblyName))
             {
-                return new DeclarationSet(Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), Array.Empty<UsedClass>());
+                return new DeclarationSet(Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), Array.Empty<UsedClass>(), string.Empty);
             }
 
             var objects = context.LoadFromAssemblyName(new AssemblyName(ObjectsAssemblyName));
             SetterScan.Check(map);
-            var used = ObjectLua.UsedClasses(map, objects, assemblyPath);
+            var used = ObjectLua.UsedClasses(map, objects, assemblyPath, out var support);
 
             var classNames = new Dictionary<string, string>(StringComparer.Ordinal);
             var standardClasses = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -124,7 +132,7 @@ namespace Moonwell.Build
                     }
                 }
 
-                return new DeclarationSet(declared, named, used);
+                return new DeclarationSet(declared, named, used, support);
             }
             finally
             {

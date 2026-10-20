@@ -27,7 +27,14 @@ public class FieldsTests
     [InlineData(Kind.Upgrade, "glvl", "LevelCount")]
     [InlineData(Kind.Ability, "anam", "Name")]
     [InlineData(Kind.Ability, "abuf", "Buffs")]
-    [InlineData(Kind.Ability, "atar", "Targets")]
+    [InlineData(Kind.Ability, "atar", "TargetsAllowed")]
+    [InlineData(Kind.Ability, "Det1", "Detects")]
+    [InlineData(Kind.Ability, "Fla1", "Detects")]
+    [InlineData(Kind.Ability, "Ifa1", "Detects")]
+    [InlineData(Kind.Ability, "Ndt3", "Detects")]
+    [InlineData(Kind.Ability, "Nsp3", "Detects")]
+    [InlineData(Kind.Ability, "Ofs1", "Detects")]
+    [InlineData(Kind.Ability, "Hca4", "StackingType")]
     [InlineData(Kind.Item, "iabi", "Abilities")]
     public void hand_picked_names(Kind kind, string id, string name)
     {
@@ -268,6 +275,176 @@ public class FieldsTests
 
         Assert.Equal("ButtonPositionX", plain.Name);
         Assert.Equal("ButtonPositionXUbpx", avoided.Name);
+    }
+
+    [Fact]
+    public void whole_number_limits_from_min_and_max()
+    {
+        var gold = Find(Fields.Of(MiniExport(), Kind.Item), "igol").Rules;
+        var hitPoints = Find(Fields.Of(MiniExport(), Kind.Item), "ihtp").Rules;
+
+        Assert.Equal(0, gold.Min);
+        Assert.Equal(100000, gold.Max);
+        Assert.Equal("Gold Cost", gold.Label);
+        Assert.False(gold.NonNegative);
+        Assert.False(gold.CanBeEmpty);
+        Assert.Null(gold.MaxLength);
+        Assert.Equal(1, hitPoints.Min);
+        Assert.Equal(500000, hitPoints.Max);
+        Assert.Equal("Hit Points", hitPoints.Label);
+    }
+
+    [Fact]
+    public void an_unreal_field_is_non_negative_only_when_the_metadata_forces_it()
+    {
+        // uhpr is unreal with forceNonNeg 0: its minimum of 0 is part of its range, and the Phoenix's standard -25 is below it.
+        var regeneration = Find(Fields.Of(MiniExport(), Kind.Unit), "uhpr").Rules;
+
+        Assert.False(regeneration.NonNegative);
+        Assert.False(regeneration.NoNegative);
+        Assert.Equal(0, regeneration.Min);
+        Assert.Equal(1000, regeneration.Max);
+        Assert.False(Find(Fields.Of(MiniExport(), Kind.Unit), "uhpm").Rules.NonNegative);
+    }
+
+    [Fact]
+    public void force_non_negative_is_read()
+    {
+        Assert.True(Find(Fields.Of(MiniExport(), Kind.Ability), "acdn").Rules.NonNegative);
+        Assert.True(Find(Fields.Of(MiniExport(), Kind.Item), "isca").Rules.NonNegative);
+    }
+
+    [Fact]
+    public void a_bool_row_has_no_limits()
+    {
+        var hero = Find(Fields.Of(MiniExport(), Kind.Ability), "aher").Rules;
+
+        Assert.Null(hero.Min);
+        Assert.Null(hero.Max);
+        Assert.Equal("Hero Ability", hero.Label);
+    }
+
+    [Fact]
+    public void a_string_limit_is_a_length_only_when_it_is_a_number()
+    {
+        var tables = MiniExport();
+
+        // utip and unam name a text size (TTDesc, TTName), which is not a number of characters.
+        Assert.Null(Find(Fields.Of(tables, Kind.Unit), "utip").Rules.MaxLength);
+        Assert.Null(Find(Fields.Of(tables, Kind.Unit), "unam").Rules.MaxLength);
+        Assert.Null(Find(Fields.Of(tables, Kind.Unit), "unam").Rules.Max);
+        Assert.Equal(50, Find(Fields.Of(tables, Kind.Unit), "unsf").Rules.MaxLength);
+        Assert.Null(Find(Fields.Of(tables, Kind.Unit), "unsf").Rules.MaxEntries);
+    }
+
+    [Fact]
+    public void a_list_limit_is_a_number_of_entries()
+    {
+        var tables = MiniExport();
+
+        // A stringList's maxVal counts entries: the standard upro holds 279 characters in 18 names under a maxVal of 32.
+        var casterNames = Find(Fields.Of(tables, Kind.Unit), "ucun").Rules;
+        Assert.Equal(32, casterNames.MaxEntries);
+        Assert.Null(casterNames.MaxLength);
+        Assert.Null(casterNames.Max);
+        Assert.Equal(12, Find(Fields.Of(tables, Kind.Unit), "usei").Rules.MaxEntries);
+        Assert.Equal(5, Find(Fields.Of(tables, Kind.Unit), "uhab").Rules.MaxEntries);
+        Assert.Null(Find(Fields.Of(tables, Kind.Unit), "uabi").Rules.MaxEntries);
+        Assert.Null(Find(Fields.Of(tables, Kind.Unit), "usei").Rules.Max);
+    }
+
+    [Fact]
+    public void only_a_name_is_required()
+    {
+        var tables = MiniExport();
+
+        Assert.True(Find(Fields.Of(tables, Kind.Unit), "unam").Rules.Required);
+        Assert.True(Find(Fields.Of(tables, Kind.Ability), "anam").Rules.Required);
+        Assert.True(Find(Fields.Of(tables, Kind.Destructable), "bnam").Rules.Required);
+        Assert.True(Find(Fields.Of(tables, Kind.Upgrade), "gnam").Rules.Required);
+
+        // canBeEmpty is 0 on these too, yet standard objects leave them empty: 267 units have no abilities.
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "ucun").Rules.Required);
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "uabi").Rules.Required);
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "usei").Rules.Required);
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "utip").Rules.Required);
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "uhpm").Rules.Required);
+    }
+
+    [Theory]
+    [InlineData(1d, null, false, false, false)]
+    [InlineData(0d, 10d, false, false, false)]
+    [InlineData(0d, 10d, true, false, true)]
+    [InlineData(0d, 10d, true, true, false)]
+    [InlineData(-1000d, 1000d, true, false, false)]
+    [InlineData(null, 9d, false, false, false)]
+    [InlineData(null, null, true, false, true)]
+    [InlineData(null, null, true, true, false)]
+    public void no_negative_only_when_the_metadata_forces_it_and_no_standard_value_is_negative(double? min, double? max, bool nonNegative, bool standardNegative, bool expected)
+    {
+        var rules = new FieldRules(min, max, nonNegative, false, null, null, StandardNegative: standardNegative);
+
+        Assert.Equal(expected, rules.NoNegative);
+    }
+
+    [Fact]
+    public void a_negative_standard_value_in_the_base_tables_or_a_balance_set_lets_the_field_hold_negatives()
+    {
+        var forced = new FieldRules(0, 10, true, false, null, null);
+        Field Number(string id, FieldType type = FieldType.Int)
+        {
+            return new Field(Kind.Unit, id, id, type, null, false, 0, false, Array.Empty<string>(), id, Rules: forced);
+        }
+
+        var fields = new[]
+        {
+            Number("zab1"), Number("zab2"), Number("zab3", FieldType.Float), Number("zab4", FieldType.String), Number("zab5"),
+            Number("zab6") with { Rules = FieldRules.None },
+        };
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> NoSets() => new Dictionary<string, IReadOnlyDictionary<string, string>>();
+        var objects = new[]
+        {
+            new StandardObject(Kind.Unit, "h000", "", "", false, false, null,
+                new Dictionary<string, string> { ["zab1"] = "-11", ["zab2"] = "3", ["zab4"] = "1,-2", ["zab5:2"] = "4", ["zab6"] = "-1" },
+                NoSets(), Array.Empty<string>()),
+            new StandardObject(Kind.Unit, "h001", "", "", false, false, null,
+                new Dictionary<string, string> { ["zab2"] = "4", ["zab5:1"] = "0" },
+                new Dictionary<string, IReadOnlyDictionary<string, string>>
+                {
+                    ["custom_v1"] = new Dictionary<string, string> { ["zab3"] = "-0.6", ["zab2"] = "" },
+                },
+                Array.Empty<string>()),
+        };
+
+        var result = Fields.WithStandardNegatives(fields, objects).ToDictionary(field => field.Id);
+
+        Assert.False(result["zab1"].Rules.NoNegative);
+        Assert.True(result["zab1"].Rules.StandardNegative);
+        Assert.True(result["zab2"].Rules.NoNegative);
+        Assert.False(result["zab3"].Rules.NoNegative);
+        Assert.False(result["zab4"].Rules.NoNegative);
+        Assert.True(result["zab5"].Rules.NoNegative);
+        Assert.Same(FieldRules.None, result["zab6"].Rules);
+    }
+
+    [Fact]
+    public void can_be_empty_is_read()
+    {
+        var tables = MiniExport();
+
+        Assert.True(Find(Fields.Of(tables, Kind.Unit), "utip").Rules.CanBeEmpty);
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "unam").Rules.CanBeEmpty);
+        Assert.False(Find(Fields.Of(tables, Kind.Unit), "ucun").Rules.CanBeEmpty);
+    }
+
+    [Fact]
+    public void a_field_made_without_rules_has_empty_ones()
+    {
+        var field = new Field(Kind.Unit, "uhpm", "Life", FieldType.Int, null, false, 0, false, Array.Empty<string>(), "HP");
+
+        Assert.Equal(FieldRules.None, field.Rules);
+        Assert.Null(field.Rules.Min);
+        Assert.Null(field.Rules.Label);
     }
 
     [Fact]

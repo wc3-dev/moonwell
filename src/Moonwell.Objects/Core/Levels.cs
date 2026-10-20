@@ -5,10 +5,14 @@ namespace Moonwell.Objects
     /// <summary>The values of a field that has one for each level, counted from level 1.</summary>
     /// @CSharpLua.Ignore
     public sealed class Levels<T>
+#if !MOONWELL_LUA
+        : ILevelValues
+#endif
     {
         private readonly Func<int, T>? formula;
         private T[] values;
         private bool counted;
+        private Action<int, object?>? whenCounted;
 
         /// <summary>Holds one value for each level, in order.</summary>
         internal Levels(T[] values)
@@ -50,7 +54,27 @@ namespace Moonwell.Objects
             get { return values; }
         }
 
-        /// <summary>Fixes the number of levels of a formula and works out the value of each; does nothing for values given one by one.</summary>
+#if !MOONWELL_LUA
+        bool ILevelValues.Counted
+        {
+            get { return counted; }
+        }
+
+        object? ILevelValues.ValueAt(int index)
+        {
+            return values[index];
+        }
+
+        void ILevelValues.WhenCounted(Action<int, object?> check)
+        {
+            whenCounted += check;
+        }
+#endif
+
+        /// <summary>
+        /// Fixes the number of levels of a formula and works out the value of each, checking each against the rules of the
+        /// fields it was put on (level 1 first); does nothing for values given one by one.
+        /// </summary>
         internal void Resolve(int count)
         {
             if (formula == null)
@@ -62,6 +86,7 @@ namespace Moonwell.Objects
             for (var i = 0; i < count; i++)
             {
                 resolved[i] = formula(i + 1);
+                whenCounted?.Invoke(i + 1, resolved[i]);
             }
 
             values = resolved;

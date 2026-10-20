@@ -111,7 +111,7 @@ public class ObjectsWriterTests
     [Fact]
     public void every_source_is_left_out_when_moonwell_lua_is_defined()
     {
-        // CSharp.lua compiles with MOONWELL_LUA and reads the build's stubs of the used classes instead.
+        // CSharp.lua compiles with MOONWELL_LUA and reads the build's stubs of the used classes instead; the enums are left out too.
         var lua = new CSharpParseOptions(LanguageVersion.CSharp13, preprocessorSymbols: new[] { "MOONWELL_LUA" });
         foreach (var (path, text) in MiniFiles.Value.Where(f => f.Key.EndsWith(".cs", StringComparison.Ordinal)))
         {
@@ -127,6 +127,7 @@ public class ObjectsWriterTests
         Assert.Equal(
             new[]
             {
+                "Choices.g.cs",
                 "Destructables.g.cs",
                 "Doodads.g.cs",
                 "Human/Abilities.g.cs",
@@ -197,8 +198,14 @@ public class ObjectsWriterTests
         Assert.Contains("public class SummerTreeWall : global::Moonwell.Objects.StandardDestructable\n", destructables);
         Assert.Contains("    /// <summary>Lilypad (ZPlp).</summary>\n", doodads);
         Assert.Contains("public class Lilypad : global::Moonwell.Objects.StandardDoodad\n", doodads);
-        Assert.DoesNotContain("WESTRING", destructables);
-        Assert.DoesNotContain("WESTRING", doodads);
+        // The constructor sets the name as the tables hold it, a key the game resolves; the class and its summary have the label.
+        foreach (var source in new[] { destructables, doodads })
+        {
+            Assert.DoesNotContain("class WESTRING", source);
+            Assert.DoesNotContain("<summary>WESTRING", source);
+        }
+
+        Assert.Contains("            Name = \"WESTRING_DEST_SUMMER_TREE_WALL\";\n", destructables);
     }
 
     [Fact]
@@ -210,7 +217,8 @@ public class ObjectsWriterTests
             for (var i = 0; i < lines.Length; i++)
             {
                 if (lines[i].TrimStart().StartsWith("public class ", StringComparison.Ordinal)
-                    || lines[i].TrimStart().StartsWith("public abstract class ", StringComparison.Ordinal))
+                    || lines[i].TrimStart().StartsWith("public abstract class ", StringComparison.Ordinal)
+                    || lines[i].TrimStart().StartsWith("public enum ", StringComparison.Ordinal))
                 {
                     var above = i - 1;
                     while (lines[above].TrimStart().StartsWith("[", StringComparison.Ordinal))
@@ -230,7 +238,8 @@ public class ObjectsWriterTests
         var stormBolt = Class(MiniFiles.Value["Human/Abilities.g.cs"], "StormBolt");
 
         Assert.Contains(
-            "[global::Moonwell.Objects.Field(\"Htb1\")]\n"
+            "[global::Moonwell.Objects.Field(\"Htb1\", Label = \"Damage\")]\n"
+            + "                [global::Moonwell.Objects.Limits(0, 99999)]\n"
             + "                public global::Moonwell.Objects.Levels<float> Damage\n"
             + "                {\n"
             + "                    get { return Fields.GetLevels<float>(this, \"Htb1\"); }\n"
@@ -248,7 +257,8 @@ public class ObjectsWriterTests
         var unit = MiniFiles.Value["Kinds/StandardUnit.g.cs"];
 
         Assert.Contains(
-            "        [global::Moonwell.Objects.Field(\"uhpm\")]\n"
+            "        [global::Moonwell.Objects.Field(\"uhpm\", Label = \"Hit Points Maximum (Base)\")]\n"
+            + "        [global::Moonwell.Objects.Limits(1, 500000)]\n"
             + "        public int HitPoints\n"
             + "        {\n"
             + "            get { return Fields.Get<int>(this, \"uhpm\"); }\n"
@@ -268,6 +278,78 @@ public class ObjectsWriterTests
     }
 
     [Fact]
+    public void a_property_carries_the_rules_of_its_field()
+    {
+        var unit = MiniFiles.Value["Kinds/StandardUnit.g.cs"];
+        var hero = MiniFiles.Value["Kinds/StandardHero.g.cs"];
+
+        Assert.Contains(
+            "        [global::Moonwell.Objects.Field(\"unam\", Label = \"Name\")]\n"
+            + "        [global::Moonwell.Objects.Required]\n"
+            + "        public string Name\n",
+            unit);
+        Assert.Contains(
+            "        [global::Moonwell.Objects.Field(\"unsf\", Label = \"Name - Editor Suffix\")]\n"
+            + "        [global::Moonwell.Objects.MaxLength(50)]\n"
+            + "        public string ",
+            unit);
+        Assert.Contains(
+            "        [global::Moonwell.Objects.Field(\"ucun\", Label = \"Caster Upgrade Names\")]\n"
+            + "        [global::Moonwell.Objects.MaxEntries(32)]\n"
+            + "        public string ",
+            unit);
+        Assert.Contains("        [global::Moonwell.Objects.MaxEntries(12)]\n        public global::Moonwell.Objects.ObjectList<global::Moonwell.Item> ", unit);
+        Assert.Contains("        [global::Moonwell.Objects.MaxEntries(5)]\n        public global::Moonwell.Objects.ObjectList<global::Moonwell.Ability> ", hero);
+
+        // A choice has no rule attribute: its enum is the rule. A list without a maxVal has none either.
+        Assert.Contains("[global::Moonwell.Objects.Field(\"ua1t\", Label = \"Attack 1 - Attack Type\")]\n        public global::Moonwell.Objects.AttackType ", unit);
+        Assert.Contains("[global::Moonwell.Objects.Field(\"uabi\", Label = \"Normal\")]\n        public global::Moonwell.Objects.ObjectList<global::Moonwell.Ability> Abilities\n", unit);
+    }
+
+    [Fact]
+    public void a_limit_is_written_as_a_number_and_a_missing_one_as_an_infinity()
+    {
+        Assert.Equal("[global::Moonwell.Objects.Limits(0.01, 2.5E+20)]", ObjectsWriter.LimitsAttribute(0.01, 2.5e20));
+        Assert.Equal("[global::Moonwell.Objects.Limits(double.NegativeInfinity, 9)]", ObjectsWriter.LimitsAttribute(null, 9));
+        Assert.Equal("[global::Moonwell.Objects.Limits(-1000, double.PositiveInfinity)]", ObjectsWriter.LimitsAttribute(-1000, null));
+    }
+
+    [Fact]
+    public void a_field_the_metadata_forces_not_to_be_negative_carries_non_negative()
+    {
+        // acdn has forceNonNeg 1 and no standard negative; uhpm and Htb1 (forceNonNeg 0) have only their range.
+        Assert.Contains(
+            "        [global::Moonwell.Objects.Field(\"acdn\", Label = \"Cooldown\")]\n"
+            + "        [global::Moonwell.Objects.Limits(0, 3600)]\n"
+            + "        [global::Moonwell.Objects.NonNegative]\n"
+            + "        public global::Moonwell.Objects.Levels<float> Cooldown\n",
+            MiniFiles.Value["Kinds/StandardAbility.g.cs"]);
+    }
+
+    [Fact]
+    public void a_negative_minimum_allows_negatives_and_a_field_without_rules_has_only_its_field_attribute()
+    {
+        var floor = new Field(Kind.Unit, "umvf", "FlyHeight", FieldType.Float, null, false, 0, false, Array.Empty<string>(), "moveFloor",
+            Rules: new FieldRules(-1000, 1000, true, false, null, "Movement - Height Minimum"));
+        var plain = new Field(Kind.Unit, "ufoo", "Foo", FieldType.Int, null, false, 0, false, Array.Empty<string>(), "foo");
+        var source = ObjectsWriter.Kind(Kind.Unit, new[] { floor, plain }, false);
+
+        Assert.Contains("[global::Moonwell.Objects.Limits(-1000, 1000)]\n        public float FlyHeight\n", source);
+        Assert.DoesNotContain("NonNegative", source);
+        Assert.Contains("        [global::Moonwell.Objects.Field(\"ufoo\")]\n        public int Foo\n", source);
+    }
+
+    [Fact]
+    public void a_number_list_held_as_text_carries_its_limits()
+    {
+        var levels = new Field(Kind.Ability, "arqa", "RequirementsLevels", FieldType.String, null, false, 0, false, Array.Empty<string>(), "Requiresamount",
+            Rules: new FieldRules(null, 100, false, false, null, "Requirements - Levels"));
+        var source = ObjectsWriter.Kind(Kind.Ability, new[] { levels }, false);
+
+        Assert.Contains("[global::Moonwell.Objects.Limits(double.NegativeInfinity, 100)]\n        public string RequirementsLevels\n", source);
+    }
+
+    [Fact]
     public void a_kind_base_summary_has_the_right_article()
     {
         Assert.Contains("/// <summary>The fields of a unit, which every standard unit class has.</summary>", MiniFiles.Value["Kinds/StandardUnit.g.cs"]);
@@ -283,14 +365,14 @@ public class ObjectsWriterTests
         var unit = MiniFiles.Value["Kinds/StandardUnit.g.cs"];
 
         Assert.Contains("public abstract class StandardUnit : global::Moonwell.Unit\n", unit);
-        Assert.Contains("protected global::Moonwell.Objects.Declared Fields => declared ??= new global::Moonwell.Objects.Declared();", unit);
+        Assert.Contains("protected global::Moonwell.Objects.Declared Fields => declared ??= new global::Moonwell.Objects.Declared(this);", unit);
         Assert.Contains("protected static global::Moonwell.Objects.Levels<T> Levels<T>(params T[] values)", unit);
         Assert.Contains("protected static global::Moonwell.Objects.Levels<T> PerLevel<T>(global::System.Func<int, T> formula)", unit);
         Assert.Contains("protected void Set(string field, object value)", unit);
         Assert.Contains("\n        internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;", unit);
         Assert.Contains("protected void Set(string field, int level, object value)", unit);
         Assert.Contains("FieldChecks.Value(\"StandardUnit\", fieldTypes, this, field, value)", unit);
-        Assert.Contains("FieldChecks.LevelValue(\"StandardUnit\", fieldTypes, this, field, level, value)", unit);
+        Assert.Contains("Fields.PutLevel(field, level, global::Moonwell.Objects.FieldChecks.LevelValue(\"StandardUnit\", fieldTypes, this, field, level, value));", unit);
         Assert.Contains("[\"uhpm\"] = typeof(int),", unit);
         Assert.Contains("[\"ua1b\"] = typeof(int),", unit);
 
@@ -373,7 +455,7 @@ public class ObjectsWriterTests
             "Moonwell.Objects.Human.Abilities", new[] { (storm, new ClassName("Moonwell.Objects.Human.Abilities", "Damage")) }, fields);
 
         Assert.Contains("public global::Moonwell.Objects.Levels<float> DamageHtb1\n", text);
-        Assert.Empty(Compile(new[] { MiniFiles.Value["Kinds/StandardAbility.g.cs"], text }));
+        Assert.Empty(Compile(new[] { MiniFiles.Value["Choices.g.cs"], MiniFiles.Value["Kinds/StandardAbility.g.cs"], text }));
     }
 
     [Fact]
