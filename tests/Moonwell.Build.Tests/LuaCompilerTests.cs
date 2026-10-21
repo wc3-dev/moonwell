@@ -173,6 +173,138 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void whole_number_floats_reach_lua_as_floats()
+        {
+            // Hello.cs passes 0f, 0f; the player number stays an integer (C18).
+            Assert.Contains("DisplayTextToPlayer(Player(0), 0.0, 0.0, \"sample: started (development)\")", builds.Development.Script);
+            Assert.Contains("DisplayTextToPlayer(Player(0), 0.0, 0.0, \"sample: started (release)\")", builds.Release.Script);
+
+            // Hello.Footman leaves out Player.Print's seconds and Unit.Create's facing, and reads Unit.DefaultFacing: all three
+            // come from Moonwell's library, so the build resolved it.
+            foreach (var script in new[] { builds.Development.Script, builds.Release.Script })
+            {
+                Assert.Contains("player:Print(\"sample: a footman, facing \" .. 270.0, -1.0)", script);
+                Assert.Contains("Moonwell.Unit.Create(Moonwell.ObjectTypes.FourCC(\"hfoo\"), player, 0.0, 0.0, 270.0)", script);
+            }
+        }
+
+        [Fact]
+        public void name_the_float_rewrite_cannot_resolve_is_a_build_error()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            File.Delete(Path.Combine(folder, "Objects.cs"));
+            File.WriteAllText(
+                Path.Combine(folder, "Unread.cs"),
+                "namespace Sample\n"
+                + "{\n"
+                + "    public static class Unread\n"
+                + "    {\n"
+                + "        public static object Keep(Moonwell.Objects.ObjectIdAttribute id)\n"
+                + "        {\n"
+                + "            return id;\n"
+                + "        }\n"
+                + "    }\n"
+                + "}\n");
+            var project = MapProject.Find(folder);
+            var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
+            var settings = MapSettingsReader.Read(assembly, project);
+            var map = SourceMap.Open(project, settings, TextWriter.Null);
+            EntryWriter.Write(project, settings);
+
+            // CSharp.lua compiles Moonwell.Objects from source; the float rewrite reads the libraries beside the assembly.
+            File.Delete(Path.Combine(Path.GetDirectoryName(assembly)!, "Moonwell.Objects.dll"));
+            var error = Assert.Throws<BuildException>(() => LuaCompiler.Compile(project, map, assembly, false));
+
+            Assert.StartsWith("the build could not resolve these names to write whole-number floats for Lua (C18):", error.Message);
+            Assert.Contains(Path.Combine(folder, "Unread.cs"), error.Message);
+            Assert.DoesNotContain("marked", error.Message);
+        }
+
+        [Fact]
+        public void float_constants_are_written_with_a_point()
+        {
+            var source = string.Join("\n", new[]
+            {
+                "public class Rewritten",
+                "{",
+                "    private const float Four = 4f;",
+                "    private const float Negative = -4f;",
+                "    public float Field = 3f;",
+                "    public Rewritten(float scale = 1f) { }",
+                "    public static float Facing(float facing = 270f, int count = 2, double @base = 5d) { return facing; }",
+                "    public static void Run(float a)",
+                "    {",
+                "        float folded = 16777216f + 1f;",
+                "        float constant = Four;",
+                "        float cast = (float)7;",
+                "        float minus = -5f;",
+                "        float joined = a-Negative;",
+                "        float stored = 2;",
+                "        double d = 5d;",
+                "        a += 1f;",
+                "        a *= 2;",
+                "        float lines = 1f +",
+                "            2f;",
+                "        Facing();",
+                "        Facing(90f, 3);",
+                "        var made = new Rewritten { Field = 1.5f };",
+                "        float pointed = 2.0f + 1.0f;",
+                "        float half = 2.0f + 0.5f;",
+                "        float exponent = 1e3f;",
+                "        float signed = -(5.0f);",
+                "        int whole = 7 / 2;",
+                "        long big = 5;",
+                "        string name = nameof(Four);",
+                "    }",
+                "}",
+            });
+            var expected = string.Join("\n", new[]
+            {
+                "public class Rewritten",
+                "{",
+                "    private const float Four = 4.0f;",
+                "    private const float Negative = -4.0f;",
+                "    public float Field = 3.0f;",
+                "    public Rewritten(float scale = 1f) { }",
+                "    public static float Facing(float facing = 270f, int count = 2, double @base = 5d) { return facing; }",
+                "    public static void Run(float a)",
+                "    {",
+                "        float folded = 16777216.0f;",
+                "        float constant = 4.0f;",
+                "        float cast = 7.0f;",
+                "        float minus = -5.0f;",
+                "        float joined = a-(-4.0f);",
+                "        float stored = 2.0f;",
+                "        double d = 5.0;",
+                "        a += 1.0f;",
+                "        a *= 2.0f;",
+                "        float lines = 3.0f",
+                ";",
+                "        Facing(facing: 270.0f, @base: 5.0);",
+                "        Facing(90.0f, 3, @base: 5.0);",
+                "        var made = new Rewritten(scale: 1.0f) { Field = 1.5f };",
+                "        float pointed = 3.0f;",
+                "        float half = 2.0f + 0.5f;",
+                "        float exponent = 1e3f;",
+                "        float signed = -(5.0f);",
+                "        int whole = 7 / 2;",
+                "        long big = 5;",
+                "        string name = nameof(Four);",
+                "    }",
+                "}",
+            });
+            var folder = Path.Combine(Path.GetTempPath(), "moonwell-floats-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(folder);
+            temporaryFolders.Add(folder);
+            File.WriteAllText(Path.Combine(folder, "Rewritten.cs"), source);
+
+            var errors = FloatLiterals.Rewrite(folder, new[] { "Rewritten.cs" }, "Rewritten", Array.Empty<string>(), Array.Empty<string>());
+
+            Assert.Empty(errors);
+            Assert.Equal(expected, File.ReadAllText(Path.Combine(folder, "Rewritten.cs")));
+        }
+
+        [Fact]
         public void missing_libraries_are_an_error()
         {
             var empty = Path.Combine(Path.GetTempPath(), "moonwell-empty-" + Guid.NewGuid().ToString("N"));
