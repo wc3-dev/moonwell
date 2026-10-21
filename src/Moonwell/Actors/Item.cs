@@ -37,6 +37,134 @@ namespace Moonwell
         [LocalSafe]
         public int TypeId { get; internal set; }
 
+        /// <summary>The charges last read or set.</summary>
+        private int lastCharges;
+
+        /// <summary>The game's player that owned the item when it was last read or set; kept for when the game no longer gives it.</summary>
+        internal player OwningPlayer = null!;
+
+        /// <summary>The x last read or set.</summary>
+        private float lastX;
+
+        /// <summary>The y last read or set.</summary>
+        private float lastY;
+
+        /// <summary>The unit that last picked the item up, as the pick-up events Moonwell has seen say; a candidate that Carrier checks with the game.</summary>
+        internal Unit? CarrierUnit;
+
+        /// <summary>The item's charges. Once the game has removed the item, the last value read or set, and setting does nothing.</summary>
+        [LocalSafe]
+        public int Charges
+        {
+            get
+            {
+                if (!IsGone)
+                {
+                    lastCharges = Runtime.World.ChargesOf(Handle);
+                }
+
+                return lastCharges;
+            }
+
+            set
+            {
+                if (!IsGone)
+                {
+                    lastCharges = value;
+                    Runtime.World.SetCharges(Handle, value);
+                }
+            }
+        }
+
+        /// <summary>The player that owns the item; setting it leaves the item's colour as it is. Once the game has removed the item, the last player read or set (the one it had when Moonwell took it in, if none); the neutral passive player when the game gives none. Setting does nothing then.</summary>
+        [LocalSafe]
+        public Player Player
+        {
+            get
+            {
+                if (!IsGone)
+                {
+                    var now = Runtime.World.ItemOwnerOf(Handle);
+                    if (now != null)
+                    {
+                        OwningPlayer = now;
+                    }
+                }
+
+                return Player.Of(OwningPlayer) ?? Player.NeutralPassive;
+            }
+
+            set
+            {
+                if (!IsGone)
+                {
+                    OwningPlayer = value.Handle;
+                    Runtime.World.SetItemOwner(Handle, value.Handle);
+                }
+            }
+        }
+
+        /// <summary>The x of the item. Once the game has removed it, the last x read or set.</summary>
+        [LocalSafe]
+        public float X
+        {
+            get
+            {
+                if (!IsGone)
+                {
+                    lastX = Runtime.World.ItemX(Handle);
+                }
+
+                return lastX;
+            }
+        }
+
+        /// <summary>The y of the item. Once the game has removed it, the last y read or set.</summary>
+        [LocalSafe]
+        public float Y
+        {
+            get
+            {
+                if (!IsGone)
+                {
+                    lastY = Runtime.World.ItemY(Handle);
+                }
+
+                return lastY;
+            }
+        }
+
+        /// <summary>Moves the item to a place (SetItemPosition). Does nothing once the item is gone.</summary>
+        public void MoveTo(float x, float y)
+        {
+            if (!IsGone)
+            {
+                lastX = x;
+                lastY = y;
+                Runtime.World.MoveItem(Handle, x, y);
+            }
+        }
+
+        /// <summary>The unit that carries the item: the last unit seen picking it up, as long as the game says it still has the item (UnitHasItem), so a drop the game fires when an item only moves between slots does not make it uncarried. Null for an item picked up before Moonwell saw it (Moonwell does not look through inventories), and once the item or the carrier is gone. Inside OnDropped it is what the game answers at that moment: null when the item is already out of the inventory.</summary>
+        [LocalSafe]
+        public Unit? Carrier
+        {
+            get
+            {
+                var by = CarrierUnit;
+                if (IsGone || by == null || by.IsGone || !Runtime.World.CarriesItem(by.Handle, Handle))
+                {
+                    return null;
+                }
+
+                return by;
+            }
+        }
+
+        /// <summary>Whether a unit carries the item; see Carrier.</summary>
+        [LocalSafe]
+        public bool IsCarried => Carrier != null;
+
         /// <summary>The starting components, which the runtime adds in order when the item is taken in.</summary>
         internal List<ItemComponent> StartComponents => Components;
 

@@ -552,6 +552,319 @@ namespace Moonwell.Engine
             Natives.UnitRemoveAbility(unit, abilityId);
         }
 
+        /// <summary>The life of a unit, from the game.</summary>
+        public float LifeOf(unit unit)
+        {
+            return Natives.GetWidgetLife(unit);
+        }
+
+        /// <summary>Sets the life of a unit in the game.</summary>
+        public void SetLife(unit unit, float life)
+        {
+            Natives.SetWidgetLife(unit, life);
+        }
+
+        /// <summary>The most life a unit can have, from the game.</summary>
+        public float MaxLifeOf(unit unit)
+        {
+            return Natives.GetUnitState(unit, Natives.UNIT_STATE_MAX_LIFE);
+        }
+
+        /// <summary>Sets the most life a unit can have in the game.</summary>
+        public void SetMaxLife(unit unit, float life)
+        {
+            Natives.SetUnitState(unit, Natives.UNIT_STATE_MAX_LIFE, life);
+        }
+
+        /// <summary>The mana of a unit, from the game.</summary>
+        public float ManaOf(unit unit)
+        {
+            return Natives.GetUnitState(unit, Natives.UNIT_STATE_MANA);
+        }
+
+        /// <summary>Sets the mana of a unit in the game.</summary>
+        public void SetMana(unit unit, float mana)
+        {
+            Natives.SetUnitState(unit, Natives.UNIT_STATE_MANA, mana);
+        }
+
+        /// <summary>The most mana a unit can have, from the game.</summary>
+        public float MaxManaOf(unit unit)
+        {
+            return Natives.GetUnitState(unit, Natives.UNIT_STATE_MAX_MANA);
+        }
+
+        /// <summary>Sets the most mana a unit can have in the game.</summary>
+        public void SetMaxMana(unit unit, float mana)
+        {
+            Natives.SetUnitState(unit, Natives.UNIT_STATE_MAX_MANA, mana);
+        }
+
+        /// <summary>The x of a unit, from the game.</summary>
+        public float UnitX(unit unit)
+        {
+            return Natives.GetUnitX(unit);
+        }
+
+        /// <summary>The y of a unit, from the game.</summary>
+        public float UnitY(unit unit)
+        {
+            return Natives.GetUnitY(unit);
+        }
+
+        /// <summary>Moves a unit through the game's pathing: SetUnitPosition.</summary>
+        public void MoveUnit(unit unit, float x, float y)
+        {
+            Natives.SetUnitPosition(unit, x, y);
+        }
+
+        /// <summary>Puts a unit at a place with no pathing: SetUnitX and SetUnitY.</summary>
+        public void PlaceUnit(unit unit, float x, float y)
+        {
+            Natives.SetUnitX(unit, x);
+            Natives.SetUnitY(unit, y);
+        }
+
+        /// <summary>The facing of a unit, from the game.</summary>
+        public float FacingOf(unit unit)
+        {
+            return Natives.GetUnitFacing(unit);
+        }
+
+        /// <summary>Orders a unit to turn at its turn rate: SetUnitFacing.</summary>
+        public void TurnUnit(unit unit, float degrees)
+        {
+            Natives.SetUnitFacing(unit, degrees);
+        }
+
+        /// <summary>Sets the facing of a unit at once: BlzSetUnitFacingEx.</summary>
+        public void FaceUnitNow(unit unit, float degrees)
+        {
+            Natives.BlzSetUnitFacingEx(unit, degrees);
+        }
+
+        /// <summary>The level of a unit, from the game.</summary>
+        public int LevelOf(unit unit)
+        {
+            return Natives.GetUnitLevel(unit);
+        }
+
+        /// <summary>Whether the game counts a unit as alive.</summary>
+        public bool IsAlive(unit unit)
+        {
+            return Natives.UnitAlive(unit);
+        }
+
+        /// <summary>Kills a unit in the game: KillUnit.</summary>
+        public void SlayUnit(unit unit)
+        {
+            Natives.KillUnit(unit);
+        }
+
+        /// <summary>A hero's experience, from the game.</summary>
+        public int ExperienceOf(unit hero)
+        {
+            return Natives.GetHeroXP(hero);
+        }
+
+        /// <summary>Sets a hero's experience in the game.</summary>
+        public void SetExperience(unit hero, int experience, bool showEffect)
+        {
+            Natives.SetHeroXP(hero, experience, showEffect);
+        }
+
+        /// <summary>Gives a hero a level in the game.</summary>
+        public void LevelHero(unit hero, int level, bool showEffect)
+        {
+            Natives.SetHeroLevel(hero, level, showEffect);
+        }
+
+        /// <summary>A hero's strength, from the game.</summary>
+        public int StrengthOf(unit hero, bool withBonus)
+        {
+            return Natives.GetHeroStr(hero, withBonus);
+        }
+
+        /// <summary>A hero's agility, from the game.</summary>
+        public int AgilityOf(unit hero, bool withBonus)
+        {
+            return Natives.GetHeroAgi(hero, withBonus);
+        }
+
+        /// <summary>A hero's intelligence, from the game.</summary>
+        public int IntelligenceOf(unit hero, bool withBonus)
+        {
+            return Natives.GetHeroInt(hero, withBonus);
+        }
+
+        /// <summary>Sets a hero's base strength for good, in the game.</summary>
+        public void SetStrength(unit hero, int strength)
+        {
+            Natives.SetHeroStr(hero, strength, true);
+        }
+
+        /// <summary>Sets a hero's base agility for good, in the game.</summary>
+        public void SetAgility(unit hero, int agility)
+        {
+            Natives.SetHeroAgi(hero, agility, true);
+        }
+
+        /// <summary>Sets a hero's base intelligence for good, in the game.</summary>
+        public void SetIntelligence(unit hero, int intelligence)
+        {
+            Natives.SetHeroInt(hero, intelligence, true);
+        }
+
+        /// <summary>The skill points a hero has, from the game.</summary>
+        public int SkillPointsOf(unit hero)
+        {
+            return Natives.GetHeroSkillPoints(hero);
+        }
+
+        /// <summary>Adds skill points to a hero in the game.</summary>
+        public bool AddSkillPoints(unit hero, int delta)
+        {
+            return Natives.UnitModifySkillPoints(hero, delta);
+        }
+
+        /// <summary>Revives a hero at a place in the game.</summary>
+        public bool ReviveAt(unit hero, float x, float y, bool showEffect)
+        {
+            return Natives.ReviveHero(hero, x, y, showEffect);
+        }
+
+        /// <summary>Whether a unit is paused, from the game.</summary>
+        public bool IsPausedUnit(unit unit)
+        {
+            return Natives.IsUnitPaused(unit);
+        }
+
+        /// <summary>Pauses or unpauses a unit in the game.</summary>
+        public void SetPaused(unit unit, bool paused)
+        {
+            Natives.PauseUnit(unit, paused);
+        }
+
+        /// <summary>The scaling value of a unit, from the game.</summary>
+        public float ScaleOf(unit unit)
+        {
+            return Natives.BlzGetUnitRealField(unit, Natives.UNIT_RF_SCALING_VALUE);
+        }
+
+        /// <summary>Sets the scale of a unit on all three axes: SetUnitScale.</summary>
+        public void ScaleUnit(unit unit, float scale)
+        {
+            Natives.SetUnitScale(unit, scale, scale, scale);
+        }
+
+        /// <summary>Tints a unit: SetUnitVertexColor.</summary>
+        public void TintUnit(unit unit, int red, int green, int blue, int alpha)
+        {
+            Natives.SetUnitVertexColor(unit, red, green, blue, alpha);
+        }
+
+        /// <summary>The fly height of a unit, from the game.</summary>
+        public float FlyHeightOf(unit unit)
+        {
+            return Natives.GetUnitFlyHeight(unit);
+        }
+
+        /// <summary>Sets the fly height of a unit with a rate of 0: SetUnitFlyHeight.</summary>
+        public void SetFlyHeight(unit unit, float height)
+        {
+            Natives.SetUnitFlyHeight(unit, height, 0.0f);
+        }
+
+        /// <summary>Gives a unit an order with no place and no target: IssueImmediateOrder.</summary>
+        public bool OrderUnit(unit unit, string order)
+        {
+            return Natives.IssueImmediateOrder(unit, order);
+        }
+
+        /// <summary>Gives a unit an order to a place: IssuePointOrder.</summary>
+        public bool OrderUnitAt(unit unit, string order, float x, float y)
+        {
+            return Natives.IssuePointOrder(unit, order, x, y);
+        }
+
+        /// <summary>Gives a unit an order on a widget: IssueTargetOrder.</summary>
+        public bool OrderUnitOn(unit unit, string order, widget target)
+        {
+            return Natives.IssueTargetOrder(unit, order, target);
+        }
+
+        /// <summary>The number of inventory slots of a unit, from the game.</summary>
+        public int InventorySizeOf(unit unit)
+        {
+            return Natives.UnitInventorySize(unit);
+        }
+
+        /// <summary>The item in a slot of a unit's inventory, from the game.</summary>
+        public item ItemInSlot(unit unit, int slot)
+        {
+            return Natives.UnitItemInSlot(unit, slot);
+        }
+
+        /// <summary>Gives a unit an item: UnitAddItem.</summary>
+        public bool GiveItem(unit unit, item item)
+        {
+            return Natives.UnitAddItem(unit, item);
+        }
+
+        /// <summary>Takes an item out of a unit's inventory and drops it where the unit stands: UnitRemoveItem.</summary>
+        public void DropItem(unit unit, item item)
+        {
+            Natives.UnitRemoveItem(unit, item);
+        }
+
+        /// <summary>Whether a unit has an item in its inventory: UnitHasItem.</summary>
+        public bool CarriesItem(unit unit, item item)
+        {
+            return Natives.UnitHasItem(unit, item);
+        }
+
+        /// <summary>The charges of an item, from the game.</summary>
+        public int ChargesOf(item item)
+        {
+            return Natives.GetItemCharges(item);
+        }
+
+        /// <summary>Sets the charges of an item: SetItemCharges.</summary>
+        public void SetCharges(item item, int charges)
+        {
+            Natives.SetItemCharges(item, charges);
+        }
+
+        /// <summary>The player that owns an item, from the game.</summary>
+        public player ItemOwnerOf(item item)
+        {
+            return Natives.GetItemPlayer(item);
+        }
+
+        /// <summary>Sets the owner of an item without changing its colour: SetItemPlayer.</summary>
+        public void SetItemOwner(item item, player player)
+        {
+            Natives.SetItemPlayer(item, player, false);
+        }
+
+        /// <summary>The x of an item, from the game.</summary>
+        public float ItemX(item item)
+        {
+            return Natives.GetItemX(item);
+        }
+
+        /// <summary>The y of an item, from the game.</summary>
+        public float ItemY(item item)
+        {
+            return Natives.GetItemY(item);
+        }
+
+        /// <summary>Moves an item to a place: SetItemPosition.</summary>
+        public void MoveItem(item item, float x, float y)
+        {
+            Natives.SetItemPosition(item, x, y);
+        }
+
         /// <summary>Runs a callback once, after the map's main function has returned.</summary>
         internal static void Later(Action callback)
         {

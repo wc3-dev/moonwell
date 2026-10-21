@@ -84,6 +84,96 @@ namespace Moonwell.Testing
         /// <summary>The type id of each destructable the world made.</summary>
         private readonly Dictionary<destructable, int> destructableTypes = new Dictionary<destructable, int>();
 
+        /// <summary>The calls that changed a unit's place or facing, as "move", "place", "turn" or "face-now".</summary>
+        public List<string> UnitCalls = new List<string>();
+
+        /// <summary>How many times a unit's life, mana, place or facing was read or set after the game had removed it, which the runtime must never do.</summary>
+        public int GoneCalls;
+
+        /// <summary>The facing each unit was last ordered to turn to; its own facing does not change by it, since turning takes time.</summary>
+        public Dictionary<unit, float> TurnTargets = new Dictionary<unit, float>();
+
+        /// <summary>How many times the runtime asked the game to kill a unit.</summary>
+        public int KillCalls;
+
+        /// <summary>The units that are paused.</summary>
+        public List<unit> PausedUnits = new List<unit>();
+
+        /// <summary>How many times a unit's scale was set.</summary>
+        public int ScaleCalls;
+
+        /// <summary>The red, green, blue and alpha each unit was last tinted with.</summary>
+        public Dictionary<unit, int[]> Tints = new Dictionary<unit, int[]>();
+
+        /// <summary>The units that have been killed.</summary>
+        private readonly HashSet<unit> dead = new HashSet<unit>();
+
+        /// <summary>The level of each unit, 1 until set.</summary>
+        private readonly Dictionary<unit, int> levels = new Dictionary<unit, int>();
+
+        /// <summary>The scale of each unit, 1 until set.</summary>
+        private readonly Dictionary<unit, float> scales = new Dictionary<unit, float>();
+
+        /// <summary>The fly height of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> flyHeights = new Dictionary<unit, float>();
+
+        /// <summary>The orders given to units, as "immediate", "point" or "target", a space, and the order string.</summary>
+        public List<string> Orders = new List<string>();
+
+        /// <summary>The x and y of each point order, in turn.</summary>
+        public List<float> OrderPoints = new List<float>();
+
+        /// <summary>The widget each target order was given on, in turn.</summary>
+        public List<widget> OrderTargets = new List<widget>();
+
+        /// <summary>What the game answers to an order.</summary>
+        public bool OrderAnswer = true;
+
+        /// <summary>The inventory calls that changed something, as "give" or "drop".</summary>
+        public List<string> InventoryCalls = new List<string>();
+
+        /// <summary>How many times a slot of an inventory was read.</summary>
+        public int ItemSlotReads;
+
+        /// <summary>The calls that changed an item, as "charges 5", "owner 3 False" (slot and colour change) or "move".</summary>
+        public List<string> ItemCalls = new List<string>();
+
+        /// <summary>The charges of each item, 1 until set.</summary>
+        private readonly Dictionary<item, int> itemCharges = new Dictionary<item, int>();
+
+        /// <summary>The player slot of each item, 0 until set.</summary>
+        private readonly Dictionary<item, int> itemSlots = new Dictionary<item, int>();
+
+        /// <summary>The x and y of each item, 0 until placed.</summary>
+        private readonly Dictionary<item, float[]> itemPlaces = new Dictionary<item, float[]>();
+
+        /// <summary>The items in each unit's slots; null for an empty slot.</summary>
+        private readonly Dictionary<unit, item[]> inventories = new Dictionary<unit, item[]>();
+
+        /// <summary>The number of inventory slots of each unit, 6 until set.</summary>
+        private readonly Dictionary<unit, int> inventorySizes = new Dictionary<unit, int>();
+
+        /// <summary>The life of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> lives = new Dictionary<unit, float>();
+
+        /// <summary>The most life of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> maxLives = new Dictionary<unit, float>();
+
+        /// <summary>The mana of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> manas = new Dictionary<unit, float>();
+
+        /// <summary>The most mana of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> maxManas = new Dictionary<unit, float>();
+
+        /// <summary>The x of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> unitXs = new Dictionary<unit, float>();
+
+        /// <summary>The y of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> unitYs = new Dictionary<unit, float>();
+
+        /// <summary>The facing of each unit, 0 until set.</summary>
+        private readonly Dictionary<unit, float> facings = new Dictionary<unit, float>();
+
         /// <summary>The player made for each slot, once it is asked for.</summary>
         private readonly Dictionary<int, player> players = new Dictionary<int, player>();
 
@@ -126,11 +216,12 @@ namespace Moonwell.Testing
         /// <summary>The tech limits set, keyed by slot, then by type id.</summary>
         private readonly Dictionary<int, Dictionary<int, int>> techMaxes = new Dictionary<int, Dictionary<int, int>>();
 
-        /// <summary>Makes a fresh world for one case and makes it the runtime's world.</summary>
+        /// <summary>Makes a fresh world for one case and makes it the runtime's world; as the runtime does at its start, it listens for pick-ups and drops.</summary>
         public static FakeWorld Install()
         {
             var world = new FakeWorld();
             Runtime.Reset(world);
+            Runtime.ListenForCarriers();
             return world;
         }
 
@@ -416,7 +507,9 @@ namespace Moonwell.Testing
         /// <summary>Makes an item; the place is not kept.</summary>
         public item SpawnItem(int typeId, float x, float y)
         {
-            return NewItem(typeId);
+            var created = NewItem(typeId);
+            itemPlaces[created] = new float[] { x, y };
+            return created;
         }
 
         /// <summary>The type id of a unit; 0 once it is removed or vanished.</summary>
@@ -637,6 +730,618 @@ namespace Moonwell.Testing
         public void RemoveAbility(unit unit, int abilityId)
         {
             AbilityCalls.Add("remove " + abilityId);
+        }
+
+        /// <summary>Counts a call on an item the world has removed.</summary>
+        private void NoteGoneItem(item item)
+        {
+            if (ItemTypeId(item) == 0)
+            {
+                GoneCalls++;
+            }
+        }
+
+        /// <summary>The charges of an item; 1 until set.</summary>
+        public int ChargesOf(item item)
+        {
+            NoteGoneItem(item);
+            return itemCharges.TryGetValue(item, out var charges) ? charges : 1;
+        }
+
+        /// <summary>Sets the charges of an item and records "charges".</summary>
+        public void SetCharges(item item, int charges)
+        {
+            NoteGoneItem(item);
+            itemCharges[item] = charges;
+            ItemCalls.Add("charges " + charges);
+        }
+
+        /// <summary>The player that owns an item; slot 0 until set, null once LoseItemOwner has been called for it.</summary>
+        public player ItemOwnerOf(item item)
+        {
+            NoteGoneItem(item);
+            var slot = itemSlots.TryGetValue(item, out var kept) ? kept : 0;
+            if (slot < 0)
+            {
+                return null!;
+            }
+
+            return PlayerAt(slot);
+        }
+
+        /// <summary>Makes the game give no owner for an item, as it may for an item nobody owns.</summary>
+        public void LoseItemOwner(item item)
+        {
+            itemSlots[item] = -1;
+        }
+
+        /// <summary>Whether a unit has an item in a slot.</summary>
+        public bool CarriesItem(unit unit, item item)
+        {
+            NoteGone(unit);
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Moves an item to another, empty slot of the unit, as the game does when the player drags it; the game fires a drop for it (seen 10-15) while the unit still has the item.</summary>
+        public void MoveItemSlot(unit unit, item item, int toSlot)
+        {
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    slots[i] = null!;
+                    slots[toSlot] = item;
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, item);
+                    }
+
+                    return;
+                }
+            }
+        }
+
+        /// <summary>Sets the player of an item and records "owner" with the slot and False, since the item's colour is left alone.</summary>
+        public void SetItemOwner(item item, player player)
+        {
+            NoteGoneItem(item);
+            itemSlots[item] = SlotOf(player);
+            ItemCalls.Add("owner " + SlotOf(player) + " False");
+        }
+
+        /// <summary>The x of an item; 0 until placed.</summary>
+        public float ItemX(item item)
+        {
+            NoteGoneItem(item);
+            return itemPlaces.TryGetValue(item, out var place) ? place[0] : 0.0f;
+        }
+
+        /// <summary>The y of an item; 0 until placed.</summary>
+        public float ItemY(item item)
+        {
+            NoteGoneItem(item);
+            return itemPlaces.TryGetValue(item, out var place) ? place[1] : 0.0f;
+        }
+
+        /// <summary>Moves an item to the place given and records "move".</summary>
+        public void MoveItem(item item, float x, float y)
+        {
+            NoteGoneItem(item);
+            itemPlaces[item] = new float[] { x, y };
+            ItemCalls.Add("move");
+        }
+
+        /// <summary>Puts an item in a slot of a unit without the game telling anyone, as when the item was there before the runtime came.</summary>
+        public void PutInSlot(unit unit, int slot, item item)
+        {
+            SlotsOf(unit)[slot] = item;
+        }
+
+        /// <summary>Counts a call on a unit the world has removed.</summary>
+        private void NoteGone(unit unit)
+        {
+            if (UnitTypeId(unit) == 0)
+            {
+                GoneCalls++;
+            }
+        }
+
+        /// <summary>A value kept for a unit; 0 when none was set.</summary>
+        private float Kept(Dictionary<unit, float> values, unit unit)
+        {
+            NoteGone(unit);
+            return values.TryGetValue(unit, out var value) ? value : 0.0f;
+        }
+
+        /// <summary>The life of a unit; 0 until set.</summary>
+        public float LifeOf(unit unit)
+        {
+            return Kept(lives, unit);
+        }
+
+        /// <summary>Sets the life of a unit, as given.</summary>
+        public void SetLife(unit unit, float life)
+        {
+            NoteGone(unit);
+            lives[unit] = life;
+        }
+
+        /// <summary>The most life of a unit; 0 until set.</summary>
+        public float MaxLifeOf(unit unit)
+        {
+            return Kept(maxLives, unit);
+        }
+
+        /// <summary>Sets the most life of a unit, as given.</summary>
+        public void SetMaxLife(unit unit, float life)
+        {
+            NoteGone(unit);
+            maxLives[unit] = life;
+        }
+
+        /// <summary>The mana of a unit; 0 until set.</summary>
+        public float ManaOf(unit unit)
+        {
+            return Kept(manas, unit);
+        }
+
+        /// <summary>Sets the mana of a unit, as given.</summary>
+        public void SetMana(unit unit, float mana)
+        {
+            NoteGone(unit);
+            manas[unit] = mana;
+        }
+
+        /// <summary>The most mana of a unit; 0 until set.</summary>
+        public float MaxManaOf(unit unit)
+        {
+            return Kept(maxManas, unit);
+        }
+
+        /// <summary>Sets the most mana of a unit, as given.</summary>
+        public void SetMaxMana(unit unit, float mana)
+        {
+            NoteGone(unit);
+            maxManas[unit] = mana;
+        }
+
+        /// <summary>The x of a unit; 0 until set.</summary>
+        public float UnitX(unit unit)
+        {
+            return Kept(unitXs, unit);
+        }
+
+        /// <summary>The y of a unit; 0 until set.</summary>
+        public float UnitY(unit unit)
+        {
+            return Kept(unitYs, unit);
+        }
+
+        /// <summary>Puts a unit at the place, and records a "move".</summary>
+        public void MoveUnit(unit unit, float x, float y)
+        {
+            NoteGone(unit);
+            UnitCalls.Add("move");
+            unitXs[unit] = x;
+            unitYs[unit] = y;
+        }
+
+        /// <summary>Puts a unit at the place, and records a "place".</summary>
+        public void PlaceUnit(unit unit, float x, float y)
+        {
+            NoteGone(unit);
+            UnitCalls.Add("place");
+            unitXs[unit] = x;
+            unitYs[unit] = y;
+        }
+
+        /// <summary>The facing of a unit; 0 until set.</summary>
+        public float FacingOf(unit unit)
+        {
+            return Kept(facings, unit);
+        }
+
+        /// <summary>Records a "turn" and the facing asked for in TurnTargets; the unit's facing stays, since a turn takes time.</summary>
+        public void TurnUnit(unit unit, float degrees)
+        {
+            NoteGone(unit);
+            UnitCalls.Add("turn");
+            TurnTargets[unit] = degrees;
+        }
+
+        /// <summary>Sets the facing of a unit, and records a "face-now".</summary>
+        public void FaceUnitNow(unit unit, float degrees)
+        {
+            NoteGone(unit);
+            UnitCalls.Add("face-now");
+            facings[unit] = degrees;
+        }
+
+        /// <summary>Sets the level the world gives a unit.</summary>
+        public void SetLevel(unit unit, int level)
+        {
+            levels[unit] = level;
+        }
+
+        /// <summary>The level of a unit; 1 until set.</summary>
+        public int LevelOf(unit unit)
+        {
+            NoteGone(unit);
+            return levels.TryGetValue(unit, out var level) ? level : 1;
+        }
+
+        /// <summary>Whether a unit has not been killed.</summary>
+        public bool IsAlive(unit unit)
+        {
+            NoteGone(unit);
+            return !dead.Contains(unit);
+        }
+
+        /// <summary>Kills a unit as the game does: the unit is dead, and when deaths are listened for, its death is delivered inside the call, with no killer.</summary>
+        public void SlayUnit(unit unit)
+        {
+            NoteGone(unit);
+            KillCalls++;
+            dead.Add(unit);
+            if (Listening.Contains(GameEvent.Death))
+            {
+                Inbound.Died(unit, null);
+            }
+
+            DropAll(unit);
+        }
+
+        /// <summary>Empties a dead unit's slots as the game drops the items of a unit that is not a hero, delivering each drop when it is listened for. Assumed, not seen: whether heroes keep their items, and whether the drops are fired (see unseen.md).</summary>
+        private void DropAll(unit unit)
+        {
+            if (heroes.TryGetValue(unit, out var isHero) && isHero)
+            {
+                return;
+            }
+
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                var carried = slots[i];
+                if (carried != null)
+                {
+                    slots[i] = null!;
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, carried);
+                    }
+                }
+            }
+        }
+
+        /// <summary>The calls that changed a hero, in turn, as a word and its values: "experience 500 True", "level 5 True", "strength 30 True", "skill-points 3", "revive 100 200 True".</summary>
+        public List<string> HeroCalls = new List<string>();
+
+        /// <summary>The experience of each hero, 0 until set.</summary>
+        private readonly Dictionary<unit, int> experiences = new Dictionary<unit, int>();
+
+        /// <summary>The base strength, agility and intelligence of each hero, 0 until set.</summary>
+        private readonly Dictionary<unit, int[]> stats = new Dictionary<unit, int[]>();
+
+        /// <summary>The bonus to strength, agility and intelligence of each hero, 0 until set.</summary>
+        private readonly Dictionary<unit, int[]> statBonuses = new Dictionary<unit, int[]>();
+
+        /// <summary>The skill points of each hero, 0 until set.</summary>
+        private readonly Dictionary<unit, int> skillPoints = new Dictionary<unit, int>();
+
+        /// <summary>Sets the base strength, agility and intelligence the world gives a hero.</summary>
+        public void SetStats(unit hero, int strength, int agility, int intelligence)
+        {
+            stats[hero] = new int[] { strength, agility, intelligence };
+        }
+
+        /// <summary>Sets the bonus to strength, agility and intelligence the world gives a hero.</summary>
+        public void SetStatBonuses(unit hero, int strength, int agility, int intelligence)
+        {
+            statBonuses[hero] = new int[] { strength, agility, intelligence };
+        }
+
+        /// <summary>Sets the skill points the world gives a hero.</summary>
+        public void SetSkillPoints(unit hero, int points)
+        {
+            skillPoints[hero] = points;
+        }
+
+        /// <summary>The experience of a hero; 0 until set.</summary>
+        public int ExperienceOf(unit hero)
+        {
+            NoteGone(hero);
+            return experiences.TryGetValue(hero, out var experience) ? experience : 0;
+        }
+
+        /// <summary>Sets the experience of a hero, and records an "experience".</summary>
+        public void SetExperience(unit hero, int experience, bool showEffect)
+        {
+            NoteGone(hero);
+            HeroCalls.Add("experience " + experience + " " + Flag(showEffect));
+            experiences[hero] = experience;
+        }
+
+        /// <summary>Gives a hero the level, and records a "level".</summary>
+        public void LevelHero(unit hero, int level, bool showEffect)
+        {
+            NoteGone(hero);
+            HeroCalls.Add("level " + level + " " + Flag(showEffect));
+            levels[hero] = level;
+        }
+
+        /// <summary>A stat of a hero, 0 until set: which is 0 for strength, 1 for agility and 2 for intelligence.</summary>
+        private int StatOf(unit hero, int which, bool withBonus)
+        {
+            NoteGone(hero);
+            var value = stats.TryGetValue(hero, out var set) ? set[which] : 0;
+            if (withBonus && statBonuses.TryGetValue(hero, out var bonus))
+            {
+                value += bonus[which];
+            }
+
+            return value;
+        }
+
+        /// <summary>Sets a base stat of a hero, and records its name with the value and that it is for good.</summary>
+        private void SetStat(unit hero, int which, string name, int value)
+        {
+            NoteGone(hero);
+            HeroCalls.Add(name + " " + value + " " + Flag(true));
+            if (!stats.TryGetValue(hero, out var set))
+            {
+                set = new int[3];
+                stats[hero] = set;
+            }
+
+            set[which] = value;
+        }
+
+        /// <summary>The strength of a hero.</summary>
+        public int StrengthOf(unit hero, bool withBonus)
+        {
+            return StatOf(hero, 0, withBonus);
+        }
+
+        /// <summary>The agility of a hero.</summary>
+        public int AgilityOf(unit hero, bool withBonus)
+        {
+            return StatOf(hero, 1, withBonus);
+        }
+
+        /// <summary>The intelligence of a hero.</summary>
+        public int IntelligenceOf(unit hero, bool withBonus)
+        {
+            return StatOf(hero, 2, withBonus);
+        }
+
+        /// <summary>Sets the base strength of a hero.</summary>
+        public void SetStrength(unit hero, int strength)
+        {
+            SetStat(hero, 0, "strength", strength);
+        }
+
+        /// <summary>Sets the base agility of a hero.</summary>
+        public void SetAgility(unit hero, int agility)
+        {
+            SetStat(hero, 1, "agility", agility);
+        }
+
+        /// <summary>Sets the base intelligence of a hero.</summary>
+        public void SetIntelligence(unit hero, int intelligence)
+        {
+            SetStat(hero, 2, "intelligence", intelligence);
+        }
+
+        /// <summary>The skill points of a hero; 0 until set.</summary>
+        public int SkillPointsOf(unit hero)
+        {
+            NoteGone(hero);
+            return skillPoints.TryGetValue(hero, out var points) ? points : 0;
+        }
+
+        /// <summary>Adds skill points to a hero and records "skill-points"; true unless the points would go below 0, which leaves them as they were.</summary>
+        public bool AddSkillPoints(unit hero, int delta)
+        {
+            NoteGone(hero);
+            HeroCalls.Add("skill-points " + delta);
+            var now = SkillPointsOf(hero) + delta;
+            if (now < 0)
+            {
+                return false;
+            }
+
+            skillPoints[hero] = now;
+            return true;
+        }
+
+        /// <summary>Revives a dead hero at the place and records a "revive"; false for a hero that is not dead.</summary>
+        public bool ReviveAt(unit hero, float x, float y, bool showEffect)
+        {
+            NoteGone(hero);
+            HeroCalls.Add("revive " + (int)x + " " + (int)y + " " + Flag(showEffect));
+            if (!dead.Remove(hero))
+            {
+                return false;
+            }
+
+            unitXs[hero] = x;
+            unitYs[hero] = y;
+            return true;
+        }
+
+        /// <summary>A flag as the hero calls record it: "True" or "False", the same on .NET and in Lua.</summary>
+        private static string Flag(bool value)
+        {
+            return value ? "True" : "False";
+        }
+
+        /// <summary>Whether a unit is paused.</summary>
+        public bool IsPausedUnit(unit unit)
+        {
+            NoteGone(unit);
+            return PausedUnits.Contains(unit);
+        }
+
+        /// <summary>Pauses or unpauses a unit.</summary>
+        public void SetPaused(unit unit, bool paused)
+        {
+            NoteGone(unit);
+            PausedUnits.Remove(unit);
+            if (paused)
+            {
+                PausedUnits.Add(unit);
+            }
+        }
+
+        /// <summary>The scale of a unit; 1 until set.</summary>
+        public float ScaleOf(unit unit)
+        {
+            NoteGone(unit);
+            return scales.TryGetValue(unit, out var scale) ? scale : 1.0f;
+        }
+
+        /// <summary>Sets the scale of a unit, and counts the call.</summary>
+        public void ScaleUnit(unit unit, float scale)
+        {
+            NoteGone(unit);
+            ScaleCalls++;
+            scales[unit] = scale;
+        }
+
+        /// <summary>Keeps the four values a unit was tinted with.</summary>
+        public void TintUnit(unit unit, int red, int green, int blue, int alpha)
+        {
+            NoteGone(unit);
+            Tints[unit] = new int[] { red, green, blue, alpha };
+        }
+
+        /// <summary>The fly height of a unit; 0 until set.</summary>
+        public float FlyHeightOf(unit unit)
+        {
+            return Kept(flyHeights, unit);
+        }
+
+        /// <summary>Sets the fly height of a unit.</summary>
+        public void SetFlyHeight(unit unit, float height)
+        {
+            NoteGone(unit);
+            flyHeights[unit] = height;
+        }
+
+        /// <summary>Sets the number of inventory slots a unit has.</summary>
+        public void SetInventorySize(unit unit, int size)
+        {
+            inventorySizes[unit] = size;
+        }
+
+        /// <summary>The slots of a unit's inventory, made on first use.</summary>
+        private item[] SlotsOf(unit unit)
+        {
+            if (!inventories.TryGetValue(unit, out var slots))
+            {
+                slots = new item[InventorySizeOf(unit)];
+                inventories[unit] = slots;
+            }
+
+            return slots;
+        }
+
+        /// <summary>Records an order and gives the answer set in OrderAnswer.</summary>
+        public bool OrderUnit(unit unit, string order)
+        {
+            NoteGone(unit);
+            Orders.Add("immediate " + order);
+            return OrderAnswer;
+        }
+
+        /// <summary>Records an order to a place and gives the answer set in OrderAnswer.</summary>
+        public bool OrderUnitAt(unit unit, string order, float x, float y)
+        {
+            NoteGone(unit);
+            Orders.Add("point " + order);
+            OrderPoints.Add(x);
+            OrderPoints.Add(y);
+            return OrderAnswer;
+        }
+
+        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer.</summary>
+        public bool OrderUnitOn(unit unit, string order, widget target)
+        {
+            NoteGone(unit);
+            Orders.Add("target " + order);
+            OrderTargets.Add(target);
+            return OrderAnswer;
+        }
+
+        /// <summary>The number of inventory slots of a unit; 6 until set.</summary>
+        public int InventorySizeOf(unit unit)
+        {
+            NoteGone(unit);
+            return inventorySizes.TryGetValue(unit, out var size) ? size : 6;
+        }
+
+        /// <summary>The item in a slot; null when empty or out of range.</summary>
+        public item ItemInSlot(unit unit, int slot)
+        {
+            NoteGone(unit);
+            ItemSlotReads++;
+            var slots = SlotsOf(unit);
+            return slot >= 0 && slot < slots.Length ? slots[slot] : null!;
+        }
+
+        /// <summary>Puts an item in the first free slot, and as the game does, delivers the pick-up when it is listened for; false when no slot is free.</summary>
+        public bool GiveItem(unit unit, item item)
+        {
+            NoteGone(unit);
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == null)
+                {
+                    InventoryCalls.Add("give");
+                    slots[i] = item;
+                    if (Listening.Contains(GameEvent.PickUp))
+                    {
+                        Inbound.PickedUp(unit, item);
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Takes an item out of its slot, and as the game does, delivers the drop when it is listened for.</summary>
+        public void DropItem(unit unit, item item)
+        {
+            NoteGone(unit);
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    InventoryCalls.Add("drop");
+                    slots[i] = null!;
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, item);
+                    }
+
+                    return;
+                }
+            }
         }
     }
 }

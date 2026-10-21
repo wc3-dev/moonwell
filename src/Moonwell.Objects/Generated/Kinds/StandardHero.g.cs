@@ -585,7 +585,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>uagi</c>.</summary>
         [global::Moonwell.Objects.Field("uagi", Label = "Starting Agility")]
         [global::Moonwell.Objects.Limits(1, 100)]
-        public int Agility
+        public int StartingAgility
         {
             get { return Fields.Get<int>(this, "uagi"); }
             protected set { Fields.Put("uagi", value); }
@@ -1270,7 +1270,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>uint</c>.</summary>
         [global::Moonwell.Objects.Field("uint", Label = "Starting Intelligence")]
         [global::Moonwell.Objects.Limits(1, 100)]
-        public int Intelligence
+        public int StartingIntelligence
         {
             get { return Fields.Get<int>(this, "uint"); }
             protected set { Fields.Put("uint", value); }
@@ -1315,7 +1315,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>ulev</c>.</summary>
         [global::Moonwell.Objects.Field("ulev", Label = "Level")]
         [global::Moonwell.Objects.Limits(1, 100)]
-        public int Level
+        public int UnitLevel
         {
             get { return Fields.Get<int>(this, "ulev"); }
             protected set { Fields.Put("ulev", value); }
@@ -1497,7 +1497,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>umpm</c>.</summary>
         [global::Moonwell.Objects.Field("umpm", Label = "Mana Maximum")]
         [global::Moonwell.Objects.Limits(0, 100000)]
-        public int Mana
+        public int ManaPoints
         {
             get { return Fields.Get<int>(this, "umpm"); }
             protected set { Fields.Put("umpm", value); }
@@ -1960,7 +1960,7 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.Field("usca", Label = "Scaling Value")]
         [global::Moonwell.Objects.Limits(0.1, 10)]
         [global::Moonwell.Objects.NonNegative]
-        public float Scale
+        public float ScalingValue
         {
             get { return Fields.Get<float>(this, "usca"); }
             protected set { Fields.Put("usca", value); }
@@ -2227,7 +2227,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>ustr</c>.</summary>
         [global::Moonwell.Objects.Field("ustr", Label = "Starting Strength")]
         [global::Moonwell.Objects.Limits(1, 100)]
-        public int Strength
+        public int StartingStrength
         {
             get { return Fields.Get<int>(this, "ustr"); }
             protected set { Fields.Put("ustr", value); }

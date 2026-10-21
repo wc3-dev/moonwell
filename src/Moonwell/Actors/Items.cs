@@ -51,6 +51,7 @@ namespace Moonwell
 
             made.Handle = handle;
             made.TypeId = typeId;
+            made.OwningPlayer = Runtime.World.ItemOwnerOf(handle);
             known[handle] = made;
             Live.Add(made);
             owner?.Adopt(made);

@@ -166,5 +166,161 @@ namespace Moonwell.Hosting
 
         /// <summary>Takes an ability from a unit.</summary>
         void RemoveAbility(unit unit, int abilityId);
+
+        /// <summary>The life of a unit.</summary>
+        float LifeOf(unit unit);
+
+        /// <summary>Sets the life of a unit; a unit left below 0.405 life dies.</summary>
+        void SetLife(unit unit, float life);
+
+        /// <summary>The most life a unit can have.</summary>
+        float MaxLifeOf(unit unit);
+
+        /// <summary>Sets the most life a unit can have.</summary>
+        void SetMaxLife(unit unit, float life);
+
+        /// <summary>The mana of a unit.</summary>
+        float ManaOf(unit unit);
+
+        /// <summary>Sets the mana of a unit.</summary>
+        void SetMana(unit unit, float mana);
+
+        /// <summary>The most mana a unit can have.</summary>
+        float MaxManaOf(unit unit);
+
+        /// <summary>Sets the most mana a unit can have.</summary>
+        void SetMaxMana(unit unit, float mana);
+
+        /// <summary>The x of a unit.</summary>
+        float UnitX(unit unit);
+
+        /// <summary>The y of a unit.</summary>
+        float UnitY(unit unit);
+
+        /// <summary>Moves a unit to a place the way the game does for a unit that is told to stand there: it finds a free spot and the unit's order ends.</summary>
+        void MoveUnit(unit unit, float x, float y);
+
+        /// <summary>Puts a unit at a place with no pathing check; the unit's order goes on.</summary>
+        void PlaceUnit(unit unit, float x, float y);
+
+        /// <summary>The facing of a unit, in degrees.</summary>
+        float FacingOf(unit unit);
+
+        /// <summary>Orders a unit to turn to a facing, in degrees, at its turn rate.</summary>
+        void TurnUnit(unit unit, float degrees);
+
+        /// <summary>Sets the facing of a unit, in degrees, at once.</summary>
+        void FaceUnitNow(unit unit, float degrees);
+
+        /// <summary>The level of a unit; a hero's hero level.</summary>
+        int LevelOf(unit unit);
+
+        /// <summary>Whether a unit is alive.</summary>
+        bool IsAlive(unit unit);
+
+        /// <summary>Kills a unit through the game; the game then delivers the unit's death, with no killer, before the call returns.</summary>
+        void SlayUnit(unit unit);
+
+        /// <summary>A hero's experience.</summary>
+        int ExperienceOf(unit hero);
+
+        /// <summary>Sets a hero's experience; the game gives the levels that come with it, with the level-up effect when asked.</summary>
+        void SetExperience(unit hero, int experience, bool showEffect);
+
+        /// <summary>Gives a hero a level, with the level-up effect when asked.</summary>
+        void LevelHero(unit hero, int level, bool showEffect);
+
+        /// <summary>A hero's strength; with the bonus items and auras give when asked.</summary>
+        int StrengthOf(unit hero, bool withBonus);
+
+        /// <summary>A hero's agility; with the bonus items and auras give when asked.</summary>
+        int AgilityOf(unit hero, bool withBonus);
+
+        /// <summary>A hero's intelligence; with the bonus items and auras give when asked.</summary>
+        int IntelligenceOf(unit hero, bool withBonus);
+
+        /// <summary>Sets a hero's base strength for good.</summary>
+        void SetStrength(unit hero, int strength);
+
+        /// <summary>Sets a hero's base agility for good.</summary>
+        void SetAgility(unit hero, int agility);
+
+        /// <summary>Sets a hero's base intelligence for good.</summary>
+        void SetIntelligence(unit hero, int intelligence);
+
+        /// <summary>The skill points a hero has to spend.</summary>
+        int SkillPointsOf(unit hero);
+
+        /// <summary>Adds skill points to a hero, or takes them with a negative number; the game's answer.</summary>
+        bool AddSkillPoints(unit hero, int delta);
+
+        /// <summary>Revives a dead hero at a place, with the revive effect when asked; the game's answer.</summary>
+        bool ReviveAt(unit hero, float x, float y, bool showEffect);
+
+        /// <summary>Whether a unit is paused.</summary>
+        bool IsPausedUnit(unit unit);
+
+        /// <summary>Pauses or unpauses a unit.</summary>
+        void SetPaused(unit unit, bool paused);
+
+        /// <summary>The size of a unit's model, as a factor.</summary>
+        float ScaleOf(unit unit);
+
+        /// <summary>Sets the size of a unit's model on all three axes.</summary>
+        void ScaleUnit(unit unit, float scale);
+
+        /// <summary>Tints a unit's model; each value is 0-255.</summary>
+        void TintUnit(unit unit, int red, int green, int blue, int alpha);
+
+        /// <summary>The height a unit flies at above the ground.</summary>
+        float FlyHeightOf(unit unit);
+
+        /// <summary>Sets the height a unit flies at, at once.</summary>
+        void SetFlyHeight(unit unit, float height);
+
+        /// <summary>Gives a unit an order that needs no place and no target; the game's answer.</summary>
+        bool OrderUnit(unit unit, string order);
+
+        /// <summary>Gives a unit an order to a place; the game's answer.</summary>
+        bool OrderUnitAt(unit unit, string order, float x, float y);
+
+        /// <summary>Gives a unit an order on a widget (a unit, an item or a destructable); the game's answer.</summary>
+        bool OrderUnitOn(unit unit, string order, widget target);
+
+        /// <summary>The number of inventory slots of a unit.</summary>
+        int InventorySizeOf(unit unit);
+
+        /// <summary>The item in a slot of a unit's inventory (0-based); null when the slot is empty.</summary>
+        item ItemInSlot(unit unit, int slot);
+
+        /// <summary>Gives a unit an item to pick up into its inventory, which the game counts as a pick-up; the game's answer.</summary>
+        bool GiveItem(unit unit, item item);
+
+        /// <summary>Makes a unit drop an item from its inventory, which the game counts as a drop.</summary>
+        void DropItem(unit unit, item item);
+
+        /// <summary>Whether a unit has an item in its inventory.</summary>
+        bool CarriesItem(unit unit, item item);
+
+        /// <summary>The number of charges of an item.</summary>
+        int ChargesOf(item item);
+
+        /// <summary>Sets the number of charges of an item.</summary>
+        void SetCharges(item item, int charges);
+
+        /// <summary>The player that owns an item.</summary>
+        player ItemOwnerOf(item item);
+
+        /// <summary>Sets the player that owns an item, leaving the item's colour as it is.</summary>
+        void SetItemOwner(item item, player player);
+
+        /// <summary>The x of an item.</summary>
+        float ItemX(item item);
+
+        /// <summary>The y of an item.</summary>
+        float ItemY(item item);
+
+        /// <summary>Moves an item to a place.</summary>
+        void MoveItem(item item, float x, float y);
     }
 }

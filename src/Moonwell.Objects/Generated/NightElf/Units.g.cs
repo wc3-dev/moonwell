@@ -737,8 +737,8 @@ namespace Moonwell.Objects
                     RepairLumberCost = 30;
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
-                    Scale = 1f;
                     ScaleProjectiles = true;
+                    ScalingValue = 1f;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
                     SelectionScale = 4.5f;
@@ -1014,7 +1014,6 @@ namespace Moonwell.Objects
                     Hotkey = "A";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNArcher.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -1074,6 +1073,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 2;
                     UnitSoundSet = "Archer";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheMoon, global::Moonwell.Objects.NightElf.Upgrades.MoonArmor, global::Moonwell.Objects.NightElf.Upgrades.ImprovedBows, global::Moonwell.Objects.NightElf.Upgrades.Marksmanship, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
                     UseClickHelper = false;
@@ -1158,13 +1158,12 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNSpiritOfVengeance.blp";
                     IsABuilding = false;
-                    Level = 7;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 0;
-                    Mana = 400;
                     ManaInitialAmount = 400;
+                    ManaPoints = 400;
                     ManaRegen = 2f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -1219,6 +1218,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 7;
                     UnitSoundSet = "SpiritOfVengeance";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -1323,7 +1323,6 @@ namespace Moonwell.Objects
                     Hotkey = "C";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNChimaera.blp";
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -1382,6 +1381,7 @@ namespace Moonwell.Objects
                     TooltipExtended = "Flying two headed Dragon. Can learn Corrosive Breath. |n|n|cffffcc00Attacks land units.|r";
                     TurnRate = 0.5f;
                     Type = global::Moonwell.Objects.MoveType.Fly;
+                    UnitLevel = 5;
                     UnitSoundSet = "Chimaera";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.CorrosiveBreath, global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -1523,7 +1523,6 @@ namespace Moonwell.Objects
                 {
                     Abilities.Set<global::Moonwell.Objects.Other.Abilities.Inventory, global::Moonwell.Objects.NightElf.Abilities.Ultravision>();
                     AcquisitionRange = 650f;
-                    Agility = 21;
                     AgilityPerLevel = 1.5f;
                     AllowCustomTeamColor = false;
                     AnimationBlendTimeSeconds = 0.15f;
@@ -1609,16 +1608,14 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Night;
                     Hotkey = "D";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-demonhunter.blp";
-                    Intelligence = 16;
                     IntelligencePerLevel = 2.1f;
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 100;
-                    Mana = 0;
                     ManaInitialAmount = 100;
+                    ManaPoints = 0;
                     ManaRegen = 0.01f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -1665,11 +1662,13 @@ namespace Moonwell.Objects
                     Speed = 320;
                     SpeedMaximum = 0;
                     SpeedMinimum = 0;
+                    StartingAgility = 21;
+                    StartingIntelligence = 16;
+                    StartingStrength = 19;
                     StockInitialAfterStartDelay = 1;
                     StockMaximum = 3;
                     StockReplenishInterval = 30;
                     StockStartDelay = 120;
-                    Strength = 19;
                     StrengthPerLevel = 2.4f;
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
@@ -1684,6 +1683,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.5f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 5;
                     UnitSoundSet = "HeroDemonHunter";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -1701,7 +1701,6 @@ namespace Moonwell.Objects
                 {
                     Abilities.Set<global::Moonwell.Objects.Other.Abilities.Inventory, global::Moonwell.Objects.NightElf.Abilities.Ultravision>();
                     AcquisitionRange = 650f;
-                    Agility = 20;
                     AgilityPerLevel = 1.5f;
                     AllowCustomTeamColor = false;
                     AnimationBlendTimeSeconds = 0.15f;
@@ -1791,16 +1790,14 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Night;
                     Hotkey = "D";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-demonhunter.blp";
-                    Intelligence = 16;
                     IntelligencePerLevel = 2.1f;
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 100;
-                    Mana = 0;
                     ManaInitialAmount = 100;
+                    ManaPoints = 0;
                     ManaRegen = 0.01f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -1852,11 +1849,13 @@ namespace Moonwell.Objects
                     Speed = 320;
                     SpeedMaximum = 0;
                     SpeedMinimum = 0;
+                    StartingAgility = 20;
+                    StartingIntelligence = 16;
+                    StartingStrength = 26;
                     StockInitialAfterStartDelay = 1;
                     StockMaximum = 3;
                     StockReplenishInterval = 30;
                     StockStartDelay = 0;
-                    Strength = 26;
                     StrengthPerLevel = 2.4f;
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
@@ -1871,6 +1870,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.5f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 5;
                     UnitSoundSet = "HeroDemonHunterMorphed";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -1956,13 +1956,12 @@ namespace Moonwell.Objects
                     Hotkey = "C";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNBearForm.blp";
                     IsABuilding = false;
-                    Level = 4;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 80;
-                    Mana = 200;
                     ManaInitialAmount = 100;
+                    ManaPoints = 200;
                     ManaRegen = 0.33333334f;
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 10f;
@@ -2025,6 +2024,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 4;
                     UnitSoundSet = "DruidoftheClawMorphed";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.DruidOfTheClawAdeptTraining, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
                     UseClickHelper = false;
@@ -2111,13 +2111,12 @@ namespace Moonwell.Objects
                     Hotkey = "C";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNDruidOfTheClaw.blp";
                     IsABuilding = false;
-                    Level = 4;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 80;
-                    Mana = 200;
                     ManaInitialAmount = 100;
+                    ManaPoints = 200;
                     ManaRegen = 0.6666667f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -2177,6 +2176,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 4;
                     UnitSoundSet = "DruidoftheClaw";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.DruidOfTheClawAdeptTraining, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.Backpack, global::Moonwell.Objects.NightElf.Upgrades.MarkOfTheClaw>();
                     UseClickHelper = false;
@@ -2267,13 +2267,12 @@ namespace Moonwell.Objects
                     Hotkey = "T";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNDruidOfTheTalon.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 20;
-                    Mana = 200;
                     ManaInitialAmount = 75;
+                    ManaPoints = 200;
                     ManaRegen = 0.6666667f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -2331,6 +2330,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 2;
                     UnitSoundSet = "DruidoftheTalon";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.DruidOfTheTalonAdeptTraining, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.Backpack, global::Moonwell.Objects.NightElf.Upgrades.MarkOfTheTalon>();
                     UseClickHelper = false;
@@ -2421,13 +2421,12 @@ namespace Moonwell.Objects
                     Hotkey = "T";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNRavenForm.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 20;
-                    Mana = 200;
                     ManaInitialAmount = 75;
+                    ManaPoints = 200;
                     ManaRegen = 0.6666667f;
                     MaximumPitchAngleDegrees = 33f;
                     MaximumRollAngleDegrees = 25f;
@@ -2487,6 +2486,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Fly;
+                    UnitLevel = 2;
                     UnitSoundSet = "DruidoftheTalonMorphed";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.DruidOfTheTalonAdeptTraining>();
                     UseClickHelper = false;
@@ -2572,13 +2572,12 @@ namespace Moonwell.Objects
                     Hotkey = "D";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNDryad.blp";
                     IsABuilding = false;
-                    Level = 3;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 60;
-                    Mana = 200;
                     ManaInitialAmount = 75;
+                    ManaPoints = 200;
                     ManaRegen = 0.75f;
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 10f;
@@ -2635,6 +2634,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.5f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 3;
                     UnitSoundSet = "Dryad";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.AbolishMagic, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
                     UseClickHelper = false;
@@ -2841,13 +2841,12 @@ namespace Moonwell.Objects
                     Hotkey = "F";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNFaerieDragon.blp";
                     IsABuilding = false;
-                    Level = 3;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 25;
-                    Mana = 200;
                     ManaInitialAmount = 75;
+                    ManaPoints = 200;
                     ManaRegen = 0.75f;
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 33f;
@@ -2904,6 +2903,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Fly;
+                    UnitLevel = 3;
                     UnitSoundSet = "FaerieDragon";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -3011,7 +3011,6 @@ namespace Moonwell.Objects
                     Hotkey = "T";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNGlaiveThrower.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -3075,6 +3074,7 @@ namespace Moonwell.Objects
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
                     UnitClassification = global::Moonwell.Objects.UnitClass.Mechanical;
+                    UnitLevel = 2;
                     UnitSoundSet = "Ballista";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheMoon, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.VorpalBlades>();
                     UseClickHelper = false;
@@ -3158,7 +3158,6 @@ namespace Moonwell.Objects
                     Hotkey = "H";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNHippogriff.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -3217,6 +3216,7 @@ namespace Moonwell.Objects
                     TooltipExtended = "Flying melee attack beast. Has the Hippogryph Taming ability. |n|n|cffffcc00Attacks air units.|r";
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Fly;
+                    UnitLevel = 2;
                     UnitSoundSet = "Hippogryph";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.HippogryphTaming, global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -3304,7 +3304,6 @@ namespace Moonwell.Objects
                     Hotkey = "R";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNHippogriffRider.blp";
                     IsABuilding = false;
-                    Level = 4;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -3363,6 +3362,7 @@ namespace Moonwell.Objects
                     TooltipExtended = "Archer mounted Hippogryph. |n|n|cffffcc00Attacks land and air units.|r";
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Fly;
+                    UnitLevel = 4;
                     UnitSoundSet = "RiddenHippogryph";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheMoon, global::Moonwell.Objects.NightElf.Upgrades.MoonArmor, global::Moonwell.Objects.NightElf.Upgrades.ImprovedBows, global::Moonwell.Objects.NightElf.Upgrades.Marksmanship, global::Moonwell.Objects.NightElf.Upgrades.HippogryphTaming, global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -3574,7 +3574,6 @@ namespace Moonwell.Objects
                     Hotkey = "H";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNHuntress.blp";
                     IsABuilding = false;
-                    Level = 3;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -3636,6 +3635,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 3;
                     UnitSoundSet = "Huntress";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheMoon, global::Moonwell.Objects.NightElf.Upgrades.MoonArmor, global::Moonwell.Objects.NightElf.Upgrades.Sentinel, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.UpgradeMoonGlaive, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
                     UseClickHelper = false;
@@ -3653,7 +3653,6 @@ namespace Moonwell.Objects
                 {
                     Abilities.Set<global::Moonwell.Objects.Other.Abilities.Inventory, global::Moonwell.Objects.NightElf.Abilities.Ultravision>();
                     AcquisitionRange = 600f;
-                    Agility = 15;
                     AgilityPerLevel = 1.5f;
                     AllowCustomTeamColor = false;
                     AnimationBlendTimeSeconds = 0.15f;
@@ -3738,16 +3737,14 @@ namespace Moonwell.Objects
                     Hotkey = "K";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNKeeperOfTheGrove.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-keeperofthegrove.blp";
-                    Intelligence = 18;
                     IntelligencePerLevel = 2.7f;
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 100;
-                    Mana = 0;
                     ManaInitialAmount = 100;
+                    ManaPoints = 0;
                     ManaRegen = 0.01f;
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 10f;
@@ -3796,11 +3793,13 @@ namespace Moonwell.Objects
                     Speed = 320;
                     SpeedMaximum = 0;
                     SpeedMinimum = 0;
+                    StartingAgility = 15;
+                    StartingIntelligence = 18;
+                    StartingStrength = 16;
                     StockInitialAfterStartDelay = 1;
                     StockMaximum = 3;
                     StockReplenishInterval = 30;
                     StockStartDelay = 0;
-                    Strength = 16;
                     StrengthPerLevel = 2f;
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
@@ -3815,6 +3814,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Horse;
+                    UnitLevel = 5;
                     UnitSoundSet = "HeroKeeperoftheGrove";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -3893,8 +3893,8 @@ namespace Moonwell.Objects
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 40;
-                    Mana = 300;
                     ManaInitialAmount = 100;
+                    ManaPoints = 300;
                     ManaRegen = 1.45f;
                     MaximumPitchAngleDegrees = 0f;
                     MaximumRollAngleDegrees = 0f;
@@ -4034,7 +4034,6 @@ namespace Moonwell.Objects
                     Hotkey = "G";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNMountainGiant.blp";
                     IsABuilding = false;
-                    Level = 6;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -4095,6 +4094,7 @@ namespace Moonwell.Objects
                     TransportedSize = 4;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 6;
                     UnitSoundSet = "MountainGiant";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.ResistantSkin, global::Moonwell.Objects.NightElf.Upgrades.HardenedSkin, global::Moonwell.Objects.NightElf.Upgrades.Backpack, global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -4471,7 +4471,6 @@ namespace Moonwell.Objects
                 {
                     Abilities.Set<global::Moonwell.Objects.NightElf.Abilities.ShadowMeld, global::Moonwell.Objects.Other.Abilities.Inventory, global::Moonwell.Objects.NightElf.Abilities.Ultravision>();
                     AcquisitionRange = 650f;
-                    Agility = 19;
                     AgilityPerLevel = 1.5f;
                     AllowCustomTeamColor = false;
                     AnimationBlendTimeSeconds = 0.15f;
@@ -4556,16 +4555,14 @@ namespace Moonwell.Objects
                     Hotkey = "P";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNPriestessOfTheMoon.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-priestessofthemoon.blp";
-                    Intelligence = 15;
                     IntelligencePerLevel = 2.6f;
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 100;
-                    Mana = 0;
                     ManaInitialAmount = 100;
+                    ManaPoints = 0;
                     ManaRegen = 0.01f;
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 10f;
@@ -4614,11 +4611,13 @@ namespace Moonwell.Objects
                     Speed = 320;
                     SpeedMaximum = 0;
                     SpeedMinimum = 0;
+                    StartingAgility = 19;
+                    StartingIntelligence = 15;
+                    StartingStrength = 18;
                     StockInitialAfterStartDelay = 1;
                     StockMaximum = 3;
                     StockReplenishInterval = 30;
                     StockStartDelay = 0;
-                    Strength = 18;
                     StrengthPerLevel = 1.9f;
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
@@ -4633,6 +4632,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Horse;
+                    UnitLevel = 5;
                     UnitSoundSet = "HeroMoonPriestess";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -4716,7 +4716,6 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNAvengingWatcher.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -4744,8 +4743,8 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 20;
-                    Scale = 1f;
                     ScaleProjectiles = true;
+                    ScalingValue = 1f;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
                     SelectionScale = 1f;
@@ -4774,6 +4773,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 2;
                     UnitSoundSet = "Vengeance";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -4854,7 +4854,6 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Night;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNEnt.blp";
                     IsABuilding = false;
-                    Level = 2;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -4883,8 +4882,8 @@ namespace Moonwell.Objects
                     RepairLumberCost = 0;
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
-                    Scale = 1f;
                     ScaleProjectiles = true;
+                    ScalingValue = 1f;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
                     SelectionScale = 1.5f;
@@ -4913,6 +4912,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.5f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 2;
                     UnitSoundSet = "Ent";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.NaturesBlessing>();
                     UseClickHelper = false;
@@ -5412,7 +5412,6 @@ namespace Moonwell.Objects
                 {
                     Abilities.Set<global::Moonwell.Objects.NightElf.Abilities.ShadowMeld, global::Moonwell.Objects.Other.Abilities.Inventory, global::Moonwell.Objects.NightElf.Abilities.Ultravision>();
                     AcquisitionRange = 650f;
-                    Agility = 20;
                     AgilityPerLevel = 1.6f;
                     AllowCustomTeamColor = false;
                     AnimationBlendTimeSeconds = 0.15f;
@@ -5497,16 +5496,14 @@ namespace Moonwell.Objects
                     Hotkey = "W";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNHeroWarden.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-warden.blp";
-                    Intelligence = 16;
                     IntelligencePerLevel = 2f;
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 100;
-                    Mana = 0;
                     ManaInitialAmount = 100;
+                    ManaPoints = 0;
                     ManaRegen = 0.01f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -5555,11 +5552,13 @@ namespace Moonwell.Objects
                     Speed = 320;
                     SpeedMaximum = 0;
                     SpeedMinimum = 0;
+                    StartingAgility = 20;
+                    StartingIntelligence = 16;
+                    StartingStrength = 18;
                     StockInitialAfterStartDelay = 1;
                     StockMaximum = 3;
                     StockReplenishInterval = 30;
                     StockStartDelay = 0;
-                    Strength = 18;
                     StrengthPerLevel = 2.4f;
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
@@ -5574,6 +5573,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 5;
                     UnitSoundSet = "HeroWarden";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;
@@ -5646,7 +5646,6 @@ namespace Moonwell.Objects
                     Hotkey = "W";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNWisp.blp";
                     IsABuilding = false;
-                    Level = 1;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -5674,8 +5673,8 @@ namespace Moonwell.Objects
                     RepairGoldCost = 60;
                     RepairLumberCost = 0;
                     RepairTime = 14;
-                    Scale = 1f;
                     ScaleProjectiles = true;
+                    ScalingValue = 1f;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
                     SelectionScale = 1f;
@@ -5703,6 +5702,7 @@ namespace Moonwell.Objects
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Hover;
                     UnitClassification = global::Moonwell.Objects.UnitClass.Peon;
+                    UnitLevel = 1;
                     UnitSoundSet = "Wisp";
                     UpgradesUsed.Set<global::Moonwell.Objects.NightElf.Upgrades.Ultravision>();
                     UseClickHelper = false;

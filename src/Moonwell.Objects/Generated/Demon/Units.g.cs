@@ -107,13 +107,12 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNDoomGuard.blp";
                     IsABuilding = false;
-                    Level = 8;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 120;
-                    Mana = 500;
                     ManaInitialAmount = 500;
+                    ManaPoints = 500;
                     ManaRegen = 1.25f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -170,6 +169,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 8;
                     UnitSoundSet = "DoomGuard";
                     UseClickHelper = false;
                     UseExtendedLineOfSight = false;
@@ -269,13 +269,12 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNDoomGuard.blp";
                     IsABuilding = false;
-                    Level = 8;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 120;
-                    Mana = 500;
                     ManaInitialAmount = 500;
+                    ManaPoints = 500;
                     ManaRegen = 1.25f;
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
@@ -333,6 +332,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 8;
                     UnitSoundSet = "DoomGuard";
                     UseClickHelper = false;
                     UseExtendedLineOfSight = false;
@@ -412,13 +412,12 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNFelHound.blp";
                     IsABuilding = false;
-                    Level = 5;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
                     LumberCost = 50;
-                    Mana = 200;
                     ManaInitialAmount = 200;
+                    ManaPoints = 200;
                     ManaRegen = 0.5f;
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 10f;
@@ -475,6 +474,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.5f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 5;
                     UnitSoundSet = "Felhound";
                     UseClickHelper = false;
                     UseExtendedLineOfSight = false;
@@ -554,7 +554,6 @@ namespace Moonwell.Objects
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNInfernal.blp";
                     IsABuilding = false;
-                    Level = 8;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
                     LumberBountyAwardedSidesPerDie = 0;
@@ -610,6 +609,7 @@ namespace Moonwell.Objects
                     TransportedSize = 1;
                     TurnRate = 0.4f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
+                    UnitLevel = 8;
                     UnitSoundSet = "Infernal";
                     UseClickHelper = false;
                     UseExtendedLineOfSight = false;

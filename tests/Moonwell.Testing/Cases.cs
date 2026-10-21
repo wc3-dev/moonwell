@@ -10,6 +10,15 @@ namespace Moonwell.Testing
         public static List<Case> All()
         {
             var list = new List<Case>();
+            AddFirst(list);
+            AddMiddle(list);
+            AddLast(list);
+            return list;
+        }
+
+        /// <summary>Adds the first cases: the harness, collections, errors, ownership, timers, hooks, actors and objects (Lua allows 200 locals in a function, and each case made here is one).</summary>
+        private static void AddFirst(List<Case> list)
+        {
             list.Add(new Case { Name = "harness.handles-are-keys", Run = HarnessCases.HandlesAreKeys });
             list.Add(new Case { Name = "harness.expect-fails", Run = HarnessCases.ExpectFails });
             list.Add(new Case { Name = "collections.set-keeps-order", Run = CollectionCases.SetKeepsOrder });
@@ -69,6 +78,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "players.print", Run = PlayerCases.PlayersPrint });
             list.Add(new Case { Name = "players.print-seconds", Run = PlayerCases.PlayersPrintSeconds });
             list.Add(new Case { Name = "game.print", Run = PlayerCases.GamePrint });
+        }
+
+        /// <summary>Adds the player, local, unit and inventory cases (Lua allows 200 locals in a function, and each case made here is one).</summary>
+        private static void AddMiddle(List<Case> list)
+        {
             list.Add(new Case { Name = "players.gold", Run = PlayerCases.PlayersGold });
             list.Add(new Case { Name = "players.states", Run = PlayerCases.PlayersStates });
             list.Add(new Case { Name = "players.playing", Run = PlayerCases.PlayersPlaying });
@@ -113,6 +127,37 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.enter", Run = UnitCases.Enter });
             list.Add(new Case { Name = "units.player-after-removal", Run = UnitCases.PlayerAfterRemoval });
             list.Add(new Case { Name = "units.dictionary-key", Run = UnitCases.DictionaryKey });
+            list.Add(new Case { Name = "units.life-and-mana", Run = UnitCases.LifeAndMana });
+            list.Add(new Case { Name = "units.position", Run = UnitCases.Position });
+            list.Add(new Case { Name = "units.move-to", Run = UnitCases.MoveTo });
+            list.Add(new Case { Name = "units.facing", Run = UnitCases.Facing });
+            list.Add(new Case { Name = "units.level", Run = UnitCases.Level });
+            list.Add(new Case { Name = "units.kill", Run = UnitCases.Kill });
+            list.Add(new Case { Name = "units.kill-gone", Run = UnitCases.KillGone });
+            list.Add(new Case { Name = "units.pause", Run = UnitCases.Pause });
+            list.Add(new Case { Name = "units.scale", Run = UnitCases.Scale });
+            list.Add(new Case { Name = "units.tint", Run = UnitCases.Tint });
+            list.Add(new Case { Name = "units.fly-height", Run = UnitCases.FlyHeight });
+            list.Add(new Case { Name = "units.gone-reads-last", Run = UnitCases.GoneReadsLast });
+            list.Add(new Case { Name = "units.order-immediate", Run = UnitCases.OrderImmediate });
+            list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
+            list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
+            list.Add(new Case { Name = "units.order-gone", Run = UnitCases.OrderGone });
+            list.Add(new Case { Name = "units.inventory", Run = ItemCases.Inventory });
+            list.Add(new Case { Name = "units.inventory-limits", Run = ItemCases.InventoryLimits });
+            list.Add(new Case { Name = "units.inventory-gone", Run = ItemCases.InventoryGone });
+        }
+
+        /// <summary>Adds the hero, item, destructable, damage, ability and buff cases, and the rest.</summary>
+        private static void AddLast(List<Case> list)
+        {
+            list.Add(new Case { Name = "heroes.unregistered-is-hero", Run = HeroCases.UnregisteredIsHero });
+            list.Add(new Case { Name = "heroes.experience", Run = HeroCases.Experience });
+            list.Add(new Case { Name = "heroes.level", Run = HeroCases.Level });
+            list.Add(new Case { Name = "heroes.stats", Run = HeroCases.Stats });
+            list.Add(new Case { Name = "heroes.skill-points", Run = HeroCases.SkillPoints });
+            list.Add(new Case { Name = "heroes.revive", Run = HeroCases.Revive });
+            list.Add(new Case { Name = "heroes.gone", Run = HeroCases.Gone });
             list.Add(new Case { Name = "items.registered-class", Run = ItemCases.RegisteredClass });
             list.Add(new Case { Name = "items.fallback-class", Run = ItemCases.FallbackClass });
             list.Add(new Case { Name = "items.pickup-order", Run = ItemCases.PickupOrder });
@@ -120,6 +165,17 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.listen", Run = ItemCases.Listens });
             list.Add(new Case { Name = "items.sweep", Run = ItemCases.SweepDetectsRemoval });
             list.Add(new Case { Name = "items.owned-create", Run = ItemCases.OwnedByOwner });
+            list.Add(new Case { Name = "items.charges", Run = ItemCases.Charges });
+            list.Add(new Case { Name = "items.player", Run = ItemCases.PlayerOf });
+            list.Add(new Case { Name = "items.position", Run = ItemCases.Position });
+            list.Add(new Case { Name = "items.carrier", Run = ItemCases.Carrier });
+            list.Add(new Case { Name = "items.carrier-in-hooks", Run = ItemCases.CarrierInHooks });
+            list.Add(new Case { Name = "items.carrier-dies", Run = ItemCases.CarrierDies });
+            list.Add(new Case { Name = "items.carrier-unseen", Run = ItemCases.CarrierUnseen });
+            list.Add(new Case { Name = "items.carrier-slot-move", Run = ItemCases.CarrierSlotMove });
+            list.Add(new Case { Name = "items.carrier-hero-dies", Run = ItemCases.CarrierHeroDies });
+            list.Add(new Case { Name = "items.player-gone-before-read", Run = ItemCases.PlayerGoneBeforeRead });
+            list.Add(new Case { Name = "items.gone-reads-last", Run = ItemCases.ItemGoneReadsLast });
             list.Add(new Case { Name = "destructables.watch", Run = DestructableCases.Watch });
             list.Add(new Case { Name = "destructables.sweep", Run = DestructableCases.SweepDetectsRemoval });
             list.Add(new Case { Name = "damage.order", Run = DamageCases.Order });
@@ -184,7 +240,6 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "floats.folded", Run = FloatCases.Folded });
             list.Add(new Case { Name = "floats.stored", Run = FloatCases.Stored });
             list.Add(new Case { Name = "floats.ints-stay", Run = FloatCases.IntsStay });
-            return list;
         }
 
         /// <summary>Runs every case on a fresh world, and returns a PASS or FAIL line for each, then DONE.</summary>

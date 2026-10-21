@@ -48,6 +48,7 @@ namespace Moonwell
                 return;
             }
 
+            picked.CarrierUnit = by;
             ItemPickedUp(picked, by);
             UnitItemPickedUp(by, picked);
         }
