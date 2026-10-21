@@ -105,6 +105,24 @@ namespace Moonwell.Testing
         /// <summary>The red, green, blue and alpha each unit was last tinted with.</summary>
         public Dictionary<unit, int[]> Tints = new Dictionary<unit, int[]>();
 
+        /// <summary>The drops of units the runtime removed (RemoveUnit): the game fires them after the call (seen 10-21), so they wait for the next Advance. The items are removed with the unit.</summary>
+        private readonly List<KeyValuePair<unit, item>> pendingDrops = new List<KeyValuePair<unit, item>>();
+
+        /// <summary>The units the game has removed but whose handles still answer: every number reads 0, as the game gives in the quarter second before the sweep.</summary>
+        private readonly HashSet<unit> vanishedUnits = new HashSet<unit>();
+
+        /// <summary>The items the game has removed but whose handles still answer: every number reads 0.</summary>
+        private readonly HashSet<item> vanishedItems = new HashSet<item>();
+
+        /// <summary>The units whose type flies (UNIT_TYPE_FLYING).</summary>
+        private readonly HashSet<unit> flyers = new HashSet<unit>();
+
+        /// <summary>The units that have been given the Amrf ability.</summary>
+        private readonly HashSet<unit> crowFormed = new HashSet<unit>();
+
+        /// <summary>The units that can show a fly height: those whose type flies and those that had Amrf added and removed.</summary>
+        private readonly HashSet<unit> floaters = new HashSet<unit>();
+
         /// <summary>The units that have been killed.</summary>
         private readonly HashSet<unit> dead = new HashSet<unit>();
 
@@ -256,18 +274,33 @@ namespace Moonwell.Testing
         {
             unitTypes[u] = 0;
             ownerless.Add(u);
+            vanishedUnits.Add(u);
         }
 
         /// <summary>Makes an item vanish the way the game does: its type id reads 0 and nothing is told.</summary>
         public void VanishItem(item i)
         {
             itemTypes[i] = 0;
+            vanishedItems.Add(i);
         }
 
         /// <summary>Makes a destructable vanish the way the game does: its type id reads 0 and nothing is told.</summary>
         public void VanishDestructable(destructable d)
         {
             destructableTypes[d] = 0;
+        }
+
+        /// <summary>Makes a unit one whose type flies: CanFly answers true and it shows a fly height at once.</summary>
+        public void MakeFlying(unit u)
+        {
+            flyers.Add(u);
+            floaters.Add(u);
+        }
+
+        /// <summary>Whether the unit would be seen above the ground: its type flies, or Amrf was added and removed (seen 10-21: a ground unit's fly height reads back but shows only then), and a height is set.</summary>
+        public bool Floats(unit u)
+        {
+            return (floaters.Contains(u) || AbilityLevel(u, CrowForm) > 0) && flyHeights.TryGetValue(u, out var height) && height != 0.0f;
         }
 
         /// <summary>Sets the level an ability has on a unit.</summary>
@@ -312,6 +345,7 @@ namespace Moonwell.Testing
         public void Advance(float seconds)
         {
             var target = Time + seconds;
+            DeliverPendingDrops();
             while (WakeAt.HasValue && WakeAt.Value <= target + 0.001f)
             {
                 Time = WakeAt.Value;
@@ -320,6 +354,27 @@ namespace Moonwell.Testing
             }
 
             Time = target;
+        }
+
+        /// <summary>Fires the drop events that waited for the end of the call that removed their unit, when they are listened for, and then removes the items with the unit.</summary>
+        private void DeliverPendingDrops()
+        {
+            if (pendingDrops.Count == 0)
+            {
+                return;
+            }
+
+            var waiting = new List<KeyValuePair<unit, item>>(pendingDrops);
+            pendingDrops.Clear();
+            foreach (var drop in waiting)
+            {
+                if (Listening.Contains(GameEvent.Drop))
+                {
+                    Inbound.Dropped(drop.Key, drop.Value);
+                }
+
+                VanishItem(drop.Value);
+            }
         }
 
         /// <summary>The game seconds since the world was made.</summary>
@@ -545,11 +600,33 @@ namespace Moonwell.Testing
             return 0;
         }
 
-        /// <summary>Records a unit removed by the runtime, and reads its type id as 0.</summary>
+        /// <summary>Records a unit removed by the runtime, and reads its type id as 0. The unit's items leave its slots inside the call, at its place; their drop events come after the call, at the next Advance, and the items are removed with the unit (seen 10-21 for a hero).</summary>
         public void DeleteUnit(unit unit)
         {
             RemovedUnits.Add(unit);
+            if (inventories.TryGetValue(unit, out var slots))
+            {
+                for (var i = 0; i < slots.Length; i++)
+                {
+                    var carried = slots[i];
+                    if (carried != null)
+                    {
+                        slots[i] = null!;
+                        LandAt(unit, carried);
+                        pendingDrops.Add(new KeyValuePair<unit, item>(unit, carried));
+                    }
+                }
+            }
+
             unitTypes[unit] = 0;
+        }
+
+        /// <summary>Puts an item that leaves a unit's slots on the ground at the unit's place.</summary>
+        private void LandAt(unit unit, item item)
+        {
+            unitXs.TryGetValue(unit, out var x);
+            unitYs.TryGetValue(unit, out var y);
+            itemPlaces[item] = new float[] { x, y };
         }
 
         /// <summary>Records an item removed by the runtime, and reads its type id as 0.</summary>
@@ -718,6 +795,10 @@ namespace Moonwell.Testing
         public void AddAbility(unit unit, int abilityId)
         {
             AbilityCalls.Add("add " + abilityId);
+            if (abilityId == CrowForm)
+            {
+                crowFormed.Add(unit);
+            }
         }
 
         /// <summary>Records a hide-ability call.</summary>
@@ -730,7 +811,14 @@ namespace Moonwell.Testing
         public void RemoveAbility(unit unit, int abilityId)
         {
             AbilityCalls.Add("remove " + abilityId);
+            if (abilityId == CrowForm && crowFormed.Remove(unit))
+            {
+                floaters.Add(unit);
+            }
         }
+
+        /// <summary>The id of Crow Form (Amrf), whose adding and removing lets a ground unit show a fly height.</summary>
+        public static readonly int CrowForm = ObjectTypes.FourCC("Amrf");
 
         /// <summary>Counts a call on an item the world has removed.</summary>
         private void NoteGoneItem(item item)
@@ -745,6 +833,11 @@ namespace Moonwell.Testing
         public int ChargesOf(item item)
         {
             NoteGoneItem(item);
+            if (vanishedItems.Contains(item))
+            {
+                return 0;
+            }
+
             return itemCharges.TryGetValue(item, out var charges) ? charges : 1;
         }
 
@@ -823,21 +916,24 @@ namespace Moonwell.Testing
         public float ItemX(item item)
         {
             NoteGoneItem(item);
-            return itemPlaces.TryGetValue(item, out var place) ? place[0] : 0.0f;
+            return !vanishedItems.Contains(item) && itemPlaces.TryGetValue(item, out var place) ? place[0] : 0.0f;
         }
 
         /// <summary>The y of an item; 0 until placed.</summary>
         public float ItemY(item item)
         {
             NoteGoneItem(item);
-            return itemPlaces.TryGetValue(item, out var place) ? place[1] : 0.0f;
+            return !vanishedItems.Contains(item) && itemPlaces.TryGetValue(item, out var place) ? place[1] : 0.0f;
         }
 
-        /// <summary>Moves an item to the place given and records "move".</summary>
+        /// <summary>The place (x, y) the game puts every moved item at when set, as it snaps a place on a tree or past the edge to a pathable spot (seen 10-21); null puts it where it was asked.</summary>
+        public float[]? ItemLandsAt;
+
+        /// <summary>Moves an item to the place given, or to <see cref="ItemLandsAt"/> when set, and records "move".</summary>
         public void MoveItem(item item, float x, float y)
         {
             NoteGoneItem(item);
-            itemPlaces[item] = new float[] { x, y };
+            itemPlaces[item] = ItemLandsAt != null ? new float[] { ItemLandsAt[0], ItemLandsAt[1] } : new float[] { x, y };
             ItemCalls.Add("move");
         }
 
@@ -860,6 +956,11 @@ namespace Moonwell.Testing
         private float Kept(Dictionary<unit, float> values, unit unit)
         {
             NoteGone(unit);
+            if (vanishedUnits.Contains(unit))
+            {
+                return 0.0f;
+            }
+
             return values.TryGetValue(unit, out var value) ? value : 0.0f;
         }
 
@@ -869,11 +970,17 @@ namespace Moonwell.Testing
             return Kept(lives, unit);
         }
 
-        /// <summary>Sets the life of a unit, as given.</summary>
+        /// <summary>Sets the life of a unit; above the most life, once one is set, it is clamped to it (seen 10-21); 0.405 or less kills it as KillUnit does (seen 10-20).</summary>
         public void SetLife(unit unit, float life)
         {
             NoteGone(unit);
-            lives[unit] = life;
+            if (life <= 0.405f)
+            {
+                Die(unit);
+                return;
+            }
+
+            lives[unit] = maxLives.TryGetValue(unit, out var most) && life > most ? most : life;
         }
 
         /// <summary>The most life of a unit; 0 until set.</summary>
@@ -886,7 +993,11 @@ namespace Moonwell.Testing
         public void SetMaxLife(unit unit, float life)
         {
             NoteGone(unit);
-            maxLives[unit] = life;
+            maxLives[unit] = (int)life;
+            if (lives.TryGetValue(unit, out var kept) && kept > (int)life)
+            {
+                lives[unit] = (int)life;
+            }
         }
 
         /// <summary>The mana of a unit; 0 until set.</summary>
@@ -895,11 +1006,11 @@ namespace Moonwell.Testing
             return Kept(manas, unit);
         }
 
-        /// <summary>Sets the mana of a unit, as given.</summary>
+        /// <summary>Sets the mana of a unit; above the most mana, once one is set, it is clamped to it (seen 10-21).</summary>
         public void SetMana(unit unit, float mana)
         {
             NoteGone(unit);
-            manas[unit] = mana;
+            manas[unit] = maxManas.TryGetValue(unit, out var most) && mana > most ? most : mana;
         }
 
         /// <summary>The most mana of a unit; 0 until set.</summary>
@@ -912,7 +1023,11 @@ namespace Moonwell.Testing
         public void SetMaxMana(unit unit, float mana)
         {
             NoteGone(unit);
-            maxManas[unit] = mana;
+            maxManas[unit] = (int)mana;
+            if (manas.TryGetValue(unit, out var kept) && kept > (int)mana)
+            {
+                manas[unit] = (int)mana;
+            }
         }
 
         /// <summary>The x of a unit; 0 until set.</summary>
@@ -977,6 +1092,11 @@ namespace Moonwell.Testing
         public int LevelOf(unit unit)
         {
             NoteGone(unit);
+            if (vanishedUnits.Contains(unit))
+            {
+                return 0;
+            }
+
             return levels.TryGetValue(unit, out var level) ? level : 1;
         }
 
@@ -987,12 +1107,24 @@ namespace Moonwell.Testing
             return !dead.Contains(unit);
         }
 
-        /// <summary>Kills a unit as the game does: the unit is dead, and when deaths are listened for, its death is delivered inside the call, with no killer.</summary>
+        /// <summary>Kills a unit as the game does: the unit is dead with life 0, and when deaths are listened for, its death is delivered inside the call, with no killer; killing a dead unit does nothing.</summary>
         public void SlayUnit(unit unit)
         {
             NoteGone(unit);
             KillCalls++;
-            dead.Add(unit);
+            Die(unit);
+        }
+
+        /// <summary>The death itself, for KillUnit and for a life set to 0.405 or less: life 0, the death inside the call when deaths are listened for, and nothing for a unit already dead (seen 10-21).</summary>
+        private void Die(unit unit)
+        {
+            if (!dead.Add(unit))
+            {
+                // A second KillUnit on the dead unit fires nothing (seen 10-21).
+                return;
+            }
+
+            lives[unit] = 0.0f;
             if (Listening.Contains(GameEvent.Death))
             {
                 Inbound.Died(unit, null);
@@ -1001,7 +1133,7 @@ namespace Moonwell.Testing
             DropAll(unit);
         }
 
-        /// <summary>Empties a dead unit's slots as the game drops the items of a unit that is not a hero, delivering each drop when it is listened for. Assumed, not seen: whether heroes keep their items, and whether the drops are fired (see unseen.md).</summary>
+        /// <summary>Empties a dead unit's slots as the game drops the items of a unit that is not a hero, at its place, with no drop event (seen 10-21); a hero keeps its items.</summary>
         private void DropAll(unit unit)
         {
             if (heroes.TryGetValue(unit, out var isHero) && isHero)
@@ -1016,10 +1148,7 @@ namespace Moonwell.Testing
                 if (carried != null)
                 {
                     slots[i] = null!;
-                    if (Listening.Contains(GameEvent.Drop))
-                    {
-                        Inbound.Dropped(unit, carried);
-                    }
+                    LandAt(unit, carried);
                 }
             }
         }
@@ -1061,7 +1190,7 @@ namespace Moonwell.Testing
         public int ExperienceOf(unit hero)
         {
             NoteGone(hero);
-            return experiences.TryGetValue(hero, out var experience) ? experience : 0;
+            return !vanishedUnits.Contains(hero) && experiences.TryGetValue(hero, out var experience) ? experience : 0;
         }
 
         /// <summary>Sets the experience of a hero, and records an "experience".</summary>
@@ -1084,6 +1213,11 @@ namespace Moonwell.Testing
         private int StatOf(unit hero, int which, bool withBonus)
         {
             NoteGone(hero);
+            if (vanishedUnits.Contains(hero))
+            {
+                return 0;
+            }
+
             var value = stats.TryGetValue(hero, out var set) ? set[which] : 0;
             if (withBonus && statBonuses.TryGetValue(hero, out var bonus))
             {
@@ -1147,7 +1281,7 @@ namespace Moonwell.Testing
         public int SkillPointsOf(unit hero)
         {
             NoteGone(hero);
-            return skillPoints.TryGetValue(hero, out var points) ? points : 0;
+            return !vanishedUnits.Contains(hero) && skillPoints.TryGetValue(hero, out var points) ? points : 0;
         }
 
         /// <summary>Adds skill points to a hero and records "skill-points"; true unless the points would go below 0, which leaves them as they were.</summary>
@@ -1190,7 +1324,7 @@ namespace Moonwell.Testing
         public bool IsPausedUnit(unit unit)
         {
             NoteGone(unit);
-            return PausedUnits.Contains(unit);
+            return !vanishedUnits.Contains(unit) && PausedUnits.Contains(unit);
         }
 
         /// <summary>Pauses or unpauses a unit.</summary>
@@ -1208,6 +1342,11 @@ namespace Moonwell.Testing
         public float ScaleOf(unit unit)
         {
             NoteGone(unit);
+            if (vanishedUnits.Contains(unit))
+            {
+                return 0.0f;
+            }
+
             return scales.TryGetValue(unit, out var scale) ? scale : 1.0f;
         }
 
@@ -1230,6 +1369,13 @@ namespace Moonwell.Testing
         public float FlyHeightOf(unit unit)
         {
             return Kept(flyHeights, unit);
+        }
+
+        /// <summary>Whether the unit's type flies.</summary>
+        public bool CanFly(unit unit)
+        {
+            NoteGone(unit);
+            return flyers.Contains(unit);
         }
 
         /// <summary>Sets the fly height of a unit.</summary>
@@ -1288,6 +1434,11 @@ namespace Moonwell.Testing
         public int InventorySizeOf(unit unit)
         {
             NoteGone(unit);
+            if (vanishedUnits.Contains(unit))
+            {
+                return 0;
+            }
+
             return inventorySizes.TryGetValue(unit, out var size) ? size : 6;
         }
 
@@ -1300,11 +1451,30 @@ namespace Moonwell.Testing
             return slot >= 0 && slot < slots.Length ? slots[slot] : null!;
         }
 
-        /// <summary>Puts an item in the first free slot, and as the game does, delivers the pick-up when it is listened for; false when no slot is free.</summary>
+        /// <summary>Puts an item in the first free slot, and as the game does, delivers the pick-up when it is listened for; false, with no event, when no slot is free. An item the unit already holds keeps its slot and fires a drop and then a pick-up (seen 10-21).</summary>
         public bool GiveItem(unit unit, item item)
         {
             NoteGone(unit);
             var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    InventoryCalls.Add("give");
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, item);
+                    }
+
+                    if (Listening.Contains(GameEvent.PickUp))
+                    {
+                        Inbound.PickedUp(unit, item);
+                    }
+
+                    return true;
+                }
+            }
+
             for (var i = 0; i < slots.Length; i++)
             {
                 if (slots[i] == null)
@@ -1323,7 +1493,7 @@ namespace Moonwell.Testing
             return false;
         }
 
-        /// <summary>Takes an item out of its slot, and as the game does, delivers the drop when it is listened for.</summary>
+        /// <summary>Takes an item out of its slot and puts it at the unit's place; the game's drop event, when it is listened for, comes while the unit still has the item in the slot (seen 10-21).</summary>
         public void DropItem(unit unit, item item)
         {
             NoteGone(unit);
@@ -1333,12 +1503,17 @@ namespace Moonwell.Testing
                 if (slots[i] == item)
                 {
                     InventoryCalls.Add("drop");
-                    slots[i] = null!;
                     if (Listening.Contains(GameEvent.Drop))
                     {
                         Inbound.Dropped(unit, item);
                     }
 
+                    if (slots[i] == item)
+                    {
+                        slots[i] = null!;
+                    }
+
+                    LandAt(unit, item);
                     return;
                 }
             }

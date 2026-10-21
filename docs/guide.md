@@ -95,7 +95,8 @@ public sealed class Champion : Human.Units.Paladin
 - The tooltips are World Editor's four: `Tooltip` (Tooltip - Normal), `TooltipExtended` (Tooltip - Normal - Extended),
   `TooltipLearn` (Tooltip - Learn) and `TooltipLearnExtended` (Tooltip - Learn - Extended).
 - A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`.
-- A constructor may compute, but must not call the game: the build fails at such a line.
+- A constructor may compute, but must not call the game: the build fails at such a line. A live value or action of the
+  unit, hero or item there (`Mana = 300`, `Kill()`) is error MW0012, which names the declared field to set instead.
 - A class with no `[ObjectId]` fails the build, which names a free id to use. A buff also names its carrier, the
   hidden ability that shows its icon: `[ObjectId("B001", Carrier = "A002")]`, or `[ObjectId(Carrier = "A002")]` with
   `[Replaces]`.
@@ -113,9 +114,10 @@ Heroes/Giant.cs:12: Giant.HitPoints is 600000; Hit Points Maximum (Base) (uhpm) 
 only: an empty name, a negative on a field the game never lets go below 0, and a choice that is none of the enum's
 values still fail. The values a standard class has are the game's, and are never checked.
 
-To see a standard object's values, go to its class (Go to Definition on `Paladin`): its constructor sets each value
-of the base tables, World Editor's Default. A map on another data set plays that set's values for the fields it leaves
-unset.
+To see a standard object's values, go to its class: Go to Definition on `Paladin` opens the class's source, which
+`Moonwell.Objects` embeds in its library, in an editor that navigates to embedded sources (the editors on Microsoft's C#
+language server do). Its constructor sets each value of the base tables, World Editor's
+Default. A map on another data set plays that set's values for the fields it leaves unset.
 
 ## Components and reactions
 
@@ -151,20 +153,21 @@ public sealed class KillCounter : UnitComponent
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit or item they give the last value read or
-set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. A read is safe in
+set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the quarter second
+before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
 `Local.For`, a change is not.
 
 | Unit | |
 |---|---|
-| `Life`, `MaxLife`, `Mana`, `MaxMana` | read and set; a `Life` under 0.405 kills |
-| `X`, `Y` | read; `MoveTo(x, y)` through the game's pathing, `PlaceAt(x, y)` with none |
-| `Facing` | read and set (the unit turns); `FaceNow(degrees)` turns at once |
+| `Life`, `MaxLife`, `Mana`, `MaxMana` | read and set; a `Life` under 0.405 kills, above the most it clamps; the most are whole numbers |
+| `X`, `Y` | read; `MoveTo(x, y)` through the game's pathing, `PlaceAt(x, y)` with none, not even the map's edge |
+| `Facing` | read and set (the unit turns, so a read at once gives the old one); `FaceNow(degrees)` turns at once, a walking unit turns back |
 | `Level` | read; a hero's hero level |
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run |
-| `IsPaused`, `Scale`, `FlyHeight` | read and set |
-| `Tint(red, green, blue, alpha)` | colours the model, 0-255 |
+| `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
+| `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
 | `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string (`"move"`, `"attack"`) |
-| `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Drop(item)` | the inventory; `Give` and `Drop` run the pick-up and drop reactions |
+| `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Drop(item)` | the inventory; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up |
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|
@@ -176,13 +179,17 @@ set (0 when never read, as in `OnLeave` after the game removed it), and setting 
 
 | Item | |
 |---|---|
-| `Charges`, `Player` | read and set |
-| `X`, `Y` | read; `MoveTo(x, y)` |
-| `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it |
+| `Charges`, `Player` | read and set; 0 charges leaves the item in place; `Player` is the owner, which picking up or dropping does not change |
+| `X`, `Y` | read; `MoveTo(x, y)` goes to a pathable spot; while a unit carries the item they are where it was picked up, so read the carrier's place |
+| `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop after `RemoveUnit` (below), where it is already null |
 
 `ItemIn` is not for `Local.For`: it takes in an item Moonwell has not seen, which has to happen on every machine.
 Moonwell listens for pick-ups and drops from the start, so an item a unit picks up is taken in; one a unit held before
-the map began has no `Carrier`. A member's exact behaviour is in its comment.
+the map began has no `Carrier`. A unit that is not a hero drops its items when it dies, with no drop reactions; a hero
+keeps them. When a unit is removed from the game (`RemoveUnit`), its items leave it inside the call, but the game fires
+the drops after it: `Carrier` is already null then, and the drop reactions run for an object about to be swept. The
+items of a removed hero are removed with it, as seen; other units are assumed to do the same. A member's exact
+behaviour is in its comment.
 
 ## Damage
 
@@ -261,8 +268,10 @@ and `using static Moonwell.Natives` (write `Natives.X`). It does not catch a `Di
 that has a static field with a value: the map can stop while it loads, with nothing on the screen. Key by the handle,
 or set the field on first use. Moonwell's classes, `Unit` and the rest, are safe keys.
 
-A whole-number `float` stays a float in the game, and prints as `50.0` where C# prints `50`. A float made from an `int`
-at run time (`(float)count`) stays an integer.
+A whole-number `float` stays a float in the game, and prints as `50.0` where C# prints `50`; so does an `int` made a
+float (`(float)count`) and a `float` field without an initializer. An `int?` made a `float?` (`float? f = maybe;`),
+`foreach (float f in ints)`, a float array's items, and `Math.Floor` or `Math.Ceiling`, are integers in the game: add
+`+ 0.0f` where a product could pass 2^31.
 
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps

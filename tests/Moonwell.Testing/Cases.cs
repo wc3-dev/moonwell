@@ -99,6 +99,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "players.ability-available", Run = PlayerCases.PlayersAbilityAvailable });
             list.Add(new Case { Name = "local.runs-for-local-player", Run = LocalCases.RunsForLocalPlayer });
             list.Add(new Case { Name = "local.skips-other-players", Run = LocalCases.SkipsOtherPlayers });
+            list.Add(new Case { Name = "local.reads-keep-no-last-value", Run = LocalCases.ReadsKeepNoLastValue });
+            list.Add(new Case { Name = "local.throw-leaves-reads-kept", Run = LocalCases.ThrowLeavesReadsKept });
             list.Add(new Case { Name = "map.components-in-order", Run = MapCases.ComponentsInOrder });
             list.Add(new Case { Name = "map.components-not-added-early", Run = MapCases.ComponentsNotAddedEarly });
             list.Add(new Case { Name = "map.components-assigned", Run = MapCases.ComponentsAssigned });
@@ -134,11 +136,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.level", Run = UnitCases.Level });
             list.Add(new Case { Name = "units.kill", Run = UnitCases.Kill });
             list.Add(new Case { Name = "units.kill-gone", Run = UnitCases.KillGone });
+            list.Add(new Case { Name = "units.kill-twice", Run = UnitCases.KillTwice });
+            list.Add(new Case { Name = "units.kill-leaves-no-life", Run = UnitCases.KillLeavesNoLife });
+            list.Add(new Case { Name = "units.life-below-threshold", Run = UnitCases.LifeBelowThreshold });
             list.Add(new Case { Name = "units.pause", Run = UnitCases.Pause });
             list.Add(new Case { Name = "units.scale", Run = UnitCases.Scale });
             list.Add(new Case { Name = "units.tint", Run = UnitCases.Tint });
             list.Add(new Case { Name = "units.fly-height", Run = UnitCases.FlyHeight });
             list.Add(new Case { Name = "units.gone-reads-last", Run = UnitCases.GoneReadsLast });
+            list.Add(new Case { Name = "units.fly-height-ground", Run = UnitCases.FlyHeightGroundUnit });
+            list.Add(new Case { Name = "units.max-clamps", Run = UnitCases.MaxClampsLifeAndMana });
+            list.Add(new Case { Name = "units.max-last-values", Run = UnitCases.MaxLastValues });
+            list.Add(new Case { Name = "units.fly-height-has-amrf", Run = UnitCases.FlyHeightWithAmrf });
+            list.Add(new Case { Name = "units.paused-gone-before-sweep", Run = UnitCases.PausedGoneBeforeSweep });
+            list.Add(new Case { Name = "units.gone-before-sweep", Run = UnitCases.GoneBeforeSweep });
+            list.Add(new Case { Name = "units.gone-before-sweep-local", Run = UnitCases.GoneBeforeSweepInLocal });
             list.Add(new Case { Name = "units.order-immediate", Run = UnitCases.OrderImmediate });
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
@@ -158,6 +170,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.skill-points", Run = HeroCases.SkillPoints });
             list.Add(new Case { Name = "heroes.revive", Run = HeroCases.Revive });
             list.Add(new Case { Name = "heroes.gone", Run = HeroCases.Gone });
+            list.Add(new Case { Name = "heroes.gone-before-sweep", Run = HeroCases.GoneBeforeSweep });
             list.Add(new Case { Name = "items.registered-class", Run = ItemCases.RegisteredClass });
             list.Add(new Case { Name = "items.fallback-class", Run = ItemCases.FallbackClass });
             list.Add(new Case { Name = "items.pickup-order", Run = ItemCases.PickupOrder });
@@ -168,14 +181,23 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.charges", Run = ItemCases.Charges });
             list.Add(new Case { Name = "items.player", Run = ItemCases.PlayerOf });
             list.Add(new Case { Name = "items.position", Run = ItemCases.Position });
+            list.Add(new Case { Name = "items.move-keeps-the-place-the-game-gives", Run = ItemCases.MoveToKeepsThePlaceTheGameGives });
+            list.Add(new Case { Name = "items.move-removed-keeps-the-last-place", Run = ItemCases.MoveToOnARemovedItemKeepsTheLastPlace });
             list.Add(new Case { Name = "items.carrier", Run = ItemCases.Carrier });
             list.Add(new Case { Name = "items.carrier-in-hooks", Run = ItemCases.CarrierInHooks });
             list.Add(new Case { Name = "items.carrier-dies", Run = ItemCases.CarrierDies });
             list.Add(new Case { Name = "items.carrier-unseen", Run = ItemCases.CarrierUnseen });
             list.Add(new Case { Name = "items.carrier-slot-move", Run = ItemCases.CarrierSlotMove });
             list.Add(new Case { Name = "items.carrier-hero-dies", Run = ItemCases.CarrierHeroDies });
+            list.Add(new Case { Name = "items.carrier-nonhero-dies", Run = ItemCases.CarrierNonHeroDiesSilently });
+            list.Add(new Case { Name = "items.place-while-carried", Run = ItemCases.PlaceWhileCarried });
+            list.Add(new Case { Name = "items.removed-unit-drops-after", Run = ItemCases.RemovedUnitDropsAfterTheCall });
+            list.Add(new Case { Name = "items.give-full-inventory", Run = ItemCases.GiveFullInventory });
+            list.Add(new Case { Name = "items.give-held-again", Run = ItemCases.GiveHeldItemAgain });
+            list.Add(new Case { Name = "items.freed-slot-first", Run = ItemCases.FreedSlotFirst });
             list.Add(new Case { Name = "items.player-gone-before-read", Run = ItemCases.PlayerGoneBeforeRead });
             list.Add(new Case { Name = "items.gone-reads-last", Run = ItemCases.ItemGoneReadsLast });
+            list.Add(new Case { Name = "items.gone-before-sweep", Run = ItemCases.GoneBeforeSweep });
             list.Add(new Case { Name = "destructables.watch", Run = DestructableCases.Watch });
             list.Add(new Case { Name = "destructables.sweep", Run = DestructableCases.SweepDetectsRemoval });
             list.Add(new Case { Name = "damage.order", Run = DamageCases.Order });
@@ -239,6 +261,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "floats.no-wrap", Run = FloatCases.NoWrap });
             list.Add(new Case { Name = "floats.folded", Run = FloatCases.Folded });
             list.Add(new Case { Name = "floats.stored", Run = FloatCases.Stored });
+            list.Add(new Case { Name = "floats.converted", Run = FloatCases.Converted });
+            list.Add(new Case { Name = "floats.bare", Run = FloatCases.Bare });
             list.Add(new Case { Name = "floats.ints-stay", Run = FloatCases.IntsStay });
         }
 

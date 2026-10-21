@@ -238,6 +238,72 @@ namespace Moonwell.Testing
             Expect.True(!dummy.HasEnded, "a death is not an end");
         }
 
+        /// <summary>A second Kill on a dead unit fires no death event (seen 10-21): the unit's reaction runs once.</summary>
+        public static void KillTwice(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("h000"), () => new Dummy());
+            var dummy = (Dummy)Unit.Of(world.NewUnit(ObjectTypes.FourCC("h000")))!;
+            TestLog.Lines.Clear();
+
+            dummy.Kill();
+            dummy.Kill();
+
+            Expect.Equal(2, world.KillCalls, "calls to the game's KillUnit");
+            Expect.Equal(2, TestLog.Lines.Count, "reactions to the death, once for the unit and its component");
+            Expect.True(!dummy.IsAlive, "alive after");
+        }
+
+        /// <summary>After a Kill the life is 0 (seen 10-21), also the last life a unit gives once the game has removed it, whatever was read before.</summary>
+        public static void KillLeavesNoLife(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            unit.Life = 100.0f;
+            Expect.Near(100.0f, unit.Life, "life before");
+
+            unit.Kill();
+            world.VanishUnit(handle);
+            world.Advance(0.3f);
+
+            Expect.True(unit.IsGone, "the sweep found the unit gone");
+            Expect.Near(0.0f, unit.Life, "the life a killed then removed unit gives");
+        }
+
+        /// <summary>A life of 0.405 or less kills the unit and reads 0 (seen 10-20: 0.405 kills, 0.406 does not); the last life is 0 then too.</summary>
+        public static void LifeBelowThreshold(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("h000"), () => new Dummy());
+            var survivor = (Dummy)Unit.Of(world.NewUnit(ObjectTypes.FourCC("h000")))!;
+            survivor.Life = 100.0f;
+            TestLog.Lines.Clear();
+
+            survivor.Life = 0.406f;
+
+            Expect.True(survivor.IsAlive, "0.406 does not kill");
+            Expect.Near(0.406f, survivor.Life, "the life kept");
+            Expect.Equal(0, TestLog.Lines.Count, "no reaction");
+
+            var handle = world.NewUnit(ObjectTypes.FourCC("h000"));
+            var victim = (Dummy)Unit.Of(handle)!;
+            victim.Life = 100.0f;
+            Expect.Near(100.0f, victim.Life, "life before");
+            TestLog.Lines.Clear();
+
+            victim.Life = 0.405f;
+
+            Expect.True(!victim.IsAlive, "0.405 kills");
+            Expect.Equal(2, TestLog.Lines.Count, "the death, once for the unit and its component");
+            Expect.Near(0.0f, victim.Life, "the life of the dead unit");
+
+            var removed = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            removed.Life = 100.0f;
+            removed.Life = 0.405f;
+            world.VanishUnit(removed.Handle);
+            world.Advance(0.3f);
+            Expect.True(removed.IsGone, "the sweep found the unit gone");
+            Expect.Near(0.0f, removed.Life, "the last life after a kill by life");
+        }
+
         /// <summary>A unit the game has removed is not alive, and Kill does not reach the game.</summary>
         public static void KillGone(FakeWorld world)
         {
@@ -627,6 +693,229 @@ namespace Moonwell.Testing
             Inbound.Entered(later);
             Expect.True(Units.Find(later) != null, "the unit is taken in once a component wants it");
             Expect.Same(Units.Find(later), watcher.Seen, "the unit given to OnUnitEnter");
+        }
+
+        /// <summary>A ground unit's fly height shows only after Amrf is added and removed (seen 10-21): FlyHeight does that once per unit, the first time it sets, and one native call per set after; a unit that flies gets no trick.</summary>
+        public static void FlyHeightGroundUnit(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            var amrf = FakeWorld.CrowForm;
+
+            unit.FlyHeight = 150.0f;
+
+            Expect.True(world.Floats(handle), "the ground unit floats after the first set");
+            Expect.Equal(2, world.AbilityCalls.Count, "ability calls for the trick");
+            Expect.Equal("add " + amrf, world.AbilityCalls[0], "the trick adds Amrf");
+            Expect.Equal("remove " + amrf, world.AbilityCalls[1], "the trick removes Amrf");
+            Expect.Near(150.0f, unit.FlyHeight, "the height");
+
+            unit.FlyHeight = 300.0f;
+            unit.FlyHeight = 0.0f;
+            unit.FlyHeight = 80.0f;
+
+            Expect.Equal(2, world.AbilityCalls.Count, "no second trick");
+            Expect.True(world.Floats(handle), "still floating");
+            Expect.Near(80.0f, unit.FlyHeight, "the last height");
+
+            var other = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            other.FlyHeight = 10.0f;
+            Expect.Equal(4, world.AbilityCalls.Count, "another unit gets its own trick");
+
+            var birdHandle = world.NewUnit(ObjectTypes.FourCC("hgry"));
+            world.MakeFlying(birdHandle);
+            var bird = Unit.Of(birdHandle)!;
+            bird.FlyHeight = 200.0f;
+            Expect.Equal(4, world.AbilityCalls.Count, "a unit that flies gets no trick");
+            Expect.True(world.Floats(birdHandle), "the flyer floats");
+        }
+
+        /// <summary>A unit's most life and most mana are whole numbers the game clamps the life and mana down to (BlzSetUnitMaxHP, seen 10-21).</summary>
+        public static void MaxClampsLifeAndMana(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            unit.MaxLife = 500.0f;
+            unit.Life = 450.0f;
+            unit.MaxMana = 200.0f;
+            unit.Mana = 150.0f;
+
+            unit.MaxLife = 400.0f;
+            unit.MaxMana = 300.0f;
+
+            Expect.Near(400.0f, unit.MaxLife, "most life");
+            Expect.Near(400.0f, unit.Life, "life clamped down to the new most");
+            Expect.Near(300.0f, unit.MaxMana, "most mana");
+            Expect.Near(150.0f, unit.Mana, "mana kept when the most rises");
+
+            unit.MaxLife = 400.7f;
+            unit.MaxMana = 300.9f;
+
+            Expect.Near(400.0f, unit.MaxLife, "most life truncated to a whole number");
+            Expect.Near(300.0f, unit.MaxMana, "most mana truncated to a whole number");
+        }
+
+        /// <summary>What a setter stored is what a unit gives after the game removed it, unread: the whole number the game keeps for the most, and a life or mana clamped to it.</summary>
+        public static void MaxLastValues(FakeWorld world)
+        {
+            var first = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(first)!;
+            unit.MaxLife = 400.7f;
+            unit.MaxMana = 90.9f;
+            unit.Life = 450.0f;
+            unit.Mana = 100.0f;
+            world.VanishUnit(first);
+            Expect.Near(400.0f, unit.MaxLife, "most life: the whole number");
+            Expect.Near(90.0f, unit.MaxMana, "most mana: the whole number");
+            Expect.Near(400.0f, unit.Life, "life: clamped to the most");
+            Expect.Near(90.0f, unit.Mana, "mana: clamped to the most");
+
+            var second = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var lowered = Unit.Of(second)!;
+            lowered.MaxLife = 500.0f;
+            lowered.Life = 450.0f;
+            lowered.MaxMana = 200.0f;
+            lowered.Mana = 150.0f;
+            lowered.MaxLife = 300.5f;
+            lowered.MaxMana = 100.0f;
+            world.VanishUnit(second);
+            Expect.Near(300.0f, lowered.Life, "life: falls to the lowered most");
+            Expect.Near(100.0f, lowered.Mana, "mana: falls to the lowered most");
+
+            var third = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var manaless = Unit.Of(third)!;
+            manaless.MaxMana = 0.0f;
+            manaless.Mana = -5.0f;
+            world.VanishUnit(third);
+            Expect.Near(0.0f, manaless.Mana, "mana of a unit without mana: 0, not negative");
+        }
+
+        /// <summary>A unit that already has Amrf gets no add and remove (the remove would take its own ability away), and floats at once.</summary>
+        public static void FlyHeightWithAmrf(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.SetAbilityLevel(handle, FakeWorld.CrowForm, 1);
+            var unit = Unit.Of(handle)!;
+
+            unit.FlyHeight = 150.0f;
+
+            Expect.Equal(0, world.AbilityCalls.Count, "no ability call");
+            Expect.True(world.Floats(handle), "the unit floats");
+            Expect.Near(150.0f, unit.FlyHeight, "the height");
+        }
+
+        /// <summary>A removed unit reads false for IsPaused before the sweep (every getter gives 0, seen 10-21): the last value stays.</summary>
+        public static void PausedGoneBeforeSweep(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            unit.IsPaused = true;
+            Expect.True(unit.IsPaused, "paused read");
+
+            world.VanishUnit(handle);
+
+            Expect.True(unit.IsPaused, "paused before the sweep");
+            world.Advance(0.3f);
+            Expect.True(unit.IsGone, "the sweep found the unit gone");
+            Expect.True(unit.IsPaused, "paused after the sweep");
+
+            var live = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            live.IsPaused = true;
+            Expect.True(live.IsPaused, "a live unit reads true");
+            live.IsPaused = false;
+            Expect.True(!live.IsPaused, "a live unit reads false");
+        }
+
+        /// <summary>The game removes a unit and every getter reads 0 before the sweep finds it (seen 10-21): the last values stay, and a real 0 of a live unit is still read.</summary>
+        public static void GoneBeforeSweep(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            SetAndRead(world, unit);
+            Expect.Equal(6, unit.InventorySize, "inventory size read");
+
+            world.VanishUnit(handle);
+
+            Expect.True(!unit.IsGone, "the sweep has not run");
+            ExpectLastValues(unit, "before the sweep");
+            world.Advance(0.3f);
+            Expect.True(unit.IsGone, "the sweep found the unit gone");
+            ExpectLastValues(unit, "after the sweep");
+
+            // A unit never read keeps nothing to give back, and the zero it reads is the last value.
+            var unread = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            world.VanishUnit(unread.Handle);
+            Expect.Near(0.0f, unread.Life, "unread: life");
+            Expect.Near(1.0f, unread.Scale, "unread: scale stays the default, not 0");
+            Expect.True(!unread.IsGone, "unread: still not swept");
+
+            // A live unit whose value really is 0 is read as 0.
+            var live = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            live.PlaceAt(10.0f, 20.0f);
+            live.Life = 50.0f;
+            Expect.Near(10.0f, live.X, "live: x read");
+            Expect.Near(50.0f, live.Life, "live: life read");
+            live.PlaceAt(0.0f, 0.0f);
+            live.Life = 0.0f;
+            Expect.Near(0.0f, live.X, "live: x is 0");
+            Expect.Near(0.0f, live.Y, "live: y is 0");
+            Expect.Near(0.0f, live.Life, "live: life is 0");
+        }
+
+        /// <summary>A read inside Local.For of a unit the game removed gives the last value as well, and leaves it as it was.</summary>
+        public static void GoneBeforeSweepInLocal(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            unit.PlaceAt(10.0f, 20.0f);
+            Expect.Near(10.0f, unit.X, "x read");
+            world.VanishUnit(handle);
+
+            var inside = 0.0f;
+            Local.For(Player.Get(0), () => inside = unit.X);
+
+            Expect.Near(10.0f, inside, "inside Local.For");
+            Expect.Near(10.0f, unit.X, "outside");
+
+            var other = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var lively = Unit.Of(other)!;
+            lively.Life = 50.0f;
+            lively.Scale = 2.5f;
+            Expect.Near(50.0f, lively.Life, "life read");
+            var untouched = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            world.VanishUnit(other);
+            world.VanishUnit(untouched.Handle);
+
+            var life = 0.0f;
+            var scale = 0.0f;
+            var plain = 0.0f;
+            Local.For(Player.Get(0), () =>
+            {
+                life = lively.Life;
+                scale = lively.Scale;
+                plain = untouched.Scale;
+            });
+
+            Expect.Near(50.0f, life, "life inside Local.For");
+            Expect.Near(2.5f, scale, "scale inside Local.For");
+            Expect.Near(1.0f, plain, "an unset scale inside Local.For is the default, not 0");
+            Expect.Near(50.0f, lively.Life, "life outside");
+            Expect.Near(1.0f, untouched.Scale, "an unset scale outside");
+        }
+
+        /// <summary>The values SetAndRead left, as a unit the game removed gives them.</summary>
+        private static void ExpectLastValues(Unit unit, string what)
+        {
+            Expect.Near(450.0f, unit.Life, what + ": life");
+            Expect.Near(500.0f, unit.MaxLife, what + ": most life");
+            Expect.Near(150.0f, unit.Mana, what + ": mana");
+            Expect.Near(200.0f, unit.MaxMana, what + ": most mana");
+            Expect.Near(10.0f, unit.X, what + ": x");
+            Expect.Near(20.0f, unit.Y, what + ": y");
+            Expect.Near(45.0f, unit.Facing, what + ": facing");
+            Expect.Near(2.5f, unit.Scale, what + ": scale");
+            Expect.Near(120.0f, unit.FlyHeight, what + ": fly height");
+            Expect.Equal(3, unit.Level, what + ": level");
+            Expect.Equal(6, unit.InventorySize, what + ": inventory size");
         }
     }
 }
