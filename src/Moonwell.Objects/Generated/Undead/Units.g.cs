@@ -28,6 +28,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.3f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 1.17f;
@@ -119,6 +121,7 @@ namespace Moonwell.Objects
                     RepairTime = 45;
                     RequiredAnimationNamesAttachments = "large";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.BlackCitadel>();
+                    Scale = 0.95f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -173,6 +176,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 235f;
+                    AnimationWalkSpeed = 235f;
                     Armor = 1;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.5f;
@@ -266,7 +271,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 75;
                     RepairLumberCost = 0;
                     RepairTime = 15;
-                    Scale = 1f;
+                    Scale = 0.825f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -396,6 +401,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\AltarOfDarkness\\AltarOfDarkness_portrait";
                     Priority = 5;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -410,6 +416,7 @@ namespace Moonwell.Objects
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
                     RevivesDeadHeroes = true;
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -452,6 +459,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.83f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Ethereal;
                     Attack1AnimationBackswingPoint = 0.51f;
@@ -540,17 +549,18 @@ namespace Moonwell.Objects
                     PlaceableInEditor = true;
                     PointValue = 100;
                     Priority = 7;
-                    ProjectileImpactZ = 60f;
+                    ProjectileImpactZ = 15f;
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = 30f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 61f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
                     RepairGoldCost = 155;
                     RepairLumberCost = 30;
                     RepairTime = 28;
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -693,6 +703,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Necropolis\\Necropolis_portrait";
                     Priority = 8;
                     ProjectileImpactZ = 260f;
                     ProjectileImpactZSwimming = 0f;
@@ -709,6 +720,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "large";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.AltarOfDarkness>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.Undead.Upgrades.Backpack>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -824,6 +836,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\BoneYard\\BoneYard_portrait";
                     Priority = 5;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -839,6 +852,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "large";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.BlackCitadel>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.Undead.Upgrades.FreezingBreath>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -927,6 +941,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNCarrionScarabs.blp";
                     IsABuilding = false;
                     Level = 2;
                     LumberBountyAwardedBase = 0;
@@ -936,6 +951,7 @@ namespace Moonwell.Objects
                     MaxLife = 300;
                     MaximumPitchAngleDegrees = 60f;
                     MaximumRollAngleDegrees = 60f;
+                    Model = "units\\undead\\scarab\\scarab";
                     ModelFileExtraVersions = 0;
                     Name = "Burrowed Carrion Beetle";
                     NameEditorSuffix = "(Level 2)";
@@ -945,6 +961,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 4;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\undead\\scarab\\scarab_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 60f;
                     ProjectileImpactZSwimming = 0f;
@@ -957,6 +974,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 20;
+                    Scale = 1.5f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -974,6 +992,9 @@ namespace Moonwell.Objects
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
                     Tilesets = "*";
+                    TintingColor1Red = 190;
+                    TintingColor2Green = 190;
+                    TintingColor3Blue = 255;
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
@@ -1045,6 +1066,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNCarrionScarabs.blp";
                     IsABuilding = false;
                     Level = 3;
                     LumberBountyAwardedBase = 0;
@@ -1054,6 +1076,7 @@ namespace Moonwell.Objects
                     MaxLife = 440;
                     MaximumPitchAngleDegrees = 60f;
                     MaximumRollAngleDegrees = 60f;
+                    Model = "units\\undead\\scarab\\scarab";
                     ModelFileExtraVersions = 0;
                     Name = "Burrowed Carrion Beetle";
                     NameEditorSuffix = "(Level 3)";
@@ -1063,6 +1086,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 4;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\undead\\scarab\\scarab_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 60f;
                     ProjectileImpactZSwimming = 0f;
@@ -1075,6 +1099,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 20;
+                    Scale = 1.7f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1092,6 +1117,9 @@ namespace Moonwell.Objects
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
                     Tilesets = "*";
+                    TintingColor1Red = 255;
+                    TintingColor2Green = 210;
+                    TintingColor3Blue = 210;
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
@@ -1203,6 +1231,7 @@ namespace Moonwell.Objects
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.Graveyard>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1254,6 +1283,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 280f;
+                    AnimationWalkSpeed = 280f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.64f;
@@ -1308,6 +1339,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Blight;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNCarrionScarabs.blp";
                     IsABuilding = false;
                     Level = 1;
                     LumberBountyAwardedBase = 0;
@@ -1338,6 +1370,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 20;
+                    Scale = 1.3f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1389,6 +1422,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 280f;
+                    AnimationWalkSpeed = 280f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.64f;
@@ -1444,6 +1479,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Blight;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNCarrionScarabs.blp";
                     IsABuilding = false;
                     Level = 2;
                     LumberBountyAwardedBase = 0;
@@ -1453,6 +1489,7 @@ namespace Moonwell.Objects
                     MaxLife = 300;
                     MaximumPitchAngleDegrees = 60f;
                     MaximumRollAngleDegrees = 60f;
+                    Model = "units\\undead\\scarab\\scarab";
                     ModelFileExtraVersions = 0;
                     Name = "Carrion Beetle";
                     NameEditorSuffix = "(Level 2)";
@@ -1462,6 +1499,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 4;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\undead\\scarab\\scarab_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 60f;
                     ProjectileImpactZSwimming = 0f;
@@ -1474,6 +1512,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 20;
+                    Scale = 1.5f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1497,6 +1536,9 @@ namespace Moonwell.Objects
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
                     Tilesets = "*";
+                    TintingColor1Red = 190;
+                    TintingColor2Green = 190;
+                    TintingColor3Blue = 255;
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
@@ -1522,6 +1564,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 280f;
+                    AnimationWalkSpeed = 280f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.64f;
@@ -1577,6 +1621,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Blight;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNCarrionScarabs.blp";
                     IsABuilding = false;
                     Level = 3;
                     LumberBountyAwardedBase = 0;
@@ -1586,6 +1631,7 @@ namespace Moonwell.Objects
                     MaxLife = 440;
                     MaximumPitchAngleDegrees = 60f;
                     MaximumRollAngleDegrees = 60f;
+                    Model = "units\\undead\\scarab\\scarab";
                     ModelFileExtraVersions = 0;
                     Name = "Carrion Beetle";
                     NameEditorSuffix = "(Level 3)";
@@ -1595,6 +1641,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 4;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\undead\\scarab\\scarab_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 60f;
                     ProjectileImpactZSwimming = 0f;
@@ -1607,6 +1654,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 20;
+                    Scale = 1.7f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1630,6 +1678,9 @@ namespace Moonwell.Objects
                     TargetedAs = global::Moonwell.Objects.Targets.Ground;
                     TeamColor = global::Moonwell.Objects.TeamColor.MatchOwningPlayer;
                     Tilesets = "*";
+                    TintingColor1Red = 255;
+                    TintingColor2Green = 190;
+                    TintingColor3Blue = 190;
                     TransportedSize = 1;
                     TurnRate = 0.6f;
                     Type = global::Moonwell.Objects.MoveType.Foot;
@@ -1727,6 +1778,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Crypt\\Crypt_portrait";
                     Priority = 9;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -1741,6 +1793,7 @@ namespace Moonwell.Objects
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
                     ResearchesAvailable.Set<global::Moonwell.Objects.Undead.Upgrades.Web, global::Moonwell.Objects.Undead.Upgrades.GhoulFrenzy, global::Moonwell.Objects.Undead.Upgrades.StoneForm, global::Moonwell.Objects.Undead.Upgrades.Burrow, global::Moonwell.Objects.Undead.Upgrades.Cannibalize>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1783,6 +1836,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.36f;
@@ -1878,6 +1933,7 @@ namespace Moonwell.Objects
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.Graveyard>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1934,6 +1990,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 1.1f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 290f;
+                    AnimationWalkSpeed = 290f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.54f;
@@ -2051,6 +2109,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.Undead.Units.HallsOfTheDead>();
                     RequirementsTier3.Set<global::Moonwell.Objects.Undead.Units.BlackCitadel>();
                     RequirementsTiersUsed = 3;
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2110,6 +2169,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 1.008f;
                     AnimationCastPoint = 0.452f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 1;
                     ArmorType = global::Moonwell.Objects.ArmorType.Metal;
                     Attack1AnimationBackswingPoint = 0.41f;
@@ -2183,6 +2244,7 @@ namespace Moonwell.Objects
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Blight;
                     Hotkey = "D";
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNHeroDeathKnight.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-deathknight.blp";
                     Intelligence = 17;
                     IntelligencePerLevel = 1.8f;
@@ -2198,6 +2260,7 @@ namespace Moonwell.Objects
                     Set("umpm", 0);
                     MaximumPitchAngleDegrees = 45f;
                     MaximumRollAngleDegrees = 10f;
+                    Model = "Units\\Undead\\HeroDeathknight\\HeroDeathknight";
                     ModelFileExtraVersions = 0;
                     Name = "Death Knight";
                     NormalSkin = "AInv";
@@ -2206,13 +2269,14 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 4;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "Units\\Undead\\HeroDeathknight\\HeroDeathknight_portrait";
                     PrimaryAttribute = global::Moonwell.Objects.AttributeType.STR;
                     Priority = 9;
                     ProjectileImpactZ = 100f;
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = -20f;
                     ProjectileLaunchY = 60f;
-                    ProjectileLaunchZ = 76f;
+                    ProjectileLaunchZ = 130f;
                     ProjectileLaunchZSwimming = 0f;
                     ProperNames = "Lord Nightsorrow,Lord Soulrender,Lord Dethstorm,Lord Maldazzar,Lord Darkhallow,Lord Lightstalker,Baron Bloodbane,Baron Felblade,Duke Dreadmoore,Duke Ragereaver,Baron Frostfel,Lord Darkscythe,Duke Wintermaul,Baron Perenolde,Baron Morte";
                     ProperNamesUsed = 15;
@@ -2225,6 +2289,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.Undead.Units.HallsOfTheDead>();
                     RequirementsTier3.Set<global::Moonwell.Objects.Undead.Units.BlackCitadel>();
                     RequirementsTiersUsed = 3;
+                    Scale = 0.95f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2282,6 +2347,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.66f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 3;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 0.337f;
@@ -2374,7 +2441,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 55f;
                     ProjectileLaunchY = 115f;
-                    ProjectileLaunchZ = 10f;
+                    ProjectileLaunchZ = 50f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 61f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
@@ -2384,7 +2451,9 @@ namespace Moonwell.Objects
                     RequiredAnimationNames = "alternate";
                     RequiredAnimationNamesAttachments = "large";
                     RequiredAttachmentLinkNames = "alternate";
+                    Scale = 1f;
                     ScaleProjectiles = true;
+                    SelectionCircleHeight = 215f;
                     SelectionCircleOnWater = false;
                     SelectionScale = 1.5f;
                     ShadowImageCenterX = 90f;
@@ -2554,6 +2623,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 1.53f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 290f;
+                    AnimationWalkSpeed = 290f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.55f;
@@ -2671,6 +2742,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.Undead.Units.HallsOfTheDead>();
                     RequirementsTier3.Set<global::Moonwell.Objects.Undead.Units.BlackCitadel>();
                     RequirementsTiersUsed = 3;
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2728,6 +2800,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.4f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 1;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.55f;
@@ -2836,7 +2910,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 115f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = -60f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 61f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
@@ -2844,6 +2918,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 120;
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "large";
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -2896,6 +2971,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0f;
+                    AnimationRunSpeed = 375f;
+                    AnimationWalkSpeed = 375f;
                     Armor = 3;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 1f;
@@ -2989,11 +3066,11 @@ namespace Moonwell.Objects
                     PlaceableInEditor = true;
                     PointValue = 100;
                     Priority = 3;
-                    ProjectileImpactZ = 60f;
+                    ProjectileImpactZ = 10f;
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 25f;
+                    ProjectileLaunchZ = 30f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 61f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
@@ -3002,6 +3079,7 @@ namespace Moonwell.Objects
                     RepairTime = 35;
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.Graveyard, global::Moonwell.Objects.Undead.Units.HallsOfTheDead>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -3054,6 +3132,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.44f;
@@ -3154,6 +3234,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 120;
                     RepairLumberCost = 0;
                     RepairTime = 18;
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3281,6 +3362,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Graveyard\\Graveyard_portrait";
                     Priority = 4;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -3425,6 +3507,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Necropolis\\Necropolis_portrait";
                     Priority = 7;
                     ProjectileImpactZ = 260f;
                     ProjectileImpactZSwimming = 0f;
@@ -3440,6 +3523,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNames = "upgrade,first";
                     RequiredAnimationNamesAttachments = "large";
                     ResearchesAvailable.Set<global::Moonwell.Objects.Undead.Upgrades.Backpack>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3532,6 +3616,7 @@ namespace Moonwell.Objects
                     HitPointRegen = 0f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.None;
                     Hotkey = "G";
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNGoldMine.blp";
                     IsABuilding = true;
                     LoopingFadeInRate = 512;
                     LoopingFadeOutRate = 512;
@@ -3554,6 +3639,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\HauntedMine\\HauntedMine_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -3567,6 +3653,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 210;
                     RepairTime = 105;
                     RequiredAnimationNamesAttachments = "large";
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3610,6 +3697,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 1.1f;
                     AnimationCastPoint = 0.4f;
+                    AnimationRunSpeed = 290f;
+                    AnimationWalkSpeed = 290f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.54f;
@@ -3686,6 +3775,7 @@ namespace Moonwell.Objects
                     HitPointRegen = 2f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Blight;
                     Hotkey = "L";
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNLichVersion2.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-lich.blp";
                     Intelligence = 20;
                     IntelligencePerLevel = 3.4f;
@@ -3716,7 +3806,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 130f;
+                    ProjectileLaunchZ = 100f;
                     ProjectileLaunchZSwimming = 0f;
                     ProperNames = "Ordin Frostbane,Ras Splinterspine,Morbent Fell,Rage Winterchill,Araj the Summoner,Kali'naj Dethknell,Rak Coldskull,Din Frostfire,Calis Wraithson,Venim Iceblade,Naze the Eternal,Ras Frostwhisper,Coldreaver,Cho'Nammoth,Kryptikk Soulslayer,Alandil Lieng";
                     ProperNamesUsed = 15;
@@ -3729,6 +3819,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.Undead.Units.HallsOfTheDead>();
                     RequirementsTier3.Set<global::Moonwell.Objects.Undead.Units.BlackCitadel>();
                     RequirementsTiersUsed = 3;
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3786,6 +3877,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0f;
                     AnimationCastPoint = 0f;
+                    AnimationRunSpeed = 400f;
+                    AnimationWalkSpeed = 400f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0f;
@@ -3923,6 +4016,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 220f;
+                    AnimationWalkSpeed = 220f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 1.3f;
@@ -4023,7 +4118,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = -30f;
-                    ProjectileLaunchZ = 150f;
+                    ProjectileLaunchZ = 175f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 30f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
@@ -4031,6 +4126,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 50;
                     RepairTime = 36;
                     RequiredAnimationNamesAttachments = "large";
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4084,6 +4180,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.5f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.47f;
@@ -4175,13 +4273,14 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = 90f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 60f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
                     RepairGoldCost = 145;
                     RepairLumberCost = 20;
                     RepairTime = 24;
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4312,6 +4411,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Necropolis\\Necropolis_portrait";
                     Priority = 6;
                     ProjectileImpactZ = 260f;
                     ProjectileImpactZSwimming = 0f;
@@ -4326,6 +4426,7 @@ namespace Moonwell.Objects
                     RepairTime = 90;
                     RequiredAnimationNamesAttachments = "large";
                     ResearchesAvailable.Set<global::Moonwell.Objects.Undead.Upgrades.Backpack>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4458,6 +4559,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Ziggurat\\Ziggurat_portrait";
                     Priority = 3;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -4472,6 +4574,7 @@ namespace Moonwell.Objects
                     RepairTime = 45;
                     RequiredAnimationNames = "upgrade,second";
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4513,6 +4616,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.3f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 4;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 0.47f;
@@ -4601,7 +4706,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = 150f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 60f;
                     Race = global::Moonwell.Objects.UnitRace.Undead;
@@ -4610,6 +4715,7 @@ namespace Moonwell.Objects
                     RepairTime = 35;
                     RequiredAnimationNamesAttachments = "large";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.TombOfRelics>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4735,6 +4841,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\SacrificialPit\\SacrificialPit_portrait";
                     Priority = 4;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -4791,6 +4898,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 1.5f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 350f;
+                    AnimationWalkSpeed = 350f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Ethereal;
                     Attack1DamageLossFactor = 0f;
@@ -4867,6 +4976,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 15;
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4919,6 +5029,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 0.5f;
@@ -5006,6 +5118,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 30;
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5057,6 +5170,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 1;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 0.44f;
@@ -5141,6 +5256,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 18;
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5265,6 +5381,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Slaughterhouse\\Slaughterhouse_portrait";
                     Priority = 5;
                     ProjectileImpactZ = 200f;
                     ProjectileImpactZSwimming = 0f;
@@ -5411,6 +5528,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Ziggurat\\Ziggurat_portrait";
                     Priority = 3;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -5426,6 +5544,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNames = "upgrade,first";
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.Graveyard>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5555,6 +5674,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "medium";
                     RequiredAttachmentLinkNames = "alternate";
                     Requires.Set<global::Moonwell.Objects.Undead.Units.Graveyard, global::Moonwell.Objects.Undead.Units.BlackCitadel>();
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5678,6 +5798,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\TempleOfTheDamned\\TempleOfTheDamned_portrait";
                     Priority = 5;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -5807,6 +5928,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\TombOfRelics\\TombOfRelics_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -5820,6 +5942,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 30;
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5934,6 +6057,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\undead\\Ziggurat\\Ziggurat_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -5947,6 +6071,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 50;
                     RepairTime = 50;
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;

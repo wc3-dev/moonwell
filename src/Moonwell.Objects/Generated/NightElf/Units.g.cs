@@ -98,6 +98,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\nightelf\\AltarOfElders\\AltarOfElders_portrait";
                     Priority = 6;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -112,6 +113,7 @@ namespace Moonwell.Objects
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
                     RevivesDeadHeroes = true;
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -156,6 +158,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 0.67f;
@@ -263,6 +267,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges, global::Moonwell.Objects.NightElf.Units.HuntersHall>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.AbolishMagic, global::Moonwell.Objects.NightElf.Upgrades.DruidOfTheClawAdeptTraining, global::Moonwell.Objects.NightElf.Upgrades.ResistantSkin, global::Moonwell.Objects.NightElf.Upgrades.HardenedSkin, global::Moonwell.Objects.NightElf.Upgrades.MarkOfTheClaw>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -315,6 +320,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 0.81f;
@@ -421,6 +428,7 @@ namespace Moonwell.Objects
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.ImprovedBows, global::Moonwell.Objects.NightElf.Upgrades.Marksmanship, global::Moonwell.Objects.NightElf.Upgrades.Sentinel, global::Moonwell.Objects.NightElf.Upgrades.UpgradeMoonGlaive, global::Moonwell.Objects.NightElf.Upgrades.VorpalBlades>();
+                    Scale = 0.87f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -473,6 +481,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 0.67f;
@@ -580,6 +590,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.DruidOfTheTalonAdeptTraining, global::Moonwell.Objects.NightElf.Upgrades.MarkOfTheTalon>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -630,6 +641,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 0.67f;
@@ -789,6 +802,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 1;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 0.6f;
@@ -903,9 +918,11 @@ namespace Moonwell.Objects
                     RepairLumberCost = 80;
                     RepairTime = 55;
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.HuntersHall>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
+                    SelectionScale = 3.6f;
                     ShadowImageCenterX = 125f;
                     ShadowImageCenterY = 125f;
                     ShadowImageHeight = 300f;
@@ -951,6 +968,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.28f;
@@ -1035,13 +1054,14 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 11f;
                     ProjectileLaunchY = 62f;
-                    ProjectileLaunchZ = 71f;
+                    ProjectileLaunchZ = 110f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 60f;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
                     RepairGoldCost = 130;
                     RepairLumberCost = 10;
                     RepairTime = 20;
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1095,6 +1115,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Ethereal;
                     Attack1AnimationBackswingPoint = 0.64f;
@@ -1182,7 +1204,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 70f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 140f;
+                    ProjectileLaunchZ = 100f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 60f;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
@@ -1190,6 +1212,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 0;
                     RepairTime = 20;
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 1.15f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1240,6 +1263,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.3f;
                     AnimationCastPoint = 0.7f;
+                    AnimationRunSpeed = 250f;
+                    AnimationWalkSpeed = 250f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.65f;
@@ -1352,6 +1377,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 70;
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "large";
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -1471,6 +1497,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\nightelf\\ChimaeraRoost\\ChimaeraRoost_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -1485,6 +1512,7 @@ namespace Moonwell.Objects
                     RepairTime = 80;
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfEternity>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.CorrosiveBreath>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1529,6 +1557,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.47f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.6f;
@@ -1607,6 +1637,7 @@ namespace Moonwell.Objects
                     HitPointRegen = 0.5f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Night;
                     Hotkey = "D";
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNHeroDemonHunter.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-demonhunter.blp";
                     Intelligence = 16;
                     IntelligencePerLevel = 2.1f;
@@ -1622,6 +1653,7 @@ namespace Moonwell.Objects
                     Set("umpm", 0);
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
+                    Model = "Units\\NightElf\\HeroDemonHunter\\HeroDemonHunter";
                     ModelFileExtraVersions = 0;
                     Name = "Demon Hunter";
                     NormalSkin = "AInv,Ault";
@@ -1630,6 +1662,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 5;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "Units\\NightElf\\HeroDemonHunter\\HeroDemonHunter_portrait";
                     PrimaryAttribute = global::Moonwell.Objects.AttributeType.AGI;
                     Priority = 9;
                     ProjectileImpactZ = 60f;
@@ -1648,6 +1681,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
                     RequirementsTier3.Set<global::Moonwell.Objects.NightElf.Units.TreeOfEternity>();
                     RequirementsTiersUsed = 3;
+                    Scale = 1.05f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1707,6 +1741,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.47f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.64f;
@@ -1789,6 +1825,7 @@ namespace Moonwell.Objects
                     HitPointRegen = 1f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Night;
                     Hotkey = "D";
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNMetamorphosis.blp";
                     IconScoreScreen = "UI\\Glues\\ScoreScreen\\scorescreen-hero-demonhunter.blp";
                     Intelligence = 16;
                     IntelligencePerLevel = 2.1f;
@@ -1804,6 +1841,7 @@ namespace Moonwell.Objects
                     Set("umpm", 0);
                     MaximumPitchAngleDegrees = 10f;
                     MaximumRollAngleDegrees = 10f;
+                    Model = "Units\\NightElf\\HeroDemonHunter\\HeroDemonHunter";
                     ModelFileExtraVersions = 0;
                     Name = "Demon Hunter";
                     NameEditorSuffix = "(Demon Form)";
@@ -1813,6 +1851,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 4;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\nightelf\\HeroDemonHunter\\HeroDemonHunterMeta_portrait";
                     PrimaryAttribute = global::Moonwell.Objects.AttributeType.AGI;
                     Priority = 9;
                     ProjectileImpactZ = 60f;
@@ -1835,6 +1874,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
                     RequirementsTier3.Set<global::Moonwell.Objects.NightElf.Units.TreeOfEternity>();
                     RequirementsTiersUsed = 3;
+                    Scale = 1.05f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -1892,6 +1932,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 3;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.83f;
@@ -1993,6 +2035,7 @@ namespace Moonwell.Objects
                     RequiredAttachmentLinkNames = "alternate";
                     RequiredBoneNames = "alternate";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
+                    Scale = 1.05f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2046,6 +2089,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 1.17f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 1;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.53f;
@@ -2145,6 +2190,7 @@ namespace Moonwell.Objects
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
+                    Scale = 1.05f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2198,6 +2244,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 1.97f;
                     AnimationCastPoint = 0.7f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.67f;
@@ -2292,13 +2340,14 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = 80f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 60f;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
                     RepairGoldCost = 135;
                     RepairLumberCost = 20;
                     RepairTime = 22;
+                    Scale = 0.95f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2352,6 +2401,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 350f;
+                    AnimationWalkSpeed = 350f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.57f;
@@ -2456,6 +2507,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNames = "alternateex";
                     RequiredAttachmentLinkNames = "alternate";
                     RequiredBoneNames = "alternate";
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -2508,6 +2560,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 350f;
+                    AnimationWalkSpeed = 350f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.7f;
@@ -2603,6 +2657,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 145;
                     RepairLumberCost = 60;
                     RepairTime = 30;
+                    Scale = 0.8f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2699,6 +2754,7 @@ namespace Moonwell.Objects
                     HeightMinimum = 0f;
                     HideMinimapDisplay = false;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.None;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNGoldMine.blp";
                     IsABuilding = true;
                     LoopingFadeInRate = 512;
                     LoopingFadeOutRate = 512;
@@ -2721,6 +2777,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\nightelf\\EntangledGoldMine\\EntangledGoldMine_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -2734,6 +2791,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 0;
                     RepairTime = 60;
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -2775,6 +2833,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 350f;
+                    AnimationWalkSpeed = 350f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Ethereal;
                     Attack1AnimationBackswingPoint = 0.8f;
@@ -2865,7 +2925,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 70f;
-                    ProjectileLaunchZ = 11f;
+                    ProjectileLaunchZ = 8f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 61f;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
@@ -2873,6 +2933,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 25;
                     RepairTime = 25;
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.AncientOfWonders>();
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -2925,6 +2986,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 220f;
+                    AnimationWalkSpeed = 220f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 1.9f;
@@ -3042,6 +3105,7 @@ namespace Moonwell.Objects
                     RepairTime = 42;
                     RequiredAnimationNamesAttachments = "large";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.HuntersHall>();
+                    Scale = 0.8f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3096,6 +3160,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 400f;
+                    AnimationWalkSpeed = 400f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.37f;
@@ -3187,6 +3253,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 20;
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 0.8f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -3325,7 +3392,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = 90f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 61f;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
@@ -3333,6 +3400,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 30;
                     RepairTime = 1;
                     RequiredAnimationNamesAttachments = "medium";
+                    Scale = 0.75f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -3452,6 +3520,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\nightelf\\HuntersHall\\HuntersHall_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -3467,6 +3536,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfLife>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheMoon, global::Moonwell.Objects.NightElf.Upgrades.MoonArmor, global::Moonwell.Objects.NightElf.Upgrades.StrengthOfTheWild, global::Moonwell.Objects.NightElf.Upgrades.ReinforcedHides, global::Moonwell.Objects.NightElf.Upgrades.Ultravision, global::Moonwell.Objects.NightElf.Upgrades.WellSpring>();
+                    Scale = 1f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3508,6 +3578,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.4f;
                     AnimationCastPoint = 0.6f;
+                    AnimationRunSpeed = 350f;
+                    AnimationWalkSpeed = 350f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.54f;
@@ -3595,7 +3667,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 60f;
+                    ProjectileLaunchZ = 100f;
                     ProjectileLaunchZSwimming = 0f;
                     PropulsionWindowDegrees = 60f;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
@@ -3604,6 +3676,7 @@ namespace Moonwell.Objects
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.HuntersHall>();
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3659,6 +3732,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.8f;
                     AnimationCastPoint = 0.7f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.77f;
@@ -3779,6 +3854,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
                     RequirementsTier3.Set<global::Moonwell.Objects.NightElf.Units.TreeOfEternity>();
                     RequirementsTiersUsed = 3;
+                    Scale = 1.05f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -3910,6 +3986,7 @@ namespace Moonwell.Objects
                     PlacementRequires = global::Moonwell.Objects.PathingListPrevent.Unbuildable;
                     PlacementRequiresWaterRadius = 0f;
                     PointValue = 100;
+                    PortraitModelFile = "buildings\\nightelf\\MoonWell\\MoonWell_portrait";
                     Priority = 2;
                     ProjectileImpactZ = 120f;
                     ProjectileImpactZSwimming = 0f;
@@ -3922,9 +3999,11 @@ namespace Moonwell.Objects
                     RepairGoldCost = 180;
                     RepairLumberCost = 40;
                     RepairTime = 50;
+                    Scale = 0.87f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
+                    SelectionScale = 3.45f;
                     ShadowTextureBuilding = "ShadowMoonWell";
                     SightRadiusNight = 600;
                     SightRange = 900;
@@ -3962,6 +4041,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 3f;
                     AnimationCastPoint = 0f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 6;
                     ArmorType = global::Moonwell.Objects.ArmorType.Stone;
                     Attack1AnimationBackswingPoint = 1f;
@@ -4064,6 +4145,7 @@ namespace Moonwell.Objects
                     RepairTime = 50;
                     RequiredAnimationNamesAttachments = "large";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges, global::Moonwell.Objects.NightElf.Units.AncientOfWonders>();
+                    Scale = 0.8f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4116,6 +4198,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.61f;
                     AnimationCastPoint = 0.56f;
+                    AnimationRunSpeed = 350f;
+                    AnimationWalkSpeed = 350f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1DamageLossFactor = 0f;
@@ -4161,6 +4245,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 0.5f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNScout.blp";
                     IsABuilding = false;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
@@ -4169,6 +4254,7 @@ namespace Moonwell.Objects
                     MaxLife = 40;
                     MaximumPitchAngleDegrees = 33f;
                     MaximumRollAngleDegrees = 25f;
+                    Model = "units\\nightelf\\OwlSCOUT\\OwlSCOUT";
                     ModelFileExtraVersions = 0;
                     Name = "Owl Scout";
                     NameEditorSuffix = "(Level 2)";
@@ -4178,6 +4264,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 0;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\nightelf\\OwlSCOUT\\OwlSCOUT_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 100f;
                     ProjectileImpactZSwimming = 0f;
@@ -4190,6 +4277,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 1;
+                    Scale = 1.3f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -4234,6 +4322,8 @@ namespace Moonwell.Objects
                     AllowCustomTeamColor = false;
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
+                    AnimationRunSpeed = 400f;
+                    AnimationWalkSpeed = 400f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1DamageLossFactor = 0f;
@@ -4279,6 +4369,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 0.5f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNScout.blp";
                     IsABuilding = false;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
@@ -4287,6 +4378,7 @@ namespace Moonwell.Objects
                     MaxLife = 40;
                     MaximumPitchAngleDegrees = 33f;
                     MaximumRollAngleDegrees = 25f;
+                    Model = "units\\nightelf\\OwlSCOUT\\OwlSCOUT";
                     ModelFileExtraVersions = 0;
                     Name = "Owl Scout";
                     NameEditorSuffix = "(Level 3)";
@@ -4296,6 +4388,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 0;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\nightelf\\OwlSCOUT\\OwlSCOUT_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 60f;
                     ProjectileImpactZSwimming = 0f;
@@ -4308,6 +4401,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 1;
+                    Scale = 1.3f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -4400,6 +4494,7 @@ namespace Moonwell.Objects
                     HideMinimapDisplay = false;
                     HitPointRegen = 0.5f;
                     HitPointsRegenerationType = global::Moonwell.Objects.RegenType.Always;
+                    Icon = "ReplaceableTextures\\CommandButtons\\BTNScout.blp";
                     IsABuilding = false;
                     LumberBountyAwardedBase = 0;
                     LumberBountyAwardedNumberOfDice = 0;
@@ -4418,6 +4513,7 @@ namespace Moonwell.Objects
                     OrientationInterpolation = 0;
                     PlaceableInEditor = true;
                     PointValue = 100;
+                    PortraitModelFile = "units\\nightelf\\OwlSCOUT\\OwlSCOUT_portrait";
                     Priority = 1;
                     ProjectileImpactZ = 100f;
                     ProjectileImpactZSwimming = 0f;
@@ -4430,6 +4526,7 @@ namespace Moonwell.Objects
                     RepairGoldCost = 0;
                     RepairLumberCost = 0;
                     RepairTime = 1;
+                    Scale = 1.25f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 230f;
                     SelectionCircleOnWater = false;
@@ -4477,6 +4574,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.83f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.7f;
@@ -4584,7 +4683,7 @@ namespace Moonwell.Objects
                     ProjectileImpactZSwimming = 0f;
                     ProjectileLaunchX = 0f;
                     ProjectileLaunchY = 0f;
-                    ProjectileLaunchZ = 100f;
+                    ProjectileLaunchZ = 110f;
                     ProjectileLaunchZSwimming = 0f;
                     ProperNames = "Kathris Starsong,Adora Nightshade,Mora Moonsinger,Felore Moonray,Anara Chillwind,Kera Stardragon,Mave Whisperwind,Delas Moonfang,Mira Whitemane,Theta Saberfang,Tygra Snowscar,Ariel Darkmoon,Diana Windwood";
                     ProperNamesUsed = 13;
@@ -4597,6 +4696,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
                     RequirementsTier3.Set<global::Moonwell.Objects.NightElf.Units.TreeOfEternity>();
                     RequirementsTiersUsed = 3;
+                    Scale = 0.85f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4654,6 +4754,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 5;
                     ArmorType = global::Moonwell.Objects.ArmorType.Ethereal;
                     Attack1AnimationBackswingPoint = 0.64f;
@@ -4795,6 +4897,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.3f;
+                    AnimationRunSpeed = 220f;
+                    AnimationWalkSpeed = 220f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.533f;
@@ -4883,7 +4987,7 @@ namespace Moonwell.Objects
                     RepairLumberCost = 0;
                     RepairTime = 30;
                     RequiredAnimationNamesAttachments = "medium";
-                    Scale = 1f;
+                    Scale = 0.9f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -4936,6 +5040,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 0.6f;
@@ -5044,6 +5150,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNames = "Upgrade,First";
                     RequiredAnimationNamesAttachments = "upgrade,first,large";
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.NaturesBlessing, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
+                    Scale = 1.15f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5097,6 +5204,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 0.6f;
@@ -5206,6 +5315,7 @@ namespace Moonwell.Objects
                     RequiredAnimationNamesAttachments = "upgrade,second,large";
                     Requires.Set<global::Moonwell.Objects.NightElf.Units.AltarOfElders>();
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.NaturesBlessing, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
+                    Scale = 1.3f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5258,6 +5368,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.4f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 40f;
+                    AnimationWalkSpeed = 40f;
                     Armor = 2;
                     ArmorType = global::Moonwell.Objects.ArmorType.Wood;
                     Attack1AnimationBackswingPoint = 0.6f;
@@ -5365,6 +5477,7 @@ namespace Moonwell.Objects
                     RepairTime = 120;
                     RequiredAnimationNamesAttachments = "large";
                     ResearchesAvailable.Set<global::Moonwell.Objects.NightElf.Upgrades.NaturesBlessing, global::Moonwell.Objects.NightElf.Upgrades.Backpack>();
+                    Scale = 0.95f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5418,6 +5531,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.83f;
                     AnimationCastPoint = 0.5f;
+                    AnimationRunSpeed = 320f;
+                    AnimationWalkSpeed = 320f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Flesh;
                     Attack1AnimationBackswingPoint = 0.7f;
@@ -5538,6 +5653,7 @@ namespace Moonwell.Objects
                     RequirementsTier2.Set<global::Moonwell.Objects.NightElf.Units.TreeOfAges>();
                     RequirementsTier3.Set<global::Moonwell.Objects.NightElf.Units.TreeOfEternity>();
                     RequirementsTiersUsed = 3;
+                    Scale = 0.925f;
                     ScaleProjectiles = true;
                     SelectionCircleHeight = 0f;
                     SelectionCircleOnWater = false;
@@ -5594,6 +5710,8 @@ namespace Moonwell.Objects
                     AnimationBlendTimeSeconds = 0.15f;
                     AnimationCastBackswing = 0.51f;
                     AnimationCastPoint = 0f;
+                    AnimationRunSpeed = 270f;
+                    AnimationWalkSpeed = 270f;
                     Armor = 0;
                     ArmorType = global::Moonwell.Objects.ArmorType.Ethereal;
                     Attack1DamageLossFactor = 0f;

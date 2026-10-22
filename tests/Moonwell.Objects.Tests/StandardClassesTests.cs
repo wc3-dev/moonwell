@@ -17,6 +17,15 @@ namespace Moonwell.Objects.Tests
         }
     }
 
+    /// <summary>A Footman of a map's own a tenth larger than the footman.</summary>
+    public class Grown : Moonwell.Objects.Human.Units.Footman
+    {
+        public Grown()
+        {
+            Scale = Scale * 1.1f;
+        }
+    }
+
     /// <summary>A Paladin of a map's own that sets its life, then its strength.</summary>
     public class LifeThenStrength : Moonwell.Objects.Human.Units.Paladin
     {
@@ -256,6 +265,24 @@ namespace Moonwell.Objects.Tests
             Assert.Equal(
                 new object[] { typeof(Moonwell.Objects.Human.Abilities.HolyLight), typeof(Moonwell.Objects.Human.Abilities.DivineShield), typeof(Moonwell.Objects.Human.Abilities.Resurrection), typeof(Moonwell.Objects.Human.Abilities.DevotionAura) },
                 paladin.HeroAbilities.Entries);
+        }
+
+        [Fact]
+        public void a_standard_units_scale_is_the_games()
+        {
+            // The game scales them so in Definitive Edition graphics (game-facts, seen on 3.0.1); a scale of their own is read from it.
+            Assert.Equal(0.8f, new Moonwell.Objects.Human.Units.Footman().Scale);
+            Assert.Equal(0.935f, new Moonwell.Objects.Human.Units.Paladin().Scale);
+            Assert.Equal(0.85f, new Moonwell.Objects.Human.Units.Peasant().Scale);
+            Assert.Equal(0.8f * 1.1f, new Grown().Scale);
+        }
+
+        [Fact]
+        public void a_standard_units_scale_with_no_definitive_edition_one_is_the_reforged_one()
+        {
+            // The game reads :hd when a unit has no :de value (game-facts, seen on 3.0.1): an Assassin's 1.2 (sd 1.3), a Guardian Golem's 1.0 (sd 1.5).
+            Assert.Equal(1.2f, new Moonwell.Objects.Creeps.Units.Assassin().Scale);
+            Assert.Equal(1.0f, new Moonwell.Objects.Creeps.Units.GuardianGolem().Scale);
         }
 
         [Fact]
