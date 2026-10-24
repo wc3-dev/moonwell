@@ -287,7 +287,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "floats.stored", Run = FloatCases.Stored });
             list.Add(new Case { Name = "floats.converted", Run = FloatCases.Converted });
             list.Add(new Case { Name = "floats.bare", Run = FloatCases.Bare });
+            list.Add(new Case { Name = "floats.beyond-the-rewrite", Run = FloatCases.Beyond });
             list.Add(new Case { Name = "floats.ints-stay", Run = FloatCases.IntsStay });
+            list.Add(new Case { Name = "floats.ints-start-as-integers", Run = FloatCases.IntsStart });
+            list.Add(new Case { Name = "floats.made-floats-in-calls", Run = FloatCases.MadeFloatsInCalls });
             list.Add(new Case { Name = "text.nullable-concat", Run = TextCases.NullableConcat });
             list.Add(new Case { Name = "text.conditional-access-concat", Run = TextCases.ConditionalAccessConcat });
             list.Add(new Case { Name = "text.nullable-interpolation", Run = TextCases.NullableInterpolation });
@@ -297,6 +300,23 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "text.nullable-struct", Run = TextCases.NullableStruct });
             list.Add(new Case { Name = "text.nullable-to-string", Run = TextCases.NullableToString });
             list.Add(new Case { Name = "text.plain", Run = TextCases.Plain });
+            list.Add(new Case { Name = "text.nullable-get-value-or-default", Run = TextCases.NullableGetValueOrDefault });
+            list.Add(new Case { Name = "text.nullable-enum-to-string", Run = TextCases.NullableEnumToString });
+            list.Add(new Case { Name = "collection-expressions.everywhere", Run = CollectionExpressionCases.Everywhere });
+            list.Add(new Case { Name = "collection-expressions.spread", Run = CollectionExpressionCases.Spread });
+            list.Add(new Case { Name = "templates.static-through-using-static", Run = TemplateCases.StaticThroughUsingStatic });
+            list.Add(new Case { Name = "templates.instance-without-receiver", Run = TemplateCases.InstanceWithoutReceiver });
+            list.Add(new Case { Name = "templates.instance-put", Run = TemplateCases.InstancePut });
+            list.Add(new Case { Name = "strings.escapes", Run = StringCases.Escapes });
+            list.Add(new Case { Name = "strings.raw-and-verbatim", Run = StringCases.RawAndVerbatim });
+            list.Add(new Case { Name = "strings.utf8", Run = StringCases.Utf8 });
+            list.Add(new Case { Name = "strings.interpolated", Run = StringCases.Interpolated });
+            list.Add(new Case { Name = "strings.percent", Run = StringCases.Percent });
+            list.Add(new Case { Name = "strings.folded", Run = StringCases.Folded });
+            list.Add(new Case { Name = "conditionals.nullable-first-branch", Run = ConditionalCases.NullableFirstBranch });
+            list.Add(new Case { Name = "conditionals.nullable-bool-first-branch", Run = ConditionalCases.NullableBoolFirstBranch });
+            list.Add(new Case { Name = "conditionals.struct-type-parameter", Run = ConditionalCases.StructTypeParameter });
+            list.Add(new Case { Name = "conditionals.still-right", Run = ConditionalCases.StillRight });
         }
 
         /// <summary>Runs every case on a fresh world, and returns a PASS or FAIL line for each, then DONE.</summary>

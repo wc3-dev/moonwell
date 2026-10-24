@@ -313,17 +313,11 @@ turns the checks off in it.
 game with it. Both make a development build: it checks the values Moonwell receives and keeps the Lua readable.
 `--release` makes the release build. `moonwell run --game <exe>` names the game when it is not in its usual place.
 
-The build also rejects what CSharp.lua cannot compile: collection expressions, `[1, 2]` (write `new List<int> { 1, 2 }`),
-and `using static Moonwell.Natives` (write `Natives.X`). `c ? n : x` whose first branch can be null or false in the
-game (an `int?`, a `bool?`) is error MW0016: the game gives `x` there, so write an `if`. The build does not catch a
+The build also rejects `using static Moonwell.Natives` (write `Natives.X`), which hides `Player` behind
+`Natives.Player`. The build does not catch a
 `Dictionary` keyed by a map's own class that has a static field with a value: the map can stop while it loads, with
 nothing on the screen. Key by the handle, or set the field on first use. Moonwell's classes, `Unit` and the rest, are
 safe keys.
-
-A whole-number `float` stays a float in the game, and prints as `50.0` where C# prints `50`; so does an `int` made a
-float (`(float)count`) and a `float` field without an initializer. An `int?` made a `float?` (`float? f = maybe;`),
-`foreach (float f in ints)`, a float array's items, and `Math.Floor` or `Math.Ceiling`, are integers in the game: add
-`+ 0.0f` where a product could pass 2^31.
 
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
