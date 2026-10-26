@@ -158,8 +158,17 @@ public static class Rules
         isEnabledByDefault: true,
         description: "The game has no setter for a unit's level, so Level is a unit's declared value: it is set in the constructor of the class that declares the unit (and in a lambda or local function there), and only read anywhere else. A hero's level is set with SetLevel; a hero's constructor does not declare it. The build rejects the same set.");
 
-    /// <summary>The rules for the constructor of a declared object class.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Declared { get; } = ImmutableArray.Create(LiveInDeclaration, LevelOutsideConstructor);
+    public static readonly DiagnosticDescriptor DefaultKind = new(
+        "MW0037",
+        "Default<T>() of a class of another kind",
+        "{0}",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Default<T>() is declared on Widget, so C# accepts any widget class through Unit, Hero or Item: Item.Default<Guard>() compiles for a unit class, and a destructable class compiles and throws in the game. The rule rejects a class that is not of the kind the call is written on (a unit class through Item or Hero, an item class through Unit), and a destructable class anywhere, which has no default object.");
+
+    /// <summary>The rules for the constructor of a declared object class, and for a class's default object.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> Declared { get; } = ImmutableArray.Create(LiveInDeclaration, LevelOutsideConstructor, DefaultKind);
 
     public static readonly DiagnosticDescriptor NoId = new(
         "MW0013",
@@ -177,7 +186,7 @@ public static class Rules
         ObjectsCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "An object id is four characters. The game makes a unit whose id starts with an upper-case letter a hero, and only such a unit: a hero's id starts with one, another unit's does not.");
+        description: "An object id is four ASCII letters, digits or signs. The game makes a unit whose id starts with an upper-case letter a hero, and only such a unit: a hero's id starts with one, another unit's does not.");
 
     /// <summary>The rules for a declared object's id.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Ids { get; } = ImmutableArray.Create(NoId, BadId);
@@ -196,12 +205,6 @@ public static class Rules
         "Pattern that gives the wrong answer",
         "{0}",
         "A positional pattern in an is test (p is (1, 2), t is (1, _), p is Pt(var a, var b)) and an extended property pattern (p is { Inner.X: 9 }) compile to Lua that is false, or stops the compiler. A positional pattern in a switch expression arm works; so does a property pattern with one name per level ({ Inner: { X: 9 } }).");
-
-    public static readonly DiagnosticDescriptor NegatedConstant = Syntax(
-        "MW0019",
-        "Minus in front of a negative constant",
-        "'{0}' is written as --{1}, which Lua reads as a comment, so the script does not load; write the number out, or 0 - {0}",
-        "CSharp.lua writes -N with N a negative constant as --5. Lua starts a comment at --, and the rest of the line is lost.");
 
     public static readonly DiagnosticDescriptor StructCopy = Syntax(
         "MW0020",
@@ -283,6 +286,6 @@ public static class Rules
 
     /// <summary>The rules for syntax and library CSharp.lua or its Lua core cannot do.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Syntaxes { get; } = ImmutableArray.Create(
-        PatternStops, PatternWrong, NegatedConstant, StructCopy, TupleForm, FormWrong, RangeIndex, RefForm,
+        PatternStops, PatternWrong, StructCopy, TupleForm, FormWrong, RangeIndex, RefForm,
         ParamsForm, StringCall, BoxedValue, CatchForm, LuaMember, CheckedForm, EnumText, UsingOrder);
 }

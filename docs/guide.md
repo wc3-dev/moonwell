@@ -1,5 +1,8 @@
 # Making a map with Moonwell
 
+This guide describes Moonwell 0.3, which is not released yet; the guide for 0.2.5, the released version, is at the
+[`v0.2.5` tag](https://github.com/mdlsvensson/moonwell/blob/v0.2.5/docs/guide.md).
+
 ## Start a map
 
 Moonwell needs the .NET 10 SDK, Warcraft III 3.0, and `common.j` and `Blizzard.j` in
@@ -30,7 +33,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Start.cs` | The game's start: makes the Champion and the footmen |
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
 | `map/` | The World Editor map, saved as a folder |
-| `assets/` | Files copied into the map at the same paths (models, icons, sounds); make it when you need it |
+| `assets/` | Files copied into the map at the same paths (models, icons, sounds), named with ASCII characters only; make it when you need it |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
 Code can sit in any folder and any namespace: the build finds objects and the map class by what they inherit. The
@@ -116,7 +119,7 @@ public sealed class Champion : Human.Units.Paladin
   starts with full life, so set `MaxLife`.
 - A class with no `[ObjectId]` is error MW0013, and the build names a free id to use. A buff also names its carrier,
   the hidden ability that shows its icon: `[ObjectId("B001", Carrier = "A002")]`, or `[ObjectId(Carrier = "A002")]`
-  with `[Replaces]`. An id is four characters, and only a hero's starts with an upper-case letter (MW0014).
+  with `[Replaces]`. An id is four ASCII characters, and only a hero's starts with an upper-case letter (MW0014).
 - `[Replaces]` makes the class the game's object itself: every unit of that type is made as the class.
 - `Unit.Create<Champion>(player, x, y)` makes one in the game, facing 270 degrees unless a facing follows;
   `Item.Create<EmberBlade>(x, y)` makes an item.
@@ -142,7 +145,8 @@ Default. A map on another data set plays that set's values for the fields it lea
 `Default` is the class's declared values as an object, which never changes when the unit does. Every unit, hero and
 item has it, a plain standard unit too: `unit.Default.MaxMana` is 300 whatever this Champion's is now. From the class
 alone it is `Unit.Default<Champion>().MaxMana`: `Unit.Default<T>()` takes a unit class (`Hero.Default<T>()` works too),
-`Item.Default<T>()` an item class. On a declared class `Default` is typed as its kind base (`StandardUnit`,
+`Item.Default<T>()` an item class; a class of another kind (`Item.Default<Guard>()`) or a destructable class, which has
+no default object, is error MW0037. On a declared class `Default` is typed as its kind base (`StandardUnit`,
 `StandardHero` or `StandardItem`), so it holds every field of it (`Default.Model`, `Default.GoldCost`); the class's own
 members come through `Unit.Default<T>()`. Its live actions do nothing. In the class's own constructor the default
 object is what the constructor is making, so `Default` and `Unit.Default<T>()` of the class there are error MW0012:
@@ -204,6 +208,7 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 | Unit | |
 |---|---|
 | `Life`, `MaxLife`, `Mana`, `MaxMana` | read and set; a `Life` under 0.405 kills, above the most it clamps; the most are whole numbers |
+| `Player` | read and set; setting gives the unit the new owner's colour |
 | `X`, `Y` | read; `MoveTo(x, y)` through the game's pathing, `PlaceAt(x, y)` with none, not even the map's edge |
 | `Facing` | read and set (the unit turns, so a read at once gives the old one); `FaceNow(degrees)` turns at once, a walking unit turns back |
 | `Level` | read; a hero's hero level; a unit's level is set only in its declared class's constructor |
@@ -449,7 +454,6 @@ in Lua and comparing what they printed.
 | MW0005 | `decimal` (with `long`, `ulong`, `uint`, `double`) | `int` or `float` |
 | MW0017 | in a `switch` expression: `> 10 =>`, `int =>`, `var n`, `not 1`; in any pattern: `(...)`, a name inside `{ X: int y }`, `not null` inside `{ }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
 | MW0018 | `x is (1, _)`, `p is Pt(var a, var b)`, `p is { Inner.X: 9 }` | `{ X: 1 }`, a `switch`, `{ Inner: { X: 9 } }` |
-| MW0019 | `-N` with `const int N = -5` (Lua reads `--5` as a comment) | write the number, `0 - N` |
 | MW0020 | `var c = arr[0]; c.X = 6;` on a struct (it changes `arr[0]`) | make a new struct, or write `c` back |
 | MW0022 | `var (a, b) = (1, 2)`, `(x[0], x[1]) = (x[1], x[0])`, a tuple turned into text | `(int a, int b) = (1, 2)`, a temporary, its items |
 | MW0023 | a user-defined `++`, `--`, `operator true/false`; `static abstract`; a record deriving from a record; one class implementing `IG<int>` and `IG<string>`; `with` on an anonymous type | a method; an ordinary class |
