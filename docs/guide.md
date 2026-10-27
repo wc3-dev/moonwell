@@ -55,9 +55,13 @@ replaces the list.
 
 A unit, hero, item, ability, buff, destructable, doodad or upgrade is a class that inherits one of the game's own,
 from `Moonwell.Objects`, by race and kind: `Human.Units.Paladin`, `Human.Abilities.Defend`, `Human.Upgrades.Defend`,
-`Campaign.Units.Arthas`, and `Items.ClawsOfAttack15`, `Destructables.X` and `Doodads.X` for the kinds with no race.
+`Campaign.Units.ArthasHart`, and `Items.ClawsOfAttack15`, `Destructables.X` and `Doodads.X` for the kinds with no race.
 `using Moonwell.Objects;` reaches all of them; `using static Moonwell.Objects.Human;` lets a file write
-`Abilities.Defend`. Its constructor changes fields; a field it does not change keeps its base's value. Every new object
+`Abilities.Defend`. A class takes the object's in-game name. Where objects of one race and kind share a name, the one
+World Editor lists without an editor suffix keeps it and the others get their id added: `Orc.Abilities.Shockwave` is
+the Tauren Chieftain's, `Orc.Abilities.ShockwaveAOs2` Cairne's. Campaign units that share a name all get their id
+(`ArthasHart`, `ArthasUear`). A class's hover shows its name, editor suffix and id: "Shockwave (Cairne), AOs2."
+Its constructor changes fields; a field it does not change keeps its base's value. Every new object
 has its id on the class, as World Editor shows it: a hero's starts with an upper-case letter, another unit's with a
 lower-case one.
 
@@ -75,13 +79,19 @@ public sealed class Champion : Human.Units.Paladin
 }
 ```
 
-- A field with levels takes `Levels(75f, 150f, 225f)`, `PerLevel(level => ...)` to compute each level, or one value
-  for every level: an upgrade's `Name = "Sharpened Blades"`.
+- A field with levels takes `Levels(75f, 150f, 225f)`, one value for each level (another count fails the build),
+  `PerLevel(level => ...)` to compute each level, or one value for every level: an upgrade's
+  `Name = "Sharpened Blades"`. Raising an ability's `LevelCount` past the game's writes every level you give; a field
+  you leave keeps the game's own data there (a Storm Bolt of 6 levels deals 325 at levels 4 to 6, its table's 4th
+  level), and reads so.
 - A field World Editor offers a list of values for holds an enum of them, named as the game's data spells them:
   `AttackType = AttackType.Magic`. One that takes several, such as the targets, holds flags:
   `Attack1TargetsAllowed = Targets.Air | Targets.Ground`. A flags field of 0 has none of them; `Targets.None` is
   World Editor's target "none", a value of its own. The numbers are Moonwell's, in World Editor's order, not the
   natives' (JASS's `ATTACK_TYPE_MAGIC` is 4, `AttackType.Magic` is 6): never cast one to or from a native's value.
+  The placement fields are the exception, named as World Editor shows them: `PlacementRequires =
+  PathingRequire.Buildable`, `PlacementPreventedBy = PathingPrevent.Unblighted`. The game stores each as its opposite
+  ("unbuildable", "blighted"), and the build writes that.
   In the game an enum of `Moonwell.Objects` has its numbers only, no names: `ToString` (also `choice?.ToString()`), a
   string made with one (`+`, `+=`, interpolation, or a call that takes an `object`: `string.Format`,
   `StringBuilder.Append`, a method of your own) and `Enum.GetValues` are rejected as error MW0010, a nullable choice
@@ -110,7 +120,9 @@ public sealed class Champion : Human.Units.Paladin
   in the game. A unit's `Level` is set only in its declared class's constructor, since the game has no setter: anywhere
   else it is error MW0015, and a build error too.
 - A list takes `Set<A, B, C>()` (the whole list, in order), `Replace<Old, New>()` (in the old one's place), `Add<T>()`
-  and `Remove<T>()`.
+  and `Remove<T>()`. Where the game's list differs by level, as a tiered upgrade's requirements do, the build makes the
+  same changes to each level's own list: `Requires.Add<Blacksmith>()` on a copy of Iron Forged Swords keeps the Keep and
+  Castle its later levels need. Read in C#, such a list is level 1's with the changes.
 - The tooltips are World Editor's four: `Tooltip` (Tooltip - Normal), `TooltipExtended` (Tooltip - Normal - Extended),
   `TooltipLearn` (Tooltip - Learn) and `TooltipLearnExtended` (Tooltip - Learn - Extended).
 - A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`.
@@ -184,18 +196,32 @@ public sealed class KillCounter : UnitComponent
 
 - A type lists the components its instances start with in its constructor. `unit.Add(new KillCounter())` adds one in the
   game, and `unit.Remove<KillCounter>()` removes it (`End()` ends a component from inside). `HasEnded` is false inside
-  `OnRemoved`, `OnLeave` and `OnEnd`, and true once the removal or `End()` returns.
+  `OnRemoved`, `OnLeave` and `OnEnd`, and true once the removal or `End()` returns. A component object is on one
+  actor only: adding it to a second, applying a buff that is on a unit already, or removing a component from an actor
+  it is not on is reported and refused, in a release build too.
 - Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnLeave`) go on a game or
-  player component. `OnUnitCreated` runs once for each unit, when it comes into the game; a unit's own is `OnCreated`.
+  player component. `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before
+  anything wanted it runs none); a unit's own is `OnCreated`.
 - A reaction's parameters say the role: `OnPickedUp(Unit carrierUnit)`, `OnUnitDied(Unit dyingUnit, Unit? killerUnit)`,
   `OnKill(Unit killedUnit)`. The killer is null when no unit's damage killed: `Kill()` or `Life = 0` from code, timed
   life running out, or a unit's own damage.
 - An event runs the type's reaction first, then its components' in the order added, then the game's and the
   players'. A reaction that fails is reported, and the others still run.
 - A buff is a class that inherits `Buff`, or a standard buff to show its icon. `Duration` and `Tick` set its time,
-  `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit.
-- `Timer.After(seconds, action)` and `Timer.Every(seconds, action)` run code later. A timer, buff or component
-  belongs to whatever made it, and ends with it.
+  `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
+  apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
+  `Duration` from then on, and keeps its other values and what it has counted.
+- `Timer.After(seconds, action)` and `Timer.Every(seconds, action)` run code later. A timer belongs to whatever made
+  it, and ends with it. A component or buff belongs to the actor it is added to, whoever added it: it ends when it is
+  removed or that actor ends, so an aura that buffs others removes its buff in `OnPart` (Interactions, below).
+- `Timer.After(0, action)` inside a timer runs in the same instant, as the game's own 0 s timer does. More than 10000
+  timer runs in one instant (a timer that keeps starting itself, say) are reported, and the rest wait 1/32 s.
+  `Timer.Every` needs seconds above 0: 0 or less is reported, and that timer never runs.
+- What an ability's `OnCast` makes belongs to the ability, which lasts as long as the caster is in the game, so a
+  delayed effect runs after the spell has ended; work that should stop with a channel names the cast:
+  `Timer.Every(0.5f, Pulse, owner: cast)`. What a unit's own `OnDeath` makes belongs to the game, as death is not an
+  end and the corpse can go at any time, so a respawn timer runs; an effect that should end with the corpse names the
+  unit: `owner: this`. What a component's `OnDeath` makes belongs to the component, which ends when the corpse goes.
 - Game work starts in a reaction. Top-level code and static fields make nothing in the game.
 
 ## Units, heroes and items
@@ -213,6 +239,7 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 | `Facing` | read and set (the unit turns, so a read at once gives the old one); `FaceNow(degrees)` turns at once, a walking unit turns back |
 | `Level` | read; a hero's hero level; a unit's level is set only in its declared class's constructor |
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run |
+| `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
@@ -221,8 +248,8 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|
-| `Experience` | read and set; the levels that come with it are given |
-| `SetLevel(level)`, `Revive(x, y)` | `showEffect:` turns the effect off |
+| `Experience` | read and set; a higher value gives the levels that come with it, a lower one keeps the level |
+| `SetLevel(level)`, `Revive(x, y)` | `showEffect:` turns the effect off; a lower level takes levels away |
 | `Strength`, `Agility`, `Intelligence` | the base, read and set |
 | `StrengthWithBonus`, `AgilityWithBonus`, `IntelligenceWithBonus` | with items and auras, read |
 | `SkillPoints` | read and set |
@@ -238,9 +265,10 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 Moonwell listens for pick-ups and drops from the start, so an item a unit picks up is taken in; one a unit held before
 the map began has no `Carrier`. A unit that is not a hero drops its items when it dies, with no drop reactions; a hero
 keeps them. When a unit is removed from the game (`RemoveUnit`), its items leave it inside the call, but the game fires
-the drops after it: `Carrier` is already null then, and the drop reactions run for an object about to be swept. The
-items of a removed hero are removed with it, as seen; other units are assumed to do the same. A member's exact
-behaviour is in its comment.
+the drops after it. For a unit Moonwell removed (`Remove()`, or its owner ending) no drop reaction runs; for one a
+native removed, the drop reactions run for an object about to be swept, with `Carrier` already null. The items of a
+removed hero are removed with it, as seen; other units are assumed to do the same. A member's exact behaviour is in
+its comment.
 
 ## Damage
 
@@ -351,6 +379,13 @@ public sealed class FireAura : Interaction<Unit, Unit> // held by a unit, pairs 
     public override void OnTick(Pair pair) { Holder.Damage(pair.Other, 10f); }
 }
 
+public sealed class FrostAura : Interaction<Unit, Unit>
+{
+    public FrostAura() { Range = 600f; }
+    public override void OnMeet(Pair pair) { pair.Other.Apply(new Chilled()); }
+    public override void OnPart(Pair pair) { pair.Other.Remove<Chilled>(); } // the buff is the unit's, not the pair's
+}
+
 unit.Interact(new FireAura()); // made inside a buff, it ends with the buff
 var well = Gizmo.Create(new Well(), x, y, caster.Player); // a gizmo is a map's own object with a place
 var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find.InRange(x, y, 500f, list)
@@ -359,7 +394,10 @@ var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find
 - `Range` is centre to centre and flat. A pair is found at the next tick after they come within range, so a 1 s tick
   may start up to 1 s late (interactions started together take turns over its steps). Only a unit in the game (alive,
   not hidden, not loaded), a visible item on the ground, a live destructable and a gizmo have a place; `OnPart` runs
-  once, when a pair ends.
+  once, when a pair ends. A timer a pair's reactions make is the pair's and ends when it parts; a buff or component
+  they add is the unit's, so `OnPart` removes it, as `FrostAura` does.
+- From the first interaction or `Find` that asks for units, Moonwell takes in every unit in the game, and each one
+  that comes in after, also those the game makes with no code of the map (trained, summoned, made by a native).
 - `Find` has `InRange`, `InRect`, `InPolygon`, `AlongLine` and `Closest`. Each gives a new list, or fills a list the
   map keeps (which makes none; use it every tick); `Closest` gives the nearest one, or the nearest few into a list.
 - `Interactions.CellSize` (128), `CellCheck` (0.1), `Slack` (64) and `Step` (1/32) are set in the map's constructor.
@@ -436,10 +474,30 @@ The `Natives` class has every native of the game for what Moonwell does not cove
 ## Multiplayer
 
 Code that differs between players' machines goes in `Local.For(player, () => ...)`, as Smite reads a unit's name,
-which is in each player's language. The build rejects, as compile
-errors, a change to the game inside it, a machine-local read outside it, `GetHandleId`, looping over a `Dictionary` or
-`HashSet` (use `OrderedMap` and `OrderedSet`), and `long`, `ulong`, `uint` and `double`. `[SyncUnchecked]` on a method
-turns the checks off in it.
+which is in each player's language. The build rejects, as compile errors:
+
+- A change to the game inside it (MW0001). The analyzer follows what the block runs: your methods and their
+  overrides, the classes it makes or first touches (their field initializers and static constructors), operators, a
+  `using`'s `Dispose`, a `foreach`'s enumerator, and the delegates it runs. A lambda you hand on through a parameter
+  of your own (`ShowTo(p, () => ...)`, where `ShowTo` gives it to `Local.For`) is checked as part of the block; calling
+  that parameter outside `Local.For` too is MW0040. A delegate it cannot follow (a list's element, a library's
+  result) is MW0039: write the lambda in place.
+- A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
+  localised names, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
+  reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
+- `new Random()` without a seed, anywhere (MW0038): it reseeds the game's own random generator with each machine's
+  clock. Use `Natives.GetRandomInt`, or `new Random(seed)` with a seed every machine shares.
+- `GetHandleId` (MW0003), looping over a `Dictionary` or `HashSet`, or one held as `IDictionary`, `ISet` or an
+  `ICollection` (MW0004; use `OrderedMap` and `OrderedSet`), and `long`, `ulong`, `uint`, `double` and `decimal`
+  (MW0005).
+
+`[MachineLocal]` on a method of your own makes it code of one machine: its body is checked as a `Local.For` block, and
+calling it outside one is MW0002. Where the code runs on every machine anyway, on an override of Moonwell's
+(`OnGameStart`) or on a lambda given to `Timer.Every`, the attribute is MW0040. `[SyncUnchecked]` on a method turns the
+checks off in its own body, except `decimal`; `Local.For` still follows a method so marked, so a block whose changes are
+meant is marked itself: `Local.For(p, [SyncUnchecked] () => ...)`. `Natives.BlzSendSyncData` inside `Local.For` sends a
+machine-local value to every machine. Not checked: a C# field written inside `Local.For` and read by code that runs on
+every machine.
 
 ## C# the game's Lua cannot run
 
@@ -451,24 +509,23 @@ in Lua and comparing what they printed.
 
 | Rule | Rejects | Write instead |
 |---|---|---|
-| MW0005 | `decimal` (with `long`, `ulong`, `uint`, `double`) | `int` or `float` |
+| MW0005 | `decimal` (`long`, `ulong`, `uint` and `double` are under Multiplayer) | `int` or `float` |
 | MW0017 | in a `switch` expression: `> 10 =>`, `int =>`, `var n`, `not 1`; in any pattern: `(...)`, a name inside `{ X: int y }`, `not null` inside `{ }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
 | MW0018 | `x is (1, _)`, `p is Pt(var a, var b)`, `p is { Inner.X: 9 }` | `{ X: 1 }`, a `switch`, `{ Inner: { X: 9 } }` |
-| MW0020 | `var c = arr[0]; c.X = 6;` on a struct (it changes `arr[0]`) | make a new struct, or write `c` back |
+| MW0020 | `var c = arr[0];` on a struct, then `c.X = 6`, `c.Inner.X = 6`, `c.Move()` or `Bump(ref c)` (it changes `arr[0]`) | make a new struct, or write `c` back with `arr[0] = c` |
 | MW0022 | `var (a, b) = (1, 2)`, `(x[0], x[1]) = (x[1], x[0])`, a tuple turned into text | `(int a, int b) = (1, 2)`, a temporary, its items |
 | MW0023 | a user-defined `++`, `--`, `operator true/false`; `static abstract`; a record deriving from a record; one class implementing `IG<int>` and `IG<string>`; `with` on an anonymous type | a method; an ordinary class |
 | MW0024 | `a[1..3]`, `s[1..]`, `list[^1]`, `Index`, `Range` (`array[^1]` is fine) | `Substring`, `Skip`/`Take`, `list[list.Count - 1]` |
 | MW0025 | a `ref` return, `ref int r = ref First(a)`, `ref int r = ref a[i]` | index the array each time |
 | MW0026 | `params List<int>`, `params` in a lambda | `params int[]` |
-| MW0027 | `s.Split("--")` (runs out of memory), `StartsWith('a')`, `EndsWith('a')`, ignore-case `IndexOf`/`StartsWith`/`EndsWith`, `"abc".Reverse()` | split on a char, a string argument, lower-case both |
+| MW0027 | `s.Split("--")` (runs out of memory), `s.Split(new[] { ", " }, options)` (never ends), `StartsWith('a')`, `EndsWith('a')`, ignore-case `IndexOf`/`StartsWith`/`EndsWith`, `"abc".Reverse()` | split on a char, a string argument, lower-case both |
 | MW0028 | a `char` or an enum given to `string.Format`, `Console.WriteLine(object)`, `StringBuilder.Append(object)`, `string.Join` (shown as its number) | `.ToString()` |
 | MW0029 | `catch (NullReferenceException)`, `catch (IndexOutOfRangeException)`, a pattern variable in a `catch ... when` | `catch (Exception)`, test first |
-| MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, `Range`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, and more (the rule's description lists them); also `HashSet.SetEquals`, `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary`, which give wrong answers | `TryGetValue`, `"
-"`, a loop |
+| MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, `Range`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, `Random.Shared`, and more (the rule's description lists them); also `SetEquals` (of a `HashSet`, an `ISet` or an `IReadOnlySet`), `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary`, which give wrong answers | `TryGetValue`, `"\n"`, a loop |
 | MW0031 | `checked(a + b)`, `checked { }` (an overflow is never detected) | test the range yourself |
 | MW0032 | `Enum.Parse`, `Enum.GetValues`/`GetNames`, `ToString("D")` on an enum, a `[Flags]` combination turned into text, `(Color)5 + "x"` | a `switch` on the value, `HasFlag` |
 | MW0034 | two `using var` in one block (disposed in the wrong order) | nested `using ( ) { }` |
-| MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
+| MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, `foreach (unit u in widgets)`, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
 
 What works is most of the language: classes, structs, records, primary constructors, interfaces and default methods,
 generics with constraints, enums, delegates, events, `switch` statements, `is` patterns with constants, types and

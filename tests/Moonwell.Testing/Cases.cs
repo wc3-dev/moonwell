@@ -11,6 +11,7 @@ namespace Moonwell.Testing
         {
             var list = new List<Case>();
             AddFirst(list);
+            AddAuditTimers(list);
             AddMiddle(list);
             AddLast(list);
             AddMaths(list);
@@ -18,8 +19,34 @@ namespace Moonwell.Testing
             AddTerrain(list);
             AddAreas(list);
             AddInput(list);
+            AddLifecycle(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the full audit's fixes to core's lifecycle.</summary>
+        private static void AddLifecycle(List<Case> list)
+        {
+            list.Add(new Case { Name = "lifecycle.units-the-game-makes-are-met", Run = LifecycleCases.UnitsTheGameMakesAreMet });
+            list.Add(new Case { Name = "lifecycle.local-throw-keeps-sync", Run = LifecycleCases.LocalThrowKeepsSync });
+            list.Add(new Case { Name = "lifecycle.death-respawn-outlives-corpse", Run = LifecycleCases.DeathRespawnOutlivesCorpse });
+            list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });
+            list.Add(new Case { Name = "lifecycle.pair-buff-belongs-to-unit", Run = LifecycleCases.PairBuffBelongsToUnit });
+            list.Add(new Case { Name = "lifecycle.illusion-is-plain", Run = LifecycleCases.IllusionIsPlain });
+            list.Add(new Case { Name = "lifecycle.shared-component-refused", Run = LifecycleCases.SharedComponentRefused });
+            list.Add(new Case { Name = "lifecycle.buff-reapplied-to-itself-refused", Run = LifecycleCases.BuffReappliedToItselfRefused });
+            list.Add(new Case { Name = "lifecycle.remove-others-component-refused", Run = LifecycleCases.RemoveOthersComponentRefused });
+            list.Add(new Case { Name = "lifecycle.adopt-again-refused", Run = LifecycleCases.AdoptAgainRefused });
+            list.Add(new Case { Name = "lifecycle.removed-hero-drop-makes-no-second", Run = LifecycleCases.RemovedHeroDropMakesNoSecond });
+            list.Add(new Case { Name = "lifecycle.created-and-removed-enter-makes-no-second", Run = LifecycleCases.CreatedAndRemovedEnterMakesNoSecond });
+            list.Add(new Case { Name = "lifecycle.hero-lowered", Run = LifecycleCases.HeroLowered });
+            list.Add(new Case { Name = "lifecycle.helper-named-like-reaction", Run = LifecycleCases.HelperNamedLikeReaction });
+            list.Add(new Case { Name = "lifecycle.hiding-method-is-no-reaction", Run = LifecycleCases.HidingMethodIsNoReaction });
+            list.Add(new Case { Name = "lifecycle.unit-created-only-when-it-comes-in", Run = LifecycleCases.UnitCreatedOnlyWhenItComesIn });
+            list.Add(new Case { Name = "lifecycle.ended-owner-runs-neither-created-nor-leave", Run = LifecycleCases.EndedOwnerRunsNeitherCreatedNorLeave });
+            list.Add(new Case { Name = "lifecycle.buff-carrier-survives-morph", Run = LifecycleCases.BuffCarrierSurvivesMorph });
+            list.Add(new Case { Name = "lifecycle.buff-applied-in-death-stays", Run = LifecycleCases.BuffAppliedInDeathStays });
+            list.Add(new Case { Name = "lifecycle.create-of-unknown-type-names-it", Run = LifecycleCases.CreateOfUnknownTypeNamesIt });
         }
 
         /// <summary>Adds the debug mode's cases; they exist only in a development build, as the debug mode does.</summary>
@@ -454,6 +481,26 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "game.print", Run = PlayerCases.GamePrint });
         }
 
+        /// <summary>Adds the cases from the full audit's timer findings; the one that needs Moonwell's clock exists only in a development build, and is named debug.* (see AddDebug).</summary>
+        private static void AddAuditTimers(List<Case> list)
+        {
+            list.Add(new Case { Name = "timers.every-late-no-drift", Run = AuditTimerCases.EveryLateNoDrift });
+            list.Add(new Case { Name = "timers.every-tiny-late", Run = AuditTimerCases.EveryTinyLate });
+            list.Add(new Case { Name = "timers.every-milli-very-late", Run = AuditTimerCases.EveryMilliVeryLate });
+            list.Add(new Case { Name = "timers.buff-ticks-late", Run = AuditTimerCases.BuffTicksLate });
+            list.Add(new Case { Name = "timers.near-times-order", Run = AuditTimerCases.NearTimesOrder });
+            list.Add(new Case { Name = "timers.near-times-many", Run = AuditTimerCases.NearTimesMany });
+            list.Add(new Case { Name = "timers.after-zero-same-instant", Run = AuditTimerCases.AfterZeroSameInstant });
+            list.Add(new Case { Name = "timers.after-zero-runaway", Run = AuditTimerCases.AfterZeroRunaway });
+            list.Add(new Case { Name = "timers.runaway-many-timers", Run = AuditTimerCases.RunawayManyTimers });
+            list.Add(new Case { Name = "timers.catch-up-not-runaway", Run = AuditTimerCases.CatchUpNotRunaway });
+            list.Add(new Case { Name = "timers.every-zero-refused", Run = AuditTimerCases.EveryZeroRefused });
+            list.Add(new Case { Name = "timers.remaining-in-every", Run = AuditTimerCases.RemainingInEvery });
+#if DEBUG
+            list.Add(new Case { Name = "debug.timers.no-drift-at-speed", Run = AuditTimerCases.NoDriftAtSpeed });
+#endif
+        }
+
         /// <summary>Adds the player, local, unit and inventory cases (Lua allows 200 locals in a function, and each case made here is one).</summary>
         private static void AddMiddle(List<Case> list)
         {
@@ -665,7 +712,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "abilities.generic", Run = AbilityCases.Generic });
             list.Add(new Case { Name = "cast.order", Run = AbilityCases.Order });
             list.Add(new Case { Name = "cast.fields", Run = AbilityCases.Fields });
-            list.Add(new Case { Name = "cast.owns-what-it-starts", Run = AbilityCases.OwnsWhatItStarts });
+            list.Add(new Case { Name = "cast.ability-owns-what-it-starts", Run = AbilityCases.AbilityOwnsWhatItStarts });
             list.Add(new Case { Name = "cast.next-ends-previous", Run = AbilityCases.NextEndsPrevious });
             list.Add(new Case { Name = "cast.listen", Run = AbilityCases.Listens });
             list.Add(new Case { Name = "cast.ends-with-unit", Run = AbilityCases.EndsWithUnit });
