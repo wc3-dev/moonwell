@@ -16,12 +16,33 @@ namespace Moonwell.Testing
             AddLast(list);
             AddMaths(list);
             AddInteractions(list);
+            AddAuditInteractions(list);
             AddTerrain(list);
+            AddAuditMaths(list);
             AddAreas(list);
+            AddAuditAreas(list);
             AddInput(list);
             AddLifecycle(list);
+            AddAuditDocs(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the full audit's doc fixes: OrderedMap and OrderedSet in a foreach, and the guide's forms to write instead.</summary>
+        private static void AddAuditDocs(List<Case> list)
+        {
+            list.Add(new Case { Name = "collections.set-foreach-keeps-order", Run = AuditDocsCases.SetForeachKeepsOrder });
+            list.Add(new Case { Name = "collections.set-foreach-change-throws", Run = AuditDocsCases.SetForeachChangeThrows });
+            list.Add(new Case { Name = "collections.map-foreach-keeps-order", Run = AuditDocsCases.MapForeachKeepsOrder });
+            list.Add(new Case { Name = "collections.map-foreach-change-throws", Run = AuditDocsCases.MapForeachChangeThrows });
+            list.Add(new Case { Name = "collections.foreach-left-early", Run = AuditDocsCases.ForeachLeftEarly });
+            list.Add(new Case { Name = "collections.linq", Run = AuditDocsCases.Linq });
+            list.Add(new Case { Name = "forms.using-statement-in-loop", Run = AuditDocsCases.UsingStatementInLoop });
+            list.Add(new Case { Name = "forms.property-pattern-on-null", Run = AuditDocsCases.PropertyPatternOnNull });
+            list.Add(new Case { Name = "forms.local-function-before-switch", Run = AuditDocsCases.LocalFunctionBeforeSwitch });
+            list.Add(new Case { Name = "forms.readonly-struct-in-list", Run = AuditDocsCases.ReadonlyStructInList });
+            list.Add(new Case { Name = "forms.number-formats", Run = AuditDocsCases.NumberFormats });
+            list.Add(new Case { Name = "forms.long-const-string-field", Run = AuditDocsCases.LongConstStringField });
         }
 
         /// <summary>Adds the cases for the full audit's fixes to core's lifecycle.</summary>
@@ -228,6 +249,25 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.tree", Run = TreeCases.Tree });
         }
 
+        /// <summary>Adds the cases for the full audit's fixes to the interactions package.</summary>
+        private static void AddAuditInteractions(List<Case> list)
+        {
+            list.Add(new Case { Name = "interactions.audit.teleport-together-stays-paired", Run = AuditInteractionCases.TeleportTogetherStaysPaired });
+            list.Add(new Case { Name = "interactions.audit.teleport-together-keeps-stop", Run = AuditInteractionCases.TeleportTogetherKeepsStop });
+            list.Add(new Case { Name = "interactions.audit.teleport-apart-parts", Run = AuditInteractionCases.TeleportApartParts });
+            list.Add(new Case { Name = "interactions.audit.guide-fire-aura-spares-changed-owner", Run = AuditInteractionCases.GuideFireAuraSparesChangedOwner });
+            list.Add(new Case { Name = "interactions.audit.recheck-off-keeps-pair", Run = AuditInteractionCases.RecheckOffKeepsPair });
+            list.Add(new Case { Name = "interactions.audit.recheck-refusal-parts-and-meets-again", Run = AuditInteractionCases.RecheckRefusalPartsAndMeetsAgain });
+            list.Add(new Case { Name = "interactions.audit.recheck-throwing-accepts-refuses", Run = AuditInteractionCases.RecheckThrowingAcceptsRefuses });
+            list.Add(new Case { Name = "interactions.audit.recheck-parts-once-per-meet", Run = AuditInteractionCases.RecheckPartsOncePerMeet });
+            list.Add(new Case { Name = "interactions.audit.gizmo-leave-has-no-place", Run = AuditInteractionCases.GizmoLeaveHasNoPlace });
+            list.Add(new Case { Name = "interactions.audit.cell-check-removal-keeps-round", Run = AuditInteractionCases.CellCheckRemovalKeepsRound });
+            list.Add(new Case { Name = "interactions.audit.destructable-holder-tracked-alone", Run = AuditInteractionCases.DestructableHolderTrackedAlone });
+            list.Add(new Case { Name = "interactions.audit.item-holder-tracked-alone", Run = AuditInteractionCases.ItemHolderTrackedAlone });
+            list.Add(new Case { Name = "interactions.audit.unit-holder-of-gizmos-tracked-alone", Run = AuditInteractionCases.UnitHolderOfGizmosTrackedAlone });
+            list.Add(new Case { Name = "interactions.audit.carried-item-has-no-place", Run = AuditInteractionCases.CarriedItemHasNoPlace });
+        }
+
         /// <summary>Adds the areas package's cases.</summary>
         private static void AddAreas(List<Case> list)
         {
@@ -267,6 +307,33 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "areas.area.step-hands-over-and-restarts", Run = AreaCases.StepHandsOverAndRestarts });
             list.Add(new Case { Name = "areas.area.step-hands-over-and-keeps-running", Run = AreaCases.StepHandsOverAndKeepsRunning });
             list.Add(new Case { Name = "areas.area.step-leaves-and-reenters", Run = AreaCases.StepLeavesAndReenters });
+        }
+
+        /// <summary>Adds the cases for the full audit's fixes to areas and input.</summary>
+        private static void AddAuditAreas(List<Case> list)
+        {
+            list.Add(new Case { Name = "audit.areas.fake-covers-as-the-game", Run = AuditAreaCases.FakeCoversAsTheGame });
+            list.Add(new Case { Name = "audit.areas.fake-walks", Run = AuditAreaCases.FakeWalks });
+            list.Add(new Case { Name = "audit.areas.small-circle", Run = AuditAreaCases.SmallCircle });
+            list.Add(new Case { Name = "audit.areas.thin-polygon", Run = AuditAreaCases.ThinPolygon });
+            list.Add(new Case { Name = "audit.areas.centre-cell-always", Run = AuditAreaCases.CentreCellAlways });
+            list.Add(new Case { Name = "audit.areas.shared-edge", Run = AuditAreaCases.SharedEdge });
+            list.Add(new Case { Name = "audit.areas.rect-rounded-out", Run = AuditAreaCases.RectRoundedOut });
+            list.Add(new Case { Name = "audit.areas.shadowed-fields", Run = AuditAreaCases.ShadowedFields });
+            list.Add(new Case { Name = "audit.areas.recheck-leaves-and-enters", Run = AuditAreaCases.RecheckLeavesAndEnters });
+            list.Add(new Case { Name = "audit.areas.recheck-refused-at-entry", Run = AuditAreaCases.RecheckRefusedAtEntry });
+            list.Add(new Case { Name = "audit.areas.recheck-off", Run = AuditAreaCases.RecheckOff });
+            list.Add(new Case { Name = "audit.areas.recheck-forgets-leavers", Run = AuditAreaCases.RecheckForgetsLeavers });
+            list.Add(new Case { Name = "audit.areas.recheck-ends-area", Run = AuditAreaCases.RecheckEndsArea });
+            list.Add(new Case { Name = "audit.areas.corpse-checks-without-steps", Run = AuditAreaCases.CorpseChecksWithoutSteps });
+            list.Add(new Case { Name = "audit.areas.no-tick-no-steps", Run = AuditAreaCases.NoTickNoSteps });
+            list.Add(new Case { Name = "audit.areas.many-corpses", Run = AuditAreaCases.ManyCorpses });
+            list.Add(new Case { Name = "audit.areas.left-while-ending", Run = AuditAreaCases.LeftWhileEnding });
+            list.Add(new Case { Name = "audit.input.no-moves", Run = AuditInputCases.NoMoves });
+            list.Add(new Case { Name = "audit.input.moves", Run = AuditInputCases.Moves });
+            list.Add(new Case { Name = "audit.input.watchers-kept", Run = AuditInputCases.WatchersKept });
+            list.Add(new Case { Name = "audit.input.watchers-changed-in-dispatch", Run = AuditInputCases.WatchersChangedInDispatch });
+            list.Add(new Case { Name = "audit.input.camera-named-before-start", Run = AuditInputCases.CameraNamedBeforeStart });
         }
 
         /// <summary>Adds the input package's cases.</summary>
@@ -339,6 +406,39 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.raycast.hit-values", Run = GroundRayCases.HitValues });
             list.Add(new Case { Name = "terrain.raycast.not-installed", Run = GroundRayCases.NotInstalled });
             list.Add(new Case { Name = "terrain.raycast.miss-makes-nothing", Run = MissCases.GroundMissMakesNothing });
+        }
+
+        /// <summary>Adds the cases for the full audit's fixes to the maths and terrain packages.</summary>
+        private static void AddAuditMaths(List<Case> list)
+        {
+            list.Add(new Case { Name = "maths.bounce.circle-exact", Run = BounceCases.CircleExact });
+            list.Add(new Case { Name = "maths.bounce.bounds-exact", Run = BounceCases.BoundsExact });
+            list.Add(new Case { Name = "maths.bounce.polygon-exact", Run = BounceCases.PolygonExact });
+            list.Add(new Case { Name = "maths.bounce.wall-exact", Run = BounceCases.WallExact });
+            list.Add(new Case { Name = "maths.bounce.circle-sweep", Run = BounceCases.CircleSweep });
+            list.Add(new Case { Name = "maths.bounce.bounds-sweep", Run = BounceCases.BoundsSweep });
+            list.Add(new Case { Name = "maths.bounce.polygon-sweep", Run = BounceCases.PolygonSweep });
+            list.Add(new Case { Name = "maths.bounce.wall-sweep", Run = BounceCases.WallSweep });
+            list.Add(new Case { Name = "maths.bounce.room", Run = BounceCases.Room });
+            list.Add(new Case { Name = "maths.bounce.notch", Run = BounceCases.Notch });
+            list.Add(new Case { Name = "maths.bounce.slide-bounds", Run = BounceCases.SlideBounds });
+            list.Add(new Case { Name = "maths.bounce.slide-polygon", Run = BounceCases.SlidePolygon });
+            list.Add(new Case { Name = "maths.bounce.into-from-surface", Run = BounceCases.IntoFromSurface });
+            list.Add(new Case { Name = "maths.bounce.slide-under-gravity", Run = BounceCases.SlideUnderGravity });
+            list.Add(new Case { Name = "maths.raycast.corners-found", Run = CornerRayCases.Found });
+            list.Add(new Case { Name = "maths.raycast.through-corners", Run = CornerRayCases.ThroughCorners });
+            list.Add(new Case { Name = "maths.shapes.polygon-far", Run = FarPolygonCases.AreaAndCenter });
+            list.Add(new Case { Name = "terrain.raycast.past-the-edge", Run = GroundClipCases.PastTheEdge });
+            list.Add(new Case { Name = "terrain.raycast.long-ray-clipped", Run = GroundClipCases.LongRayClipped });
+            list.Add(new Case { Name = "terrain.pathing.every-cell", Run = PackedPathingCases.EveryCell });
+            list.Add(new Case { Name = "terrain.pathing.full-grid-memory", Run = PackedPathingCases.FullGridMemory });
+            list.Add(new Case { Name = "maths.actors.face-own-place", Run = FaceOwnPlaceCases.KeepsFacing });
+            list.Add(new Case { Name = "terrain.bounce.flat", Run = GroundBounceCases.BounceFlat });
+            list.Add(new Case { Name = "terrain.bounce.slope", Run = GroundBounceCases.BounceSlope });
+            list.Add(new Case { Name = "terrain.bounce.roll-flat", Run = GroundBounceCases.RollFlat });
+            list.Add(new Case { Name = "terrain.bounce.roll-slope", Run = GroundBounceCases.RollSlope });
+            list.Add(new Case { Name = "terrain.bounce.into-from-ground", Run = GroundBounceCases.IntoFromGround });
+            list.Add(new Case { Name = "terrain.bounce.roll-under-gravity", Run = GroundBounceCases.RollUnderGravity });
         }
 
         /// <summary>Adds the maths package's cases.</summary>
