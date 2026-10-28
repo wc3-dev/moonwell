@@ -378,6 +378,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "wall.goes", Run = WallCases.WallGoes });
             list.Add(new Case { Name = "wall.set", Run = WallCases.WallSet });
             list.Add(new Case { Name = "wall.slide-radius-zero", Run = WallCases.SlideRadiusZero });
+            list.Add(new Case { Name = "wall.slide-radius-zero-far", Run = WallCases.SlideRadiusZeroFar });
             list.Add(new Case { Name = "wall.jumped-along", Run = WallCases.JumpedAlong });
             list.Add(new Case { Name = "wall.push-corner", Run = WallCases.PushCorner });
             list.Add(new Case { Name = "wall.push-on-wall", Run = WallCases.PushOnWall });
@@ -1034,6 +1035,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.nullable-equals-null", Run = CompilerCases.NullableEqualsNull });
             list.Add(new Case { Name = "compiler.switch-statement-patterns", Run = CompilerCases.SwitchStatementPatterns });
             list.Add(new Case { Name = "compiler.negated-negative-constant", Run = CompilerCases.NegatedNegativeConstant });
+            list.Add(new Case { Name = "compiler.compound-conditional", Run = CompilerCases.CompoundConditional });
         }
 
         /// <summary>Runs every case on a fresh world, and returns a PASS or FAIL line for each, then DONE.</summary>
