@@ -201,7 +201,8 @@ public sealed class KillCounter : UnitComponent
   game, and `unit.Remove<KillCounter>()` removes it (`End()` ends a component from inside). `HasEnded` is false inside
   `OnRemoved`, `OnLeave` and `OnEnd`, and true once the removal or `End()` returns. A component object is on one
   actor only: adding it to a second, applying a buff that is on a unit already, or removing a component from an actor
-  it is not on is reported and refused, in a release build too.
+  it is not on is reported and refused, in a release build too. A component's `Actor` is set from `OnAdded` on: read in
+  its constructor, a development build reports it.
 - Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnLeave`) go on a game or
   player component. `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before
   anything wanted it runs none); a unit's own is `OnCreated`.
@@ -322,7 +323,8 @@ after armor, the target's armor has cut it and only the amount can change. The l
 - A hit of 0 that the game starts and that is no attack, such as Storm Bolt's first and Fireball's extra two, runs no
   reaction of the package; `OnDamaged` still sees it. An attack of 0, and a hit of 0 from `source.Damage`, are not
   silenced.
-- A reaction the package would never call is an error, MW0036: one that is not public or takes another parameter, a
+- A reaction the package would never call is an error, MW0036, for the physics interfaces (`IPushTarget`,
+  `IMissileTarget`) as for these: one that is not public or takes another parameter, a
   public one a letter off a reaction's name, a name from before 0.3, a reaction in a unit or component without its
   interface, or an interface on a class the package does not call it on. `#pragma warning disable MW0036` keeps a
   helper's name.
@@ -374,7 +376,7 @@ Add the `Moonwell.Terrain` package (the template's `.csproj` has the line, comme
 pathing and rays. A map that does not reference it carries none of its code and no grid.
 
 ```csharp
-var z = Terrain.Height(target.X, target.Y);
+var z = Terrain.Height(target.X, target.Y);     // or Terrain.Height(target.Position())
 if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at hit.Point */ }
 ```
 
@@ -391,8 +393,12 @@ if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at
 - Pathing is read from the game a block of 16 by 16 cells of 32 at a time, the first time a cell in it is asked for
   (1,024 reads, about 0.3 ms), and kept: all of the largest map is about 8 MB of Lua's memory in the test host's Lua
   (not measured in the game).
-- On a bridge, `Height` reads the water or ground beneath, and `IsWalkable` and `CanStand` read false.
+- On a bridge, `Height` reads the water or ground beneath, and `CanStand` reads false. `IsWalkable` reads the map's
+  pathing file, which World Editor writes walkable under a placed bridge's deck; under a bridge made at runtime, or in
+  a map whose pathing file a tool wrote, it reads the water or ground beneath.
 - `Terrain.Raycast(from, to, out hit)` is for a missile against the ground; a ridge narrower than 32 can be stepped over.
+- Each query of a point takes `(x, y)` or a `Vector2`. A vector is a table in the game's Lua, so code that runs every
+  tick on many points passes the floats.
   As with the maths raycasts, a missile goes on when its step moves on after a hit for the rest of its time. Only the
   part of a ray over the map is cast: past the map's edge it meets nothing, and a long ray reads the ground at most
   about 2,700 times (across the largest map, about 25 ms).
@@ -448,6 +454,107 @@ var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find
 - `Interactions.CellSize` (128), `CellCheck` (0.1), `Slack` (64) and `Step` (1/32) are set in the map's constructor.
 - `Find` is fine inside `Local.For`: it reads and changes nothing there (a kind nothing outside has asked for yet is
   searched through the objects Moonwell knows, slower). `IsTree()` needs `Moonwell.Objects`; the build warns if missing.
+
+## Physics and missiles
+
+Add the `Moonwell.Physics` package (the template's `.csproj` has the line, commented) for missiles, knockback, walls
+and ballistics. It brings `Moonwell.Maths`, `Moonwell.Terrain` and `Moonwell.Interactions` with it. A map that does not
+reference it carries none of its code.
+
+```csharp
+public sealed class Firebolt : Missile // a bolt that flies straight and burns the first enemy it meets
+{
+    public Firebolt()
+    {
+        Model = @"Abilities\Weapons\RedDragonBreath\RedDragonMissile.mdl";
+        Speed = 900f;
+        Radius = 24f;
+        ImpactDamage = 75f;
+        DamageKind = DamageKind.Fire;
+    }
+
+    public override bool CanHit(Actor other) => other is Unit unit && Source!.Player.IsEnemy(unit.Player);
+}
+
+caster.Fire(new Firebolt(), target); // or Fire(missile, x, y), or Fire(missile, x, y, z)
+
+public sealed class Shell : Missile // a mortar shell that arcs to a point and blasts what is near where it lands
+{
+    public Shell()
+    {
+        Model = @"Abilities\Weapons\Mortar\MortarMissile.mdl";
+        Speed = 700f;
+        Arc = 0.35f;                // the game's Missile Arc: the peak is this times the distance
+        UnitContact = Contact.None; // flies over units; only the ground stops it
+        Components.Add(new Shadow());
+    }
+
+    public override void OnImpact(Impact impact)
+    {
+        foreach (var unit in Find.InRange<Unit>(impact.X, impact.Y, 200f, u => Source!.Player.IsEnemy(u.Player)))
+        {
+            Source!.Damage(unit, 60f, tag: this);
+        }
+    }
+}
+
+target.Knockback(caster.AngleTo(target), 300f, 0.5f); // 300 away over half a second, slowing to a stop
+```
+
+- Every missile moves the same way: `Acceleration` (up to `MaxSpeed`), `Gravity` (`Physics.Gravity` is 800), then the
+  move. Set `Speed` or `Velocity`, and `Radius` (16), `Mass`, `Bounciness`, `Friction`, `Duration` or `MaxDistance`, in
+  the constructor.
+- `Fire` starts it `LaunchHeight` (60) above the unit, with the unit as `Source`. With `Arc` it sets its own `Gravity`
+  and lands on the mark: the peak is above the line from launch to mark, an arc at a point lands with its bottom on the
+  ground there, and an arc at a unit lands on its middle.
+  `Missile.Create(missile, x, y, z, player, owner)` places one at rest; one made touching the ground with
+  `GroundContact = Stop` ends at once.
+- `ImpactDamage` and the rest go through `source.Damage` with the missile as `Tag`. A missile with damage and no
+  `Source` deals none. `Homing { TurnRate }` is given its target by `Fire(missile, unit)`.
+- **Contacts**: `UnitContact` and `GroundContact` are `Stop`; `DestructableContact`, `ItemContact`, `MissileContact`
+  and `WallContact` are `None` (not checked). The others are `Bounce`, `Pass` and, for ground and walls, `Slide`.
+- A unit is met as an upright cylinder its collision size around and 3 times that tall (a footman 93, a tauren 144),
+  from the ground plus its fly height; a `Body` on the unit sets its own `Height`.
+- **At a contact**: the missile's `OnImpact` and its components'; then `OnStruck` of `IMissileTarget` on a unit, so the
+  defender has the last word (a shield sets `impact.Contact` to `Bounce`); then the damage; then the outcome.
+- A `Bounce` or `Slide` that something keeps pulling onto the ground or into a wall, such as a slope's gravity, goes on
+  along it for the rest of its step with no impact, as the loop in Maths does after a hit; it does not stand still.
+  Going along the ground, both lose their `Friction` (200) a second, and rest (`OnRest`) where a slope's pull, by
+  `Physics.Gravity` whatever their own `Gravity`, cannot move them against it, or where walls take that pull (a corner
+  on a hill: one resting against a wall wakes when the wall ends or moves away from it); with `Friction = 0` they never
+  slow.
+- **Ownership**: a missile belongs to the game unless `Fire` or `Create` is given an `owner`, so one fired in a spell
+  outlives the cast. `OnImpact` runs with the missile's owner.
+- **Knockback** keeps the unit's order. It stops at trees, buildings, cliffs, walls (`Wall.Create`) and a bridge's
+  rail, which keeps its body on the deck (a unit wider than the deck rides with it over both sides). A stopped push
+  stops short of the edge, by up to a step's move and the unit's collision size (about 37 and its collision size at
+  1,200 a second). `IPushTarget` has `OnPushed`, `OnSlammed` and `OnGrounded`; an `OnPushed` that pushes its own unit
+  calls itself again, without end.
+- **Bridges**: placed bridges are ground, for missiles landing (from above: one below a deck flies under it) and units
+  standing, until the bridge dies (brought back to life, it is not ground again); missiles do not meet it as a
+  destructable. A deck stands on the ground beneath any water at its bridge's place, as in the game; the build writes
+  that ground, which `Terrain.Height` does not read (it reads the water's surface). A bridge made by code is not
+  ground, nor a type with no deck Moonwell knows (an ice floe, or the map's own type with its model changed): the build
+  warns of it. A pushed unit uses the deck, whatever the pathing under it; the game's own pathing (move orders) walks a
+  deck only where the map's pathing file says so, which World Editor writes for a placed bridge, but not for a bridge
+  made at runtime or in a map whose pathing file a tool wrote.
+- Everything runs on every machine. Reads are safe in `Local.For`; firing, pushing and every set are not.
+- In the debug mode, a selected missile's panel shows its speed, velocity and radius, and a pushed unit's its push;
+  `-stats` counts the missiles (and how many rest) and the pushed units.
+- **Known limits**:
+  - A ball rolling along a wall into a square or sharper corner on a hill comes to rest the moment it meets the second
+    wall, without bouncing back.
+  - A `Bounce` with low `Friction` (about 20) in a very shallow corner (about 160 degrees) on a steep hill (1 in 1) can
+    bounce between the walls for more than 16 seconds before it rests.
+  - Walls do not push missiles: a wall moved into a resting missile goes into it, and lowering a wall's `Height` does
+    not wake what rests against it or on its top.
+  - A wall moved slowly away from a ball resting against it on a hill (under about 0.2 a step) wakes it each time it
+    rests again, so `OnRest` runs once for every short roll after the wall.
+  - On a bridge turned off the axes, a unit standing with its body slightly over the side (a footman, about 1 or 2.5
+    over) may be stopped when pushed along the deck.
+  - A unit as wide as a bridge's deck crosses it only when pushed straight along it; pushed slightly sideways, it stops
+    where the rail begins.
+  - A unit pushed on a bridge's deck costs about half again as much a step as one pushed on the ground.
 
 ## Areas
 
@@ -583,8 +690,8 @@ compared, and from later checks of the compiler Moonwell builds with.
 | Rule | Rejects | Write instead |
 |---|---|---|
 | MW0005 | `decimal` (`long`, `ulong`, `uint` and `double` are under Multiplayer) | `int` or `float` |
-| MW0017 | in a `switch` expression: `> 10 =>`, `int =>`, `var n`, `not 1`; in any pattern: `(...)`, a name inside `{ X: int y }`, `not null` inside `{ }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
-| MW0018 | `x is (1, _)`, `p is Pt(var a, var b)`, `p is { Inner.X: 9 }` | `{ X: 1 }`, a `switch`, `{ Inner: { X: 9 } }` |
+| MW0017 | at the top of a `switch` expression arm: `> 10 =>`, `int =>`, `var n`, `not 1`, `(1 or 2) =>`; in any pattern: a name inside `{ X: int y }` or `{ X: var y }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
+| MW0018 | outside a `switch` expression arm, a positional pattern on a class, a record, a nullable struct or `object` (`p is (1, 2)`), inside another pattern (`{ T: (1, _) }`) or with names (`(A: 1, B: 2)`) | `{ X: 1 }`; on a tuple or a struct, `t is (1, _)` works |
 | MW0020 | `var c = arr[0];` on a struct, then `c.X = 6`, `c.Inner.X = 6`, `c.Move()` or `Bump(ref c)` (it changes `arr[0]`) | make a new struct, or write `c` back with `arr[0] = c` |
 | MW0022 | `var (a, b) = (1, 2)`, `(x[0], x[1]) = (x[1], x[0])`, a tuple turned into text | `(int a, int b) = (1, 2)`, a temporary, its items |
 | MW0023 | a user-defined `++`, `--`, `operator true/false`; `static abstract`; a record deriving from a record; one class implementing `IG<int>` and `IG<string>`; `with` on an anonymous type | a method; an ordinary class |
@@ -616,11 +723,12 @@ The analyzer does not see these, so they build and then go wrong in the game:
 | `byte` and `short` arithmetic | does not wrap | `int`, wrapped yourself |
 
 What works is most of the language: classes, structs, records, primary constructors, interfaces and default methods,
-generics with constraints, enums, delegates, events, `switch` statements, `is` patterns with constants, types and
-properties, `??`, `?.`, collection expressions, `foreach` over every collection, `yield`, lambdas and closures,
-`ref`/`out`/`in` parameters, `lock`, string interpolation, `List`, `Dictionary`, `HashSet`, `Queue`, `Stack`, arrays and
-most of LINQ. `float` and `int` arithmetic is the game's, see MW0005; its floats have no NaN or infinity (MW0042), and
-its square roots and sines are off by up to about 2 parts in 100,000 (Maths).
+generics with constraints, enums, delegates, events, `switch` statements, `is` patterns with constants, types,
+properties (`{ Inner.X: 9 }` too) and positions on a tuple or a struct, `??`, `?.`, collection expressions, `foreach`
+over every collection, `yield`, lambdas and closures, `ref`/`out`/`in` parameters, `lock`, string interpolation, `List`,
+`Dictionary`, `HashSet`, `Queue`, `Stack`, arrays and most of LINQ. `float` and `int` arithmetic is the game's, see
+MW0005; its floats have no NaN or infinity (MW0042), and its square roots and sines are off by up to about 2 parts in
+100,000 (Maths).
 
 ## The build
 

@@ -163,7 +163,7 @@ public static class Rules
         "Reactions",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The damage package's and the input package's interfaces give every reaction an empty body, so the compiler accepts a class that only seems to write one. A package calls a reaction that is a public, non-static method of the interface's name and parameters: on a unit's class or its components (buffs too) for IDamageSource and IDamageTarget, and on the game's and players' components for IDamageWatch and IMouseWatch. The rule rejects a method named like a reaction that is not one (not public, static, other parameters, an explicit implementation, or a reaction of an interface the class does not implement), a name renamed in Moonwell 0.3, a public method shaped like a reaction (a Hit or a Burst; a Mouse and a button) whose name is a letter off a reaction (one added, removed, changed, or two swapped) in a class with reactions, a reaction in a class that lacks its interface (an abstract class is left alone: its subclasses may list the interface), and an interface on a class the package never calls. For IMouseWatch an explicit implementation and a method with other parameters run in the game's Lua, which calls them by name, and not on .NET, so the two disagree. #pragma warning disable MW0036 keeps a helper's name.");
+        description: "The damage, input and physics packages' interfaces give every reaction an empty body, so the compiler accepts a class that only seems to write one. A package calls a reaction that is a public, non-static method of the interface's name and parameters: on a unit's class or its components (buffs too) for IDamageSource, IDamageTarget, IPushTarget and IMissileTarget, and on the game's and players' components for IDamageWatch and IMouseWatch. The rule rejects a method named like a reaction that is not one (not public, static, other parameters, an explicit implementation, or a reaction of an interface the class does not implement), a name renamed in Moonwell 0.3 (or IPushTarget's OnLanded, which is OnGrounded), a public method shaped like a reaction (a Hit, a Burst, an Impact or a Slam, or the parameter a physics reaction takes; a Mouse and a button) whose name is a letter off a reaction (one added, removed, changed, or two swapped) in a class with reactions, a reaction in a class that lacks its interface (an abstract class is left alone: its subclasses may list the interface), and an interface on a class the package never calls. For IMouseWatch an explicit implementation and a method with other parameters run in the game's Lua, which calls them by name, and not on .NET, so the two disagree. #pragma warning disable MW0036 keeps a helper's name.");
 
     public static readonly DiagnosticDescriptor HiddenReaction = new(
         "MW0041",
@@ -174,7 +174,7 @@ public static class Rules
         isEnabledByDefault: true,
         description: "A reaction of a Moonwell class (a unit's OnDamaged, a component's OnKill, a game component's OnGameStart, a buff's OnTick, an area's OnUnitEntered) is a virtual method the map overrides. One written without override, or with new, hides it: the compiler only warns (CS0114), and Moonwell never calls it. A method named On... like a reaction but with other parameters never runs as the reaction either, and on .NET Moonwell's lookup of reactions by name fails on it when the class is added, while the game's Lua takes it.");
 
-    /// <summary>The rules for reactions: the packages' interfaces (damage, mouse) and Moonwell's virtual methods.</summary>
+    /// <summary>The rules for reactions: the packages' interfaces (damage, mouse, physics) and Moonwell's virtual methods.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Reactions { get; } = ImmutableArray.Create(UnseenReaction, HiddenReaction);
 
     public static readonly DiagnosticDescriptor LiveInDeclaration = new(
@@ -234,14 +234,14 @@ public static class Rules
     public static readonly DiagnosticDescriptor PatternStops = Syntax(
         "MW0017",
         "Pattern the compiler stops on",
-        "{0}: CSharp.lua stops with \"Compiler has a bug\" on this pattern",
-        "CSharp.lua cannot compile these patterns: in a switch expression a relational pattern (> 10), a type pattern without a name (int =>), var, not and a pattern in parentheses; anywhere a var or a declaration pattern (Y: int y) or not inside a property pattern, a pattern in parentheses, and a list pattern's slice with a name ([var first, .. var rest]). Constants, or, a typed name (int i =>) with when, property patterns of constants and tuples of constants work. Write a when clause on a named variable, or an if.");
+        "{0}: CSharp.lua stops on this pattern",
+        "CSharp.lua cannot compile these patterns: at the top of a switch expression arm a relational pattern (> 10), a type pattern without a name (int =>), var, not and a pattern in parentheses; anywhere a var or a declaration pattern inside a property pattern ({ Y: int y }), and a list pattern's slice with a name ([var first, .. var rest]). Constants, or, a typed name (int i =>) with when, property patterns, not and parentheses inside them, and parentheses in an is test work. Write a when clause on a named variable, or an if.");
 
     public static readonly DiagnosticDescriptor PatternWrong = Syntax(
         "MW0018",
         "Pattern that gives the wrong answer",
         "{0}",
-        "A positional pattern in an is test (p is (1, 2), t is (1, _), p is Pt(var a, var b)) and an extended property pattern (p is { Inner.X: 9 }) compile to Lua that is false, or stops the compiler. A positional pattern in a switch expression arm works, except on a class or record given null, whose Deconstruct runs before the null check (the analyzer does not see that); so does a property pattern with one name per level ({ Inner: { X: 9 } }).");
+        "A positional pattern outside a switch expression arm stops the compiler, or is false, on a value that can be null (a class, a record, a nullable struct, object: p is (1, 2)), inside another pattern ({ T: (1, _) }) and with names ((A: 1, B: 2)). On a tuple or a struct it works (t is (1, _), s is (var a, var b)). A positional pattern in a switch expression arm works, except on a class or record given null, whose Deconstruct runs before the null check (the analyzer does not see that). An extended property pattern ({ Inner.X: 9 }) works.");
 
     public static readonly DiagnosticDescriptor StructCopy = Syntax(
         "MW0020",
