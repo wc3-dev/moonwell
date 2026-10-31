@@ -47,7 +47,10 @@ namespace Moonwell
             set
             {
                 CheckBeforeArmor("DamageKind");
-                damageKind = value;
+                if (Known("DamageKind", (int)value, (int)DamageKind.Universal))
+                {
+                    damageKind = value;
+                }
             }
         }
 
@@ -59,7 +62,10 @@ namespace Moonwell
             set
             {
                 CheckBeforeArmor("WeaponSound");
-                weaponSound = value;
+                if (Known("WeaponSound", (int)value, (int)WeaponSound.RockHeavyBash))
+                {
+                    weaponSound = value;
+                }
             }
         }
 
@@ -115,7 +121,7 @@ namespace Moonwell
         /// <summary>The stage the hit is in.</summary>
         internal Stage Stage;
 
-        /// <summary>The target's life when the lethal check ran: after the after-armor reactions, so after any hit they dealt, and before this hit lowers it.</summary>
+        /// <summary>The target's life as last read in the lethal check: after the reactions so far, so after any hit they dealt, and before this hit lowers it.</summary>
         internal float TargetLife = 0.0f;
 
         /// <summary>Whether the hit, at its amount now, leaves the target at death's life or below.</summary>
@@ -152,6 +158,8 @@ namespace Moonwell
                 return;
             }
 
+            // Read now: a hit a lethal reaction dealt, this one included, has already lowered the life.
+            TargetLife = Pipeline.World.Life(Target.Handle);
             var amount = TargetLife - life;
             Amount = amount < 0.0f ? 0.0f : amount;
         }
@@ -162,6 +170,14 @@ namespace Moonwell
             damageKind = type;
             weaponSound = sound;
             armor = targetArmor;
+        }
+
+        /// <summary>Whether a type's number is one the game has. A development build reports one it has not; a release build has no check, and the hit keeps the type it had, as the package could hand no other to the game.</summary>
+        private static bool Known(string member, int number, int most)
+        {
+            var known = number >= 0 && number <= most;
+            Dev.Check(known, "Hit." + member + " cannot be " + number + ": the game's numbers are 0 to " + most);
+            return known;
         }
 
         /// <summary>Reports a change made after armor, which the game would ignore.</summary>

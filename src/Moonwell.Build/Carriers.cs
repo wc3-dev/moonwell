@@ -32,6 +32,9 @@ namespace Moonwell.Build
                     ["abuf:1"] = new[] { buff.ClassName },
                     ["atar:1"] = "self",
                     ["aare:1"] = 1f,
+
+                    // The base is a Slow Aura: left at its -0.6, this slows the unit from 270 to 150 (seen 10-31).
+                    ["Slo1:1"] = 0f,
                 };
                 carriers.Add(new DeclaredObject(name, "ability", BaseAbility, false, null, null, changed, new[] { buff.ClassName }));
             }

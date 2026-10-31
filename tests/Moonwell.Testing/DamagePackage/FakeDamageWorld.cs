@@ -149,11 +149,11 @@ namespace Moonwell.Testing
         /// <summary>Sets the current event's attack type.</summary>
         public void SetEventAttackType(int type) => events[events.Count - 1].Attack = type;
 
-        /// <summary>Sets the current event's damage type.</summary>
-        public void SetEventDamageType(int type) => events[events.Count - 1].Damage = type;
+        /// <summary>Sets the current event's damage type; one past the game's 26 throws, as NativeDamageWorld's list does.</summary>
+        public void SetEventDamageType(int type) => events[events.Count - 1].Damage = InRange(type, 26);
 
-        /// <summary>Sets the current event's weapon type.</summary>
-        public void SetEventWeaponType(int type) => events[events.Count - 1].Weapon = type;
+        /// <summary>Sets the current event's weapon type; one past the game's 23 throws, as NativeDamageWorld's list does.</summary>
+        public void SetEventWeaponType(int type) => events[events.Count - 1].Weapon = InRange(type, 23);
 
         /// <summary>A unit's life.</summary>
         public float Life(unit target) => Body(target).Life;
@@ -182,10 +182,21 @@ namespace Moonwell.Testing
         /// <summary>Sets a unit's defense type.</summary>
         public void SetDefenseType(unit target, int type) => Body(target).Defense = type;
 
-        /// <summary>Plays a hit from code; the game reads such a hit as no attack.</summary>
+        /// <summary>Plays a hit from code; the game reads such a hit as no attack. A type past the game's throws, as NativeDamageWorld's lists do.</summary>
         public void Deal(unit source, unit target, float amount, bool attack, bool ranged, int attackType, int damageType, int weaponType)
         {
-            Hit(source, target, amount, attackType, damageType, weaponType, false);
+            Hit(source, target, amount, attackType, InRange(damageType, 26), InRange(weaponType, 23), false);
+        }
+
+        /// <summary>A type's number, which throws when the game's list of that type does not reach it.</summary>
+        private static int InRange(int type, int most)
+        {
+            if (type < 0 || type > most)
+            {
+                throw new ArgumentOutOfRangeException("type");
+            }
+
+            return type;
         }
 
         /// <summary>Keeps the action for RunZero.</summary>

@@ -2,6 +2,7 @@ using System.Globalization;
 using Moonwell.GameData;
 using Moonwell.MapFiles;
 using War3Net.Build.Object;
+using War3Net.Build.Script;
 
 namespace Moonwell.Build
 {
@@ -22,6 +23,7 @@ namespace Moonwell.Build
         /// <param name="standard">The standard fields and ids.</param>
         /// <param name="stagedFolder">The staged map folder.</param>
         /// <param name="log">The build log; warnings start with <c>warning: </c>.</param>
+        /// <param name="strings">The source map's trigger strings (<c>war3map.wts</c>); null when it has none.</param>
         /// <exception cref="BuildException">A list or reference names a class that has no object, or a source file cannot be read.</exception>
         public static void Write(
             MapProject project,
@@ -30,11 +32,13 @@ namespace Moonwell.Build
             IReadOnlyDictionary<string, string> standardClassIds,
             StandardData standard,
             string stagedFolder,
-            TextWriter log)
+            TextWriter log,
+            TriggerStrings? strings = null)
         {
             var written = new List<DeclaredObject>(objects);
             written.AddRange(Carriers.Of(objects, ids));
             var resolver = new Resolver(ids, standardClassIds, standard);
+            var texts = MapTypes.TextsOf(strings);
 
             Directory.CreateDirectory(stagedFolder);
             foreach (var fileKind in Kinds.All)
@@ -53,8 +57,9 @@ namespace Moonwell.Build
                 }
 
                 var replaced = new HashSet<string>(StringComparer.Ordinal);
-                RemoveDeclared(main, mainName, declared, replaced, log);
-                RemoveDeclared(skin, skinName, declared, replaced, log);
+                var dropped = new List<(string Name, ObjectEntry Entry)>();
+                RemoveDeclared(main, mainName, declared, replaced, dropped, log);
+                RemoveDeclared(skin, skinName, declared, replaced, dropped, log);
                 WarnKept(main, skin, mainName, skinName, standard.Ids(kind), log);
 
                 var fields = new Dictionary<string, StandardData.ObjectField>(StringComparer.Ordinal);
@@ -67,6 +72,8 @@ namespace Moonwell.Build
                 {
                     Add(fileKind, one, IdOf(one, ids), fields, resolver, main, skin);
                 }
+
+                WarnDropped(dropped, declared, main, skin, texts, log);
 
                 if (main.Existed || !main.IsEmpty)
                 {
@@ -91,10 +98,12 @@ namespace Moonwell.Build
         }
 
         // A new object of the source map that a declared object takes the id of is replaced; a different base is worth a word.
-        private static void RemoveDeclared(SourceObjectFile table, string name, Dictionary<string, DeclaredObject> declared, HashSet<string> warned, TextWriter log)
+        // A standard object a class replaces goes too, kept in dropped to compare with what the class writes.
+        private static void RemoveDeclared(SourceObjectFile table, string name, Dictionary<string, DeclaredObject> declared, HashSet<string> warned, List<(string Name, ObjectEntry Entry)> dropped, TextWriter log)
         {
             foreach (var entry in table.File.Original.Where(entry => declared.ContainsKey(SourceObjectFile.IdOf(entry))).ToList())
             {
+                dropped.Add((name, entry));
                 table.File.Remove(entry);
             }
 
@@ -113,7 +122,8 @@ namespace Moonwell.Build
             }
         }
 
-        // What is left is the source map's, and no class declares it. A standard object World Editor changed is not worth a word.
+        // What is left is the source map's, and no class declares it: a new object, or World Editor's changes to a standard one.
+        // World Editor writes a standard object into both files, so one of the two may change nothing and is not named.
         private static void WarnKept(SourceObjectFile main, SourceObjectFile skin, string mainName, string skinName, IReadOnlySet<string> standardIds, TextWriter log)
         {
             var warned = new HashSet<string>(StringComparer.Ordinal);
@@ -122,12 +132,63 @@ namespace Moonwell.Build
                 foreach (var entry in table.Entries)
                 {
                     var id = SourceObjectFile.IdOf(entry);
-                    if (!(entry.Id.Length == 0 && standardIds.Contains(entry.BaseId)) && warned.Add(id))
+                    var isStandard = entry.Id.Length == 0 && standardIds.Contains(entry.BaseId);
+                    if ((isStandard && entry.Mods.Count == 0) || !warned.Add(id))
                     {
-                        log.WriteLine($@"warning: map\{name} keeps {id}, which no class declares");
+                        continue;
                     }
+
+                    log.WriteLine(isStandard
+                        ? $@"warning: map\{name} keeps World Editor's changes to {id}, which no class declares"
+                        : $@"warning: map\{name} keeps {id}, which no class declares");
                 }
             }
+        }
+
+        // The standard objects a class replaces, whose source entries are gone. After decision 4's save the source map holds the
+        // class's own values, so a word is due only for a value the class does not write: World Editor's change is lost.
+        private static void WarnDropped(
+            List<(string Name, ObjectEntry Entry)> dropped,
+            Dictionary<string, DeclaredObject> declared,
+            SourceObjectFile main,
+            SourceObjectFile skin,
+            IReadOnlyDictionary<uint, string> texts,
+            TextWriter log)
+        {
+            foreach (var entries in dropped.GroupBy(one => SourceObjectFile.IdOf(one.Entry)))
+            {
+                var id = entries.Key;
+                var written = main.Entries.Concat(skin.Entries).Where(entry => SourceObjectFile.IdOf(entry) == id).ToList();
+                var lost = entries
+                    .SelectMany(one => one.Entry.Mods.Where(mod => !Holds(written, mod, texts)).Select(mod => (one.Name, mod.Field)))
+                    .ToList();
+                if (lost.Count > 0)
+                {
+                    var fields = string.Join(", ", lost.Select(one => one.Field).Distinct());
+                    log.WriteLine($@"warning: map\{lost[0].Name}'s changes to {id} ({fields}) are replaced by {declared[id].ClassName}");
+                }
+            }
+        }
+
+        // Whether what the class writes holds a modification's value: a text as the game reads it, a number as a number.
+        private static bool Holds(List<ObjectEntry> written, FieldMod mod, IReadOnlyDictionary<uint, string> texts)
+        {
+            var other = written.Select(entry => entry.Find(mod.Field, mod.Level)).FirstOrDefault(found => found != null);
+            if (other == null)
+            {
+                return false;
+            }
+
+            var value = SourceObjectFile.ValueOf(mod);
+            var mine = SourceObjectFile.ValueOf(other);
+            if (value is string text && mine is string own)
+            {
+                return MapTypes.TextOf(text, texts) == MapTypes.TextOf(own, texts);
+            }
+
+            return value is int or float && mine is int or float
+                ? Convert.ToSingle(value, CultureInfo.InvariantCulture) == Convert.ToSingle(mine, CultureInfo.InvariantCulture)
+                : Equals(value, mine);
         }
 
         /// <summary>

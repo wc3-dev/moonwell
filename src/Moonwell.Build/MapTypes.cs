@@ -23,12 +23,7 @@ namespace Moonwell.Build
         /// <exception cref="BuildException">An object file cannot be read.</exception>
         public static IReadOnlyList<MapType> Read(string mapFolder, TriggerStrings? strings, StandardData standard)
         {
-            var texts = new Dictionary<uint, string>();
-            foreach (var one in strings?.Strings ?? new List<TriggerString>())
-            {
-                texts[one.Key] = one.Value ?? string.Empty;
-            }
-
+            var texts = TextsOf(strings);
             var types = new List<MapType>();
             foreach (var fileKind in new[] { Kind.Unit, Kind.Item, Kind.Destructable })
             {
@@ -105,8 +100,20 @@ namespace Moonwell.Build
             }
         }
 
+        // The text of each trigger string, by its number.
+        internal static IReadOnlyDictionary<uint, string> TextsOf(TriggerStrings? strings)
+        {
+            var texts = new Dictionary<uint, string>();
+            foreach (var one in strings?.Strings ?? new List<TriggerString>())
+            {
+                texts[one.Key] = one.Value ?? string.Empty;
+            }
+
+            return texts;
+        }
+
         // A trigger string's text; a reference to no string stays as it is.
-        private static string TextOf(string text, IReadOnlyDictionary<uint, string> texts)
+        internal static string TextOf(string text, IReadOnlyDictionary<uint, string> texts)
         {
             if (text.StartsWith(TriggerStringPrefix, StringComparison.Ordinal)
                 && uint.TryParse(text.Substring(TriggerStringPrefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, out var key)

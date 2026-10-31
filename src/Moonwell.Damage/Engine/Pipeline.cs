@@ -308,6 +308,7 @@ namespace Moonwell
             {
                 hit.Stage = Stage.Lethal;
                 Reactions.Run(hit, Stage.Lethal);
+                hit.TargetLife = World.Life(targetHandle);
             }
 
             // Read again after the lethal stage: a hit a lethal reaction dealt may have killed the target first.

@@ -12,6 +12,9 @@ namespace Moonwell
         /// <summary>The destructables the runtime holds, in the order they were taken in.</summary>
         internal static OrderedSet<Destructable> Live = new OrderedSet<Destructable>();
 
+        /// <summary>The index in Live of the destructable the sweep checks next.</summary>
+        internal static int NextToCheck;
+
         /// <summary>The object of a game destructable when the runtime holds it; null otherwise.</summary>
         internal static Destructable? Find(destructable handle)
         {
@@ -99,6 +102,7 @@ namespace Moonwell
         {
             known.Clear();
             Live.Clear();
+            NextToCheck = 0;
         }
     }
 }

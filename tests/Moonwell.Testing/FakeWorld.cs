@@ -76,9 +76,6 @@ namespace Moonwell.Testing
         /// <summary>The destructables the runtime removed.</summary>
         public List<destructable> RemovedDestructables = new List<destructable>();
 
-        /// <summary>Whether RemoveDestructable fires the death event of a watched destructable inside the call, as the game does (seen in a played map).</summary>
-        public bool DeathOnRemove;
-
         /// <summary>The ability calls, as "add 42", "hide 42" or "remove 42", with the ability id in decimal.</summary>
         public List<string> AbilityCalls = new List<string>();
 
@@ -148,7 +145,7 @@ namespace Moonwell.Testing
         /// <summary>The drops of units the runtime removed (RemoveUnit): the game fires them after the call (seen 10-21), so they wait for the next Advance. The items are removed with the unit.</summary>
         private readonly List<KeyValuePair<unit, item>> pendingDrops = new List<KeyValuePair<unit, item>>();
 
-        /// <summary>The units removed by the runtime in this frame, whose type id still reads until the next Advance.</summary>
+        /// <summary>The units removed by the runtime in this frame, which still read as they were until the next Advance.</summary>
         private readonly List<unit> pendingRemovals = new List<unit>();
 
         /// <summary>The units the game has removed but whose handles still answer: every number reads 0, as the game gives in the quarter second before the sweep.</summary>
@@ -192,6 +189,9 @@ namespace Moonwell.Testing
 
         /// <summary>The inventory calls that changed something, as "give" or "drop".</summary>
         public List<string> InventoryCalls = new List<string>();
+
+        /// <summary>How many times a destructable's type id was read.</summary>
+        public int DestructableTypeReads;
 
         /// <summary>How many times a slot of an inventory was read.</summary>
         public int ItemSlotReads;
@@ -473,12 +473,12 @@ namespace Moonwell.Testing
             return time + tick;
         }
 
-        /// <summary>Makes the units removed in the frame that ends read type id 0.</summary>
+        /// <summary>Makes the units removed in the frame that ends read as the game reads them from the next frame: a type id of 0, every number 0 and no owner (seen 10-17, 10-21).</summary>
         private void EndPendingRemovals()
         {
             foreach (var removed in pendingRemovals)
             {
-                unitTypes[removed] = 0;
+                VanishUnit(removed);
             }
 
             pendingRemovals.Clear();
@@ -541,7 +541,7 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>Records the damage; unless refused, delivers it to Inbound as the game does, inside the call, when the runtime listens for damage. The game's event says no attack even for one dealt as an attack.</summary>
+        /// <summary>Records the damage; unless refused, delivers it to Inbound as the game does, inside the call, when the runtime listens for damage. The game's event says no attack even for one dealt as an attack. Then the life drops by what the reactions left, before the call returns, and 0.405 or less kills with the source as the killer; a unit whose life was never set keeps its 0. A dead unit gets no event and takes nothing, though the game answers true (seen 10-31).</summary>
         public bool DealDamage(unit source, unit target, float amount, bool attack, bool ranged, int attackType, int damageType, int weaponType)
         {
             Dealt.Add((int)amount + " attack:" + attack + " ranged:" + ranged + " " + attackType + " " + damageType + " " + weaponType);
@@ -550,9 +550,27 @@ namespace Moonwell.Testing
                 return false;
             }
 
+            if (dead.Contains(target))
+            {
+                return true;
+            }
+
+            var left = amount;
             if (Listening.Contains(GameEvent.Damage))
             {
-                Inbound.Damaged(target, source, amount, false);
+                left = Inbound.Damaged(target, source, amount, false);
+            }
+
+            if (lives.TryGetValue(target, out var life))
+            {
+                if (life - left <= 0.405f)
+                {
+                    Die(target, source);
+                }
+                else
+                {
+                    lives[target] = life - left;
+                }
             }
 
             return true;
@@ -772,9 +790,10 @@ namespace Moonwell.Testing
             return 0;
         }
 
-        /// <summary>The type id of a destructable; 0 once it is removed or vanished.</summary>
+        /// <summary>The type id of a destructable; 0 once it is removed or vanished. Counts the read.</summary>
         public int DestructableTypeId(destructable destructable)
         {
+            DestructableTypeReads++;
             if (destructableTypes.TryGetValue(destructable, out var typeId))
             {
                 return typeId;
@@ -783,7 +802,7 @@ namespace Moonwell.Testing
             return 0;
         }
 
-        /// <summary>Records a unit removed by the runtime. Its type id still reads in this frame, as the game's does after RemoveUnit, and reads 0 from the next Advance, after the drop events (seen 10-21: 0 by 0.05 s later; seen 10-26: the drops fire after the call while it still reads). The unit's items leave its slots inside the call, at its place; their drop events come after the call, at the next Advance, and the items are removed with the unit (seen 10-21 for a hero).</summary>
+        /// <summary>Records a unit removed by the runtime. It reads as it was in this frame, as the game's does after RemoveUnit, and its type id and every number read 0 and its owner null from the next Advance, after the drop events (seen 10-21: 0 by 0.05 s later; seen 10-26: the drops fire after the call while it still reads). The unit's items leave its slots inside the call, at its place; their drop events come after the call, at the next Advance, and the items are removed with the unit (seen 10-21 for a hero).</summary>
         public void DeleteUnit(unit unit)
         {
             RemovedUnits.Add(unit);
@@ -841,11 +860,11 @@ namespace Moonwell.Testing
             return destructablePlaces.TryGetValue(destructable, out var place) ? place[1] : -50f;
         }
 
-        /// <summary>Records a destructable removed by the runtime, and reads its type id as 0.</summary>
+        /// <summary>Records a destructable removed by the runtime, and reads its type id as 0. As the game does, it fires the death event of a watched destructable inside the call, for one that was alive and for one already dead (seen 10-23).</summary>
         public void DeleteDestructable(destructable destructable)
         {
             RemovedDestructables.Add(destructable);
-            if (DeathOnRemove && Watched.Contains(destructable))
+            if (Watched.Contains(destructable))
             {
                 Inbound.DestructableDied(destructable);
             }
@@ -1257,7 +1276,7 @@ namespace Moonwell.Testing
             NoteGone(unit);
             if (life <= 0.405f)
             {
-                Die(unit);
+                Die(unit, null);
                 return;
             }
 
@@ -1401,11 +1420,11 @@ namespace Moonwell.Testing
         {
             NoteGone(unit);
             KillCalls++;
-            Die(unit);
+            Die(unit, null);
         }
 
-        /// <summary>The death itself, for KillUnit and for a life set to 0.405 or less: life 0, the death inside the call when deaths are listened for, and nothing for a unit already dead (seen 10-21).</summary>
-        private void Die(unit unit)
+        /// <summary>The death itself, for KillUnit, for a life set to 0.405 or less and for damage: life 0, the death inside the call when deaths are listened for, and nothing for a unit already dead (seen 10-21).</summary>
+        private void Die(unit unit, unit? killer)
         {
             if (!dead.Add(unit))
             {
@@ -1416,7 +1435,7 @@ namespace Moonwell.Testing
             lives[unit] = 0.0f;
             if (Listening.Contains(GameEvent.Death))
             {
-                Inbound.Died(unit, null);
+                Inbound.Died(unit, killer);
             }
 
             DropAll(unit);
@@ -1612,7 +1631,7 @@ namespace Moonwell.Testing
             return true;
         }
 
-        /// <summary>Revives a dead hero at the place and records a "revive"; false for a hero that is not dead.</summary>
+        /// <summary>Revives a dead hero at the place, with full life but its mana as it was (seen 10-21), and records a "revive"; false for a hero that is not dead.</summary>
         public bool ReviveAt(unit hero, float x, float y, bool showEffect)
         {
             NoteGone(hero);
@@ -1624,6 +1643,7 @@ namespace Moonwell.Testing
 
             unitXs[hero] = x;
             unitYs[hero] = y;
+            lives[hero] = maxLives.TryGetValue(hero, out var most) ? most : 0.0f;
             return true;
         }
 
@@ -1794,7 +1814,7 @@ namespace Moonwell.Testing
             return slot >= 0 && slot < slots.Length ? slots[slot] : null!;
         }
 
-        /// <summary>Puts an item in the first free slot, and as the game does, delivers the pick-up when it is listened for; false, with no event, when no slot is free. An item the unit already holds keeps its slot and fires a drop and then a pick-up (seen 10-21).</summary>
+        /// <summary>Puts an item in the first free slot, and as the game does, delivers the pick-up when it is listened for; false, with no event, when no slot is free. An item the unit already holds keeps its slot and fires a drop and then a pick-up (seen 10-21). An item another unit holds leaves that unit's slots first, with a drop while it still has the item, and reads that unit's place from then on (seen 10-31).</summary>
         public bool GiveItem(unit unit, item item)
         {
             NoteGone(unit);
@@ -1823,6 +1843,7 @@ namespace Moonwell.Testing
                 if (slots[i] == null)
                 {
                     InventoryCalls.Add("give");
+                    TakeFromHolder(item);
                     slots[i] = item;
                     if (Listening.Contains(GameEvent.PickUp))
                     {
@@ -1834,6 +1855,33 @@ namespace Moonwell.Testing
             }
 
             return false;
+        }
+
+        /// <summary>Takes an item out of the slots of the unit that holds it, if one does, with the drop event first when it is listened for.</summary>
+        private void TakeFromHolder(item item)
+        {
+            foreach (var holder in inventories)
+            {
+                var slots = holder.Value;
+                for (var i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == item)
+                    {
+                        if (Listening.Contains(GameEvent.Drop))
+                        {
+                            Inbound.Dropped(holder.Key, item);
+                        }
+
+                        if (slots[i] == item)
+                        {
+                            slots[i] = null!;
+                        }
+
+                        LandAt(holder.Key, item);
+                        return;
+                    }
+                }
+            }
         }
 
         /// <summary>Takes an item out of its slot and puts it at the unit's place; the game's drop event, when it is listened for, comes while the unit still has the item in the slot (seen 10-21).</summary>

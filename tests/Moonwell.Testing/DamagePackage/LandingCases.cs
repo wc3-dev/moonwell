@@ -102,6 +102,79 @@ namespace Moonwell.Testing
             Expect.Near(1f, fake.Body(target.Handle).Life, "the target was spared");
         }
 
+        /// <summary>A lethal reaction deals a hit, and a later one spares: Spare keeps the life asked for, from the life the first left. Life 100, a hit of 120, 50 dealt, Spare(1): the hit takes 49, not 99.</summary>
+        public static void SpareAfterLethalDeal(FakeWorld world)
+        {
+            StageCases.Arena(world, out var source, out var target);
+            var fake = StageCases.Fake;
+            var killed = true;
+            var dealt = false;
+            var last = new LethalComp();
+            target.Add(last);
+            target.Lethal = hit =>
+            {
+                if (!dealt)
+                {
+                    dealt = true;
+                    source.Damage(target, 50f, DamageKind.Normal);
+                }
+            };
+            last.Dying = hit => hit.Spare(1f);
+            target.Hurt = hit => killed = killed && hit.Killed;
+            fake.Hit(source.Handle, target.Handle, 120f, damageType: 4);
+            fake.RunZero();
+            Expect.Near(1f, fake.Body(target.Handle).Life, "the spared target keeps 1 life");
+            Expect.True(!fake.Body(target.Handle).Dead, "the spared target lives");
+            Expect.True(!killed, "no hit killed");
+        }
+
+        /// <summary>The same inside one reaction: a hit dealt just before Spare counts.</summary>
+        public static void SpareAfterOwnLethalDeal(FakeWorld world)
+        {
+            StageCases.Arena(world, out var source, out var target);
+            var fake = StageCases.Fake;
+            var dealt = false;
+            target.Lethal = hit =>
+            {
+                if (!dealt)
+                {
+                    dealt = true;
+                    source.Damage(target, 50f, DamageKind.Normal);
+                    hit.Spare(1f);
+                }
+            };
+            fake.Hit(source.Handle, target.Handle, 120f, damageType: 4);
+            Expect.Near(1f, fake.Body(target.Handle).Life, "the spared target keeps 1 life");
+        }
+
+        /// <summary>A lethal reaction deals a hit and lowers the amount: what counts is the life the deal left, so a hit that still kills still runs the next lethal reaction and says Killed.</summary>
+        public static void LoweredStillLethalAfterDeal(FakeWorld world)
+        {
+            StageCases.Arena(world, out var source, out var target);
+            var fake = StageCases.Fake;
+            var later = 0;
+            var dealt = false;
+            var landed = new System.Collections.Generic.List<string>();
+            var last = new LethalComp();
+            target.Add(last);
+            target.Lethal = hit =>
+            {
+                if (!dealt)
+                {
+                    dealt = true;
+                    source.Damage(target, 50f, DamageKind.Normal);
+                    hit.Amount = 60f;
+                }
+            };
+            last.Dying = hit => later++;
+            target.Hurt = hit => landed.Add((hit.IsCode ? "deal " : "outer ") + (hit.Killed ? "killed" : "alive"));
+            fake.Hit(source.Handle, target.Handle, 120f, damageType: 4);
+            fake.RunZero();
+            Expect.Equal(1, later, "the hit still kills, so the next lethal reaction ran");
+            Expect.True(fake.Body(target.Handle).Dead, "the target died");
+            Expect.Equal("deal alive|outer killed", string.Join("|", landed), "the outer hit got the kill");
+        }
+
         /// <summary>A target removed by a reaction before the 0 s timer is not killed by the hit, and nothing throws.</summary>
         public static void RemovedTargetNotKilled(FakeWorld world)
         {

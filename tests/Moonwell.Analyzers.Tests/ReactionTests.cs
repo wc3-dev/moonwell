@@ -93,6 +93,155 @@ public class ReactionTests
     }
 
     [Fact]
+    public void an_interface_on_a_class_through_a_maps_own_interface_is_an_error()
+    {
+        Assert.Equal(new[]
+        {
+            "'IDamageTarget' on this class never runs: the damage package calls IDamageTarget only on a unit's class and its components (buffs too)",
+            "'IDamageWatch' on this class never runs: the damage package calls IDamageWatch only on the game's and players' components",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public interface IShielded : IDamageTarget { }
+
+                public interface IAlert : IDamageWatch { }
+
+                public class Ward : Item, IShielded
+                {
+                }
+
+                public class Guard : Unit, IAlert
+                {
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void a_map_interface_on_a_class_the_package_calls_passes()
+    {
+        Assert.Empty(MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public interface IShielded : IDamageTarget { }
+
+                public class Knight : Unit, IShielded
+                {
+                    public void OnTaken(Hit hit) { }
+                }
+
+                public class Shield : UnitComponent, IShielded
+                {
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void an_interface_reached_two_ways_is_reported_once()
+    {
+        Assert.Equal(new[] { "MW0036: IShielded" }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public interface IShielded : IDamageTarget { }
+
+                public class Ward : Item, IShielded, IDamageTarget
+                {
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void an_overload_beside_the_right_reaction_says_it_is_an_overload()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnTaken' never runs: it is an overload, and the damage package calls only OnTaken(Hit); give the helper another name",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Knight : Unit, IDamageTarget
+                {
+                    public void OnTaken(Hit hit) { OnTaken(hit, 2f); }
+                    public void OnTaken(Hit hit, float scale) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void an_overload_of_a_reaction_written_above_says_so_too()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnTaken' never runs: it is an overload, and the damage package calls only OnTaken(Hit); give the helper another name",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Knight : Unit, IDamageTarget
+                {
+                    public void OnTaken(Hit hit) { }
+                }
+
+                public class Paladin : Knight
+                {
+                    public void OnTaken(Hit hit, float scale) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void an_overload_of_a_mouse_reaction_says_the_two_disagree()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnMousePressed' is an overload of OnMousePressed(Mouse, MouseButton), and the game's Lua may call it in its place, while .NET does not; give the helper another name",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Aim : GameComponent, IMouseWatch
+                {
+                    public void OnMousePressed(Mouse mouse, MouseButton button) { }
+                    public void OnMousePressed(Mouse mouse) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void a_wrong_reaction_with_no_right_one_keeps_its_message()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnTaken' never runs: a reaction of IDamageTarget is public, not static, and takes a Hit",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Knight : Unit, IDamageTarget
+                {
+                    public void OnTaken(Hit hit, float scale) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void the_message_says_what_to_write()
     {
         Assert.Equal(new[]

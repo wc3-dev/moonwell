@@ -114,6 +114,36 @@ namespace Moonwell.Testing
         public void OnTaken(Hit hit) => TestLog.Lines.Add("target comp taken");
     }
 
+    /// <summary>A target component that sets a damage kind the game has no number for.</summary>
+    public class OutOfRangeKind : UnitComponent, IDamageTarget
+    {
+        /// <summary>Sets the kind.</summary>
+        public void OnTaking(Hit hit) => hit.DamageKind = (DamageKind)99;
+    }
+
+    /// <summary>A target component that sets a sound the game has no number for.</summary>
+    public class OutOfRangeSound : UnitComponent, IDamageTarget
+    {
+        /// <summary>Sets the sound.</summary>
+        public void OnTaking(Hit hit) => hit.WeaponSound = (WeaponSound)99;
+    }
+
+    /// <summary>A target component with a lethal reaction, which runs after its unit's.</summary>
+    public class LethalComp : UnitComponent, IDamageTarget
+    {
+        /// <summary>Run in OnDying; null for nothing.</summary>
+        public System.Action<Hit>? Dying;
+
+        /// <summary>Runs Dying.</summary>
+        public void OnDying(Hit hit)
+        {
+            if (Dying != null)
+            {
+                Dying(hit);
+            }
+        }
+    }
+
     /// <summary>A game component that logs every hit's stages as "game".</summary>
     public class GameHitWatch : GameComponent, IDamageWatch
     {

@@ -69,6 +69,18 @@ namespace Moonwell.Testing
             Expect.Equal("5 attack:True ranged:True 3 8 1", world.Dealt[1], "the given numbers");
         }
 
+        /// <summary>Damage from code to a dead unit gives null: the game answers true, but deals nothing and fires no event (seen 10-31). The hit that kills is dealt.</summary>
+        public static void DealToTheDead(FakeWorld world)
+        {
+            var source = Unit.Of(world.NewUnit(ObjectTypes.FourCC("ofoo"), slot: 0))!;
+            var handle = world.NewUnit(ObjectTypes.FourCC("ofoo"), slot: 1);
+            var target = Unit.Of(handle)!;
+            world.SetLife(handle, 20f);
+            Expect.True(source.Damage(target, 30f) != null, "the hit that killed was dealt");
+            Expect.True(!target.IsAlive, "the target died");
+            Expect.True(source.Damage(target, 30f) == null, "nothing was dealt to the dead");
+        }
+
         /// <summary>Damage dealt from code runs the reactions inside the call, and returns the damage they saw.</summary>
         public static void DealRunsReactions(FakeWorld world)
         {

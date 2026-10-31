@@ -149,6 +149,8 @@ namespace Moonwell
         /// <summary>Deals damage from code through the world, and returns the damage the reactions saw; one made here when none ran, null when the game dealt nothing.</summary>
         internal static Damage? Deal(Unit source, Unit target, float amount, DamageKind kind, AttackType attackType, bool isAttack, bool ranged, WeaponSound sound, object? tag)
         {
+            // The game answers true for a dead target, though it deals nothing and fires no event (seen 10-31).
+            var alive = target.IsAlive;
             var previous = dealing;
             var deal = new Dealing(source.Handle, target.Handle, isAttack, tag);
             dealing = deal;
@@ -162,7 +164,7 @@ namespace Moonwell
                 dealing = previous;
             }
 
-            if (!dealt)
+            if (!dealt || !alive)
             {
                 return null;
             }

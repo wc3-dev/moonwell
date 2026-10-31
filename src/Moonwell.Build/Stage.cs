@@ -56,7 +56,7 @@ namespace Moonwell.Build
             StandardData standard,
             TextWriter log)
         {
-            Write(project, map, staged => ObjectFiles.Write(project, objects, ids, standardClassIds, standard, staged, log), log);
+            Write(project, map, staged => ObjectFiles.Write(project, objects, ids, standardClassIds, standard, staged, log, map.TriggerStrings), log);
         }
 
         private static void Write(MapProject project, War3Net.Build.Map map, Action<string> writeObjectFiles, TextWriter log)

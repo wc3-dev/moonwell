@@ -431,6 +431,7 @@ namespace Moonwell.Testing
         /// <summary>Adds the cases for the full audit's fixes to the interactions package.</summary>
         private static void AddAuditInteractions(List<Case> list)
         {
+            list.Add(new Case { Name = "interactions.audit.held-end-newest-first", Run = AuditInteractionCases.HeldEndNewestFirst });
             list.Add(new Case { Name = "interactions.audit.teleport-together-stays-paired", Run = AuditInteractionCases.TeleportTogetherStaysPaired });
             list.Add(new Case { Name = "interactions.audit.teleport-together-keeps-stop", Run = AuditInteractionCases.TeleportTogetherKeepsStop });
             list.Add(new Case { Name = "interactions.audit.teleport-apart-parts", Run = AuditInteractionCases.TeleportApartParts });
@@ -693,6 +694,13 @@ namespace Moonwell.Testing
         {
             list.Add(new Case { Name = "harness.handles-are-keys", Run = HarnessCases.HandlesAreKeys });
             list.Add(new Case { Name = "harness.expect-fails", Run = HarnessCases.ExpectFails });
+            list.Add(new Case { Name = "fake.removed-destructable-dies", Run = FakeGameCases.RemovedDestructableDies });
+            list.Add(new Case { Name = "fake.damage-lowers-life", Run = FakeGameCases.DamageLowersLife });
+            list.Add(new Case { Name = "fake.damage-kills", Run = FakeGameCases.DamageKills });
+            list.Add(new Case { Name = "fake.damage-to-the-dead", Run = FakeGameCases.DamageToTheDead });
+            list.Add(new Case { Name = "fake.removed-unit-reads-nothing", Run = FakeGameCases.RemovedUnitReadsNothing });
+            list.Add(new Case { Name = "fake.revive-gives-full-life", Run = FakeGameCases.ReviveGivesFullLife });
+            list.Add(new Case { Name = "fake.given-item-leaves-its-holder", Run = FakeGameCases.GivenItemLeavesItsHolder });
             list.Add(new Case { Name = "collections.set-keeps-order", Run = CollectionCases.SetKeepsOrder });
             list.Add(new Case { Name = "collections.set-remove-keeps-order", Run = CollectionCases.SetRemoveKeepsOrder });
             list.Add(new Case { Name = "collections.set-snapshot", Run = CollectionCases.SetSnapshot });
@@ -902,6 +910,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "damage.deal-from-code", Run = DamageCases.DealFromCode });
             list.Add(new Case { Name = "damage.deal-runs-reactions", Run = DamageCases.DealRunsReactions });
             list.Add(new Case { Name = "damage.deal-refused", Run = DamageCases.DealRefused });
+            list.Add(new Case { Name = "damage.deal-to-the-dead", Run = DamageCases.DealToTheDead });
             list.Add(new Case { Name = "damage.deal-is-attack", Run = DamageCases.DealIsAttack });
             list.Add(new Case { Name = "damage.destructable", Run = DamageCases.DealToDestructable });
             list.Add(new Case { Name = "damage.destructable-gone", Run = DamageCases.DealToDestructableGone });
@@ -929,6 +938,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "destructable.position", Run = DestructableCases.Position });
             list.Add(new Case { Name = "destructables.watch", Run = DestructableCases.Watch });
             list.Add(new Case { Name = "destructables.sweep", Run = DestructableCases.SweepDetectsRemoval });
+            list.Add(new Case { Name = "destructables.sweep-capped", Run = DestructableCases.SweepCapped });
+            list.Add(new Case { Name = "destructables.sweep-takes-turns", Run = DestructableCases.SweepTakesTurns });
+            list.Add(new Case { Name = "destructables.sweep-at-the-cap", Run = DestructableCases.SweepAtTheCap });
+            list.Add(new Case { Name = "destructables.sweep-ends-neighbours", Run = DestructableCases.SweepEndsNeighbours });
+            list.Add(new Case { Name = "destructables.sweep-while-the-list-empties", Run = DestructableCases.SweepWhileTheListEmpties });
             list.Add(new Case { Name = "destructables.remove-after-death", Run = DestructableCases.RemoveAfterDeath });
             list.Add(new Case { Name = "destructables.remove-living", Run = DestructableCases.RemoveLiving });
             list.Add(new Case { Name = "components.ended-in-onremoved", Run = EndedCases.ReadInOnRemoved });
@@ -969,6 +983,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "damage-package.lethal-stops-when-spared", Run = LandingCases.LethalStopsWhenSpared });
             list.Add(new Case { Name = "damage-package.removed-target-not-killed", Run = LandingCases.RemovedTargetNotKilled });
             list.Add(new Case { Name = "damage-package.outer-found-below-stray", Run = LandingCases.OuterFoundBelowStray });
+            list.Add(new Case { Name = "damage-package.spare-after-lethal-deal", Run = LandingCases.SpareAfterLethalDeal });
+            list.Add(new Case { Name = "damage-package.spare-after-own-lethal-deal", Run = LandingCases.SpareAfterOwnLethalDeal });
+            list.Add(new Case { Name = "damage-package.lowered-still-lethal-after-deal", Run = LandingCases.LoweredStillLethalAfterDeal });
+            list.Add(new Case { Name = "damage-package.type-out-of-range-refused", Run = StageCases.TypeOutOfRangeRefused });
             list.Add(new Case { Name = "damage-package.deal-stopped-returns-null", Run = DealCases.DealStoppedReturnsNull });
             list.Add(new Case { Name = "damage-package.raw-deal-chain-cut", Run = DealCases.RawDealChainCut });
             list.Add(new Case { Name = "damage-package.code-deal-of-zero-runs", Run = DealCases.CodeDealOfZeroRuns });
@@ -1063,6 +1081,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.switch-statement-patterns", Run = CompilerCases.SwitchStatementPatterns });
             list.Add(new Case { Name = "compiler.negated-negative-constant", Run = CompilerCases.NegatedNegativeConstant });
             list.Add(new Case { Name = "compiler.compound-conditional", Run = CompilerCases.CompoundConditional });
+            list.Add(new Case { Name = "flags.core-enum", Run = FlagCases.CoreEnum });
+            list.Add(new Case { Name = "flags.ignored-enum", Run = FlagCases.IgnoredEnum });
+            list.Add(new Case { Name = "flags.top-bits", Run = FlagCases.TopBits });
         }
 
         /// <summary>Runs every case on a fresh world, and returns a PASS or FAIL line for each, then DONE.</summary>

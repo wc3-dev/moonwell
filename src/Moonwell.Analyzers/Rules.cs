@@ -168,6 +168,18 @@ public static class Rules
     /// <summary>The rules for the scopes code makes things in.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Scopes { get; } = ImmutableArray.Create(PlayerScope);
 
+    public static readonly DiagnosticDescriptor LuaName = new(
+        "MW0044",
+        "A name the game's Lua takes for another",
+        "'{0}' {1}",
+        LuaCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "CSharp.lua keeps a map's names in Lua's own scopes, where the game's natives are globals of the same names. A namespace's first name is a global, so one named like a native or a function of Lua stops the script while it loads, and so does a type in no namespace named like any global of the game's Lua. The script holds one type of a full name, so a type with the full name of one of Moonwell's stops the Lua step or the script. And a class's methods, those of the classes around it, and a local, a parameter or a local function are Lua locals, so Natives.Cos(x) where one of them is called Cos runs that instead of the native: a method calling itself this way never returns. A method of a base class, a field, a property and a type in a namespace are not locals in the Lua, and pass.");
+
+    /// <summary>The rule for a map's names in the game's Lua.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> Names { get; } = ImmutableArray.Create(LuaName);
+
     public static readonly DiagnosticDescriptor UnseenReaction = new(
         "MW0036",
         "Reaction a package never calls",

@@ -36,8 +36,8 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `assets/` | Files copied into the map at the same paths (models, icons, sounds), named with ASCII characters only; make it when you need it |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
-Code can sit in any folder and any namespace: the build finds objects and the map class by what they inherit. The
-template keeps one folder per feature, each with its own namespace (`MyMap.Heroes`).
+Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
+class by what they inherit. The template keeps one folder per feature, each with its own namespace (`MyMap.Heroes`).
 
 World Editor is for terrain and placed things: regions, cameras, units, items, trees. Open `map/` in World Editor,
 change it, and save it as a folder again. Objects, triggers and the map's settings are in code; the build replaces the
@@ -224,6 +224,8 @@ public sealed class KillCounter : UnitComponent
   `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
   apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
   `Duration` from then on, and keeps its other values and what it has counted.
+- The game's dispels (Dispel Magic, Abolish Magic, Purge) and spell immunity do not reach a buff: it goes on and its
+  icon stays, on a spell-immune unit too. A dispel of the map's own removes it, with `unit.Remove<Burn>()`.
 - A component or buff belongs to the actor it is added to, whoever added it: it ends when it is removed or that actor
   ends, so an aura that buffs others removes its buff in `OnPart` (Interactions, below).
 - Game work starts in a reaction. Top-level code and static fields make nothing in the game.
@@ -345,10 +347,11 @@ after armor, the target's armor has cut it and only the amount can change. The l
   after-armor stage.
 - A `Hit` has the amount, `Original`, `IsAttack`, `IsSpell`, `IsMelee`, `IsRanged`, `IsCode` and `Tag`. Before armor
   a reaction may also change `DamageKind`, `WeaponSound`, `AttackType`, the target's `DefenseType` and its `Armor` for
-  this hit; the target has its own defense type and armor back afterwards.
-- The lethal stage sees the life after any hit the after-armor reactions dealt, such as an on-hit bonus.
-  `hit.Spare()` keeps the target alive, and the lethal reactions after it no longer run. In the landed stage
-  `hit.Killed` tells whether this hit was the one that killed.
+  this hit; the target has its own defense type and armor back afterwards. A `DamageKind` or `WeaponSound` the game
+  has no number for, such as a cast of 99, is refused: a development build reports it, and the hit keeps the one it had.
+- The lethal stage sees the life after any hit the after-armor reactions dealt, such as an on-hit bonus, and after any
+  hit an earlier lethal reaction dealt. `hit.Spare()` keeps the target alive, and the lethal reactions after it no
+  longer run. In the landed stage `hit.Killed` tells whether this hit was the one that killed.
 - `source.Damage(...)` goes through the stages too, and what it returns is the `Hit`: `(Hit?)source.Damage(target, 10f)`.
   It is null when the hit dealt nothing, as when spell immunity stops it; such a hit runs before armor only.
 - Every hit made while a reaction runs belongs to the hit it reacted to, whether it comes from `source.Damage`, a native
@@ -481,7 +484,8 @@ var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find
   and 18 MB on a map of 18,600 (measured). Asking for items starts a look for new ground items once a second. `Actor`
   and `Widget` ask for every kind (`Find.InRange<Actor>`, `Interaction<Gizmo, Actor>`), so ask for `Unit` or a gizmo
   class when that is what is meant. The holder of an interaction is tracked on its own: a tree that holds one takes
-  in no other destructable.
+  in no other destructable. Past 2,000 destructables taken in, the check for those a raw native removed takes turns, so
+  it notices one later: up to 2.5 s on a map of 18,600, where `Remove()` is at once.
 - A check or `Find` reads every cell of its box, empty or not: a `Range` of 5,000 is about 6,400 cells, near 2.6 ms a
   check (estimated). Keep a range to what the interaction needs, and a search of the whole map for a rare moment.
 - `Find` has `InRange`, `InRect`, `InPolygon`, `AlongLine` and `Closest`. Each gives a new list, or fills a list the
@@ -743,6 +747,17 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, `foreach (unit u in widgets)`, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game, whose arithmetic makes no NaN), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 
+MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
+
+| It rejects | In the game | Write instead |
+|---|---|---|
+| `namespace Rect`: a first name that is a native or a function of Lua | the script stops while it loads | another name; `MyMap.Rect` is fine |
+| a type in no namespace named like a native, or like `math`, `string` or another global | the same | a namespace |
+| a type with the full name of one of Moonwell's, such as `Moonwell.Hero` | the build's Lua step or the script stops | another name or namespace |
+| `Natives.Cos(x)` where the class, or a class around it, writes a method `Cos`, or a local, parameter or local function is called `Cos` | that runs in the native's place; `float Cos(float x) => Natives.Cos(x)` never returns, and the game freezes | another name |
+
+A method of a base class, a field, a property and a type in a namespace pass.
+
 The analyzer does not see these, so they build and then go wrong in the game:
 
 | Form | In the game | Write instead |
@@ -784,7 +799,8 @@ count ("failed 10 times"); past a hundred different errors, the new ones share o
 lines.
 
 To place objects declared in code in World Editor, save `build\MyMap.w3x` from World Editor as the `map/` folder. The
-next build keeps the placed units; code wins over any object it also declares.
+next build keeps the placed units; code wins over any object it also declares. World Editor's own changes to an object
+get a warning at each build: kept when no class declares the object, dropped, with the fields named, when one does.
 
 ## Debug mode
 

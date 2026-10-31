@@ -154,10 +154,16 @@ namespace Moonwell
             actor.EndDispatch();
         }
 
-        /// <summary>Whether a hit in its lethal stage no longer kills, as an earlier reaction lowered it: the later lethal reactions do not run.</summary>
+        /// <summary>Whether a hit in its lethal stage no longer kills, as an earlier reaction lowered it or healed the target: the later lethal reactions do not run. The life is read each time, as an earlier reaction may have dealt a hit.</summary>
         private static bool Spared(Hit? hit)
         {
-            return hit != null && hit.Stage == Stage.Lethal && !hit.Kills;
+            if (hit == null || hit.Stage != Stage.Lethal)
+            {
+                return false;
+            }
+
+            hit.TargetLife = Pipeline.World.Life(hit.Target.Handle);
+            return !hit.Kills;
         }
 
         /// <summary>Calls the reaction in a slot; a failing reaction is reported.</summary>

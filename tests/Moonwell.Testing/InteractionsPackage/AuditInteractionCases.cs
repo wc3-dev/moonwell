@@ -41,6 +41,26 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>A holder that ends ends what it holds newest first, as Tracking.Ending says: the aura made last parts first.</summary>
+        public static void HeldEndNewestFirst(FakeWorld world)
+        {
+            Fresh();
+            var holder = UnitAt(world, 0.0f, 0.0f);
+            UnitAt(world, 100.0f, 0.0f);
+            var first = new FireAura();
+            first.Tag = unit => "first";
+            var second = new FireAura();
+            second.Tag = unit => "second";
+            holder.Interact(first, Game.Instance);
+            holder.Interact(second, Game.Instance);
+            Steps(world, 20);
+            Expect.Equal(1, CountOf("meet first"), "the first aura met the other");
+            Expect.Equal(1, CountOf("meet second"), "the second aura met the other");
+            TestLog.Lines.Clear();
+            holder.Remove();
+            Expect.Equal("part second|part first", string.Join("|", TestLog.Lines), "the order they ended in");
+        }
+
         /// <summary>How many lines of the test log equal a line.</summary>
         private static int CountOf(string line)
         {

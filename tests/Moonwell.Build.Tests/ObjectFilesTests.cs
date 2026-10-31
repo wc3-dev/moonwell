@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using War3Net.Build.Extensions;
 using War3Net.Build.Object;
+using War3Net.Build.Script;
 
 namespace Moonwell.Build.Tests
 {
@@ -14,7 +15,7 @@ namespace Moonwell.Build.Tests
         // The SHA-256 of each object file the build stages, so a change to what they hold shows as the file that changed.
         private static readonly Dictionary<string, string> FixtureHashes = new Dictionary<string, string>
         {
-            ["war3map.w3a"] = "01d118c77f1748a336a4ca4ce9e1d4f55f3dcc0136264bb69c1b5d9023a1e4bd",
+            ["war3map.w3a"] = "3b8f1064e64a2d0c4e5ca162f9223967a930d6a69840d00ec12c7891b4e70187",
             ["war3map.w3b"] = "7b570b0c76efb1716e4c6f4e1206eae42ab73eab6ab1b59e74854e659b4a8e68",
             ["war3map.w3d"] = "55fb9284c404f90d28d6db807d87ee09a0f15859a33efbe22acdfb8a312a9cc0",
             ["war3map.w3h"] = "e5e03195a88dd495e0718d6502efbce27bb8ca0bf36ce284f84ae0a487d5c4ed",
@@ -32,7 +33,7 @@ namespace Moonwell.Build.Tests
 
         private static readonly Dictionary<string, string> MergedHashes = new Dictionary<string, string>
         {
-            ["war3map.w3a"] = "77abcb0fda4d7f85d6ec3fd12350d2e4566359789759cc5b512c50cc7399a9d1",
+            ["war3map.w3a"] = "b275483d2689730002ad0314dc7f1c9746264fa274129cdd427087c3fa125236",
             ["war3map.w3b"] = "26291b0f51897f7e13899fcf91a2e6b71d32dbbb132814e934ea580f30726707",
             ["war3map.w3d"] = "a645cdb1fe9016f921bd5e35b9f2d951d3b7ac2035c8330c343279056a2bb489",
             ["war3map.w3h"] = "b3b1b3b9208f6e8f766f79ca6805aa0de3c50cc048455f24661756407726cca1",
@@ -334,6 +335,19 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_carrier_leaves_its_units_speed_alone()
+        {
+            var staged = StageFixtureObjects(out var ids, out _);
+
+            var carrier = Assert.Single(ReadAbilities(staged, "war3map.w3a").NewAbilities, one => one.NewId == IdOf(ids["Objects.Burn#carrier"]));
+            var speed = Assert.Single(carrier.Modifications, one => one.Id == IdOf("Slo1"));
+            Assert.Equal(1, speed.Level);
+            Assert.Equal(1, speed.Pointer);
+            Assert.Equal(0f, speed.Value);
+            Assert.Equal(ObjectDataType.Unreal, speed.Type);
+        }
+
+        [Fact]
         public void a_replaced_buff_has_a_carrier()
         {
             var buff = new DeclaredObject(
@@ -400,7 +414,74 @@ namespace Moonwell.Build.Tests
             Assert.NotEqual(1, Assert.Single(arthas.Modifications, one => one.Id == IdOf("uhpm")).Value);
             Assert.Equal("Arthas", Assert.Single(Assert.Single(skin.NewUnits, one => one.NewId == IdOf("H001")).Modifications).Value);
             Assert.Equal(600, Assert.Single(Assert.Single(main.BaseUnits).Modifications, one => one.Id == IdOf("uhpm")).Value);
-            Assert.DoesNotContain("warning:", log.ToString());
+            Assert.Equal(@"warning: map\war3map.w3u's changes to hfoo (uhpm) are replaced by Objects.StrongFootman" + "\n", log.ToString());
+        }
+
+        [Fact]
+        public void a_replaced_object_the_source_holds_as_the_class_does_is_silent()
+        {
+            // Decision 4's save: the source map holds the class's own values, a text among them in the trigger strings.
+            var source = new UnitObjectData(ObjectDataFormatVersion.v3);
+            source.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("uhpm", 600)));
+            var skinSource = new UnitObjectData(ObjectDataFormatVersion.v3);
+            skinSource.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("unam", "TRIGSTR_012")));
+            WriteSource("war3map.w3u", source);
+            WriteSource("war3mapSkin.w3u", skinSource);
+
+            WriteObjects(new[] { Strong() }, StrongIds, new Dictionary<string, string>(), built.Standard, Strings((12, "Strong")));
+
+            Assert.Empty(log.ToString());
+        }
+
+        [Fact]
+        public void a_replaced_object_with_a_field_the_class_leaves_is_warned_about()
+        {
+            var source = new UnitObjectData(ObjectDataFormatVersion.v3);
+            source.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("uhpm", 600), Mod("ugol", 7)));
+            WriteSource("war3map.w3u", source);
+
+            WriteObjects(new[] { Strong() }, StrongIds, new Dictionary<string, string>());
+
+            Assert.Equal(@"warning: map\war3map.w3u's changes to hfoo (ugol) are replaced by Objects.Strong" + "\n", log.ToString());
+        }
+
+        [Fact]
+        public void a_field_only_the_class_sets_drops_nothing()
+        {
+            var source = new UnitObjectData(ObjectDataFormatVersion.v3);
+            source.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("uhpm", 600)));
+            WriteSource("war3map.w3u", source);
+
+            WriteObjects(new[] { Strong() }, StrongIds, new Dictionary<string, string>());
+
+            Assert.Empty(log.ToString());
+        }
+
+        [Fact]
+        public void a_replaced_text_is_compared_as_its_trigger_string()
+        {
+            var skinSource = new UnitObjectData(ObjectDataFormatVersion.v3);
+            skinSource.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("unam", "TRIGSTR_012")));
+            WriteSource("war3mapSkin.w3u", skinSource);
+
+            WriteObjects(new[] { Strong() }, StrongIds, new Dictionary<string, string>(), built.Standard, Strings((12, "Mine")));
+
+            Assert.Equal(@"warning: map\war3mapSkin.w3u's changes to hfoo (unam) are replaced by Objects.Strong" + "\n", log.ToString());
+        }
+
+        [Fact]
+        public void changes_in_both_files_are_one_warning()
+        {
+            var source = new UnitObjectData(ObjectDataFormatVersion.v3);
+            source.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("uhpm", 5)));
+            var skinSource = new UnitObjectData(ObjectDataFormatVersion.v3);
+            skinSource.BaseUnits.Add(NewUnit("hfoo", string.Empty, Mod("unam", "Mine")));
+            WriteSource("war3map.w3u", source);
+            WriteSource("war3mapSkin.w3u", skinSource);
+
+            WriteObjects(new[] { Strong() }, StrongIds, new Dictionary<string, string>());
+
+            Assert.Equal(@"warning: map\war3map.w3u's changes to hfoo (uhpm, unam) are replaced by Objects.Strong" + "\n", log.ToString());
         }
 
         [Fact]
@@ -452,7 +533,38 @@ namespace Moonwell.Build.Tests
             var main = ReadUnits(staged, "war3map.w3u");
             Assert.Contains(main.NewUnits, one => one.NewId == IdOf("h000"));
             Assert.Contains(main.BaseUnits, one => one.OldId == IdOf("hpea"));
-            Assert.Equal(@"warning: map\war3map.w3u keeps h000, which no class declares" + "\n", log.ToString());
+            Assert.Equal(
+                @"warning: map\war3map.w3u keeps World Editor's changes to hpea, which no class declares" + "\n"
+                + @"warning: map\war3map.w3u keeps h000, which no class declares" + "\n",
+                log.ToString());
+        }
+
+        [Fact]
+        public void a_kept_standard_change_in_the_skin_file_only_is_named_by_it()
+        {
+            // World Editor writes the pair: the main file holds the object with nothing changed, the skin file the name.
+            var source = new UnitObjectData(ObjectDataFormatVersion.v3);
+            source.BaseUnits.Add(NewUnit("hpea", string.Empty));
+            var skinSource = new UnitObjectData(ObjectDataFormatVersion.v3);
+            skinSource.BaseUnits.Add(NewUnit("hpea", string.Empty, Mod("unam", "Mine")));
+            WriteSource("war3map.w3u", source);
+            WriteSource("war3mapSkin.w3u", skinSource);
+
+            WriteObjects(Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), new Dictionary<string, string>());
+
+            Assert.Equal(@"warning: map\war3mapSkin.w3u keeps World Editor's changes to hpea, which no class declares" + "\n", log.ToString());
+        }
+
+        [Fact]
+        public void a_standard_object_with_nothing_changed_is_silent()
+        {
+            var source = new UnitObjectData(ObjectDataFormatVersion.v3);
+            source.BaseUnits.Add(NewUnit("hpea", string.Empty));
+            WriteSource("war3map.w3u", source);
+
+            WriteObjects(Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), new Dictionary<string, string>());
+
+            Assert.Empty(log.ToString());
         }
 
         [Fact]
@@ -754,6 +866,27 @@ namespace Moonwell.Build.Tests
             Assert.Equal(2f, mod.Value);
         }
 
+        private static readonly Dictionary<string, string> StrongIds = new Dictionary<string, string> { ["Objects.Strong"] = "hfoo" };
+
+        // A class with [Replaces] on the footman, with a life and a name.
+        private static DeclaredObject Strong()
+        {
+            return new DeclaredObject(
+                "Objects.Strong", "unit", "hfoo", true, null, null,
+                new SortedDictionary<string, object?> { ["uhpm"] = 600, ["unam"] = "Strong" }, Array.Empty<string>());
+        }
+
+        private static TriggerStrings Strings(params (uint Key, string Text)[] texts)
+        {
+            var strings = new TriggerStrings();
+            foreach (var (key, text) in texts)
+            {
+                strings.Strings.Add(new TriggerString { Key = key, Value = text });
+            }
+
+            return strings;
+        }
+
         private static DeclaredObject Odd(SortedDictionary<string, object?> changed)
         {
             return new DeclaredObject("Objects.Odd", "unit", "hfoo", false, null, null, changed, Array.Empty<string>());
@@ -772,11 +905,11 @@ namespace Moonwell.Build.Tests
             return WriteObjects(objects, ids, standardClassIds, built.Standard);
         }
 
-        private string WriteObjects(IReadOnlyList<DeclaredObject> objects, IReadOnlyDictionary<string, string> ids, IReadOnlyDictionary<string, string> standardClassIds, StandardData standard)
+        private string WriteObjects(IReadOnlyList<DeclaredObject> objects, IReadOnlyDictionary<string, string> ids, IReadOnlyDictionary<string, string> standardClassIds, StandardData standard, TriggerStrings? strings = null)
         {
             var project = MapProject.Find(folder);
             var staged = Path.Combine(folder, "staged-" + Guid.NewGuid().ToString("N"));
-            ObjectFiles.Write(project, objects, ids, standardClassIds, standard, staged, log);
+            ObjectFiles.Write(project, objects, ids, standardClassIds, standard, staged, log, strings);
             return staged;
         }
 

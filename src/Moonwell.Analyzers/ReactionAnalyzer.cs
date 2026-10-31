@@ -265,6 +265,13 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
                     return "is not " + face + "'s reaction here, as " + type.Name + " gets " + face + " from a base class: list " + face + " among " + type.Name + "'s own bases too";
                 }
 
+                if (!SameParameters(method, reaction) && Written(type, reaction))
+                {
+                    return family.LuaByName
+                        ? "is an overload of " + Called(reaction) + ", and the game's Lua may call it in its place, while .NET does not; give the helper another name"
+                        : "never runs: it is an overload, and the " + family.Package + " calls only " + Called(reaction) + "; give the helper another name";
+                }
+
                 var shape = "a reaction of " + face + " is public, not static, and takes " + Takes(reaction);
                 return family.LuaByName
                     ? "is not called on .NET, while the game's Lua calls it by its name, so the two disagree: " + shape
@@ -337,20 +344,36 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
                 ? "a " + reaction.Parameters[0].Type.ToDisplayString(TypeName)
                 : "(" + string.Join(", ", reaction.Parameters.Select(p => p.Type.ToDisplayString(TypeName))) + ")";
 
-        /// <summary>Reports a reaction interface on a class the package never calls it on.</summary>
+        // A reaction as the package calls it: "OnTaken(Hit)".
+        private static string Called(IMethodSymbol reaction) =>
+            reaction.Name + "(" + string.Join(", ", reaction.Parameters.Select(p => p.Type.ToDisplayString(TypeName))) + ")";
+
+        // Whether the class or one above it writes the reaction, rather than leaving the interface's empty default.
+        private static bool Written(INamedTypeSymbol type, IMethodSymbol reaction) =>
+            type.FindImplementationForInterfaceMember(reaction) is { ContainingType.TypeKind: not TypeKind.Interface };
+
+        /// <summary>
+        /// Reports a reaction interface on a class the package never calls it on: one the class lists, or one it reaches
+        /// through an interface it lists, such as a map's own IShielded : IDamageTarget. An interface got from a base
+        /// class is reported on that class.
+        /// </summary>
         private void CheckHosts(SymbolAnalysisContext context, INamedTypeSymbol type)
         {
-            foreach (var i in type.Interfaces)
+            var reported = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            foreach (var listed in type.Interfaces)
             {
-                var family = families.FirstOrDefault(f => SymbolEqualityComparer.Default.Equals(f.Interface, i));
-                if (family == null || family.Hosts(type))
+                foreach (var i in new[] { listed }.Concat(listed.AllInterfaces))
                 {
-                    continue;
-                }
+                    var family = families.FirstOrDefault(f => SymbolEqualityComparer.Default.Equals(f.Interface, i));
+                    if (family == null || family.Hosts(type) || !reported.Add(i))
+                    {
+                        continue;
+                    }
 
-                var location = BaseTypeLocation(type, i) ?? type.Locations[0];
-                context.ReportDiagnostic(Diagnostic.Create(Rules.UnseenReaction, location, i.Name,
-                    "on this class never runs: the " + family.Package + " calls " + i.Name + " only on " + family.HostsText));
+                    var location = BaseTypeLocation(type, listed) ?? type.Locations[0];
+                    context.ReportDiagnostic(Diagnostic.Create(Rules.UnseenReaction, location, i.Name,
+                        "on this class never runs: the " + family.Package + " calls " + i.Name + " only on " + family.HostsText));
+                }
             }
         }
 

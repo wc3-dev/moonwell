@@ -110,6 +110,34 @@ namespace Moonwell.Testing
             Expect.True(TestLog.Lines.Contains("target comp taken"), "the component's reaction still ran");
         }
 
+        /// <summary>A damage kind or sound the game has no number for, set before armor, stays out of the game: a development build reports it, and the hit goes on with the type it had, armor and after-armor stage included.</summary>
+        public static void TypeOutOfRangeRefused(FakeWorld world)
+        {
+            Arena(world, out var source, out var target);
+            fake.Body(target.Handle).Armor = 2f;
+            var kind = DamageKind.Unknown;
+            var sound = WeaponSound.None;
+            target.Taking = hit => hit.Armor = 0f;
+            target.Add(new OutOfRangeKind());
+            target.Add(new OutOfRangeSound());
+            target.Taken = hit =>
+            {
+                kind = hit.DamageKind;
+                sound = hit.WeaponSound;
+            };
+            fake.Hit(source.Handle, target.Handle, 10f, damageType: 4, weapon: 5);
+            fake.RunZero();
+            Expect.Equal((int)DamageKind.Normal, (int)kind, "the hit keeps its damage kind");
+            Expect.Equal((int)WeaponSound.MetalMediumSlice, (int)sound, "the hit keeps its sound");
+            Expect.Near(90f, fake.Body(target.Handle).Life, "the armor set in the same stage counted");
+            Expect.Near(2f, fake.Armor(target.Handle), "the armor is back");
+#if DEBUG
+            Expect.Equal(2, world.Logged.Count, "each is reported in a development build");
+#else
+            Expect.Equal(0, world.Logged.Count, "a release build leaves the check out");
+#endif
+        }
+
         /// <summary>An attack type set before armor reaches the game, in the game's number, and reads back as the same type after armor.</summary>
         public static void AttackTypeChange(FakeWorld world)
         {
