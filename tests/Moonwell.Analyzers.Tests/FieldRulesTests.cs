@@ -103,7 +103,7 @@ public class FieldRulesTests
     }
 
     [Fact]
-    public void a_set_of_an_unknown_id_or_with_a_computed_level_gives_nothing()
+    public void a_set_of_a_computed_id_or_with_a_computed_level_gives_nothing()
     {
         Assert.Empty(Found("""
             public class Odd : Moonwell.Objects.Human.Abilities.StormBolt
@@ -114,7 +114,6 @@ public class FieldRulesTests
 
                 public Odd()
                 {
-                    Set("zzzz", 600000);
                     Set(Id(), 600000);
                     Set("acdn", Level(), 3900f);
                 }
@@ -310,7 +309,15 @@ public class FieldRulesTests
         Assert.Equal(
             new[] { "Bolt.RequirementsLevels is \"1,200\"; Requirements - Levels (arqa) allows at most 100 for each number; [BeyondLimits] goes past it" },
             Messages(Bolt("RequirementsLevels = \"1,200\";")));
-        Assert.Empty(Found(Bolt("RequirementsLevels = \"1,100\"; RequirementsLevels = \"x\";")));
+        Assert.Empty(Found(Bolt("RequirementsLevels = \"1,100\";")));
+    }
+
+    [Fact]
+    public void a_number_list_with_a_part_that_is_no_number_is_rejected()
+    {
+        Assert.Equal(
+            new[] { "Bolt.RequirementsLevels is \"1,abc\"; Requirements - Levels (arqa) allows only numbers separated by commas" },
+            Messages(Bolt("RequirementsLevels = \"1,abc\";")));
     }
 
     [Fact]

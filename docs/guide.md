@@ -135,7 +135,10 @@ public sealed class Champion : Human.Units.Paladin
   first comma, quoted or not, so a comma in it fails the build, and placeholders, which hold one, cannot go in it. A new
   buff that keeps a standard text with a comma (Flame Strike's) fails too: set `TooltipExtended`. Write `‚` (U+201A)
   for a comma there: the game draws it as one and does not cut the text at it.
-- A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`.
+- A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`, or `Set("ua1w", WeaponType.Missile)` for a
+  choice. The value has exactly the type the field holds, so `1.5f` or `5` in the wrong field, a choice's number and an
+  id the class doesn't have are error MW0049. A list of numbers held as text (`RequirementsLevels = "1,2"`) is only
+  numbers: any other part is error MW0009, which `[BeyondLimits]` doesn't lift.
 - A constructor may compute, but must not call the game: the build fails at such a line. A live member with no declared
   field there (`Life = 300`, `Kill()`, `X`) is error MW0012, which says what to set instead where there is one: a unit
   starts with full life, so set `MaxLife`.
