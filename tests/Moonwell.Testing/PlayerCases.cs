@@ -214,6 +214,19 @@ namespace Moonwell.Testing
             Expect.Equal(1, world.TechMaxOf(world.PlayerAt(0), ObjectTypes.FourCC("H001")), "the game's limit");
         }
 
+        /// <summary>NoLimit is the game's "no limit" for a unit type: what a class without a limit reads, and what lifts a limit.</summary>
+        public static void PlayersNoLimit(FakeWorld world)
+        {
+            ObjectTypes.Id<TestHero>(ObjectTypes.FourCC("H001"));
+
+            Expect.Equal(2147483647, Player.NoLimit, "the game's number");
+            Expect.Equal(Player.NoLimit, Player.One.MaxAllowed<TestHero>(), "no limit until set");
+            Player.One.SetMaxAllowed<TestHero>(1);
+            Expect.True(Player.One.MaxAllowed<TestHero>() != Player.NoLimit, "a limit set");
+            Player.One.SetMaxAllowed<TestHero>(Player.NoLimit);
+            Expect.Equal(Player.NoLimit, Player.One.MaxAllowed<TestHero>(), "the limit lifted");
+        }
+
         /// <summary>An ability is made available or not for a player.</summary>
         public static void PlayersAbilityAvailable(FakeWorld world)
         {

@@ -12,6 +12,9 @@ namespace Moonwell
         /// <summary>The number of slots a person or a computer can play in, the game's bj_MAX_PLAYERS.</summary>
         public const int PlayableSlots = 24;
 
+        /// <summary>No limit: what MaxAllowed reads for a unit class without one, and what SetMaxAllowed takes to lift one.</summary>
+        public const int NoLimit = int.MaxValue;
+
         /// <summary>The player object of each slot, made when the slot is first asked for; null until then. The array is made on first use, so that the class has no static initializer (see Unit.UnitHooks).</summary>
         private static Player?[]? bySlot;
 
@@ -301,14 +304,14 @@ namespace Moonwell
             Runtime.World.Research(Handle, ObjectTypes.IdOf<T>(), level);
         }
 
-        /// <summary>How many units of a unit class the player may have, or the top level of an upgrade class it may research; int.MaxValue for a unit class without a limit.</summary>
+        /// <summary>How many units of a unit class the player may have, or the top level of an upgrade class it may research; NoLimit for a unit class without a limit.</summary>
         [LocalSafe]
         public int MaxAllowed<T>() where T : class
         {
             return Runtime.World.TechMaxOf(Handle, ObjectTypes.IdOf<T>());
         }
 
-        /// <summary>Sets how many units of a unit class the player may have, or the top level of an upgrade class; 0 forbids it, and int.MaxValue lifts a unit limit.</summary>
+        /// <summary>Sets how many units of a unit class the player may have, or the top level of an upgrade class; 0 forbids it, and NoLimit lifts a unit limit.</summary>
         public void SetMaxAllowed<T>(int max) where T : class
         {
             Runtime.World.SetTechMax(Handle, ObjectTypes.IdOf<T>(), max);
