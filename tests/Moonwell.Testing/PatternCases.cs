@@ -3,7 +3,8 @@ namespace Moonwell.Testing
     /// <summary>
     /// Cases for the patterns MW0017 and MW0018 allow since decision 80, which the fork's CSharp.lua 2.0.4-moonwell.12
     /// writes right: parentheses in an is test, not inside a property pattern, an extended property pattern
-    /// ({ Inner.X: 9 }), and a positional pattern in an is test on a value that cannot be null (a tuple or a struct).
+    /// ({ Inner.X: 9 }), and a positional pattern in an is test on a value that cannot be null (a tuple or a struct); and
+    /// since 2.0.4-moonwell.14, a type's name with no variable.
     /// </summary>
     public static class PatternCases
     {
@@ -21,6 +22,36 @@ namespace Moonwell.Testing
             Expect.True(!(node is { X: (> 5 and < 9) }), "inside a property pattern, false");
             var pair = (4, 2);
             Expect.True(pair is ((> 3 and < 5), 2), "inside a positional pattern");
+        }
+
+        /// <summary>A type's name with no variable checks the type: in a case with when, an arm, with or, and and not, and inside a property pattern (C43).</summary>
+        public static void TypeNames(FakeWorld world)
+        {
+            object box = new Box();
+            object crate = new Crate();
+            object other = new Other();
+            object text = "a";
+            Expect.Equal("box", CaseWhen(box, true), "case with when");
+            Expect.Equal("box", CaseWhen(crate, true), "case with when, a derived class");
+            Expect.Equal("none", CaseWhen(box, false), "case with when, false");
+            Expect.Equal("none", CaseWhen(other, true), "case with when, another type");
+            Expect.Equal("box", Arm(box), "an arm");
+            Expect.Equal("box", Arm(crate), "an arm, a derived class");
+            Expect.Equal("other", Arm(other), "an arm, the second");
+            Expect.Equal("text", Arm(text), "string =>");
+            Expect.Equal("number", Arm(1), "int =>");
+            Expect.Equal("either", Either(text), "an arm with or, the second");
+            Expect.Equal("either", Either(1), "an arm with or, the first");
+            Expect.Equal("none", Either(box), "an arm with or, neither");
+            Expect.Equal("none", Arm(null), "an arm, null");
+            Expect.True(box is Box or Other, "or, the first");
+            Expect.True(other is Box or Other, "or, the second");
+            Expect.True(!(text is Box or Other), "or, neither");
+            Expect.True(box is Box and not Crate, "and not, the plain class");
+            Expect.True(!(crate is Box and not Crate), "and not, the derived class");
+            Expect.True(new Shelf { Held = crate } is { Held: Box }, "in a property pattern");
+            Expect.True(!(new Shelf { Held = other } is { Held: Box }), "in a property pattern, another type");
+            Expect.True(!(new Shelf() is { Held: Box }), "in a property pattern, null");
         }
 
         /// <summary>not inside a property pattern, in an is test and in a switch expression arm, on a null and a set member and on a null input.</summary>
@@ -87,6 +118,61 @@ namespace Moonwell.Testing
 
         /// <summary>Whether a node's inner X is 9.</summary>
         private static string Nine(Node? node) => node switch { { Inner.X: 9 } => "nine", _ => "other" };
+
+        private static string CaseWhen(object value, bool yes)
+        {
+            switch (value)
+            {
+                case Box when yes:
+                    return "box";
+                case Other when !yes:
+                    return "other";
+                default:
+                    return "none";
+            }
+        }
+
+        private static string Arm(object? value)
+        {
+            return value switch
+            {
+                Box => "box",
+                Other => "other",
+                string => "text",
+                int => "number",
+                _ => "none",
+            };
+        }
+
+        private static string Either(object value)
+        {
+            return value switch
+            {
+                int or string => "either",
+                _ => "none",
+            };
+        }
+
+        /// <summary>A class with a class under it.</summary>
+        private class Box
+        {
+        }
+
+        /// <summary>The class under <see cref="Box"/>.</summary>
+        private sealed class Crate : Box
+        {
+        }
+
+        /// <summary>A class that is no <see cref="Box"/>.</summary>
+        private sealed class Other
+        {
+        }
+
+        /// <summary>A class with a member of any type.</summary>
+        private sealed class Shelf
+        {
+            public object? Held;
+        }
 
         /// <summary>A class with a number, a name and an inner node.</summary>
         private sealed class Node

@@ -3,7 +3,7 @@ namespace Moonwell
     /// <summary>Finds the units, items and destructables the game has removed, which fire no event, and ends them. A timer runs it every 0.25 seconds.</summary>
     internal static class Sweep
     {
-        /// <summary>How many destructables a run checks; past this many they take turns. Each is a native call, about 0.6 us with its loop, so a run over 18,596 stopped the game for 12 ms, four times a second (game facts, 10-31).</summary>
+        /// <summary>How many destructables a run checks; past this many they take turns. Each is a native call, so a run over all of 18,596 stopped the game for 12 ms, four times a second, and at this limit it takes 2.3 ms (game facts, 10-31 and 11-01).</summary>
         internal const int MostDestructables = 2000;
 
         /// <summary>Ends each live unit and item, and each destructable it comes to, whose type id reads 0, which means the game has removed it, and forgets the handles of the units the runtime removed once theirs reads 0.</summary>

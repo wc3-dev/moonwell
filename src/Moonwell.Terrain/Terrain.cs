@@ -52,12 +52,12 @@ namespace Moonwell
         }
 
         /// <summary>
-        /// The ground's height at a point, from the map's terrain: the four corners of its tile blended, in every tile,
-        /// cliff tiles included. It is the game's at the corners, and rough between them on steep ground and within 128
-        /// of a cliff (on Lost Temple the game's heights between corners differed from such a blend by up to 77 away from
-        /// cliffs and 96 near one); how the game blends inside a tile has not been measured. Deformations (spells and the
-        /// like) are not in it; <c>LocalHeight</c> sees them. A point outside the map reads the edge. On a bridge it reads
-        /// the water or ground beneath (the game's <c>GetLocationZ</c>, <c>LocalHeight</c>, reads the deck).
+        /// The ground's height at a point, from the map's terrain: the four corners of its tile blended bilinearly, as the
+        /// game does, in every tile, cliff tiles included. It is the game's at the corners, and rough between them within
+        /// 128 of a cliff or ramp (on Lost Temple up to 96 off) and at water's edge; the rest of the ground was 0.05 off on
+        /// average and 77 at worst. Deformations (spells and the like) are not in it; <c>LocalHeight</c> sees them. A point
+        /// outside the map reads the edge. On a bridge it reads the water or ground beneath (the game's
+        /// <c>GetLocationZ</c>, <c>LocalHeight</c>, reads the deck).
         /// </summary>
         [LocalSafe]
         public static float Height(float x, float y)

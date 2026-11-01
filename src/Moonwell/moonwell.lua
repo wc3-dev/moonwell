@@ -103,8 +103,9 @@ end
 -- previous triple's, the file's number or 0 for none, the C# line). CoreSystem calls an exception's traceback where it is
 -- thrown and in try's handler, before the stack unwinds; this one reads the stack with error's position, which
 -- pcall(error, "", level) gives without the debug library, and keeps the C# locations, innermost first, one a line, at most
--- eight. MoonwellWhere(e) gives them to Errors.Where. A Lua error's message loses its position in war3map.lua. Nothing here
--- may break the report: the reading runs under pcall, and a table that fails to load is read again at the next error.
+-- eight. MoonwellWhere(e) gives them to Errors.Where. A Lua error's message loses its position in war3map.lua, which stands in
+-- for the locations when none is found (an error in Moonwell's or CoreSystem's own Lua). Nothing here may break the report: the
+-- reading runs under pcall, and a table that fails to load is read again at the next error.
 local lineStarts, lineFiles, lineNumbers
 
 local function loadLines()
@@ -171,11 +172,19 @@ local function withoutPosition(message)
     or message
 end
 
+local function scriptPosition(message)
+  if type(message) ~= "string" then return nil end
+  local line = string.match(message, '^%[string "war3map%.lua"%]:(%d+): ')
+    or string.match(message, "^war3map%.lua:(%d+): ")
+  return line and "war3map.lua:" .. line
+end
+
 -- A rethrown exception keeps where it was first thrown.
 System.Exception.traceback = function (this)
   if this.moonwellWhere ~= nil then return end
   local ok, where = pcall(stackLocations)
-  this.moonwellWhere = ok and where or ""
+  where = ok and where or ""
+  this.moonwellWhere = where ~= "" and where or scriptPosition(this.message) or ""
   this.message = withoutPosition(this.message)
 end
 

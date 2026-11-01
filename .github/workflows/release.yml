@@ -1,5 +1,5 @@
 # Publishes Moonwell's packages to nuget.org by trusted publishing: nuget.org trusts this workflow file (policy owner
-# mdlsvensson, repository moonwell, workflow file release.yml) and gives it a key for one hour, so no API key is stored.
+# wc3-dev, repository moonwell, workflow file release.yml) and gives it a key for one hour, so no API key is stored.
 # A pushed tag v<version> publishes that tag; run the workflow by hand to publish a tag pushed before it existed.
 # The tests do not run here: the build tests need the game's common.j and Blizzard.j, which the repository cannot carry.
 # Run dotnet test Moonwell.slnx before tagging.

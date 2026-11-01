@@ -10,7 +10,8 @@ namespace Moonwell.Testing
     /// until 2.0.4-moonwell.11, a field named as a base class's private field (C32); and until 2.0.4-moonwell.12, a local
     /// function used above its declaration (C36), a return after a using declaration (C37), a nullable struct compared
     /// with null (C38), patterns in a switch statement (C39) and the negation of a negative constant (C40); and until
-    /// 2.0.4-moonwell.13, a conditional added to an element or a property (C42).
+    /// 2.0.4-moonwell.13, a conditional added to an element or a property (C42). PatternCases and UsingCases hold those of
+    /// 2.0.4-moonwell.14.
     /// The build's line marks put a comment after a loop body's last return, which is the shape C29 was found in.
     /// </summary>
     public static class CompilerCases
@@ -169,6 +170,24 @@ namespace Moonwell.Testing
             Expect.Equal(-2, counts[1], "an array element, subtracted");
             Expect.Equal(10, list[0], "a list's element");
             Expect.Equal(4, holder.Count, "a property");
+        }
+
+        /// <summary>
+        /// Two using var in one block are disposed last first, as C# does. The Lua cases are marked as a map is, and the marker
+        /// between them keeps them from the fork's joined form, which is right too since CoreSystem 2.0.3-moonwell.6 (BL6, C44).
+        /// </summary>
+        public static void TwoUsingDeclarations(FakeWorld world)
+        {
+            var log = new List<string>();
+            DisposesTwo(log);
+            Expect.Equal("body,second,first", string.Join(",", log), "the order");
+        }
+
+        private static void DisposesTwo(List<string> log)
+        {
+            using var first = new Labelled(log, "first");
+            using var second = new Labelled(log, "second");
+            log.Add("body");
         }
 
         private const float NegativeSingle = -2f;
@@ -333,6 +352,14 @@ namespace Moonwell.Testing
             public void Dispose()
             {
                 log.Add("disposed");
+            }
+        }
+
+        private sealed class Labelled(List<string> log, string label) : IDisposable
+        {
+            public void Dispose()
+            {
+                log.Add(label);
             }
         }
 

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using CSharpLua;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using War3Net.Build;
 using War3Net.Build.Extensions;
 
@@ -126,13 +127,11 @@ namespace Moonwell.Build
             }
             if (!result.Success)
             {
-                var errors = result.Diagnostics
-                    .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-                    .Select(diagnostic => marked.Unstage(diagnostic.ToString()))
-                    .ToList();
+                var failures = result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToList();
+                var errors = failures.Select(diagnostic => marked.Unstage(diagnostic.ToString())).ToList();
 
-                // dotnet build compiled the same code, so a name missing from the stubs is the likely cause.
-                if (objects != null)
+                // dotnet build compiled the same code, so an error inside a nameof is a name missing from the stubs.
+                if (objects != null && failures.Any(IsInNameof))
                 {
                     errors.Add("CSharp.lua sees only the members of Moonwell.Objects that the map's assembly references: a name used only in nameof is not one");
                 }
@@ -145,12 +144,19 @@ namespace Moonwell.Build
             return script;
         }
 
+        private static bool IsInNameof(Diagnostic diagnostic)
+        {
+            var tree = diagnostic.Location.SourceTree;
+            return tree != null && tree.GetRoot().FindNode(diagnostic.Location.SourceSpan, getInnermostNodeForTie: true).AncestorsAndSelf()
+                .Any(node => node is InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } });
+        }
+
         // CSharp.lua's message starts with Roslyn's SourceLocation(path@line:column) of the statement it stopped in, or of the
-        // class for a member with no statements. The build gives path(line): the marked copy's line marks move the column.
+        // class for a member with no statements. The build gives path(line,column), as dotnet build does.
         private static string CompilerStop(BugErrorException failure)
         {
-            var at = Regex.Match(failure.Message, @"^SourceLocation\((.+)@(\d+):\d+\)");
-            var where = at.Success ? $"{at.Groups[1].Value}({at.Groups[2].Value}): " : string.Empty;
+            var at = Regex.Match(failure.Message, @"^SourceLocation\((.+)@(\d+):(\d+)\)");
+            var where = at.Success ? $"{at.Groups[1].Value}({at.Groups[2].Value},{at.Groups[3].Value}): " : string.Empty;
             var cause = failure.InnerException is { } error ? $" ({error.GetType().Name}: {error.Message})" : string.Empty;
             return where + "CSharp.lua cannot compile this code" + cause + "; write it another way. The guide's section \"C# the game's Lua cannot run\" lists the forms known to stop it";
         }

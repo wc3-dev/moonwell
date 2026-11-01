@@ -1,3 +1,6 @@
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+
 namespace Moonwell.Build
 {
     /// <summary>Which files a map project's code is compiled from and against: the one place the build decides.</summary>
@@ -46,6 +49,51 @@ namespace Moonwell.Build
             var assembly = Path.GetFullPath(assemblyPath);
             return Directory.EnumerateFiles(Path.GetDirectoryName(assembly)!, "*.dll")
                 .Where(path => !string.Equals(Path.GetFullPath(path), assembly, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// The map's built assembly and each library of its own it reaches, as a map's code may be in a library project: the
+        /// references beside it, followed through one another. Moonwell's assemblies are not followed: what a package references
+        /// is no use of it by the map (the physics package references the interactions package).
+        /// </summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <returns>The assemblies' paths, the map's first.</returns>
+        public static IEnumerable<string> MapAssemblies(string assemblyPath)
+        {
+            var assembly = Path.GetFullPath(assemblyPath);
+            var folder = Path.GetDirectoryName(assembly)!;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var waiting = new Queue<string>();
+            waiting.Enqueue(assembly);
+            while (waiting.Count > 0)
+            {
+                var path = waiting.Dequeue();
+                if (!seen.Add(path))
+                {
+                    continue;
+                }
+
+                yield return path;
+                foreach (var name in ReferencedAssemblies(path))
+                {
+                    var library = Path.Combine(folder, name + ".dll");
+                    if (name != "Moonwell" && !name.StartsWith("Moonwell.", StringComparison.Ordinal) && File.Exists(library))
+                    {
+                        waiting.Enqueue(library);
+                    }
+                }
+            }
+        }
+
+        /// <summary>The names of the assemblies an assembly references, read from its metadata without loading it; the compiler keeps only the references the code uses.</summary>
+        /// <param name="assemblyPath">A built assembly.</param>
+        /// <returns>The names, such as <c>Moonwell.Damage</c>.</returns>
+        public static List<string> ReferencedAssemblies(string assemblyPath)
+        {
+            using var stream = File.OpenRead(assemblyPath);
+            using var pe = new PEReader(stream);
+            var metadata = pe.GetMetadataReader();
+            return metadata.AssemblyReferences.Select(handle => metadata.GetString(metadata.GetAssemblyReference(handle).Name)).ToList();
         }
     }
 }

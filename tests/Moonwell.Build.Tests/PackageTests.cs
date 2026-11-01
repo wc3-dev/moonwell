@@ -467,6 +467,48 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_package_only_a_library_project_references_is_installed()
+        {
+            var hive = folders.TemporaryFolderOutsideRepository();
+            var parent = folders.TemporaryFolderOutsideRepository();
+            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
+            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
+            WriteFeedConfig(parent);
+            var map = Path.Combine(parent, "Keep");
+
+            var library = Path.Combine(parent, "KeepCode");
+            Directory.CreateDirectory(library);
+            File.WriteAllText(
+                Path.Combine(library, "KeepCode.csproj"),
+                "<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n  </PropertyGroup>\n  <ItemGroup>\n"
+                + $"    <PackageReference Include=\"Moonwell.Damage\" Version=\"{packed.Version}\" />\n"
+                + "  </ItemGroup>\n</Project>\n");
+            File.WriteAllText(
+                Path.Combine(library, "Shield.cs"),
+                "namespace KeepCode\n{\n    public sealed class Shield : Moonwell.Buff, Moonwell.IDamageTarget\n    {\n        public void OnTaken(Moonwell.Hit hit) { hit.Amount *= 0.5f; }\n    }\n}\n");
+
+            var csproj = Path.Combine(map, "Keep.csproj");
+            File.WriteAllText(csproj, File.ReadAllText(csproj).Replace("</Project>", "  <ItemGroup>\n    <ProjectReference Include=\"..\\KeepCode\\KeepCode.csproj\" />\n  </ItemGroup>\n\n</Project>", StringComparison.Ordinal));
+            File.WriteAllText(
+                Path.Combine(map, "Uses.cs"),
+                "namespace Keep\n{\n    public static class Uses\n    {\n        public static Moonwell.Buff Shield() { return new KeepCode.Shield(); }\n    }\n}\n");
+
+            var log = new StringWriter();
+            string archive;
+            try
+            {
+                archive = MapBuild.Run(map, Packed(), log);
+            }
+            catch (BuildException failure)
+            {
+                throw new Xunit.Sdk.XunitException(failure.Message + "\n" + log);
+            }
+
+            Assert.True(File.Exists(archive), log.ToString());
+            Assert.Contains("DamageSystem.Install()", File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua")));
+        }
+
+        [Fact]
         public void template_map_release_carries_no_damage_package()
         {
             var hive = folders.TemporaryFolderOutsideRepository();

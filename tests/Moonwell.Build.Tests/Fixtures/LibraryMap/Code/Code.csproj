@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\src\Moonwell\Moonwell.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Moonwell.Damage\Moonwell.Damage.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Moonwell.Terrain\Moonwell.Terrain.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Moonwell.Areas\Moonwell.Areas.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Moonwell.Input\Moonwell.Input.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Moonwell.Physics\Moonwell.Physics.csproj" />
+  </ItemGroup>
+
+</Project>

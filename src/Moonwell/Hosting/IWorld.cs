@@ -185,7 +185,7 @@ namespace Moonwell.Hosting
         /// <summary>The life of a unit.</summary>
         float LifeOf(unit unit);
 
-        /// <summary>Sets the life of a unit; a unit left below 0.405 life dies.</summary>
+        /// <summary>Sets the life of a unit; a unit left at 0.405 life or less dies.</summary>
         void SetLife(unit unit, float life);
 
         /// <summary>The most life a unit can have.</summary>

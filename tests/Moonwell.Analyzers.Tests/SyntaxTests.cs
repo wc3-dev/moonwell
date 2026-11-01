@@ -1,7 +1,7 @@
 namespace Moonwell.Analyzers.Tests;
 
 /// <summary>
-/// MW0017 to MW0034: C# syntax and library calls that CSharp.lua stops on, writes wrong, or the game's Lua core does not have.
+/// MW0017 to MW0032: C# syntax and library calls that CSharp.lua stops on, writes wrong, or the game's Lua core does not have.
 /// Each was seen by running the code on .NET and in Lua and comparing what they printed.
 /// </summary>
 public class SyntaxTests
@@ -19,7 +19,6 @@ public class SyntaxTests
     [Theory]
     // MW0017: patterns the compiler stops on
     [InlineData("MW0017", "int x = 1; var s = x switch { 1 => \"a\", > 10 => \"b\", _ => \"c\" };", "> 10")]
-    [InlineData("MW0017", "object o = 1; var s = o switch { int => \"a\", _ => \"c\" };", "int")]
     [InlineData("MW0017", "int x = 1; var s = x switch { var n when n > 3 => \"a\", _ => \"c\" };", "var n")]
     [InlineData("MW0017", "int x = 1; var s = x switch { not 1 => \"a\", _ => \"c\" };", "not 1")]
     [InlineData("MW0017", "var bx = new Box(); var b = bx is { X: var y };", "var y")]
@@ -110,8 +109,6 @@ public class SyntaxTests
     [InlineData("MW0032", "var s = Color.Green.ToString(\"D\");", "Color.Green.ToString(\"D\")")]
     [InlineData("MW0032", "var m = Mode.A | Mode.B; var s = \"m=\" + m;", "m")]
     [InlineData("MW0032", "var s = (Color)5 + \" x\";", "(Color)5")]
-    // MW0034: using order
-    [InlineData("MW0034", "using var a = new Res(); using var b = new Res();", "using var b = new Res();", "class Res : IDisposable { public void Dispose() { } }")]
     // MW0042: NaN and the infinities, which the game's own numbers do not have
     [InlineData("MW0042", "var x = float.NaN;", "NaN")]
     [InlineData("MW0042", "var x = double.NaN;", "NaN")]
@@ -151,6 +148,20 @@ public class SyntaxTests
             (int q, int r) = (1, 2);
             var (first, second) = Pair();
             """, Types + "\n" + "static (int, int) Pair() => (1, 2);"));
+    }
+
+    [Fact]
+    public void a_type_name_in_an_arm_and_several_usings_are_accepted()
+    {
+        // MW0017's type pattern and MW0034 went with the fork's 2.0.4-moonwell.14 and CoreSystem 2.0.3-moonwell.6 (C43, C44).
+        Assert.Empty(MapCode.Check("""
+            object o = 1;
+            var a = o switch { int => "a", string => "b", Box => "c", _ => "e" };
+            var b = o switch { int or string => "d", _ => "e" };
+            using var first = new Res();
+            using var second = new Res();
+            using Res third = new Res(), fourth = new Res();
+            """, Types + "\n" + "class Res : IDisposable { public void Dispose() { } }"));
     }
 
     [Fact]

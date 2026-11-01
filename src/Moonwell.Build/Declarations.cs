@@ -30,36 +30,31 @@ namespace Moonwell.Build
         /// <returns>True when it references the library.</returns>
         public static bool UsesObjects(string assemblyPath)
         {
-            return References(assemblyPath, ObjectsAssemblyName);
+            return CompiledFiles.ReferencedAssemblies(assemblyPath).Contains(ObjectsAssemblyName);
         }
 
-        /// <summary>Whether a built assembly references an assembly by name; the compiler keeps only the references the code uses.</summary>
+        /// <summary>Whether a map's built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), references an assembly by name; the compiler keeps only the references the code uses.</summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
         /// <param name="assemblyName">The name of the referenced assembly, such as <c>Moonwell.Damage</c>.</param>
         public static bool References(string assemblyPath, string assemblyName)
         {
-            using var stream = File.OpenRead(assemblyPath);
-            using var pe = new PEReader(stream);
-            var metadata = pe.GetMetadataReader();
-            foreach (var handle in metadata.AssemblyReferences)
-            {
-                if (metadata.GetString(metadata.GetAssemblyReference(handle).Name) == assemblyName)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => CompiledFiles.ReferencedAssemblies(path).Contains(assemblyName));
         }
 
         /// <summary>
-        /// Whether a built assembly has a type reference to a type, read from its metadata without loading it. The compiler keeps a
-        /// reference for each type the code names, calls a member of, implements or has in a signature it calls.
+        /// Whether a map's built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), has a type reference
+        /// to a type, read from its metadata without loading it. The compiler keeps a reference for each type the code names, calls a
+        /// member of, implements or has in a signature it calls.
         /// </summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
         /// <param name="ns">The namespace of the type, such as <c>Moonwell</c>.</param>
         /// <param name="name">The name of the type, such as <c>Mouse</c>.</param>
         public static bool ReferencesType(string assemblyPath, string ns, string name)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => HasTypeReference(path, ns, name));
+        }
+
+        private static bool HasTypeReference(string assemblyPath, string ns, string name)
         {
             using var stream = File.OpenRead(assemblyPath);
             using var pe = new PEReader(stream);

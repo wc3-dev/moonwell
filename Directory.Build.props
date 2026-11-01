@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -11,8 +11,8 @@
   <PropertyGroup>
     <Authors>mdlsvensson</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/mdlsvensson/moonwell</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/mdlsvensson/moonwell.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/wc3-dev/moonwell</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/wc3-dev/moonwell.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>warcraft3;wc3;map;lua</PackageTags>
   </PropertyGroup>

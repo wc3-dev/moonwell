@@ -11,9 +11,9 @@ namespace Moonwell.Analyzers;
 
 /// <summary>
 /// Rejects the C# syntax and library calls that CSharp.lua stops on, writes wrong or leaves to a Lua core that does not have
-/// them, so the editor and dotnet build show it with its line (MW0017 to MW0034). Found by running about 770 checks
-/// against .NET; each rule's description says what was seen. MW0019, MW0021 and MW0033 are gone: the fork's CSharp.lua
-/// writes their forms right. MW0042 is the game's own numbers, which have no NaN or infinity (the 0.3 gate).
+/// them, so the editor and dotnet build show it with its line (MW0017 to MW0032). Found by running about 770 checks
+/// against .NET; each rule's description says what was seen. MW0019, MW0021, MW0033 and MW0034 are gone: the fork's
+/// CSharp.lua writes their forms right. MW0042 is the game's own numbers, which have no NaN or infinity (the 0.3 gate).
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
@@ -56,7 +56,6 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         context.RegisterSyntaxNodeAction(EnumSum, SyntaxKind.AddExpression);
         context.RegisterSyntaxNodeAction(EnumHole, SyntaxKind.Interpolation);
         context.RegisterSyntaxNodeAction(EnumCast, SyntaxKind.CastExpression);
-        context.RegisterSyntaxNodeAction(Usings, SyntaxKind.LocalDeclarationStatement);
     }
 
     // ---- patterns (MW0017, MW0018) ----
@@ -106,9 +105,6 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
                 break;
             case RelationalPatternSyntax when arm:
                 Stops(context, pattern, "a relational pattern in a switch expression");
-                break;
-            case TypePatternSyntax when arm:
-                Stops(context, pattern, "a type pattern without a name in a switch expression");
                 break;
             case VarPatternSyntax when arm || sub:
                 Stops(context, pattern, "var in " + (arm ? "a switch expression" : "a property pattern"));
@@ -1044,22 +1040,6 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
     private static void Enum(SyntaxNodeAnalysisContext context, SyntaxNode node, string message)
     {
         context.ReportDiagnostic(Diagnostic.Create(Rules.EnumText, node.GetLocation(), message));
-    }
-
-    // ---- MW0034 ----
-
-    private static void Usings(SyntaxNodeAnalysisContext context)
-    {
-        var declaration = (LocalDeclarationStatementSyntax)context.Node;
-        if (declaration.UsingKeyword.IsKind(SyntaxKind.None) || declaration.Parent is not BlockSyntax block)
-        {
-            return;
-        }
-
-        if (block.Statements.TakeWhile(s => s != declaration).OfType<LocalDeclarationStatementSyntax>().Any(s => !s.UsingKeyword.IsKind(SyntaxKind.None)))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.UsingOrder, declaration.GetLocation()));
-        }
     }
 }
 

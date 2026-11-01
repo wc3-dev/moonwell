@@ -14,6 +14,7 @@ namespace Moonwell.Testing
             AddAuditTimers(list);
             AddMiddle(list);
             AddLast(list);
+            AddCompiler(list);
             AddMaths(list);
             AddInteractions(list);
             AddAuditInteractions(list);
@@ -1064,8 +1065,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "conditionals.nullable-bool-first-branch", Run = ConditionalCases.NullableBoolFirstBranch });
             list.Add(new Case { Name = "conditionals.struct-type-parameter", Run = ConditionalCases.StructTypeParameter });
             list.Add(new Case { Name = "conditionals.still-right", Run = ConditionalCases.StillRight });
+        }
+
+        /// <summary>Adds the cases for what the compiler writes. A function of more than 200 cases does not load: each is a local in its Lua.</summary>
+        private static void AddCompiler(List<Case> list)
+        {
             list.Add(new Case { Name = "compiler.out-discard-lambda", Run = CompilerCases.OutDiscardLambda });
             list.Add(new Case { Name = "compiler.patterns.is-parentheses", Run = PatternCases.IsParentheses });
+            list.Add(new Case { Name = "compiler.patterns.type-names", Run = PatternCases.TypeNames });
             list.Add(new Case { Name = "compiler.patterns.not-in-property", Run = PatternCases.NotInProperty });
             list.Add(new Case { Name = "compiler.patterns.extended-property", Run = PatternCases.ExtendedProperty });
             list.Add(new Case { Name = "compiler.patterns.positional-on-value", Run = PatternCases.PositionalOnValue });
@@ -1077,6 +1084,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.private-base-fields", Run = CompilerCases.PrivateBaseFields });
             list.Add(new Case { Name = "compiler.local-function-before-declaration", Run = CompilerCases.LocalFunctionBeforeDeclaration });
             list.Add(new Case { Name = "compiler.using-declaration-returns", Run = CompilerCases.UsingDeclarationReturns });
+            list.Add(new Case { Name = "compiler.two-using-declarations", Run = CompilerCases.TwoUsingDeclarations });
+            list.Add(new Case { Name = "compiler.usings-in-one-statement", Run = UsingCases.InOneStatement });
             list.Add(new Case { Name = "compiler.nullable-equals-null", Run = CompilerCases.NullableEqualsNull });
             list.Add(new Case { Name = "compiler.switch-statement-patterns", Run = CompilerCases.SwitchStatementPatterns });
             list.Add(new Case { Name = "compiler.negated-negative-constant", Run = CompilerCases.NegatedNegativeConstant });

@@ -228,9 +228,57 @@ namespace Moonwell.Build.Tests
 
             var error = Assert.Throws<BuildException>(() => MapBuild.Run(folder, new BuildOptions(), TextWriter.Null));
 
-            // The line of the statement CSharp.lua stopped in, in the project's file rather than the marked copy.
-            Assert.StartsWith(Path.Combine(folder, "Stop.cs") + "(7): CSharp.lua cannot compile this code", error.Message);
+            // The line and column of the statement CSharp.lua stopped in, in the project's file rather than the marked copy.
+            Assert.StartsWith(Path.Combine(folder, "Stop.cs") + "(7,13): CSharp.lua cannot compile this code", error.Message);
             Assert.DoesNotContain("marked", error.Message);
+        }
+
+        [Fact]
+        public void an_error_only_the_lua_sees_has_the_files_own_column()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            File.WriteAllText(
+                Path.Combine(folder, "OnlyLua.cs"),
+                "namespace Sample\n"
+                + "{\n"
+                + "    public static class OnlyLua\n"
+                + "    {\n"
+                + "        public static int Value()\n"
+                + "        {\n"
+                + "#if __CSharpLua__\n"
+                + "            return Missing;\n"
+                + "#else\n"
+                + "            return 1;\n"
+                + "#endif\n"
+                + "        }\n"
+                + "    }\n"
+                + "}\n");
+
+            var error = Assert.Throws<BuildException>(() => MapBuild.Run(folder, new BuildOptions(), TextWriter.Null));
+
+            Assert.StartsWith(Path.Combine(folder, "OnlyLua.cs") + "(8,20): error CS0103", error.Message);
+        }
+
+        [Fact]
+        public void a_csharplua_error_has_the_files_own_column()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            File.WriteAllText(
+                Path.Combine(folder, "Bad.cs"),
+                "namespace Sample\n"
+                + "{\n"
+                + "    public static class Bad\n"
+                + "    {\n"
+                + "        public static void Call(dynamic target)\n"
+                + "        {\n"
+                + "            target.Foo(x: 1);\n"
+                + "        }\n"
+                + "    }\n"
+                + "}\n");
+
+            var error = Assert.Throws<BuildException>(() => MapBuild.Run(folder, new BuildOptions(), TextWriter.Null));
+
+            Assert.Contains(Path.Combine(folder, "Bad.cs") + "@7:24)", error.Message);
         }
 
         [Fact]

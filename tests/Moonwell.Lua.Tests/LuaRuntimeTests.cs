@@ -26,12 +26,20 @@ public class LuaRuntimeTests
     private static void EveryCasePasses(bool release)
     {
         var project = Path.Combine(LuaScript.RepoRoot, "tests", "Moonwell.Testing", "Moonwell.Testing.csproj");
+        var copies = Copies();
         var lines = LuaScript.Run(LuaScript.Compile(project, release));
 
+        Assert.Empty(Copies().Except(copies));
         var failures = lines.Where(line => line.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
         // The debug mode's cases exist only in a development build (Cases.AddDebug).
         var count = release ? Cases.All().Count(testCase => !testCase.Name.StartsWith("debug.", StringComparison.Ordinal)) : Cases.All().Count;
         Assert.Equal("DONE " + count, lines.LastOrDefault());
+    }
+
+    // The copies of the project a compile of the cases made and left in the temporary folder.
+    private static string[] Copies()
+    {
+        return Directory.GetDirectories(Path.GetTempPath(), "moonwell-lua-*");
     }
 }

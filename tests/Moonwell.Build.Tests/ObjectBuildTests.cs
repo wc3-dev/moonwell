@@ -805,6 +805,29 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void an_error_with_no_nameof_gets_no_hint_about_it()
+        {
+            // Only CSharp.lua sees this line, so dotnet build passes and the error is one of CSharp.lua's.
+            var copy = folders.TemporaryCopyOfSample();
+            File.WriteAllText(Path.Combine(copy, "OnlyLua.cs"), """
+                namespace Sample
+                {
+                    public static class OnlyLua
+                    {
+                #if __CSharpLua__
+                        public static int Value() { return Missing; }
+                #endif
+                    }
+                }
+                """);
+
+            var error = Assert.Throws<BuildException>(() => MapBuild.Run(copy, new BuildOptions(), new StringWriter()));
+
+            Assert.Contains("Missing", error.Message);
+            Assert.DoesNotContain("nameof", error.Message);
+        }
+
+        [Fact]
         public void a_stale_objects_library_beside_the_assembly_does_not_make_the_objects_build()
         {
             var copy = folders.TemporaryCopyOfSample();

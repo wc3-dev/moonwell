@@ -259,7 +259,7 @@ public static class Rules
         "MW0017",
         "Pattern the compiler stops on",
         "{0}: CSharp.lua stops on this pattern",
-        "CSharp.lua cannot compile these patterns: at the top of a switch expression arm a relational pattern (> 10), a type pattern without a name (int =>), var, not and a pattern in parentheses; anywhere a var or a declaration pattern inside a property pattern ({ Y: int y }), and a list pattern's slice with a name ([var first, .. var rest]). Constants, or, a typed name (int i =>) with when, property patterns, not and parentheses inside them, and parentheses in an is test work. Write a when clause on a named variable, or an if.");
+        "CSharp.lua cannot compile these patterns: at the top of a switch expression arm a relational pattern (> 10), var, not and a pattern in parentheses; anywhere a var or a declaration pattern inside a property pattern ({ Y: int y }), and a list pattern's slice with a name ([var first, .. var rest]). Constants, or, a type's name (int =>, Box =>), a typed name (int i =>) with when, property patterns, not and parentheses inside them, and parentheses in an is test work. Write a when clause on a named variable, or an if.");
 
     public static readonly DiagnosticDescriptor PatternWrong = Syntax(
         "MW0018",
@@ -289,7 +289,7 @@ public static class Rules
         "MW0024",
         "Range or index",
         "'{0}' needs System.Range or System.Index, which the game's Lua does not have; use Substring, Skip/Take or an index like list[list.Count - 1]",
-        "a[1..3], s[1..3], list[^1] and the types Index and Range are missing. a[^1] on an array works.");
+        "a[1..3], s[1..3] and list[^1] are missing, as are the types Index and Range (MW0030). a[^1] on an array works.");
 
     public static readonly DiagnosticDescriptor RefForm = Syntax(
         "MW0025",
@@ -339,12 +339,6 @@ public static class Rules
         "{0}",
         "An enum that is a [Flags] combination prints its number; Enum.Parse gives the number; Enum.GetValues and GetNames come in no fixed order; ToString(\"D\") and ToString(\"X\") on an enum give the name; and (Color)5 + \" x\" with a constant stops the compiler. Comparing, |, &, switch, TryParse and the name of a single value work.");
 
-    public static readonly DiagnosticDescriptor UsingOrder = Syntax(
-        "MW0034",
-        "Two using declarations in one block",
-        "using var is disposed after the earlier using var here, not before it, in the game's Lua; use nested using (...) blocks",
-        "C# disposes using var declarations in reverse order; CSharp.lua disposes them in the order they are written.");
-
     public static readonly DiagnosticDescriptor NotANumber = Syntax(
         "MW0042",
         "NaN or infinity, which the game's Lua does not have",
@@ -354,5 +348,5 @@ public static class Rules
     /// <summary>The rules for syntax and library CSharp.lua or its Lua core cannot do.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Syntaxes { get; } = ImmutableArray.Create(
         PatternStops, PatternWrong, StructCopy, TupleForm, FormWrong, RangeIndex, RefForm,
-        ParamsForm, StringCall, BoxedValue, CatchForm, LuaMember, CheckedForm, EnumText, UsingOrder, NotANumber);
+        ParamsForm, StringCall, BoxedValue, CatchForm, LuaMember, CheckedForm, EnumText, NotANumber);
 }

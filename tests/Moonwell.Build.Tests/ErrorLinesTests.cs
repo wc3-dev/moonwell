@@ -74,6 +74,23 @@ namespace Moonwell.Build.Tests
             Assert.Equal("Moonwell: CallsHelper.OnGameStart failed: from helper", run.Log[2]);
         }
 
+        [Fact]
+        public void an_error_with_no_csharp_location_names_the_script_line()
+        {
+            // An error in Moonwell's or the core's own Lua has no C# location on its stack; a table with no lines reads the same.
+            const string NoLines = "MoonwellLines = { files = {}, map = \"\" }";
+
+            var development = FailsBuilds.Start(builds.DevelopmentScript, NoLines);
+            var release = FailsBuilds.Start(builds.ReleaseScript, NoLines);
+
+            Assert.Matches(@"^.*ReadsNull\.OnGameStart failed:\|r attempt to index a nil value \(field 'holder'\) \(war3map\.lua:\d+\)$", development.Screen[1]);
+            Assert.Matches(@"^.*ReadsNull\.OnGameStart failed\|r \(war3map\.lua:\d+\)$", release.Screen[1]);
+            Assert.Matches(@"^Moonwell: ReadsNull\.OnGameStart failed: attempt to index a nil value \(field 'holder'\) \(war3map\.lua:\d+\)$", development.Log[1]);
+
+            // A C# throw's message has no script position to keep.
+            Assert.Equal(Red + "Moonwell: Throws.OnGameStart failed:|r thrown", development.Screen[0]);
+        }
+
         /// <summary>What a run of a built script showed on the screen and wrote to the log.</summary>
         public sealed record Run(IReadOnlyList<string> Screen, IReadOnlyList<string> Log);
 
@@ -85,11 +102,14 @@ namespace Moonwell.Build.Tests
             public FailsBuilds()
             {
                 DevelopmentScript = Build(false);
+                ReleaseScript = Build(true);
                 Development = Start(DevelopmentScript, string.Empty);
-                Release = Start(Build(true), string.Empty);
+                Release = Start(ReleaseScript, string.Empty);
             }
 
             public string DevelopmentScript { get; }
+
+            public string ReleaseScript { get; }
 
             public Run Development { get; }
 

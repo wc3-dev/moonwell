@@ -21,32 +21,38 @@ internal static class LuaScript
     /// LineMarks) and compiled by CSharp.lua with DEBUG and MOONWELL_LUA for a development build, MOONWELL_LUA alone and no
     /// comments for a release build; the script is linked with CSharp.lua's core and the Lua that Moonwell.Natives.dll and
     /// Moonwell.dll carry (ScriptLibraries), trimmed, and given its line table. What a map build adds besides (the map's entry,
-    /// its objects, the placed things) is no part of the cases.
+    /// its objects, the placed things) is no part of the cases. The copy is deleted after the compile.
     /// </summary>
     public static string Compile(string csproj, bool release)
     {
-        var outputFolder = Path.Combine(Path.GetTempPath(), "moonwell-lua", Guid.NewGuid().ToString("N"));
-        var folder = Path.Combine(outputFolder, "project");
-        Rewritten(csproj, folder);
-        var mapFolder = Path.Combine(folder, "map");
-        Directory.CreateDirectory(mapFolder);
-        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepoRoot, "tests", "Moonwell.Lua.Tests", "map")))
+        var folder = Path.Combine(Path.GetTempPath(), "moonwell-lua-" + Guid.NewGuid().ToString("N"));
+        try
         {
-            File.Copy(file, Path.Combine(mapFolder, Path.GetFileName(file)));
+            Rewritten(csproj, folder);
+            var mapFolder = Path.Combine(folder, "map");
+            Directory.CreateDirectory(mapFolder);
+            foreach (var file in Directory.EnumerateFiles(Path.Combine(RepoRoot, "tests", "Moonwell.Lua.Tests", "map")))
+            {
+                File.Copy(file, Path.Combine(mapFolder, Path.GetFileName(file)));
+            }
+
+            var project = MapProject.Find(folder);
+            var map = War3Net.Build.Map.Open(project.MapFolder, War3Net.Build.MapFiles.All & ~War3Net.Build.MapFiles.Triggers & ~War3Net.Build.MapFiles.CustomTextTriggers);
+
+            // The libraries the script is linked with are read from beside the project's assembly, as a map build reads them from
+            // beside the map's: here the ones this test was built with.
+            var assembly = Path.Combine(AppContext.BaseDirectory, Path.GetFileNameWithoutExtension(csproj) + ".dll");
+            var script = LuaCompiler.Compile(project, map, assembly, release);
+
+            // Kept beside the test's own files, where the next run replaces it, so a Lua error naming a line of the script can be looked up.
+            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, release ? "cases-release.lua" : "cases-development.lua"), script);
+
+            return script;
         }
-
-        var project = MapProject.Find(folder);
-        var map = War3Net.Build.Map.Open(project.MapFolder, War3Net.Build.MapFiles.All & ~War3Net.Build.MapFiles.Triggers & ~War3Net.Build.MapFiles.CustomTextTriggers);
-
-        // The libraries the script is linked with are read from beside the project's assembly, as a map build reads them from
-        // beside the map's: here the ones this test was built with.
-        var assembly = Path.Combine(AppContext.BaseDirectory, Path.GetFileNameWithoutExtension(csproj) + ".dll");
-        var script = LuaCompiler.Compile(project, map, assembly, release);
-
-        // Kept next to the project copy, so a Lua error naming a line of the script can be looked up.
-        File.WriteAllText(Path.Combine(outputFolder, "script.lua"), script);
-
-        return script;
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
     }
 
     // A copy of the project with its project references made absolute; the projects it references are compiled as they are,

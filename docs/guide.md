@@ -1,7 +1,7 @@
 # Making a map with Moonwell
 
-This guide describes Moonwell 0.4.0; the guide for 0.3.3 is at the
-[`v0.3.3` tag](https://github.com/mdlsvensson/moonwell/blob/v0.3.3/docs/guide.md).
+This guide describes Moonwell 0.4.1; the guide for 0.4.0 is at the
+[`v0.4.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.4.0/docs/guide.md).
 
 ## Start a map
 
@@ -38,6 +38,8 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 
 Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
 class by what they inherit. The template keeps one folder per feature, each with its own namespace (`MyMap.Heroes`).
+Don't name one after a group of `Moonwell.Objects` (`Human`, `Items`): with `MyMap.Items` in the project, `Items.X`
+finds that namespace and fails with CS0234.
 
 World Editor is for terrain and placed things: regions, cameras, units, items, trees. Open `map/` in World Editor,
 change it, and save it as a folder again. Objects, triggers and the map's settings are in code; the build replaces the
@@ -255,7 +257,8 @@ static void Smoke(Scope scope, Unit unit) // a helper is told whose
 ```
 
 - An ability's scope lasts as long as the caster is in the game, so what its `OnCast` makes there runs after the spell
-  has ended; work that should stop with a channel is made on the cast: `cast.Every(0.5f, Pulse)`.
+  has ended; work that should stop with a channel is made on the cast: `cast.Every(0.5f, Pulse)`. On a spell with no
+  channel a cast lasts only as long as the spell's animation, or no time at all.
 - Death is not an end: a unit and its components last until the corpse goes, which can be at once (exploded or raised),
   so a respawn timer is made on the game.
 - `After(0, action)` inside a timer runs in the same instant, as the game's own 0 s timer does. More than 10000 timer
@@ -419,11 +422,12 @@ if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at
 
 - The build writes the height grid from the map's terrain file, so it is the same on every machine. It does not see
   deformations or bridges; `Terrain.LocalHeight`, inside `Local.For` only, reads the live height and sees both.
-- A height blends the four corners of each 128 tile. It is the game's at the corners, and rough between them on steep
-  ground and within 128 of a cliff: on Lost Temple the game's heights between corners differed from such a blend by 0.05
-  on average away from cliffs, but by up to 77 there and 96 near a cliff or ramp. How the game blends inside a tile has
-  not been measured. `IsCliff` tells a cliff tile, for treating it as a wall. Water reads its surface where that is above
-  the ground. Over the water at the map's outer edge, far outside the playable area, heights can differ from the game's.
+- A height blends the four corners of each 128 tile, as the game does. It is the game's at the corners, and on Lost
+  Temple it fit the game's within 0.05 on 8,536 of the 8,648 sloped tiles away from cliffs, ramps and water. Within 128
+  of a cliff or ramp it is rough, up to 96 off, and it can miss at water's edge; over the rest of the ground it was 0.05
+  off on average and 77 at worst. `IsCliff` tells a cliff tile, for treating it as a wall. Water reads its surface where
+  that is above the ground. Over the water at the map's outer edge, far outside the playable area, heights can differ
+  from the game's.
 - `IsWalkable`, `IsFlyable`, `IsBuildable` and `IsWater` are terrain only, as the game's own. After changing pathing with
   natives, call `Terrain.Refresh(area)`. `CanStand` also sees trees and buildings and needs walkable ground, but it
   places a hidden item, so it changes game state and is not for `Local.For`.
@@ -475,7 +479,8 @@ var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find
   does.
 - `Accepts` is asked before a meeting and again before each tick: a no parts the pair (`OnPart`), and the two meet
   again once it says yes, so `FireAura` stops burning a unit that changes sides (Charm, a new owner). Set
-  `RecheckAccepts = false` in the constructor to ask only before a meeting, a call less per pair at each tick.
+  `RecheckAccepts = false` in the constructor to ask only before a meeting, a call less per pair at each tick. Units
+  with Locust pair like any other, so a map filters its dummies here.
 - A thing moved far in one jump (a teleport, a unit unloaded or revived, an item dropped far from where it was picked
   up) is found at its new place within `CellCheck` (0.1 s). A pair whose holder and other moved together stays paired.
 - From the first interaction or `Find` that asks for units, Moonwell takes in every unit in the game, and each one
@@ -611,10 +616,13 @@ public sealed class ShopFloor : Area // a game component: Components.Add(new Sho
 }
 ```
 
-- A shape is a World Editor region by name (the build fails at the line of a name the map does not have), a rect, a
-  polygon, a circle, or `AreaShape.Of(a, b)` for several. `OnUnitStays` runs every `Tick` seconds; 0 never runs it.
+- A shape is a World Editor region by name, a rect, a polygon, a circle, or `AreaShape.Of(a, b)` for several. The build
+  fails at the line of an `AreaShape.Region("Shop")` whose name the map does not have; a name it cannot read there (a
+  variable, `using static`, an alias) throws when the area is added. `OnUnitStays` runs every `Tick` seconds; 0 never
+  runs it.
 - Only units count, alive and with a place: a dead, hidden or loaded unit leaves, and one hidden at the start enters
   once shown (the game sends no event for hiding, so that is up to 0.25 s late). `End()` lets every unit inside leave.
+  Units with Locust count like any other, so a map filters its dummies in `Accepts`.
 - `Accepts` is asked as a unit comes inside, and again every 0.25 s for each unit inside and each one in the area it
   refused: a no makes a unit leave (`OnUnitLeft`), a later yes lets it enter. An area whose answer for a unit never
   changes sets `RecheckAccepts = false;` in its constructor to save the calls; a refused unit is then asked again only
@@ -717,6 +725,9 @@ meant is marked itself: `Local.For(p, [SyncUnchecked] () => ...)`. `Natives.BlzS
 machine-local value to every machine. Not checked: a C# field written inside `Local.For` and read by code that runs on
 every machine.
 
+A `#pragma warning disable`, `NoWarn` or `.editorconfig` on one of these rules removes its protection, and nothing says
+so. To turn the checks off where you mean it, use `[SyncUnchecked]`.
+
 ## C# the game's Lua cannot run
 
 Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A few C# forms stop the compiler, write
@@ -729,7 +740,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | Rule | Rejects | Write instead |
 |---|---|---|
 | MW0005 | `decimal` (`long`, `ulong`, `uint` and `double` are under Multiplayer) | `int` or `float` |
-| MW0017 | at the top of a `switch` expression arm: `> 10 =>`, `int =>`, `var n`, `not 1`, `(1 or 2) =>`; in any pattern: a name inside `{ X: int y }` or `{ X: var y }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
+| MW0017 | at the top of a `switch` expression arm: `> 10 =>`, `var n`, `not 1`, `(1 or 2) =>`; in any pattern: a name inside `{ X: int y }` or `{ X: var y }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
 | MW0018 | outside a `switch` expression arm, a positional pattern on a class, a record, a nullable struct or `object` (`p is (1, 2)`), inside another pattern (`{ T: (1, _) }`) or with names (`(A: 1, B: 2)`) | `{ X: 1 }`; on a tuple or a struct, `t is (1, _)` works |
 | MW0020 | `var c = arr[0];` on a struct, then `c.X = 6`, `c.Inner.X = 6`, `c.Move()` or `Bump(ref c)` (it changes `arr[0]`) | make a new struct, or write `c` back with `arr[0] = c` |
 | MW0022 | `var (a, b) = (1, 2)`, `(x[0], x[1]) = (x[1], x[0])`, a tuple turned into text | `(int a, int b) = (1, 2)`, a temporary, its items |
@@ -743,7 +754,6 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, `Index`/`Range`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, `Random.Shared`, and more (the rule's description lists them); also `SetEquals` (of a `HashSet`, an `ISet` or an `IReadOnlySet`), `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary` (of an `OrderedMap` it works), which give wrong answers | `TryGetValue`, `"\n"`, a loop |
 | MW0031 | `checked(a + b)`, `checked { }` (an overflow is never detected) | test the range yourself |
 | MW0032 | `Enum.Parse`, `Enum.GetValues`/`GetNames`, `ToString("D")` on an enum, a `[Flags]` combination turned into text, `(Color)5 + "x"` | a `switch` on the value, `HasFlag` |
-| MW0034 | two `using var` in one block (disposed in the wrong order) | nested `using ( ) { }` |
 | MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, `foreach (unit u in widgets)`, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game, whose arithmetic makes no NaN), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 
@@ -767,6 +777,7 @@ The analyzer does not see these, so they build and then go wrong in the game:
 | a number format other than `F`, `D`, `X`, `E`, `G` and a width: `N0`, `P0`, `00`, `0.0`, `#,##0.00` | the number as it is (`{x:N0}` of 1234567 shows `1234567`, `{x:P0}` of 0.5 shows `0.5`); `D3` of a negative number has a digit too few | `F` and a width (`{x,6:F1}`), `$"{x * 100:F0}%"` |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
 | `break` or `continue` after a `using var` in a loop | the script does not load | `using (var d = ...) { }` around the loop's body |
+| a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
 | a positional pattern on a class or record (`case (1, 2):`, `(1, 2) =>`) given null | fails: `Deconstruct` is called before the null check | a property pattern (`{ X: 1, Y: 2 }`), or a test for null first |
 | a local function called from another `switch` section than the one it is declared in | fails: "attempt to call a nil value" | declare it before the `switch` |
 | a `const string` local longer than 27 characters that is not one literal (`const string L = Prefix + "...";`), read on its own | nil, which shows as empty | one literal, or a `const` field |

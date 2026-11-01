@@ -137,7 +137,7 @@ namespace Moonwell.Build
             StageWith(project, () => Stage.WriteWithoutObjects(project, map, log));
         }
 
-        // What the map's Main installs before anything registers: each package the map references, in this order. The terrain's grid, the
+        // What the map's Main installs before anything registers: each package the map or a library of its own references, in this order. The terrain's grid, the
         // areas' regions, the input's cameras and the physics' bridges are written here too, from the map's ground, regions, cameras and
         // placed destructables (with the destructable types the map declares and the standard ids, when it uses Moonwell.Objects),
         // and a file an earlier build wrote is removed when the map no longer uses the package.
@@ -213,10 +213,15 @@ namespace Moonwell.Build
         /// mouse's synced position (a member reference to <c>Mouse.X</c>, <c>Y</c>, <c>Position</c> or <c>HasPosition</c>), which only
         /// the moves keep up to date between presses, or it has a method named <c>OnMouseMoved</c>. A press, a release, <c>IsDown</c>,
         /// the cursor and the machine-local reads need none. A read inside a press reaction counts too, as the build cannot tell where
-        /// it is read.
+        /// it is read. A library of the map's own counts as its code.
         /// </summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
         internal static bool NeedsMouseMoves(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsMouseMoves);
+        }
+
+        private static bool ReadsMouseMoves(string assemblyPath)
         {
             using var stream = File.OpenRead(assemblyPath);
             using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
