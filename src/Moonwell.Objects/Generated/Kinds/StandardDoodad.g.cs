@@ -66,7 +66,7 @@ namespace Moonwell.Objects
         /// <summary>The values put on this object so far, by field id; the build reads them.</summary>
         internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;
 
-        /// <summary>The field <c>danf</c>.</summary>
+        /// <summary>Animate in Fog of War (danf).</summary>
         [global::Moonwell.Objects.Field("danf", Label = "Animate in Fog of War")]
         public bool AnimateInFogOfWar
         {
@@ -74,7 +74,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("danf", value); }
         }
 
-        /// <summary>The field <c>dcat</c>.</summary>
+        /// <summary>Category (dcat).</summary>
         [global::Moonwell.Objects.Field("dcat", Label = "Category")]
         public string Category
         {
@@ -82,7 +82,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dcat", value); }
         }
 
-        /// <summary>The field <c>dcpr</c>.</summary>
+        /// <summary>Can Place Random Scale (dcpr).</summary>
         [global::Moonwell.Objects.Field("dcpr", Label = "Can Place Random Scale")]
         public bool CanPlaceRandomScale
         {
@@ -90,7 +90,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dcpr", value); }
         }
 
-        /// <summary>The field <c>dcuw</c>.</summary>
+        /// <summary>Cull Underwater (HD) (dcuw).</summary>
         [global::Moonwell.Objects.Field("dcuw", Label = "Cull Underwater (HD)")]
         public bool CullUnderwaterHD
         {
@@ -98,7 +98,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dcuw", value); }
         }
 
-        /// <summary>The field <c>ddec</c>.</summary>
+        /// <summary>Is a Decal (HD) (ddec).</summary>
         [global::Moonwell.Objects.Field("ddec", Label = "Is a Decal (HD)")]
         public bool IsADecalHD
         {
@@ -106,7 +106,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ddec", value); }
         }
 
-        /// <summary>The field <c>ddes</c>.</summary>
+        /// <summary>Default Scale (ddes), 0.01 to 100.</summary>
         [global::Moonwell.Objects.Field("ddes", Label = "Default Scale")]
         [global::Moonwell.Objects.Limits(0.01, 100)]
         [global::Moonwell.Objects.NonNegative]
@@ -116,7 +116,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ddes", value); }
         }
 
-        /// <summary>The field <c>decs</c>.</summary>
+        /// <summary>Decal Sort Priority (HD) (decs), -2147483647 to 2147483647.</summary>
         [global::Moonwell.Objects.Field("decs", Label = "Decal Sort Priority (HD)")]
         [global::Moonwell.Objects.Limits(-2147483647, 2147483647)]
         public int DecalSortPriorityHD
@@ -125,7 +125,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("decs", value); }
         }
 
-        /// <summary>The field <c>dfil</c>.</summary>
+        /// <summary>Model File (dfil).</summary>
         [global::Moonwell.Objects.Field("dfil", Label = "Model File")]
         public string Model
         {
@@ -133,7 +133,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dfil", value); }
         }
 
-        /// <summary>The field <c>dflt</c>.</summary>
+        /// <summary>Floats (dflt).</summary>
         [global::Moonwell.Objects.Field("dflt", Label = "Floats")]
         public bool Floats
         {
@@ -141,7 +141,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dflt", value); }
         }
 
-        /// <summary>The field <c>dfxr</c>.</summary>
+        /// <summary>Fixed Rotation (dfxr), -1 to 360.</summary>
         [global::Moonwell.Objects.Field("dfxr", Label = "Fixed Rotation")]
         [global::Moonwell.Objects.Limits(-1, 360)]
         public float FixedRotation
@@ -150,7 +150,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dfxr", value); }
         }
 
-        /// <summary>The field <c>dimc</c>.</summary>
+        /// <summary>Ignore Model Clicks (dimc).</summary>
         [global::Moonwell.Objects.Field("dimc", Label = "Ignore Model Clicks")]
         public bool IgnoreModelClicks
         {
@@ -158,7 +158,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dimc", value); }
         }
 
-        /// <summary>The field <c>dmap</c>.</summary>
+        /// <summary>Maximum Pitch Angle (degrees) (dmap), 0 to 99999.</summary>
         [global::Moonwell.Objects.Field("dmap", Label = "Maximum Pitch Angle (degrees)")]
         [global::Moonwell.Objects.Limits(0, 99999)]
         [global::Moonwell.Objects.NonNegative]
@@ -168,7 +168,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmap", value); }
         }
 
-        /// <summary>The field <c>dmar</c>.</summary>
+        /// <summary>Max Roll Angle (degrees) (dmar), 0 to 99999.</summary>
         [global::Moonwell.Objects.Field("dmar", Label = "Max Roll Angle (degrees)")]
         [global::Moonwell.Objects.Limits(0, 99999)]
         [global::Moonwell.Objects.NonNegative]
@@ -178,7 +178,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmar", value); }
         }
 
-        /// <summary>The field <c>dmas</c>.</summary>
+        /// <summary>Maximum Scale (dmas), 0.01 to 100.</summary>
         [global::Moonwell.Objects.Field("dmas", Label = "Maximum Scale")]
         [global::Moonwell.Objects.Limits(0.01, 100)]
         [global::Moonwell.Objects.NonNegative]
@@ -188,7 +188,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmas", value); }
         }
 
-        /// <summary>The field <c>dmis</c>.</summary>
+        /// <summary>Minimum Scale (dmis), 0.01 to 100.</summary>
         [global::Moonwell.Objects.Field("dmis", Label = "Minimum Scale")]
         [global::Moonwell.Objects.Limits(0.01, 100)]
         [global::Moonwell.Objects.NonNegative]
@@ -198,7 +198,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmis", value); }
         }
 
-        /// <summary>The field <c>dmmb</c>.</summary>
+        /// <summary>Minimap Color 3 (Blue) (dmmb), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("dmmb", Label = "Minimap Color 3 (Blue)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public int MinimapColor3Blue
@@ -207,7 +207,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmmb", value); }
         }
 
-        /// <summary>The field <c>dmmg</c>.</summary>
+        /// <summary>Minimap Color 2 (Green) (dmmg), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("dmmg", Label = "Minimap Color 2 (Green)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public int MinimapColor2Green
@@ -216,7 +216,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmmg", value); }
         }
 
-        /// <summary>The field <c>dmmr</c>.</summary>
+        /// <summary>Minimap Color 1 (Red) (dmmr), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("dmmr", Label = "Minimap Color 1 (Red)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public int MinimapColor1Red
@@ -225,7 +225,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dmmr", value); }
         }
 
-        /// <summary>The field <c>dnam</c>.</summary>
+        /// <summary>Name (dnam), not empty.</summary>
         [global::Moonwell.Objects.Field("dnam", Label = "Name")]
         [global::Moonwell.Objects.Required]
         public string Name
@@ -234,7 +234,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dnam", value); }
         }
 
-        /// <summary>The field <c>doct</c>.</summary>
+        /// <summary>Occlusion Type (HD) (doct).</summary>
         [global::Moonwell.Objects.Field("doct", Label = "Occlusion Type (HD)")]
         public global::Moonwell.Objects.OcclusionType2 OcclusionTypeHD
         {
@@ -242,7 +242,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("doct", value); }
         }
 
-        /// <summary>The field <c>donc</c>.</summary>
+        /// <summary>Placeable on Cliffs (donc).</summary>
         [global::Moonwell.Objects.Field("donc", Label = "Placeable on Cliffs")]
         public bool PlaceableOnCliffs
         {
@@ -250,7 +250,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("donc", value); }
         }
 
-        /// <summary>The field <c>donw</c>.</summary>
+        /// <summary>Placeable on Water (donw).</summary>
         [global::Moonwell.Objects.Field("donw", Label = "Placeable on Water")]
         public bool PlaceableOnWater
         {
@@ -258,7 +258,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("donw", value); }
         }
 
-        /// <summary>The field <c>dptx</c>.</summary>
+        /// <summary>Pathing Texture (dptx).</summary>
         [global::Moonwell.Objects.Field("dptx", Label = "Pathing Texture")]
         public string PathingTexture
         {
@@ -266,7 +266,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dptx", value); }
         }
 
-        /// <summary>The field <c>dsel</c>.</summary>
+        /// <summary>Selection Size (dsel), 0 to 99999.</summary>
         [global::Moonwell.Objects.Field("dsel", Label = "Selection Size")]
         [global::Moonwell.Objects.Limits(0, 99999)]
         [global::Moonwell.Objects.NonNegative]
@@ -276,7 +276,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dsel", value); }
         }
 
-        /// <summary>The field <c>dsh2</c>.</summary>
+        /// <summary>Has a Shadow (HD) (dsh2).</summary>
         [global::Moonwell.Objects.Field("dsh2", Label = "Has a Shadow (HD)")]
         public bool HasAShadowHD
         {
@@ -284,7 +284,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dsh2", value); }
         }
 
-        /// <summary>The field <c>dshd</c>.</summary>
+        /// <summary>Has a Shadow (SD) (dshd).</summary>
         [global::Moonwell.Objects.Field("dshd", Label = "Has a Shadow (SD)")]
         public bool HasAShadowSD
         {
@@ -292,7 +292,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dshd", value); }
         }
 
-        /// <summary>The field <c>dshf</c>.</summary>
+        /// <summary>Show in Fog of War (dshf).</summary>
         [global::Moonwell.Objects.Field("dshf", Label = "Show in Fog of War")]
         public bool ShowInFogOfWar
         {
@@ -300,7 +300,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dshf", value); }
         }
 
-        /// <summary>The field <c>dsmm</c>.</summary>
+        /// <summary>Minimap - Show (dsmm).</summary>
         [global::Moonwell.Objects.Field("dsmm", Label = "Minimap - Show")]
         public bool MinimapShow
         {
@@ -308,7 +308,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dsmm", value); }
         }
 
-        /// <summary>The field <c>dsnd</c>.</summary>
+        /// <summary>Looping Sound (dsnd).</summary>
         [global::Moonwell.Objects.Field("dsnd", Label = "Looping Sound")]
         public string LoopingSound
         {
@@ -316,7 +316,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dsnd", value); }
         }
 
-        /// <summary>The field <c>dtcc</c>.</summary>
+        /// <summary>Allow Custom Team Color (dtcc).</summary>
         [global::Moonwell.Objects.Field("dtcc", Label = "Allow Custom Team Color")]
         public bool AllowCustomTeamColor
         {
@@ -324,7 +324,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dtcc", value); }
         }
 
-        /// <summary>The field <c>dtco</c>.</summary>
+        /// <summary>Team Color (dtco).</summary>
         [global::Moonwell.Objects.Field("dtco", Label = "Team Color")]
         public global::Moonwell.Objects.TeamColor TeamColor
         {
@@ -332,7 +332,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dtco", value); }
         }
 
-        /// <summary>The field <c>dtil</c>.</summary>
+        /// <summary>Tilesets (dtil).</summary>
         [global::Moonwell.Objects.Field("dtil", Label = "Tilesets")]
         public string Tilesets
         {
@@ -340,7 +340,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dtil", value); }
         }
 
-        /// <summary>The field <c>dtsp</c>.</summary>
+        /// <summary>Has Tileset Specific Data (dtsp).</summary>
         [global::Moonwell.Objects.Field("dtsp", Label = "Has Tileset Specific Data")]
         public bool HasTilesetSpecificData
         {
@@ -348,7 +348,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dtsp", value); }
         }
 
-        /// <summary>The field <c>duch</c>.</summary>
+        /// <summary>Use Click Helper (duch).</summary>
         [global::Moonwell.Objects.Field("duch", Label = "Use Click Helper")]
         public bool UseClickHelper
         {
@@ -356,7 +356,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("duch", value); }
         }
 
-        /// <summary>The field <c>dumc</c>.</summary>
+        /// <summary>Minimap - Use Custom Color (dumc).</summary>
         [global::Moonwell.Objects.Field("dumc", Label = "Minimap - Use Custom Color")]
         public bool MinimapUseCustomColor
         {
@@ -364,7 +364,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dumc", value); }
         }
 
-        /// <summary>The field <c>dusr</c>.</summary>
+        /// <summary>On User-Specified List (dusr).</summary>
         [global::Moonwell.Objects.Field("dusr", Label = "On User-Specified List")]
         public bool OnUserSpecifiedList
         {
@@ -372,7 +372,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dusr", value); }
         }
 
-        /// <summary>The field <c>dvar</c>.</summary>
+        /// <summary>Variations (dvar), 1 to 10.</summary>
         [global::Moonwell.Objects.Field("dvar", Label = "Variations")]
         [global::Moonwell.Objects.Limits(1, 10)]
         public int Variations
@@ -381,7 +381,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dvar", value); }
         }
 
-        /// <summary>The field <c>dvb1</c>.</summary>
+        /// <summary>Tinting Color 3 (Blue) (dvb1), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("dvb1", Label = "Tinting Color 3 (Blue)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public global::Moonwell.Objects.Levels<int> TintingColor3Blue
@@ -390,7 +390,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dvb1", value); }
         }
 
-        /// <summary>The field <c>dvg1</c>.</summary>
+        /// <summary>Tinting Color 2 (Green) (dvg1), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("dvg1", Label = "Tinting Color 2 (Green)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public global::Moonwell.Objects.Levels<int> TintingColor2Green
@@ -399,7 +399,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dvg1", value); }
         }
 
-        /// <summary>The field <c>dvis</c>.</summary>
+        /// <summary>Visibility Radius (dvis), 0 to 99999.</summary>
         [global::Moonwell.Objects.Field("dvis", Label = "Visibility Radius")]
         [global::Moonwell.Objects.Limits(0, 99999)]
         [global::Moonwell.Objects.NonNegative]
@@ -409,7 +409,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dvis", value); }
         }
 
-        /// <summary>The field <c>dvr1</c>.</summary>
+        /// <summary>Tinting Color 1 (Red) (dvr1), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("dvr1", Label = "Tinting Color 1 (Red)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public global::Moonwell.Objects.Levels<int> TintingColor1Red
@@ -418,7 +418,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dvr1", value); }
         }
 
-        /// <summary>The field <c>dwat</c>.</summary>
+        /// <summary>Is Water (HD) (dwat).</summary>
         [global::Moonwell.Objects.Field("dwat", Label = "Is Water (HD)")]
         public bool IsWaterHD
         {
@@ -426,7 +426,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("dwat", value); }
         }
 
-        /// <summary>The field <c>dwlk</c>.</summary>
+        /// <summary>Walkable (dwlk).</summary>
         [global::Moonwell.Objects.Field("dwlk", Label = "Walkable")]
         public bool Walkable
         {

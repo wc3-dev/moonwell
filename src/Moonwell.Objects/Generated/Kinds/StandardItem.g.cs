@@ -87,7 +87,7 @@ namespace Moonwell.Objects
             Fields.Put(field, global::Moonwell.Objects.FieldChecks.Declared(fieldTypes, field, value));
         }
 
-        /// <summary>The field <c>iabi</c>.</summary>
+        /// <summary>Abilities (iabi), at most 4 entries.</summary>
         [global::Moonwell.Objects.Field("iabi", Label = "Abilities")]
         [global::Moonwell.Objects.MaxEntries(4)]
         public global::Moonwell.Objects.ObjectList<global::Moonwell.Ability> Abilities
@@ -95,7 +95,7 @@ namespace Moonwell.Objects
             get { return Fields.GetList<global::Moonwell.Ability>(this, "iabi"); }
         }
 
-        /// <summary>The field <c>iarm</c>.</summary>
+        /// <summary>Armor Type (iarm).</summary>
         [global::Moonwell.Objects.Field("iarm", Label = "Armor Type")]
         public global::Moonwell.Objects.ArmorType ArmorType
         {
@@ -103,14 +103,14 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iarm", value); }
         }
 
-        /// <summary>The field <c>icid</c>.</summary>
+        /// <summary>Cooldown Group (icid).</summary>
         [global::Moonwell.Objects.Field("icid", Label = "Cooldown Group")]
         public global::Moonwell.Objects.ObjectRef<global::Moonwell.Ability> CooldownGroup
         {
             get { return Fields.GetRef<global::Moonwell.Ability>("icid"); }
         }
 
-        /// <summary>The field <c>icla</c>.</summary>
+        /// <summary>Classification (icla).</summary>
         [global::Moonwell.Objects.Field("icla", Label = "Classification")]
         public global::Moonwell.Objects.ItemClass Classification
         {
@@ -118,7 +118,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("icla", value); }
         }
 
-        /// <summary>The field <c>iclb</c>.</summary>
+        /// <summary>Tinting Color 3 (Blue) (iclb), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("iclb", Label = "Tinting Color 3 (Blue)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public int TintingColor3Blue
@@ -127,7 +127,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iclb", value); }
         }
 
-        /// <summary>The field <c>iclg</c>.</summary>
+        /// <summary>Tinting Color 2 (Green) (iclg), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("iclg", Label = "Tinting Color 2 (Green)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public int TintingColor2Green
@@ -136,7 +136,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iclg", value); }
         }
 
-        /// <summary>The field <c>iclr</c>.</summary>
+        /// <summary>Tinting Color 1 (Red) (iclr), 0 to 255.</summary>
         [global::Moonwell.Objects.Field("iclr", Label = "Tinting Color 1 (Red)")]
         [global::Moonwell.Objects.Limits(0, 255)]
         public int TintingColor1Red
@@ -145,7 +145,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iclr", value); }
         }
 
-        /// <summary>The field <c>ides</c>.</summary>
+        /// <summary>Description (ides).</summary>
         [global::Moonwell.Objects.Field("ides", Label = "Description")]
         public string Description
         {
@@ -153,7 +153,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ides", value); }
         }
 
-        /// <summary>The field <c>idro</c>.</summary>
+        /// <summary>Can Be Dropped (idro).</summary>
         [global::Moonwell.Objects.Field("idro", Label = "Can Be Dropped")]
         public bool CanBeDropped
         {
@@ -161,7 +161,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("idro", value); }
         }
 
-        /// <summary>The field <c>idrp</c>.</summary>
+        /// <summary>Dropped When Carrier Dies (idrp).</summary>
         [global::Moonwell.Objects.Field("idrp", Label = "Dropped When Carrier Dies")]
         public bool DroppedWhenCarrierDies
         {
@@ -169,7 +169,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("idrp", value); }
         }
 
-        /// <summary>The field <c>iequ</c>.</summary>
+        /// <summary>Equipment Type (iequ).</summary>
         [global::Moonwell.Objects.Field("iequ", Label = "Equipment Type")]
         public global::Moonwell.Objects.EquipmentType EquipmentType
         {
@@ -177,7 +177,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iequ", value); }
         }
 
-        /// <summary>The field <c>ifil</c>.</summary>
+        /// <summary>Model Used (ifil).</summary>
         [global::Moonwell.Objects.Field("ifil", Label = "Model Used")]
         public string Model
         {
@@ -185,7 +185,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ifil", value); }
         }
 
-        /// <summary>The field <c>igol</c>.</summary>
+        /// <summary>Gold Cost (igol), 0 to 100000.</summary>
         [global::Moonwell.Objects.Field("igol", Label = "Gold Cost")]
         [global::Moonwell.Objects.Limits(0, 100000)]
         public int GoldCost
@@ -194,7 +194,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("igol", value); }
         }
 
-        /// <summary>The field <c>ihtp</c>.</summary>
+        /// <summary>Hit Points (ihtp), 1 to 500000.</summary>
         [global::Moonwell.Objects.Field("ihtp", Label = "Hit Points")]
         [global::Moonwell.Objects.Limits(1, 500000)]
         public int HitPoints
@@ -203,7 +203,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ihtp", value); }
         }
 
-        /// <summary>The field <c>iicd</c>.</summary>
+        /// <summary>Ignore Cooldown (iicd).</summary>
         [global::Moonwell.Objects.Field("iicd", Label = "Ignore Cooldown")]
         public bool IgnoreCooldown
         {
@@ -211,7 +211,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iicd", value); }
         }
 
-        /// <summary>The field <c>iico</c>.</summary>
+        /// <summary>Interface Icon (iico).</summary>
         [global::Moonwell.Objects.Field("iico", Label = "Interface Icon")]
         public string Icon
         {
@@ -219,7 +219,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iico", value); }
         }
 
-        /// <summary>The field <c>iinv</c>.</summary>
+        /// <summary>Invulnerable (iinv).</summary>
         [global::Moonwell.Objects.Field("iinv", Label = "Invulnerable")]
         public bool Invulnerable
         {
@@ -227,7 +227,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iinv", value); }
         }
 
-        /// <summary>The field <c>ilev</c>.</summary>
+        /// <summary>Level (ilev), 0 to 8.</summary>
         [global::Moonwell.Objects.Field("ilev", Label = "Level")]
         [global::Moonwell.Objects.Limits(0, 8)]
         public int Level
@@ -236,7 +236,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ilev", value); }
         }
 
-        /// <summary>The field <c>ilum</c>.</summary>
+        /// <summary>Lumber Cost (ilum), 0 to 100000.</summary>
         [global::Moonwell.Objects.Field("ilum", Label = "Lumber Cost")]
         [global::Moonwell.Objects.Limits(0, 100000)]
         public int LumberCost
@@ -245,7 +245,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ilum", value); }
         }
 
-        /// <summary>The field <c>ilvo</c>.</summary>
+        /// <summary>Level (Unclassified) (ilvo), 0 to 10.</summary>
         [global::Moonwell.Objects.Field("ilvo", Label = "Level (Unclassified)")]
         [global::Moonwell.Objects.Limits(0, 10)]
         public int LevelUnclassified
@@ -254,7 +254,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ilvo", value); }
         }
 
-        /// <summary>The field <c>imor</c>.</summary>
+        /// <summary>Valid Target For Transformation (imor).</summary>
         [global::Moonwell.Objects.Field("imor", Label = "Valid Target For Transformation")]
         public bool ValidTargetForTransformation
         {
@@ -262,7 +262,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("imor", value); }
         }
 
-        /// <summary>The field <c>ipaw</c>.</summary>
+        /// <summary>Can Be Sold To Merchants (ipaw).</summary>
         [global::Moonwell.Objects.Field("ipaw", Label = "Can Be Sold To Merchants")]
         public bool CanBeSoldToMerchants
         {
@@ -270,7 +270,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ipaw", value); }
         }
 
-        /// <summary>The field <c>iper</c>.</summary>
+        /// <summary>Perishable (iper).</summary>
         [global::Moonwell.Objects.Field("iper", Label = "Perishable")]
         public bool Perishable
         {
@@ -278,7 +278,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iper", value); }
         }
 
-        /// <summary>The field <c>ipow</c>.</summary>
+        /// <summary>Use Automatically When Acquired (ipow).</summary>
         [global::Moonwell.Objects.Field("ipow", Label = "Use Automatically When Acquired")]
         public bool UseAutomaticallyWhenAcquired
         {
@@ -286,7 +286,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ipow", value); }
         }
 
-        /// <summary>The field <c>ipri</c>.</summary>
+        /// <summary>Priority (ipri), 0 to 1000.</summary>
         [global::Moonwell.Objects.Field("ipri", Label = "Priority")]
         [global::Moonwell.Objects.Limits(0, 1000)]
         public int Priority
@@ -295,7 +295,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ipri", value); }
         }
 
-        /// <summary>The field <c>iprn</c>.</summary>
+        /// <summary>Include As Random Choice (iprn).</summary>
         [global::Moonwell.Objects.Field("iprn", Label = "Include As Random Choice")]
         public bool IncludeAsRandomChoice
         {
@@ -303,7 +303,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iprn", value); }
         }
 
-        /// <summary>The field <c>isca</c>.</summary>
+        /// <summary>Scaling Value (isca), 0.1 to 10.</summary>
         [global::Moonwell.Objects.Field("isca", Label = "Scaling Value")]
         [global::Moonwell.Objects.Limits(0.1, 10)]
         [global::Moonwell.Objects.NonNegative]
@@ -313,7 +313,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("isca", value); }
         }
 
-        /// <summary>The field <c>isel</c>.</summary>
+        /// <summary>Can Be Sold By Merchants (isel).</summary>
         [global::Moonwell.Objects.Field("isel", Label = "Can Be Sold By Merchants")]
         public bool CanBeSoldByMerchants
         {
@@ -321,7 +321,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("isel", value); }
         }
 
-        /// <summary>The field <c>isit</c>.</summary>
+        /// <summary>Stock Initial After Start Delay (isit), 1 to 100.</summary>
         [global::Moonwell.Objects.Field("isit", Label = "Stock Initial After Start Delay")]
         [global::Moonwell.Objects.Limits(1, 100)]
         public int StockInitialAfterStartDelay
@@ -330,7 +330,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("isit", value); }
         }
 
-        /// <summary>The field <c>issc</c>.</summary>
+        /// <summary>Selection Size - Editor (issc), 0 to 10000.</summary>
         [global::Moonwell.Objects.Field("issc", Label = "Selection Size - Editor")]
         [global::Moonwell.Objects.Limits(0, 10000)]
         [global::Moonwell.Objects.NonNegative]
@@ -340,7 +340,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("issc", value); }
         }
 
-        /// <summary>The field <c>isst</c>.</summary>
+        /// <summary>Stock Start Delay (isst), 0 to 3600.</summary>
         [global::Moonwell.Objects.Field("isst", Label = "Stock Start Delay")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         public int StockStartDelay
@@ -349,7 +349,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("isst", value); }
         }
 
-        /// <summary>The field <c>ista</c>.</summary>
+        /// <summary>Max Stacks (ista), 0 to 1000.</summary>
         [global::Moonwell.Objects.Field("ista", Label = "Max Stacks")]
         [global::Moonwell.Objects.Limits(0, 1000)]
         public int MaxStacks
@@ -358,7 +358,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ista", value); }
         }
 
-        /// <summary>The field <c>isto</c>.</summary>
+        /// <summary>Stock Maximum (isto), 0 to 100.</summary>
         [global::Moonwell.Objects.Field("isto", Label = "Stock Maximum")]
         [global::Moonwell.Objects.Limits(0, 100)]
         public int StockMaximum
@@ -367,7 +367,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("isto", value); }
         }
 
-        /// <summary>The field <c>istr</c>.</summary>
+        /// <summary>Stock Replenish Interval (istr), 0 to 3600.</summary>
         [global::Moonwell.Objects.Field("istr", Label = "Stock Replenish Interval")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         public int StockReplenishInterval
@@ -376,7 +376,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("istr", value); }
         }
 
-        /// <summary>The field <c>itag</c>.</summary>
+        /// <summary>Tag (itag).</summary>
         [global::Moonwell.Objects.Field("itag", Label = "Tag")]
         public global::Moonwell.Objects.ItemTag Tag
         {
@@ -384,7 +384,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("itag", value); }
         }
 
-        /// <summary>The field <c>itcc</c>.</summary>
+        /// <summary>Allow Custom Team Color (itcc).</summary>
         [global::Moonwell.Objects.Field("itcc", Label = "Allow Custom Team Color")]
         public bool AllowCustomTeamColor
         {
@@ -392,7 +392,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("itcc", value); }
         }
 
-        /// <summary>The field <c>itco</c>.</summary>
+        /// <summary>Team Color (itco).</summary>
         [global::Moonwell.Objects.Field("itco", Label = "Team Color")]
         public global::Moonwell.Objects.TeamColor TeamColor
         {
@@ -400,7 +400,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("itco", value); }
         }
 
-        /// <summary>The field <c>iusa</c>.</summary>
+        /// <summary>Actively Used (iusa).</summary>
         [global::Moonwell.Objects.Field("iusa", Label = "Actively Used")]
         public bool ActivelyUsed
         {
@@ -408,7 +408,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("iusa", value); }
         }
 
-        /// <summary>The field <c>ubpx</c>.</summary>
+        /// <summary>Button Position (X) (ubpx), 0 to 3.</summary>
         [global::Moonwell.Objects.Field("ubpx", Label = "Button Position (X)")]
         [global::Moonwell.Objects.Limits(0, 3)]
         public int ButtonPositionX
@@ -417,7 +417,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ubpx", value); }
         }
 
-        /// <summary>The field <c>ubpy</c>.</summary>
+        /// <summary>Button Position (Y) (ubpy), 0 to 2.</summary>
         [global::Moonwell.Objects.Field("ubpy", Label = "Button Position (Y)")]
         [global::Moonwell.Objects.Limits(0, 2)]
         public int ButtonPositionY
@@ -426,7 +426,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ubpy", value); }
         }
 
-        /// <summary>The field <c>uhot</c>.</summary>
+        /// <summary>Hotkey (uhot).</summary>
         [global::Moonwell.Objects.Field("uhot", Label = "Hotkey")]
         public string Hotkey
         {
@@ -434,7 +434,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("uhot", value); }
         }
 
-        /// <summary>The field <c>unam</c>.</summary>
+        /// <summary>Name (unam), not empty.</summary>
         [global::Moonwell.Objects.Field("unam", Label = "Name")]
         [global::Moonwell.Objects.Required]
         public string Name
@@ -443,7 +443,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("unam", value); }
         }
 
-        /// <summary>The field <c>unsf</c>.</summary>
+        /// <summary>Name - Editor Suffix (unsf), at most 50 characters.</summary>
         [global::Moonwell.Objects.Field("unsf", Label = "Name - Editor Suffix")]
         [global::Moonwell.Objects.MaxLength(50)]
         public string NameEditorSuffix
@@ -452,14 +452,14 @@ namespace Moonwell.Objects
             protected set { Fields.Put("unsf", value); }
         }
 
-        /// <summary>The field <c>ureq</c>.</summary>
+        /// <summary>Requirements (ureq).</summary>
         [global::Moonwell.Objects.Field("ureq", Label = "Requirements")]
         public global::Moonwell.Objects.ObjectList<object> Requires
         {
             get { return Fields.GetList<object>(this, "ureq"); }
         }
 
-        /// <summary>The field <c>urqa</c>.</summary>
+        /// <summary>Requirements - Levels (urqa).</summary>
         [global::Moonwell.Objects.Field("urqa", Label = "Requirements - Levels")]
         public string RequirementsLevels
         {
@@ -467,7 +467,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("urqa", value); }
         }
 
-        /// <summary>The field <c>utip</c>.</summary>
+        /// <summary>Tooltip - Basic (utip).</summary>
         [global::Moonwell.Objects.Field("utip", Label = "Tooltip - Basic")]
         public string Tooltip
         {
@@ -475,7 +475,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("utip", value); }
         }
 
-        /// <summary>The field <c>utub</c>.</summary>
+        /// <summary>Tooltip - Extended (utub).</summary>
         [global::Moonwell.Objects.Field("utub", Label = "Tooltip - Extended")]
         public string TooltipExtended
         {

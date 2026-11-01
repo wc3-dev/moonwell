@@ -50,7 +50,7 @@ namespace Moonwell.Objects
         /// <summary>The values put on this object so far, by field id; the build reads them.</summary>
         internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;
 
-        /// <summary>The field <c>fart</c>.</summary>
+        /// <summary>Icon (fart).</summary>
         [global::Moonwell.Objects.Field("fart", Label = "Icon")]
         public string Icon
         {
@@ -58,7 +58,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fart", value); }
         }
 
-        /// <summary>The field <c>feat</c>.</summary>
+        /// <summary>Effect (feat).</summary>
         [global::Moonwell.Objects.Field("feat", Label = "Effect")]
         public string Effect
         {
@@ -66,7 +66,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("feat", value); }
         }
 
-        /// <summary>The field <c>feff</c>.</summary>
+        /// <summary>Is an Effect (feff).</summary>
         [global::Moonwell.Objects.Field("feff", Label = "Is an Effect")]
         public bool IsAnEffect
         {
@@ -74,7 +74,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("feff", value); }
         }
 
-        /// <summary>The field <c>fefl</c>.</summary>
+        /// <summary>Effect Sound (Looping) (fefl).</summary>
         [global::Moonwell.Objects.Field("fefl", Label = "Effect Sound (Looping)")]
         public string EffectSoundLooping
         {
@@ -82,7 +82,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fefl", value); }
         }
 
-        /// <summary>The field <c>fefs</c>.</summary>
+        /// <summary>Effect Sound (fefs).</summary>
         [global::Moonwell.Objects.Field("fefs", Label = "Effect Sound")]
         public string EffectSound
         {
@@ -90,7 +90,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fefs", value); }
         }
 
-        /// <summary>The field <c>feft</c>.</summary>
+        /// <summary>Effect Attachment Point (feft), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("feft", Label = "Effect Attachment Point")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string EffectAttachmentPoint
@@ -99,7 +99,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("feft", value); }
         }
 
-        /// <summary>The field <c>flig</c>.</summary>
+        /// <summary>Lightning (flig).</summary>
         [global::Moonwell.Objects.Field("flig", Label = "Lightning")]
         public global::Moonwell.Objects.LightningEffect Lightning
         {
@@ -107,7 +107,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("flig", value); }
         }
 
-        /// <summary>The field <c>fmac</c>.</summary>
+        /// <summary>Missile Arc (fmac), 0 to 1.</summary>
         [global::Moonwell.Objects.Field("fmac", Label = "Missile Arc")]
         [global::Moonwell.Objects.Limits(0, 1)]
         public float MissileArc
@@ -116,7 +116,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fmac", value); }
         }
 
-        /// <summary>The field <c>fmat</c>.</summary>
+        /// <summary>Missile Art (fmat).</summary>
         [global::Moonwell.Objects.Field("fmat", Label = "Missile Art")]
         public string MissileArt
         {
@@ -124,7 +124,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fmat", value); }
         }
 
-        /// <summary>The field <c>fmho</c>.</summary>
+        /// <summary>Missile Homing Enabled (fmho).</summary>
         [global::Moonwell.Objects.Field("fmho", Label = "Missile Homing Enabled")]
         public bool MissileHomingEnabled
         {
@@ -132,7 +132,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fmho", value); }
         }
 
-        /// <summary>The field <c>fmsp</c>.</summary>
+        /// <summary>Missile Speed (fmsp), 0 to 10000.</summary>
         [global::Moonwell.Objects.Field("fmsp", Label = "Missile Speed")]
         [global::Moonwell.Objects.Limits(0, 10000)]
         public int MissileSpeed
@@ -141,7 +141,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fmsp", value); }
         }
 
-        /// <summary>The field <c>fnam</c>.</summary>
+        /// <summary>Name (Editor Only) (fnam).</summary>
         [global::Moonwell.Objects.Field("fnam", Label = "Name (Editor Only)")]
         public string Name
         {
@@ -149,7 +149,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fnam", value); }
         }
 
-        /// <summary>The field <c>fnsf</c>.</summary>
+        /// <summary>Editor Suffix (fnsf), at most 50 characters.</summary>
         [global::Moonwell.Objects.Field("fnsf", Label = "Editor Suffix")]
         [global::Moonwell.Objects.MaxLength(50)]
         public string EditorSuffix
@@ -158,7 +158,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fnsf", value); }
         }
 
-        /// <summary>The field <c>frac</c>.</summary>
+        /// <summary>Race (frac).</summary>
         [global::Moonwell.Objects.Field("frac", Label = "Race")]
         public global::Moonwell.Objects.UnitRace Race
         {
@@ -166,7 +166,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("frac", value); }
         }
 
-        /// <summary>The field <c>fsat</c>.</summary>
+        /// <summary>Special (fsat).</summary>
         [global::Moonwell.Objects.Field("fsat", Label = "Special")]
         public string Special
         {
@@ -174,7 +174,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fsat", value); }
         }
 
-        /// <summary>The field <c>fspd</c>.</summary>
+        /// <summary>Required Spell Detail (fspd).</summary>
         [global::Moonwell.Objects.Field("fspd", Label = "Required Spell Detail")]
         public global::Moonwell.Objects.SpellDetail RequiredSpellDetail
         {
@@ -182,7 +182,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fspd", value); }
         }
 
-        /// <summary>The field <c>fspt</c>.</summary>
+        /// <summary>Special Attachment Point (fspt), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fspt", Label = "Special Attachment Point")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string SpecialAttachmentPoint
@@ -191,7 +191,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fspt", value); }
         }
 
-        /// <summary>The field <c>fta0</c>.</summary>
+        /// <summary>Target Attachment Point 1 (fta0), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fta0", Label = "Target Attachment Point 1")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint1
@@ -200,7 +200,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fta0", value); }
         }
 
-        /// <summary>The field <c>fta1</c>.</summary>
+        /// <summary>Target Attachment Point 2 (fta1), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fta1", Label = "Target Attachment Point 2")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint2
@@ -209,7 +209,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fta1", value); }
         }
 
-        /// <summary>The field <c>fta2</c>.</summary>
+        /// <summary>Target Attachment Point 3 (fta2), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fta2", Label = "Target Attachment Point 3")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint3
@@ -218,7 +218,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fta2", value); }
         }
 
-        /// <summary>The field <c>fta3</c>.</summary>
+        /// <summary>Target Attachment Point 4 (fta3), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fta3", Label = "Target Attachment Point 4")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint4
@@ -227,7 +227,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fta3", value); }
         }
 
-        /// <summary>The field <c>fta4</c>.</summary>
+        /// <summary>Target Attachment Point 5 (fta4), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fta4", Label = "Target Attachment Point 5")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint5
@@ -236,7 +236,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fta4", value); }
         }
 
-        /// <summary>The field <c>fta5</c>.</summary>
+        /// <summary>Target Attachment Point 6 (fta5), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("fta5", Label = "Target Attachment Point 6")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint6
@@ -245,7 +245,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("fta5", value); }
         }
 
-        /// <summary>The field <c>ftac</c>.</summary>
+        /// <summary>Target Attachments (ftac), 0 to 6.</summary>
         [global::Moonwell.Objects.Field("ftac", Label = "Target Attachments")]
         [global::Moonwell.Objects.Limits(0, 6)]
         public int TargetAttachments
@@ -254,7 +254,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ftac", value); }
         }
 
-        /// <summary>The field <c>ftat</c>.</summary>
+        /// <summary>Target (ftat).</summary>
         [global::Moonwell.Objects.Field("ftat", Label = "Target")]
         public string Target
         {
@@ -262,7 +262,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ftat", value); }
         }
 
-        /// <summary>The field <c>ftip</c>.</summary>
+        /// <summary>Tooltip (ftip).</summary>
         [global::Moonwell.Objects.Field("ftip", Label = "Tooltip")]
         public string Tooltip
         {
@@ -270,7 +270,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ftip", value); }
         }
 
-        /// <summary>The field <c>fube</c>.</summary>
+        /// <summary>Tooltip - Extended (fube).</summary>
         [global::Moonwell.Objects.Field("fube", Label = "Tooltip - Extended")]
         public string TooltipExtended
         {

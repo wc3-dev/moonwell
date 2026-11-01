@@ -81,6 +81,8 @@ public sealed class Champion : Human.Units.Paladin
 }
 ```
 
+- A field's hover in the editor gives World Editor's label, its id and what it allows:
+  `Acquisition Range (uacq), 0 to 20000.`
 - A field with levels takes `Levels(75f, 150f, 225f)`, one value for each level (another count fails the build),
   `PerLevel(level => ...)` to compute each level, or one value for every level: an upgrade's
   `Name = "Sharpened Blades"`. Raising an ability's `LevelCount` past the game's writes every level you give; a field
