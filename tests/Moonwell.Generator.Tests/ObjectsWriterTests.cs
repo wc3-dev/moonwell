@@ -312,6 +312,18 @@ public class ObjectsWriterTests
     }
 
     [Fact]
+    public void a_choice_of_only_some_of_its_enum_lists_their_numbers()
+    {
+        var sound = Choices.Make("combatSound", "string", new[] { new ChoiceEntry(0, "MetalHeavySlice", "L", Array.Empty<string>()) }, _ => "");
+        var numbered = sound with { Members = sound.Members.Select(member => member with { Value = 6 }).ToList() };
+        var field = new Field(Kind.Unit, "ucs1", "Attack1WeaponSound", FieldType.Choice, null, false, 0, false, Array.Empty<string>(), "weapType1", Choice: numbered);
+
+        var source = ObjectsWriter.Kind(Kind.Unit, new[] { field }, false);
+
+        Assert.Contains("[global::Moonwell.Objects.ListedValues(6)]\n        public global::Moonwell.WeaponSound Attack1WeaponSound\n", source);
+    }
+
+    [Fact]
     public void a_fields_hover_is_its_label_its_id_and_what_it_allows()
     {
         Assert.Equal("Defense Base (uabc), 0 to 1000.", Hover(new FieldRules(0, 1000, false, false, null, "Defense Base")));

@@ -50,7 +50,8 @@ public static class GeneratedObjects
         var choices = Choices.WithStandardBits(listed, fieldsOf.Keys.Select(kind => (fieldsOf[kind], objectsOf[kind])).ToList());
         if (runtime != null)
         {
-            foreach (var choice in choices.Values.Where(choice => choice.Core))
+            choices = Choices.WithCoreNumbers(choices, runtime.EnumMembers);
+            foreach (var choice in choices.Values.Where(choice => choice.Core && !choice.Partial))
             {
                 Choices.CheckCore(choice, runtime.EnumMembers(choice.Name));
             }

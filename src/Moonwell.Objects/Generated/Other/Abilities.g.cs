@@ -4914,7 +4914,7 @@ namespace Moonwell.Objects
                     Race = global::Moonwell.Objects.UnitRace.Other;
                     Range = Levels(160f);
                     RequiredLevel = 0;
-                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Invulnerable | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Vulnerable | global::Moonwell.Objects.Targets.Friend);
+                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Invulnerable | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Vulnerable | global::Moonwell.Objects.Targets.Friend);
                     UseNewDefaultLevelCap = false;
                 }
 
@@ -5013,7 +5013,7 @@ namespace Moonwell.Objects
                     Race = global::Moonwell.Objects.UnitRace.Other;
                     Range = Levels(200f);
                     RequiredLevel = 0;
-                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Invulnerable | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Vulnerable | global::Moonwell.Objects.Targets.Friend);
+                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Invulnerable | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Vulnerable | global::Moonwell.Objects.Targets.Friend);
                     UseNewDefaultLevelCap = false;
                 }
 
@@ -57140,7 +57140,7 @@ namespace Moonwell.Objects
                     PriorityForSpellSteal = 0;
                     Race = global::Moonwell.Objects.UnitRace.Other;
                     RequiredLevel = 0;
-                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Invulnerable | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Self | global::Moonwell.Objects.Targets.Vulnerable | global::Moonwell.Objects.Targets.Friend);
+                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Invulnerable | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Self | global::Moonwell.Objects.Targets.Vulnerable | global::Moonwell.Objects.Targets.Friend);
                     UseNewDefaultLevelCap = false;
                 }
 

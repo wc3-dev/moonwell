@@ -336,6 +336,16 @@ public class FieldRulesTests
                 """, "[BeyondLimits(nameof(AttackType), nameof(DeathType))]")));
     }
 
+    [Theory]
+    [InlineData("Attack1WeaponSound = WeaponSound.ClawLightSlice;")]
+    [InlineData("Set(\"ucs1\", WeaponSound.ClawLightSlice);")]
+    public void a_sound_world_editor_does_not_list_is_rejected_by_name_and_by_id(string statement)
+    {
+        Assert.Equal(
+            new[] { "Giant.Attack1WeaponSound is 19; Attack 1 - Weapon Sound (ucs1) allows only the values of WeaponSound that World Editor lists" },
+            Messages(Footman(statement)));
+    }
+
     [Fact]
     public void a_flags_choice_may_combine_members_but_not_use_a_bit_no_member_has()
     {

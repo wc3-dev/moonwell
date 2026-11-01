@@ -1,6 +1,10 @@
 namespace Moonwell
 {
-    /// <summary>The sound a hit makes, which the game calls its weapon type, numbered as the game numbers them. A missile's hit has none.</summary>
+    /// <summary>
+    /// The sound a hit makes, which the game calls its weapon type, numbered as the game numbers them. A missile's hit has
+    /// none. A unit's <c>Attack1WeaponSound</c> and <c>Attack2WeaponSound</c> hold it too, and take the sounds World Editor
+    /// lists: every member but <c>None</c> and the stab, claw and wood slice sounds.
+    /// </summary>
     public enum WeaponSound
     {
         /// <summary>No sound: missiles and most code damage.</summary>

@@ -678,7 +678,7 @@ namespace Moonwell.Objects
                     Race = global::Moonwell.Objects.UnitRace.Creeps;
                     Range = Levels(800f);
                     RequiredLevel = 0;
-                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Organic);
+                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Organic);
                     Tooltip = Levels("Banish");
                     TooltipExtended = Levels("Turns a non-mechanical unit ethereal and slows its movement speed by <ACbn,DataA1,%>% for <ACbn,Dur1> seconds. Ethereal creatures cannot attack, but they can cast spells and certain spells cast upon them will have a greater effect.");
                     UseNewDefaultLevelCap = false;

@@ -412,7 +412,14 @@ public static class ObjectsWriter
             return $"{Xml(member.Label)}: the game's \"{Xml(member.Text)}\".";
         }
 
-        var shown = Xml(member.Label.Length > 0 ? member.Label : member.Text) + ".";
+        var label = Xml(member.Label.Length > 0 ? member.Label : member.Text);
+        var shown = label + ".";
+        if (choice.IsCoded(member.Text) && !string.Equals(member.Name, member.Text, StringComparison.OrdinalIgnoreCase))
+        {
+            // A member named by its label keeps the game's code in its hover, for a modder who knows the code.
+            shown = $"{label} ({Xml(member.Text)}).";
+        }
+
         if (choice.Flags && member.Value != 0 && member.Name == "None")
         {
             // Targets.None is World Editor's target "none", one of the values; no flags at all is 0.
@@ -590,12 +597,19 @@ public static class ObjectsWriter
     /// The rule attributes of a field's property, in this order and only those the field has: <c>[Limits]</c> for a
     /// number field (or a number list held as text) with a <c>minVal</c> or <c>maxVal</c>; <c>[NonNegative]</c> for one
     /// that allows no negative (<see cref="FieldRules.NoNegative"/>); <c>[NumberList]</c>; <c>[Required]</c>;
-    /// <c>[MaxLength]</c>; <c>[MaxEntries]</c>. A choice has none: its enum is its rule.
+    /// <c>[MaxLength]</c>; <c>[MaxEntries]</c>. A choice has none, as its enum is its rule, unless World Editor lists
+    /// only some of the enum's values (<see cref="ChoiceType.Partial"/>): then it has <c>[ListedValues]</c>.
     /// </summary>
     private static List<string> RuleAttributes(Field field)
     {
         var rules = field.Rules;
         var attributes = new List<string>();
+        if (field.Choice is { Partial: true } choice)
+        {
+            var numbers = choice.Members.Select(member => member.Value.ToString(CultureInfo.InvariantCulture));
+            attributes.Add($"[{Root}.ListedValues({string.Join(", ", numbers)})]");
+        }
+
         if (IsLimited(field))
         {
             attributes.Add(LimitsAttribute(rules.Min, rules.Max));

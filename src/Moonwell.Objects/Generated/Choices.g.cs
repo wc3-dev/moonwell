@@ -153,17 +153,17 @@ namespace Moonwell.Objects
     /// @CSharpLua.Ignore
     public enum AttributeType
     {
-        /// <summary>Agility.</summary>
+        /// <summary>Agility (AGI).</summary>
         [global::Moonwell.Objects.GameValue("AGI")]
-        AGI = 0,
+        Agility = 0,
 
-        /// <summary>Intelligence.</summary>
+        /// <summary>Intelligence (INT).</summary>
         [global::Moonwell.Objects.GameValue("INT")]
-        INT = 1,
+        Intelligence = 1,
 
-        /// <summary>Strength.</summary>
+        /// <summary>Strength (STR).</summary>
         [global::Moonwell.Objects.GameValue("STR")]
-        STR = 2,
+        Strength = 2,
     }
 
     /// <summary>Any of the values of the metadata type <c>channelFlags</c>, as World Editor offers them; the object file holds the number whose bits they are, and 0 is none of them. Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.</summary>
@@ -211,63 +211,6 @@ namespace Moonwell.Objects
         /// <summary>Unit or Point Target.</summary>
         [global::Moonwell.Objects.GameValue("3")]
         UnitOrPointTarget = 3,
-    }
-
-    /// <summary>A value of the metadata type <c>combatSound</c>, as World Editor offers it. Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.</summary>
-    /// @CSharpLua.Ignore
-    public enum CombatSound
-    {
-        /// <summary>Axe Medium Chop.</summary>
-        [global::Moonwell.Objects.GameValue("AxeMediumChop")]
-        AxeMediumChop = 0,
-
-        /// <summary>Metal Heavy Bash.</summary>
-        [global::Moonwell.Objects.GameValue("MetalHeavyBash")]
-        MetalHeavyBash = 1,
-
-        /// <summary>Metal Heavy Chop.</summary>
-        [global::Moonwell.Objects.GameValue("MetalHeavyChop")]
-        MetalHeavyChop = 2,
-
-        /// <summary>Metal Heavy Slice.</summary>
-        [global::Moonwell.Objects.GameValue("MetalHeavySlice")]
-        MetalHeavySlice = 3,
-
-        /// <summary>Metal Light Chop.</summary>
-        [global::Moonwell.Objects.GameValue("MetalLightChop")]
-        MetalLightChop = 4,
-
-        /// <summary>Metal Light Slice.</summary>
-        [global::Moonwell.Objects.GameValue("MetalLightSlice")]
-        MetalLightSlice = 5,
-
-        /// <summary>Metal Medium Bash.</summary>
-        [global::Moonwell.Objects.GameValue("MetalMediumBash")]
-        MetalMediumBash = 6,
-
-        /// <summary>Metal Medium Chop.</summary>
-        [global::Moonwell.Objects.GameValue("MetalMediumChop")]
-        MetalMediumChop = 7,
-
-        /// <summary>Metal Medium Slice.</summary>
-        [global::Moonwell.Objects.GameValue("MetalMediumSlice")]
-        MetalMediumSlice = 8,
-
-        /// <summary>Rock Heavy Bash.</summary>
-        [global::Moonwell.Objects.GameValue("RockHeavyBash")]
-        RockHeavyBash = 9,
-
-        /// <summary>Wood Heavy Bash.</summary>
-        [global::Moonwell.Objects.GameValue("WoodHeavyBash")]
-        WoodHeavyBash = 10,
-
-        /// <summary>Wood Light Bash.</summary>
-        [global::Moonwell.Objects.GameValue("WoodLightBash")]
-        WoodLightBash = 11,
-
-        /// <summary>Wood Medium Bash.</summary>
-        [global::Moonwell.Objects.GameValue("WoodMediumBash")]
-        WoodMediumBash = 12,
     }
 
     /// <summary>A value of the metadata type <c>damageType</c>, as World Editor offers it. Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.</summary>
@@ -528,65 +471,65 @@ namespace Moonwell.Objects
     /// @CSharpLua.Ignore
     public enum LightningEffect
     {
-        /// <summary>Chain Lightning - Primary.</summary>
+        /// <summary>Chain Lightning - Primary (CLPB).</summary>
         [global::Moonwell.Objects.GameValue("CLPB")]
-        CLPB = 0,
+        ChainLightningPrimary = 0,
 
-        /// <summary>Chain Lightning - Secondary.</summary>
+        /// <summary>Chain Lightning - Secondary (CLSB).</summary>
         [global::Moonwell.Objects.GameValue("CLSB")]
-        CLSB = 1,
+        ChainLightningSecondary = 1,
 
-        /// <summary>Mana Burn.</summary>
+        /// <summary>Mana Burn (MBUR).</summary>
         [global::Moonwell.Objects.GameValue("MBUR")]
-        MBUR = 2,
+        ManaBurn = 2,
 
-        /// <summary>Lightning Attack.</summary>
+        /// <summary>Lightning Attack (CHIM).</summary>
         [global::Moonwell.Objects.GameValue("CHIM")]
-        CHIM = 3,
+        LightningAttack = 3,
 
-        /// <summary>Finger of Death.</summary>
+        /// <summary>Finger of Death (AFOD).</summary>
         [global::Moonwell.Objects.GameValue("AFOD")]
-        AFOD = 4,
+        FingerOfDeath = 4,
 
-        /// <summary>Healing Wave - Primary.</summary>
+        /// <summary>Healing Wave - Primary (HWPB).</summary>
         [global::Moonwell.Objects.GameValue("HWPB")]
-        HWPB = 5,
+        HealingWavePrimary = 5,
 
-        /// <summary>Healing Wave - Secondary.</summary>
+        /// <summary>Healing Wave - Secondary (HWSB).</summary>
         [global::Moonwell.Objects.GameValue("HWSB")]
-        HWSB = 6,
+        HealingWaveSecondary = 6,
 
-        /// <summary>Mana Flare.</summary>
+        /// <summary>Mana Flare (MFPB).</summary>
         [global::Moonwell.Objects.GameValue("MFPB")]
-        MFPB = 7,
+        ManaFlare = 7,
 
-        /// <summary>Drain Life and Mana.</summary>
+        /// <summary>Drain Life and Mana (DRAB).</summary>
         [global::Moonwell.Objects.GameValue("DRAB")]
-        DRAB = 8,
+        DrainLifeAndMana = 8,
 
-        /// <summary>Drain Life.</summary>
+        /// <summary>Drain Life (DRAL).</summary>
         [global::Moonwell.Objects.GameValue("DRAL")]
-        DRAL = 9,
+        DrainLife = 9,
 
-        /// <summary>Drain Mana.</summary>
+        /// <summary>Drain Mana (DRAM).</summary>
         [global::Moonwell.Objects.GameValue("DRAM")]
-        DRAM = 10,
+        DrainMana = 10,
 
-        /// <summary>Forked Lighting.</summary>
+        /// <summary>Forked Lighting (FORK).</summary>
         [global::Moonwell.Objects.GameValue("FORK")]
-        FORK = 11,
+        ForkedLightning = 11,
 
-        /// <summary>Spirit Link.</summary>
+        /// <summary>Spirit Link (SPLK).</summary>
         [global::Moonwell.Objects.GameValue("SPLK")]
-        SPLK = 12,
+        SpiritLink = 12,
 
-        /// <summary>Aerial Shackles.</summary>
+        /// <summary>Aerial Shackles (LEAS).</summary>
         [global::Moonwell.Objects.GameValue("LEAS")]
-        LEAS = 13,
+        AerialShackles = 13,
 
-        /// <summary>Possession.</summary>
+        /// <summary>Possession (POSS).</summary>
         [global::Moonwell.Objects.GameValue("POSS")]
-        POSS = 14,
+        Possession = 14,
     }
 
     /// <summary>Any of the values of the metadata type <c>morphFlags</c>, as World Editor offers them; the object file holds the number whose bits they are, and 0 is none of them. Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.</summary>
@@ -639,9 +582,9 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.GameValue("float")]
         Float = 4,
 
-        /// <summary>Amphibious.</summary>
+        /// <summary>Amphibious (amph).</summary>
         [global::Moonwell.Objects.GameValue("amph")]
-        Amph = 5,
+        Amphibious = 5,
     }
 
     /// <summary>A value of the metadata type <c>occlusionType</c>, as World Editor offers it. Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.</summary>
@@ -937,9 +880,9 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.GameValue("nonhero", "nonh")]
         NonHero = 8192,
 
-        /// <summary>Non-suicidal.</summary>
+        /// <summary>Non-suicidal (nonsapper).</summary>
         [global::Moonwell.Objects.GameValue("nonsapper")]
-        Nonsapper = 16384,
+        NonSuicidal = 16384,
 
         /// <summary>Not self.</summary>
         [global::Moonwell.Objects.GameValue("notself", "nots")]
@@ -953,9 +896,9 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.GameValue("player", "play")]
         Player = 131072,
 
-        /// <summary>Suicidal.</summary>
+        /// <summary>Suicidal (sapper).</summary>
         [global::Moonwell.Objects.GameValue("sapper")]
-        Sapper = 262144,
+        Suicidal = 262144,
 
         /// <summary>Self.</summary>
         [global::Moonwell.Objects.GameValue("self")]
@@ -1136,13 +1079,13 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.GameValue("mechanical")]
         Mechanical = 8,
 
-        /// <summary>Worker.</summary>
+        /// <summary>Worker (peon).</summary>
         [global::Moonwell.Objects.GameValue("peon")]
-        Peon = 16,
+        Worker = 16,
 
-        /// <summary>Suicidal.</summary>
+        /// <summary>Suicidal (sapper).</summary>
         [global::Moonwell.Objects.GameValue("sapper")]
-        Sapper = 32,
+        Suicidal = 32,
 
         /// <summary>Town Hall.</summary>
         [global::Moonwell.Objects.GameValue("townhall")]
@@ -1160,9 +1103,9 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.GameValue("ancient")]
         Ancient = 512,
 
-        /// <summary>Walkable.</summary>
+        /// <summary>Walkable (standon).</summary>
         [global::Moonwell.Objects.GameValue("standon")]
-        Standon = 1024,
+        Walkable = 1024,
 
         /// <summary>Neutral.</summary>
         [global::Moonwell.Objects.GameValue("neutral")]
@@ -1251,141 +1194,141 @@ namespace Moonwell.Objects
     /// @CSharpLua.Ignore
     public enum UpgradeEffect
     {
-        /// <summary>Apply Defense Upgrade Bonus.</summary>
+        /// <summary>Apply Defense Upgrade Bonus (rarm).</summary>
         [global::Moonwell.Objects.GameValue("rarm")]
-        Rarm = 0,
+        ApplyDefenseUpgradeBonus = 0,
 
-        /// <summary>Apply Attack Upgrade Bonus.</summary>
+        /// <summary>Apply Attack Upgrade Bonus (ratt).</summary>
         [global::Moonwell.Objects.GameValue("ratt")]
-        Ratt = 1,
+        ApplyAttackUpgradeBonus = 1,
 
-        /// <summary>Attack Damage Bonus.</summary>
+        /// <summary>Attack Damage Bonus (ratx).</summary>
         [global::Moonwell.Objects.GameValue("ratx")]
-        Ratx = 2,
+        AttackDamageBonus = 2,
 
-        /// <summary>Attack Damage Loss Bonus.</summary>
+        /// <summary>Attack Damage Loss Bonus (radl).</summary>
         [global::Moonwell.Objects.GameValue("radl")]
-        Radl = 3,
+        AttackDamageLossBonus = 3,
 
-        /// <summary>Attack Dice Bonus.</summary>
+        /// <summary>Attack Dice Bonus (ratd).</summary>
         [global::Moonwell.Objects.GameValue("ratd")]
-        Ratd = 4,
+        AttackDiceBonus = 4,
 
-        /// <summary>Attack Range Bonus.</summary>
+        /// <summary>Attack Range Bonus (ratr).</summary>
         [global::Moonwell.Objects.GameValue("ratr")]
-        Ratr = 5,
+        AttackRangeBonus = 5,
 
-        /// <summary>Attack Speed Bonus (%).</summary>
+        /// <summary>Attack Speed Bonus (%) (rats).</summary>
         [global::Moonwell.Objects.GameValue("rats")]
-        Rats = 6,
+        AttackSpeedBonusPercent = 6,
 
-        /// <summary>Attack Spill Distance Bonus.</summary>
+        /// <summary>Attack Spill Distance Bonus (rasd).</summary>
         [global::Moonwell.Objects.GameValue("rasd")]
-        Rasd = 7,
+        AttackSpillDistanceBonus = 7,
 
-        /// <summary>Attack Spill Radius Bonus.</summary>
+        /// <summary>Attack Spill Radius Bonus (rasr).</summary>
         [global::Moonwell.Objects.GameValue("rasr")]
-        Rasr = 8,
+        AttackSpillRadiusBonus = 8,
 
-        /// <summary>Attack Target Count Bonus.</summary>
+        /// <summary>Attack Target Count Bonus (ratc).</summary>
         [global::Moonwell.Objects.GameValue("ratc")]
-        Ratc = 9,
+        AttackTargetCountBonus = 9,
 
-        /// <summary>Aura Data Bonus.</summary>
+        /// <summary>Aura Data Bonus (raud).</summary>
         [global::Moonwell.Objects.GameValue("raud")]
-        Raud = 10,
+        AuraDataBonus = 10,
 
-        /// <summary>Enable Attacks.</summary>
+        /// <summary>Enable Attacks (renw).</summary>
         [global::Moonwell.Objects.GameValue("renw")]
-        Renw = 11,
+        EnableAttacks = 11,
 
-        /// <summary>Gold Harvest Bonus (Entangle).</summary>
+        /// <summary>Gold Harvest Bonus (Entangle) (rent).</summary>
         [global::Moonwell.Objects.GameValue("rent")]
-        Rent = 12,
+        GoldHarvestBonusEntangle = 12,
 
-        /// <summary>Hit Point Bonus (%).</summary>
+        /// <summary>Hit Point Bonus (%) (rhpo).</summary>
         [global::Moonwell.Objects.GameValue("rhpo")]
-        Rhpo = 13,
+        HitPointBonusPercent = 13,
 
-        /// <summary>Hit Point Bonus.</summary>
+        /// <summary>Hit Point Bonus (rhpx).</summary>
         [global::Moonwell.Objects.GameValue("rhpx")]
-        Rhpx = 14,
+        HitPointBonus = 14,
 
-        /// <summary>Hit Point Regeneration.</summary>
+        /// <summary>Hit Point Regeneration (rhpr).</summary>
         [global::Moonwell.Objects.GameValue("rhpr")]
-        Rhpr = 15,
+        HitPointRegeneration = 15,
 
-        /// <summary>Lumber Harvest Bonus.</summary>
+        /// <summary>Lumber Harvest Bonus (rlum).</summary>
         [global::Moonwell.Objects.GameValue("rlum")]
-        Rlum = 16,
+        LumberHarvestBonus = 16,
 
-        /// <summary>Magic Immunity.</summary>
+        /// <summary>Magic Immunity (rmim).</summary>
         [global::Moonwell.Objects.GameValue("rmim")]
-        Rmim = 17,
+        MagicImmunity = 17,
 
-        /// <summary>Mana Point Bonus (%).</summary>
+        /// <summary>Mana Point Bonus (%) (rman).</summary>
         [global::Moonwell.Objects.GameValue("rman")]
-        Rman = 18,
+        ManaPointBonusPercent = 18,
 
-        /// <summary>Mana Point Bonus.</summary>
+        /// <summary>Mana Point Bonus (rmnx).</summary>
         [global::Moonwell.Objects.GameValue("rmnx")]
-        Rmnx = 19,
+        ManaPointBonus = 19,
 
-        /// <summary>Mana Regeneration.</summary>
+        /// <summary>Mana Regeneration (rmnr).</summary>
         [global::Moonwell.Objects.GameValue("rmnr")]
-        Rmnr = 20,
+        ManaRegeneration = 20,
 
-        /// <summary>Gold Harvest Bonus.</summary>
+        /// <summary>Gold Harvest Bonus (rmin).</summary>
         [global::Moonwell.Objects.GameValue("rmin")]
-        Rmin = 21,
+        GoldHarvestBonus = 21,
 
-        /// <summary>Movement Speed Bonus (%).</summary>
+        /// <summary>Movement Speed Bonus (%) (rmov).</summary>
         [global::Moonwell.Objects.GameValue("rmov")]
-        Rmov = 22,
+        MovementSpeedBonusPercent = 22,
 
-        /// <summary>Movement Speed Bonus.</summary>
+        /// <summary>Movement Speed Bonus (rmvx).</summary>
         [global::Moonwell.Objects.GameValue("rmvx")]
-        Rmvx = 23,
+        MovementSpeedBonus = 23,
 
-        /// <summary>Raise Dead Duration Bonus.</summary>
+        /// <summary>Raise Dead Duration Bonus (rrai).</summary>
         [global::Moonwell.Objects.GameValue("rrai")]
-        Rrai = 24,
+        RaiseDeadDurationBonus = 24,
 
-        /// <summary>Enable Attacks (Rooted).</summary>
+        /// <summary>Enable Attacks (Rooted) (rroo).</summary>
         [global::Moonwell.Objects.GameValue("rroo")]
-        Rroo = 25,
+        EnableAttacksRooted = 25,
 
-        /// <summary>Sight Range Bonus.</summary>
+        /// <summary>Sight Range Bonus (rsig).</summary>
         [global::Moonwell.Objects.GameValue("rsig")]
-        Rsig = 26,
+        SightRangeBonus = 26,
 
-        /// <summary>Ability Level Bonus.</summary>
+        /// <summary>Ability Level Bonus (rlev).</summary>
         [global::Moonwell.Objects.GameValue("rlev")]
-        Rlev = 27,
+        AbilityLevelBonus = 27,
 
-        /// <summary>Spiked Barricades.</summary>
+        /// <summary>Spiked Barricades (rspi).</summary>
         [global::Moonwell.Objects.GameValue("rspi")]
-        Rspi = 28,
+        SpikedBarricades = 28,
 
-        /// <summary>Enable Attacks (Uprooted).</summary>
+        /// <summary>Enable Attacks (Uprooted) (ruro).</summary>
         [global::Moonwell.Objects.GameValue("ruro")]
-        Ruro = 29,
+        EnableAttacksUprooted = 29,
 
-        /// <summary>Unit Availability Change.</summary>
+        /// <summary>Unit Availability Change (rtma).</summary>
         [global::Moonwell.Objects.GameValue("rtma")]
-        Rtma = 30,
+        UnitAvailabilityChange = 30,
 
-        /// <summary>Defense Type Change.</summary>
+        /// <summary>Defense Type Change (rart).</summary>
         [global::Moonwell.Objects.GameValue("rart")]
-        Rart = 31,
+        DefenseTypeChange = 31,
 
-        /// <summary>Add Ultravision.</summary>
+        /// <summary>Add Ultravision (rauv).</summary>
         [global::Moonwell.Objects.GameValue("rauv")]
-        Rauv = 32,
+        AddUltravision = 32,
 
-        /// <summary>Spiked Barricades (%).</summary>
+        /// <summary>Spiked Barricades (%) (rspp).</summary>
         [global::Moonwell.Objects.GameValue("rspp")]
-        Rspp = 33,
+        SpikedBarricadesPercent = 33,
     }
 
     /// <summary>Any of the values of the metadata type <c>versionFlags</c>, as World Editor offers them; the object file holds the number whose bits they are, and 0 is none of them. Its numbers are Moonwell's, from World Editor's list, not the natives' (JASS's ATTACK_TYPE_MAGIC is 4, AttackType.Magic is 6): never cast one to or from a native's value.</summary>
@@ -1422,25 +1365,25 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.GameValue("artillery")]
         Artillery = 2,
 
-        /// <summary>Artillery (Line).</summary>
+        /// <summary>Artillery (Line) (aline).</summary>
         [global::Moonwell.Objects.GameValue("aline")]
-        Aline = 3,
+        ArtilleryLine = 3,
 
         /// <summary>Missile.</summary>
         [global::Moonwell.Objects.GameValue("missile")]
         Missile = 4,
 
-        /// <summary>Missile (Splash).</summary>
+        /// <summary>Missile (Splash) (msplash).</summary>
         [global::Moonwell.Objects.GameValue("msplash")]
-        Msplash = 5,
+        MissileSplash = 5,
 
-        /// <summary>Missile (Bounce).</summary>
+        /// <summary>Missile (Bounce) (mbounce).</summary>
         [global::Moonwell.Objects.GameValue("mbounce")]
-        Mbounce = 6,
+        MissileBounce = 6,
 
-        /// <summary>Missile (Line).</summary>
+        /// <summary>Missile (Line) (mline).</summary>
         [global::Moonwell.Objects.GameValue("mline")]
-        Mline = 7,
+        MissileLine = 7,
     }
 
     /// <summary>The game's texts of the members of the choice enums that are core Moonwell's, by the enum's name: the build and StandardValues read them here, and the map's Lua has none of them.</summary>
@@ -1502,9 +1445,9 @@ namespace Moonwell.Objects
             [global::Moonwell.Objects.GameValue("large")]
             Large = 3,
 
-            /// <summary>Fortified.</summary>
+            /// <summary>Fortified (fort).</summary>
             [global::Moonwell.Objects.GameValue("fort")]
-            Fort = 4,
+            Fortified = 4,
 
             /// <summary>Hero.</summary>
             [global::Moonwell.Objects.GameValue("hero")]
@@ -1517,6 +1460,62 @@ namespace Moonwell.Objects
             /// <summary>Unarmored.</summary>
             [global::Moonwell.Objects.GameValue("none")]
             None = 7,
+        }
+
+        /// <summary>The game's texts of <see cref="global::Moonwell.WeaponSound"/>, the metadata type <c>combatSound</c>: each member is the core enum's member of its name and number.</summary>
+        internal enum WeaponSound
+        {
+            /// <summary>Axe Medium Chop.</summary>
+            [global::Moonwell.Objects.GameValue("AxeMediumChop")]
+            AxeMediumChop = 22,
+
+            /// <summary>Metal Heavy Bash.</summary>
+            [global::Moonwell.Objects.GameValue("MetalHeavyBash")]
+            MetalHeavyBash = 8,
+
+            /// <summary>Metal Heavy Chop.</summary>
+            [global::Moonwell.Objects.GameValue("MetalHeavyChop")]
+            MetalHeavyChop = 3,
+
+            /// <summary>Metal Heavy Slice.</summary>
+            [global::Moonwell.Objects.GameValue("MetalHeavySlice")]
+            MetalHeavySlice = 6,
+
+            /// <summary>Metal Light Chop.</summary>
+            [global::Moonwell.Objects.GameValue("MetalLightChop")]
+            MetalLightChop = 1,
+
+            /// <summary>Metal Light Slice.</summary>
+            [global::Moonwell.Objects.GameValue("MetalLightSlice")]
+            MetalLightSlice = 4,
+
+            /// <summary>Metal Medium Bash.</summary>
+            [global::Moonwell.Objects.GameValue("MetalMediumBash")]
+            MetalMediumBash = 7,
+
+            /// <summary>Metal Medium Chop.</summary>
+            [global::Moonwell.Objects.GameValue("MetalMediumChop")]
+            MetalMediumChop = 2,
+
+            /// <summary>Metal Medium Slice.</summary>
+            [global::Moonwell.Objects.GameValue("MetalMediumSlice")]
+            MetalMediumSlice = 5,
+
+            /// <summary>Rock Heavy Bash.</summary>
+            [global::Moonwell.Objects.GameValue("RockHeavyBash")]
+            RockHeavyBash = 23,
+
+            /// <summary>Wood Heavy Bash.</summary>
+            [global::Moonwell.Objects.GameValue("WoodHeavyBash")]
+            WoodHeavyBash = 16,
+
+            /// <summary>Wood Light Bash.</summary>
+            [global::Moonwell.Objects.GameValue("WoodLightBash")]
+            WoodLightBash = 14,
+
+            /// <summary>Wood Medium Bash.</summary>
+            [global::Moonwell.Objects.GameValue("WoodMediumBash")]
+            WoodMediumBash = 15,
         }
     }
 }

@@ -165,6 +165,32 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_weapon_sound_is_written_as_the_games_text()
+        {
+            var staged = Build("""
+                using Moonwell;
+                using Moonwell.Objects;
+
+                namespace Sample
+                {
+                    [ObjectId("h001")]
+                    public sealed class Knight : Human.Units.Footman
+                    {
+                        public Knight()
+                        {
+                            Attack1WeaponSound = WeaponSound.MetalHeavySlice;
+                            Attack2WeaponSound = WeaponSound.WoodLightBash;
+                        }
+                    }
+                }
+                """);
+
+            var units = ReadUnits(staged);
+            Assert.Equal(new[] { "0=MetalHeavySlice" }, LevelsOf(units, "h001", "ucs1"));
+            Assert.Equal(new[] { "0=WoodLightBash" }, LevelsOf(units, "h001", "ucs2"));
+        }
+
+        [Fact]
         public void a_choice_set_by_id_is_written_as_one_set_by_name()
         {
             var staged = Build("""

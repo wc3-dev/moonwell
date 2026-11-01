@@ -24,7 +24,7 @@ namespace Moonwell.Build
         // The attributes of Moonwell.Objects whose files are inside #if !MOONWELL_LUA: a map may name them, so CSharp.lua gets stubs.
         private static readonly HashSet<string> RuleAttributes = new HashSet<string>(StringComparer.Ordinal)
         {
-            "BeyondLimitsAttribute", "LimitsAttribute", "MaxEntriesAttribute", "MaxLengthAttribute", "NonNegativeAttribute", "NumberListAttribute", "RequiredAttribute", "SharedFieldAttribute",
+            "BeyondLimitsAttribute", "LimitsAttribute", "ListedValuesAttribute", "MaxEntriesAttribute", "MaxLengthAttribute", "NonNegativeAttribute", "NumberListAttribute", "RequiredAttribute", "SharedFieldAttribute",
         };
 
         private const BindingFlags DeclaredMembers =

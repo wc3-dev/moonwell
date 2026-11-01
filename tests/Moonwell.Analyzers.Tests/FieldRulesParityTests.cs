@@ -108,6 +108,12 @@ public class FieldRulesParityTests
         yield return new object[] { "choice, lifted", Footman, "[BeyondLimits(nameof(AttackType))]", "AttackType = (AttackType)42;" };
         yield return new object[] { "choice, a member", Footman, "", "AttackType = AttackType.Normal;" };
         yield return new object[] { "int-stored choice", Footman, "", "DeathType = (DeathType)9;" };
+        yield return new object[] { "listed choice", Footman, "", "Attack1WeaponSound = WeaponSound.MetalHeavySlice;" };
+        yield return new object[] { "choice World Editor does not list", Footman, "", "Attack1WeaponSound = WeaponSound.ClawLightSlice;" };
+        yield return new object[] { "choice World Editor does not list, lifted", Footman, "[BeyondLimits(nameof(Attack1WeaponSound))]", "Attack1WeaponSound = WeaponSound.ClawLightSlice;" };
+        yield return new object[] { "choice of none", Footman, "", "Attack2WeaponSound = WeaponSound.None;" };
+        yield return new object[] { "listed choice by id", Footman, "", "Set(\"ucs1\", WeaponSound.MetalHeavySlice);" };
+        yield return new object[] { "choice World Editor does not list, by id", Footman, "", "Set(\"ucs1\", WeaponSound.ClawLightSlice);" };
         yield return new object[] { "flags choice", Footman, "", "PlacementRequires = (PathingRequire)(1 << 10);" };
         yield return new object[] { "flags choice, a combination", Footman, "", "PlacementRequires = PathingRequire.Buildable | PathingRequire.AirPathable;" };
         yield return new object[] { "float at the lower limit", Tree, "", "Scale = 0.01f;" };

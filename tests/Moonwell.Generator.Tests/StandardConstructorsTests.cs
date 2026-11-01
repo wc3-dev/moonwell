@@ -131,7 +131,7 @@ public class StandardConstructorsTests
         Assert.Contains("                    Name = \"Paladin\";\n", paladin);
         Assert.Contains("                    Icon = \"ReplaceableTextures\\\\CommandButtons\\\\BTNHeroPaladin.blp\";\n", paladin);
         Assert.Contains("                    AttackType = global::Moonwell.AttackType.Hero;\n", paladin);
-        Assert.Contains("                    PrimaryAttribute = global::Moonwell.Objects.AttributeType.STR;\n", paladin);
+        Assert.Contains("                    PrimaryAttribute = global::Moonwell.Objects.AttributeType.Strength;\n", paladin);
         // A list names the standard classes; an id with no class in the export is added by its id.
         Assert.Contains(
             "                    HeroAbilities.Set<global::Moonwell.Objects.Human.Abilities.HolyLight>();\n"

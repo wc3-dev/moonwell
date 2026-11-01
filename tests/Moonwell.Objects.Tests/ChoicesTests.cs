@@ -52,7 +52,7 @@ namespace Moonwell.Objects.Tests
             Assert.Null(Objects.GetType("Moonwell.Objects.DefenseType"));
             Assert.NotNull(Objects.GetType("Moonwell.Objects.DefenseTypeInt"));
             Assert.Equal(
-                new[] { "Normal", "Small", "Medium", "Large", "Fort", "Hero", "Divine", "None" },
+                new[] { "Normal", "Small", "Medium", "Large", "Fortified", "Hero", "Divine", "None" },
                 Enum.GetNames<Moonwell.DefenseType>());
             Assert.Equal(6, (int)Moonwell.DefenseType.Divine);
         }
@@ -69,6 +69,25 @@ namespace Moonwell.Objects.Tests
                     texts.GetFields(BindingFlags.Public | BindingFlags.Static).Select(field => (field.Name, Convert.ToInt32(field.GetValue(null)))));
                 Assert.All(texts.GetFields(BindingFlags.Public | BindingFlags.Static), field => Assert.NotNull(field.GetCustomAttribute<GameValueAttribute>()));
             }
+        }
+
+        [Fact]
+        public void a_partial_core_enums_game_values_are_some_of_its_members()
+        {
+            var table = Objects.GetType("Moonwell.Objects.CoreChoices", true)!;
+            var texts = table.GetNestedType("WeaponSound", BindingFlags.NonPublic)!.GetFields(BindingFlags.Public | BindingFlags.Static);
+
+            Assert.Equal(13, texts.Length);
+            Assert.All(texts, field => Assert.Equal((int)Enum.Parse<Moonwell.WeaponSound>(field.Name), Convert.ToInt32(field.GetValue(null))));
+        }
+
+        [Theory]
+        [InlineData("MetalHeavySlice", Moonwell.WeaponSound.MetalHeavySlice)]
+        [InlineData("AxeMediumChop", Moonwell.WeaponSound.AxeMediumChop)]
+        [InlineData(null, Moonwell.WeaponSound.None)]
+        public void a_weapon_sound_reads_its_text(string? text, Moonwell.WeaponSound expected)
+        {
+            Assert.Equal(expected, StandardValues.Parse<Moonwell.WeaponSound>(text));
         }
 
         [Fact]
@@ -117,7 +136,7 @@ namespace Moonwell.Objects.Tests
 
         [Theory]
         [InlineData("divine", Moonwell.DefenseType.Divine)]
-        [InlineData("Fort", Moonwell.DefenseType.Fort)]
+        [InlineData("Fort", Moonwell.DefenseType.Fortified)]
         [InlineData("none", Moonwell.DefenseType.None)]
         public void a_core_choice_reads_its_text(string text, Moonwell.DefenseType expected)
         {
@@ -160,7 +179,7 @@ namespace Moonwell.Objects.Tests
         public void every_member_has_its_game_value_and_a_flag_is_one_bit_the_games_integers_hold()
         {
             var enums = Enums().ToList();
-            Assert.Equal(39, enums.Count);
+            Assert.Equal(38, enums.Count);
             foreach (var type in enums)
             {
                 var flags = type.IsDefined(typeof(FlagsAttribute), false);

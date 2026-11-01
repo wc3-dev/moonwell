@@ -58,7 +58,7 @@ namespace Moonwell
                     return 1;
                 case DefenseType.Large:
                     return 2;
-                case DefenseType.Fort:
+                case DefenseType.Fortified:
                     return 3;
                 case DefenseType.Hero:
                     return 5;
@@ -83,7 +83,7 @@ namespace Moonwell
                 case 2:
                     return DefenseType.Large;
                 case 3:
-                    return DefenseType.Fort;
+                    return DefenseType.Fortified;
                 case 5:
                     return DefenseType.Hero;
                 case 6:
