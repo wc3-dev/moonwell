@@ -41,8 +41,6 @@ class by what they inherit. The template keeps one folder per feature, each with
 Don't name one after a group of `Moonwell.Objects` (`Human`, `Items`): with `MyMap.Items` in the project, `Items.X`
 finds that namespace and fails with CS0234.
 
-Moonwell's packages work together at one version, so `MyMap.csproj` gives them all the same one: NuGet refuses a mix.
-
 World Editor is for terrain and placed things: regions, cameras, units, items, trees. Open `map/` in World Editor,
 change it, and save it as a folder again. Objects, triggers and the map's settings are in code; the build replaces the
 saved script.

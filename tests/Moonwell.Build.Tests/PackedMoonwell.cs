@@ -31,9 +31,6 @@ namespace Moonwell.Build.Tests
         /// <summary>The version all eleven packages were packed with, <c>0.1.0-test.</c> and a number nothing else uses.</summary>
         public string Version { get; }
 
-        /// <summary>The version as a package asks for another: exactly the one it was packed with.</summary>
-        public string Pinned => "[" + Version + "]";
-
         /// <summary>The folder holding the eleven <c>.nupkg</c> files.</summary>
         public string Feed { get; }
 

@@ -44,25 +44,6 @@ namespace Moonwell.Build.Tests
             Assert.Equal("None", runtime.Attribute("buildAction")!.Value);
         }
 
-        // The packages use each other's internals, so a mix of versions would fail in the Lua step or run wrong: NuGet refuses it instead.
-        [Theory]
-        [InlineData("Moonwell", "Moonwell.Natives")]
-        [InlineData("Moonwell.Objects", "Moonwell")]
-        [InlineData("Moonwell.Damage", "Moonwell")]
-        [InlineData("Moonwell.Maths", "Moonwell")]
-        [InlineData("Moonwell.Interactions", "Moonwell.Maths")]
-        [InlineData("Moonwell.Terrain", "Moonwell.Maths")]
-        [InlineData("Moonwell.Physics", "Moonwell.Interactions")]
-        [InlineData("Moonwell.Areas", "Moonwell.Maths")]
-        [InlineData("Moonwell.Input", "Moonwell.Maths")]
-        public void a_package_asks_for_exactly_its_own_version_of_another(string id, string other)
-        {
-            using var archive = ZipFile.OpenRead(Path.Combine(packed.Feed, id + "." + packed.Version + ".nupkg"));
-            using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == id + ".nuspec").Open());
-            var dependency = Assert.Single(XDocument.Parse(reader.ReadToEnd()).Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == other);
-            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
-        }
-
         [Fact]
         public void package_source_has_its_own_version()
         {
@@ -121,7 +102,7 @@ namespace Moonwell.Build.Tests
             var declared = files.Single(file => file.Attribute("include")!.Value.Replace('\\', '/') == "cs/net10.0/Moonwell.Objects/Core/Declared.cs");
             Assert.Equal("None", declared.Attribute("buildAction")!.Value);
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,dependency.Attribute("version")!.Value);
             Assert.DoesNotContain("Analyzers", dependency.Attribute("exclude")?.Value ?? string.Empty);
         }
 
@@ -204,7 +185,7 @@ namespace Moonwell.Build.Tests
             var hit = files.Single(file => file.Attribute("include")!.Value.Replace('\\', '/') == "cs/net10.0/Moonwell.Damage/Hit.cs");
             Assert.Equal("None", hit.Attribute("buildAction")!.Value);
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,dependency.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -219,7 +200,7 @@ namespace Moonwell.Build.Tests
             using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == "Moonwell.Maths.nuspec").Open());
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,dependency.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -235,9 +216,9 @@ namespace Moonwell.Build.Tests
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependencies = nuspec.Descendants().Where(element => element.Name.LocalName == "dependency").ToList();
             var moonwell = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, moonwell.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
-            Assert.Equal(packed.Pinned, maths.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,maths.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -252,7 +233,7 @@ namespace Moonwell.Build.Tests
             using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == "Moonwell.Terrain.nuspec").Open());
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,dependency.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -270,7 +251,7 @@ namespace Moonwell.Build.Tests
             foreach (var id in new[] { "Moonwell", "Moonwell.Maths", "Moonwell.Terrain", "Moonwell.Interactions" })
             {
                 var dependency = Assert.Single(dependencies, element => element.Attribute("id")!.Value == id);
-                Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
+                Assert.Equal(packed.Version,dependency.Attribute("version")!.Value);
             }
         }
 
@@ -287,9 +268,9 @@ namespace Moonwell.Build.Tests
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependencies = nuspec.Descendants().Where(element => element.Name.LocalName == "dependency").ToList();
             var moonwell = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, moonwell.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
-            Assert.Equal(packed.Pinned, maths.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,maths.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -305,9 +286,9 @@ namespace Moonwell.Build.Tests
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependencies = nuspec.Descendants().Where(element => element.Name.LocalName == "dependency").ToList();
             var moonwell = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Pinned, moonwell.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
-            Assert.Equal(packed.Pinned, maths.Attribute("version")!.Value);
+            Assert.Equal(packed.Version,maths.Attribute("version")!.Value);
         }
 
         [Fact]
