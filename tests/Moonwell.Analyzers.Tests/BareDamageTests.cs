@@ -1,12 +1,12 @@
 namespace Moonwell.Analyzers.Tests;
 
-/// <summary>MW0048: a bare Damage(...) in a unit class, where the name is the declared field.</summary>
+/// <summary>MW0050: a bare Damage(...) in a unit class, where the name is the declared field.</summary>
 public class BareDamageTests
 {
     [Fact]
     public void a_bare_damage_in_a_unit_class_is_an_error_beside_the_compilers()
     {
-        Assert.Equal(new[] { "MW0048: Damage(target, 10f)", "MW0048: Damage(target, 10f)" }, MapCode.CheckBrokenFile("""
+        Assert.Equal(new[] { "MW0050: Damage(target, 10f)", "MW0050: Damage(target, 10f)" }, MapCode.CheckBrokenFile("""
             using Moonwell;
             using Moonwell.Objects;
 

@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Moonwell.Analyzers;
 
 /// <summary>
-/// Names the fix for a bare <c>Damage(...)</c> in a unit class (MW0048), beside the compiler's CS1955: the declared field is
+/// Names the fix for a bare <c>Damage(...)</c> in a unit class (MW0050), beside the compiler's CS1955: the declared field is
 /// the name that binds there, and <c>Damage</c> the method is an extension, which C# finds only after a dot.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]

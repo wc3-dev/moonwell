@@ -157,7 +157,7 @@ public static class Rules
     public static ImmutableArray<DiagnosticDescriptor> Moved { get; } = ImmutableArray.Create(MovedChoice);
 
     public static readonly DiagnosticDescriptor BareDamage = new(
-        "MW0048",
+        "MW0050",
         "Damage without this in a unit class",
         "'Damage' here is the unit's field, attack 1's base damage: write this.Damage(...) to deal damage",
         ObjectsCategory,
