@@ -379,6 +379,16 @@ public class ObjectsWriterTests
     }
 
     [Fact]
+    public void a_number_list_held_as_text_says_so()
+    {
+        var list = new Field(Kind.Unit, "urqa", "RequirementsLevels", FieldType.String, null, false, 0, false, Array.Empty<string>(), "requiresamount",
+            Rules: new FieldRules(null, null, false, true, null, "Requirements - Levels", NumberList: true));
+        var source = ObjectsWriter.Kind(Kind.Unit, new[] { list }, false);
+
+        Assert.Contains("[global::Moonwell.Objects.NumberList]\n        public string RequirementsLevels\n", source);
+    }
+
+    [Fact]
     public void a_number_list_held_as_text_carries_its_limits()
     {
         var levels = new Field(Kind.Ability, "arqa", "RequirementsLevels", FieldType.String, null, false, 0, false, Array.Empty<string>(), "Requiresamount",
@@ -429,7 +439,7 @@ public class ObjectsWriterTests
         Assert.DoesNotContain("\"ustr\"", unit);
         Assert.DoesNotContain("Strength", unit);
         Assert.Contains("[\"ustr\"] = typeof(int),", hero);
-        Assert.Contains("[global::Moonwell.Objects.SharedField(\"ustr\", \"Strength\", Label = \"Starting Strength\", Min = 1, Max = 100, HasLimits = true)]\n", hero);
+        Assert.Contains("[global::Moonwell.Objects.SharedField(\"ustr\", \"Strength\", Label = \"Starting Strength\", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]\n", hero);
         Assert.Contains("public abstract class StandardHero : global::Moonwell.Hero\n", hero);
     }
 
@@ -442,11 +452,11 @@ public class ObjectsWriterTests
 
         Assert.Contains(
             "    /// @CSharpLua.Ignore\n"
-            + "    [global::Moonwell.Objects.SharedField(\"uhpm\", \"MaxLife\", Label = \"Hit Points Maximum (Base)\", Min = 1, Max = 500000, HasLimits = true)]\n",
+            + "    [global::Moonwell.Objects.SharedField(\"uhpm\", \"MaxLife\", Label = \"Hit Points Maximum (Base)\", Min = 1, Max = 500000, HasLimits = true, Holds = typeof(int))]\n",
             unit);
-        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"unam\", \"Name\", Label = \"Name\", Required = true)]\n", unit);
-        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"umpm\", \"MaxMana\", Label = \"Mana Maximum\", Min = 0, Max = 100000, HasLimits = true)]\n", unit);
-        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"iuse\", \"Charges\", Label = \"Number of Charges\", Min = 0, Max = 1000, HasLimits = true)]\n", item);
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"unam\", \"Name\", Label = \"Name\", Required = true, Holds = typeof(string))]\n", unit);
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"umpm\", \"MaxMana\", Label = \"Mana Maximum\", Min = 0, Max = 100000, HasLimits = true, Holds = typeof(int))]\n", unit);
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"iuse\", \"Charges\", Label = \"Number of Charges\", Min = 0, Max = 1000, HasLimits = true, Holds = typeof(int))]\n", item);
         foreach (var old in new[] { "HitPoints", "ManaPoints", "UnitLevel", "ScalingValue", "Height", "Name" })
         {
             Assert.DoesNotContain(" " + old + "\n        {", unit);

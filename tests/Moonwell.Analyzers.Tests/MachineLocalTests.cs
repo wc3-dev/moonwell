@@ -14,6 +14,7 @@ public class MachineLocalTests
             {
                 public sealed class Hud : PlayerComponent
                 {
+                    [MachineLocal]
                     public static float LastX;
 
                     [MachineLocal]
@@ -38,6 +39,7 @@ public class MachineLocalTests
 
                 public static class Use
                 {
+                    [MachineLocal]
                     private static float last;
 
                     public static event Action? Changed;

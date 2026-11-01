@@ -8,7 +8,7 @@ namespace Moonwell.Objects
 {
     /// <summary>The fields of an item, which every standard item class has.</summary>
     /// @CSharpLua.Ignore
-    [global::Moonwell.Objects.SharedField("iuse", "Charges", Label = "Number of Charges", Min = 0, Max = 1000, HasLimits = true)]
+    [global::Moonwell.Objects.SharedField("iuse", "Charges", Label = "Number of Charges", Min = 0, Max = 1000, HasLimits = true, Holds = typeof(int))]
     public abstract class StandardItem : global::Moonwell.Item
     {
         private static readonly global::System.Collections.Generic.Dictionary<string, global::System.Type> fieldTypes =
@@ -461,6 +461,7 @@ namespace Moonwell.Objects
 
         /// <summary>Requirements - Levels (urqa).</summary>
         [global::Moonwell.Objects.Field("urqa", Label = "Requirements - Levels")]
+        [global::Moonwell.Objects.NumberList]
         public string RequirementsLevels
         {
             get { return Fields.Get<string>(this, "urqa"); }

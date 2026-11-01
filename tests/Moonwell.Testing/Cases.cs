@@ -814,6 +814,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "local.skips-other-players", Run = LocalCases.SkipsOtherPlayers });
             list.Add(new Case { Name = "local.reads-keep-no-last-value", Run = LocalCases.ReadsKeepNoLastValue });
             list.Add(new Case { Name = "local.throw-leaves-reads-kept", Run = LocalCases.ThrowLeavesReadsKept });
+            list.Add(new Case { Name = "local.marked-field-holds-its-value", Run = LocalCases.MarkedFieldHoldsItsValue });
             list.Add(new Case { Name = "map.components-in-order", Run = MapCases.ComponentsInOrder });
             list.Add(new Case { Name = "map.components-not-added-early", Run = MapCases.ComponentsNotAddedEarly });
             list.Add(new Case { Name = "map.components-assigned", Run = MapCases.ComponentsAssigned });

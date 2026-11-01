@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
@@ -15,7 +16,8 @@ namespace Moonwell.Analyzers;
 /// arguments of <c>Levels(...)</c>, as one value for every level (<c>Cooldown = 3900f;</c>, which the build checks at each level
 /// and names at level 1), or in <c>Set("id", ...)</c>. The text is the one the build gives for the same value
 /// (<c>Moonwell.Objects.RuleChecks</c>), without its "file:line: " prefix. Only a constant is checked; a computed value is
-/// left to the build.
+/// left to the build. It also rejects a <c>Set("id", ...)</c> whose value the field does not hold, or whose id the class
+/// does not have (MW0049), with the text of <c>Moonwell.Objects.FieldChecks</c>.
 /// </summary>
 /// <remarks>
 /// The rules are read from the attributes of the property the field belongs to; a shared field, which has no property,
@@ -31,6 +33,7 @@ namespace Moonwell.Analyzers;
 public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
 {
     private const string Lift = "; [BeyondLimits] goes past it";
+    private const string Numbers = "only numbers separated by commas";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Rules.Objects;
 
@@ -55,6 +58,7 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
         public double Min = double.NegativeInfinity;
         public double Max = double.PositiveInfinity;
         public bool NonNegative;
+        public bool NumberList;
         public bool Required;
         public int? MaxLength;
         public int? MaxEntries;
@@ -119,27 +123,161 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        int? level = null;
-        if (call.Arguments.Length == 3)
+        var holder = EnclosingType(context.ContainingSymbol);
+        if (holder == null)
         {
-            if (call.Arguments[1].Value.ConstantValue is not { HasValue: true, Value: int at })
-            {
-                return;
-            }
-
-            level = at;
+            return;
         }
 
-        var holder = EnclosingType(context.ContainingSymbol);
-        var property = holder == null ? null : PropertyOf(holder, id);
-        var field = holder == null ? null
-            : property != null ? ReadField(property, holder)
-            : SharedFieldOf(holder, id, null) is { } shared ? ReadShared(shared, holder)
-            : null;
+        var value = Unbox(call.Arguments[call.Arguments.Length - 1].Value);
+        var oneLevel = call.Arguments.Length == 3;
+        int? level = oneLevel && call.Arguments[1].Value.ConstantValue is { HasValue: true, Value: int at } ? at : null;
+        var property = PropertyOf(holder, id);
+        var shared = property == null ? SharedFieldOf(holder, id, null) : null;
+        var held = property != null ? property.Type : shared == null ? null : HeldByShared(shared);
+        // A [SharedField] that does not say what it holds is still the field: only the build can tell its type.
+        if ((held != null || shared == null) && WrongSet(context.Compilation, method.ContainingType, holder, id, held, oneLevel, level, value) is { } wrong)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rules.SetById, value.Syntax.GetLocation(), wrong));
+            return;
+        }
+
+        if (oneLevel && level == null)
+        {
+            return;
+        }
+
+        var field = property != null ? ReadField(property, holder) : shared != null ? ReadShared(shared, holder) : null;
         if (field != null)
         {
-            Value(context, field, level, call.Arguments[call.Arguments.Length - 1].Value);
+            Value(context, field, level, value);
         }
+    }
+
+    /// <summary>The text of <c>FieldChecks</c> for a put by id it refuses; null for one it takes, or one only the build can tell.</summary>
+    private static string? WrongSet(Compilation compilation, INamedTypeSymbol kind, INamedTypeSymbol holder, string id, ITypeSymbol? held, bool oneLevel, int? level, IOperation value)
+    {
+        var owner = kind.Name;
+        if (held == null)
+        {
+            return kind.Name == "StandardAbility" && IsFieldOfAnAbility(kind.ContainingNamespace, kind, id)
+                ? StandardClassOf(holder, owner) + " has no field " + id + ", which other abilities have"
+                : owner + " has no field " + id;
+        }
+
+        var named = owner + " field " + id;
+        var levels = held is INamedTypeSymbol { IsGenericType: true } generic && IsObjects(generic.OriginalDefinition, "Levels") ? generic : null;
+        var isNull = value.ConstantValue is { HasValue: true, Value: null };
+        if (!oneLevel)
+        {
+            if (isNull)
+            {
+                return named + " holds " + Describe(held) + ", not null";
+            }
+
+            return Holds(compilation, held, value) ? null
+                : named + " holds " + Describe(held) + ", not " + Describe(value.Type!) + (levels != null ? "; give the value of one level with Set(field, level, value)" : string.Empty);
+        }
+
+        if (levels == null)
+        {
+            return named + " holds " + Describe(held) + ", which has no levels";
+        }
+
+        if (level < 1)
+        {
+            return named + ": levels count from 1";
+        }
+
+        var element = levels.TypeArguments[0];
+        return !isNull && Holds(compilation, element, value) ? null
+            : named + " holds " + Describe(element) + " for each level, not " + (isNull ? "null" : Describe(value.Type!));
+    }
+
+    // Whether a value can be of the held type when it runs: a value typed as a base class, a generic parameter or a nullable may be, and the build tells.
+    private static bool Holds(Compilation compilation, ITypeSymbol held, IOperation value)
+    {
+        if (value.Type is not { } type || type.TypeKind == TypeKind.TypeParameter || type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+            || SymbolEqualityComparer.Default.Equals(type, held))
+        {
+            return true;
+        }
+
+        var conversion = ((CSharpCompilation)compilation).ClassifyConversion(type, held);
+        return conversion.IsUnboxing || conversion.IsReference;
+    }
+
+    /// <summary>The type a shared field holds, from its <c>[SharedField]</c>; null when it does not say.</summary>
+    private static ITypeSymbol? HeldByShared(AttributeData shared)
+    {
+        foreach (var named in shared.NamedArguments)
+        {
+            if (named.Key == "Holds" && named.Value.Value is ITypeSymbol type)
+            {
+                return type;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Whether a class under <paramref name="container"/> that inherits <paramref name="kind"/> has a field with this id.</summary>
+    private static bool IsFieldOfAnAbility(INamespaceOrTypeSymbol container, INamedTypeSymbol kind, string id)
+    {
+        foreach (var member in container.GetMembers())
+        {
+            if (member is INamespaceOrTypeSymbol inner && IsFieldOfAnAbility(inner, kind, id))
+            {
+                return true;
+            }
+
+            if (member is INamedTypeSymbol type && SymbolEqualityComparer.Default.Equals(type.BaseType, kind)
+                && type.GetMembers().OfType<IPropertySymbol>().Any(property => FieldAttributeOf(property) is { } field && (string?)field.ConstructorArguments[0].Value == id))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>The name of the nearest standard class in the base chain; <paramref name="owner"/> when there is none.</summary>
+    private static string StandardClassOf(INamedTypeSymbol type, string owner)
+    {
+        for (var parent = (INamedTypeSymbol?)type; parent != null; parent = parent.BaseType)
+        {
+            if (parent.GetAttributes().Any(attribute => IsObjects(attribute.AttributeClass, "StandardAttribute")))
+            {
+                return parent.Name;
+            }
+        }
+
+        return owner;
+    }
+
+    /// <summary>The name of a type as <c>FieldChecks</c> writes it: <c>int</c>, <c>Levels&lt;float&gt;</c>.</summary>
+    private static string Describe(ITypeSymbol type)
+    {
+        switch (type.SpecialType)
+        {
+            case SpecialType.System_Int32:
+                return "int";
+            case SpecialType.System_Single:
+                return "float";
+            case SpecialType.System_Boolean:
+                return "bool";
+            case SpecialType.System_String:
+                return "string";
+        }
+
+        if (type is IArrayTypeSymbol array)
+        {
+            return array.ElementType.Name + "[]";
+        }
+
+        return type is INamedTypeSymbol { IsGenericType: true } generic
+            ? generic.Name + "<" + string.Join(", ", generic.TypeArguments.Select(Describe)) + ">"
+            : type.Name;
     }
 
     /// <summary>
@@ -295,13 +433,16 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             return (shown + " (" + Count(entries.Length) + " entries)", "at most " + Count(most) + " entries" + Lift);
         }
 
-        if (field.HasLimits || field.NonNegative)
+        if (field.NumberList)
         {
-            // A number list held as text: each number is checked; a part that is no number is left to the game.
             foreach (var entry in entries)
             {
-                if (double.TryParse(entry.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number)
-                    && Number(field, number, false, shown, " for each number") is { } broken)
+                if (!double.TryParse(entry.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+                {
+                    return (shown, Numbers);
+                }
+
+                if (Number(field, number, false, shown, " for each number") is { } broken)
                 {
                     return broken;
                 }
@@ -391,6 +532,10 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             else if (IsObjects(attribute.AttributeClass, "NonNegativeAttribute"))
             {
                 result.NonNegative = true;
+            }
+            else if (IsObjects(attribute.AttributeClass, "NumberListAttribute"))
+            {
+                result.NumberList = true;
             }
             else if (IsObjects(attribute.AttributeClass, "RequiredAttribute"))
             {

@@ -338,6 +338,7 @@ namespace Moonwell.Objects
 
         /// <summary>Requirements - Levels (grqc).</summary>
         [global::Moonwell.Objects.Field("grqc", Label = "Requirements - Levels")]
+        [global::Moonwell.Objects.NumberList]
         public global::Moonwell.Objects.Levels<string> RequirementsLevels
         {
             get { return Fields.GetLevels<string>(this, "grqc"); }

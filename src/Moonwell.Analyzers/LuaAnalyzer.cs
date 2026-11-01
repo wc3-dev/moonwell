@@ -113,10 +113,10 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
     }
 
     // string.Format("{0}", choice), string.Concat("a", choice), builder.Append(choice): an enum given to an object parameter is
-    // made into text by the callee's ToString. Equals compares and shows nothing.
+    // made into text by the callee's ToString. Equals compares and shows nothing, and a declared object's Set keeps the choice.
     private static void Boxed(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocation, IMethodSymbol method)
     {
-        if (method.Name is "Equals" or "ReferenceEquals")
+        if (method.Name is "Equals" or "ReferenceEquals" || (method.Name == "Set" && Declares(method.ContainingType)))
         {
             return;
         }
@@ -181,6 +181,10 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
     {
         context.ReportDiagnostic(Diagnostic.Create(Rules.ChoiceNames, node.GetLocation(), node.ToString(), choice.Name));
     }
+
+    // A kind base of namespace Moonwell.Objects.
+    private static bool Declares(INamedTypeSymbol? type) =>
+        type?.ContainingNamespace is { Name: "Objects", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } };
 
     // The enum of namespace Moonwell.Objects a type is, or the enum under a nullable of it: a choice of World Editor's, which CSharp.lua ignores.
     private static INamedTypeSymbol? Choice(ITypeSymbol? type)

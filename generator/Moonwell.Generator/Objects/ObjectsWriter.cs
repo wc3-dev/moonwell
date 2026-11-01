@@ -265,7 +265,8 @@ public static class ObjectsWriter
 
     /// <summary>
     /// The <c>[SharedField]</c> of a shared field, with the rules a property of it would carry (<see cref="RuleAttributes"/>):
-    /// its label, its range with <c>HasLimits</c>, <c>NonNegative</c> and <c>Required</c>.
+    /// its label, its range with <c>HasLimits</c>, <c>NonNegative</c> and <c>Required</c>, and in <c>Holds</c> the type its
+    /// live member's value is declared in.
     /// </summary>
     /// <exception cref="InvalidOperationException">The field has a rule or a type <c>[SharedField]</c> cannot carry.</exception>
     private static string SharedFieldAttribute(Field field, string member)
@@ -299,7 +300,7 @@ public static class ObjectsWriter
             text.Append(", Required = true");
         }
 
-        return text.Append(")]").ToString();
+        return text.Append($", Holds = typeof({PropertyType(field)}))]").ToString();
     }
 
     // "The standard objects of the group Human.", "The standard units of the group Human.", "The standard items."
@@ -588,8 +589,8 @@ public static class ObjectsWriter
     /// <summary>
     /// The rule attributes of a field's property, in this order and only those the field has: <c>[Limits]</c> for a
     /// number field (or a number list held as text) with a <c>minVal</c> or <c>maxVal</c>; <c>[NonNegative]</c> for one
-    /// that allows no negative (<see cref="FieldRules.NoNegative"/>); <c>[Required]</c>; <c>[MaxLength]</c>;
-    /// <c>[MaxEntries]</c>. A choice has none: its enum is its rule.
+    /// that allows no negative (<see cref="FieldRules.NoNegative"/>); <c>[NumberList]</c>; <c>[Required]</c>;
+    /// <c>[MaxLength]</c>; <c>[MaxEntries]</c>. A choice has none: its enum is its rule.
     /// </summary>
     private static List<string> RuleAttributes(Field field)
     {
@@ -603,6 +604,11 @@ public static class ObjectsWriter
         if (IsNumber(field) && rules.NoNegative)
         {
             attributes.Add($"[{Root}.NonNegative]");
+        }
+
+        if (rules.NumberList)
+        {
+            attributes.Add($"[{Root}.NumberList]");
         }
 
         if (rules.Required)
