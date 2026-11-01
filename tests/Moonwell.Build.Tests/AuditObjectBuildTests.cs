@@ -165,6 +165,32 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_weapon_sound_is_written_as_the_games_text()
+        {
+            var staged = Build("""
+                using Moonwell;
+                using Moonwell.Objects;
+
+                namespace Sample
+                {
+                    [ObjectId("h001")]
+                    public sealed class Knight : Human.Units.Footman
+                    {
+                        public Knight()
+                        {
+                            Attack1WeaponSound = WeaponSound.MetalHeavySlice;
+                            Attack2WeaponSound = WeaponSound.WoodLightBash;
+                        }
+                    }
+                }
+                """);
+
+            var units = ReadUnits(staged);
+            Assert.Equal(new[] { "0=MetalHeavySlice" }, LevelsOf(units, "h001", "ucs1"));
+            Assert.Equal(new[] { "0=WoodLightBash" }, LevelsOf(units, "h001", "ucs2"));
+        }
+
+        [Fact]
         public void the_placement_fields_take_world_editors_names_and_write_the_games()
         {
             // Decision 70: World Editor's "Placement Requires: Buildable, Unblighted" is the game's preventPlace "blighted,unbuildable";
