@@ -985,7 +985,7 @@ namespace Moonwell.Objects
         /// <summary>The values put on this object so far, by field id; the build reads them.</summary>
         internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;
 
-        /// <summary>The field <c>aaea</c>.</summary>
+        /// <summary>Area Effect (aaea).</summary>
         [global::Moonwell.Objects.Field("aaea", Label = "Area Effect")]
         public string AreaEffect
         {
@@ -993,7 +993,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aaea", value); }
         }
 
-        /// <summary>The field <c>aani</c>.</summary>
+        /// <summary>Animation Names (aani).</summary>
         [global::Moonwell.Objects.Field("aani", Label = "Animation Names")]
         public string AnimationNames
         {
@@ -1001,7 +1001,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aani", value); }
         }
 
-        /// <summary>The field <c>aare</c>.</summary>
+        /// <summary>Area of Effect (aare), 0 to 99999.</summary>
         [global::Moonwell.Objects.Field("aare", Label = "Area of Effect")]
         [global::Moonwell.Objects.Limits(0, 99999)]
         public global::Moonwell.Objects.Levels<float> Area
@@ -1010,7 +1010,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aare", value); }
         }
 
-        /// <summary>The field <c>aart</c>.</summary>
+        /// <summary>Icon - Normal (aart).</summary>
         [global::Moonwell.Objects.Field("aart", Label = "Icon - Normal")]
         public string Icon
         {
@@ -1018,7 +1018,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aart", value); }
         }
 
-        /// <summary>The field <c>abpx</c>.</summary>
+        /// <summary>Button Position - Normal (X) (abpx), 0 to 3.</summary>
         [global::Moonwell.Objects.Field("abpx", Label = "Button Position - Normal (X)")]
         [global::Moonwell.Objects.Limits(0, 3)]
         public int ButtonPositionNormalX
@@ -1027,7 +1027,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("abpx", value); }
         }
 
-        /// <summary>The field <c>abpy</c>.</summary>
+        /// <summary>Button Position - Normal (Y) (abpy), 0 to 2.</summary>
         [global::Moonwell.Objects.Field("abpy", Label = "Button Position - Normal (Y)")]
         [global::Moonwell.Objects.Limits(0, 2)]
         public int ButtonPositionNormalY
@@ -1036,14 +1036,14 @@ namespace Moonwell.Objects
             protected set { Fields.Put("abpy", value); }
         }
 
-        /// <summary>The field <c>abuf</c>.</summary>
+        /// <summary>Buffs (abuf).</summary>
         [global::Moonwell.Objects.Field("abuf", Label = "Buffs")]
         public global::Moonwell.Objects.ObjectList<global::Moonwell.Buff> Buffs
         {
             get { return Fields.GetList<global::Moonwell.Buff>(this, "abuf"); }
         }
 
-        /// <summary>The field <c>aca1</c>.</summary>
+        /// <summary>Caster Attachment Point 2 (aca1), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("aca1", Label = "Caster Attachment Point 2")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string CasterAttachmentPoint2
@@ -1052,7 +1052,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aca1", value); }
         }
 
-        /// <summary>The field <c>acac</c>.</summary>
+        /// <summary>Caster Attachments (acac), 0 to 2.</summary>
         [global::Moonwell.Objects.Field("acac", Label = "Caster Attachments")]
         [global::Moonwell.Objects.Limits(0, 2)]
         public int CasterAttachments
@@ -1061,7 +1061,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("acac", value); }
         }
 
-        /// <summary>The field <c>acap</c>.</summary>
+        /// <summary>Caster Attachment Point 1 (acap), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("acap", Label = "Caster Attachment Point 1")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string CasterAttachmentPoint1
@@ -1070,7 +1070,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("acap", value); }
         }
 
-        /// <summary>The field <c>acas</c>.</summary>
+        /// <summary>Casting Time (acas), 0 to 3600.</summary>
         [global::Moonwell.Objects.Field("acas", Label = "Casting Time")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         [global::Moonwell.Objects.NonNegative]
@@ -1080,7 +1080,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("acas", value); }
         }
 
-        /// <summary>The field <c>acat</c>.</summary>
+        /// <summary>Caster (acat).</summary>
         [global::Moonwell.Objects.Field("acat", Label = "Caster")]
         public string Caster
         {
@@ -1088,7 +1088,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("acat", value); }
         }
 
-        /// <summary>The field <c>acdn</c>.</summary>
+        /// <summary>Cooldown (acdn), 0 to 3600.</summary>
         [global::Moonwell.Objects.Field("acdn", Label = "Cooldown")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         [global::Moonwell.Objects.NonNegative]
@@ -1098,7 +1098,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("acdn", value); }
         }
 
-        /// <summary>The field <c>achd</c>.</summary>
+        /// <summary>Check Dependencies (achd).</summary>
         [global::Moonwell.Objects.Field("achd", Label = "Check Dependencies")]
         public bool CheckDependencies
         {
@@ -1106,7 +1106,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("achd", value); }
         }
 
-        /// <summary>The field <c>adur</c>.</summary>
+        /// <summary>Duration - Normal (adur), 0 to 3600.</summary>
         [global::Moonwell.Objects.Field("adur", Label = "Duration - Normal")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         [global::Moonwell.Objects.NonNegative]
@@ -1116,7 +1116,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("adur", value); }
         }
 
-        /// <summary>The field <c>aeat</c>.</summary>
+        /// <summary>Effect (aeat).</summary>
         [global::Moonwell.Objects.Field("aeat", Label = "Effect")]
         public string Effect
         {
@@ -1124,7 +1124,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aeat", value); }
         }
 
-        /// <summary>The field <c>aeff</c>.</summary>
+        /// <summary>Effects (aeff).</summary>
         [global::Moonwell.Objects.Field("aeff", Label = "Effects")]
         public global::Moonwell.Objects.Levels<string> Effects
         {
@@ -1132,7 +1132,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aeff", value); }
         }
 
-        /// <summary>The field <c>aefl</c>.</summary>
+        /// <summary>Effect Sound (Looping) (aefl).</summary>
         [global::Moonwell.Objects.Field("aefl", Label = "Effect Sound (Looping)")]
         public string EffectSoundLooping
         {
@@ -1140,7 +1140,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aefl", value); }
         }
 
-        /// <summary>The field <c>aefs</c>.</summary>
+        /// <summary>Effect Sound (aefs).</summary>
         [global::Moonwell.Objects.Field("aefs", Label = "Effect Sound")]
         public string EffectSound
         {
@@ -1148,7 +1148,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aefs", value); }
         }
 
-        /// <summary>The field <c>ahdu</c>.</summary>
+        /// <summary>Duration - Hero (ahdu), 0 to 3600.</summary>
         [global::Moonwell.Objects.Field("ahdu", Label = "Duration - Hero")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         [global::Moonwell.Objects.NonNegative]
@@ -1158,7 +1158,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ahdu", value); }
         }
 
-        /// <summary>The field <c>aher</c>.</summary>
+        /// <summary>Hero Ability (aher).</summary>
         [global::Moonwell.Objects.Field("aher", Label = "Hero Ability")]
         public bool HeroAbility
         {
@@ -1166,7 +1166,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aher", value); }
         }
 
-        /// <summary>The field <c>ahky</c>.</summary>
+        /// <summary>Hotkey - Normal (ahky).</summary>
         [global::Moonwell.Objects.Field("ahky", Label = "Hotkey - Normal")]
         public string Hotkey
         {
@@ -1174,7 +1174,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ahky", value); }
         }
 
-        /// <summary>The field <c>aite</c>.</summary>
+        /// <summary>Item Ability (aite).</summary>
         [global::Moonwell.Objects.Field("aite", Label = "Item Ability")]
         public bool ItemAbility
         {
@@ -1182,7 +1182,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aite", value); }
         }
 
-        /// <summary>The field <c>alcp</c>.</summary>
+        /// <summary>Use new default level cap (alcp).</summary>
         [global::Moonwell.Objects.Field("alcp", Label = "Use new default level cap")]
         public bool UseNewDefaultLevelCap
         {
@@ -1190,7 +1190,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("alcp", value); }
         }
 
-        /// <summary>The field <c>alev</c>.</summary>
+        /// <summary>Levels (alev), 1 to 100.</summary>
         [global::Moonwell.Objects.Field("alev", Label = "Levels")]
         [global::Moonwell.Objects.Limits(1, 100)]
         public int LevelCount
@@ -1199,7 +1199,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("alev", value); }
         }
 
-        /// <summary>The field <c>alig</c>.</summary>
+        /// <summary>Lightning Effects (alig).</summary>
         [global::Moonwell.Objects.Field("alig", Label = "Lightning Effects")]
         public string LightningEffects
         {
@@ -1207,7 +1207,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("alig", value); }
         }
 
-        /// <summary>The field <c>alsk</c>.</summary>
+        /// <summary>Level Skip Requirement (alsk), 0 to 10000.</summary>
         [global::Moonwell.Objects.Field("alsk", Label = "Level Skip Requirement")]
         [global::Moonwell.Objects.Limits(0, 10000)]
         public int LevelSkipRequirement
@@ -1216,7 +1216,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("alsk", value); }
         }
 
-        /// <summary>The field <c>amac</c>.</summary>
+        /// <summary>Missile Arc (amac), 0 to 1.</summary>
         [global::Moonwell.Objects.Field("amac", Label = "Missile Arc")]
         [global::Moonwell.Objects.Limits(0, 1)]
         public float MissileArc
@@ -1225,7 +1225,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("amac", value); }
         }
 
-        /// <summary>The field <c>amat</c>.</summary>
+        /// <summary>Missile Art (amat).</summary>
         [global::Moonwell.Objects.Field("amat", Label = "Missile Art")]
         public string MissileArt
         {
@@ -1233,7 +1233,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("amat", value); }
         }
 
-        /// <summary>The field <c>amcs</c>.</summary>
+        /// <summary>Mana Cost (amcs), 0 to 1000.</summary>
         [global::Moonwell.Objects.Field("amcs", Label = "Mana Cost")]
         [global::Moonwell.Objects.Limits(0, 1000)]
         public global::Moonwell.Objects.Levels<int> ManaCost
@@ -1242,7 +1242,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("amcs", value); }
         }
 
-        /// <summary>The field <c>amho</c>.</summary>
+        /// <summary>Missile Homing Enabled (amho).</summary>
         [global::Moonwell.Objects.Field("amho", Label = "Missile Homing Enabled")]
         public bool MissileHomingEnabled
         {
@@ -1250,7 +1250,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("amho", value); }
         }
 
-        /// <summary>The field <c>amsp</c>.</summary>
+        /// <summary>Missile Speed (amsp), 0 to 10000.</summary>
         [global::Moonwell.Objects.Field("amsp", Label = "Missile Speed")]
         [global::Moonwell.Objects.Limits(0, 10000)]
         public int MissileSpeed
@@ -1259,7 +1259,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("amsp", value); }
         }
 
-        /// <summary>The field <c>anam</c>.</summary>
+        /// <summary>Name (anam), not empty.</summary>
         [global::Moonwell.Objects.Field("anam", Label = "Name")]
         [global::Moonwell.Objects.Required]
         public string Name
@@ -1268,7 +1268,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("anam", value); }
         }
 
-        /// <summary>The field <c>ansf</c>.</summary>
+        /// <summary>Editor Suffix (ansf), at most 50 characters.</summary>
         [global::Moonwell.Objects.Field("ansf", Label = "Editor Suffix")]
         [global::Moonwell.Objects.MaxLength(50)]
         public string EditorSuffix
@@ -1277,7 +1277,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ansf", value); }
         }
 
-        /// <summary>The field <c>aord</c>.</summary>
+        /// <summary>Order String - Use/Turn On (aord).</summary>
         [global::Moonwell.Objects.Field("aord", Label = "Order String - Use/Turn On")]
         public string Order
         {
@@ -1285,7 +1285,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aord", value); }
         }
 
-        /// <summary>The field <c>aorf</c>.</summary>
+        /// <summary>Order String - Deactivate (aorf).</summary>
         [global::Moonwell.Objects.Field("aorf", Label = "Order String - Deactivate")]
         public string OrderStringDeactivate
         {
@@ -1293,7 +1293,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aorf", value); }
         }
 
-        /// <summary>The field <c>aoro</c>.</summary>
+        /// <summary>Order String - Activate (aoro).</summary>
         [global::Moonwell.Objects.Field("aoro", Label = "Order String - Activate")]
         public string OrderStringActivate
         {
@@ -1301,7 +1301,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aoro", value); }
         }
 
-        /// <summary>The field <c>aoru</c>.</summary>
+        /// <summary>Order String - Turn Off (aoru).</summary>
         [global::Moonwell.Objects.Field("aoru", Label = "Order String - Turn Off")]
         public string OrderStringTurnOff
         {
@@ -1309,7 +1309,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aoru", value); }
         }
 
-        /// <summary>The field <c>apri</c>.</summary>
+        /// <summary>Priority for Spell Steal (apri), 0 to 100.</summary>
         [global::Moonwell.Objects.Field("apri", Label = "Priority for Spell Steal")]
         [global::Moonwell.Objects.Limits(0, 100)]
         public int PriorityForSpellSteal
@@ -1318,7 +1318,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("apri", value); }
         }
 
-        /// <summary>The field <c>arac</c>.</summary>
+        /// <summary>Race (arac).</summary>
         [global::Moonwell.Objects.Field("arac", Label = "Race")]
         public global::Moonwell.Objects.UnitRace Race
         {
@@ -1326,7 +1326,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arac", value); }
         }
 
-        /// <summary>The field <c>aran</c>.</summary>
+        /// <summary>Cast Range (aran), 0 to 99999.</summary>
         [global::Moonwell.Objects.Field("aran", Label = "Cast Range")]
         [global::Moonwell.Objects.Limits(0, 99999)]
         [global::Moonwell.Objects.NonNegative]
@@ -1336,7 +1336,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aran", value); }
         }
 
-        /// <summary>The field <c>arar</c>.</summary>
+        /// <summary>Icon - Research (arar).</summary>
         [global::Moonwell.Objects.Field("arar", Label = "Icon - Research")]
         public string IconResearch
         {
@@ -1344,14 +1344,14 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arar", value); }
         }
 
-        /// <summary>The field <c>areq</c>.</summary>
+        /// <summary>Requirements (areq).</summary>
         [global::Moonwell.Objects.Field("areq", Label = "Requirements")]
         public global::Moonwell.Objects.ObjectList<object> Requires
         {
             get { return Fields.GetList<object>(this, "areq"); }
         }
 
-        /// <summary>The field <c>aret</c>.</summary>
+        /// <summary>Tooltip - Learn (aret).</summary>
         [global::Moonwell.Objects.Field("aret", Label = "Tooltip - Learn")]
         public string TooltipLearn
         {
@@ -1359,7 +1359,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aret", value); }
         }
 
-        /// <summary>The field <c>arhk</c>.</summary>
+        /// <summary>Hotkey - Learn (arhk).</summary>
         [global::Moonwell.Objects.Field("arhk", Label = "Hotkey - Learn")]
         public string LearnHotkey
         {
@@ -1367,7 +1367,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arhk", value); }
         }
 
-        /// <summary>The field <c>arlv</c>.</summary>
+        /// <summary>Required Level (arlv), 1 to 10000.</summary>
         [global::Moonwell.Objects.Field("arlv", Label = "Required Level")]
         [global::Moonwell.Objects.Limits(1, 10000)]
         public int RequiredLevel
@@ -1376,7 +1376,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arlv", value); }
         }
 
-        /// <summary>The field <c>arpx</c>.</summary>
+        /// <summary>Button Position - Research (X) (arpx), 0 to 3.</summary>
         [global::Moonwell.Objects.Field("arpx", Label = "Button Position - Research (X)")]
         [global::Moonwell.Objects.Limits(0, 3)]
         public int ButtonPositionResearchX
@@ -1385,7 +1385,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arpx", value); }
         }
 
-        /// <summary>The field <c>arpy</c>.</summary>
+        /// <summary>Button Position - Research (Y) (arpy), 0 to 2.</summary>
         [global::Moonwell.Objects.Field("arpy", Label = "Button Position - Research (Y)")]
         [global::Moonwell.Objects.Limits(0, 2)]
         public int ButtonPositionResearchY
@@ -1394,7 +1394,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arpy", value); }
         }
 
-        /// <summary>The field <c>arqa</c>.</summary>
+        /// <summary>Requirements - Levels (arqa), at most 100 for each number.</summary>
         [global::Moonwell.Objects.Field("arqa", Label = "Requirements - Levels")]
         [global::Moonwell.Objects.Limits(double.NegativeInfinity, 100)]
         [global::Moonwell.Objects.NumberList]
@@ -1404,7 +1404,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arqa", value); }
         }
 
-        /// <summary>The field <c>arut</c>.</summary>
+        /// <summary>Tooltip - Learn - Extended (arut).</summary>
         [global::Moonwell.Objects.Field("arut", Label = "Tooltip - Learn - Extended")]
         public string TooltipLearnExtended
         {
@@ -1412,7 +1412,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("arut", value); }
         }
 
-        /// <summary>The field <c>asat</c>.</summary>
+        /// <summary>Special (asat).</summary>
         [global::Moonwell.Objects.Field("asat", Label = "Special")]
         public string Special
         {
@@ -1420,7 +1420,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("asat", value); }
         }
 
-        /// <summary>The field <c>aspt</c>.</summary>
+        /// <summary>Special Attachment Point (aspt), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("aspt", Label = "Special Attachment Point")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string SpecialAttachmentPoint
@@ -1429,7 +1429,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aspt", value); }
         }
 
-        /// <summary>The field <c>ata0</c>.</summary>
+        /// <summary>Target Attachment Point 1 (ata0), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("ata0", Label = "Target Attachment Point 1")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint1
@@ -1438,7 +1438,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ata0", value); }
         }
 
-        /// <summary>The field <c>ata1</c>.</summary>
+        /// <summary>Target Attachment Point 2 (ata1), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("ata1", Label = "Target Attachment Point 2")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint2
@@ -1447,7 +1447,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ata1", value); }
         }
 
-        /// <summary>The field <c>ata2</c>.</summary>
+        /// <summary>Target Attachment Point 3 (ata2), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("ata2", Label = "Target Attachment Point 3")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint3
@@ -1456,7 +1456,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ata2", value); }
         }
 
-        /// <summary>The field <c>ata3</c>.</summary>
+        /// <summary>Target Attachment Point 4 (ata3), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("ata3", Label = "Target Attachment Point 4")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint4
@@ -1465,7 +1465,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ata3", value); }
         }
 
-        /// <summary>The field <c>ata4</c>.</summary>
+        /// <summary>Target Attachment Point 5 (ata4), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("ata4", Label = "Target Attachment Point 5")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint5
@@ -1474,7 +1474,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ata4", value); }
         }
 
-        /// <summary>The field <c>ata5</c>.</summary>
+        /// <summary>Target Attachment Point 6 (ata5), at most 32 entries.</summary>
         [global::Moonwell.Objects.Field("ata5", Label = "Target Attachment Point 6")]
         [global::Moonwell.Objects.MaxEntries(32)]
         public string TargetAttachmentPoint6
@@ -1483,7 +1483,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ata5", value); }
         }
 
-        /// <summary>The field <c>atac</c>.</summary>
+        /// <summary>Target Attachments (atac), 0 to 6.</summary>
         [global::Moonwell.Objects.Field("atac", Label = "Target Attachments")]
         [global::Moonwell.Objects.Limits(0, 6)]
         public int TargetAttachments
@@ -1492,7 +1492,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("atac", value); }
         }
 
-        /// <summary>The field <c>atar</c>.</summary>
+        /// <summary>Targets Allowed (atar).</summary>
         [global::Moonwell.Objects.Field("atar", Label = "Targets Allowed")]
         public global::Moonwell.Objects.Levels<global::Moonwell.Objects.Targets> TargetsAllowed
         {
@@ -1500,7 +1500,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("atar", value); }
         }
 
-        /// <summary>The field <c>atat</c>.</summary>
+        /// <summary>Target (atat).</summary>
         [global::Moonwell.Objects.Field("atat", Label = "Target")]
         public string Target
         {
@@ -1508,7 +1508,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("atat", value); }
         }
 
-        /// <summary>The field <c>atp1</c>.</summary>
+        /// <summary>Tooltip - Normal (atp1).</summary>
         [global::Moonwell.Objects.Field("atp1", Label = "Tooltip - Normal")]
         public global::Moonwell.Objects.Levels<string> Tooltip
         {
@@ -1516,7 +1516,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("atp1", value); }
         }
 
-        /// <summary>The field <c>auar</c>.</summary>
+        /// <summary>Icon - Turn Off (auar).</summary>
         [global::Moonwell.Objects.Field("auar", Label = "Icon - Turn Off")]
         public string IconTurnOff
         {
@@ -1524,7 +1524,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("auar", value); }
         }
 
-        /// <summary>The field <c>aub1</c>.</summary>
+        /// <summary>Tooltip - Normal - Extended (aub1).</summary>
         [global::Moonwell.Objects.Field("aub1", Label = "Tooltip - Normal - Extended")]
         public global::Moonwell.Objects.Levels<string> TooltipExtended
         {
@@ -1532,7 +1532,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aub1", value); }
         }
 
-        /// <summary>The field <c>aubx</c>.</summary>
+        /// <summary>Button Position - Turn Off (X) (aubx), 0 to 3.</summary>
         [global::Moonwell.Objects.Field("aubx", Label = "Button Position - Turn Off (X)")]
         [global::Moonwell.Objects.Limits(0, 3)]
         public int ButtonPositionTurnOffX
@@ -1541,7 +1541,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aubx", value); }
         }
 
-        /// <summary>The field <c>auby</c>.</summary>
+        /// <summary>Button Position - Turn Off (Y) (auby), 0 to 2.</summary>
         [global::Moonwell.Objects.Field("auby", Label = "Button Position - Turn Off (Y)")]
         [global::Moonwell.Objects.Limits(0, 2)]
         public int ButtonPositionTurnOffY
@@ -1550,7 +1550,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("auby", value); }
         }
 
-        /// <summary>The field <c>auhk</c>.</summary>
+        /// <summary>Hotkey - Turn Off (auhk).</summary>
         [global::Moonwell.Objects.Field("auhk", Label = "Hotkey - Turn Off")]
         public string HotkeyTurnOff
         {
@@ -1558,7 +1558,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("auhk", value); }
         }
 
-        /// <summary>The field <c>ausk</c>.</summary>
+        /// <summary>Unit Skin List (ausk).</summary>
         [global::Moonwell.Objects.Field("ausk", Label = "Unit Skin List")]
         public string UnitSkinList
         {
@@ -1566,7 +1566,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("ausk", value); }
         }
 
-        /// <summary>The field <c>aut1</c>.</summary>
+        /// <summary>Tooltip - Turn Off (aut1).</summary>
         [global::Moonwell.Objects.Field("aut1", Label = "Tooltip - Turn Off")]
         public global::Moonwell.Objects.Levels<string> TooltipTurnOff
         {
@@ -1574,7 +1574,7 @@ namespace Moonwell.Objects
             protected set { Fields.Put("aut1", value); }
         }
 
-        /// <summary>The field <c>auu1</c>.</summary>
+        /// <summary>Tooltip - Turn Off - Extended (auu1).</summary>
         [global::Moonwell.Objects.Field("auu1", Label = "Tooltip - Turn Off - Extended")]
         public global::Moonwell.Objects.Levels<string> TooltipTurnOffExtended
         {
