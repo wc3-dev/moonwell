@@ -19,11 +19,13 @@ public sealed partial class SyncAnalyzer
     /// <summary>Why a call may not run on one machine: the path from the call to what it reaches, and what that does.</summary>
     private sealed class Finding
     {
-        public Finding(string path, string what, bool unseen = false)
+        public Finding(string path, string what, bool unseen = false, string? written = null, string? fix = null)
         {
             Path = path;
             What = what;
             Unseen = unseen;
+            Written = written;
+            Fix = fix;
         }
 
         public string Path { get; }
@@ -33,13 +35,22 @@ public sealed partial class SyncAnalyzer
         /// <summary>Whether the code reached is code the analyzer cannot follow, which is MW0039 and not MW0001.</summary>
         public bool Unseen { get; }
 
+        /// <summary>The shared value the code changes, which is MW0048 and not MW0001; null for any other finding.</summary>
+        public string? Written { get; }
+
+        /// <summary>What to do about a shared value changed.</summary>
+        public string? Fix { get; }
+
         /// <summary>The name the path starts with: what the reported code calls.</summary>
         public string Name => Path.Split(new[] { " > " }, 2, System.StringSplitOptions.None)[0];
 
-        public Finding Through(string name) => new(name + " > " + Path, What, Unseen);
+        public Finding Through(string name) => new(name + " > " + Path, What, Unseen, Written, Fix);
 
-        public string Message(string name) =>
-            Path == name ? $"'{name}' {What}" : $"'{name}' {What} (through {Path})";
+        public string Message(string name)
+        {
+            var subject = Written ?? name;
+            return Path == subject ? $"'{subject}' {What}" : $"'{subject}' {What} (through {Path})";
+        }
     }
 
     /// <summary>A member an operation calls or touches: whether it is written, the type of what it is called on, and whether the call is virtual.</summary>
@@ -65,9 +76,20 @@ public sealed partial class SyncAnalyzer
     /// <summary>The nodes being followed now, each with its depth, and the lowest depth a cycle was cut back to.</summary>
     private sealed class Walk
     {
+        public Walk(SyntaxNode? block)
+        {
+            if (block != null)
+            {
+                Code.Add(block);
+            }
+        }
+
         public Dictionary<object, int> Depths { get; } = new(new NodeComparer());
 
         public int Low { get; set; } = int.MaxValue;
+
+        /// <summary>The code of one machine being read: the block the walk began in, then the code of each node followed.</summary>
+        public List<SyntaxNode> Code { get; } = new();
     }
 
     /// <summary>A part of a class that is followed as one: its static initializers and constructor.</summary>
@@ -191,8 +213,22 @@ public sealed partial class SyncAnalyzer
         {
             IAssignmentOperation assignment => assignment.Target == operation,
             IIncrementOrDecrementOperation => true,
+            IArgumentOperation { Parameter.RefKind: RefKind.Ref or RefKind.Out } => true,
+            ITupleOperation tuple => IsDeconstructed(tuple),
             _ => false,
         };
+
+        // Whether a tuple is what a deconstruction assigns to, and not a value.
+        private static bool IsDeconstructed(ITupleOperation tuple)
+        {
+            IOperation up = tuple;
+            while (up.Parent is ITupleOperation)
+            {
+                up = up.Parent;
+            }
+
+            return up.Parent is IDeconstructionAssignmentOperation assignment && assignment.Target == up;
+        }
 
         /// <summary>The Dispose a using calls for each of its resources.</summary>
         private IEnumerable<Reach> Disposes(IOperation resources)
@@ -273,8 +309,7 @@ public sealed partial class SyncAnalyzer
                 return null;
             }
 
-            if ((runtime != null && SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, runtime))
-                || packages.Any(package => SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, package)))
+            if (IsMoonwell(member))
             {
                 // Making a Moonwell object changes nothing in the game until it is added or started.
                 if (member is IMethodSymbol { MethodKind: MethodKind.Constructor } || IsLocalSafe(member, write) || IsMachineLocal(member, write))
@@ -369,6 +404,9 @@ public sealed partial class SyncAnalyzer
         }
 
         private bool IsMap(ISymbol member) => SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, compilation.Assembly);
+
+        private bool IsMoonwell(ISymbol member) =>
+            IsRuntime(member) || packages.Any(package => SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, package));
 
         /// <summary>
         /// The map's overrides and implementations of a virtual, abstract or interface method that a virtual call on a
@@ -584,14 +622,16 @@ public sealed partial class SyncAnalyzer
                     break;
                 }
 
+                walk.Code.Add(syntax);
                 foreach (var inner in body.DescendantsAndSelf())
                 {
-                    if ((found = Reaches(inner, walk)) != null)
+                    if ((found = Written(inner, walk) ?? Reaches(inner, walk)) != null)
                     {
                         break;
                     }
                 }
 
+                walk.Code.RemoveAt(walk.Code.Count - 1);
                 if (found != null)
                 {
                     break;
@@ -686,7 +726,7 @@ public sealed partial class SyncAnalyzer
                         yield return initial;
                     }
 
-                    var body = declarator.Ancestors().FirstOrDefault(a => a is BaseMethodDeclarationSyntax or AccessorDeclarationSyntax or LocalFunctionStatementSyntax or AnonymousFunctionExpressionSyntax or GlobalStatementSyntax);
+                    var body = BodyOf(declarator);
                     if (body == null)
                     {
                         continue;
@@ -713,6 +753,10 @@ public sealed partial class SyncAnalyzer
                 }
             }
         }
+
+        // The body a local is declared in.
+        private static SyntaxNode? BodyOf(SyntaxNode declarator) =>
+            declarator.Ancestors().FirstOrDefault(a => a is BaseMethodDeclarationSyntax or AccessorDeclarationSyntax or LocalFunctionStatementSyntax or AnonymousFunctionExpressionSyntax or GlobalStatementSyntax);
 
         private static bool IsGiven(AssignmentExpressionSyntax assignment) =>
             assignment.IsKind(SyntaxKind.SimpleAssignmentExpression) || assignment.IsKind(SyntaxKind.AddAssignmentExpression) || assignment.IsKind(SyntaxKind.CoalesceAssignmentExpression);
@@ -798,18 +842,12 @@ public sealed partial class SyncAnalyzer
                         value = parenthesized.Operand;
                         continue;
                     case IConditionalAccessInstanceOperation instance:
-                        var access = instance.Parent;
-                        while (access != null && access is not IConditionalAccessOperation)
-                        {
-                            access = access.Parent;
-                        }
-
-                        if (access is not IConditionalAccessOperation conditional)
+                        if (Accessed(instance) is not { } accessed)
                         {
                             return false;
                         }
 
-                        value = conditional.Operation;
+                        value = accessed;
                         continue;
                     case IAnonymousFunctionOperation or IMethodReferenceOperation or ILocalReferenceOperation or IDefaultValueOperation:
                         return true;
@@ -835,7 +873,259 @@ public sealed partial class SyncAnalyzer
             }
         }
 
+        // The value a ?. reads.
+        private static IOperation? Accessed(IConditionalAccessInstanceOperation instance)
+        {
+            var access = instance.Parent;
+            while (access != null && access is not IConditionalAccessOperation)
+            {
+                access = access.Parent;
+            }
+
+            return (access as IConditionalAccessOperation)?.Operation;
+        }
+
+        // ---- what code of one machine writes ----
+
+        /// <summary>The library methods that change what they are called on, for the classes of <see cref="IsChanging"/>, and the static methods of System.Array that change an array.</summary>
+        private static readonly HashSet<string> Changing = new()
+        {
+            "Add", "AddAfter", "AddBefore", "AddFirst", "AddLast", "AddRange", "Append", "AppendFormat", "AppendLine", "Clear", "Copy", "Dequeue",
+            "Enqueue", "ExceptWith", "Fill", "Insert", "InsertRange", "IntersectWith", "Next", "NextBytes", "NextDouble", "NextInt64", "NextSingle",
+            "Pop", "Push", "Remove", "RemoveAll", "RemoveAt", "RemoveFirst", "RemoveLast", "RemoveRange", "RemoveWhere", "Replace", "Reverse", "Sort",
+            "SymmetricExceptWith", "TryAdd", "TryDequeue", "TryPop", "UnionWith",
+        };
+
+        // .NET's collections, and the classes of changingTypes.
+        private bool IsChanging(INamedTypeSymbol? type) =>
+            type != null && (changingTypes.Any(c => c != null && SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, c))
+                || type.ContainingNamespace?.ToDisplayString() is "System.Collections.Generic" or "System.Collections");
+
+        /// <summary>MW0048 for what code of one machine changes that every machine shares.</summary>
+        public void Write(OperationAnalysisContext context)
+        {
+            var operation = context.Operation;
+            var targets = WrittenBy(operation).ToList();
+            if (targets.Count == 0 || Silenced(operation, context.ContainingSymbol) || BlockOf(operation, context.ContainingSymbol) is not { } block)
+            {
+                return;
+            }
+
+            foreach (var target in targets)
+            {
+                if (Landed(target, new Walk(block)) is { } finding)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Rules.SharedWrite, target.Syntax.GetLocation(), finding.Message(finding.Name), finding.Fix));
+                }
+            }
+        }
+
+        /// <summary>The first shared value an operation changes; null when it changes none.</summary>
+        private Finding? Written(IOperation operation, Walk walk) =>
+            WrittenBy(operation).Select(target => Landed(target, walk)).FirstOrDefault(found => found != null);
+
+        /// <summary>What an operation writes: an assignment's or an increment's target, a ref or out argument, the event added to, and what a changing call changes.</summary>
+        private IEnumerable<IOperation> WrittenBy(IOperation operation) => operation switch
+        {
+            IDeconstructionAssignmentOperation deconstruction => Elements(deconstruction.Target),
+            IAssignmentOperation assignment => new[] { assignment.Target },
+            IIncrementOrDecrementOperation increment => new[] { increment.Target },
+            IEventAssignmentOperation handler => new[] { handler.EventReference },
+            IArgumentOperation { Parameter.RefKind: RefKind.Ref or RefKind.Out } argument => new[] { argument.Value },
+            IInvocationOperation invocation when ChangedBy(invocation) is { } changed => new[] { changed },
+            _ => Enumerable.Empty<IOperation>(),
+        };
+
+        // The items a deconstruction assigns to, in any depth of tuples.
+        private static IEnumerable<IOperation> Elements(IOperation target) =>
+            target is ITupleOperation tuple ? tuple.Elements.SelectMany(Elements) : new[] { target };
+
+        /// <summary>What a call changes: its object, or the array given to System.Array's. Null for any other call.</summary>
+        private IOperation? ChangedBy(IInvocationOperation invocation)
+        {
+            var method = invocation.TargetMethod;
+            if (!Changing.Contains(method.Name))
+            {
+                return null;
+            }
+
+            if (method.IsStatic)
+            {
+                return IsNamed(method.ContainingType, "System.Array")
+                    ? invocation.Arguments.FirstOrDefault(a => a.Parameter?.Name is "array" or "destinationArray")?.Value
+                    : null;
+            }
+
+            return IsChanging(method.ContainingType) ? invocation.Instance : null;
+        }
+
+        /// <summary>
+        /// The shared value a write to a target lands in: a field, auto-property or event of the map, or a local or
+        /// parameter from outside the code being read. The way goes from what is written down to what holds it. Null
+        /// when the way ends in something marked [MachineLocal] or made on this machine, or names nothing.
+        /// </summary>
+        private Finding? Landed(IOperation target, Walk walk)
+        {
+            ISymbol? named = null;
+            var inStruct = false;
+            for (var at = target; at != null;)
+            {
+                switch (at)
+                {
+                    case IConversionOperation conversion:
+                        at = conversion.Operand;
+                        break;
+                    case IConditionalAccessInstanceOperation instance:
+                        at = Accessed(instance);
+                        break;
+                    case IArrayElementReferenceOperation element:
+                        at = element.ArrayReference;
+                        break;
+                    case IObjectCreationOperation or ITypeParameterObjectCreationOperation or IArrayCreationOperation or ICollectionExpressionOperation:
+                        return null;
+                    case IInstanceReferenceOperation self:
+                        var made = self.ReferenceKind == InstanceReferenceKind.ImplicitReceiver
+                            || ConstructorAround(self) is { } constructor && !constructor.Modifiers.Any(SyntaxKind.StaticKeyword);
+                        return made ? null : Shared(named);
+                    case ILocalReferenceOperation or IParameterReferenceOperation:
+                        var variable = at is ILocalReferenceOperation local ? (ISymbol)local.Local : ((IParameterReferenceOperation)at).Parameter;
+                        var isStruct = TypeOf(variable)?.IsValueType == true;
+                        if (!IsInside(variable, walk))
+                        {
+                            return Shared(isStruct || named == null ? variable : named);
+                        }
+
+                        if (isStruct)
+                        {
+                            return null;
+                        }
+
+                        at = variable is ILocalSymbol held ? OnlyValue(held) : null;
+                        break;
+                    case IMemberReferenceOperation reference:
+                        var member = reference.Member;
+                        if (IsMachineLocal(member, false) || (member.IsStatic && InOwnStaticConstructor(reference)))
+                        {
+                            return null;
+                        }
+
+                        var holds = HoldsValue(member);
+                        if (at == target && IsWritten(at) && member is IPropertySymbol && !holds && (IsMap(member) || (IsMoonwell(member) && !IsChanging(member.ContainingType))))
+                        {
+                            // Its setter is followed, or it is checked as a member of Moonwell.
+                            return null;
+                        }
+
+                        if (holds && (named == null || inStruct))
+                        {
+                            named = member;
+                        }
+
+                        inStruct = member.ContainingType.IsValueType;
+                        at = reference.Instance;
+                        break;
+                    default:
+                        at = null;
+                        break;
+                }
+            }
+
+            return Shared(named);
+        }
+
+        private Finding? Shared(ISymbol? symbol)
+        {
+            if (symbol == null)
+            {
+                return null;
+            }
+
+            var fix = symbol switch
+            {
+                IEventSymbol => "an event cannot be marked: add to it outside the block",
+                ILocalSymbol or IParameterSymbol => "declare it inside the block, or use a [MachineLocal] field",
+                _ => "mark it [MachineLocal] if only code of one machine reads it",
+            };
+            return new Finding(Name(symbol), "is changed", written: Name(symbol), fix: fix);
+        }
+
+        // A field, auto-property or event of the map: what holds a value of its own, which code of one machine may not change.
+        private bool HoldsValue(ISymbol member) =>
+            IsMap(member) && (member is IFieldSymbol or IEventSymbol || (member is IPropertySymbol property && IsAuto(property)));
+
+        private static bool IsAuto(IPropertySymbol property) =>
+            property.ContainingType.GetMembers().OfType<IFieldSymbol>().Any(f => SymbolEqualityComparer.Default.Equals(f.AssociatedSymbol, property));
+
+        // Whether a static member is written in its own class's static constructor, which gives it its first value as an initializer does.
+        private static bool InOwnStaticConstructor(IMemberReferenceOperation reference) =>
+            ConstructorAround(reference) is { } constructor && constructor.Modifiers.Any(SyntaxKind.StaticKeyword)
+            && SymbolEqualityComparer.Default.Equals(reference.SemanticModel!.GetDeclaredSymbol(constructor)?.ContainingType, reference.Member.ContainingType);
+
+        // Whether a local or parameter is declared in the code being read; a setter's value is declared by no code.
+        private static bool IsInside(ISymbol variable, Walk walk) =>
+            variable.IsImplicitlyDeclared
+            || variable.DeclaringSyntaxReferences.Any(declared => walk.Code.Any(code => code.SyntaxTree == declared.SyntaxTree && code.Span.Contains(declared.Span)));
+
+        /// <summary>A local's initializer, when nothing writes the local after it; null for any other local.</summary>
+        private IOperation? OnlyValue(ILocalSymbol local)
+        {
+            if (local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not VariableDeclaratorSyntax { Initializer.Value: { } initial } declarator
+                || BodyOf(declarator) is not { } body)
+            {
+                return null;
+            }
+
+            var model = compilation.GetSemanticModel(declarator.SyntaxTree);
+            foreach (var node in body.DescendantNodes())
+            {
+                var written = node switch
+                {
+                    AssignmentExpressionSyntax assignment => assignment.Left,
+                    ArgumentSyntax { RefKindKeyword.RawKind: not 0 } argument => argument.Expression,
+                    _ => null,
+                };
+                if (written != null && SymbolEqualityComparer.Default.Equals(model.GetSymbolInfo(written).Symbol, local))
+                {
+                    return null;
+                }
+            }
+
+            return model.GetOperation(initial);
+        }
+
+        /// <summary>Whether an operation gives a field or auto-property a value without reading the old one: a plain =, a tuple's assignment or an out argument.</summary>
+        private bool IsPlainWrite(IOperation operation, ISymbol member) =>
+            (member is IFieldSymbol || (member is IPropertySymbol property && IsMap(property) && IsAuto(property))) && operation.Parent switch
+            {
+                ISimpleAssignmentOperation assignment => assignment.Target == operation,
+                IArgumentOperation { Parameter.RefKind: RefKind.Out } => true,
+                ITupleOperation tuple => IsDeconstructed(tuple),
+                _ => false,
+            };
+
         // ---- where code runs on one machine ----
+
+        /// <summary>The outermost code around an operation that runs on one machine: a block, or a [MachineLocal] function or member. Null for code of every machine.</summary>
+        private SyntaxNode? BlockOf(IOperation operation, ISymbol container)
+        {
+            var model = operation.SemanticModel!;
+            SyntaxNode? block = null;
+            for (var node = operation.Syntax; node != null; node = node.Parent)
+            {
+                if ((node is ExpressionSyntax expression && InLocalPosition(expression, model, localParameters.Value))
+                    || (node is LocalFunctionStatementSyntax or AnonymousFunctionExpressionSyntax && DeclaredBy(node, model) is { } function && Has(function, machineLocal)))
+                {
+                    block = node;
+                }
+
+                if (node is MemberDeclarationSyntax)
+                {
+                    return Has(container, machineLocal) ? node : block;
+                }
+            }
+
+            return block;
+        }
 
         /// <summary>Whether an operation runs on one machine: inside Local.For's action (or a delegate that ends there), or in a [MachineLocal] method.</summary>
         private bool IsLocal(IOperation operation, ISymbol container) =>
