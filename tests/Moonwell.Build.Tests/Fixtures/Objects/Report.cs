@@ -31,6 +31,12 @@ namespace Objects
             return arthas.Default == Unit.Default<Arthas>() && unit.Default == Unit.Default<Arthas>();
         }
 
+        // An ability has no default object: its declared values read on the object a unit has of it.
+        public static float BoltDamage(Unit unit)
+        {
+            return unit.AbilityOf<Firebolt>().Damage[2];
+        }
+
         // A unit's default object: its type's values, from the build's table by type id for a type no class of the map's declares.
         public static string DefaultOf(Unit unit)
         {

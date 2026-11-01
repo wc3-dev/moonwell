@@ -50,6 +50,14 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void an_abilitys_declared_value_reads_on_the_object_a_unit_has_of_it()
+        {
+            using var lua = compiled.Start();
+
+            Assert.Equal("200", Query(lua, "return Objects.Report.BoltDamage(Objects.Arthas())"));
+        }
+
+        [Fact]
         public void the_default_object_is_the_same_object_from_a_unit_and_from_its_class()
         {
             using var lua = compiled.Start();

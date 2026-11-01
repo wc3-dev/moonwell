@@ -88,9 +88,9 @@ public sealed class BuildOnlyAnalyzer : DiagnosticAnalyzer
             case "Item":
                 return "write Item.Create<" + name + ">(x, y, scope) to make one in the game, or Item.Default<" + name + ">() for its declared values";
             case "Destructable":
-                return "the game makes a destructable, and Moonwell gives it its class";
+                return "the game makes a destructable, and Moonwell gives it its class, so read its declared values on one in the game";
             case "Ability":
-                return "Moonwell makes an ability's object when it is cast";
+                return "write unit.AbilityOf<" + name + ">() for the object a unit has of it, which reads its declared values";
             default:
                 return "a " + kind.ToLowerInvariant() + " class is data for the build, and the game gives no handle to one";
         }

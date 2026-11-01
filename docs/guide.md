@@ -177,6 +177,9 @@ members come through `Unit.Default<T>()`. Its live actions do nothing. In the cl
 object is what the constructor is making, so `Default` and `Unit.Default<T>()` of the class there are error MW0012:
 read the field itself (`MaxLife`, not `Default.MaxLife`).
 
+An ability class has no default object either. `unit.AbilityOf<Smite>()` is the object a unit has of it, made if the
+unit has none yet, and its fields read what the class declares. A destructable's read on one in the game.
+
 `Default` of a type made or changed in World Editor reads its values as World Editor made them; a class of the map with
 its id wins over them.
 
