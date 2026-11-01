@@ -1,7 +1,7 @@
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the terrain package sees it: the ground's height, the four pathing flags, the item trick that finds where a unit would land, and the playable area. Types are the game's numbers.</summary>
-    public interface ITerrainWorld
+    internal interface ITerrainWorld
     {
         /// <summary>The height of the ground at a point as the game reads it, deformations included. The game can answer differently on each machine, so a map reads it only inside <c>Local.For</c>.</summary>
         [MachineLocal]

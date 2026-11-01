@@ -15,9 +15,12 @@ namespace Moonwell
         [LocalSafe]
         public Unit Source { get; }
 
+        /// <summary>The hits, which the damage pipeline adds to.</summary>
+        internal readonly List<Hit> hits = new List<Hit>();
+
         /// <summary>The hits, in the order they came.</summary>
         [LocalSafe]
-        public List<Hit> Hits { get; } = new List<Hit>();
+        public IReadOnlyList<Hit> Hits => hits;
 
         /// <summary>How many units the hits hit.</summary>
         [LocalSafe]

@@ -1,7 +1,7 @@
 namespace Moonwell.Hosting
 {
     /// <summary>The game events the runtime can ask the world to deliver.</summary>
-    public enum GameEvent
+    internal enum GameEvent
     {
         /// <summary>A unit takes damage.</summary>
         Damage,

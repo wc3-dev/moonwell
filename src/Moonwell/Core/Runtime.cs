@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
 
@@ -51,7 +52,7 @@ namespace Moonwell
         }
 
         /// <summary>Starts the runtime on the game; the map's Main calls it once, with the setup that registers its types and components.</summary>
-        public static void Start(Action setup)
+        internal static void Start(Action setup)
         {
             Reset(new NativeWorld());
 #if DEBUG
@@ -61,12 +62,14 @@ namespace Moonwell
         }
 
         /// <summary>Starts the runtime on the game with a map: the map's Main calls it once, and the map's components are added before the game's start.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Start(Map map)
         {
             Start(map, () => { });
         }
 
         /// <summary>Starts the runtime on the game with a map and a register step: the register step runs first, before the map's components are added.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Start(Map map, Action register)
         {
             Start(() => Install(map, register));

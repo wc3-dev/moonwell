@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    The packages use each other's internals, so they work together only at one version. Pack writes a project reference
+    as "this version or newer", which lets a map mix them; this writes it as exactly this version, so that NuGet refuses a
+    mix. NuGet has no setting for it, so this changes the list its pack keeps; PackageTests sees it if that list changes.
+  -->
+  <Target Name="PinProjectReferenceVersions" AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <_PinnedProjectReferences Include="@(_ProjectReferencesWithVersions)" ProjectVersion="[%(_ProjectReferencesWithVersions.ProjectVersion)]" />
+      <_ProjectReferencesWithVersions Remove="@(_ProjectReferencesWithVersions)" />
+      <_ProjectReferencesWithVersions Include="@(_PinnedProjectReferences)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

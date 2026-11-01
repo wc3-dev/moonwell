@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the runtime sees it; the game implements it later, and the tests fake it.</summary>
-    public interface IWorld
+    internal interface IWorld
     {
         /// <summary>Game seconds since the runtime started.</summary>
         float Now();

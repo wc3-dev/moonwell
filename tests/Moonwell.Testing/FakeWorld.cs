@@ -62,7 +62,7 @@ namespace Moonwell.Testing
         public bool RefuseDamage;
 
         /// <summary>The events the runtime asked to hear, once each.</summary>
-        public List<GameEvent> Listening = new List<GameEvent>();
+        internal List<GameEvent> Listening = new List<GameEvent>();
 
         /// <summary>The destructables whose deaths the runtime asked to hear, once each.</summary>
         public List<destructable> Watched = new List<destructable>();
@@ -533,7 +533,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>Records that the runtime asked to hear an event, once.</summary>
-        public void Listen(GameEvent gameEvent)
+        void IWorld.Listen(GameEvent gameEvent)
         {
             if (!Listening.Contains(gameEvent))
             {
@@ -620,13 +620,13 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A state of a player; 0 until it is set.</summary>
-        public int StateOf(player player, PlayerState state)
+        int IWorld.StateOf(player player, PlayerState state)
         {
             return states.TryGetValue(SlotOf(player) * 16 + (int)state, out var value) ? value : 0;
         }
 
         /// <summary>Sets a state of a player.</summary>
-        public void SetState(player player, PlayerState state, int value)
+        void IWorld.SetState(player player, PlayerState state, int value)
         {
             states[SlotOf(player) * 16 + (int)state] = value;
         }

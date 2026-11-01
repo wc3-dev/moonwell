@@ -3,6 +3,11 @@ namespace Moonwell
     /// <summary>The game: the actor of the components that react to the map as a whole, and the scope of what lasts the whole game.</summary>
     public sealed class Game : Actor
     {
+        /// <summary>Makes the game of a runtime; Runtime.Reset does.</summary>
+        internal Game()
+        {
+        }
+
         /// <summary>The game of this runtime; set by Runtime.Reset.</summary>
         [LocalSafe]
         public static Game Instance { get; internal set; } = null!;

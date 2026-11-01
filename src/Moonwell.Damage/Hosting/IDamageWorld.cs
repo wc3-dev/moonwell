@@ -3,7 +3,7 @@ using System;
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the damage package sees it: the game's damage events, the units' life and armor, dealing damage, and a 0 s timer. Types are the game's numbers.</summary>
-    public interface IDamageWorld
+    internal interface IDamageWorld
     {
         /// <summary>Starts delivering the game's damaging (before armor) and damaged (after armor) events.</summary>
         void Listen(Action damaging, Action damaged);

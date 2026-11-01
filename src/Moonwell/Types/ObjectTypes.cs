@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Moonwell
 {
@@ -43,6 +44,7 @@ namespace Moonwell
         private static List<Action>? waiting;
 
         /// <summary>Registers a unit type with its id and the function that makes its object, and listens for the events its class needs.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Unit<T>(int id, Func<T> make)
             where T : Moonwell.Unit
         {
@@ -57,6 +59,7 @@ namespace Moonwell
         }
 
         /// <summary>Registers an item type with its id and the function that makes its object, and listens for the events its class needs.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Item<T>(int id, Func<T> make)
             where T : Moonwell.Item
         {
@@ -71,6 +74,7 @@ namespace Moonwell
         }
 
         /// <summary>Registers a destructable type with its id and the function that makes its object, and listens for the events its class needs.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Destructable<T>(int id, Func<T> make)
             where T : Moonwell.Destructable
         {
@@ -85,6 +89,7 @@ namespace Moonwell
         }
 
         /// <summary>Registers an ability type with its id and the function that makes its object, and listens for the events its class needs.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Ability<T>(int id, Func<T> make)
             where T : Moonwell.Ability
         {
@@ -136,6 +141,7 @@ namespace Moonwell
         }
 
         /// <summary>Registers a class with its object id and no maker, for kinds such as doodads, upgrades and buffs; throws when the class is registered twice.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Id<T>(int id)
             where T : class
         {
@@ -148,6 +154,7 @@ namespace Moonwell
         }
 
         /// <summary>Registers a buff class with the game buff it shows and the hidden ability that carries it on its unit; a buff of the class shows only with this.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void BuffDisplay<T>(int buffId, int carrierId)
             where T : Buff
         {

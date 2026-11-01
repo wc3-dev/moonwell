@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace Moonwell.Analyzers;
 
@@ -13,7 +14,7 @@ namespace Moonwell.Analyzers;
 /// give every reaction an empty default body, so the compiler takes a misspelt, non-public or wrongly typed reaction
 /// without a word, while the package finds a class's reactions by name and calls only the interface's own. MW0041: a
 /// reaction of a Moonwell class written without override, or a method with a reaction's name and other parameters,
-/// which Moonwell never calls either. It does nothing in a map without Moonwell.
+/// which Moonwell never calls either. MW0047: a reaction called by hand. It does nothing in a map without Moonwell.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class ReactionAnalyzer : DiagnosticAnalyzer
@@ -103,6 +104,8 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
             var checker = new Checker(families, unit, unitComponent, mapComponent);
             start.RegisterSymbolAction(checker.Check, SymbolKind.NamedType);
             start.RegisterSymbolAction(checker.CheckHidden, SymbolKind.Method);
+            start.RegisterOperationAction(checker.CheckCall, OperationKind.Invocation);
+            start.RegisterOperationAction(checker.CheckReference, OperationKind.MethodReference);
         });
     }
 
@@ -433,6 +436,55 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(Diagnostic.Create(Rules.HiddenReaction, method.Locations[0], method.Name,
                     "is not the reaction " + root.ContainingType.Name + "." + root.Name + "(" + Parameters(root) + "), which takes other parameters, so it never runs as one, and on .NET it makes adding the class fail; give the helper another name"));
             }
+        }
+
+        /// <summary>MW0047: a call to a reaction; base.OnX(...) inside an override of OnX is the one that is right.</summary>
+        public void CheckCall(OperationAnalysisContext context)
+        {
+            var call = (IInvocationOperation)context.Operation;
+            if (IsReaction(call.TargetMethod) && !(call.Instance?.Syntax is BaseExpressionSyntax && Overrides(context.ContainingSymbol, call.TargetMethod)))
+            {
+                ReportCall(context, call.TargetMethod);
+            }
+        }
+
+        /// <summary>MW0047: a method group of a reaction, which runs it the same way.</summary>
+        public void CheckReference(OperationAnalysisContext context)
+        {
+            var reference = (IMethodReferenceOperation)context.Operation;
+            if (IsReaction(reference.Method))
+            {
+                ReportCall(context, reference.Method);
+            }
+        }
+
+        private static void ReportCall(OperationAnalysisContext context, IMethodSymbol reaction)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rules.CalledReaction, context.Operation.Syntax.GetLocation(), reaction.Name));
+        }
+
+        /// <summary>Whether a method is a reaction: an On... method of a Moonwell class or of a package's interface, an override of one, or a map's implementation of one.</summary>
+        private bool IsReaction(IMethodSymbol method)
+        {
+            if (method.Name.Length <= 2 || !method.Name.StartsWith("On", StringComparison.Ordinal) || !char.IsUpper(method.Name[2]))
+            {
+                return false;
+            }
+
+            return IsMoonwellReaction(method) || families.Any(family => family.Reactions.Any(reaction => reaction.Name == method.Name
+                && SymbolEqualityComparer.Default.Equals(method.ContainingType.FindImplementationForInterfaceMember(reaction), method)));
+        }
+
+        /// <summary>Whether the code is inside an override of a reaction, a lambda in it too.</summary>
+        private static bool Overrides(ISymbol code, IMethodSymbol reaction)
+        {
+            var member = code;
+            while (member is IMethodSymbol { MethodKind: MethodKind.AnonymousFunction or MethodKind.LocalFunction })
+            {
+                member = member.ContainingSymbol;
+            }
+
+            return member is IMethodSymbol { IsOverride: true } method && SymbolEqualityComparer.Default.Equals(Root(method).OriginalDefinition, Root(reaction).OriginalDefinition);
         }
 
         // A virtual or abstract method (or an override of one) first declared by a Moonwell assembly.

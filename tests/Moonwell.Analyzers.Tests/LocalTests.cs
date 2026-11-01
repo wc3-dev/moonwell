@@ -399,7 +399,7 @@ public class LocalTests
             });
             """, "private sealed class Zone : Area { }");
 
-        Assert.Equal(new[] { "MW0001: new Zone().OnUnitLeft(null!)" }, found);
+        Assert.Equal(new[] { "MW0001: new Zone().OnUnitLeft(null!)", "MW0047: new Zone().OnUnitLeft(null!)" }, found);
     }
 
     [Fact]

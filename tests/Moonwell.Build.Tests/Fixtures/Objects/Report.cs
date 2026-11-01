@@ -1,5 +1,8 @@
 using Moonwell;
 
+// The analyzer rejects new of these classes (MW0046); the Lua tests show what an object with no handle reads without it.
+#pragma warning disable MW0046
+
 namespace Objects
 {
     // What the objects read in the game: the Lua tests run the map and read the line it shows at the start.

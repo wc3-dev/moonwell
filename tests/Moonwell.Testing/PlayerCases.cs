@@ -103,7 +103,7 @@ namespace Moonwell.Testing
             player.Gold += 25;
 
             Expect.Equal(1025, player.Gold, "gold");
-            Expect.Equal(1025, world.StateOf(world.PlayerAt(1), PlayerState.Gold), "the game's gold");
+            Expect.Equal(1025, Runtime.World.StateOf(world.PlayerAt(1), PlayerState.Gold), "the game's gold");
             Expect.Equal(0, Player.One.Gold, "another player's gold");
         }
 
@@ -121,14 +121,14 @@ namespace Moonwell.Testing
             player.LumberUpkeepRate = 8;
 
             var handle = world.PlayerAt(0);
-            Expect.Equal(1, world.StateOf(handle, PlayerState.Lumber), "Lumber");
-            Expect.Equal(2, world.StateOf(handle, PlayerState.FoodUsed), "FoodUsed");
-            Expect.Equal(3, world.StateOf(handle, PlayerState.FoodCap), "FoodCap");
-            Expect.Equal(4, world.StateOf(handle, PlayerState.FoodCapCeiling), "FoodCapCeiling");
-            Expect.Equal(5, world.StateOf(handle, PlayerState.GoldGathered), "GoldGathered");
-            Expect.Equal(6, world.StateOf(handle, PlayerState.LumberGathered), "LumberGathered");
-            Expect.Equal(7, world.StateOf(handle, PlayerState.GoldUpkeepRate), "GoldUpkeepRate");
-            Expect.Equal(8, world.StateOf(handle, PlayerState.LumberUpkeepRate), "LumberUpkeepRate");
+            Expect.Equal(1, Runtime.World.StateOf(handle, PlayerState.Lumber), "Lumber");
+            Expect.Equal(2, Runtime.World.StateOf(handle, PlayerState.FoodUsed), "FoodUsed");
+            Expect.Equal(3, Runtime.World.StateOf(handle, PlayerState.FoodCap), "FoodCap");
+            Expect.Equal(4, Runtime.World.StateOf(handle, PlayerState.FoodCapCeiling), "FoodCapCeiling");
+            Expect.Equal(5, Runtime.World.StateOf(handle, PlayerState.GoldGathered), "GoldGathered");
+            Expect.Equal(6, Runtime.World.StateOf(handle, PlayerState.LumberGathered), "LumberGathered");
+            Expect.Equal(7, Runtime.World.StateOf(handle, PlayerState.GoldUpkeepRate), "GoldUpkeepRate");
+            Expect.Equal(8, Runtime.World.StateOf(handle, PlayerState.LumberUpkeepRate), "LumberUpkeepRate");
             Expect.Equal(8, player.LumberUpkeepRate, "a read");
             Expect.Equal(0, player.Gold, "Gold is apart");
         }

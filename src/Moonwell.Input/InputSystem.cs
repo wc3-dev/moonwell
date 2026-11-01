@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
 
 namespace Moonwell
 {
     /// <summary>Starts the input package; a map's generated Main calls Install when the map uses the package, with whether the map names the mouse, whether it needs the mouse's moves, and the World Editor cameras the build wrote.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static class InputSystem
     {
         /// <summary>The world the package talks to; null until Install.</summary>
@@ -35,25 +37,26 @@ namespace Moonwell
         /// names' order, the target x and y, the count n, n pairs of field code and value, and the camera type (-1 for
         /// none). Throws ArgumentException when the numbers do not hold exactly the cameras the names say.
         /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install(bool mouse, bool moves, string[] cameraNames, float[] cameras)
         {
             Install(new NativeInputWorld(), mouse, moves, cameraNames, cameras);
         }
 
         /// <summary>Installs the package on the game, listening for every mouse event, the moves included, when the mouse is on.</summary>
-        public static void Install(bool mouse, string[] cameraNames, float[] cameras)
+        internal static void Install(bool mouse, string[] cameraNames, float[] cameras)
         {
             Install(new NativeInputWorld(), mouse, mouse, cameraNames, cameras);
         }
 
         /// <summary>Installs the package on a world, listening for every mouse event, the moves included, when the mouse is on; tests give a fake one.</summary>
-        public static void Install(IInputWorld host, bool mouse, string[] cameraNames, float[] cameras)
+        internal static void Install(IInputWorld host, bool mouse, string[] cameraNames, float[] cameras)
         {
             Install(host, mouse, mouse, cameraNames, cameras);
         }
 
         /// <summary>Installs the package on a world; tests give a fake one. With the mouse, it listens for the mouse of every user player playing now, in slot order: its presses and releases, and its moves when <paramref name="moves"/> is true.</summary>
-        public static void Install(IInputWorld host, bool mouse, bool moves, string[] cameraNames, float[] cameras)
+        internal static void Install(IInputWorld host, bool mouse, bool moves, string[] cameraNames, float[] cameras)
         {
             var starts = CameraStarts(cameraNames, cameras);
             world = host;

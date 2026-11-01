@@ -5,6 +5,11 @@ namespace Moonwell
     /// <summary>Something a scope holds, and ends when the scope ends or when it ends by itself.</summary>
     public abstract class Scoped
     {
+        /// <summary>Internal, as a map's class derives from the ones Moonwell made for it: this, in a map, would have no scope to end it.</summary>
+        internal Scoped()
+        {
+        }
+
         /// <summary>The scope this object was made in, which ends it when it ends; kept after the object ends.</summary>
         [LocalSafe]
         public Scope? Parent { get; internal set; }

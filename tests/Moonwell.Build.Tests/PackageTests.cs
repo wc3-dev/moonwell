@@ -44,6 +44,25 @@ namespace Moonwell.Build.Tests
             Assert.Equal("None", runtime.Attribute("buildAction")!.Value);
         }
 
+        // The packages use each other's internals, so a mix of versions would fail in the Lua step or run wrong: NuGet refuses it instead.
+        [Theory]
+        [InlineData("Moonwell", "Moonwell.Natives")]
+        [InlineData("Moonwell.Objects", "Moonwell")]
+        [InlineData("Moonwell.Damage", "Moonwell")]
+        [InlineData("Moonwell.Maths", "Moonwell")]
+        [InlineData("Moonwell.Interactions", "Moonwell.Maths")]
+        [InlineData("Moonwell.Terrain", "Moonwell.Maths")]
+        [InlineData("Moonwell.Physics", "Moonwell.Interactions")]
+        [InlineData("Moonwell.Areas", "Moonwell.Maths")]
+        [InlineData("Moonwell.Input", "Moonwell.Maths")]
+        public void a_package_asks_for_exactly_its_own_version_of_another(string id, string other)
+        {
+            using var archive = ZipFile.OpenRead(Path.Combine(packed.Feed, id + "." + packed.Version + ".nupkg"));
+            using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == id + ".nuspec").Open());
+            var dependency = Assert.Single(XDocument.Parse(reader.ReadToEnd()).Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == other);
+            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
+        }
+
         [Fact]
         public void package_source_has_its_own_version()
         {
@@ -102,7 +121,7 @@ namespace Moonwell.Build.Tests
             var declared = files.Single(file => file.Attribute("include")!.Value.Replace('\\', '/') == "cs/net10.0/Moonwell.Objects/Core/Declared.cs");
             Assert.Equal("None", declared.Attribute("buildAction")!.Value);
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
             Assert.DoesNotContain("Analyzers", dependency.Attribute("exclude")?.Value ?? string.Empty);
         }
 
@@ -185,7 +204,7 @@ namespace Moonwell.Build.Tests
             var hit = files.Single(file => file.Attribute("include")!.Value.Replace('\\', '/') == "cs/net10.0/Moonwell.Damage/Hit.cs");
             Assert.Equal("None", hit.Attribute("buildAction")!.Value);
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -200,7 +219,7 @@ namespace Moonwell.Build.Tests
             using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == "Moonwell.Maths.nuspec").Open());
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -216,9 +235,9 @@ namespace Moonwell.Build.Tests
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependencies = nuspec.Descendants().Where(element => element.Name.LocalName == "dependency").ToList();
             var moonwell = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, moonwell.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
-            Assert.Equal(packed.Version, maths.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, maths.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -233,7 +252,7 @@ namespace Moonwell.Build.Tests
             using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == "Moonwell.Terrain.nuspec").Open());
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependency = Assert.Single(nuspec.Descendants(), element => element.Name.LocalName == "dependency" && element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, dependency.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -251,7 +270,7 @@ namespace Moonwell.Build.Tests
             foreach (var id in new[] { "Moonwell", "Moonwell.Maths", "Moonwell.Terrain", "Moonwell.Interactions" })
             {
                 var dependency = Assert.Single(dependencies, element => element.Attribute("id")!.Value == id);
-                Assert.Equal(packed.Version, dependency.Attribute("version")!.Value);
+                Assert.Equal(packed.Pinned, dependency.Attribute("version")!.Value);
             }
         }
 
@@ -268,9 +287,9 @@ namespace Moonwell.Build.Tests
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependencies = nuspec.Descendants().Where(element => element.Name.LocalName == "dependency").ToList();
             var moonwell = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, moonwell.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
-            Assert.Equal(packed.Version, maths.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, maths.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -286,9 +305,9 @@ namespace Moonwell.Build.Tests
             var nuspec = XDocument.Parse(reader.ReadToEnd());
             var dependencies = nuspec.Descendants().Where(element => element.Name.LocalName == "dependency").ToList();
             var moonwell = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell");
-            Assert.Equal(packed.Version, moonwell.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
-            Assert.Equal(packed.Version, maths.Attribute("version")!.Value);
+            Assert.Equal(packed.Pinned, maths.Attribute("version")!.Value);
         }
 
         [Fact]
@@ -464,6 +483,76 @@ namespace Moonwell.Build.Tests
             Assert.True(File.Exists(archive), log.ToString());
             var script = File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua"));
             Assert.Contains("DamageSystem.Install()", script);
+        }
+
+        // Each package is its own assembly here, as it is in a map, and most of them use core's internals.
+        [Fact]
+        public void template_map_builds_with_every_package()
+        {
+            var hive = folders.TemporaryFolderOutsideRepository();
+            var parent = folders.TemporaryFolderOutsideRepository();
+            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
+            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
+            var map = Path.Combine(parent, "Keep");
+            WriteFeedConfig(map);
+
+            var csproj = Path.Combine(map, "Keep.csproj");
+            var text = File.ReadAllText(csproj);
+            var uncommented = Regex.Replace(text, @"<!--\s*(<PackageReference Include=""Moonwell\.[A-Za-z]+"" [^>]*/>)\s*-->", "$1");
+            Assert.DoesNotContain("<!-- <PackageReference", uncommented);
+            File.WriteAllText(csproj, uncommented);
+
+            File.WriteAllText(
+                Path.Combine(map, "Every.cs"),
+                """
+                using Moonwell;
+
+                namespace Keep
+                {
+                    public sealed class Shield : Buff, IDamageTarget
+                    {
+                        public void OnTaken(Hit hit) { hit.Amount *= 0.5f; }
+                    }
+
+                    public sealed class Shop : Area
+                    {
+                        public Shop() { Shape = AreaShape.Rect(new Bounds(Vector2.Zero, Vector2.One)); }
+                    }
+
+                    public sealed class Well : Gizmo
+                    {
+                    }
+
+                    public sealed class Bolt : Missile
+                    {
+                    }
+
+                    public sealed class Aim : PlayerComponent, IMouseWatch
+                    {
+                        public override void OnGameStart() { Player.Print("" + Terrain.Height(0f, 0f)); }
+                    }
+                }
+
+                """);
+
+            var log = new StringWriter();
+            string archive;
+            try
+            {
+                archive = MapBuild.Run(map, Packed(), log);
+            }
+            catch (BuildException failure)
+            {
+                throw new Xunit.Sdk.XunitException(failure.Message + "\n" + log);
+            }
+
+            Assert.True(File.Exists(archive), log.ToString());
+            var script = File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua"));
+            Assert.Contains("DamageSystem.Install()", script);
+            Assert.Contains("Terrain.Install(", script);
+            Assert.Contains("AreaSystem.Install(", script);
+            Assert.Contains("InputSystem.Install(", script);
+            Assert.Contains("Physics.Install", script);
         }
 
         [Fact]
