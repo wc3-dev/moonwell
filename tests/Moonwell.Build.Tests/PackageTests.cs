@@ -497,7 +497,7 @@ namespace Moonwell.Build.Tests
 
                     public sealed class Shop : Area
                     {
-                        public Shop() { Shape = AreaShape.Rect(new Bounds(Vector2.Zero, Vector2.One)); }
+                        public Shop() { Shape = AreaShape.Rect(Bounds.FromCorners(Vector2.Zero, Vector2.One)); }
                     }
 
                     public sealed class Well : Gizmo
