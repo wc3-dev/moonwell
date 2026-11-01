@@ -157,6 +157,118 @@ namespace Moonwell
         [LocalSafe]
         public static Player TwentyFour => Get(23);
 
+        /// <summary>The player in the game with this colour, the first in slot order; null when nobody in the game has it.</summary>
+        [LocalSafe]
+        public static Player? ByColor(PlayerColor color)
+        {
+            var playing = Playing;
+            for (var i = 0; i < playing.Count; i++)
+            {
+                if (playing[i].Color == color)
+                {
+                    return playing[i];
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The player in the game coloured red, the lobby's red; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Red => ByColor(PlayerColor.Red);
+
+        /// <summary>The player in the game coloured blue, the lobby's blue; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Blue => ByColor(PlayerColor.Blue);
+
+        /// <summary>The player in the game coloured cyan, the lobby's teal; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Cyan => ByColor(PlayerColor.Cyan);
+
+        /// <summary>The player in the game coloured purple, the lobby's purple; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Purple => ByColor(PlayerColor.Purple);
+
+        /// <summary>The player in the game coloured yellow, the lobby's yellow; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Yellow => ByColor(PlayerColor.Yellow);
+
+        /// <summary>The player in the game coloured orange, the lobby's orange; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Orange => ByColor(PlayerColor.Orange);
+
+        /// <summary>The player in the game coloured green, the lobby's green; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Green => ByColor(PlayerColor.Green);
+
+        /// <summary>The player in the game coloured pink, the lobby's pink; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Pink => ByColor(PlayerColor.Pink);
+
+        /// <summary>The player in the game coloured light gray, the lobby's gray; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? LightGray => ByColor(PlayerColor.LightGray);
+
+        /// <summary>The player in the game coloured light blue, the lobby's light blue; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? LightBlue => ByColor(PlayerColor.LightBlue);
+
+        /// <summary>The player in the game coloured aqua, the lobby's dark green; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Aqua => ByColor(PlayerColor.Aqua);
+
+        /// <summary>The player in the game coloured brown, the lobby's brown; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Brown => ByColor(PlayerColor.Brown);
+
+        /// <summary>The player in the game coloured maroon, the lobby's maroon; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Maroon => ByColor(PlayerColor.Maroon);
+
+        /// <summary>The player in the game coloured navy, the lobby's navy; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Navy => ByColor(PlayerColor.Navy);
+
+        /// <summary>The player in the game coloured turquoise, the lobby's turquoise; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Turquoise => ByColor(PlayerColor.Turquoise);
+
+        /// <summary>The player in the game coloured violet, the lobby's violet; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Violet => ByColor(PlayerColor.Violet);
+
+        /// <summary>The player in the game coloured wheat, the lobby's wheat; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Wheat => ByColor(PlayerColor.Wheat);
+
+        /// <summary>The player in the game coloured peach, the lobby's peach; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Peach => ByColor(PlayerColor.Peach);
+
+        /// <summary>The player in the game coloured mint, the lobby's mint; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Mint => ByColor(PlayerColor.Mint);
+
+        /// <summary>The player in the game coloured lavender, the lobby's lavender; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Lavender => ByColor(PlayerColor.Lavender);
+
+        /// <summary>The player in the game coloured coal, the lobby's coal; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Coal => ByColor(PlayerColor.Coal);
+
+        /// <summary>The player in the game coloured snow, the lobby's snow; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Snow => ByColor(PlayerColor.Snow);
+
+        /// <summary>The player in the game coloured emerald, the lobby's emerald; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Emerald => ByColor(PlayerColor.Emerald);
+
+        /// <summary>The player in the game coloured peanut, the lobby's peanut; null when nobody in the game is.</summary>
+        [LocalSafe]
+        public static Player? Peanut => ByColor(PlayerColor.Peanut);
+
         /// <summary>The neutral hostile player, which owns creeps.</summary>
         [LocalSafe]
         public static Player NeutralAggressive => Get(Runtime.World.NeutralAggressiveSlot());

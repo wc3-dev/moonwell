@@ -155,6 +155,83 @@ namespace Moonwell.Testing
             Expect.True(Player.One.Color == PlayerColor.Red, "another player's colour");
         }
 
+        /// <summary>ByColor finds the player in the game with a colour, wherever a map has moved it.</summary>
+        public static void PlayersByColor(FakeWorld world)
+        {
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            world.SetSlot(2, SlotState.Playing, Controller.Computer);
+
+            Expect.Same(Player.Three, Player.ByColor(PlayerColor.Cyan), "the slot's own colour");
+            Player.Three.Color = PlayerColor.Peanut;
+
+            Expect.Same(Player.Three, Player.ByColor(PlayerColor.Peanut), "the new colour");
+            Expect.True(Player.ByColor(PlayerColor.Cyan) == null, "the colour it left");
+        }
+
+        /// <summary>ByColor looks only at players in the game: an empty slot, or one that left, is not found by the colour it holds.</summary>
+        public static void PlayersByColorInGameOnly(FakeWorld world)
+        {
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            world.SetSlot(1, SlotState.Empty, Controller.User);
+            world.SetSlot(2, SlotState.Left, Controller.User);
+
+            Expect.True(Player.ByColor(PlayerColor.Blue) == null, "an empty slot");
+            Expect.True(Player.ByColor(PlayerColor.Cyan) == null, "a slot that left");
+            Expect.Same(Player.One, Player.ByColor(PlayerColor.Red), "a player in the game");
+        }
+
+        /// <summary>When two players share a colour, ByColor gives the first in slot order.</summary>
+        public static void PlayersByColorShared(FakeWorld world)
+        {
+            world.SetSlot(1, SlotState.Playing, Controller.User);
+            world.SetSlot(3, SlotState.Playing, Controller.User);
+            Player.Four.Color = PlayerColor.Blue;
+
+            Expect.Same(Player.Two, Player.ByColor(PlayerColor.Blue), "the lower slot");
+        }
+
+        /// <summary>Each named colour gives the player in the game with that colour.</summary>
+        public static void PlayersNamedColors(FakeWorld world)
+        {
+            for (var slot = 0; slot < Player.PlayableSlots; slot++)
+            {
+                world.SetSlot(slot, SlotState.Playing, Controller.User);
+            }
+
+            Expect.Same(Player.Get(0), Player.Red, "Red");
+            Expect.Same(Player.Get(1), Player.Blue, "Blue");
+            Expect.Same(Player.Get(2), Player.Cyan, "Cyan");
+            Expect.Same(Player.Get(3), Player.Purple, "Purple");
+            Expect.Same(Player.Get(4), Player.Yellow, "Yellow");
+            Expect.Same(Player.Get(5), Player.Orange, "Orange");
+            Expect.Same(Player.Get(6), Player.Green, "Green");
+            Expect.Same(Player.Get(7), Player.Pink, "Pink");
+            Expect.Same(Player.Get(8), Player.LightGray, "LightGray");
+            Expect.Same(Player.Get(9), Player.LightBlue, "LightBlue");
+            Expect.Same(Player.Get(10), Player.Aqua, "Aqua");
+            Expect.Same(Player.Get(11), Player.Brown, "Brown");
+            Expect.Same(Player.Get(12), Player.Maroon, "Maroon");
+            Expect.Same(Player.Get(13), Player.Navy, "Navy");
+            Expect.Same(Player.Get(14), Player.Turquoise, "Turquoise");
+            Expect.Same(Player.Get(15), Player.Violet, "Violet");
+            Expect.Same(Player.Get(16), Player.Wheat, "Wheat");
+            Expect.Same(Player.Get(17), Player.Peach, "Peach");
+            Expect.Same(Player.Get(18), Player.Mint, "Mint");
+            Expect.Same(Player.Get(19), Player.Lavender, "Lavender");
+            Expect.Same(Player.Get(20), Player.Coal, "Coal");
+            Expect.Same(Player.Get(21), Player.Snow, "Snow");
+            Expect.Same(Player.Get(22), Player.Emerald, "Emerald");
+            Expect.Same(Player.Get(23), Player.Peanut, "Peanut");
+        }
+
+        /// <summary>A named colour nobody in the game has is null.</summary>
+        public static void PlayersNamedColorNobody(FakeWorld world)
+        {
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+
+            Expect.True(Player.Blue == null, "nobody is blue");
+        }
+
         /// <summary>A player's team is the game's: read and set.</summary>
         public static void PlayersTeam(FakeWorld world)
         {
