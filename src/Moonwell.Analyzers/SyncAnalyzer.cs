@@ -40,6 +40,9 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             start.RegisterOperationAction(checker.Delegates, OperationKind.Argument, OperationKind.ParameterReference);
             start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument);
             start.RegisterOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
+            start.RegisterOperationAction(checker.Write,
+                OperationKind.SimpleAssignment, OperationKind.CompoundAssignment, OperationKind.CoalesceAssignment, OperationKind.DeconstructionAssignment,
+                OperationKind.Increment, OperationKind.Decrement, OperationKind.EventAssignment, OperationKind.Argument, OperationKind.Invocation);
             start.RegisterSymbolAction(checker.Placement, SymbolKind.Method, SymbolKind.Property);
             start.RegisterSymbolAction(checker.Declaration, SymbolKind.Field, SymbolKind.Property, SymbolKind.Method, SymbolKind.NamedType);
         });
@@ -65,6 +68,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         private readonly INamedTypeSymbol?[] hashInterfaces;
         /// <summary>The interfaces that hand out a collection's items: what a loop or LINQ goes through.</summary>
         private readonly INamedTypeSymbol?[] collections;
+        /// <summary>The classes outside System.Collections whose objects a changing call changes.</summary>
+        private readonly INamedTypeSymbol?[] changingTypes;
         private readonly INamedTypeSymbol? handle;
 
         /// <summary>What each followed node of the map reaches; a node that reaches nothing rejected maps to null.</summary>
@@ -120,6 +125,13 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 compilation.GetTypeByMetadataName("System.Collections.Generic.ICollection`1"),
                 compilation.GetTypeByMetadataName("System.Collections.Generic.IReadOnlyCollection`1"),
             };
+            changingTypes = new[]
+            {
+                compilation.GetTypeByMetadataName("System.Text.StringBuilder"),
+                compilation.GetTypeByMetadataName("System.Random"),
+                compilation.GetTypeByMetadataName("Moonwell.OrderedMap`2"),
+                compilation.GetTypeByMetadataName("Moonwell.OrderedSet`1"),
+            };
             handle = compilation.GetTypeByMetadataName("Moonwell.handle");
             overriders = new(FindOverriders, LazyThreadSafetyMode.ExecutionAndPublication);
             memberValues = new(FindMemberValues, LazyThreadSafetyMode.ExecutionAndPublication);
@@ -163,7 +175,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             {
                 ReportLocal(context, operation);
             }
-            else if (IsMachineLocal(member, write) && !DeclaredName(operation, member, write) && !InNameOf(operation))
+            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write) && !InNameOf(operation))
             {
                 // 0.2.2's Name read the declared name outside the constructor too; the message says where it is now.
                 var declared = member is IPropertySymbol { Name: "Name" } && IsRuntime(member) && member.ContainingType.Name == "Unit" ? "; the declared name is Default.Name" : string.Empty;
@@ -200,7 +212,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         /// <summary>Reports what an operation inside Local.For reaches: MW0001, or MW0039 for code the analyzer cannot follow.</summary>
         private void ReportLocal(OperationAnalysisContext context, IOperation operation)
         {
-            if (Reaches(operation, new Walk()) is not { } finding)
+            if (Reaches(operation, new Walk(BlockOf(operation, context.ContainingSymbol))) is not { } finding)
             {
                 return;
             }
@@ -208,7 +220,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             var location = operation is IForEachLoopOperation loop ? loop.Collection.Syntax.GetLocation()
                 : operation is IUsingOperation usingBlock ? usingBlock.Resources.Syntax.GetLocation()
                 : operation.Syntax.GetLocation();
-            context.ReportDiagnostic(Diagnostic.Create(finding.Unseen ? Rules.Unfollowed : Rules.StateInLocal, location, finding.Message(finding.Name)));
+            var rule = finding.Unseen ? Rules.Unfollowed : finding.Written != null ? Rules.SharedWrite : Rules.StateInLocal;
+            context.ReportDiagnostic(Diagnostic.Create(rule, location, finding.Message(finding.Name), finding.Fix));
         }
 
         private const string Clock = "; it is this machine's clock: time game logic with After or Every on a scope";
@@ -438,24 +451,28 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             runtime != null && SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, runtime);
 
         /// <summary>Whether an operation is in the body of an instance constructor of a declared class, and not in a lambda or local function there, which may run later.</summary>
-        private static bool InDeclaredConstructor(IOperation operation)
+        private static bool InDeclaredConstructor(IOperation operation) =>
+            ConstructorAround(operation) is { } constructor && !constructor.Modifiers.Any(SyntaxKind.StaticKeyword)
+            && operation.SemanticModel!.GetDeclaredSymbol(constructor)?.ContainingType is { } type
+            && DeclaredAnalyzer.IsDeclared(type);
+
+        /// <summary>The constructor whose body an operation is in, and not a lambda or local function there, which may run later.</summary>
+        private static ConstructorDeclarationSyntax? ConstructorAround(IOperation operation)
         {
             for (var node = operation.Syntax; node != null; node = node.Parent)
             {
                 switch (node)
                 {
                     case AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax:
-                        return false;
+                        return null;
                     case ConstructorDeclarationSyntax constructor:
-                        return !constructor.Modifiers.Any(SyntaxKind.StaticKeyword)
-                            && operation.SemanticModel!.GetDeclaredSymbol(constructor)?.ContainingType is { } type
-                            && DeclaredAnalyzer.IsDeclared(type);
+                        return constructor;
                     case MemberDeclarationSyntax:
-                        return false;
+                        return null;
                 }
             }
 
-            return false;
+            return null;
         }
 
         public void Loop(OperationAnalysisContext context)

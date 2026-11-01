@@ -3,6 +3,17 @@ namespace Moonwell.Testing
     /// <summary>Cases that check Local.For.</summary>
     public static class LocalCases
     {
+        [MachineLocal]
+        private static int tab;
+
+        /// <summary>A field marked as one machine's compiles and holds its value, in .NET and in the game's Lua.</summary>
+        public static void MarkedFieldHoldsItsValue(FakeWorld world)
+        {
+            tab = 0;
+            Local.For(Player.Get(0), () => tab = 3);
+            Expect.Equal(3, tab, "the marked field's value");
+        }
+
         /// <summary>The action runs when the player is the one at this machine.</summary>
         public static void RunsForLocalPlayer(FakeWorld world)
         {
