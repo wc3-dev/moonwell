@@ -8,16 +8,16 @@ namespace Moonwell.Objects
 {
     /// <summary>The fields of a hero, which every standard hero class has.</summary>
     /// @CSharpLua.Ignore
-    [global::Moonwell.Objects.SharedField("uagi", "Agility", Label = "Starting Agility", Min = 1, Max = 100, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("uhpm", "MaxLife", Label = "Hit Points Maximum (Base)", Min = 1, Max = 500000, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("uint", "Intelligence", Label = "Starting Intelligence", Min = 1, Max = 100, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("ulev", "Level", Label = "Level", Min = 1, Max = 100, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("umpi", "Mana", Label = "Mana Initial Amount", Min = 0, Max = 100000, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("umpm", "MaxMana", Label = "Mana Maximum", Min = 0, Max = 100000, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("umvh", "FlyHeight", Label = "Height", Min = -1000, Max = 1000, HasLimits = true)]
-    [global::Moonwell.Objects.SharedField("unam", "Name", Label = "Name", Required = true)]
-    [global::Moonwell.Objects.SharedField("usca", "Scale", Label = "Scaling Value", Min = 0.1, Max = 10, HasLimits = true, NonNegative = true)]
-    [global::Moonwell.Objects.SharedField("ustr", "Strength", Label = "Starting Strength", Min = 1, Max = 100, HasLimits = true)]
+    [global::Moonwell.Objects.SharedField("uagi", "Agility", Label = "Starting Agility", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("uhpm", "MaxLife", Label = "Hit Points Maximum (Base)", Min = 1, Max = 500000, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("uint", "Intelligence", Label = "Starting Intelligence", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("ulev", "Level", Label = "Level", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("umpi", "Mana", Label = "Mana Initial Amount", Min = 0, Max = 100000, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("umpm", "MaxMana", Label = "Mana Maximum", Min = 0, Max = 100000, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("umvh", "FlyHeight", Label = "Height", Min = -1000, Max = 1000, HasLimits = true, Holds = typeof(float))]
+    [global::Moonwell.Objects.SharedField("unam", "Name", Label = "Name", Required = true, Holds = typeof(string))]
+    [global::Moonwell.Objects.SharedField("usca", "Scale", Label = "Scaling Value", Min = 0.1, Max = 10, HasLimits = true, NonNegative = true, Holds = typeof(float))]
+    [global::Moonwell.Objects.SharedField("ustr", "Strength", Label = "Starting Strength", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
     public abstract class StandardHero : global::Moonwell.Hero
     {
         private static readonly global::System.Collections.Generic.Dictionary<string, global::System.Type> fieldTypes =
@@ -1874,6 +1874,7 @@ namespace Moonwell.Objects
 
         /// <summary>The field <c>urqa</c>.</summary>
         [global::Moonwell.Objects.Field("urqa", Label = "Requirements - Levels")]
+        [global::Moonwell.Objects.NumberList]
         public string RequirementsLevels
         {
             get { return Fields.Get<string>(this, "urqa"); }

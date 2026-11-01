@@ -116,7 +116,7 @@ public static class Rules
         LuaCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The enums of Moonwell.Objects (ArmorType, Targets, ...) are ignored by CSharp.lua: the game's Lua has their numbers only. ToString (also x?.ToString()), a string joined (+ or +=) or interpolated with one, a list or array of them given to string.Join or string.Concat, one given to an object parameter (string.Format, string.Concat, StringBuilder.Append; Equals is left alone), and Enum methods given one (GetValues, GetNames, GetName, IsDefined, Parse, TryParse, Format, ToObject) give the number where .NET gives the name, or stop. Comparing, |, & and HasFlag work.");
+        description: "The enums of Moonwell.Objects (ArmorType, Targets, ...) are ignored by CSharp.lua: the game's Lua has their numbers only. ToString (also x?.ToString()), a string joined (+ or +=) or interpolated with one, a list or array of them given to string.Join or string.Concat, one given to an object parameter (string.Format, string.Concat, StringBuilder.Append; Equals and a declared object's Set are left alone), and Enum methods given one (GetValues, GetNames, GetName, IsDefined, Parse, TryParse, Format, ToObject) give the number where .NET gives the name, or stop. Comparing, |, & and HasFlag work.");
 
     public static readonly DiagnosticDescriptor HandleCheck = new(
         "MW0035",
@@ -139,10 +139,19 @@ public static class Rules
         ObjectsCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "A constant a class puts on a field of a standard object (an assignment, an argument of Levels, a Set by field id) is outside what World Editor allows: a number outside its range, a negative where none is allowed, an empty required name, a text or list that is too long, or a choice that is no value of its enum. The message is the one the build gives. [BeyondLimits(nameof(Property))] on the class goes past a range or a length; it never allows a negative, an empty name or a wrong choice. It also reports a [BeyondLimits] name that is no property, which lifts nothing.");
+        description: "A constant a class puts on a field of a standard object (an assignment, an argument of Levels, a Set by field id) is outside what World Editor allows: a number outside its range, a negative where none is allowed, an empty required name, a text or list that is too long, a choice that is no value of its enum, or a number list with a part that is no number. The message is the one the build gives. [BeyondLimits(nameof(Property))] on the class goes past a range or a length; it never allows a negative, an empty name, a wrong choice or a part that is no number. It also reports a [BeyondLimits] name that is no property, which lifts nothing.");
+
+    public static readonly DiagnosticDescriptor SetById = new(
+        "MW0049",
+        "Set with a value its field does not hold",
+        "{0}",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Set(\"id\", value) takes any object, so the compiler lets through a value of another type than the field holds, and an id the class does not have; the build then stops on it. The message is the one the build gives. A value holds exactly the field's type: a whole number is no float, and a choice is its enum, never its number. A computed id, and a value typed object, are left to the build.");
 
     /// <summary>The rules for the values a map's classes put on object fields.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Objects { get; } = ImmutableArray.Create(FieldRule);
+    public static ImmutableArray<DiagnosticDescriptor> Objects { get; } = ImmutableArray.Create(FieldRule, SetById);
 
     public static readonly DiagnosticDescriptor MovedChoice = new(
         "MW0011",

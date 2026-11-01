@@ -73,6 +73,12 @@ public class FieldRulesParityTests
         yield return new object[] { "at most", StormBolt, "", "RequirementsLevels = \"1,200\";" };
         yield return new object[] { "at most, lifted", StormBolt, "[BeyondLimits(nameof(RequirementsLevels))]", "RequirementsLevels = \"1,200\";" };
         yield return new object[] { "at most, in range", StormBolt, "", "RequirementsLevels = \"-5,100\";" };
+        yield return new object[] { "number list, a part that is no number", StormBolt, "", "RequirementsLevels = \"1,abc\";" };
+        yield return new object[] { "number list with no limits", Footman, "", "RequirementsLevels = \"1,abc\";" };
+        yield return new object[] { "number list, a part that is no number, lifted", StormBolt, "[BeyondLimits(nameof(RequirementsLevels))]", "RequirementsLevels = \"1,abc\";" };
+        yield return new object[] { "number list, an empty part", StormBolt, "", "RequirementsLevels = \"1,,2\";" };
+        yield return new object[] { "number list, spaces", StormBolt, "", "RequirementsLevels = \"1, 2\";" };
+        yield return new object[] { "number list, empty", StormBolt, "", "RequirementsLevels = \"\";" };
         yield return new object[] { "negative", Footman, "", "MaxLife = -5;" };
         yield return new object[] { "negative, lifted", Footman, "[BeyondLimits(nameof(MaxLife))]", "MaxLife = -5;" };
         yield return new object[] { "negative the game forbids, shared", Footman, "[BeyondLimits(nameof(Scale))]", "Scale = -1f;" };
@@ -139,7 +145,7 @@ public class FieldRulesParityTests
     public void the_cases_cover_both_outcomes_and_every_wording()
     {
         var all = Cases().Select(c => (string)c[0]).ToList();
-        foreach (var wording in new[] { "range", "or more", "at most", "negative", "level", "empty name", "too long", "too many entries", "choice", "flags choice", "float" })
+        foreach (var wording in new[] { "range", "or more", "at most", "negative", "level", "empty name", "too long", "too many entries", "choice", "flags choice", "float", "number list" })
         {
             Assert.Contains(all, name => name.Contains(wording));
         }

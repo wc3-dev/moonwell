@@ -1397,6 +1397,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>arqa</c>.</summary>
         [global::Moonwell.Objects.Field("arqa", Label = "Requirements - Levels")]
         [global::Moonwell.Objects.Limits(double.NegativeInfinity, 100)]
+        [global::Moonwell.Objects.NumberList]
         public string RequirementsLevels
         {
             get { return Fields.Get<string>(this, "arqa"); }
