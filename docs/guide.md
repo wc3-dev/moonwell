@@ -715,8 +715,14 @@ screen, `seconds: 10f`. `Package.Version` is the version of Moonwell the map is 
 says who plays it. `OnLeave(Player leavingPlayer)` runs on the game's components, then the leaving player's.
 
 `Name`, `Color` and `Team` are read and set, and `Race` read; setting `Color` also recolours the player's units.
-`a.SetAlliance(b, Alliance.Allied | Alliance.SharedVision)` sets what `a` gives `b`, one way as the game keeps it, and
-`a.AllianceWith(b)`, `a.IsAlly(b)` and `a.IsEnemy(b)` read it. `LevelOf<T>()` and `SetLevel<T>(2)` take an upgrade class;
+
+`a.MakeAllies(b)` and `a.MakeEnemies(b)` go both ways and replace what the two gave each other: `MakeEnemies` leaves
+nothing between them, and `a.MakeAllies(b, sharedVision: true)` lets each see what the other sees. `a.ShowVisionTo(b)`
+lets `b` see what `a` sees, `a.HideVisionFrom(b)` stops it and `a.ShowsVisionTo(b)` reads it: these go one way and leave
+the alliance as it is. For anything finer, `a.SetAlliance(b, Alliance.Allied | Alliance.SharedControl)` sets what `a`
+gives `b`, one way as the game keeps it, and `a.AllianceWith(b)`, `a.IsAlly(b)` and `a.IsEnemy(b)` read it.
+
+`LevelOf<T>()` and `SetLevel<T>(2)` take an upgrade class;
 `SetMaxAllowed<T>(1)` a unit or upgrade class, where 0 forbids it and `Player.NoLimit` lifts a unit's limit; and
 `SetAvailable<T>(false)` an ability class.
 

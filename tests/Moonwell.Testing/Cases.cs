@@ -808,6 +808,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "players.race", Run = PlayerCases.PlayersRace });
             list.Add(new Case { Name = "players.alliance", Run = PlayerCases.PlayersAlliance });
             list.Add(new Case { Name = "players.allied", Run = PlayerCases.PlayersAllied });
+            list.Add(new Case { Name = "players.make-allies", Run = PlayerCases.PlayersMakeAllies });
+            list.Add(new Case { Name = "players.make-allies-shared-vision", Run = PlayerCases.PlayersMakeAlliesSharedVision });
+            list.Add(new Case { Name = "players.make-enemies", Run = PlayerCases.PlayersMakeEnemies });
+            list.Add(new Case { Name = "players.alliance-with-self", Run = PlayerCases.PlayersAllianceWithSelf });
+            list.Add(new Case { Name = "players.show-vision", Run = PlayerCases.PlayersShowVision });
             list.Add(new Case { Name = "players.tech", Run = PlayerCases.PlayersTech });
             list.Add(new Case { Name = "players.no-limit", Run = PlayerCases.PlayersNoLimit });
             list.Add(new Case { Name = "players.ability-available", Run = PlayerCases.PlayersAbilityAvailable });
