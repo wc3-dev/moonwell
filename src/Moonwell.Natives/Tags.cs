@@ -27,9 +27,11 @@ namespace Moonwell
     /// @CSharpLua.Ignore
     /// <summary>
     /// The member gives a different answer, or runs, on one machine only. The analyzer rejects a call to it outside
-    /// <c>Local.For</c>, and checks the body of a map method that carries it as it checks a <c>Local.For</c> block.
+    /// <c>Local.For</c>, and checks the body of a map method that carries it as it checks a <c>Local.For</c> block. On a
+    /// field or auto-property of the map it says the value is one machine's: code of one machine may write it, and
+    /// nothing else may read it.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor | AttributeTargets.Field)]
     public sealed class MachineLocalAttribute : Attribute
     {
     }

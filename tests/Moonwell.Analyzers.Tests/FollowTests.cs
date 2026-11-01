@@ -279,8 +279,7 @@ public class FollowTests
                     public bool MoveNext() { Natives.CreateUnit(Natives.Player(0), 0, 0f, 0f, 0f); return false; }
                 }
 
-                private static int score;
-                public static int Score { get { Natives.CreateGroup(); return score; } set { score = value; } }
+                public static int Score { get { Natives.CreateGroup(); return 0; } set { } }
             """);
 
         Assert.Equal(new[]
