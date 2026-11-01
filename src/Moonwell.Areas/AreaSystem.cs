@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
 
 namespace Moonwell
 {
     /// <summary>Starts the areas package; a map's generated Main calls Install when the map uses the package, with the World Editor regions the build wrote.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static class AreaSystem
     {
         /// <summary>The world the package talks to; null until Install.</summary>
@@ -15,13 +17,14 @@ namespace Moonwell
         private static readonly Dictionary<string, Bounds> regions = new Dictionary<string, Bounds>();
 
         /// <summary>Installs the package on the game with the map's World Editor regions: their names, and four floats for each (left, bottom, right, top), in the same order.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install(string[] names, float[] rects)
         {
             Install(new NativeAreaWorld(), names, rects);
         }
 
         /// <summary>Installs the package on a world; tests give a fake one. Throws ArgumentException, and changes nothing, when the rects are not four floats for each name.</summary>
-        public static void Install(IAreaWorld host, string[] names, float[] rects)
+        internal static void Install(IAreaWorld host, string[] names, float[] rects)
         {
             if (rects.Length != names.Length * 4)
             {

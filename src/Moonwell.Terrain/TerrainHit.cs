@@ -16,7 +16,7 @@ namespace Moonwell
 
         /// <summary>Makes a hit.</summary>
         [LocalSafe]
-        public TerrainHit(Vector3 point, Vector3 normal, float fraction)
+        internal TerrainHit(Vector3 point, Vector3 normal, float fraction)
         {
             Point = point;
             Normal = normal;

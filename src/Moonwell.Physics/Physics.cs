@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
 
@@ -99,7 +100,7 @@ namespace Moonwell
         }
 
         /// <summary>Installs the package on a world; tests give a fake one. The game needs no call: the package installs itself on its native world on first use. The interactions package is installed first, on the game, if it is not; a test that gives it a fake world installs that first. A Runtime.Reset undoes the install.</summary>
-        public static void Install(IPhysicsWorld world)
+        internal static void Install(IPhysicsWorld world)
         {
             Interactions.EnsureInstalled();
             // Installed: interactions has not been installed afresh since, so the count pushes added to its Awake is still there.
@@ -120,6 +121,7 @@ namespace Moonwell
         /// </summary>
         /// <param name="bridges">The placed bridges, as the build writes them.</param>
         /// <param name="decks">The deck shapes of their types, as the build writes them.</param>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install(string bridges, string decks)
         {
             if (bridges.Length == 0)

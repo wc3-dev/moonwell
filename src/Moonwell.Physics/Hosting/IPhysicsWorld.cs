@@ -5,7 +5,7 @@ namespace Moonwell.Hosting
     /// needs, the destructables placed in the map, and the world's bounds. Types are the game's. Angles of an effect are in
     /// radians, as the natives take them; the rest of Moonwell speaks degrees, so the package converts.
     /// </summary>
-    public interface IPhysicsWorld
+    internal interface IPhysicsWorld
     {
         /// <summary>Makes an effect of a model at a place on the ground.</summary>
         effect AddEffect(string model, float x, float y);

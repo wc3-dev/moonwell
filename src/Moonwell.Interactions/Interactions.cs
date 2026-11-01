@@ -148,7 +148,7 @@ namespace Moonwell
         }
 
         /// <summary>Installs the package on a world, with a grid of its own to be made on first use; tests give a fake one. The game needs no call: the package installs itself on its native world on first use. A Runtime.Reset undoes the install.</summary>
-        public static void Install(IInteractionWorld world)
+        internal static void Install(IInteractionWorld world)
         {
             host = world;
             grid = null;

@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
 
@@ -20,13 +21,14 @@ namespace Moonwell
         private static Bounds playable;
 
         /// <summary>Installs the package on the game, with the grid the build wrote: the corners across, the corners up, the position of the first corner and the corners' text.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install(int columns, int rows, float left, float bottom, string corners)
         {
             Install(new NativeTerrainWorld(), columns, rows, left, bottom, corners);
         }
 
         /// <summary>Installs the package on a world; tests give a fake one. Throws ArgumentException, and changes nothing, when the text is not the length the grid needs.</summary>
-        public static void Install(ITerrainWorld host, int columns, int rows, float left, float bottom, string corners)
+        internal static void Install(ITerrainWorld host, int columns, int rows, float left, float bottom, string corners)
         {
             var made = new HeightGrid(columns, rows, left, bottom, corners);
             host.PlayableArea(out var minX, out var minY, out var maxX, out var maxY);

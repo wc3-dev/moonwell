@@ -1,7 +1,7 @@
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the interactions package sees it: whether a unit, item or destructable has a place, and the world's bounds. Types are the game's.</summary>
-    public interface IInteractionWorld
+    internal interface IInteractionWorld
     {
         /// <summary>Whether a unit is hidden.</summary>
         bool IsHidden(unit target);

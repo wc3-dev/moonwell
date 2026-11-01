@@ -1,5 +1,8 @@
 using Moonwell;
 
+// The analyzer rejects new of these classes (MW0046); the Lua tests show what an object with no handle reads without it.
+#pragma warning disable MW0046
+
 namespace Objects
 {
     // What the objects read in the game: the Lua tests run the map and read the line it shows at the start.
@@ -26,6 +29,12 @@ namespace Objects
             var arthas = new Arthas();
             Unit unit = arthas;
             return arthas.Default == Unit.Default<Arthas>() && unit.Default == Unit.Default<Arthas>();
+        }
+
+        // An ability has no default object: its declared values read on the object a unit has of it.
+        public static float BoltDamage(Unit unit)
+        {
+            return unit.AbilityOf<Firebolt>().Damage[2];
         }
 
         // A unit's default object: its type's values, from the build's table by type id for a type no class of the map's declares.

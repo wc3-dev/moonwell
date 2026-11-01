@@ -198,8 +198,38 @@ public static class Rules
         isEnabledByDefault: true,
         description: "A reaction of a Moonwell class (a unit's OnDamaged, a component's OnKill, a game component's OnGameStart, a buff's OnTick, an area's OnUnitEntered) is a virtual method the map overrides. One written without override, or with new, hides it: the compiler only warns (CS0114), and Moonwell never calls it. A method named On... like a reaction but with other parameters never runs as the reaction either, and on .NET Moonwell's lookup of reactions by name fails on it when the class is added, while the game's Lua takes it.");
 
+    public static readonly DiagnosticDescriptor CalledReaction = new(
+        "MW0047",
+        "Reaction called by hand",
+        "'{0}' is a reaction, which Moonwell calls when its event happens, so calling it runs the code with no event behind it; move what both need into a method of your own",
+        "Reactions",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "A reaction (an On... method of a Moonwell class or of a package's interface, public or protected) belongs to Moonwell: a map overrides it, and Moonwell calls it. A call to one, or a method group of one (Every(1f, OnTick)), runs it with no event behind it, and ties the map to how Moonwell calls it. base.OnDeath(killerUnit) inside an override of OnDeath is right, and the only call allowed.");
+
     /// <summary>The rules for reactions: the packages' interfaces (damage, mouse, physics) and Moonwell's virtual methods.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Reactions { get; } = ImmutableArray.Create(UnseenReaction, HiddenReaction);
+    public static ImmutableArray<DiagnosticDescriptor> Reactions { get; } = ImmutableArray.Create(UnseenReaction, HiddenReaction, CalledReaction);
+
+    public static readonly DiagnosticDescriptor BuildOnlyMember = new(
+        "MW0045",
+        "A member only the build's code calls",
+        "'{0}' is for the code Moonwell's build writes, and may change in any version, so a map does not call it",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "The build writes code into a map that registers its classes and starts the game, and that code compiles as part of the map, so what it calls has to be public. Moonwell hides those members from the editor (ObjectTypes.Unit, Item, Destructable, Ability, Id and BuffDisplay, Runtime.Start, each package's Install, a declared class's Declare and DeclaredValue). The rule rejects a call to one, or a method group of one, anywhere but the namespace Moonwell.Generated, which is the build's. ObjectTypes.FourCC and IdOf are a map's to call.");
+
+    public static readonly DiagnosticDescriptor NewOfGameObject = new(
+        "MW0046",
+        "new of a class whose objects the game has",
+        "'{0}' makes an object with nothing in the game behind it: {1}",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "A class of a unit, an item, a destructable or an ability describes objects the game has, and a doodad's or an upgrade's only data for the build. Their constructors are public because the code the build writes needs them, so C# accepts new Footman(), which gives an object no game object stands behind: some of its members read the class's declared values and the rest reach the game with nothing to act on. Unit.Create<T> and Item.Create<T> make one in the game, and Unit.Default<T>() and Item.Default<T>() give a class's declared values. The namespace Moonwell.Generated, which is the build's, is left alone.");
+
+    /// <summary>The rules for what only the build's code does.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> BuildOnly { get; } = ImmutableArray.Create(BuildOnlyMember, NewOfGameObject);
 
     public static readonly DiagnosticDescriptor LiveInDeclaration = new(
         "MW0012",

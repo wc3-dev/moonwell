@@ -9,6 +9,11 @@ namespace Moonwell
         // CSharp.lua gives a subclass's field a name of its own only when it sees the base's field of that name,
         // and it does not see a private one, so in Lua the two would be one field (PrivateFieldTests).
 
+        /// <summary>Internal, as what code makes sits in the tree of scopes: a map's scope of its own is a component.</summary>
+        internal Scope()
+        {
+        }
+
         /// <summary>The newest child, the first one to end.</summary>
         internal Scoped? newest;
 

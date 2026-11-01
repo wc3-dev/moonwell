@@ -4,7 +4,7 @@ using System;
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the debug mode sees it, in a development build: its chat command, keys and mouse, holding units, timing, drawing, the panel and the log; the game implements it, and the tests fake it.</summary>
-    public interface IDebugWorld
+    internal interface IDebugWorld
     {
         /// <summary>Starts delivering every player slot's chat lines that start with "-" to the action, with the slot; called once, at the start.</summary>
         void ListenChat(Action<int, string> heard);

@@ -1,7 +1,7 @@
 namespace Moonwell.Hosting
 {
     /// <summary>The states of a player the runtime reads and sets: its resources, food and upkeep.</summary>
-    public enum PlayerState
+    internal enum PlayerState
     {
         /// <summary>The gold the player has.</summary>
         Gold,

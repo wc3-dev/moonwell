@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the areas package sees it: regions and the events of units entering and leaving them, the units in a rect (hidden ones too), and the events that say a unit died or came back. Types are the game's numbers.</summary>
-    public interface IAreaWorld
+    internal interface IAreaWorld
     {
         /// <summary>Makes an empty region.</summary>
         region NewRegion();

@@ -146,7 +146,8 @@ public sealed class Champion : Human.Units.Paladin
   starts with an upper-case letter (MW0014).
 - `[Replaces]` makes the class the game's object itself: every unit of that type is made as the class.
 - `Unit.Create<Champion>(player, x, y, scope)` makes one in the game, in the scope named (scopes, below), facing 270
-  degrees unless a facing follows; `Item.Create<EmberBlade>(x, y, scope)` makes an item.
+  degrees unless a facing follows; `Item.Create<EmberBlade>(x, y, scope)` makes an item. `new Champion()` gives an
+  object with nothing in the game behind it, and is error MW0046.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -175,6 +176,9 @@ no default object, is error MW0037. On a declared class `Default` is typed as it
 members come through `Unit.Default<T>()`. Its live actions do nothing. In the class's own constructor the default
 object is what the constructor is making, so `Default` and `Unit.Default<T>()` of the class there are error MW0012:
 read the field itself (`MaxLife`, not `Default.MaxLife`).
+
+An ability class has no default object either. `unit.AbilityOf<Smite>()` is the object a unit has of it, made if the
+unit has none yet, and its fields read what the class declares. A destructable's read on one in the game.
 
 `Default` of a type made or changed in World Editor reads its values as World Editor made them; a class of the map with
 its id wins over them.
@@ -216,7 +220,9 @@ public sealed class KillCounter : UnitComponent
   player component. `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before
   anything wanted it runs none); a unit's own is `OnCreated`.
 - A reaction is a method the class overrides: one written without `override`, or with `new`, never runs, and is error
-  MW0041, as is a method named like a reaction (`On...`) with other parameters.
+  MW0041, as is a method named like a reaction (`On...`) with other parameters. Moonwell calls a reaction: a call to one
+  runs it with no event behind it and is error MW0047, except `base.OnDeath(killerUnit)` inside its own override. What a
+  reaction shares with other code goes in a method of its own.
 - A reaction's parameters say the role: `OnPickedUp(Unit carrierUnit)`, `OnUnitDied(Unit dyingUnit, Unit? killerUnit)`,
   `OnKill(Unit killedUnit)`. The killer is null when no unit's damage killed: `Kill()` or `Life = 0` from code, timed
   life running out, or a unit's own damage.
@@ -238,7 +244,9 @@ Timers are made on their scope: inside a class, `After(2f, Puff)` and `Every(1f,
 elsewhere the line names it, as `cast.Every(0.5f, Pulse)` or `Game.Instance.After(30f, Respawn)`. `Create`, `Fire`,
 `Wall.Create` and `Interact` take the scope as an argument. Nothing has a default, so a static helper is given one. A
 player is a scope too, but it lasts the whole game, and one where a scope goes is most often meant as the owner
-(`Gizmo.Create(gizmo, x, y, scope, owner)`), so it is error MW0043: write `Game.Instance`, or pass it as the owner.
+(`Gizmo.Create(gizmo, x, y, scope, owner)`), so it is error MW0043: write `Game.Instance`, or pass it as the owner. A
+map's classes cannot inherit `Scope` itself, or `Scoped`, `Actor`, `Widget` or `MapComponent`: a scope the map ends
+itself is a game component, as `var round = Game.Instance.Add(new Round());` and later `round.End();`.
 
 ```csharp
 public sealed class Respawns : UnitComponent
@@ -802,7 +810,9 @@ game with it. Both make a development build: it checks the values Moonwell recei
 `--release` makes the release build. `moonwell run --game <exe>` names the game when it is not in its usual place.
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
-`Natives.Player`. The build does not catch a
+`Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
+`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use. The
+build does not catch a
 `Dictionary` keyed by a map's own class that has a static field with a value: the map can stop while it loads, with
 nothing on the screen. Key by the handle, or set the field on first use. Moonwell's classes, `Unit` and the rest, are
 safe keys.

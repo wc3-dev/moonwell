@@ -8,6 +8,11 @@ namespace Moonwell
     {
         // The instance fields are internal, not private, as a map's subclass may name a field of its own the same (see Scope).
 
+        /// <summary>Internal, as an actor stands for something of the game: a map's own object with a place is a gizmo.</summary>
+        internal Actor()
+        {
+        }
+
         /// <summary>The components in add order; a removed one is null until the list is compacted.</summary>
         internal List<Component?> components = new List<Component?>();
 

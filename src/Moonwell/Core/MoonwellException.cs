@@ -6,7 +6,7 @@ namespace Moonwell
     public sealed class MoonwellException : Exception
     {
         /// <summary>Makes the error with its message.</summary>
-        public MoonwellException(string message)
+        internal MoonwellException(string message)
             : base(message)
         {
         }

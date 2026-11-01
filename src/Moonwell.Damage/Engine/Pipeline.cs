@@ -394,7 +394,7 @@ namespace Moonwell
                 burst.Targets++;
             }
 
-            burst.Hits.Add(hit);
+            burst.hits.Add(hit);
         }
 
         /// <summary>Puts the hit's armor on the target, whether the game's armor setter sets the armor with its bonuses or without them, and remembers what puts the target's own back.</summary>
