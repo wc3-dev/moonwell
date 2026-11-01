@@ -29,6 +29,25 @@ public class LuaTests
     }
 
     [Fact]
+    public void a_choice_given_to_a_declared_objects_set_is_not_made_into_text()
+    {
+        Assert.Empty(MapCode.CheckFile("""
+            using Moonwell.Objects;
+
+            namespace Map
+            {
+                public class Archer : Human.Units.Footman
+                {
+                    public Archer()
+                    {
+                        Set("ua1w", WeaponType.Missile);
+                    }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void using_static_natives_is_rejected()
     {
         Assert.Equal(new[] { "MW0008: using static Moonwell.Natives;", "MW0008: using static Natives;" },

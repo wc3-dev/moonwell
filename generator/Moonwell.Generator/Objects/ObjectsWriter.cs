@@ -265,7 +265,8 @@ public static class ObjectsWriter
 
     /// <summary>
     /// The <c>[SharedField]</c> of a shared field, with the rules a property of it would carry (<see cref="RuleAttributes"/>):
-    /// its label, its range with <c>HasLimits</c>, <c>NonNegative</c> and <c>Required</c>.
+    /// its label, its range with <c>HasLimits</c>, <c>NonNegative</c> and <c>Required</c>, and in <c>Holds</c> the type its
+    /// live member's value is declared in.
     /// </summary>
     /// <exception cref="InvalidOperationException">The field has a rule or a type <c>[SharedField]</c> cannot carry.</exception>
     private static string SharedFieldAttribute(Field field, string member)
@@ -299,7 +300,7 @@ public static class ObjectsWriter
             text.Append(", Required = true");
         }
 
-        return text.Append(")]").ToString();
+        return text.Append($", Holds = typeof({PropertyType(field)}))]").ToString();
     }
 
     // "The standard objects of the group Human.", "The standard units of the group Human.", "The standard items."
@@ -517,7 +518,7 @@ public static class ObjectsWriter
     {
         var id = Literal(field.Id);
         var element = ElementType(field);
-        text.Append($"{indent}/// <summary>The field <c>{Xml(field.Id)}</c>.</summary>\n");
+        text.Append($"{indent}/// <summary>{FieldSummary(field)}</summary>\n");
         var label = field.Rules.Label == null ? "" : $", Label = {Literal(field.Rules.Label)}";
         text.Append($"{indent}[{Root}.Field({id}{label})]\n");
         foreach (var rule in RuleAttributes(field))
@@ -545,11 +546,59 @@ public static class ObjectsWriter
     }
 
     /// <summary>
+    /// The hover of a field's property: its World Editor label, its id and what it allows, in the wording of the build's
+    /// errors (<c>Acquisition Range (uacq), 0 to 20000.</c>); <c>The field <c>ufoo</c>.</c> for a field with no label.
+    /// </summary>
+    private static string FieldSummary(Field field)
+    {
+        var rules = field.Rules;
+        var id = Xml(field.Id);
+        var summary = rules.Label == null ? $"The field <c>{id}</c>" : $"{Xml(rules.Label)} ({id})";
+        var allowed = new List<string>();
+        if (IsLimited(field))
+        {
+            allowed.Add(RangeText(rules.Min, rules.Max) + (field.Type == FieldType.String ? " for each number" : ""));
+        }
+        else if (IsNumber(field) && rules.NoNegative)
+        {
+            allowed.Add("0 or more");
+        }
+
+        if (rules.Required)
+        {
+            allowed.Add("not empty");
+        }
+
+        if (rules.MaxLength.HasValue)
+        {
+            allowed.Add($"at most {rules.MaxLength.Value.ToString(CultureInfo.InvariantCulture)} characters");
+        }
+
+        if (rules.MaxEntries.HasValue)
+        {
+            allowed.Add($"at most {rules.MaxEntries.Value.ToString(CultureInfo.InvariantCulture)} entries");
+        }
+
+        return string.Join(", ", new[] { summary }.Concat(allowed)) + ".";
+    }
+
+    // A range as the build's errors write it; a field with neither end has no range to write.
+    private static string RangeText(double? min, double? max)
+    {
+        if (!min.HasValue)
+        {
+            return $"at most {Number(max!.Value)}";
+        }
+
+        return max.HasValue ? $"{Number(min.Value)} to {Number(max.Value)}" : $"{Number(min.Value)} or more";
+    }
+
+    /// <summary>
     /// The rule attributes of a field's property, in this order and only those the field has: <c>[Limits]</c> for a
     /// number field (or a number list held as text) with a <c>minVal</c> or <c>maxVal</c>; <c>[NonNegative]</c> for one
-    /// that allows no negative (<see cref="FieldRules.NoNegative"/>); <c>[Required]</c>; <c>[MaxLength]</c>;
-    /// <c>[MaxEntries]</c>. A choice has none, as its enum is its rule, unless World Editor lists only some of the enum's
-    /// values (<see cref="ChoiceType.Partial"/>): then it has <c>[ListedValues]</c>.
+    /// that allows no negative (<see cref="FieldRules.NoNegative"/>); <c>[NumberList]</c>; <c>[Required]</c>;
+    /// <c>[MaxLength]</c>; <c>[MaxEntries]</c>. A choice has none, as its enum is its rule, unless World Editor lists
+    /// only some of the enum's values (<see cref="ChoiceType.Partial"/>): then it has <c>[ListedValues]</c>.
     /// </summary>
     private static List<string> RuleAttributes(Field field)
     {
@@ -569,6 +618,11 @@ public static class ObjectsWriter
         if (IsNumber(field) && rules.NoNegative)
         {
             attributes.Add($"[{Root}.NonNegative]");
+        }
+
+        if (rules.NumberList)
+        {
+            attributes.Add($"[{Root}.NumberList]");
         }
 
         if (rules.Required)

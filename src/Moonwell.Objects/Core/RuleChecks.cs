@@ -27,6 +27,7 @@ namespace Moonwell.Objects
     /// <item>A choice that is no value of its enum: <c>only the values of AttackType</c>, and for a flags enum
     /// <c>only the values of Targets and their combinations</c>; a value World Editor does not list for the field
     /// (<see cref="ListedValuesAttribute"/>): <c>only the values of WeaponSound that World Editor lists</c>.</item>
+    /// <item>A part of a number list that is no number: <c>only numbers separated by commas</c>.</item>
     /// </list>
     /// <para>
     /// The value is shown as C# would print it in the invariant culture (<c>600000</c>, <c>0.5</c>, a choice as its number);
@@ -41,6 +42,7 @@ namespace Moonwell.Objects
         // The analyzer (MW0009, FieldRulesAnalyzer in Moonwell.Analyzers) repeats these rules and messages, and
         // FieldRulesParityTests holds the two to one text: a rule or wording added or changed here gets a row there.
         private const string Lift = "; [BeyondLimits] goes past it";
+        private const string Numbers = "only numbers separated by commas";
 
         // A Dictionary under a lock, as in FieldChecks: the Lua runtime has no System.Collections.Concurrent. Its values
         // are typed object: CSharp.lua writes Lua for the generic types a file uses even when its class is ignored, and a
@@ -166,15 +168,16 @@ namespace Moonwell.Objects
                 throw rules.Error(shown + " (" + Count(entries.Length) + " entries)", "at most " + Count(rules.MaxEntries.Value) + " entries" + Lift, level, putAt);
             }
 
-            if (rules.HasLimits || rules.NonNegative)
+            if (rules.NumberList)
             {
-                // A number list held as text (intList, unrealList): each number is checked; a part that is no number is left to the game.
                 foreach (var entry in entries)
                 {
-                    if (double.TryParse(entry.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+                    if (!double.TryParse(entry.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
                     {
-                        CheckNumber(rules, level, number, false, shown, " for each number", putAt);
+                        throw rules.Error(shown, Numbers, level, putAt);
                     }
+
+                    CheckNumber(rules, level, number, false, shown, " for each number", putAt);
                 }
             }
         }
@@ -327,6 +330,7 @@ namespace Moonwell.Objects
                 Max = limits == null ? double.PositiveInfinity : limits.Max;
                 NonNegative = info.IsDefined(typeof(NonNegativeAttribute), false);
                 Listed = info.GetCustomAttribute<ListedValuesAttribute>(false)?.Numbers;
+                NumberList = info.IsDefined(typeof(NumberListAttribute), false);
                 Required = info.IsDefined(typeof(RequiredAttribute), false);
                 MaxLength = info.GetCustomAttribute<MaxLengthAttribute>(false)?.Length;
                 MaxEntries = info.GetCustomAttribute<MaxEntriesAttribute>(false)?.Count;
@@ -356,6 +360,7 @@ namespace Moonwell.Objects
             public bool NonNegative { get; }
 
             public int[]? Listed { get; }
+            public bool NumberList { get; }
 
             public bool Required { get; }
 

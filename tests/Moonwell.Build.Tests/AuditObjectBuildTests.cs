@@ -191,6 +191,31 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_choice_set_by_id_is_written_as_one_set_by_name()
+        {
+            var staged = Build("""
+                using Moonwell.Objects;
+
+                namespace Sample
+                {
+                    [ObjectId("h001")]
+                    public sealed class Archer : Human.Units.Footman
+                    {
+                        public Archer()
+                        {
+                            Set("ua1w", WeaponType.Missile);
+                            Set("ua1g", Targets.Air | Targets.Ground);
+                        }
+                    }
+                }
+                """);
+
+            var units = ReadUnits(staged);
+            Assert.Equal(new[] { "0=missile" }, LevelsOf(units, "h001", "ua1w"));
+            Assert.Equal(new[] { "0=air,ground" }, LevelsOf(units, "h001", "ua1g"));
+        }
+
+        [Fact]
         public void the_placement_fields_take_world_editors_names_and_write_the_games()
         {
             // Decision 70: World Editor's "Placement Requires: Buildable, Unblighted" is the game's preventPlace "blighted,unbuildable";

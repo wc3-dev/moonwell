@@ -40,6 +40,7 @@ public enum FieldType
 /// negatives there (a button at -11 is hidden, an item's bonus of -2), so a map may too. Set by
 /// <see cref="Fields.WithStandardNegatives"/>.
 /// </param>
+/// <param name="NumberList">True for a list of numbers held as text (<c>intList</c>, <c>unrealList</c>): each of its parts is a number.</param>
 public sealed record FieldRules(
     double? Min,
     double? Max,
@@ -49,7 +50,8 @@ public sealed record FieldRules(
     string? Label,
     int? MaxEntries = null,
     bool Required = false,
-    bool StandardNegative = false)
+    bool StandardNegative = false,
+    bool NumberList = false)
 {
     /// <summary>The rules of a field with none.</summary>
     public static FieldRules None { get; } = new FieldRules(null, null, false, false, null, null);
@@ -544,7 +546,16 @@ public static class Fields
             }
         }
 
-        return new FieldRules(min, max, nonNegative, canBeEmpty, maxLength, label.Length == 0 ? null : label, maxEntries, required);
+        return new FieldRules(
+            min,
+            max,
+            nonNegative,
+            canBeEmpty,
+            maxLength,
+            label.Length == 0 ? null : label,
+            maxEntries,
+            required,
+            NumberList: type == "intList" || type == "unrealList");
     }
 
     // A limit cell as a number; null when the cell is empty, or (for a text field) names a text size such as TTDesc.

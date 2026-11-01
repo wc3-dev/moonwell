@@ -81,6 +81,8 @@ public sealed class Champion : Human.Units.Paladin
 }
 ```
 
+- A field's hover in the editor gives World Editor's label, its id and what it allows:
+  `Acquisition Range (uacq), 0 to 20000.`
 - A field with levels takes `Levels(75f, 150f, 225f)`, one value for each level (another count fails the build),
   `PerLevel(level => ...)` to compute each level, or one value for every level: an upgrade's
   `Name = "Sharpened Blades"`. Raising an ability's `LevelCount` past the game's writes every level you give; a field
@@ -139,7 +141,10 @@ public sealed class Champion : Human.Units.Paladin
   first comma, quoted or not, so a comma in it fails the build, and placeholders, which hold one, cannot go in it. A new
   buff that keeps a standard text with a comma (Flame Strike's) fails too: set `TooltipExtended`. Write `‚` (U+201A)
   for a comma there: the game draws it as one and does not cut the text at it.
-- A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`.
+- A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`, or `Set("ua1w", WeaponType.Missile)` for a
+  choice. The value has exactly the type the field holds, so `1.5f` or `5` in the wrong field, a choice's number and an
+  id the class doesn't have are error MW0049. A list of numbers held as text (`RequirementsLevels = "1,2"`) is only
+  numbers: any other part is error MW0009, which `[BeyondLimits]` doesn't lift.
 - A constructor may compute, but must not call the game: the build fails at such a line. A live member with no declared
   field there (`Life = 300`, `Kill()`, `X`) is error MW0012, which says what to set instead where there is one: a unit
   starts with full life, so set `MaxLife`.
@@ -332,7 +337,8 @@ its comment.
 `OnDamaged` sees a hit after armor. `source.Damage(target, 10f)` deals damage from code, as a spell does: magic,
 of the spells attack type. `DamageKind.Fire`, `attackType:`, `isAttack:`, `ranged:`, `sound:` and `tag:` (read back as
 `damage.Tag`) change it. The reactions run inside the call, which returns the damage they saw, or null when the game
-dealt nothing.
+dealt nothing. In a unit's own class, write `this.Damage(target, 10f)`: there `Damage` alone is the field, attack 1's
+base damage, and is error MW0050.
 
 For more, add the `Moonwell.Damage` package to the project, at the same version as
 Moonwell (the template's `.csproj` has the line, commented). The build starts it once the map's code uses one of its
@@ -730,6 +736,12 @@ which is in each player's language. The build rejects, as compile errors:
 - A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
   localised names, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
   reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
+- A change inside it to something every machine shares (MW0048), in the block or in what it calls: a field or
+  auto-property of your map, a local or parameter from outside the block, an event of your map, or a collection held in
+  one of those (`Scores.Add(x)`, `Scores[i] = x`, on .NET's collections, arrays, `StringBuilder`, `Random`, `OrderedMap`
+  and `OrderedSet`). What the block makes is free: a constructor writing its own object, `new Panel { Count = 3 }`, a
+  local that only holds a `new` of the block, and a struct in a local. A method called on a new object is still checked.
+  A list assigned to a local later, given as a parameter, or returned by a method or a property with a body, is not seen.
 - `new Random()` without a seed, anywhere (MW0038): it reseeds the game's own random generator with each machine's
   clock. Use `Natives.GetRandomInt`, or `new Random(seed)` with a seed every machine shares.
 - `GetHandleId` (MW0003), looping over a `Dictionary` or `HashSet`, or one held as `IDictionary`, `ISet` or an
@@ -746,11 +758,16 @@ table, so code that runs every tick over many keys loops by index with `KeyAt` a
 
 `[MachineLocal]` on a method of your own makes it code of one machine: its body is checked as a `Local.For` block, and
 calling it outside one is MW0002. Where the code runs on every machine anyway, on an override of Moonwell's
-(`OnGameStart`) or on a lambda given to a scope's `Every`, the attribute is MW0040. `[SyncUnchecked]` on a method turns the
-checks off in its own body, except `decimal`; `Local.For` still follows a method so marked, so a block whose changes are
-meant is marked itself: `Local.For(p, [SyncUnchecked] () => ...)`. `Natives.BlzSendSyncData` inside `Local.For` sends a
-machine-local value to every machine. Not checked: a C# field written inside `Local.For` and read by code that runs on
-every machine.
+(`OnGameStart`) or on a lambda given to a scope's `Every`, the attribute is MW0040.
+
+`[MachineLocal]` on a field or auto-property of your own makes its value one machine's: code of one machine writes it,
+and any other read is MW0002, `+=`, `++` and `.Add` included. A plain `=` is allowed anywhere, as it reads nothing: a
+reset in a constructor needs no block. A local or an event cannot be marked.
+
+`[SyncUnchecked]` on a method turns the checks off in its own body, except `decimal`; `Local.For` still follows a method
+so marked, so a block whose changes are meant is marked itself: `Local.For(p, [SyncUnchecked] () => ...)`. That is the
+way for MW0048's false alarms: a lazy `instance ??= new Hud()`, or a cache filled inside a block.
+`Natives.BlzSendSyncData` inside `Local.For` sends a machine-local value to every machine.
 
 A `#pragma warning disable`, `NoWarn` or `.editorconfig` on one of these rules removes its protection, and nothing says
 so. To turn the checks off where you mean it, use `[SyncUnchecked]`.

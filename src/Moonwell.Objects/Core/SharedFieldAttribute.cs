@@ -39,6 +39,9 @@ namespace Moonwell.Objects
         /// <summary>True when the field allows no empty or null text, as <see cref="RequiredAttribute"/> gives a property.</summary>
         public bool Required { get; set; }
 
+        /// <summary>The type the field holds, which a value put by its id has to be; the analyzer reads it, as a shared field has no property to say so.</summary>
+        public Type? Holds { get; set; }
+
         /// <summary>Marks a class as having the shared field with this id, whose live value is the core member.</summary>
         public SharedFieldAttribute(string id, string member)
         {

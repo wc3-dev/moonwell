@@ -95,8 +95,17 @@ public static class Rules
         isEnabledByDefault: true,
         description: "Code the analyzer checks as code of one machine must not also run on every machine, where its machine-local reads desync the game: a delegate parameter given to Local.For (whose callers' lambdas are checked as blocks) called outside it, and [MachineLocal] on an override or an interface implementation (Moonwell calls OnGameStart on every machine) or on a lambda given to a method or event that runs it (a scope's Every). [MachineLocal] on an override of a map method that has it too is right." + Silence);
 
+    public static readonly DiagnosticDescriptor SharedWrite = new(
+        "MW0048",
+        "Shared value changed inside Local.For",
+        "{0}; inside Local.For that happens on one machine only, so code every machine runs would see a different value, which desyncs the game; {1}",
+        Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Code inside Local.For or a [MachineLocal] method, and the map's methods it calls, runs on one player's machine, so what it changes that lasts after it differs from the other machines. The rule rejects a write (=, +=, ??=, ++, ref, out, a tuple's assignment) to a field or auto-property of the map or to a local or parameter from outside the block, adding to an event of the map, and a call that changes one's value: an element set, and Add, Remove, Clear and the like on .NET's collections, an array, a StringBuilder, a Random, an OrderedMap or an OrderedSet. [MachineLocal] on a field or auto-property makes it one machine's: code of one machine writes it, and any read elsewhere is MW0002, though a plain = is allowed there. A local or an event cannot be marked. What is made in the block is free: a constructor writing its own object, a static constructor its own class, an object initializer, a local holding only a new from the block, and a struct in a local of the block. A method called on a new object is still checked, since a method is checked once and not for each object. A collection assigned to a local later, given as a parameter, or returned by a method or a property with a body is not seen." + Silence);
+
     public static ImmutableArray<DiagnosticDescriptor> All { get; } =
-        ImmutableArray.Create(StateInLocal, LocalOutside, HandleId, HashLoop, NumberType, Desyncs, UnseededRandom, Unfollowed, OneMachineCode);
+        ImmutableArray.Create(StateInLocal, LocalOutside, HandleId, HashLoop, NumberType, Desyncs, UnseededRandom, Unfollowed, OneMachineCode, SharedWrite);
 
     private const string LuaCategory = "Lua";
 
@@ -116,7 +125,7 @@ public static class Rules
         LuaCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The enums of Moonwell.Objects (ArmorType, Targets, ...) are ignored by CSharp.lua: the game's Lua has their numbers only. ToString (also x?.ToString()), a string joined (+ or +=) or interpolated with one, a list or array of them given to string.Join or string.Concat, one given to an object parameter (string.Format, string.Concat, StringBuilder.Append; Equals is left alone), and Enum methods given one (GetValues, GetNames, GetName, IsDefined, Parse, TryParse, Format, ToObject) give the number where .NET gives the name, or stop. Comparing, |, & and HasFlag work.");
+        description: "The enums of Moonwell.Objects (ArmorType, Targets, ...) are ignored by CSharp.lua: the game's Lua has their numbers only. ToString (also x?.ToString()), a string joined (+ or +=) or interpolated with one, a list or array of them given to string.Join or string.Concat, one given to an object parameter (string.Format, string.Concat, StringBuilder.Append; Equals and a declared object's Set are left alone), and Enum methods given one (GetValues, GetNames, GetName, IsDefined, Parse, TryParse, Format, ToObject) give the number where .NET gives the name, or stop. Comparing, |, & and HasFlag work.");
 
     public static readonly DiagnosticDescriptor HandleCheck = new(
         "MW0035",
@@ -139,10 +148,19 @@ public static class Rules
         ObjectsCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "A constant a class puts on a field of a standard object (an assignment, an argument of Levels, a Set by field id) is outside what World Editor allows: a number outside its range, a negative where none is allowed, an empty required name, a text or list that is too long, or a choice that is no value of its enum. The message is the one the build gives. [BeyondLimits(nameof(Property))] on the class goes past a range or a length; it never allows a negative, an empty name or a wrong choice. It also reports a [BeyondLimits] name that is no property, which lifts nothing.");
+        description: "A constant a class puts on a field of a standard object (an assignment, an argument of Levels, a Set by field id) is outside what World Editor allows: a number outside its range, a negative where none is allowed, an empty required name, a text or list that is too long, a choice that is no value of its enum, or a number list with a part that is no number. The message is the one the build gives. [BeyondLimits(nameof(Property))] on the class goes past a range or a length; it never allows a negative, an empty name, a wrong choice or a part that is no number. It also reports a [BeyondLimits] name that is no property, which lifts nothing.");
+
+    public static readonly DiagnosticDescriptor SetById = new(
+        "MW0049",
+        "Set with a value its field does not hold",
+        "{0}",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Set(\"id\", value) takes any object, so the compiler lets through a value of another type than the field holds, and an id the class does not have; the build then stops on it. The message is the one the build gives. A value holds exactly the field's type: a whole number is no float, and a choice is its enum, never its number. A computed id, and a value typed object, are left to the build.");
 
     /// <summary>The rules for the values a map's classes put on object fields.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Objects { get; } = ImmutableArray.Create(FieldRule);
+    public static ImmutableArray<DiagnosticDescriptor> Objects { get; } = ImmutableArray.Create(FieldRule, SetById);
 
     public static readonly DiagnosticDescriptor MovedChoice = new(
         "MW0011",
@@ -155,6 +173,18 @@ public static class Rules
 
     /// <summary>The rules for names that moved between Moonwell's namespaces.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Moved { get; } = ImmutableArray.Create(MovedChoice);
+
+    public static readonly DiagnosticDescriptor BareDamage = new(
+        "MW0050",
+        "Damage without this in a unit class",
+        "'Damage' here is the unit's field, attack 1's base damage: write this.Damage(...) to deal damage",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Damage(target, 10f) in a unit class does not compile: the declared field Damage is the name that binds, and C# finds an extension method only after a dot, so the compiler's error (CS1955) says only that the field is no method. this.Damage(target, 10f) deals the damage.");
+
+    /// <summary>The rule for a bare Damage(...) in a unit class.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> BareDamages { get; } = ImmutableArray.Create(BareDamage);
 
     public static readonly DiagnosticDescriptor PlayerScope = new(
         "MW0043",

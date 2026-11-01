@@ -324,6 +324,48 @@ public class ObjectsWriterTests
     }
 
     [Fact]
+    public void a_fields_hover_is_its_label_its_id_and_what_it_allows()
+    {
+        Assert.Equal("Defense Base (uabc), 0 to 1000.", Hover(new FieldRules(0, 1000, false, false, null, "Defense Base")));
+        Assert.Equal("Reach (uabc), 1 or more.", Hover(new FieldRules(1, null, false, false, null, "Reach")));
+        Assert.Equal("Reach (uabc), at most 9.", Hover(new FieldRules(null, 9, false, false, null, "Reach")));
+        Assert.Equal("Reach (uabc), 0 or more.", Hover(new FieldRules(null, null, true, false, null, "Reach")));
+        Assert.Equal("Tint &amp; Glow (uabc).", Hover(new FieldRules(null, null, false, false, null, "Tint & Glow")));
+        Assert.Equal("The field <c>uabc</c>, 0 to 5.", Hover(new FieldRules(0, 5, false, false, null, null)));
+        Assert.Equal("The field <c>uabc</c>.", Hover(FieldRules.None));
+    }
+
+    [Fact]
+    public void a_text_or_list_fields_hover_says_what_it_allows()
+    {
+        Assert.Equal("Suffix (uabc), at most 50 characters.", Hover(new FieldRules(null, null, false, false, 50, "Suffix"), FieldType.String));
+        Assert.Equal("Names (uabc), at most 12 entries.", Hover(new FieldRules(null, null, false, false, null, "Names", 12), FieldType.String));
+        Assert.Equal("Name (uabc), not empty.", Hover(new FieldRules(null, null, false, false, null, "Name", null, true), FieldType.String));
+        Assert.Equal(
+            "Levels (uabc), at most 100 for each number.",
+            Hover(new FieldRules(null, 100, false, false, null, "Levels"), FieldType.String));
+    }
+
+    [Fact]
+    public void a_fields_hover_is_written_on_its_property()
+    {
+        Assert.Contains(
+            "        /// <summary>Cooldown (acdn), 0 to 3600.</summary>\n"
+            + "        [global::Moonwell.Objects.Field(\"acdn\", Label = \"Cooldown\")]\n",
+            MiniFiles.Value["Kinds/StandardAbility.g.cs"]);
+    }
+
+    private static string Hover(FieldRules rules, FieldType type = FieldType.Int)
+    {
+        var field = new Field(Kind.Unit, "uabc", "Abc", type, null, false, 0, false, Array.Empty<string>(), "abc", Rules: rules);
+        var source = ObjectsWriter.Kind(Kind.Unit, new[] { field }, false);
+        var line = Assert.Single(source.Split('\n'), candidate => candidate.Contains("[global::Moonwell.Objects.Field(", StringComparison.Ordinal));
+        var lines = source.Split('\n');
+        var summary = lines[Array.IndexOf(lines, line) - 1].Trim();
+        return summary.Substring("/// <summary>".Length, summary.Length - "/// <summary>".Length - "</summary>".Length);
+    }
+
+    [Fact]
     public void a_field_the_metadata_forces_not_to_be_negative_carries_non_negative()
     {
         // acdn has forceNonNeg 1 and no standard negative; uhpm and Htb1 (forceNonNeg 0) have only their range.
@@ -346,6 +388,16 @@ public class ObjectsWriterTests
         Assert.Contains("[global::Moonwell.Objects.Limits(-1000, 1000)]\n        public float FlyHeight\n", source);
         Assert.DoesNotContain("NonNegative", source);
         Assert.Contains("        [global::Moonwell.Objects.Field(\"ufoo\")]\n        public int Foo\n", source);
+    }
+
+    [Fact]
+    public void a_number_list_held_as_text_says_so()
+    {
+        var list = new Field(Kind.Unit, "urqa", "RequirementsLevels", FieldType.String, null, false, 0, false, Array.Empty<string>(), "requiresamount",
+            Rules: new FieldRules(null, null, false, true, null, "Requirements - Levels", NumberList: true));
+        var source = ObjectsWriter.Kind(Kind.Unit, new[] { list }, false);
+
+        Assert.Contains("[global::Moonwell.Objects.NumberList]\n        public string RequirementsLevels\n", source);
     }
 
     [Fact]
@@ -399,7 +451,7 @@ public class ObjectsWriterTests
         Assert.DoesNotContain("\"ustr\"", unit);
         Assert.DoesNotContain("Strength", unit);
         Assert.Contains("[\"ustr\"] = typeof(int),", hero);
-        Assert.Contains("[global::Moonwell.Objects.SharedField(\"ustr\", \"Strength\", Label = \"Starting Strength\", Min = 1, Max = 100, HasLimits = true)]\n", hero);
+        Assert.Contains("[global::Moonwell.Objects.SharedField(\"ustr\", \"Strength\", Label = \"Starting Strength\", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]\n", hero);
         Assert.Contains("public abstract class StandardHero : global::Moonwell.Hero\n", hero);
     }
 
@@ -412,11 +464,11 @@ public class ObjectsWriterTests
 
         Assert.Contains(
             "    /// @CSharpLua.Ignore\n"
-            + "    [global::Moonwell.Objects.SharedField(\"uhpm\", \"MaxLife\", Label = \"Hit Points Maximum (Base)\", Min = 1, Max = 500000, HasLimits = true)]\n",
+            + "    [global::Moonwell.Objects.SharedField(\"uhpm\", \"MaxLife\", Label = \"Hit Points Maximum (Base)\", Min = 1, Max = 500000, HasLimits = true, Holds = typeof(int))]\n",
             unit);
-        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"unam\", \"Name\", Label = \"Name\", Required = true)]\n", unit);
-        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"umpm\", \"MaxMana\", Label = \"Mana Maximum\", Min = 0, Max = 100000, HasLimits = true)]\n", unit);
-        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"iuse\", \"Charges\", Label = \"Number of Charges\", Min = 0, Max = 1000, HasLimits = true)]\n", item);
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"unam\", \"Name\", Label = \"Name\", Required = true, Holds = typeof(string))]\n", unit);
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"umpm\", \"MaxMana\", Label = \"Mana Maximum\", Min = 0, Max = 100000, HasLimits = true, Holds = typeof(int))]\n", unit);
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"iuse\", \"Charges\", Label = \"Number of Charges\", Min = 0, Max = 1000, HasLimits = true, Holds = typeof(int))]\n", item);
         foreach (var old in new[] { "HitPoints", "ManaPoints", "UnitLevel", "ScalingValue", "Height", "Name" })
         {
             Assert.DoesNotContain(" " + old + "\n        {", unit);
