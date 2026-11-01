@@ -103,6 +103,21 @@ public class SetByIdTests
     }
 
     [Fact]
+    public void a_shared_field_that_does_not_say_what_it_holds_is_left_to_the_build()
+    {
+        Assert.Empty(MapCode.CheckFile(FieldRulesTests.File("""
+            [SharedField("zzz1", "Unnamed")]
+            public class Marked : Moonwell.Objects.Human.Units.Footman
+            {
+                public Marked()
+                {
+                    Set("zzz1", 1.5f);
+                }
+            }
+            """)));
+    }
+
+    [Fact]
     public void a_set_that_is_not_the_objects_set_is_left_alone()
     {
         Assert.Empty(MapCode.CheckFile(FieldRulesTests.File("""

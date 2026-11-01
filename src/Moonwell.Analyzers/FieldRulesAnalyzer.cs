@@ -135,7 +135,8 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
         var property = PropertyOf(holder, id);
         var shared = property == null ? SharedFieldOf(holder, id, null) : null;
         var held = property != null ? property.Type : shared == null ? null : HeldByShared(shared);
-        if (WrongSet(context.Compilation, method.ContainingType, holder, id, held, oneLevel, level, value) is { } wrong)
+        // A [SharedField] that does not say what it holds is still the field: only the build can tell its type.
+        if ((held != null || shared == null) && WrongSet(context.Compilation, method.ContainingType, holder, id, held, oneLevel, level, value) is { } wrong)
         {
             context.ReportDiagnostic(Diagnostic.Create(Rules.SetById, value.Syntax.GetLocation(), wrong));
             return;
