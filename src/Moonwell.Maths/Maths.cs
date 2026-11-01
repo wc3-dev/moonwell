@@ -125,7 +125,7 @@ namespace Moonwell
 
         /// <summary>The facing in degrees from the first point to the second, 0 to 360 (0 along +X, 90 along +Y); 0 for the same point.</summary>
         [LocalSafe]
-        public static float AngleBetween(float x1, float y1, float x2, float y2)
+        public static float AngleToPoint(float x1, float y1, float x2, float y2)
         {
             var dx = x2 - x1;
             var dy = y2 - y1;

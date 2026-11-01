@@ -16,21 +16,25 @@ namespace Moonwell.Testing
         /// <summary>Any two opposite corners make the same bounds.</summary>
         public static void BoundsCorners(FakeWorld world)
         {
-            var b = new Bounds(new Vector2(10f, 10f), new Vector2(0f, 0f));
+            var b = Bounds.FromCorners(new Vector2(10f, 10f), new Vector2(0f, 0f));
             Expect.True(b.Min == new Vector2(0f, 0f), "Min");
             Expect.True(b.Max == new Vector2(10f, 10f), "Max");
             Expect.True(b.Center == new Vector2(5f, 5f), "Center");
             Expect.True(b.Size == new Vector2(10f, 10f), "Size");
             var c = Bounds.FromCenter(new Vector2(5f, 5f), new Vector2(10f, 4f));
             Expect.True(c.Min == new Vector2(0f, 3f) && c.Max == new Vector2(10f, 7f), "FromCenter");
-            Expect.True(b == new Bounds(new Vector2(0f, 0f), new Vector2(10f, 10f)), "==");
+            var sized = Bounds.FromSize(new Vector2(100f, 100f), new Vector2(50f, 20f));
+            Expect.True(sized.Min == new Vector2(100f, 100f) && sized.Max == new Vector2(150f, 120f), "FromSize");
+            var back = Bounds.FromSize(new Vector2(10f, 10f), new Vector2(-4f, -2f));
+            Expect.True(back.Min == new Vector2(6f, 8f) && back.Max == new Vector2(10f, 10f), "FromSize with a negative size");
+            Expect.True(b == Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(10f, 10f)), "==");
             Expect.Equal("((0, 0), (10, 10))", b.ToString(), "ToString");
         }
 
         /// <summary>Contains counts the edges as inside.</summary>
         public static void BoundsContains(FakeWorld world)
         {
-            var b = new Bounds(Vector2.Zero, new Vector2(10f, 10f));
+            var b = Bounds.FromCorners(Vector2.Zero, new Vector2(10f, 10f));
             Expect.True(b.Contains(new Vector2(5f, 5f)), "(5, 5)");
             Expect.True(b.Contains(new Vector2(10f, 10f)), "(10, 10) on the corner");
             Expect.True(!b.Contains(new Vector2(11f, 5f)), "(11, 5)");
@@ -39,22 +43,22 @@ namespace Moonwell.Testing
         /// <summary>Touching bounds intersect; apart ones do not.</summary>
         public static void BoundsIntersects(FakeWorld world)
         {
-            var b = new Bounds(Vector2.Zero, new Vector2(10f, 10f));
-            Expect.True(b.Intersects(new Bounds(new Vector2(10f, 0f), new Vector2(20f, 10f))), "touching at x 10");
-            Expect.True(b.Intersects(new Bounds(new Vector2(5f, 5f), new Vector2(15f, 15f))), "overlapping");
-            Expect.True(!b.Intersects(new Bounds(new Vector2(11f, 0f), new Vector2(20f, 10f))), "apart");
+            var b = Bounds.FromCorners(Vector2.Zero, new Vector2(10f, 10f));
+            Expect.True(b.Intersects(Bounds.FromCorners(new Vector2(10f, 0f), new Vector2(20f, 10f))), "touching at x 10");
+            Expect.True(b.Intersects(Bounds.FromCorners(new Vector2(5f, 5f), new Vector2(15f, 15f))), "overlapping");
+            Expect.True(!b.Intersects(Bounds.FromCorners(new Vector2(11f, 0f), new Vector2(20f, 10f))), "apart");
         }
 
-        /// <summary>Clamp gives the nearest point inside; a negative Expanded shrinks, never past a zero size at the center.</summary>
-        public static void BoundsClampExpand(FakeWorld world)
+        /// <summary>Clamp gives the nearest point inside; a negative Grown shrinks, never past a zero size at the center.</summary>
+        public static void BoundsClampGrow(FakeWorld world)
         {
-            var b = new Bounds(Vector2.Zero, new Vector2(10f, 10f));
+            var b = Bounds.FromCorners(Vector2.Zero, new Vector2(10f, 10f));
             Expect.True(b.Clamp(new Vector2(20f, 5f)) == new Vector2(10f, 5f), "Clamp((20, 5))");
             Expect.True(b.Clamp(new Vector2(3f, 4f)) == new Vector2(3f, 4f), "Clamp inside");
-            var grown = b.Expanded(2f);
-            Expect.True(grown.Min == new Vector2(-2f, -2f) && grown.Max == new Vector2(12f, 12f), "Expanded(2)");
-            var shrunk = b.Expanded(-6f);
-            Expect.True(shrunk.Min == new Vector2(5f, 5f) && shrunk.Max == new Vector2(5f, 5f), "Expanded(-6)");
+            var grown = b.Grown(2f);
+            Expect.True(grown.Min == new Vector2(-2f, -2f) && grown.Max == new Vector2(12f, 12f), "Grown(2)");
+            var shrunk = b.Grown(-6f);
+            Expect.True(shrunk.Min == new Vector2(5f, 5f) && shrunk.Max == new Vector2(5f, 5f), "Grown(-6)");
         }
 
         /// <summary>Contains on an L shape: the notch is out, the arms in, an edge in.</summary>
@@ -93,7 +97,7 @@ namespace Moonwell.Testing
             Vector2Cases.Near(new Vector2(5f, 5f), counter.Center, "counterclockwise center");
             Vector2Cases.Near(new Vector2(5f, 5f), clockwise.Center, "clockwise center");
             Expect.Near(64f, LShape().Area, "L area");
-            Expect.True(LShape().Bounds == new Bounds(Vector2.Zero, new Vector2(10f, 10f)), "L bounds");
+            Expect.True(LShape().Bounds == Bounds.FromCorners(Vector2.Zero, new Vector2(10f, 10f)), "L bounds");
             Expect.Equal(6, LShape().Points.Count, "L points");
         }
 

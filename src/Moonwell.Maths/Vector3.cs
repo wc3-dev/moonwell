@@ -70,7 +70,7 @@ namespace Moonwell
 
         /// <summary>The direction on the map in degrees, 0 to 360, as a facing: what an effect's yaw needs to point along the vector. 0 straight up or down.</summary>
         [LocalSafe]
-        public float Yaw => Maths.AngleBetween(0f, 0f, X, Y);
+        public float Yaw => Maths.AngleToPoint(0f, 0f, X, Y);
 
         /// <summary>The tilt up from the map in degrees, -90 to 90: 90 straight up. What an effect's pitch needs to point along the vector. 0 for a zero vector.</summary>
         [LocalSafe]
@@ -115,6 +115,13 @@ namespace Moonwell
             var dy = other.Y - Y;
             var dz = other.Z - Z;
             return dx * dx + dy * dy + dz * dz;
+        }
+
+        /// <summary>The direction from this point to another, with length 1; zero for the same point.</summary>
+        [LocalSafe]
+        public Vector3 DirectionTo(Vector3 other)
+        {
+            return (other - this).Normalized();
         }
 
         /// <summary>The dot product.</summary>

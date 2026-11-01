@@ -126,7 +126,7 @@ namespace Moonwell.Testing
             Expect.Same(third, found[1], "and the third");
             var closest = Find.Closest<Unit>(0.0f, 0.0f, 100.0f, u => u != first);
             Expect.Same(second, closest, "the closest that the filter keeps");
-            var rect = Find.InRect<Unit>(new Bounds(new Vector2(0.0f, 0.0f), new Vector2(100.0f, 100.0f)), u => u == third);
+            var rect = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(0.0f, 0.0f), new Vector2(100.0f, 100.0f)), u => u == third);
             Expect.Equal(1, rect.Count, "a filter on a rect");
             var line = Find.AlongLine<Unit>(0.0f, 0.0f, 100.0f, 100.0f, 50.0f, u => u != third);
             Expect.Equal(2, line.Count, "a filter along a line");
@@ -150,7 +150,7 @@ namespace Moonwell.Testing
             Expect.Same(b, results[1], "the second");
             Expect.Equal(2, Find.InRange(new Vector2(0.0f, 0.0f), 100.0f, results), "the vector form");
             results.Add(old);
-            var bounds = new Bounds(new Vector2(0.0f, 0.0f), new Vector2(15.0f, 15.0f));
+            var bounds = Bounds.FromCorners(new Vector2(0.0f, 0.0f), new Vector2(15.0f, 15.0f));
             Expect.Equal(1, Find.InRect(bounds, results), "a rect");
             Expect.Equal(1, results.Count, "cleared before");
             results.Add(old);
@@ -181,12 +181,12 @@ namespace Moonwell.Testing
             var low = UnitAt(world, 0.0f, 0.0f);
             var out1 = UnitAt(world, 201.0f, 50.0f);
             var out2 = UnitAt(world, 100.0f, -1.0f);
-            var bounds = new Bounds(new Vector2(0.0f, 0.0f), new Vector2(200.0f, 100.0f));
+            var bounds = Bounds.FromCorners(new Vector2(0.0f, 0.0f), new Vector2(200.0f, 100.0f));
             var found = Find.InRect<Unit>(bounds);
             Expect.Equal(4, found.Count, "four inside, edges included");
             Expect.True(Holds(found, corner) && Holds(found, edge) && Holds(found, middle) && Holds(found, low), "the corner, the edge, the middle and the low corner");
             Expect.True(!Holds(found, out1) && !Holds(found, out2), "one past the edge is out");
-            var swapped = Find.InRect<Unit>(new Bounds(new Vector2(200.0f, 100.0f), new Vector2(0.0f, 0.0f)));
+            var swapped = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(200.0f, 100.0f), new Vector2(0.0f, 0.0f)));
             Expect.Equal(4, swapped.Count, "bounds made from the other corners are the same");
         }
 
@@ -378,7 +378,7 @@ namespace Moonwell.Testing
             var numbers = new List<int>();
             var found = Find.InRange<Unit>(0.0f, 0.0f, 400.0f);
             AddNumbers(numbers, units, found);
-            found = Find.InRect<Unit>(new Bounds(new Vector2(-100.0f, -100.0f), new Vector2(300.0f, 200.0f)));
+            found = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(-100.0f, -100.0f), new Vector2(300.0f, 200.0f)));
             AddNumbers(numbers, units, found);
             found = Find.AlongLine<Unit>(-200.0f, 0.0f, 300.0f, 100.0f, 150.0f);
             AddNumbers(numbers, units, found);
@@ -536,16 +536,16 @@ namespace Moonwell.Testing
             Expect.Equal(1, found.Count, "a range on the edge finds the unit on it only");
             Expect.Same(onEdge, found[0], "the one on the edge");
             Expect.Equal(0, Find.InRange<Unit>(5000.0f, 5000.0f, 100.0f).Count, "a range outside the world with nothing in it finds nothing");
-            found = Find.InRect<Unit>(new Bounds(new Vector2(2900.0f, -50.0f), new Vector2(3100.0f, 50.0f)));
+            found = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(2900.0f, -50.0f), new Vector2(3100.0f, 50.0f)));
             Expect.Equal(1, found.Count, "a rect wholly outside the world");
             Expect.Same(east, found[0], "finds the east one");
-            found = Find.InRect<Unit>(new Bounds(new Vector2(-6000.0f, -50.0f), new Vector2(-4000.0f, 50.0f)));
+            found = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(-6000.0f, -50.0f), new Vector2(-4000.0f, 50.0f)));
             Expect.Equal(1, found.Count, "a rect past the west edge");
             Expect.Same(west, found[0], "finds the west one");
-            found = Find.InRect<Unit>(new Bounds(new Vector2(900.0f, -50.0f), new Vector2(3100.0f, 50.0f)));
+            found = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(900.0f, -50.0f), new Vector2(3100.0f, 50.0f)));
             Expect.Equal(2, found.Count, "a rect that straddles the east edge");
             Expect.True(Holds(found, onEdge) && Holds(found, east), "finds the one on the edge and the one past it");
-            found = Find.InRect<Unit>(new Bounds(new Vector2(-6000.0f, -50.0f), new Vector2(3100.0f, 50.0f)));
+            found = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(-6000.0f, -50.0f), new Vector2(3100.0f, 50.0f)));
             Expect.Equal(4, found.Count, "a rect that covers the world and more finds all four");
             Expect.Same(east, Find.Closest<Unit>(2500.0f, 0.0f, 600.0f), "the closest to a point outside the world");
             Expect.Same(west, Find.Closest<Unit>(-4000.0f, 0.0f, 2000.0f), "and on the other side");
@@ -694,7 +694,7 @@ namespace Moonwell.Testing
             Local.For(Player.Get(0), () =>
             {
                 found = Find.InRange<Actor>(0.0f, 0.0f, 100.0f);
-                units = Find.InRect<Unit>(new Bounds(new Vector2(0.0f, 0.0f), new Vector2(100.0f, 100.0f)));
+                units = Find.InRect<Unit>(Bounds.FromCorners(new Vector2(0.0f, 0.0f), new Vector2(100.0f, 100.0f)));
                 inPolygon = Find.InPolygon<Unit>(polygon);
             });
             Expect.Equal(3, found.Count, "the two units and the item");

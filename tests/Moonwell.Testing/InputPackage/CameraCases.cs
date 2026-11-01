@@ -115,7 +115,7 @@ namespace Moonwell.Testing
             one.StopFollowing();
             Player.Two.Camera().Reset(2.5f);
             one.Reset();
-            Player.Two.Camera().SetBounds(new Bounds(new Vector2(-100f, -200f), new Vector2(300f, 400f)));
+            Player.Two.Camera().SetBounds(Bounds.FromCorners(new Vector2(-100f, -200f), new Vector2(300f, 400f)));
             var calls = fake.CameraCalls;
             Expect.Equal(14, calls.Count, "the number of changes");
             ExpectField(calls[0], 0, 2, 300f, 1f, "angle of attack");

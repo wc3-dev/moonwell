@@ -59,7 +59,7 @@ namespace Moonwell
                 cy += (ay + by) * cross;
             }
 
-            Bounds = new Bounds(new Vector2(minX, minY), new Vector2(maxX, maxY));
+            Bounds = Bounds.FromCorners(new Vector2(minX, minY), new Vector2(maxX, maxY));
             Area = MathF.Abs(twiceArea) / 2f;
             if (twiceArea == 0f)
             {

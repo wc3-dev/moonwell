@@ -55,30 +55,30 @@ namespace Moonwell
 
         /// <summary>The facing in degrees from the unit to another, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Unit unit, Unit other)
+        public static float AngleToPoint(this Unit unit, Unit other)
         {
-            return Maths.AngleBetween(unit.X, unit.Y, other.X, other.Y);
+            return Maths.AngleToPoint(unit.X, unit.Y, other.X, other.Y);
         }
 
         /// <summary>The facing in degrees from the unit to an item, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Unit unit, Item item)
+        public static float AngleToPoint(this Unit unit, Item item)
         {
-            return Maths.AngleBetween(unit.X, unit.Y, item.X, item.Y);
+            return Maths.AngleToPoint(unit.X, unit.Y, item.X, item.Y);
         }
 
         /// <summary>The facing in degrees from the unit to a destructable, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Unit unit, Destructable destructable)
+        public static float AngleToPoint(this Unit unit, Destructable destructable)
         {
-            return Maths.AngleBetween(unit.X, unit.Y, destructable.X, destructable.Y);
+            return Maths.AngleToPoint(unit.X, unit.Y, destructable.X, destructable.Y);
         }
 
         /// <summary>The facing in degrees from the unit to a point, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Unit unit, Vector2 point)
+        public static float AngleToPoint(this Unit unit, Vector2 point)
         {
-            return Maths.AngleBetween(unit.X, unit.Y, point.X, point.Y);
+            return Maths.AngleToPoint(unit.X, unit.Y, point.X, point.Y);
         }
 
         /// <summary>Turns the unit toward a point at its turn rate, as setting Facing does; a read just after still gives the old facing. Toward its own place it keeps its facing.</summary>
@@ -88,7 +88,7 @@ namespace Moonwell
             var y = unit.Y;
             if (point.X != x || point.Y != y)
             {
-                unit.Facing = Maths.AngleBetween(x, y, point.X, point.Y);
+                unit.Facing = Maths.AngleToPoint(x, y, point.X, point.Y);
             }
         }
 
@@ -99,7 +99,7 @@ namespace Moonwell
             var y = unit.Y;
             if (point.X != x || point.Y != y)
             {
-                unit.FaceNow(Maths.AngleBetween(x, y, point.X, point.Y));
+                unit.FaceNow(Maths.AngleToPoint(x, y, point.X, point.Y));
             }
         }
 
@@ -146,30 +146,30 @@ namespace Moonwell
 
         /// <summary>The facing in degrees from the item to a unit, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Item item, Unit unit)
+        public static float AngleToPoint(this Item item, Unit unit)
         {
-            return Maths.AngleBetween(item.X, item.Y, unit.X, unit.Y);
+            return Maths.AngleToPoint(item.X, item.Y, unit.X, unit.Y);
         }
 
         /// <summary>The facing in degrees from the item to another, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Item item, Item other)
+        public static float AngleToPoint(this Item item, Item other)
         {
-            return Maths.AngleBetween(item.X, item.Y, other.X, other.Y);
+            return Maths.AngleToPoint(item.X, item.Y, other.X, other.Y);
         }
 
         /// <summary>The facing in degrees from the item to a destructable, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Item item, Destructable destructable)
+        public static float AngleToPoint(this Item item, Destructable destructable)
         {
-            return Maths.AngleBetween(item.X, item.Y, destructable.X, destructable.Y);
+            return Maths.AngleToPoint(item.X, item.Y, destructable.X, destructable.Y);
         }
 
         /// <summary>The facing in degrees from the item to a point, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Item item, Vector2 point)
+        public static float AngleToPoint(this Item item, Vector2 point)
         {
-            return Maths.AngleBetween(item.X, item.Y, point.X, point.Y);
+            return Maths.AngleToPoint(item.X, item.Y, point.X, point.Y);
         }
 
         /// <summary>The destructable's place (its X and Y).</summary>
@@ -209,30 +209,30 @@ namespace Moonwell
 
         /// <summary>The facing in degrees from the destructable to a unit, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Destructable destructable, Unit unit)
+        public static float AngleToPoint(this Destructable destructable, Unit unit)
         {
-            return Maths.AngleBetween(destructable.X, destructable.Y, unit.X, unit.Y);
+            return Maths.AngleToPoint(destructable.X, destructable.Y, unit.X, unit.Y);
         }
 
         /// <summary>The facing in degrees from the destructable to an item, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Destructable destructable, Item item)
+        public static float AngleToPoint(this Destructable destructable, Item item)
         {
-            return Maths.AngleBetween(destructable.X, destructable.Y, item.X, item.Y);
+            return Maths.AngleToPoint(destructable.X, destructable.Y, item.X, item.Y);
         }
 
         /// <summary>The facing in degrees from the destructable to another, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Destructable destructable, Destructable other)
+        public static float AngleToPoint(this Destructable destructable, Destructable other)
         {
-            return Maths.AngleBetween(destructable.X, destructable.Y, other.X, other.Y);
+            return Maths.AngleToPoint(destructable.X, destructable.Y, other.X, other.Y);
         }
 
         /// <summary>The facing in degrees from the destructable to a point, 0 to 360.</summary>
         [LocalSafe]
-        public static float AngleTo(this Destructable destructable, Vector2 point)
+        public static float AngleToPoint(this Destructable destructable, Vector2 point)
         {
-            return Maths.AngleBetween(destructable.X, destructable.Y, point.X, point.Y);
+            return Maths.AngleToPoint(destructable.X, destructable.Y, point.X, point.Y);
         }
     }
 }

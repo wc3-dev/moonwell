@@ -61,7 +61,7 @@ namespace Moonwell.Testing
             var fake = new FakeTerrainWorld();
             Terrain.Install(fake, 2, 2, 0f, 0f, Pinned4);
             var playable = Terrain.Playable;
-            Expect.True(playable == new Bounds(new Vector2(-512f, -256f), new Vector2(512f, 256f)), "the area read back as Bounds");
+            Expect.True(playable == Bounds.FromCorners(new Vector2(-512f, -256f), new Vector2(512f, 256f)), "the area read back as Bounds");
             fake.AreaMinX = 0f;
             Expect.True(Terrain.Playable == playable, "the area is not read again");
         }

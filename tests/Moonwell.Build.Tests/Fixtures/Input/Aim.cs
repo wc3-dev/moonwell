@@ -16,7 +16,7 @@ namespace InputFixture
         {
             if (button == MouseButton.Right)
             {
-                hero.FaceNow(hero.AngleTo(mouse.Position));
+                hero.FaceNow(hero.AngleToPoint(mouse.Position));
             }
         }
     }

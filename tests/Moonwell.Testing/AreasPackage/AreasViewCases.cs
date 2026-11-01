@@ -30,7 +30,7 @@ namespace Moonwell.Testing
         /// <summary>A rect from (x, y) to (x + size, y + size).</summary>
         private static AreaShape Square(float x, float y, float size)
         {
-            return AreaShape.Rect(new Bounds(new Vector2(x, y), new Vector2(x + size, y + size)));
+            return AreaShape.Rect(Bounds.FromCorners(new Vector2(x, y), new Vector2(x + size, y + size)));
         }
 
         /// <summary>Makes a footman of the game at a place and takes it in.</summary>

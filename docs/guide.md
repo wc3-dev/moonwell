@@ -376,15 +376,19 @@ bounds, polygons and raycasts. A map that does not reference it carries none of 
 
 ```csharp
 var start = target.Position();
-var end = start.Offset(caster.AngleTo(target), 300f);
+var end = start.Offset(caster.AngleToPoint(target), 300f);
 target.PlaceAt(Vector2.Lerp(start, end, Ease.OutQuad(t)));
 ```
 
 - Angles are degrees, as `Facing`: 0 along +X, 90 along +Y. `MathF.Sin` takes radians; use `Angles.Sin`.
+- y grows north, where Godot's grows down the screen: `Vector2.Up` is `(0, 1)` here and `(0, -1)` there, and `Rotated`
+  and `Cross` turn the other way on the screen. In a `Vector3`, height is Z, as in the game's natives; Godot's is Y.
 - `Vector2`, `Vector3`, `Bounds`, `Ray` and `RayHit` are values that never change once made, so they are shared and
-  never copied. Their names follow Godot's; `Vector2.Up` is north on the map, and `AngleTo` is the facing to a point.
+  never copied. Their names follow Godot's where the idea is the same.
+- A `Bounds` is made by `FromCorners`, `FromSize` or `FromCenter`. Its edges are inside it: `Contains` counts all four,
+  and `Intersects` counts touching. Godot's `Rect2` leaves them out.
 - In the game a vector is a table to make: in code that runs every tick on many objects, use the float forms in
-  `Maths` (`Maths.Distance`, `Maths.AngleBetween`, `Maths.Polar`), which make none.
+  `Maths` (`Maths.Distance`, `Maths.AngleToPoint`, `Maths.Polar`), which make none.
 - `unit.Position()` is a method. `PlaceAt` ignores pathing and keeps the unit's order, which a push wants; `MoveTo`
   goes through pathing and ends it.
 - `Raycast.Circle`, `Segment`, `Bounds` and `Polygon` give the first hit along a segment in an `out` value, with a
@@ -542,7 +546,7 @@ public sealed class Shell : Missile // a mortar shell that arcs to a point and b
     }
 }
 
-target.Knockback(caster.AngleTo(target), 300f, 0.5f); // 300 away over half a second, slowing to a stop
+target.Knockback(caster.AngleToPoint(target), 300f, 0.5f); // 300 away over half a second, slowing to a stop
 ```
 
 - Every missile moves the same way: `Acceleration` (up to `MaxSpeed`), `Gravity` (`Physics.Gravity` is 800), then the

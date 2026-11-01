@@ -11,12 +11,24 @@ namespace Moonwell
         /// <summary>The upper-right corner.</summary>
         public readonly Vector2 Max;
 
-        /// <summary>Makes bounds from any two opposite corners.</summary>
-        [LocalSafe]
-        public Bounds(Vector2 a, Vector2 b)
+        private Bounds(Vector2 a, Vector2 b)
         {
             Min = new Vector2(MathF.Min(a.X, b.X), MathF.Min(a.Y, b.Y));
             Max = new Vector2(MathF.Max(a.X, b.X), MathF.Max(a.Y, b.Y));
+        }
+
+        /// <summary>The bounds between any two opposite corners.</summary>
+        [LocalSafe]
+        public static Bounds FromCorners(Vector2 a, Vector2 b)
+        {
+            return new Bounds(a, b);
+        }
+
+        /// <summary>The bounds of a size from a corner, as Godot's Rect2(position, size).</summary>
+        [LocalSafe]
+        public static Bounds FromSize(Vector2 corner, Vector2 size)
+        {
+            return new Bounds(corner, corner + size);
         }
 
         /// <summary>The bounds of a size around a center.</summary>
@@ -58,7 +70,7 @@ namespace Moonwell
 
         /// <summary>The bounds grown by a distance on every side; a negative one shrinks them, never past a zero size at the center.</summary>
         [LocalSafe]
-        public Bounds Expanded(float by)
+        public Bounds Grown(float by)
         {
             var center = Center;
             var halfWidth = MathF.Max(0f, (Max.X - Min.X) / 2f + by);

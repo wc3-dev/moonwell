@@ -68,7 +68,7 @@ namespace Moonwell.Testing
         /// <summary>A segment into bounds hits the near side.</summary>
         public static void BoundsHit(FakeWorld world)
         {
-            var box = new Bounds(Vector2.Zero, new Vector2(10f, 10f));
+            var box = Bounds.FromCorners(Vector2.Zero, new Vector2(10f, 10f));
             Expect.True(Raycast.Bounds(new Vector2(-5f, 5f), new Vector2(5f, 5f), box, out var hit), "hits");
             Hit(hit, new Vector2(0f, 5f), new Vector2(-1f, 0f), 0.5f, "bounds");
             Expect.True(Raycast.Bounds(new Vector2(5f, 5f), new Vector2(20f, 5f), box, out hit), "starts inside");

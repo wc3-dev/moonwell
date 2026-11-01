@@ -133,8 +133,8 @@ namespace Moonwell.Testing
         {
             var fake = new FakeAreaWorld();
             AreaSystem.Install(fake, new[] { "West", "East" }, new[] { 0f, 0f, 256f, 128f, 256f, 0f, 512f, 128f });
-            var left = Added(world, new LogArea(AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(256f, 256f)))));
-            var right = Added(world, new LogArea(AreaShape.Rect(new Bounds(new Vector2(256f, 0f), new Vector2(512f, 256f)))));
+            var left = Added(world, new LogArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 256f)))));
+            var right = Added(world, new LogArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(256f, 0f), new Vector2(512f, 256f)))));
             var west = Added(world, new LogArea(AreaShape.Region("West")));
             var east = Added(world, new LogArea(AreaShape.Region("East")));
             var leftCells = fake.Regions[0];
@@ -164,8 +164,8 @@ namespace Moonwell.Testing
         public static void RectRoundedOut(FakeWorld world)
         {
             var fake = Fresh();
-            Added(world, new LogArea(AreaShape.Rect(new Bounds(new Vector2(100.5f, -100f), new Vector2(300.5f, -64f)))));
-            Added(world, new LogArea(AreaShape.Rect(new Bounds(new Vector2(64f, 0f), new Vector2(64f, 64f)))));
+            Added(world, new LogArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(100.5f, -100f), new Vector2(300.5f, -64f)))));
+            Added(world, new LogArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(64f, 0f), new Vector2(64f, 64f)))));
             var odd = fake.Regions[0];
             Expect.True(fake.Covers(odd, 96f, -128f) && fake.Covers(odd, 319.9f, -64.1f), "(100.5, -100)-(300.5, -64) covers 96 to 320 and -128 to -64");
             Expect.True(!fake.Covers(odd, 95.9f, -100f) && !fake.Covers(odd, 320f, -100f) && !fake.Covers(odd, 200f, -64f) && !fake.Covers(odd, 200f, -128.1f), "and no further");
@@ -177,7 +177,7 @@ namespace Moonwell.Testing
         /// <summary>A rect from (0, 0) to (256, 256).</summary>
         private static AreaShape Square()
         {
-            return AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(256f, 256f)));
+            return AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 256f)));
         }
 
         /// <summary>Decision 75: a unit inside that Accepts now refuses leaves at the next quarter-second check, with OnUnitLeft, and enters again at the first check after a yes; nothing happens between checks.</summary>
@@ -419,7 +419,7 @@ namespace Moonwell.Testing
         public static void ShadowedFields(FakeWorld world)
         {
             var fake = Fresh();
-            var area = new ShadowArea(AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(256f, 256f))));
+            var area = new ShadowArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 256f))));
             Game.Instance.Add(area);
             world.Advance(0f);
             Expect.Equal("own shape, 7, 0, 0, 0, idle, 0", area.Own(), "its own fields at the start");
@@ -439,7 +439,7 @@ namespace Moonwell.Testing
         public static void FakeWalks(FakeWorld world)
         {
             var fake = Fresh();
-            var area = new LogArea(AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(100f, 100f))));
+            var area = new LogArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(100f, 100f))));
             Game.Instance.Add(area);
             world.Advance(0f);
             var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;

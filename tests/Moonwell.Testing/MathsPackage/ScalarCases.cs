@@ -60,10 +60,10 @@ namespace Moonwell.Testing
         {
             Expect.Near(5f, Maths.Distance(0f, 0f, 3f, 4f), "Distance(0, 0, 3, 4)");
             Expect.Near(25f, Maths.DistanceSquared(0f, 0f, 3f, 4f), "DistanceSquared(0, 0, 3, 4)");
-            Expect.Near(90f, Maths.AngleBetween(0f, 0f, 0f, 5f), "AngleBetween to +Y");
-            Expect.Near(180f, Maths.AngleBetween(0f, 0f, -1f, 0f), "AngleBetween to -X");
-            Expect.Near(270f, Maths.AngleBetween(0f, 0f, 0f, -1f), "AngleBetween to -Y");
-            Expect.Near(0f, Maths.AngleBetween(1f, 1f, 1f, 1f), "AngleBetween the same point");
+            Expect.Near(90f, Maths.AngleToPoint(0f, 0f, 0f, 5f), "AngleToPoint to +Y");
+            Expect.Near(180f, Maths.AngleToPoint(0f, 0f, -1f, 0f), "AngleToPoint to -X");
+            Expect.Near(270f, Maths.AngleToPoint(0f, 0f, 0f, -1f), "AngleToPoint to -Y");
+            Expect.Near(0f, Maths.AngleToPoint(1f, 1f, 1f, 1f), "AngleToPoint the same point");
         }
 
         /// <summary>Polar gives both coordinates of the point that far that way, through out.</summary>

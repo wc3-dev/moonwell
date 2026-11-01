@@ -76,7 +76,7 @@ namespace Moonwell.Testing
             fake.Block(112f, 80f, FakeTerrainWorld.NoWalk);
             fake.Block(600f, 80f, FakeTerrainWorld.NoWalk);
             Expect.True(Terrain.IsWalkable(112f, 80f), "the first block keeps what it read");
-            Terrain.Refresh(new Bounds(new Vector2(100f, 70f), new Vector2(130f, 90f)));
+            Terrain.Refresh(Bounds.FromCorners(new Vector2(100f, 70f), new Vector2(130f, 90f)));
             Expect.Equal(2048, fake.PathCalls, "Refresh reads nothing itself");
             Expect.True(!Terrain.IsWalkable(112f, 80f), "the first block reads the new flag");
             Expect.Equal(3072, fake.PathCalls, "the first block was read again");
@@ -93,7 +93,7 @@ namespace Moonwell.Testing
             Expect.True(Terrain.IsWalkable(520f, 10f), "the second block");
             Expect.True(Terrain.IsWalkable(10f, 520f), "the block above the first");
             Expect.Equal(3072, fake.PathCalls, "three blocks read");
-            Terrain.Refresh(new Bounds(new Vector2(-5000f, -5000f), new Vector2(520f, 10f)));
+            Terrain.Refresh(Bounds.FromCorners(new Vector2(-5000f, -5000f), new Vector2(520f, 10f)));
             Expect.True(Terrain.IsWalkable(10f, 10f) && Terrain.IsWalkable(520f, 10f), "both blocks again");
             Expect.Equal(5120, fake.PathCalls, "two blocks read again");
             Expect.True(Terrain.IsWalkable(10f, 520f), "the block above is untouched");
@@ -208,7 +208,7 @@ namespace Moonwell.Testing
             Expect.Throws<InvalidOperationException>(() => Terrain.IsFlyable(0f, 0f), "IsFlyable");
             Expect.Throws<InvalidOperationException>(() => Terrain.IsBuildable(0f, 0f), "IsBuildable");
             Expect.Throws<InvalidOperationException>(() => Terrain.IsWater(0f, 0f), "IsWater");
-            Expect.Throws<InvalidOperationException>(() => Terrain.Refresh(new Bounds(Vector2.Zero, Vector2.One)), "Refresh");
+            Expect.Throws<InvalidOperationException>(() => Terrain.Refresh(Bounds.FromCorners(Vector2.Zero, Vector2.One)), "Refresh");
             Expect.Throws<InvalidOperationException>(() => Terrain.CanStand(0f, 0f, out _), "CanStand");
             Expect.Throws<InvalidOperationException>(() => Terrain.LocalHeight(0f, 0f), "LocalHeight");
         }

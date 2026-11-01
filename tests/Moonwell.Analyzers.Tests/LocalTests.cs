@@ -184,7 +184,7 @@ public class LocalTests
             var b = Unit.Of(u)!;
             Local.For(p, () =>
             {
-                var d = a.DistanceTo(b) + a.AngleTo(b) + Maths.Lerp(0f, 1f, 0.5f) + Angles.Normalize(-90f);
+                var d = a.DistanceTo(b) + a.AngleToPoint(b) + Maths.Lerp(0f, 1f, 0.5f) + Angles.Normalize(-90f);
                 var v = Vector2.Up.Rotated(30f) + a.Position();
                 var inside = new Polygon(Vector2.Zero, Vector2.Right, Vector2.Up).Contains(v);
                 var hit = Raycast.Circle(Vector2.Zero, v, Vector2.One, 2f, out var first);
@@ -316,11 +316,11 @@ public class LocalTests
         var found = MapCode.Check("""
             Local.For(p, () =>
             {
-                Terrain.Refresh(new Bounds(Vector2.Zero, Vector2.One));
+                Terrain.Refresh(Bounds.FromCorners(Vector2.Zero, Vector2.One));
             });
             """);
 
-        Assert.Equal(new[] { "MW0001: Terrain.Refresh(new Bounds(Vector2.Zero, Vector2.One))" }, found);
+        Assert.Equal(new[] { "MW0001: Terrain.Refresh(Bounds.FromCorners(Vector2.Zero, Vector2.One))" }, found);
     }
 
     [Fact]
@@ -408,7 +408,7 @@ public class LocalTests
         Assert.Empty(MapCode.Check("""
             Local.For(p, () =>
             {
-                var b = new Bounds(Vector2.Zero, Vector2.One);
+                var b = Bounds.FromCorners(Vector2.Zero, Vector2.One);
                 var inside = AreaShape.Rect(b).Contains(0f, 0f);
             });
             """));

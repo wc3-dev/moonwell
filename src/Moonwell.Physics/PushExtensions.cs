@@ -3,7 +3,7 @@ using Moonwell.Engine;
 namespace Moonwell
 {
     /// <summary>
-    /// Pushing units: <c>target.Knockback(caster.AngleTo(target), 300f, 0.5f)</c>. A push moves the unit each step with
+    /// Pushing units: <c>target.Knockback(caster.AngleToPoint(target), 300f, 0.5f)</c>. A push moves the unit each step with
     /// SetUnitX/Y, which keeps its order, so its own walking carries on and adds to it; it is kept on ground it could
     /// stand on, sliding along what blocks it or stopping (OnSlammed). A push up lifts it: a unit that does not fly
     /// falls back to its own height under Physics.Gravity (OnGrounded), a flying one drifts back to its height. It

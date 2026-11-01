@@ -47,14 +47,14 @@ namespace Moonwell.Testing
             var b = UnitAt(world, 0f, 300f);
             var item = ItemAt(world, -10f, 0f);
             Expect.Near(300f, a.DistanceTo(b), "unit to unit");
-            Expect.Near(90f, a.AngleTo(b), "unit to unit angle");
+            Expect.Near(90f, a.AngleToPoint(b), "unit to unit angle");
             Expect.Near(10f, a.DistanceTo(item), "unit to item");
-            Expect.Near(180f, a.AngleTo(item), "unit to item angle");
+            Expect.Near(180f, a.AngleToPoint(item), "unit to item angle");
             Expect.Near(5f, a.DistanceTo(new Vector2(3f, 4f)), "unit to point");
-            Expect.Near(270f, a.AngleTo(new Vector2(0f, -1f)), "unit to point angle");
+            Expect.Near(270f, a.AngleToPoint(new Vector2(0f, -1f)), "unit to point angle");
             Expect.Near(300.1666f, item.DistanceTo(b), "item to unit");
             Expect.Near(10f, item.DistanceTo(a), "item to unit, the other way");
-            Expect.Near(0f, item.AngleTo(a), "item to unit angle");
+            Expect.Near(0f, item.AngleToPoint(a), "item to unit angle");
             Expect.Near(10f, item.DistanceTo(new Vector2(0f, 0f)), "item to point");
             Expect.Near(10f, item.DistanceTo(ItemAt(world, 0f, 0f)), "item to item");
         }
@@ -70,19 +70,19 @@ namespace Moonwell.Testing
             var unit = UnitAt(world, 30f, 140f);
             var item = ItemAt(world, 20f, 40f);
             Expect.Near(100f, tree.DistanceTo(unit), "destructable to unit");
-            Expect.Near(90f, tree.AngleTo(unit), "destructable to unit angle");
+            Expect.Near(90f, tree.AngleToPoint(unit), "destructable to unit angle");
             Expect.Near(100f, unit.DistanceTo(tree), "unit to destructable");
-            Expect.Near(270f, unit.AngleTo(tree), "unit to destructable angle");
+            Expect.Near(270f, unit.AngleToPoint(tree), "unit to destructable angle");
             Expect.Near(10f, tree.DistanceTo(item), "destructable to item");
-            Expect.Near(180f, tree.AngleTo(item), "destructable to item angle");
+            Expect.Near(180f, tree.AngleToPoint(item), "destructable to item angle");
             Expect.Near(10f, item.DistanceTo(tree), "item to destructable");
-            Expect.Near(0f, item.AngleTo(tree), "item to destructable angle");
+            Expect.Near(0f, item.AngleToPoint(tree), "item to destructable angle");
             Expect.Near(5f, tree.DistanceTo(new Vector2(33f, 44f)), "destructable to point");
-            Expect.Near(270f, tree.AngleTo(new Vector2(30f, 0f)), "destructable to point angle");
+            Expect.Near(270f, tree.AngleToPoint(new Vector2(30f, 0f)), "destructable to point angle");
             Expect.Near(Maths.Distance(30f, 40f, 100f, -50f), tree.DistanceTo(other), "destructable to destructable");
-            Expect.Near(Maths.AngleBetween(30f, 40f, 100f, -50f), tree.AngleTo(other), "destructable to destructable angle");
+            Expect.Near(Maths.AngleToPoint(30f, 40f, 100f, -50f), tree.AngleToPoint(other), "destructable to destructable angle");
             Expect.Near(Maths.Distance(100f, -50f, 30f, 40f), other.DistanceTo(tree), "destructable to destructable, the other way");
-            Expect.Near(Maths.AngleBetween(100f, -50f, 30f, 40f), other.AngleTo(tree), "destructable to destructable angle, the other way");
+            Expect.Near(Maths.AngleToPoint(100f, -50f, 30f, 40f), other.AngleToPoint(tree), "destructable to destructable angle, the other way");
         }
 
         /// <summary>FaceToward turns as setting Facing does; FaceNow turns at once.</summary>

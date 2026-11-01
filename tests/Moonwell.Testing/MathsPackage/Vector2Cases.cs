@@ -28,6 +28,8 @@ namespace Moonwell.Testing
             Near(new Vector2(1f, 1f), Vector2.One, "One");
             Near(new Vector2(1f, 0f), Vector2.Right, "Right");
             Near(new Vector2(0f, 1f), Vector2.Up, "Up");
+            Near(new Vector2(0f, -1f), Vector2.Down, "Down");
+            Near(new Vector2(-1f, 0f), Vector2.Left, "Left");
             Expect.Near(5f, v.DistanceTo(Vector2.Zero), "DistanceTo");
             Expect.Near(25f, v.DistanceSquaredTo(Vector2.Zero), "DistanceSquaredTo");
         }
@@ -39,9 +41,18 @@ namespace Moonwell.Testing
             Expect.Near(180f, new Vector2(-1f, 0f).Angle, "(-1, 0).Angle");
             Expect.Near(270f, new Vector2(0f, -1f).Angle, "(0, -1).Angle");
             Expect.Near(0f, Vector2.Zero.Angle, "Zero.Angle");
-            Expect.Near(90f, Vector2.Zero.AngleTo(new Vector2(0f, 5f)), "AngleTo a point above");
+            Expect.Near(90f, Vector2.Zero.AngleToPoint(new Vector2(0f, 5f)), "AngleToPoint a point above");
             var p = new Vector2(7f, -3f);
-            Expect.Near(0f, p.AngleTo(p), "AngleTo the same point");
+            Expect.Near(0f, p.AngleToPoint(p), "AngleToPoint the same point");
+        }
+
+        /// <summary>DirectionTo is the way to a point, with length 1; the same point gives zero.</summary>
+        public static void DirectionTo(FakeWorld world)
+        {
+            var p = new Vector2(1f, 2f);
+            Near(new Vector2(0.6f, 0.8f), p.DirectionTo(new Vector2(4f, 6f)), "DirectionTo a point");
+            Near(Vector2.Zero, p.DirectionTo(p), "DirectionTo the same point");
+            NotNaN(p.DirectionTo(p), "DirectionTo the same point");
         }
 
         /// <summary>Offset, Rotated and FromAngle take degrees.</summary>

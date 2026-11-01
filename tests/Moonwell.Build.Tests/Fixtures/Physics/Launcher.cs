@@ -13,7 +13,7 @@ namespace PhysicsFixture
             After(0.1f, () =>
             {
                 caster.Fire(new Firebolt(), target, Game.Instance);
-                target.Knockback(caster.AngleTo(target), 300f, 0.5f);
+                target.Knockback(caster.AngleToPoint(target), 300f, 0.5f);
             });
         }
     }

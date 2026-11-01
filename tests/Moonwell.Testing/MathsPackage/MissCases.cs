@@ -14,7 +14,7 @@ namespace Moonwell.Testing
             var center = Vector2.Zero;
             var a = new Vector2(0f, -5f);
             var b = new Vector2(0f, 5f);
-            var box = new Bounds(Vector2.Zero, new Vector2(10f, 10f));
+            var box = Bounds.FromCorners(Vector2.Zero, new Vector2(10f, 10f));
             var square = new Polygon(new Vector2(0f, 0f), new Vector2(10f, 0f), new Vector2(10f, 10f), new Vector2(0f, 10f));
             var near = new Vector2(-10f, 5f);
             var short_ = new Vector2(-5f, 5f);

@@ -39,7 +39,7 @@ namespace Moonwell.Testing
 
             if (shape == BoxShape)
             {
-                return Raycast.Bounds(from, to, new Bounds(c + new Vector2(-31.7f, -23.9f), c + new Vector2(27.3f, 29.1f)), out hit);
+                return Raycast.Bounds(from, to, Bounds.FromCorners(c + new Vector2(-31.7f, -23.9f), c + new Vector2(27.3f, 29.1f)), out hit);
             }
 
             if (shape == PolygonShape)
@@ -104,7 +104,7 @@ namespace Moonwell.Testing
         /// <summary>Bounds met at (0, 53), on the left side: the bounce goes on.</summary>
         public static void BoundsExact(FakeWorld world)
         {
-            var box = new Bounds(Vector2.Zero, new Vector2(100f, 100f));
+            var box = Bounds.FromCorners(Vector2.Zero, new Vector2(100f, 100f));
             var ball = new Bouncer(new Vector2(-12f, 50f), new Vector2(8f, 2f));
             for (var i = 0; i < 10; i++)
             {
@@ -246,7 +246,7 @@ namespace Moonwell.Testing
         public static void SlideBounds(FakeWorld world)
         {
             var c = Far();
-            var box = new Bounds(c, c + new Vector2(300f, 100f));
+            var box = Bounds.FromCorners(c, c + new Vector2(300f, 100f));
             var ball = new Bouncer(c + new Vector2(10.3f, 130.7f), new Vector2(9.1f, -7.3f));
             ball.Slides = true;
             for (var i = 0; i < 60; i++)
@@ -289,7 +289,7 @@ namespace Moonwell.Testing
         /// <summary>A point on a surface that moves into the shape still hits it at its start, with the surface's normal; one that starts deeper in hits at its start with the normal against its direction, as before.</summary>
         public static void IntoFromSurface(FakeWorld world)
         {
-            var box = new Bounds(Vector2.Zero, new Vector2(100f, 100f));
+            var box = Bounds.FromCorners(Vector2.Zero, new Vector2(100f, 100f));
             Expect.True(Raycast.Bounds(new Vector2(0f, 50f), new Vector2(8f, 52f), box, out var hit), "bounds: hits");
             Expect.Near(0f, hit.Fraction, "bounds: fraction");
             Vector2Cases.Near(new Vector2(0f, 50f), hit.Point, "bounds: point");

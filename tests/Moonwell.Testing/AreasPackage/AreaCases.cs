@@ -29,7 +29,7 @@ namespace Moonwell.Testing
         /// <summary>A rect from (0, 0) to (256, 256).</summary>
         private static AreaShape Square()
         {
-            return AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(256f, 256f)));
+            return AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 256f)));
         }
 
         /// <summary>Makes a unit of the game at a place and takes it in; a hero when asked.</summary>
@@ -134,7 +134,7 @@ namespace Moonwell.Testing
             var fake = Fresh();
             var corner = UnitAt(world, 98f, 98f);
             fake.Stand(corner.Handle, 98f, 98f);
-            var area = new LogArea(AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(100f, 100f))));
+            var area = new LogArea(AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(100f, 100f))));
             area.Labels[corner] = "corner";
             Game.Instance.Add(area);
             fake.Regions[0].Inside.Add(corner.Handle);
@@ -310,7 +310,7 @@ namespace Moonwell.Testing
             Expect.Near(240f, shop.Rects[2], "its right edge: the middle of its last cell, so that the cell past 256 is not the game's");
             Expect.Near(112f, shop.Rects[3], "its top edge: the middle of its last cell");
             Expect.Equal(0, shop.Cells.Count, "a region adds no cells");
-            Game.Instance.Add(new LogArea(AreaShape.Of(AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(64f, 64f))), circle)));
+            Game.Instance.Add(new LogArea(AreaShape.Of(AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(64f, 64f))), circle)));
             Expect.Equal(4, fake.Regions[2].Rects.Count, "a union holds its rect");
             Expect.Equal(8, fake.Regions[2].Cells.Count, "and its circle's cells");
             Expect.True(shop.Listening && fake.Regions[2].Listening, "each region is listened to");
@@ -376,7 +376,7 @@ namespace Moonwell.Testing
             Expect.True(area.Has(a) && area.Has(b), "both are inside");
             Expect.True(area.Contains(100f, 100f) && area.Contains(new Vector2(256f, 256f)), "Contains takes the shape's test");
             Expect.True(!area.Contains(257f, 100f), "and is false outside");
-            Expect.True(area.Bounds == new Bounds(new Vector2(0f, 0f), new Vector2(256f, 256f)), "Bounds are the shape's");
+            Expect.True(area.Bounds == Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 256f)), "Bounds are the shape's");
             world.Advance(2f);
             Expect.Near(2f, area.Since(a), "Since counts game seconds");
         }

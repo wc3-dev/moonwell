@@ -641,6 +641,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.scalars.angles-trig", Run = ScalarCases.AnglesTrig });
             list.Add(new Case { Name = "maths.vector2.basics", Run = Vector2Cases.Basics });
             list.Add(new Case { Name = "maths.vector2.angles", Run = Vector2Cases.Angles });
+            list.Add(new Case { Name = "maths.vector2.direction-to", Run = Vector2Cases.DirectionTo });
             list.Add(new Case { Name = "maths.vector2.offset-and-rotate", Run = Vector2Cases.OffsetAndRotate });
             list.Add(new Case { Name = "maths.vector2.products", Run = Vector2Cases.Products });
             list.Add(new Case { Name = "maths.vector2.bounce-reflect-slide", Run = Vector2Cases.BounceReflectSlide });
@@ -650,6 +651,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.vector2.equality", Run = Vector2Cases.Equality });
             list.Add(new Case { Name = "maths.vector2.text", Run = Vector2Cases.Text });
             list.Add(new Case { Name = "maths.vector3.basics", Run = Vector3Cases.Basics });
+            list.Add(new Case { Name = "maths.vector3.direction-to", Run = Vector3Cases.DirectionTo });
             list.Add(new Case { Name = "maths.vector3.yaw-pitch", Run = Vector3Cases.YawPitch });
             list.Add(new Case { Name = "maths.vector3.cross", Run = Vector3Cases.Cross });
             list.Add(new Case { Name = "maths.vector3.bounce", Run = Vector3Cases.Bounce });
@@ -661,7 +663,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.shapes.bounds-corners", Run = ShapeCases.BoundsCorners });
             list.Add(new Case { Name = "maths.shapes.bounds-contains", Run = ShapeCases.BoundsContains });
             list.Add(new Case { Name = "maths.shapes.bounds-intersects", Run = ShapeCases.BoundsIntersects });
-            list.Add(new Case { Name = "maths.shapes.bounds-clamp-expand", Run = ShapeCases.BoundsClampExpand });
+            list.Add(new Case { Name = "maths.shapes.bounds-clamp-grow", Run = ShapeCases.BoundsClampGrow });
             list.Add(new Case { Name = "maths.shapes.polygon-contains", Run = ShapeCases.PolygonContains });
             list.Add(new Case { Name = "maths.shapes.polygon-area-center", Run = ShapeCases.PolygonAreaCenter });
             list.Add(new Case { Name = "maths.shapes.polygon-copies", Run = ShapeCases.PolygonCopies });

@@ -33,7 +33,7 @@ namespace Moonwell
             {
                 var a = new Vector2(rects[i * 4], rects[i * 4 + 1]);
                 var b = new Vector2(rects[i * 4 + 2], rects[i * 4 + 3]);
-                regions[names[i]] = new Bounds(a, b);
+                regions[names[i]] = Bounds.FromCorners(a, b);
             }
 
             world = host;

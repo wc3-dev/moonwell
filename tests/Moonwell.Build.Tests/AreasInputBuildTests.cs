@@ -102,7 +102,7 @@ namespace Moonwell.Build.Tests
             var project = folders.TemporaryCopyOf("Input");
             var file = Path.Combine(project, "Aim.cs");
             var text = File.ReadAllText(file);
-            var changed = text.Replace("hero.FaceNow(hero.AngleTo(mouse.Position));", "hero.FaceNow(0f);");
+            var changed = text.Replace("hero.FaceNow(hero.AngleToPoint(mouse.Position));", "hero.FaceNow(0f);");
             Assert.NotEqual(text, changed);
             File.WriteAllText(file, changed);
 

@@ -32,7 +32,7 @@ namespace Moonwell.Testing
         {
             InstallShop();
             var shape = AreaShape.Region("Shop");
-            Expect.True(shape.Bounds == new Bounds(new Vector2(0f, 0f), new Vector2(256f, 128f)), "the region's bounds");
+            Expect.True(shape.Bounds == Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 128f)), "the region's bounds");
             Expect.True(shape.Contains(256f, 128f), "the top right corner is inside");
             Expect.True(shape.Contains(new Vector2(0f, 0f)), "the bottom left corner is inside");
             Expect.True(!shape.Contains(257f, 0f), "one past the right edge is outside");
@@ -71,7 +71,7 @@ namespace Moonwell.Testing
             Expect.True(Has(cells, -16f, -16f) && Has(cells, 16f, -16f) && Has(cells, -16f, 16f) && Has(cells, 16f, 16f), "the four centres are (+-16, +-16)");
             Expect.True(!small.Contains(50f, 0f), "50 is outside a radius of 48");
             Expect.True(small.Contains(48f, 0f), "the radius itself is inside");
-            Expect.True(small.Bounds == new Bounds(new Vector2(-48f, -48f), new Vector2(48f, 48f)), "the circle's bounds");
+            Expect.True(small.Bounds == Bounds.FromCorners(new Vector2(-48f, -48f), new Vector2(48f, 48f)), "the circle's bounds");
 
             var wider = AreaShape.Circle(new Vector2(0f, 0f), 51f);
             var more = new List<float>();
@@ -120,10 +120,10 @@ namespace Moonwell.Testing
         /// <summary>Of covers all its shapes: the bounds hold both, a point in either is inside, and the cells are those of its parts.</summary>
         public static void Of(FakeWorld world)
         {
-            var left = AreaShape.Rect(new Bounds(new Vector2(0f, 0f), new Vector2(64f, 64f)));
-            var right = AreaShape.Rect(new Bounds(new Vector2(200f, 100f), new Vector2(300f, 160f)));
+            var left = AreaShape.Rect(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(64f, 64f)));
+            var right = AreaShape.Rect(Bounds.FromCorners(new Vector2(200f, 100f), new Vector2(300f, 160f)));
             var both = AreaShape.Of(left, right);
-            Expect.True(both.Bounds == new Bounds(new Vector2(0f, 0f), new Vector2(300f, 160f)), "the bounds cover both");
+            Expect.True(both.Bounds == Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(300f, 160f)), "the bounds cover both");
             Expect.True(both.Contains(10f, 10f), "a point in the first");
             Expect.True(both.Contains(250f, 120f), "a point in the second");
             Expect.True(!both.Contains(150f, 80f), "a point between them");
@@ -143,14 +143,14 @@ namespace Moonwell.Testing
         {
             AreaSystem.Uninstall();
             var shape = AreaShape.Region("Shop");
-            var union = AreaShape.Of(shape, AreaShape.Rect(new Bounds(new Vector2(512f, 0f), new Vector2(600f, 64f))));
+            var union = AreaShape.Of(shape, AreaShape.Rect(Bounds.FromCorners(new Vector2(512f, 0f), new Vector2(600f, 64f))));
             Expect.Throws<InvalidOperationException>(() => { var unused = shape.Bounds; }, "Bounds before Install");
             Expect.Throws<InvalidOperationException>(() => shape.Contains(1f, 1f), "Contains before Install");
             Expect.Throws<InvalidOperationException>(() => { var unused = union.Bounds; }, "a union holding a region, before Install");
             InstallShop();
             Expect.True(shape.Contains(1f, 1f), "after Install it reads");
-            Expect.True(shape.Bounds == new Bounds(new Vector2(0f, 0f), new Vector2(256f, 128f)), "its bounds");
-            Expect.True(union.Bounds == new Bounds(new Vector2(0f, 0f), new Vector2(600f, 128f)), "a union holding it resolves the same way");
+            Expect.True(shape.Bounds == Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(256f, 128f)), "its bounds");
+            Expect.True(union.Bounds == Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(600f, 128f)), "a union holding it resolves the same way");
             Expect.True(union.Contains(550f, 10f) && union.Contains(10f, 10f), "and holds both parts");
         }
 

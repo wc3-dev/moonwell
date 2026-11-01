@@ -30,7 +30,7 @@ namespace Moonwell
         {
             var made = new HeightGrid(columns, rows, left, bottom, corners);
             host.PlayableArea(out var minX, out var minY, out var maxX, out var maxY);
-            playable = new Bounds(new Vector2(minX, minY), new Vector2(maxX, maxY));
+            playable = Bounds.FromCorners(new Vector2(minX, minY), new Vector2(maxX, maxY));
             world = host;
             grid = made;
             pathing = new PathingGrid(host, columns, rows, left, bottom);
@@ -115,7 +115,7 @@ namespace Moonwell
         public static float Slope(float x, float y)
         {
             Grid.Gradient(x, y, out var alongX, out var alongY);
-            return Maths.AngleBetween(0f, 0f, 1f, MathF.Sqrt(alongX * alongX + alongY * alongY));
+            return Maths.AngleToPoint(0f, 0f, 1f, MathF.Sqrt(alongX * alongX + alongY * alongY));
         }
 
         /// <summary>How steep the ground is at a point, in degrees, as <c>Slope(x, y)</c>.</summary>

@@ -36,9 +36,17 @@ namespace Moonwell
         [LocalSafe]
         public static Vector2 Right => new Vector2(1f, 0f);
 
-        /// <summary>(0, 1): north on the map, facing 90. Godot's Up points the other way, as its screen's y grows downward.</summary>
+        /// <summary>(0, 1): north on the map, facing 90, up on the screen as Godot's Up is; its value there is (0, -1), as Godot's y grows downward.</summary>
         [LocalSafe]
         public static Vector2 Up => new Vector2(0f, 1f);
+
+        /// <summary>(-1, 0): west on the map, facing 180.</summary>
+        [LocalSafe]
+        public static Vector2 Left => new Vector2(-1f, 0f);
+
+        /// <summary>(0, -1): south on the map, facing 270.</summary>
+        [LocalSafe]
+        public static Vector2 Down => new Vector2(0f, -1f);
 
         /// <summary>The vector's length.</summary>
         [LocalSafe]
@@ -50,7 +58,7 @@ namespace Moonwell
 
         /// <summary>The vector's direction in degrees, 0 to 360; 0 for a zero vector.</summary>
         [LocalSafe]
-        public float Angle => Maths.AngleBetween(0f, 0f, X, Y);
+        public float Angle => Maths.AngleToPoint(0f, 0f, X, Y);
 
         /// <summary>The vector with length 1 in the same direction; a zero vector gives zero.</summary>
         [LocalSafe]
@@ -79,11 +87,18 @@ namespace Moonwell
             return Maths.DistanceSquared(X, Y, other.X, other.Y);
         }
 
-        /// <summary>The facing in degrees from this point to another, 0 to 360, as a unit's AngleTo; 0 for the same point. Godot's AngleTo is the angle between two directions instead.</summary>
+        /// <summary>The facing in degrees from this point to another, 0 to 360, as Godot's angle_to_point in radians; 0 for the same point.</summary>
         [LocalSafe]
-        public float AngleTo(Vector2 point)
+        public float AngleToPoint(Vector2 point)
         {
-            return Maths.AngleBetween(X, Y, point.X, point.Y);
+            return Maths.AngleToPoint(X, Y, point.X, point.Y);
+        }
+
+        /// <summary>The direction from this point to another, with length 1; zero for the same point.</summary>
+        [LocalSafe]
+        public Vector2 DirectionTo(Vector2 other)
+        {
+            return (other - this).Normalized();
         }
 
         /// <summary>The point a distance from this one in the direction of an angle in degrees.</summary>

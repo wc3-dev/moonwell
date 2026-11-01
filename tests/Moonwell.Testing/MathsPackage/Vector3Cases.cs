@@ -26,6 +26,14 @@ namespace Moonwell.Testing
             Expect.Near(32f, new Vector3(1f, 2f, 3f).Dot(new Vector3(4f, 5f, 6f)), "Dot");
         }
 
+        /// <summary>DirectionTo is the way to a point, with length 1; the same point gives zero.</summary>
+        public static void DirectionTo(FakeWorld world)
+        {
+            var p = new Vector3(1f, 2f, 3f);
+            Near(new Vector3(2f / 7f, 3f / 7f, 6f / 7f), p.DirectionTo(new Vector3(3f, 5f, 9f)), "DirectionTo a point");
+            Near(Vector3.Zero, p.DirectionTo(p), "DirectionTo the same point");
+        }
+
         /// <summary>Yaw is the XY direction, Pitch the tilt up from it, both in degrees; FromAngles makes a vector from them.</summary>
         public static void YawPitch(FakeWorld world)
         {

@@ -76,7 +76,7 @@ namespace Moonwell
         [LocalSafe]
         public static AreaShape Region(string name)
         {
-            return new AreaShape(ShapeKind.Rect, new Bounds(Vector2.Zero, Vector2.Zero), false, name, null, Vector2.Zero, 0f, new AreaShape[0]);
+            return new AreaShape(ShapeKind.Rect, Bounds.FromCorners(Vector2.Zero, Vector2.Zero), false, name, null, Vector2.Zero, 0f, new AreaShape[0]);
         }
 
         /// <summary>A rect. The game gives the area the rect rounded out to whole 32 cells, the cells it touches: an edge on the 32 grid is where its cells end, so rects that share an edge do not overlap. <c>Contains</c> tests the true rect, its edges included, so a shared edge is in both.</summary>
@@ -102,7 +102,7 @@ namespace Moonwell
                 throw new ArgumentException("A circle needs a radius above 0.");
             }
 
-            var bounds = new Bounds(new Vector2(center.X - radius, center.Y - radius), new Vector2(center.X + radius, center.Y + radius));
+            var bounds = Bounds.FromCorners(new Vector2(center.X - radius, center.Y - radius), new Vector2(center.X + radius, center.Y + radius));
             return new AreaShape(ShapeKind.Circle, bounds, true, null, null, center, radius, new AreaShape[0]);
         }
 
@@ -126,7 +126,7 @@ namespace Moonwell
                 parts[i] = shapes[i];
             }
 
-            return new AreaShape(ShapeKind.Union, new Bounds(Vector2.Zero, Vector2.Zero), false, null, null, Vector2.Zero, 0f, parts);
+            return new AreaShape(ShapeKind.Union, Bounds.FromCorners(Vector2.Zero, Vector2.Zero), false, null, null, Vector2.Zero, 0f, parts);
         }
 
         /// <summary>The smallest bounds that cover the whole shape, the true shape and not the cells.</summary>
@@ -182,7 +182,7 @@ namespace Moonwell
                 }
             }
 
-            bounds = new Bounds(new Vector2(minX, minY), new Vector2(maxX, maxY));
+            bounds = Bounds.FromCorners(new Vector2(minX, minY), new Vector2(maxX, maxY));
             resolved = true;
         }
 

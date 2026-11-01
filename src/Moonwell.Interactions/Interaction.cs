@@ -880,7 +880,7 @@ namespace Moonwell
             [LocalSafe]
             public float Angle
             {
-                get { return Maths.AngleBetween(holderX, holderY, otherX, otherY); }
+                get { return Maths.AngleToPoint(holderX, holderY, otherX, otherY); }
             }
 
             /// <summary>The holder's place at the last check, left to right.</summary>
