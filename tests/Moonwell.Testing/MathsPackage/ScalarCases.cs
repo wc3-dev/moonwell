@@ -55,6 +55,36 @@ namespace Moonwell.Testing
             Expect.True(Maths.Near(1f, 1.01f, 0.1f), "Near(1, 1.01, 0.1)");
         }
 
+        /// <summary>Near's own tolerance is 0.001 up to 1,000 and 1 part in a million of the larger value past it, as a float's step grows; one given is exact.</summary>
+        public static void NearGrows(FakeWorld world)
+        {
+            Expect.True(Maths.Near(1000f, 1000.0005f), "Near(1000, 1000.0005)");
+            Expect.True(!Maths.Near(1000f, 1000.01f), "not Near(1000, 1000.01)");
+            Expect.True(Maths.Near(20000f, 20000.01f), "Near(20000, 20000.01)");
+            Expect.True(Maths.Near(20000.01f, 20000f), "either way round");
+            Expect.True(Maths.Near(-20000f, -20000.01f), "Near(-20000, -20000.01)");
+            Expect.True(!Maths.Near(20000f, 20000.05f), "not Near(20000, 20000.05)");
+            Expect.True(!Maths.Near(20000f, 20000.01f, 0.001f), "a tolerance given is exact");
+            Expect.True(new Vector2(20000f, 5f).Near(new Vector2(20000.01f, 5f)), "Vector2.Near");
+            Expect.True(!new Vector2(20000f, 5f).Near(new Vector2(20000.01f, 5f), 0.001f), "Vector2.Near with a tolerance");
+            Expect.True(new Vector3(0f, 0f, 20000f).Near(new Vector3(0f, 0f, 20000.01f)), "Vector3.Near");
+            Expect.True(!new Vector3(0f, 0f, 20000f).Near(new Vector3(0f, 0f, 20000.01f), 0.001f), "Vector3.Near with a tolerance");
+        }
+
+        /// <summary>Square roots are right to a float's rounding, in the game too, where its own gives 5.00006676 for 25; a length and a direction are built on them.</summary>
+        public static void Sqrt(FakeWorld world)
+        {
+            Expect.True(Maths.Sqrt(25f) == 5f, "Sqrt(25)");
+            Expect.True(Maths.Sqrt(100f) == 10f, "Sqrt(100)");
+            Expect.True(Maths.Sqrt(0.25f) == 0.5f, "Sqrt(0.25)");
+            Expect.True(Maths.Sqrt(0f) == 0f, "Sqrt(0)");
+            Expect.True(MathF.Abs(Maths.Sqrt(3f) - 1.7320508f) < 0.000002f, "Sqrt(3)");
+            Expect.True(MathF.Abs(new Vector2(60f, 80f).Length - 100f) < 0.0001f, "(60, 80).Length");
+            Expect.True(MathF.Abs(Maths.Distance(0f, 0f, 3000f, 4000f) - 5000f) < 0.001f, "Distance to (3000, 4000)");
+            Expect.True(MathF.Abs(new Vector2(0f, 25f).Normalized().Y - 1f) < 0.000002f, "(0, 25).Normalized()");
+            Expect.True(MathF.Abs(new Vector3(0f, 0f, 3f).Normalized().Z - 1f) < 0.000002f, "(0, 0, 3).Normalized()");
+        }
+
         /// <summary>The float forms: distance, and the facing from one point to another.</summary>
         public static void DistanceAndAngle(FakeWorld world)
         {

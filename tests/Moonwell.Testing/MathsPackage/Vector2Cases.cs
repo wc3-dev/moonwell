@@ -1,3 +1,5 @@
+using System;
+
 namespace Moonwell.Testing
 {
     /// <summary>Cases for Vector2, in degrees, with Godot's names where the idea is the same.</summary>
@@ -72,6 +74,19 @@ namespace Moonwell.Testing
             Expect.Near(11f, new Vector2(1f, 2f).Dot(new Vector2(3f, 4f)), "(1, 2).Dot(3, 4)");
             Expect.Near(1f, Vector2.Right.Cross(Vector2.Up), "Right.Cross(Up)");
             Expect.Near(-1f, Vector2.Up.Cross(Vector2.Right), "Up.Cross(Right)");
+        }
+
+        /// <summary>Bouncing off a normal from Normalized() keeps a speed: on the game's own square root it fell by 7% in 1,900 hits.</summary>
+        public static void BounceKeepsSpeed(FakeWorld world)
+        {
+            var normal = new Vector2(0f, 3f).Normalized();
+            var velocity = new Vector2(300f, -400f);
+            for (var i = 0; i < 2000; i++)
+            {
+                velocity = velocity.Bounce(normal);
+            }
+
+            Expect.True(MathF.Abs(velocity.Length - 500f) < 0.5f, "the speed after 2,000 hits is " + velocity.Length);
         }
 
         /// <summary>Bounce is the physical bounce off a surface; Reflect mirrors across the normal; Slide keeps the part along the surface.</summary>

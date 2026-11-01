@@ -5,6 +5,12 @@ namespace Moonwell
     /// <summary>Numbers: interpolation, clamping and wrapping, and the float forms of distance and direction that code run every tick uses instead of vectors, since a vector is a table to make. Angles are in degrees.</summary>
     public static class Maths
     {
+        /// <summary>Near's own tolerance for smaller values: above a float's rounding up to 1,000.</summary>
+        private const float NearTolerance = 0.001f;
+
+        /// <summary>Near's own tolerance as a share of larger values, as a float's step grows with its value: 0.02 at 20,000, where a step is 0.002.</summary>
+        private const float NearShare = 0.000001f;
+
         /// <summary>The value a fraction t of the way from a to b: 0 gives a, 1 gives b. t is not clamped, so 2 goes past b.</summary>
         [LocalSafe]
         public static float Lerp(float a, float b, float t)
@@ -83,11 +89,25 @@ namespace Moonwell
             return from + Sign(gap) * step;
         }
 
-        /// <summary>Whether a and b are within tolerance of each other. Use it on computed floats, where == is exact and rarely holds.</summary>
+        /// <summary>Whether a and b are the same but for a float's rounding: within 0.001, or past 1,000 within 1 part in a million of the larger. Use it on computed floats, where == is exact and rarely holds.</summary>
         [LocalSafe]
-        public static bool Near(float a, float b, float tolerance = 0.001f)
+        public static bool Near(float a, float b)
+        {
+            return Near(a, b, MathF.Max(NearTolerance, MathF.Max(MathF.Abs(a), MathF.Abs(b)) * NearShare));
+        }
+
+        /// <summary>Whether a and b are within tolerance of each other.</summary>
+        [LocalSafe]
+        public static bool Near(float a, float b, float tolerance)
         {
             return MathF.Abs(a - b) <= tolerance;
+        }
+
+        /// <summary>The square root, right to a float's rounding, where MathF.Sqrt in the game is up to 2 parts in 100,000 high.</summary>
+        [LocalSafe]
+        public static float Sqrt(float value)
+        {
+            return Trig.Sqrt(value);
         }
 
         /// <summary>-1 for a negative value, 1 for a positive one, 0 for 0.</summary>

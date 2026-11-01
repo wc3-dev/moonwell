@@ -406,9 +406,20 @@ target.PlaceAt(Vector2.Lerp(start, end, Ease.OutQuad(t)));
   the hit is then put on the surface; one that starts deeper inside hits at once, with the normal against its direction.
 - A wall (`Segment`) has no inside, so a point that slides along it, or meets it within 0.01 of where another wall
   joins it, can end up on its far side. Make something solid from a `Polygon` or `Bounds`.
-- The game's numbers are not .NET's: a square root, sine or cosine is off by up to about 2 parts in 100,000, an
-  addition drops what is below two float steps of its result (0.004 at 20,000), and nothing makes NaN or infinity
-  (MW0042). Compare places with a tolerance, not `==`.
+- The game's numbers are not .NET's. These pass on .NET and go wrong only in the game:
+  - A float that should be whole can land just under it, and a cast truncates: with `count` at 10, `(int)(count * 0.7f)`
+    is 6. Round first: `(int)MathF.Round(count * 0.7f)`.
+  - A loop on a float can run once more: `for (var t = 0f; t < 1f; t += 0.1f)` runs 11 times. Count in an `int` and work
+    out `t = i * 0.1f`.
+  - Added-up floats run low: a clock adding 0.03 each tick is 15 s short after an hour, and an addition drops what is
+    below two float steps of its result (0.004 at 20,000). Count ticks in an `int` and multiply, or step by 1/32, which
+    stays exact.
+  - Compare with `Near`, not `==`: its own tolerance grows with the value, as a float's step does. It sees only the two
+    numbers, so a short distance read at 20,000, where points are off by 0.002, needs a tolerance: `Near(a, b, 0.01f)`.
+  - `MathF.Sqrt` is up to 2 parts in 100,000 high; `Maths.Sqrt`, `Length` and `DistanceTo` are right to a float's
+    rounding. Sines and cosines are off by up to 6 parts in a million.
+  - Dividing by 0 gives a number, and which one depends on what is divided (1 gives 2^127, 100 gives 0). A product past
+    the float's range gives 0 or nonsense (1e30 times 1e30 is 0). Test first (MW0042).
 
 ```csharp
 var left = dt;                                     // the step's seconds
@@ -767,7 +778,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0031 | `checked(a + b)`, `checked { }` (an overflow is never detected) | test the range yourself |
 | MW0032 | `Enum.Parse`, `Enum.GetValues`/`GetNames`, `ToString("D")` on an enum, a `[Flags]` combination turned into text, `(Color)5 + "x"` | a `switch` on the value, `HasFlag` |
 | MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, `foreach (unit u in widgets)`, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
-| MW0042 | `float.NaN` and `double.NaN` (1 in the game, whose arithmetic makes no NaN), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
+| MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
 
@@ -800,7 +811,7 @@ generics with constraints, enums, delegates, events, `switch` statements, `is` p
 properties (`{ Inner.X: 9 }` too) and positions on a tuple or a struct, `??`, `?.`, collection expressions, `foreach`
 over every collection, `yield`, lambdas and closures, `ref`/`out`/`in` parameters, `lock`, string interpolation, `List`,
 `Dictionary`, `HashSet`, `Queue`, `Stack`, arrays and most of LINQ. `float` and `int` arithmetic is the game's, see
-MW0005; its floats have no NaN or infinity (MW0042), and its square roots and sines are off by up to about 2 parts in
+MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF.Sqrt` is off by up to 2 parts in
 100,000 (Maths).
 
 ## The build

@@ -633,6 +633,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.scalars.clamp-and-wrap", Run = ScalarCases.ClampAndWrap });
             list.Add(new Case { Name = "maths.scalars.move-toward", Run = ScalarCases.MoveToward });
             list.Add(new Case { Name = "maths.scalars.sign-and-near", Run = ScalarCases.SignAndNear });
+            list.Add(new Case { Name = "maths.scalars.near-grows", Run = ScalarCases.NearGrows });
+            list.Add(new Case { Name = "maths.scalars.sqrt", Run = ScalarCases.Sqrt });
             list.Add(new Case { Name = "maths.scalars.distance-and-angle", Run = ScalarCases.DistanceAndAngle });
             list.Add(new Case { Name = "maths.scalars.polar", Run = ScalarCases.Polar });
             list.Add(new Case { Name = "maths.scalars.angles-normalize", Run = ScalarCases.AnglesNormalize });
@@ -645,6 +647,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.vector2.offset-and-rotate", Run = Vector2Cases.OffsetAndRotate });
             list.Add(new Case { Name = "maths.vector2.products", Run = Vector2Cases.Products });
             list.Add(new Case { Name = "maths.vector2.bounce-reflect-slide", Run = Vector2Cases.BounceReflectSlide });
+            list.Add(new Case { Name = "maths.vector2.bounce-keeps-speed", Run = Vector2Cases.BounceKeepsSpeed });
             list.Add(new Case { Name = "maths.vector2.limits", Run = Vector2Cases.Limits });
             list.Add(new Case { Name = "maths.vector2.lerp", Run = Vector2Cases.Lerp });
             list.Add(new Case { Name = "maths.vector2.operators", Run = Vector2Cases.Operators });

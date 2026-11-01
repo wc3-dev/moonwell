@@ -44,7 +44,7 @@ namespace Moonwell.Engine
                 return false;
             }
 
-            var length = MathF.Sqrt(dx * dx + dy * dy);
+            var length = Maths.Sqrt(dx * dx + dy * dy);
             if (!Finite(length))
             {
                 hit = Miss();
