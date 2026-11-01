@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
@@ -75,7 +76,7 @@ namespace Moonwell
             Start(() => Install(map, register));
         }
 
-        /// <summary>Runs the register step, with every maker registered before any class's constructor runs (ObjectTypes.Registering), then adds the map's starting components to the game, in list order; Start runs it as the setup.</summary>
+        /// <summary>Runs the register step, with every maker registered before any class's constructor runs (ObjectTypes.Registering), then adds the map's starting components to the game, in list order, and its player components to each player in the game; Start runs it as the setup.</summary>
         internal static void Install(Map map, Action register)
         {
             ObjectTypes.Registering(register);
@@ -83,6 +84,31 @@ namespace Moonwell
             for (var i = 0; i < components.Count; i++)
             {
                 Game.Instance.Add(components[i]);
+            }
+
+            if (map.StartPlayerComponents.Count > 0)
+            {
+                AddPlayerComponents(map.StartPlayerComponents);
+            }
+        }
+
+        /// <summary>Gives each player in the game, in slot order, its own object from each maker, in list order; a maker that throws is reported and the others run.</summary>
+        private static void AddPlayerComponents(List<Func<PlayerComponent>> makers)
+        {
+            var players = Player.Playing;
+            for (var p = 0; p < players.Count; p++)
+            {
+                for (var m = 0; m < makers.Count; m++)
+                {
+                    try
+                    {
+                        players[p].Add(makers[m]());
+                    }
+                    catch (Exception error)
+                    {
+                        Errors.Report("Moonwell.Setup", error);
+                    }
+                }
             }
         }
 

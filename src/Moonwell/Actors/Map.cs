@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 
 namespace Moonwell
 {
-    /// <summary>The map a project declares: its settings, and the components the game starts with; a project has one class deriving from it.</summary>
+    /// <summary>The map a project declares: its settings, and the components the game and its players start with; a project has one class deriving from it.</summary>
     public abstract class Map
     {
         /// <summary>The name of the map; empty keeps the value World Editor set.</summary>
@@ -26,7 +27,13 @@ namespace Moonwell
         /// <summary>The components the game starts with, added in list order when the game starts; the constructor lists them, or assigns a new list.</summary>
         protected List<GameComponent> Components { get; set; } = new List<GameComponent>();
 
+        /// <summary>What makes the components each player in the game starts with, people and computers: when the game starts each maker runs once for each player, in list order, before the units already in the map come in. The constructor lists them, or assigns a new list.</summary>
+        protected List<Func<PlayerComponent>> PlayerComponents { get; set; } = new List<Func<PlayerComponent>>();
+
         /// <summary>The starting components, in the order they were listed.</summary>
         internal List<GameComponent> StartComponents => Components;
+
+        /// <summary>The makers of the starting player components, in the order they were listed.</summary>
+        internal List<Func<PlayerComponent>> StartPlayerComponents => PlayerComponents;
     }
 }

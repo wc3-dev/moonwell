@@ -53,6 +53,12 @@ map plays with, as World Editor's Data Set and Data Version. `Components` lists 
 starts with: `Components.Add(new Start(), new Rules());` adds them, and `Components = new() { new Start(), new Rules() };`
 replaces the list.
 
+`PlayerComponents` lists what every player in the game starts with, people and computers:
+`PlayerComponents.Add(() => new Aim(), () => new Score());`. A component is on one actor only, so each `() =>` makes a
+new one for each player. They are added when the game starts, before the units already in the map come in, so their
+`OnUnitCreated` hears of those units. One added later, such as `player.Add(new Aim())` for a single player or a
+neutral one, does not.
+
 ## Objects
 
 A unit, hero, item, ability, buff, destructable, doodad or upgrade is a class that inherits one of the game's own,

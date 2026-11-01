@@ -831,6 +831,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "map.components-assigned", Run = MapCases.ComponentsAssigned });
             list.Add(new Case { Name = "map.components-add-many", Run = MapCases.ComponentsAddMany });
             list.Add(new Case { Name = "map.begin-takes-in-placed", Run = MapCases.BeginTakesInPlaced });
+            list.Add(new Case { Name = "map.player-components-per-player", Run = MapCases.PlayerComponentsPerPlayer });
+            list.Add(new Case { Name = "map.player-components-in-order", Run = MapCases.PlayerComponentsInOrder });
+            list.Add(new Case { Name = "map.player-components-assigned", Run = MapCases.PlayerComponentsAssigned });
+            list.Add(new Case { Name = "map.player-components-not-made-early", Run = MapCases.PlayerComponentsNotMadeEarly });
+            list.Add(new Case { Name = "map.player-components-hear-placed-units", Run = MapCases.PlayerComponentsHearPlacedUnits });
+            list.Add(new Case { Name = "map.player-component-maker-fails", Run = MapCases.PlayerComponentMakerFails });
+            list.Add(new Case { Name = "map.player-components-none-listed", Run = MapCases.PlayerComponentsNoneListed });
             list.Add(new Case { Name = "units.subclass-assigning-drops-parent", Run = MapCases.SubclassAssigningDropsParent });
             list.Add(new Case { Name = "units.subclass-add-many-keeps-parent", Run = MapCases.SubclassAddManyKeepsParent });
             list.Add(new Case { Name = "units.create-default-facing", Run = MapCases.CreateDefaultFacing });

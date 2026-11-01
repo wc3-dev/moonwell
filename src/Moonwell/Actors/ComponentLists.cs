@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Moonwell
@@ -8,6 +9,17 @@ namespace Moonwell
         /// <summary>Adds the components to the end of the list, in the order given.</summary>
         public static void Add<T>(this List<T> list, T first, T second, params T[] more)
             where T : Component
+        {
+            list.Add(first);
+            list.Add(second);
+            for (var i = 0; i < more.Length; i++)
+            {
+                list.Add(more[i]);
+            }
+        }
+
+        /// <summary>Adds the makers of player components to the end of the list, in the order given: <c>PlayerComponents.Add(() => new Aim(), () => new Score());</c>.</summary>
+        public static void Add(this List<Func<PlayerComponent>> list, Func<PlayerComponent> first, Func<PlayerComponent> second, params Func<PlayerComponent>[] more)
         {
             list.Add(first);
             list.Add(second);
