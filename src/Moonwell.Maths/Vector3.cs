@@ -207,9 +207,16 @@ namespace Moonwell
             return new Vector3(X - normal.X * k, Y - normal.Y * k, Z - normal.Z * k);
         }
 
-        /// <summary>Whether each component is within tolerance of the other vector's. Use it on computed vectors, where == is exact.</summary>
+        /// <summary>Whether each component is the same as the other vector's but for a float's rounding, as Maths.Near. Use it on computed vectors, where == is exact.</summary>
         [LocalSafe]
-        public bool Near(Vector3 other, float tolerance = 0.001f)
+        public bool Near(Vector3 other)
+        {
+            return Maths.Near(X, other.X) && Maths.Near(Y, other.Y) && Maths.Near(Z, other.Z);
+        }
+
+        /// <summary>Whether each component is within tolerance of the other vector's.</summary>
+        [LocalSafe]
+        public bool Near(Vector3 other, float tolerance)
         {
             return Maths.Near(X, other.X, tolerance) && Maths.Near(Y, other.Y, tolerance) && Maths.Near(Z, other.Z, tolerance);
         }

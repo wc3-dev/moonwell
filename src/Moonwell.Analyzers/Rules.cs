@@ -373,7 +373,7 @@ public static class Rules
         "MW0042",
         "NaN or infinity, which the game's Lua does not have",
         "'{0}' {1}",
-        "The game's own Lua has floats of its own (the 0.3 gate, 10-27): its arithmetic makes no NaN and no infinity. float.NaN and double.NaN, which CSharp.lua writes 0 / 0, are 1 there; 1 / 0 is 2^127 (1.7e38), and inf - inf and 0 * inf are 0. So float.IsNaN is never true, IsInfinity, IsPositiveInfinity, IsNegativeInfinity and IsFinite test for what never happens, and PositiveInfinity and NegativeInfinity turn into plain numbers in arithmetic. Mark no value with a bool or a float?, use float.MaxValue for no limit, and test what could go wrong before it does (a length of 0 before dividing by it).");
+        "The game's own Lua has floats of its own (the 0.3 gate, 10-27): dividing makes no NaN and no infinity, and a product past the float's range gives 0 or nonsense. float.NaN and double.NaN, which CSharp.lua writes 0 / 0, are 1 there; 1 / 0 is 2^127 (1.7e38), and inf - inf and 0 * inf are 0. So float.IsNaN is never true, IsInfinity, IsPositiveInfinity, IsNegativeInfinity and IsFinite test for what never happens, and PositiveInfinity and NegativeInfinity turn into plain numbers in arithmetic. Mark no value with a bool or a float?, use float.MaxValue for no limit, and test what could go wrong before it does (a length of 0 before dividing by it).");
 
     /// <summary>The rules for syntax and library CSharp.lua or its Lua core cannot do.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Syntaxes { get; } = ImmutableArray.Create(
