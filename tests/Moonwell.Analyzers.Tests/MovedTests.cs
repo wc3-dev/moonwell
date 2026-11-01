@@ -83,7 +83,7 @@ public class MovedTests
                     {
                         AttackType = AttackType.Magic;
                         DefenseType = Moonwell.DefenseType.Divine;
-                        Attack2AttackType = AttackType;
+                        Attack2Type = AttackType;
                         var shown = AttackType.ToString();
                     }
 

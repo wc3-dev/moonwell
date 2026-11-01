@@ -25,7 +25,8 @@ namespace Moonwell.Objects
     /// <item>A text too long: <c>at most 50 characters; [BeyondLimits] goes past it</c>.</item>
     /// <item>A list too long: <c>at most 12 entries; [BeyondLimits] goes past it</c>.</item>
     /// <item>A choice that is no value of its enum: <c>only the values of AttackType</c>, and for a flags enum
-    /// <c>only the values of Targets and their combinations</c>.</item>
+    /// <c>only the values of Targets and their combinations</c>; a value World Editor does not list for the field
+    /// (<see cref="ListedValuesAttribute"/>): <c>only the values of WeaponSound that World Editor lists</c>.</item>
     /// </list>
     /// <para>
     /// The value is shown as C# would print it in the invariant culture (<c>600000</c>, <c>0.5</c>, a choice as its number);
@@ -204,6 +205,11 @@ namespace Moonwell.Objects
                 var allowed = "only the values of " + type.Name + (flags ? " and their combinations" : string.Empty);
                 throw rules.Error(number.ToString(CultureInfo.InvariantCulture), allowed, level, putAt);
             }
+
+            if (rules.Listed != null && Array.IndexOf(rules.Listed, (int)number) < 0)
+            {
+                throw rules.Error(number.ToString(CultureInfo.InvariantCulture), "only the values of " + type.Name + " that World Editor lists", level, putAt);
+            }
         }
 
         private static string Range(double min, double max)
@@ -320,6 +326,7 @@ namespace Moonwell.Objects
                 Min = limits == null ? double.NegativeInfinity : limits.Min;
                 Max = limits == null ? double.PositiveInfinity : limits.Max;
                 NonNegative = info.IsDefined(typeof(NonNegativeAttribute), false);
+                Listed = info.GetCustomAttribute<ListedValuesAttribute>(false)?.Numbers;
                 Required = info.IsDefined(typeof(RequiredAttribute), false);
                 MaxLength = info.GetCustomAttribute<MaxLengthAttribute>(false)?.Length;
                 MaxEntries = info.GetCustomAttribute<MaxEntriesAttribute>(false)?.Count;
@@ -347,6 +354,8 @@ namespace Moonwell.Objects
             public double Max { get; }
 
             public bool NonNegative { get; }
+
+            public int[]? Listed { get; }
 
             public bool Required { get; }
 

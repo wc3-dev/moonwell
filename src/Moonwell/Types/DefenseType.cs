@@ -19,7 +19,7 @@ namespace Moonwell
         Large = 3,
 
         /// <summary>Fortified.</summary>
-        Fort = 4,
+        Fortified = 4,
 
         /// <summary>Hero.</summary>
         Hero = 5,

@@ -89,8 +89,8 @@ namespace Moonwell.Objects
                 ["uclr"] = typeof(int),
                 ["ucol"] = typeof(float),
                 ["ucpt"] = typeof(float),
-                ["ucs1"] = typeof(global::Moonwell.Objects.CombatSound),
-                ["ucs2"] = typeof(global::Moonwell.Objects.CombatSound),
+                ["ucs1"] = typeof(global::Moonwell.WeaponSound),
+                ["ucs2"] = typeof(global::Moonwell.WeaponSound),
                 ["ucua"] = typeof(string),
                 ["ucun"] = typeof(string),
                 ["ucut"] = typeof(string),
@@ -442,7 +442,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>ua2b</c>.</summary>
         [global::Moonwell.Objects.Field("ua2b", Label = "Attack 2 - Damage Base")]
         [global::Moonwell.Objects.Limits(0, 500000)]
-        public int Attack2DamageBase
+        public int Attack2Damage
         {
             get { return Fields.Get<int>(this, "ua2b"); }
             protected set { Fields.Put("ua2b", value); }
@@ -452,7 +452,7 @@ namespace Moonwell.Objects
         [global::Moonwell.Objects.Field("ua2c", Label = "Attack 2 - Cooldown Time")]
         [global::Moonwell.Objects.Limits(0, 3600)]
         [global::Moonwell.Objects.NonNegative]
-        public float Attack2CooldownTime
+        public float Attack2Cooldown
         {
             get { return Fields.Get<float>(this, "ua2c"); }
             protected set { Fields.Put("ua2c", value); }
@@ -461,7 +461,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>ua2d</c>.</summary>
         [global::Moonwell.Objects.Field("ua2d", Label = "Attack 2 - Damage Number of Dice")]
         [global::Moonwell.Objects.Limits(0, 100)]
-        public int Attack2DamageNumberOfDice
+        public int Attack2DamageDice
         {
             get { return Fields.Get<int>(this, "ua2d"); }
             protected set { Fields.Put("ua2d", value); }
@@ -530,7 +530,7 @@ namespace Moonwell.Objects
         /// <summary>The field <c>ua2s</c>.</summary>
         [global::Moonwell.Objects.Field("ua2s", Label = "Attack 2 - Damage Sides per Die")]
         [global::Moonwell.Objects.Limits(0, 100)]
-        public int Attack2DamageSidesPerDie
+        public int Attack2DamageSides
         {
             get { return Fields.Get<int>(this, "ua2s"); }
             protected set { Fields.Put("ua2s", value); }
@@ -538,7 +538,7 @@ namespace Moonwell.Objects
 
         /// <summary>The field <c>ua2t</c>.</summary>
         [global::Moonwell.Objects.Field("ua2t", Label = "Attack 2 - Attack Type")]
-        public global::Moonwell.AttackType Attack2AttackType
+        public global::Moonwell.AttackType Attack2Type
         {
             get { return Fields.Get<global::Moonwell.AttackType>(this, "ua2t"); }
             protected set { Fields.Put("ua2t", value); }
@@ -880,17 +880,19 @@ namespace Moonwell.Objects
 
         /// <summary>The field <c>ucs1</c>.</summary>
         [global::Moonwell.Objects.Field("ucs1", Label = "Attack 1 - Weapon Sound")]
-        public global::Moonwell.Objects.CombatSound Attack1WeaponSound
+        [global::Moonwell.Objects.ListedValues(22, 8, 3, 6, 1, 4, 7, 2, 5, 23, 16, 14, 15)]
+        public global::Moonwell.WeaponSound Attack1WeaponSound
         {
-            get { return Fields.Get<global::Moonwell.Objects.CombatSound>(this, "ucs1"); }
+            get { return Fields.Get<global::Moonwell.WeaponSound>(this, "ucs1"); }
             protected set { Fields.Put("ucs1", value); }
         }
 
         /// <summary>The field <c>ucs2</c>.</summary>
         [global::Moonwell.Objects.Field("ucs2", Label = "Attack 2 - Weapon Sound")]
-        public global::Moonwell.Objects.CombatSound Attack2WeaponSound
+        [global::Moonwell.Objects.ListedValues(22, 8, 3, 6, 1, 4, 7, 2, 5, 23, 16, 14, 15)]
+        public global::Moonwell.WeaponSound Attack2WeaponSound
         {
-            get { return Fields.Get<global::Moonwell.Objects.CombatSound>(this, "ucs2"); }
+            get { return Fields.Get<global::Moonwell.WeaponSound>(this, "ucs2"); }
             protected set { Fields.Put("ucs2", value); }
         }
 

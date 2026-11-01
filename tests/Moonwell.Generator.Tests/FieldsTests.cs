@@ -107,6 +107,17 @@ public class FieldsTests
         Assert.Equal(name, FieldNames.HandPicked(kind)[id]);
     }
 
+    [Theory]
+    [InlineData("ua2t", "Attack2Type")]
+    [InlineData("ua2b", "Attack2Damage")]
+    [InlineData("ua2d", "Attack2DamageDice")]
+    [InlineData("ua2s", "Attack2DamageSides")]
+    [InlineData("ua2c", "Attack2Cooldown")]
+    public void attack_2s_fields_are_named_as_attack_1s(string id, string name)
+    {
+        Assert.Equal(name, FieldNames.HandPicked(Kind.Unit)[id]);
+    }
+
     [Fact]
     public void every_listed_id_exists()
     {

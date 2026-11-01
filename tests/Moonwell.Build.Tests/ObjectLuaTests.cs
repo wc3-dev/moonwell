@@ -708,6 +708,15 @@ namespace Moonwell.Build.Tests
             Assert.Equal("Magic Divine Hero", Outcome(lua, "return Objects.Report.CoreNamed(Objects.Mage())"));
         }
 
+        [Fact]
+        public void a_weapon_sound_reads_as_the_enum_a_hit_takes()
+        {
+            using var lua = compiled.Start();
+
+            // The mage is a footman, whose attack sounds metal and medium, and which has no second attack.
+            Assert.Equal("MetalMediumSlice 5 None", Outcome(lua, "return Objects.Report.Sounded(Objects.Mage())"));
+        }
+
         // What a chunk returns, or "error: " and the error it raises.
         private static string Outcome(NLua.Lua lua, string chunk)
         {

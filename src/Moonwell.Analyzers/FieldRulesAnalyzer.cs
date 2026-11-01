@@ -55,6 +55,7 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
         public double Min = double.NegativeInfinity;
         public double Max = double.PositiveInfinity;
         public bool NonNegative;
+        public ImmutableArray<int>? Listed;
         public bool Required;
         public int? MaxLength;
         public int? MaxEntries;
@@ -234,7 +235,7 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
     {
         if (type is { TypeKind: TypeKind.Enum } && value != null)
         {
-            return Choice(type, value);
+            return Choice(field, type, value);
         }
 
         switch (value)
@@ -311,7 +312,7 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
         return null;
     }
 
-    private static (string, string)? Choice(ITypeSymbol type, object value)
+    private static (string, string)? Choice(Field field, ITypeSymbol type, object value)
     {
         var number = ToLong(value);
         var flags = type.GetAttributes().Any(a => a.AttributeClass is { Name: "FlagsAttribute", ContainingNamespace: { Name: "System", ContainingNamespace.IsGlobalNamespace: true } });
@@ -332,7 +333,14 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             known = members.Contains(number);
         }
 
-        return known ? null : (number.ToString(CultureInfo.InvariantCulture), "only the values of " + type.Name + (flags ? " and their combinations" : string.Empty));
+        if (!known)
+        {
+            return (number.ToString(CultureInfo.InvariantCulture), "only the values of " + type.Name + (flags ? " and their combinations" : string.Empty));
+        }
+
+        return field.Listed is { } listed && !listed.Contains((int)number)
+            ? (number.ToString(CultureInfo.InvariantCulture), "only the values of " + type.Name + " that World Editor lists")
+            : null;
     }
 
     private static long ToLong(object value) => value is ulong big ? unchecked((long)big) : Convert.ToInt64(value, CultureInfo.InvariantCulture);
@@ -391,6 +399,10 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             else if (IsObjects(attribute.AttributeClass, "NonNegativeAttribute"))
             {
                 result.NonNegative = true;
+            }
+            else if (IsObjects(attribute.AttributeClass, "ListedValuesAttribute") && arguments.Length == 1)
+            {
+                result.Listed = arguments[0].Values.Select(number => (int)number.Value!).ToImmutableArray();
             }
             else if (IsObjects(attribute.AttributeClass, "RequiredAttribute"))
             {

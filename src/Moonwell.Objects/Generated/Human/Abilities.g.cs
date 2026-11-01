@@ -217,7 +217,7 @@ namespace Moonwell.Objects
                     Race = global::Moonwell.Objects.UnitRace.Human;
                     Range = Levels(800f, 800f, 800f);
                     RequiredLevel = 1;
-                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Organic, global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Organic, global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Organic);
+                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Organic, global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Organic, global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Organic);
                     Tooltip = Levels("Banish - [|cffffcc00Level 1|r]", "Banish - [|cffffcc00Level 2|r]", "Banish - [|cffffcc00Level 3|r]");
                     TooltipExtended = Levels("Turns a non-mechanical unit ethereal and slows its movement speed by <AHbn,DataA1,%>% for <AHbn,Dur1> seconds. Ethereal creatures cannot attack, but they can cast spells and certain spells cast upon them will have a greater effect.", "Turns a unit ethereal and slows its movement speed by <AHbn,DataA2,%>% for <AHbn,Dur2> seconds. Ethereal creatures cannot attack, but they can cast spells and certain spells cast upon them will have a greater effect.", "Turns a unit ethereal and slows its movement speed by <AHbn,DataA3,%>% for <AHbn,Dur3> seconds. Ethereal creatures cannot attack, but they can cast spells and certain spells cast upon them will have a greater effect.");
                     TooltipLearn = "Learn Banish - [|cffffcc00Level %d|r]";
@@ -2012,7 +2012,7 @@ namespace Moonwell.Objects
                     Requires.Set<global::Moonwell.Objects.Human.Upgrades.SorceressAdeptTraining>();
                     Target = "Abilities\\Spells\\Human\\Invisibility\\InvisibilityTarget.mdl";
                     TargetAttachmentPoint1 = "chest";
-                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Neutral | global::Moonwell.Objects.Targets.Nonsapper | global::Moonwell.Objects.Targets.Organic | global::Moonwell.Objects.Targets.Friend);
+                    TargetsAllowed = Levels(global::Moonwell.Objects.Targets.Air | global::Moonwell.Objects.Targets.Ground | global::Moonwell.Objects.Targets.Neutral | global::Moonwell.Objects.Targets.NonSuicidal | global::Moonwell.Objects.Targets.Organic | global::Moonwell.Objects.Targets.Friend);
                     Tooltip = Levels("Invisibility");
                     TooltipExtended = Levels("Makes a unit invisible. If the unit attacks, uses an ability or casts a spell, it will become visible. |nLasts <Aivs,Dur1> seconds.");
                     TransitionTimeSeconds = Levels(0f);

@@ -59,6 +59,13 @@ namespace Objects
             return (declared ? "yes" : "no") + " " + (standard ? "yes" : "no") + " " + (int)zap.TargetsAllowed[3];
         }
 
+        // A unit's weapon sound reads as the enum a hit takes, numbered as the game numbers it; a unit with none reads None.
+        public static string Sounded(Mage mage)
+        {
+            WeaponSound hit = mage.Attack1WeaponSound;
+            return hit + " " + (int)hit + " " + mage.Attack2WeaponSound;
+        }
+
         // A destructable's "Targeted As": the declared Gate's chain reads it, so the standard Demonic Gate it is based on has its value too.
         public static bool Debris(Gate gate)
         {

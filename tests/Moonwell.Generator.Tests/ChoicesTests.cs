@@ -206,6 +206,69 @@ public class ChoicesTests
         Assert.Equal("AttributeTypeChoice", Choices.All(MiniExport(), new HashSet<string> { "AttributeType" })["attributeType"].Name);
     }
 
+    [Theory]
+    [InlineData("lightningEffect", "CLPB", "Chain Lightning - Primary", "ChainLightningPrimary")]
+    [InlineData("lightningEffect", "FORK", "Forked Lighting", "ForkedLightning")]
+    [InlineData("upgradeEffect", "rhpx", "Hit Point Bonus", "HitPointBonus")]
+    [InlineData("upgradeEffect", "rhpo", "Hit Point Bonus (%)", "HitPointBonusPercent")]
+    [InlineData("weaponType", "aline", "Artillery (Line)", "ArtilleryLine")]
+    [InlineData("moveType", "amph", "Amphibious", "Amphibious")]
+    [InlineData("attributeType", "STR", "Strength", "Strength")]
+    [InlineData("unitClass", "standon", "Walkable", "Walkable")]
+    [InlineData("unitClass", "peon", "Worker", "Worker")]
+    [InlineData("targetList", "sapper", "Suicidal", "Suicidal")]
+    [InlineData("targetList", "nonsapper", "Non-suicidal", "NonSuicidal")]
+    public void a_code_is_named_by_its_label(string type, string text, string label, string name)
+    {
+        var choice = Choices.Make(type, "string", new[] { Entry(0, text, "LABEL") }, _ => label);
+
+        Assert.Equal(name, Assert.Single(choice.Members).Name);
+    }
+
+    [Fact]
+    public void a_word_keeps_its_name_beside_a_code()
+    {
+        var targets = Choices.Make("targetList", "string", new[] { Entry(0, "enemies", "LABEL") }, _ => "Enemy");
+
+        Assert.Equal("Enemies", Assert.Single(targets.Members).Name);
+    }
+
+    [Fact]
+    public void a_code_stays_in_the_hover_of_the_member_its_label_names()
+    {
+        var weapon = Choices.Make("weaponType", "string", new[] { Entry(0, "aline", "LABEL") }, _ => "Artillery (Line)");
+        var moved = Choices.Make("moveType", "string", new[] { Entry(0, "foot", "LABEL") }, _ => "Foot");
+        var source = ObjectsWriter.Choices(new[] { weapon, moved });
+
+        Assert.Contains("/// <summary>Artillery (Line) (aline).</summary>\n", source);
+        Assert.Contains("/// <summary>Foot.</summary>\n", source);
+    }
+
+    [Fact]
+    public void a_sound_is_a_part_of_core_weapon_sound_with_its_numbers()
+    {
+        var sound = Choices.Make("combatSound", "string", new[] { Entry(0, "MetalHeavySlice", "LABEL"), Entry(1, "WoodLightBash", "LABEL") }, _ => "");
+        var core = new (string Name, int Value)[] { ("None", 0), ("MetalHeavySlice", 6), ("WoodLightBash", 14), ("ClawHeavySlice", 21) };
+
+        var numbered = Choices.WithCoreNumbers(new Dictionary<string, ChoiceType> { ["combatSound"] = sound }, _ => core)["combatSound"];
+
+        Assert.Equal("global::Moonwell.WeaponSound", sound.TypeName);
+        Assert.True(sound.Partial);
+        Assert.Equal(new[] { ("MetalHeavySlice", 6), ("WoodLightBash", 14) }, numbered.Members.Select(member => (member.Name, member.Value)));
+    }
+
+    [Fact]
+    public void a_sound_the_core_enum_lacks_stops_the_generator()
+    {
+        var sound = Choices.Make("combatSound", "string", new[] { Entry(0, "GlassHeavyBash", "LABEL") }, _ => "");
+        var core = new (string Name, int Value)[] { ("None", 0) };
+
+        var error = Assert.Throws<InvalidOperationException>(
+            () => Choices.WithCoreNumbers(new Dictionary<string, ChoiceType> { ["combatSound"] = sound }, _ => core));
+
+        Assert.Equal("combatSound: Moonwell.WeaponSound has no member GlassHeavyBash", error.Message);
+    }
+
     [Fact]
     public void attack_and_defense_types_are_core_moonwells_enums()
     {
@@ -295,9 +358,9 @@ public class ChoicesTests
             + "    /// @CSharpLua.Ignore\n"
             + "    public enum AttributeType\n"
             + "    {\n"
-            + "        /// <summary>Agility.</summary>\n"
+            + "        /// <summary>Agility (AGI).</summary>\n"
             + "        [global::Moonwell.Objects.GameValue(\"AGI\")]\n"
-            + "        AGI = 0,\n",
+            + "        Agility = 0,\n",
             source);
         Assert.Contains(
             "    /// @CSharpLua.Ignore\n"

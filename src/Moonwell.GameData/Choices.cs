@@ -40,6 +40,12 @@ public sealed record ChoiceType(string Type, string Name, ChoiceForm Form, strin
     /// <summary>True for a placement type, whose members are named as World Editor shows them: see <see cref="Choices.IsPlacement"/>.</summary>
     public bool Placement => Choices.IsPlacement(Type);
 
+    /// <summary>True when World Editor lists fewer values than the core enum has: see <see cref="Choices.IsPartial"/>.</summary>
+    public bool Partial => Choices.IsPartial(Type);
+
+    /// <summary>Whether a value's text is a code, so that its member is named by its label: see <see cref="Choices.IsCoded"/>.</summary>
+    public bool IsCoded(string text) => Choices.IsCoded(Type, text);
+
     /// <summary>The enum as generated C# names it: <c>global::Moonwell.AttackType</c>, <c>global::Moonwell.Objects.Targets</c>.</summary>
     public string TypeName => (Core ? "global::Moonwell." : "global::Moonwell.Objects.") + Name;
 }
@@ -49,7 +55,8 @@ public sealed record ChoiceType(string Type, string Name, ChoiceForm Form, strin
 /// <para>
 /// A member is named by its text (<c>magic</c> is <c>Magic</c>), with the word breaks of its label when the label
 /// spells the same letters (<c>notself</c>, labelled <c>Not self</c>, is <c>NotSelf</c>); a text with a digit or no
-/// letter (<c>AS01</c>, <c>3</c>, <c>_</c>) is named by its label alone. A placement type's enum and members are named
+/// letter (<c>AS01</c>, <c>3</c>, <c>_</c>) is named by its label alone, and so is a text that is a code
+/// (<see cref="IsCoded"/>: <c>CLPB</c> is <c>ChainLightningPrimary</c>). A placement type's enum and members are named
 /// as World Editor shows them (<see cref="IsPlacement"/>).
 /// </para>
 /// <para>
@@ -74,7 +81,23 @@ public static class Choices
 
     // The types whose enums are core Moonwell's: the damage package's hits hold them too, and it cannot reference
     // Moonwell.Objects (CSharp.lua problem C19), so a map has one of each, in namespace Moonwell.
-    private static readonly HashSet<string> CoreTypes = new(StringComparer.Ordinal) { "attackType", "defenseType" };
+    private static readonly HashSet<string> CoreTypes = new(StringComparer.Ordinal) { "attackType", "combatSound", "defenseType" };
+
+    // The core types World Editor lists only some values of: the game's natives have more sounds than its list has. The enum
+    // holds them all, so that a hit can make any, and a field takes the listed ones (decision 97).
+    private static readonly HashSet<string> PartialTypes = new(StringComparer.Ordinal) { "combatSound" };
+
+    // The core types named otherwise than their metadata type.
+    private static readonly Dictionary<string, string> CoreNames = new(StringComparer.Ordinal) { ["combatSound"] = "WeaponSound" };
+
+    // The types whose values the game's data spells as codes (decision 96): rhpx, CLPB, aline, STR.
+    private static readonly HashSet<string> CodedTypes = new(StringComparer.Ordinal)
+    {
+        "attributeType", "lightningEffect", "moveType", "upgradeEffect", "weaponType",
+    };
+
+    // The values that are codes in types whose other values read well (decision 96): World Editor calls standon Walkable.
+    private static readonly HashSet<string> CodedValues = new(StringComparer.Ordinal) { "fort", "nonsapper", "peon", "sapper", "standon" };
 
     // The placement types and the names of their enums (decision 70). The game stores World Editor's "Placement Requires"
     // (upap) as preventPlace, of type pathingListPrevent, and "Placement Prevented By" (upar) as requirePlace, of type
@@ -106,6 +129,21 @@ public static class Choices
     public static bool IsPlacement(string type)
     {
         return PlacementTypes.ContainsKey(type);
+    }
+
+    /// <summary>
+    /// Whether World Editor lists fewer values of a metadata type than its core enum has (<c>combatSound</c> has 13 of
+    /// <c>Moonwell.WeaponSound</c>'s 24): the members take the core enum's numbers, and a field allows only those.
+    /// </summary>
+    public static bool IsPartial(string type)
+    {
+        return PartialTypes.Contains(type);
+    }
+
+    /// <summary>Whether the game's data spells a value as a code rather than a word, so that its member is named by its label: <c>rhpx</c> is <c>HitPointBonus</c>.</summary>
+    public static bool IsCoded(string type, string text)
+    {
+        return CodedTypes.Contains(type) || CodedValues.Contains(text);
     }
 
     /// <summary>
@@ -195,7 +233,9 @@ public static class Choices
             }
 
             var shown = Shown(entry.Label.Length == 0 ? "" : label(entry.Label));
-            var name = IsPlacement(type) ? FieldNames.FromLabel(shown) : MemberName(entry.Text, shown);
+            var name = IsPlacement(type) ? FieldNames.FromLabel(shown)
+                : IsCoded(type, entry.Text) && shown.Length > 0 ? CodedName(shown)
+                : MemberName(entry.Text, shown);
             if (name.Length == 0)
             {
                 throw new InvalidOperationException($"{type}: the value {entry.Text} has no name; it has no letter and no label");
@@ -279,14 +319,59 @@ public static class Choices
     }
 
     /// <summary>
+    /// The choice types with the members of a partial type (<see cref="IsPartial"/>) numbered as its core enum numbers
+    /// them; other types are returned as they are.
+    /// </summary>
+    /// <param name="choices">The choice types by type.</param>
+    /// <param name="core">The members of a core enum by its name (<c>RuntimeMembers.EnumMembers</c> in Moonwell's generator); null when Moonwell has no such enum.</param>
+    /// <exception cref="InvalidOperationException">There is no such enum, or it lacks a member.</exception>
+    public static IReadOnlyDictionary<string, ChoiceType> WithCoreNumbers(
+        IReadOnlyDictionary<string, ChoiceType> choices,
+        Func<string, IReadOnlyList<(string Name, int Value)>?> core)
+    {
+        var result = new SortedDictionary<string, ChoiceType>(StringComparer.Ordinal);
+        foreach (var (type, choice) in choices)
+        {
+            if (!choice.Partial)
+            {
+                result[type] = choice;
+                continue;
+            }
+
+            var numbers = core(choice.Name) ?? throw new InvalidOperationException($"{type}: Moonwell has no enum {choice.Name}");
+            var members = new List<ChoiceMember>(choice.Members.Count);
+            foreach (var member in choice.Members)
+            {
+                var found = numbers.Where(number => number.Name == member.Name).ToList();
+                if (found.Count == 0)
+                {
+                    throw new InvalidOperationException($"{type}: Moonwell.{choice.Name} has no member {member.Name}");
+                }
+
+                members.Add(member with { Value = found[0].Value });
+            }
+
+            result[type] = choice with { Members = members };
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// The enum's name: the type's in PascalCase, and a type ending in List names its values in the plural (<c>targetList</c>
-    /// is <c>Targets</c>); a placement type's is the field's World Editor shows (<c>pathingListPrevent</c> is <c>PathingRequire</c>).
+    /// is <c>Targets</c>); a placement type's is the field's World Editor shows (<c>pathingListPrevent</c> is <c>PathingRequire</c>),
+    /// and a core type may have a name of its own (<c>combatSound</c> is <c>WeaponSound</c>).
     /// </summary>
     public static string EnumName(string type)
     {
         if (PlacementTypes.TryGetValue(type, out var placement))
         {
             return placement;
+        }
+
+        if (CoreNames.TryGetValue(type, out var core))
+        {
+            return core;
         }
 
         var name = type.EndsWith("List", StringComparison.Ordinal) ? type.Substring(0, type.Length - 4) + "s" : type;
@@ -317,6 +402,13 @@ public static class Choices
     private static bool IsWhole(string text)
     {
         return int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _);
+    }
+
+    // A code's name from its label. "Hit Point Bonus (%)" stays apart from "Hit Point Bonus", and the game's misspelled
+    // "Forked Lighting" is corrected.
+    private static string CodedName(string label)
+    {
+        return FieldNames.FromLabel(label.Replace("%", "Percent", StringComparison.Ordinal).Replace("Lighting", "Lightning", StringComparison.Ordinal));
     }
 
     private static string MemberName(string text, string label)

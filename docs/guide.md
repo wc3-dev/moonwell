@@ -86,8 +86,9 @@ public sealed class Champion : Human.Units.Paladin
   `Name = "Sharpened Blades"`. Raising an ability's `LevelCount` past the game's writes every level you give; a field
   you leave keeps the game's own data there (a Storm Bolt of 6 levels deals 325 at levels 4 to 6, its table's 4th
   level), and reads so.
-- A field World Editor offers a list of values for holds an enum of them, named as the game's data spells them:
-  `AttackType = AttackType.Magic`. One that takes several, such as the targets, holds flags:
+- A field World Editor offers a list of values for holds an enum of them, named as the game's data spells them, or
+  from World Editor's label where the data has a code, which stays in the hover (`WeaponType.MissileSplash`,
+  `UpgradeEffect.HitPointBonus`): `AttackType = AttackType.Magic`. One that takes several, such as the targets, holds flags:
   `Attack1TargetsAllowed = Targets.Air | Targets.Ground`. A flags field of 0 has none of them; `Targets.None` is
   World Editor's target "none", a value of its own. The numbers are Moonwell's, in World Editor's order, not the
   natives' (JASS's `ATTACK_TYPE_MAGIC` is 4, `AttackType.Magic` is 6): never cast one to or from a native's value.
@@ -99,9 +100,12 @@ public sealed class Champion : Human.Units.Paladin
   `StringBuilder.Append`, a method of your own), a list of them given to `string.Join`, and `Enum.GetValues` and the
   other `Enum` methods are rejected as error MW0010, a nullable choice too; compare with its members, `|`, `&` and
   `HasFlag`.
-- `AttackType` and `DefenseType` are core Moonwell's (`Moonwell.AttackType`), shared with the damage package, and keep
-  their names in the game. A file writes them with `using Moonwell;`; a name of the old `Moonwell.Objects.AttackType`
-  is error MW0011.
+- `AttackType`, `DefenseType` and `WeaponSound` are core Moonwell's (`Moonwell.AttackType`), shared with hits and the
+  damage package, and keep their names in the game. A file writes them with `using Moonwell;`; a name of the old
+  `Moonwell.Objects.AttackType` is error MW0011. `Attack1WeaponSound` takes the 13 sounds World Editor lists: `None` and
+  the stab, claw and wood slice sounds are for hits, and are error MW0009 there, as what the game does with them on a
+  unit is not known. In a unit's class the field goes straight into a hit:
+  `this.Damage(target, 10f, sound: Attack1WeaponSound)`.
 - A field that a `Unit`, `Hero` or `Item` also has as a live value has one name for both. In the constructor it sets
   what every object of the class starts with; anywhere else it is this object (`MaxLife += 10` in `OnKill`). The
   names are `MaxLife`, `MaxMana`, `Mana` (what it starts with), `Scale`, `FlyHeight` and `Name` on a unit and hero,

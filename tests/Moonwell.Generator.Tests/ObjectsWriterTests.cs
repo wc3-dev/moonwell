@@ -312,6 +312,18 @@ public class ObjectsWriterTests
     }
 
     [Fact]
+    public void a_choice_of_only_some_of_its_enum_lists_their_numbers()
+    {
+        var sound = Choices.Make("combatSound", "string", new[] { new ChoiceEntry(0, "MetalHeavySlice", "L", Array.Empty<string>()) }, _ => "");
+        var numbered = sound with { Members = sound.Members.Select(member => member with { Value = 6 }).ToList() };
+        var field = new Field(Kind.Unit, "ucs1", "Attack1WeaponSound", FieldType.Choice, null, false, 0, false, Array.Empty<string>(), "weapType1", Choice: numbered);
+
+        var source = ObjectsWriter.Kind(Kind.Unit, new[] { field }, false);
+
+        Assert.Contains("[global::Moonwell.Objects.ListedValues(6)]\n        public global::Moonwell.WeaponSound Attack1WeaponSound\n", source);
+    }
+
+    [Fact]
     public void a_field_the_metadata_forces_not_to_be_negative_carries_non_negative()
     {
         // acdn has forceNonNeg 1 and no standard negative; uhpm and Htb1 (forceNonNeg 0) have only their range.

@@ -275,7 +275,7 @@ namespace Moonwell.Objects
                     EffectSoundLooping = "ManaFlareLoop";
                     Icon = "ReplaceableTextures\\CommandButtons\\BTNManaFlare.blp";
                     IsAnEffect = false;
-                    Lightning = global::Moonwell.Objects.LightningEffect.MFPB;
+                    Lightning = global::Moonwell.Objects.LightningEffect.ManaFlare;
                     Race = global::Moonwell.Objects.UnitRace.NightElf;
                     Target = "Abilities\\Spells\\Human\\ManaFlare\\ManaFlareBase.mdl";
                     TargetAttachmentPoint1 = "overhead";

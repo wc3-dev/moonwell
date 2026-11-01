@@ -24,8 +24,8 @@ namespace Moonwell.Objects
                 {
                     AppliesToAllUnits = false;
                     EditorSuffix = Levels("(Upgrade 1)", "(Upgrade 2)", "(Upgrade 3)");
-                    Effect1 = global::Moonwell.Objects.UpgradeEffect.Rarm;
-                    Effect2 = global::Moonwell.Objects.UpgradeEffect.Rhpo;
+                    Effect1 = global::Moonwell.Objects.UpgradeEffect.ApplyDefenseUpgradeBonus;
+                    Effect2 = global::Moonwell.Objects.UpgradeEffect.HitPointBonusPercent;
                     Effect2Base = 0.2f;
                     Effect2Mod = 0.2f;
                     GoldBase = 100;
@@ -52,7 +52,7 @@ namespace Moonwell.Objects
                 {
                     AppliesToAllUnits = false;
                     EditorSuffix = Levels("(Upgrade)");
-                    Effect1 = global::Moonwell.Objects.UpgradeEffect.Rauv;
+                    Effect1 = global::Moonwell.Objects.UpgradeEffect.AddUltravision;
                     GoldBase = 100;
                     GoldIncrement = 50;
                     Icon = Levels("ReplaceableTextures\\CommandButtons\\BTNGlyph.blp");
