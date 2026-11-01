@@ -156,6 +156,18 @@ public static class Rules
     /// <summary>The rules for names that moved between Moonwell's namespaces.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Moved { get; } = ImmutableArray.Create(MovedChoice);
 
+    public static readonly DiagnosticDescriptor BareDamage = new(
+        "MW0048",
+        "Damage without this in a unit class",
+        "'Damage' here is the unit's field, attack 1's base damage: write this.Damage(...) to deal damage",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Damage(target, 10f) in a unit class does not compile: the declared field Damage is the name that binds, and C# finds an extension method only after a dot, so the compiler's error (CS1955) says only that the field is no method. this.Damage(target, 10f) deals the damage.");
+
+    /// <summary>The rule for a bare Damage(...) in a unit class.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> BareDamages { get; } = ImmutableArray.Create(BareDamage);
+
     public static readonly DiagnosticDescriptor PlayerScope = new(
         "MW0043",
         "A player where a scope goes",

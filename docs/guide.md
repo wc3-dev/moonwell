@@ -328,7 +328,8 @@ its comment.
 `OnDamaged` sees a hit after armor. `source.Damage(target, 10f)` deals damage from code, as a spell does: magic,
 of the spells attack type. `DamageKind.Fire`, `attackType:`, `isAttack:`, `ranged:`, `sound:` and `tag:` (read back as
 `damage.Tag`) change it. The reactions run inside the call, which returns the damage they saw, or null when the game
-dealt nothing.
+dealt nothing. In a unit's own class, write `this.Damage(target, 10f)`: there `Damage` alone is the field, attack 1's
+base damage, and is error MW0048.
 
 For more, add the `Moonwell.Damage` package to the project, at the same version as
 Moonwell (the template's `.csproj` has the line, commented). The build starts it once the map's code uses one of its
