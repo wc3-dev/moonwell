@@ -14,12 +14,16 @@ namespace Moonwell
         /// <summary>The bit of each reaction, in the same order as Names.</summary>
         internal readonly int[] Bits;
 
+        /// <summary>The table of the base's own base class, whose reactions a class below this base also has (Unit's, below Hero); null when none.</summary>
+        internal readonly HookTable? Parent;
+
         /// <summary>Makes a table for a base class's reactions.</summary>
-        internal HookTable(Type declaringBase, string[] names, int[] bits)
+        internal HookTable(Type declaringBase, string[] names, int[] bits, HookTable? parent = null)
         {
             Base = declaringBase;
             Names = names;
             Bits = bits;
+            Parent = parent;
         }
     }
 }

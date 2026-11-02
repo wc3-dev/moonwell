@@ -231,9 +231,14 @@ public sealed class KillCounter : UnitComponent
   actor only: adding it to a second, applying a buff that is on a unit already, or removing a component from an actor
   it is not on is reported and refused, in a release build too. A component's `Actor` is set from `OnAdded` on: read in
   its constructor, a development build reports it.
-- Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnLeave`) go on a game or
-  player component. `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before
-  anything wanted it runs none); a unit's own is `OnCreated`.
+- Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnHeroLevelUp`,
+  `OnHeroSkillLearned`, `OnLeave`) go on a game or player component. `OnUnitCreated` runs once for each unit, when it
+  comes into the game (one that came in before anything wanted it runs none); a unit's own is `OnCreated`.
+- A hero's own reactions, `OnLevelUp(int reachedLevel)` and `OnSkillLearned(Ability learnedAbility)`, go on a hero
+  class or a `UnitComponent`, where they run only for a hero. The game fires one event for a jump of several levels,
+  and `OnLevelUp` runs once for each level gained, in order, while `Level` already reads the last; levels taken away
+  run nothing. An ability's `OnLearned` runs first when a hero learns it or raises its level. Inside these the skill
+  point is not spent yet: `SkillPoints` reads one more than after.
 - A reaction is a method the class overrides: one written without `override`, or with `new`, never runs, and is error
   MW0041, as is a method named like a reaction (`On...`) with other parameters. Moonwell calls a reaction: a call to one
   runs it with no event behind it and is error MW0047, except `base.OnDeath(killerUnit)` inside its own override. What a

@@ -13,6 +13,7 @@ namespace Moonwell.Testing
             AddFirst(list);
             AddAuditTimers(list);
             AddMiddle(list);
+            AddHeroes(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -908,8 +909,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.inventory-gone", Run = ItemCases.InventoryGone });
         }
 
-        /// <summary>Adds the hero, item, destructable, damage, ability and buff cases, and the rest.</summary>
-        private static void AddLast(List<Case> list)
+        /// <summary>Adds the hero cases.</summary>
+        private static void AddHeroes(List<Case> list)
         {
             list.Add(new Case { Name = "heroes.unregistered-is-hero", Run = HeroCases.UnregisteredIsHero });
             list.Add(new Case { Name = "heroes.experience", Run = HeroCases.Experience });
@@ -929,6 +930,26 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.gone-before-sweep", Run = HeroCases.GoneBeforeSweep });
             list.Add(new Case { Name = "heroes.proper-name", Run = HeroCases.ProperName });
             list.Add(new Case { Name = "heroes.shared-without-handle", Run = HeroCases.SharedWithoutHandle });
+            list.Add(new Case { Name = "heroes.level-up-order", Run = HeroReactionCases.LevelUpOrder });
+            list.Add(new Case { Name = "heroes.level-jump", Run = HeroReactionCases.LevelJump });
+            list.Add(new Case { Name = "heroes.level-up-through-set-level", Run = HeroReactionCases.LevelUpThroughSetLevel });
+            list.Add(new Case { Name = "heroes.level-up-from-taken-in", Run = HeroReactionCases.LevelUpFromTakenIn });
+            list.Add(new Case { Name = "heroes.level-up-after-quiet-levels", Run = HeroReactionCases.LevelUpAfterQuietLevels });
+            list.Add(new Case { Name = "heroes.level-up-raised-in-reaction", Run = HeroReactionCases.LevelUpRaisedInReaction });
+            list.Add(new Case { Name = "heroes.level-up-first-seen", Run = HeroReactionCases.LevelUpFirstSeen });
+            list.Add(new Case { Name = "heroes.level-up-takes-in-entering-heroes", Run = HeroReactionCases.LevelUpTakesInEnteringHeroes });
+            list.Add(new Case { Name = "heroes.level-up-stops-when-removed", Run = HeroReactionCases.LevelUpStopsWhenRemoved });
+            list.Add(new Case { Name = "heroes.level-up-listens", Run = HeroReactionCases.LevelUpListens });
+            list.Add(new Case { Name = "heroes.skill-listens", Run = HeroReactionCases.SkillListens });
+            list.Add(new Case { Name = "heroes.skill-order", Run = HeroReactionCases.SkillOrder });
+            list.Add(new Case { Name = "heroes.skill-raised", Run = HeroReactionCases.SkillRaised });
+            list.Add(new Case { Name = "heroes.ability-learned-listens", Run = HeroReactionCases.AbilityLearnedListens });
+            list.Add(new Case { Name = "heroes.skill-without-point", Run = HeroReactionCases.SkillWithoutPoint });
+        }
+
+        /// <summary>Adds the item, destructable, damage, ability and buff cases, and the rest (Lua allows 200 locals in a function, and each case made here is one).</summary>
+        private static void AddLast(List<Case> list)
+        {
             list.Add(new Case { Name = "items.registered-class", Run = ItemCases.RegisteredClass });
             list.Add(new Case { Name = "items.fallback-class", Run = ItemCases.FallbackClass });
             list.Add(new Case { Name = "items.pickup-order", Run = ItemCases.PickupOrder });

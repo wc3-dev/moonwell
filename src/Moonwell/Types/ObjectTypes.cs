@@ -55,7 +55,11 @@ namespace Moonwell
 
             ids[typeof(T)] = id;
             makers[id] = make;
-            Listen(() => Events.Need(Hooks.MaskOf(make(), Moonwell.Unit.UnitHooks)));
+            Listen(() =>
+            {
+                var made = make();
+                Events.Need(Hooks.MaskOf(made, Moonwell.Unit.HooksOf(made)));
+            });
         }
 
         /// <summary>Registers an item type with its id and the function that makes its object, and listens for the events its class needs.</summary>

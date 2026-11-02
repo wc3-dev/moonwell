@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned });
                 }
 
                 return mapHooks;
@@ -56,6 +56,20 @@ namespace Moonwell
         /// <summary>Runs when a player leaves the game, for the game's components, then the leaving player's.</summary>
         /// <param name="leavingPlayer">The player who left.</param>
         public virtual void OnLeave(Player leavingPlayer)
+        {
+        }
+
+        /// <summary>Runs when a hero in the map gains a level, once for each level gained, for the game's components, then the components of the hero's player.</summary>
+        /// <param name="leveledHero">The hero that gained the level.</param>
+        /// <param name="reachedLevel">The level gained. In a jump of several levels (the game fires one event for it) the hero's Level already reads the last.</param>
+        public virtual void OnHeroLevelUp(Hero leveledHero, int reachedLevel)
+        {
+        }
+
+        /// <summary>Runs when a hero in the map learns a skill or raises its level, for the game's components, then the components of the hero's player. The skill point is not spent yet: the hero's SkillPoints reads one more than after (seen 11-02).</summary>
+        /// <param name="learningHero">The hero that learned the skill.</param>
+        /// <param name="learnedAbility">The ability learned; its Level reads the new level.</param>
+        public virtual void OnHeroSkillLearned(Hero learningHero, Ability learnedAbility)
         {
         }
 

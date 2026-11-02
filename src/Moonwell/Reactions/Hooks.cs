@@ -57,11 +57,14 @@ namespace Moonwell
             }
 
             mask = 0;
-            for (var i = 0; i < table.Names.Length; i++)
+            for (var level = table; level != null; level = level.Parent)
             {
-                if (Overrides(obj, table.Names[i], table.Base))
+                for (var i = 0; i < level.Names.Length; i++)
                 {
-                    mask |= table.Bits[i];
+                    if (Overrides(obj, level.Names[i], level.Base))
+                    {
+                        mask |= level.Bits[i];
+                    }
                 }
             }
 

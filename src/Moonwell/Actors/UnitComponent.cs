@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned });
                 }
 
                 return componentHooks;
@@ -63,6 +63,18 @@ namespace Moonwell
 
         /// <summary>Runs when the unit begins a cast.</summary>
         public virtual void OnCast(Cast cast)
+        {
+        }
+
+        /// <summary>Runs when the unit, a hero, gains a level, once for each level gained, after the hero's own OnLevelUp; never on a unit that is not a hero.</summary>
+        /// <param name="reachedLevel">The level gained. In a jump of several levels (the game fires one event for it) Level already reads the last.</param>
+        public virtual void OnLevelUp(int reachedLevel)
+        {
+        }
+
+        /// <summary>Runs when the unit, a hero, learns a skill or raises its level, after the hero's own OnSkillLearned; never on a unit that is not a hero. The skill point is not spent yet: the hero's SkillPoints reads one more than after (seen 11-02).</summary>
+        /// <param name="learnedAbility">The ability learned; its Level reads the new level.</param>
+        public virtual void OnSkillLearned(Ability learnedAbility)
         {
         }
     }

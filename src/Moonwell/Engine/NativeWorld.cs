@@ -120,6 +120,12 @@ namespace Moonwell.Engine
 
                     Natives.TriggerAddAction(trigger, LeaveAction);
                     break;
+                case GameEvent.HeroLevel:
+                    Register(Natives.EVENT_PLAYER_HERO_LEVEL, HeroLevelAction);
+                    break;
+                case GameEvent.HeroSkill:
+                    Register(Natives.EVENT_PLAYER_HERO_SKILL, HeroSkillAction);
+                    break;
             }
         }
 
@@ -1098,6 +1104,32 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.SpellEnded", error);
+            }
+        }
+
+        /// <summary>Hands a hero's level-up to Inbound.</summary>
+        private static void HeroLevelAction()
+        {
+            try
+            {
+                Inbound.HeroLevel(Natives.GetLevelingUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.HeroLevel", error);
+            }
+        }
+
+        /// <summary>Hands a learned skill to Inbound.</summary>
+        private static void HeroSkillAction()
+        {
+            try
+            {
+                Inbound.HeroSkill(Natives.GetLearningUnit(), Natives.GetLearnedSkill());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.HeroSkill", error);
             }
         }
 
