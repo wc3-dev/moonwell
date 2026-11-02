@@ -804,6 +804,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "players.leave-listened-when-reacted", Run = PlayerCases.PlayersLeaveListenedWhenReacted });
             list.Add(new Case { Name = "players.name", Run = PlayerCases.PlayersName });
             list.Add(new Case { Name = "players.color", Run = PlayerCases.PlayersColor });
+            list.Add(new Case { Name = "players.by-color", Run = PlayerCases.PlayersByColor });
+            list.Add(new Case { Name = "players.by-color-in-game-only", Run = PlayerCases.PlayersByColorInGameOnly });
+            list.Add(new Case { Name = "players.by-color-shared", Run = PlayerCases.PlayersByColorShared });
+            list.Add(new Case { Name = "players.named-colors", Run = PlayerCases.PlayersNamedColors });
+            list.Add(new Case { Name = "players.named-color-nobody", Run = PlayerCases.PlayersNamedColorNobody });
             list.Add(new Case { Name = "players.team", Run = PlayerCases.PlayersTeam });
             list.Add(new Case { Name = "players.race", Run = PlayerCases.PlayersRace });
             list.Add(new Case { Name = "players.alliance", Run = PlayerCases.PlayersAlliance });

@@ -702,7 +702,9 @@ player.Camera().Apply(CameraSetup.Named("Intro"), 2f); // World Editor's camera,
 ## Players
 
 `Player.One` to `Player.TwentyFour` are the player slots, as the lobby numbers them; `Player.Get(slot)` takes the
-slot from 0, so `Player.Get(0)` is `Player.One`. A slot is not a colour: a map can recolour its players.
+slot from 0, so `Player.Get(0)` is `Player.One`. A slot is not a colour: a map can recolour its players. `Player.Red`
+to `Player.Peanut` are whoever in the game has that colour, and `Player.ByColor(color)` the same for a colour in a
+variable: the first in slot order, or null when nobody in the game has it, so check before using one.
 `Player.NeutralAggressive`, `NeutralPassive`, `NeutralVictim` and `NeutralExtra` are the neutral players, and
 `StartX` and `StartY` a player's start location.
 
