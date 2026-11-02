@@ -892,6 +892,73 @@ namespace Moonwell
         public T AbilityOf<T>()
             where T : Ability => (T)AbilityOf(ObjectTypes.IdOf<T>());
 
+        /// <summary>Gives the unit an ability at level 1, made permanent so that a morph keeps it at its level, and returns the unit's object of it. A hero skill given to a hero runs the learn reactions, as learning it does: the ability's OnLearned, the hero's OnSkillLearned and its components', then the map's OnHeroSkillLearned. A unit that has the ability already keeps it at its level, and nothing runs. Once the unit is gone, the object, and no call to the game.</summary>
+        public Ability AddAbility(int abilityId)
+        {
+            var ability = AbilityOf(abilityId);
+            if (IsGone || !Runtime.World.AddAbility(Handle, abilityId))
+            {
+                return ability;
+            }
+
+            Runtime.World.MakeAbilityPermanent(Handle, abilityId);
+            ability.lastLevel = 1;
+            var hero = this as Hero;
+            if (hero != null && Runtime.World.IsHeroAbility(Handle, abilityId))
+            {
+                Inbound.Learned(hero, ability);
+            }
+
+            return ability;
+        }
+
+        /// <summary>Gives the unit an ability of a registered class, as AddAbility(id) does, and returns the object of that class.</summary>
+        public T AddAbility<T>()
+            where T : Ability => (T)AddAbility(ObjectTypes.IdOf<T>());
+
+        /// <summary>Takes an ability from the unit, one of its type's own too, and answers whether it had it. A cast of the ability that is running ends inside the call, as the game ends the spell. A hero skill taken from a hero runs the ability's OnLost after the removal, and gives no skill point back. False, and no call to the game, once the unit is gone.</summary>
+        public bool RemoveAbility(int abilityId)
+        {
+            if (IsGone)
+            {
+                return false;
+            }
+
+            var skill = this is Hero && Runtime.World.IsHeroAbility(Handle, abilityId);
+            if (!Runtime.World.RemoveAbility(Handle, abilityId))
+            {
+                return false;
+            }
+
+            if (abilities.TryGetValue(abilityId, out var known))
+            {
+                known.lastLevel = 0;
+            }
+
+            if (skill)
+            {
+                Inbound.Lost(AbilityOf(abilityId));
+            }
+
+            return true;
+        }
+
+        /// <summary>Takes an ability of a registered class from the unit, as RemoveAbility(id) does.</summary>
+        public bool RemoveAbility<T>()
+            where T : Ability => RemoveAbility(ObjectTypes.IdOf<T>());
+
+        /// <summary>Whether the unit has an ability: its level is above 0. A carried item's ability counts, as the game gives it to the unit. False once the unit is gone.</summary>
+        [LocalSafe]
+        public bool HasAbility(int abilityId)
+        {
+            return !IsGone && Runtime.World.AbilityLevel(Handle, abilityId) > 0;
+        }
+
+        /// <summary>Whether the unit has an ability of a registered class, as HasAbility(id) says.</summary>
+        [LocalSafe]
+        public bool HasAbility<T>()
+            where T : Ability => HasAbility(ObjectTypes.IdOf<T>());
+
         /// <summary>Adds a component to the unit, and returns it.</summary>
         public T Add<T>(T component)
             where T : UnitComponent => AddComponent(component);

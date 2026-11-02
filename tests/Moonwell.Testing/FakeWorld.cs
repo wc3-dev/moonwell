@@ -115,6 +115,12 @@ namespace Moonwell.Testing
         /// <summary>The ability levels of each unit, keyed by ability id.</summary>
         private readonly Dictionary<unit, Dictionary<int, int>> abilityLevels = new Dictionary<unit, Dictionary<int, int>>();
 
+        /// <summary>The number of levels of each ability given one; an ability not given one has no last level.</summary>
+        private readonly Dictionary<int, int> levelCounts = new Dictionary<int, int>();
+
+        /// <summary>The abilities that are hero skills.</summary>
+        private readonly HashSet<int> heroAbilities = new HashSet<int>();
+
         /// <summary>The type id of each item the world made.</summary>
         private readonly Dictionary<item, int> itemTypes = new Dictionary<item, int>();
 
@@ -379,6 +385,18 @@ namespace Moonwell.Testing
             }
 
             levels[abilityId] = level;
+        }
+
+        /// <summary>Gives an ability its number of levels, which ChangeAbilityLevel keeps a level within.</summary>
+        public void SetLevelCount(int abilityId, int count)
+        {
+            levelCounts[abilityId] = count;
+        }
+
+        /// <summary>Makes an ability a hero skill.</summary>
+        public void MarkHeroAbility(int abilityId)
+        {
+            heroAbilities.Add(abilityId);
         }
 
         /// <summary>Sets the level a player slot has of an upgrade.</summary>
@@ -1038,15 +1056,47 @@ namespace Moonwell.Testing
             return !IsAllyOf(source, other);
         }
 
-        /// <summary>Records an add-ability call, and keeps the ability among those code gave the unit.</summary>
-        public void AddAbility(unit unit, int abilityId)
+        /// <summary>Records an add-ability call; a unit that lacks the ability gets it at level 1, kept among those code gave it, and the answer is true, as UnitAddAbility does (seen 11-02).</summary>
+        public bool AddAbility(unit unit, int abilityId)
         {
             AbilityCalls.Add("add " + abilityId);
+            if (AbilityLevel(unit, abilityId) > 0)
+            {
+                return false;
+            }
+
+            SetAbilityLevel(unit, abilityId, 1);
             AddedTo(unit).Add(abilityId);
             if (abilityId == CrowForm)
             {
                 crowFormed.Add(unit);
             }
+
+            return true;
+        }
+
+        /// <summary>Sets the level of an ability the unit has, kept from 1 to its level count, and answers the level set; 0, and nothing changes, for one it lacks, as SetUnitAbilityLevel does (seen 11-02).</summary>
+        public int ChangeAbilityLevel(unit unit, int abilityId, int level)
+        {
+            if (AbilityLevel(unit, abilityId) <= 0)
+            {
+                return 0;
+            }
+
+            var given = level < 1 ? 1 : level;
+            if (levelCounts.TryGetValue(abilityId, out var count) && given > count)
+            {
+                given = count;
+            }
+
+            SetAbilityLevel(unit, abilityId, given);
+            return given;
+        }
+
+        /// <summary>Whether an ability the unit has was marked a hero skill.</summary>
+        public bool IsHeroAbility(unit unit, int abilityId)
+        {
+            return AbilityLevel(unit, abilityId) > 0 && heroAbilities.Contains(abilityId);
         }
 
         /// <summary>Records a hide-ability call.</summary>
@@ -1068,18 +1118,27 @@ namespace Moonwell.Testing
             permanent.Add(abilityId);
         }
 
-        /// <summary>Records a remove-ability call, and takes the ability from those code gave the unit.</summary>
-        public void RemoveAbility(unit unit, int abilityId)
+        /// <summary>Records a remove-ability call, takes the ability from those code gave the unit, and answers whether it had it. The game fires the end-cast of a spell being cast inside the call (seen 11-02); this world fires it for every ability the unit had, which Moonwell passes over unless a cast of that ability is running.</summary>
+        public bool RemoveAbility(unit unit, int abilityId)
         {
             AbilityCalls.Add("remove " + abilityId);
+            var had = AbilityLevel(unit, abilityId) > 0;
+            SetAbilityLevel(unit, abilityId, 0);
             AddedTo(unit).Remove(abilityId);
             if (abilityId == CrowForm && crowFormed.Remove(unit))
             {
                 floaters.Add(unit);
             }
+
+            if (had && Listening.Contains(GameEvent.Spell))
+            {
+                Inbound.SpellEnded(unit, abilityId);
+            }
+
+            return had;
         }
 
-        /// <summary>Morphs a unit as Metamorphosis or Bear Form does: it loses each ability code gave it that was not made permanent (seen 10-26), and each is recorded as "stripped".</summary>
+        /// <summary>Morphs a unit as Metamorphosis or Bear Form does: it loses each ability code gave it that was not made permanent, whose level then reads 0 (seen 10-26), and each is recorded as "stripped".</summary>
         public void Morph(unit u)
         {
             var added = AddedTo(u);
@@ -1088,6 +1147,7 @@ namespace Moonwell.Testing
                 if (!permanentAbilities.TryGetValue(u, out var permanent) || !permanent.Contains(added[i]))
                 {
                     AbilityCalls.Add("stripped " + added[i]);
+                    SetAbilityLevel(u, added[i], 0);
                     added.RemoveAt(i);
                 }
             }

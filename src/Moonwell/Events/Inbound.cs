@@ -778,8 +778,13 @@ namespace Moonwell
                 return;
             }
 
+            Learned(hero, hero.AbilityOf(abilityId));
+        }
+
+        /// <summary>Runs the learn reactions for a skill a hero learned or code gave it a level of: the ability's OnLearned, the hero's OnSkillLearned and its components', then the map's and the hero's player's OnHeroSkillLearned.</summary>
+        internal static void Learned(Hero hero, Ability ability)
+        {
             var slot = hero.Owner.Slot;
-            var ability = hero.AbilityOf(abilityId);
             AbilityLearned(ability);
             HeroLearned(hero, ability);
             MapLearned(Game.Instance, hero, ability);
@@ -787,6 +792,22 @@ namespace Moonwell
             if (player != null)
             {
                 MapLearned(player, hero, ability);
+            }
+        }
+
+        /// <summary>Runs OnLost on an ability RemoveAbility took from a hero whose skill it is.</summary>
+        internal static void Lost(Ability ability)
+        {
+            if (!ability.HasEnded && (ability.Mask & Hook.OnLost) != 0)
+            {
+                try
+                {
+                    ability.OnLost();
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(ability) + ".OnLost", error);
+                }
             }
         }
 

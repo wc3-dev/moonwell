@@ -584,10 +584,23 @@ namespace Moonwell.Engine
             return Natives.GetUnitAbilityLevel(unit, abilityId);
         }
 
-        /// <summary>Gives a unit an ability.</summary>
-        public void AddAbility(unit unit, int abilityId)
+        /// <summary>Gives a unit an ability: UnitAddAbility, which answers false for an ability the unit has (seen 11-02).</summary>
+        public bool AddAbility(unit unit, int abilityId)
         {
-            Natives.UnitAddAbility(unit, abilityId);
+            return Natives.UnitAddAbility(unit, abilityId);
+        }
+
+        /// <summary>Sets the level of an ability on a unit: SetUnitAbilityLevel, which keeps it within the ability's levels and answers 0 for an ability the unit lacks (seen 11-02).</summary>
+        public int ChangeAbilityLevel(unit unit, int abilityId, int level)
+        {
+            return Natives.SetUnitAbilityLevel(unit, abilityId, level);
+        }
+
+        /// <summary>Whether an ability the unit has is a hero skill, by its hero ability field.</summary>
+        public bool IsHeroAbility(unit unit, int abilityId)
+        {
+            var ability = Natives.BlzGetUnitAbility(unit, abilityId);
+            return ability != null && Natives.BlzGetAbilityBooleanField(ability, Natives.ABILITY_BF_HERO_ABILITY);
         }
 
         /// <summary>Hides an ability on a unit.</summary>
@@ -602,10 +615,10 @@ namespace Moonwell.Engine
             Natives.UnitMakeAbilityPermanent(unit, true, abilityId);
         }
 
-        /// <summary>Takes an ability from a unit.</summary>
-        public void RemoveAbility(unit unit, int abilityId)
+        /// <summary>Takes an ability from a unit: UnitRemoveAbility.</summary>
+        public bool RemoveAbility(unit unit, int abilityId)
         {
-            Natives.UnitRemoveAbility(unit, abilityId);
+            return Natives.UnitRemoveAbility(unit, abilityId);
         }
 
         /// <summary>The life of a unit, from the game.</summary>

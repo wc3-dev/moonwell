@@ -10,6 +10,7 @@ public class ReactionCallTests
         {
             "MW0047: hero.OnLevelUp(2)",
             "MW0047: ability.OnLearned()",
+            "MW0047: ability.OnLost()",
             "MW0047: OnHeroLevelUp(hero, 3)",
         }, MapCode.CheckFile("""
             using Moonwell;
@@ -22,6 +23,7 @@ public class ReactionCallTests
                     {
                         hero.OnLevelUp(2);
                         ability.OnLearned();
+                        ability.OnLost();
                     }
                 }
 

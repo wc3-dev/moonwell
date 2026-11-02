@@ -59,5 +59,8 @@ namespace Moonwell
 
         /// <summary>A hero in the map learns a skill.</summary>
         internal const int OnHeroSkillLearned = 262144;
+
+        /// <summary>A hero's skill is taken away by RemoveAbility; no game event.</summary>
+        internal const int OnLost = 1048576;
     }
 }

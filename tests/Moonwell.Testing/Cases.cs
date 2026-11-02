@@ -14,6 +14,7 @@ namespace Moonwell.Testing
             AddAuditTimers(list);
             AddMiddle(list);
             AddHeroes(list);
+            AddUnitAbilities(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -123,6 +124,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.actors.actor-before-added", Run = ActorCases.ActorBeforeAdded });
             list.Add(new Case { Name = "debug.session.toggle", Run = SessionCases.Toggle });
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
+            list.Add(new Case { Name = "debug.abilities.level-out-of-range-reported", Run = UnitAbilityCases.LevelOutOfRangeReported });
+            list.Add(new Case { Name = "debug.abilities.level-of-missing-reported", Run = UnitAbilityCases.LevelOfMissingReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });
@@ -907,6 +910,29 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.inventory", Run = ItemCases.Inventory });
             list.Add(new Case { Name = "units.inventory-limits", Run = ItemCases.InventoryLimits });
             list.Add(new Case { Name = "units.inventory-gone", Run = ItemCases.InventoryGone });
+        }
+
+        /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>
+        private static void AddUnitAbilities(List<Case> list)
+        {
+            list.Add(new Case { Name = "abilities.add-gives-level-one", Run = UnitAbilityCases.AddGivesLevelOne });
+            list.Add(new Case { Name = "abilities.add-has-remove-generic", Run = UnitAbilityCases.Generic });
+            list.Add(new Case { Name = "abilities.add-when-had-keeps-level", Run = UnitAbilityCases.AddWhenHadKeepsLevel });
+            list.Add(new Case { Name = "abilities.add-kept-through-morph", Run = UnitAbilityCases.AddKeptThroughMorph });
+            list.Add(new Case { Name = "abilities.remove-takes-it", Run = UnitAbilityCases.RemoveTakesIt });
+            list.Add(new Case { Name = "abilities.gone", Run = UnitAbilityCases.Gone });
+            list.Add(new Case { Name = "abilities.level-set", Run = UnitAbilityCases.LevelSet });
+            list.Add(new Case { Name = "abilities.level-kept-in-range", Run = UnitAbilityCases.LevelKeptInRange });
+            list.Add(new Case { Name = "abilities.hero-add-runs-learn", Run = UnitAbilityCases.HeroAddRunsLearn });
+            list.Add(new Case { Name = "abilities.hero-level-runs-learn-per-level", Run = UnitAbilityCases.HeroLevelRunsLearnPerLevel });
+            list.Add(new Case { Name = "abilities.hero-level-past-last-stops-at-last", Run = UnitAbilityCases.HeroLevelPastLastStopsAtLast });
+            list.Add(new Case { Name = "abilities.hero-level-lowered-runs-nothing", Run = UnitAbilityCases.HeroLevelLoweredRunsNothing });
+            list.Add(new Case { Name = "abilities.hero-reaction-lowering-ends-steps", Run = UnitAbilityCases.HeroReactionLoweringEndsSteps });
+            list.Add(new Case { Name = "abilities.only-hero-skills-of-heroes-learn", Run = UnitAbilityCases.OnlyHeroSkillsOfHeroesLearn });
+            list.Add(new Case { Name = "abilities.remove-runs-on-lost", Run = UnitAbilityCases.RemoveRunsOnLost });
+            list.Add(new Case { Name = "abilities.only-hero-skills-of-heroes-are-lost", Run = UnitAbilityCases.OnlyHeroSkillsOfHeroesAreLost });
+            list.Add(new Case { Name = "abilities.remove-ends-running-cast", Run = UnitAbilityCases.RemoveEndsRunningCast });
+            list.Add(new Case { Name = "abilities.lost-listens-for-nothing", Run = UnitAbilityCases.LostListensForNothing });
         }
 
         /// <summary>Adds the hero cases.</summary>

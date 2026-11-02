@@ -238,7 +238,9 @@ public sealed class KillCounter : UnitComponent
   class or a `UnitComponent`, where they run only for a hero. The game fires one event for a jump of several levels,
   and `OnLevelUp` runs once for each level gained, in order, while `Level` already reads the last; levels taken away
   run nothing. An ability's `OnLearned` runs first when a hero learns it or raises its level. Inside these the skill
-  point is not spent yet: `SkillPoints` reads one more than after.
+  point is not spent yet: `SkillPoints` reads one more than after. A hero skill given in code, by `AddAbility` or a
+  higher `Level`, runs them too, once for each level gained, and `RemoveAbility` runs the ability's `OnLost`, where a
+  passive undoes what `OnLearned` set up. Code spends no skill point, and taking a skill gives none back.
 - A reaction is a method the class overrides: one written without `override`, or with `new`, never runs, and is error
   MW0041, as is a method named like a reaction (`On...`) with other parameters. Moonwell calls a reaction: a call to one
   runs it with no event behind it and is error MW0047, except `base.OnDeath(killerUnit)` inside its own override. What a
@@ -318,6 +320,11 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
 | `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string (`"move"`, `"attack"`) |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Drop(item)` | the inventory; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up |
+| `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
+
+`unit.AddAbility<Smite>().Level = 3` gives an ability and sets its level. A level the ability doesn't have is kept
+between 1 and its last, as the game does, and a level set on an ability the unit lacks does nothing; a development
+build reports both. Removing an ability ends a cast of it that is running, and adding it back clears its cooldown.
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|
