@@ -54,6 +54,44 @@ namespace Moonwell.Build.Tests
             Assert.Equal($"{Path.Combine(folder, "war3mapMisc.txt")}: IntManaBonus is 'lots', not a number", error.Message);
         }
 
+        [Fact]
+        public void a_maps_misc_file_sets_the_experience_constants_it_names_and_keeps_the_others()
+        {
+            var folder = folders.TemporaryFolderOutsideRepository();
+            File.WriteAllText(Path.Combine(folder, "war3mapMisc.txt"), "[Misc]\r\nMaxHeroLevel=15\r\nNeedHeroXP=100, 300\r\nneedheroxpformulaa=1.5\r\n");
+
+            var experience = MapMisc.ReadExperience(folder, HeroExperience.Standard);
+
+            Assert.Equal(15, experience.MaxLevel);
+            Assert.Equal(new[] { 100f, 300f }, experience.Listed);
+            Assert.Equal(1.5f, experience.PreviousFactor);
+            Assert.Equal(100f, experience.LevelFactor);
+            Assert.Equal(0f, experience.Constant);
+        }
+
+        [Fact]
+        public void no_file_gives_the_standard_experience()
+        {
+            var folder = folders.TemporaryFolderOutsideRepository();
+
+            Assert.Same(HeroExperience.Standard, MapMisc.ReadExperience(folder, HeroExperience.Standard));
+        }
+
+        [Fact]
+        public void a_top_level_that_is_no_whole_number_or_a_list_entry_that_is_no_number_fails_naming_the_file_and_key()
+        {
+            var folder = folders.TemporaryFolderOutsideRepository();
+            var path = Path.Combine(folder, "war3mapMisc.txt");
+            File.WriteAllText(path, "[Misc]\nMaxHeroLevel=12.5\n");
+
+            var level = Assert.Throws<BuildException>(() => MapMisc.ReadExperience(folder, HeroExperience.Standard));
+
+            Assert.Equal($"{path}: MaxHeroLevel is '12.5', not a whole number", level.Message);
+            File.WriteAllText(path, "[Misc]\nNeedHeroXP=100,lots\n");
+            var list = Assert.Throws<BuildException>(() => MapMisc.ReadExperience(folder, HeroExperience.Standard));
+            Assert.Equal($"{path}: NeedHeroXP is '100,lots', not a list of numbers", list.Message);
+        }
+
         public void Dispose()
         {
             folders.Dispose();

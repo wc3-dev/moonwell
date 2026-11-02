@@ -1,3 +1,8 @@
 [Misc]
 StrHitPointBonus=25
 IntManaBonus=15
+MaxHeroLevel=10
+NeedHeroXP=200
+NeedHeroXPFormulaA=1
+NeedHeroXPFormulaB=100
+NeedHeroXPFormulaC=0

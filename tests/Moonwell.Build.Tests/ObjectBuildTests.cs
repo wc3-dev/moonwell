@@ -492,6 +492,23 @@ namespace Moonwell.Build.Tests
             var arthas = Assert.Single(ReadUnits(copy).NewUnits);
             Assert.Equal(580, Assert.Single(arthas.Modifications, one => one.Id == IdOf("uhpm")).Value);
             Assert.Equal("[Misc]\nStrHitPointBonus=10\n", File.ReadAllText(Path.Combine(copy, "build", "Sample", "war3mapMisc.txt")));
+
+            // Its experience constants are the standard ones, which the runtime has: nothing to install.
+            Assert.DoesNotContain("HeroExperience", File.ReadAllText(Path.Combine(copy, "build", "generated", "MapMain.g.cs")));
+        }
+
+        [Fact]
+        public void a_misc_file_that_changes_the_experience_table_installs_it_before_anything_registers()
+        {
+            // The map's own file is replaced by the one in assets, as the game takes it.
+            var copy = folders.TemporaryCopyOfSample();
+            File.WriteAllText(Path.Combine(copy, "map", "war3mapMisc.txt"), "[Misc]\nMaxHeroLevel=20\n");
+            File.WriteAllText(Path.Combine(copy, "assets", "war3mapMisc.txt"), "[Misc]\nMaxHeroLevel=4\nNeedHeroXP=100,300\nNeedHeroXPFormulaA=1.5\nNeedHeroXPFormulaB=10\nNeedHeroXPFormulaC=5\n");
+
+            MapBuild.Run(copy, new BuildOptions(), new StringWriter());
+
+            var main = File.ReadAllText(Path.Combine(copy, "build", "generated", "MapMain.g.cs"));
+            Assert.Contains("() => { global::Moonwell.Runtime.InstallHeroExperience(new int[] { 0, 100, 300, 495 }); global::Moonwell.Generated.ObjectRegistry.Register(); }", main);
         }
 
         [Fact]

@@ -782,9 +782,16 @@ public class ObjectsWriterTests
         Assert.Equal(new[] { "base", "custom_v0", "melee_v0" }, document.RootElement.EnumerateObject().Select(p => p.Name));
         foreach (var set in document.RootElement.EnumerateObject())
         {
-            Assert.Equal(new[] { "IntManaBonus", "StrHitPointBonus" }, set.Value.EnumerateObject().Select(p => p.Name));
+            Assert.Equal(
+                new[] { "IntManaBonus", "MaxHeroLevel", "NeedHeroXP", "NeedHeroXPFormulaA", "NeedHeroXPFormulaB", "NeedHeroXPFormulaC", "StrHitPointBonus" },
+                set.Value.EnumerateObject().Select(p => p.Name));
             Assert.Equal("25", set.Value.GetProperty("StrHitPointBonus").GetString());
             Assert.Equal("15", set.Value.GetProperty("IntManaBonus").GetString());
+            Assert.Equal("10", set.Value.GetProperty("MaxHeroLevel").GetString());
+            Assert.Equal("200", set.Value.GetProperty("NeedHeroXP").GetString());
+            Assert.Equal("1", set.Value.GetProperty("NeedHeroXPFormulaA").GetString());
+            Assert.Equal("100", set.Value.GetProperty("NeedHeroXPFormulaB").GetString());
+            Assert.Equal("0", set.Value.GetProperty("NeedHeroXPFormulaC").GetString());
         }
     }
 

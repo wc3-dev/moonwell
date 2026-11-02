@@ -317,12 +317,18 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 | Hero (a unit the game makes as a hero) | |
 |---|---|
 | `Experience` | read and set; a higher value gives the levels that come with it, a lower one keeps the level |
-| `SetLevel(level)`, `Revive(x, y)` | `showEffect:` turns the effect off; a lower level takes levels away |
+| `AddExperience(amount)` | adds, or takes with a negative amount, as `Experience` does; `showEffect:` turns the effect off |
+| `SetLevel(level)`, `LevelUp()`, `Revive(x, y)` | `showEffect:` turns the effect off; a lower level takes levels away; `LevelUp` gives one level, none at the top |
+| `ExperienceToNextLevel`, `LevelProgress` | read; what the next level still needs, and how far through the level from 0 to 100; 0 and 100 at the top level |
 | `Strength`, `Agility`, `Intelligence` | the base, read and set |
 | `StrengthWithBonus`, `AgilityWithBonus`, `IntelligenceWithBonus` | with items and auras, read |
 | `StrengthBonus`, `AgilityBonus`, `IntelligenceBonus` | what items and auras add alone, read |
 | `SkillPoints` | read and set |
 | `ProperName` | read inside `Local.For` only, set anywhere outside it |
+
+The experience each level needs, and the top level, come from the map's gameplay constants (`war3mapMisc.txt` in the
+map or its assets, as for a hero's life above), else the standard ones: 200 for level 2, then 100 more per level, up
+to 5400 for level 10. The build gives the map's own to the runtime.
 
 | Item | |
 |---|---|

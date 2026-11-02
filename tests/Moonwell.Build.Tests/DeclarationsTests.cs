@@ -427,6 +427,20 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void the_hero_experience_is_the_gameplay_constants_of_each_set()
+        {
+            var standard = built.Standard;
+
+            foreach (var set in new[] { null, "melee_v0", "custom_v0", "custom_v1" })
+            {
+                Assert.Equal(HeroExperience.Standard.Table(), standard.Experience(set).Table());
+            }
+
+            Assert.Throws<BuildException>(() => standard.Experience("custom_v9"));
+            Assert.Throws<BuildException>(() => StandardData.Empty.Experience(null));
+        }
+
+        [Fact]
         public void setter_outside_ctor()
         {
             AssertFails(

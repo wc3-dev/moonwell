@@ -37,6 +37,7 @@ namespace Moonwell
             KnownItems.Reset();
             KnownDestructables.Reset();
             ObjectTypes.Reset();
+            HeroTable.Reset();
 #if DEBUG
             DebugSession.Reset();
             DebugViews.Reset();
@@ -60,6 +61,13 @@ namespace Moonwell
             DebugSession.Install(new NativeDebugWorld((NativeWorld)World));
 #endif
             NativeWorld.Later(() => Begin(setup));
+        }
+
+        /// <summary>Gives heroes the map's experience table, from level 1's total (0) to the top level's; the map's Main calls it, before anything registers, when the map's gameplay constants change the standard table.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void InstallHeroExperience(int[] experience)
+        {
+            HeroTable.Install(experience);
         }
 
         /// <summary>Starts the runtime on the game with a map: the map's Main calls it once, and the map's components are added before the game's start.</summary>
