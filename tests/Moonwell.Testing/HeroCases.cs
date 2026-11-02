@@ -83,6 +83,58 @@ namespace Moonwell.Testing
             Expect.Equal("intelligence 32 True", world.HeroCalls[2], "the intelligence call is permanent");
         }
 
+        /// <summary>A stat's bonus is what items and auras add: the stat with bonus less the base. A new base keeps it, and once the hero is gone it is the difference of the last values read.</summary>
+        public static void StatBonus(FakeWorld world)
+        {
+            var hero = NewHero(world, out var handle);
+            world.SetStats(handle, 22, 13, 17);
+            world.SetStatBonuses(handle, 4, 5, 6);
+
+            Expect.Equal(4, hero.StrengthBonus, "strength bonus");
+            Expect.Equal(5, hero.AgilityBonus, "agility bonus");
+            Expect.Equal(6, hero.IntelligenceBonus, "intelligence bonus");
+            Expect.Equal(0, world.HeroCalls.Count, "reading asks nothing to change");
+
+            hero.Strength = 30;
+            Expect.Equal(4, hero.StrengthBonus, "a new base keeps the bonus");
+            world.SetStatBonuses(handle, 0, 5, 6);
+            Expect.Equal(0, hero.StrengthBonus, "no bonus");
+            world.SetStatBonuses(handle, 4, 5, 6);
+            Expect.Equal(4, hero.StrengthBonus, "the bonus read last");
+
+            world.VanishUnit(handle);
+            world.Advance(0.3f);
+            Expect.True(hero.IsGone, "the sweep found the hero gone");
+            world.GoneCalls = 0;
+
+            Expect.Equal(4, hero.StrengthBonus, "the gone hero's strength bonus");
+            Expect.Equal(5, hero.AgilityBonus, "the gone hero's agility bonus");
+            Expect.Equal(6, hero.IntelligenceBonus, "the gone hero's intelligence bonus");
+            Expect.Equal(0, world.GoneCalls, "no call to the game for the gone hero");
+        }
+
+        /// <summary>A hero with no handle, in its constructor or as a default object, has no bonus: it reads 0, asking the game nothing, whatever base its type declares.</summary>
+        public static void StatBonusWithoutHandle(FakeWorld world)
+        {
+            var id = ObjectTypes.FourCC("H0rb");
+            ObjectTypes.Unit(id, () => new RecordingHero());
+            world.SetTypeValue(id, "ustr", 22);
+            var hero = new RecordingHero();
+            var standing = Unit.Default<RecordingHero>();
+            world.CallsThrow = true;
+
+            var strength = hero.StrengthBonus;
+            var agility = hero.AgilityBonus;
+            var intelligence = hero.IntelligenceBonus;
+            var standingStrength = standing.StrengthBonus;
+
+            world.CallsThrow = false;
+            Expect.Equal(0, strength, "strength bonus without a handle");
+            Expect.Equal(0, agility, "agility bonus without a handle");
+            Expect.Equal(0, intelligence, "intelligence bonus without a handle");
+            Expect.Equal(0, standingStrength, "a default object's strength bonus");
+        }
+
         /// <summary>SkillPoints reads the game's, and setting it adds or takes the difference.</summary>
         public static void SkillPoints(FakeWorld world)
         {
