@@ -1504,34 +1504,61 @@ namespace Moonwell.Testing
             return !vanishedUnits.Contains(hero) && experiences.TryGetValue(hero, out var experience) ? experience : 0;
         }
 
-        /// <summary>Sets the experience of a hero, and records an "experience". It only raises, as SetHeroXP (seen 10-21): a lower value changes nothing. The levels that come with it are not given here.</summary>
+        /// <summary>Sets the experience of a hero, and records an "experience". It only raises, as SetHeroXP (seen 10-21): a lower value changes nothing. A higher one gives the levels that come with it (seen 11-02).</summary>
         public void SetExperience(unit hero, int experience, bool showEffect)
         {
             NoteGone(hero);
             HeroCalls.Add("experience " + experience + " " + Flag(showEffect));
             if (experience > ExperienceOf(hero))
             {
-                experiences[hero] = experience;
+                GiveExperience(hero, experience);
             }
         }
 
-        /// <summary>Adds experience to a hero, or takes it with a negative amount, and records an "add-experience": AddHeroXP with -400 lowers the experience but not the level (seen 10-21); it stops at 0 (assumed).</summary>
+        /// <summary>Adds experience to a hero, or takes it with a negative amount, and records an "add-experience": AddHeroXP with -400 lowers the experience but not the level (seen 10-21), and more gives the levels that come with it (seen 11-02); it stops at 0 (assumed). At the top level it changes nothing (seen 11-02; for a negative amount, assumed).</summary>
         public void AddExperience(unit hero, int experience, bool showEffect)
         {
             NoteGone(hero);
             HeroCalls.Add("add-experience " + experience + " " + Flag(showEffect));
+            if (LevelOf(hero) >= HeroTable.Experience.Length)
+            {
+                return;
+            }
+
             var now = ExperienceOf(hero) + experience;
-            experiences[hero] = now < 0 ? 0 : now;
+            GiveExperience(hero, now < 0 ? 0 : now);
         }
 
-        /// <summary>Gives a hero the level, and records a "level". It only raises, as SetHeroLevel (seen 10-21): a lower level changes nothing. The experience of the level is not given here.</summary>
+        /// <summary>Sets a hero's experience, which stops at the top level's (seen 10-21 and 11-02), and raises the hero to the level of the experience table it reaches; a lower experience keeps the level.</summary>
+        private void GiveExperience(unit hero, int experience)
+        {
+            var table = HeroTable.Experience;
+            var top = table[table.Length - 1];
+            var now = experience > top ? top : experience;
+            experiences[hero] = now;
+            var level = 1;
+            while (level < table.Length && now >= table[level])
+            {
+                level++;
+            }
+
+            if (level > LevelOf(hero))
+            {
+                RaiseLevel(hero, level);
+            }
+        }
+
+        /// <summary>Gives a hero the level and that level's experience, and records a "level". It only raises and stops at the top level, as SetHeroLevel (seen 10-21 and 11-02): a lower level changes nothing.</summary>
         public void LevelHero(unit hero, int level, bool showEffect)
         {
             NoteGone(hero);
             HeroCalls.Add("level " + level + " " + Flag(showEffect));
-            if (level > LevelOf(hero))
+            var table = HeroTable.Experience;
+            var reached = level < table.Length ? level : table.Length;
+            if (reached > LevelOf(hero))
             {
-                RaiseLevel(hero, level);
+                experiences[hero] = table[reached - 1];
+                RaiseLevel(hero, reached);
             }
         }
 
@@ -1565,13 +1592,16 @@ namespace Moonwell.Testing
             return true;
         }
 
-        /// <summary>Takes levels from a hero, down to 1, and records a "strip": UnitStripHeroLevel lowers the level (seen). What it does to the experience is not modelled.</summary>
+        /// <summary>Takes levels from a hero, down to 1, and records a "strip": UnitStripHeroLevel lowers the level and sets the experience to the lower level's (seen 11-02). What it does to the skill points is not modelled.</summary>
         public void StripLevels(unit hero, int count)
         {
             NoteGone(hero);
             HeroCalls.Add("strip " + count);
             var now = LevelOf(hero) - count;
-            levels[hero] = now < 1 ? 1 : now;
+            var level = now < 1 ? 1 : now;
+            levels[hero] = level;
+            var table = HeroTable.Experience;
+            experiences[hero] = table[(level < table.Length ? level : table.Length) - 1];
         }
 
         /// <summary>A stat of a hero, 0 until set: which is 0 for strength, 1 for agility and 2 for intelligence.</summary>

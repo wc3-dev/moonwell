@@ -275,7 +275,7 @@ namespace Moonwell.Testing
             Expect.Equal("1 1 1", CountedHero.Created + " " + watch.Seen.Count + " " + CountedHero.Left, "OnCreated's, OnUnitCreated's and OnLeave's runs");
         }
 
-        /// <summary>A hero's experience and level are lowered as the game allows: SetHeroXP and SetHeroLevel only raise (seen 10-21), so a lower experience goes through AddHeroXP with a negative amount, which keeps the level, and a lower level through UnitStripHeroLevel, as blizzard.j's SetHeroLevelBJ does. The last values are the game's, so a removed hero reads what it had.</summary>
+        /// <summary>A hero's experience and level are lowered as the game allows: SetHeroXP and SetHeroLevel only raise (seen 10-21), so a lower experience goes through AddHeroXP with a negative amount, which keeps the level, and a lower level through UnitStripHeroLevel, as blizzard.j's SetHeroLevelBJ does; the strip sets the experience to the lower level's (seen 11-02). The last values are the game's, so a removed hero reads what it had.</summary>
         public static void HeroLowered(FakeWorld world)
         {
             var handle = world.NewUnit(ObjectTypes.FourCC("Hpal"), hero: true);
@@ -289,9 +289,9 @@ namespace Moonwell.Testing
             hero.SetLevel(2);
             Expect.Equal("experience 500 True|add-experience -200 True|level 5 True|strip 3", string.Join("|", world.HeroCalls), "the calls that changed the hero");
             world.SetExperience(handle, 100, true);
-            Expect.Equal(300, world.ExperienceOf(handle), "the fake world's experience after a lower SetHeroXP, as the game's");
+            Expect.Equal(200, world.ExperienceOf(handle), "the fake world's experience after a lower SetHeroXP, as the game's: level 2's");
             hero.Remove();
-            Expect.Equal("300 2", hero.Experience + " " + hero.Level, "the removed hero's last experience and level");
+            Expect.Equal("200 2", hero.Experience + " " + hero.Level, "the removed hero's last experience and level");
         }
 
         /// <summary>A component with a helper named like a reaction and taking other parameters (OnDeath(string)) and with no reaction: adding it works on .NET as in Lua, its mask has no OnDeath, and the unit's death does not call the helper. Only a method that overrides the base's reaction counts.</summary>

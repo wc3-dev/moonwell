@@ -921,6 +921,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.installed-experience", Run = HeroCases.InstalledExperience });
             list.Add(new Case { Name = "heroes.experience-gone", Run = HeroCases.ExperienceGone });
             list.Add(new Case { Name = "heroes.experience-without-handle", Run = HeroCases.ExperienceWithoutHandle });
+            list.Add(new Case { Name = "heroes.experience-gives-levels", Run = HeroCases.ExperienceGivesLevels });
+            list.Add(new Case { Name = "heroes.level-gives-experience", Run = HeroCases.LevelGivesExperience });
+            list.Add(new Case { Name = "heroes.installed-experience-gives-levels", Run = HeroCases.InstalledExperienceGivesLevels });
             list.Add(new Case { Name = "heroes.stats", Run = HeroCases.Stats });
             list.Add(new Case { Name = "heroes.stat-bonus", Run = HeroCases.StatBonus });
             list.Add(new Case { Name = "heroes.stat-bonus-without-handle", Run = HeroCases.StatBonusWithoutHandle });
@@ -932,6 +935,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.shared-without-handle", Run = HeroCases.SharedWithoutHandle });
             list.Add(new Case { Name = "heroes.level-up-order", Run = HeroReactionCases.LevelUpOrder });
             list.Add(new Case { Name = "heroes.level-jump", Run = HeroReactionCases.LevelJump });
+            list.Add(new Case { Name = "heroes.level-up-from-experience", Run = HeroReactionCases.LevelUpFromExperience });
             list.Add(new Case { Name = "heroes.level-up-through-set-level", Run = HeroReactionCases.LevelUpThroughSetLevel });
             list.Add(new Case { Name = "heroes.level-up-from-taken-in", Run = HeroReactionCases.LevelUpFromTakenIn });
             list.Add(new Case { Name = "heroes.level-up-after-quiet-levels", Run = HeroReactionCases.LevelUpAfterQuietLevels });
