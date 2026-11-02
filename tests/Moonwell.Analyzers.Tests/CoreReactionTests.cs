@@ -36,7 +36,7 @@ public class CoreReactionTests
     [Fact]
     public void a_hero_or_ability_reaction_without_override_is_an_error()
     {
-        Assert.Equal(new[] { "MW0041: OnLevelUp", "MW0041: OnSkillLearned", "MW0041: OnLevelUp", "MW0041: OnHeroLevelUp", "MW0041: OnHeroSkillLearned", "MW0041: OnLearned", "MW0041: OnLevelUp" }, MapCode.CheckFile("""
+        Assert.Equal(new[] { "MW0041: OnLevelUp", "MW0041: OnSkillLearned", "MW0041: OnLevelUp", "MW0041: OnHeroLevelUp", "MW0041: OnHeroSkillLearned", "MW0041: OnLearned", "MW0041: OnLost", "MW0041: OnLevelUp" }, MapCode.CheckFile("""
             using Moonwell;
 
             namespace Map
@@ -66,6 +66,8 @@ public class CoreReactionTests
                 public class Toughness : Ability
                 {
                     public void OnLearned() { }
+
+                    public void OnLost() { }
                 }
 
                 public class Squire : Hero
@@ -110,6 +112,8 @@ public class CoreReactionTests
                 public class Toughness : Ability
                 {
                     public override void OnLearned() { }
+
+                    public override void OnLost() { }
                 }
             }
             """));
