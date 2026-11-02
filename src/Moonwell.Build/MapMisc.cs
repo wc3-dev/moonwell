@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Moonwell.Build
 {
-    /// <summary>The map's own gameplay constants, <c>war3mapMisc.txt</c> in the map's folder or in its assets.</summary>
+    /// <summary>The map's own gameplay constants, <c>war3mapMisc.txt</c> in the map's folder or in its assets: the hero bonuses and the experience table.</summary>
     public static class MapMisc
     {
         private const string FileName = "war3mapMisc.txt";
@@ -31,6 +31,37 @@ namespace Moonwell.Build
                 return standard;
             }
 
+            var values = Values(path);
+            return new HeroBonus(
+                Number(values, StrengthKey, standard.LifePerStrength, path),
+                Number(values, IntelligenceKey, standard.ManaPerIntelligence, path));
+        }
+
+        /// <summary>Reads the experience constants the map's file sets over the standard ones.</summary>
+        /// <param name="mapFolder">The map's folder.</param>
+        /// <param name="standard">The constants of the data set the map plays under, which a key the file leaves out keeps.</param>
+        /// <returns>The map's constants; the standard ones when the map has no file.</returns>
+        /// <exception cref="BuildException">The top level is not a whole number, the list not a list of numbers, or a factor not a number.</exception>
+        public static HeroExperience ReadExperience(string mapFolder, HeroExperience standard)
+        {
+            var path = Path.Combine(mapFolder, FileName);
+            if (!File.Exists(path))
+            {
+                return standard;
+            }
+
+            var values = Values(path);
+            return new HeroExperience(
+                WholeNumber(values, "MaxHeroLevel", standard.MaxLevel, path),
+                Numbers(values, "NeedHeroXP", standard.Listed, path),
+                Number(values, "NeedHeroXPFormulaA", standard.PreviousFactor, path),
+                Number(values, "NeedHeroXPFormulaB", standard.LevelFactor, path),
+                Number(values, "NeedHeroXPFormulaC", standard.Constant, path));
+        }
+
+        // The keys of the file's [Misc] section and their values.
+        private static Dictionary<string, string> Values(string path)
+        {
             var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var inSection = false;
             foreach (var raw in File.ReadAllLines(path))
@@ -54,9 +85,7 @@ namespace Moonwell.Build
                 }
             }
 
-            return new HeroBonus(
-                Number(values, StrengthKey, standard.LifePerStrength, path),
-                Number(values, IntelligenceKey, standard.ManaPerIntelligence, path));
+            return values;
         }
 
         private static float Number(Dictionary<string, string> values, string key, float standard, string path)
@@ -72,6 +101,42 @@ namespace Moonwell.Build
             }
 
             return number;
+        }
+
+        private static int WholeNumber(Dictionary<string, string> values, string key, int standard, string path)
+        {
+            if (!values.TryGetValue(key, out var text))
+            {
+                return standard;
+            }
+
+            if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
+            {
+                throw new BuildException($"{path}: {key} is '{text}', not a whole number");
+            }
+
+            return number;
+        }
+
+        private static IReadOnlyList<float> Numbers(Dictionary<string, string> values, string key, IReadOnlyList<float> standard, string path)
+        {
+            if (!values.TryGetValue(key, out var text))
+            {
+                return standard;
+            }
+
+            var numbers = new List<float>();
+            foreach (var part in text.Split(','))
+            {
+                if (!float.TryParse(part.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+                {
+                    throw new BuildException($"{path}: {key} is '{text}', not a list of numbers");
+                }
+
+                numbers.Add(number);
+            }
+
+            return numbers;
         }
     }
 }

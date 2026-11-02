@@ -12,7 +12,7 @@ public static class GeneratedObjects
     private const string MiscFile = "Values/misc.json";
 
     // The keys of miscgame.txt's [Misc] section the build reads: a hero's life per point of strength and mana per point of intelligence.
-    private static readonly string[] MiscKeys = { "StrHitPointBonus", "IntManaBonus" };
+    private static readonly string[] MiscKeys = { "StrHitPointBonus", "IntManaBonus", "MaxHeroLevel", "NeedHeroXP", "NeedHeroXPFormulaA", "NeedHeroXPFormulaB", "NeedHeroXPFormulaC" };
 
     /// <summary>The file name of a kind's values (<c>unit.json</c>), which is also the end of its embedded resource name.</summary>
     public static string ValuesFile(Kind kind)

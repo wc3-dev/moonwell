@@ -66,7 +66,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The hero's experience. Setting a higher value makes the game give the levels that come with it, with the level-up effect (SetHeroXP, which only raises; it stops at the last level's experience). Setting a lower value lowers the experience but keeps the level (AddHeroXP with a negative amount); SetLevel lowers the level. A read after a set gives what the game took. Once the game has removed the hero, the last value read or set, and setting does nothing.</summary>
+        /// <summary>The hero's experience. Setting a higher value makes the game give the levels that come with it, with the level-up effect (SetHeroXP, which only raises; it stops at the last level's experience). Setting a lower value lowers the experience but keeps the level (AddHeroXP with a negative amount); SetLevel lowers the level; AddExperience can leave the effect out. A read after a set gives what the game took. Once the game has removed the hero, the last value read or set, and setting does nothing.</summary>
         [LocalSafe]
         public int Experience
         {
@@ -108,6 +108,75 @@ namespace Moonwell
 
                     // The last value is what the game took, which the getter keeps.
                     lastExperience = Experience;
+                }
+            }
+        }
+
+        /// <summary>Adds experience to the hero, or takes it away with a negative amount (AddHeroXP). Adding gives the levels that come with it, with the level-up effect unless showEffect is false, and stops at the top level's experience; taking lowers the experience but keeps the level (SetLevel lowers the level). The player's XP handicap does not apply (seen 11-02). Does nothing once the hero is gone.</summary>
+        public void AddExperience(int amount, bool showEffect = true)
+        {
+            if (!IsGone)
+            {
+                Runtime.World.AddExperience(Handle, amount, showEffect);
+
+                // The last values are what the game took, which the getters keep.
+                lastLevel = Level;
+                lastExperience = Experience;
+            }
+        }
+
+        /// <summary>The experience the hero still needs for its next level, from the experience table of the map's gameplay constants; 0 at the top level. Once the game has removed the hero, from the last level and experience read or set; with no handle (in a declared class's constructor, on a default object), a new hero's: what level 2 needs.</summary>
+        [LocalSafe]
+        public int ExperienceToNextLevel
+        {
+            get
+            {
+                var table = HeroTable.Experience;
+                var level = Handle == null ? 1 : Level;
+                if (level >= table.Length)
+                {
+                    return 0;
+                }
+
+                var left = table[level] - (Handle == null ? 0 : Experience);
+                return left > 0 ? left : 0;
+            }
+        }
+
+        /// <summary>How far the hero is through its level, from 0 to 100: its experience past its level's, out of what the next level needs, from the experience table of the map's gameplay constants. 100 at the top level; 0 when its experience was lowered below its level's, which keeps the level. Once the game has removed the hero, from the last level and experience read or set; with no handle (in a declared class's constructor, on a default object), 0.</summary>
+        [LocalSafe]
+        public float LevelProgress
+        {
+            get
+            {
+                var table = HeroTable.Experience;
+                var level = Handle == null ? 1 : Level;
+                if (level >= table.Length)
+                {
+                    return 100.0f;
+                }
+
+                var past = (Handle == null ? 0 : Experience) - table[level - 1];
+                var span = table[level] - table[level - 1];
+                if (past <= 0 || span <= 0)
+                {
+                    return past > 0 ? 100.0f : 0.0f;
+                }
+
+                var progress = past * 100.0f / span;
+                return progress < 100.0f ? progress : 100.0f;
+            }
+        }
+
+        /// <summary>Gives the hero one level, as SetLevel(Level + 1) does, with the level-up effect unless showEffect is false. Does nothing at the top level of the map's experience table, and once the hero is gone.</summary>
+        public void LevelUp(bool showEffect = true)
+        {
+            if (!IsGone)
+            {
+                var level = Level;
+                if (level < HeroTable.Experience.Length)
+                {
+                    SetLevel(level + 1, showEffect);
                 }
             }
         }

@@ -18,17 +18,20 @@ namespace Moonwell.Build
         private readonly Dictionary<string, IReadOnlySet<string>> ids;
         private readonly Dictionary<string, StandardObject> objects;
         private readonly Dictionary<string, HeroBonus> misc;
+        private readonly Dictionary<string, HeroExperience> experience;
 
         private StandardData(
             Dictionary<string, IReadOnlyList<ObjectField>> fields,
             Dictionary<string, IReadOnlySet<string>> ids,
             Dictionary<string, StandardObject> objects,
-            Dictionary<string, HeroBonus> misc)
+            Dictionary<string, HeroBonus> misc,
+            Dictionary<string, HeroExperience> experience)
         {
             this.fields = fields;
             this.ids = ids;
             this.objects = objects;
             this.misc = misc;
+            this.experience = experience;
         }
 
         /// <summary>No standard objects, no fields and no gameplay constants: for the build of a map that declares no objects.</summary>
@@ -36,7 +39,8 @@ namespace Moonwell.Build
             KindFiles.ToDictionary(kind => kind, kind => (IReadOnlyList<ObjectField>)new List<ObjectField>(), StringComparer.Ordinal),
             KindFiles.ToDictionary(kind => kind, kind => (IReadOnlySet<string>)new HashSet<string>(), StringComparer.Ordinal),
             new Dictionary<string, StandardObject>(StringComparer.Ordinal),
-            new Dictionary<string, HeroBonus>(StringComparer.Ordinal));
+            new Dictionary<string, HeroBonus>(StringComparer.Ordinal),
+            new Dictionary<string, HeroExperience>(StringComparer.Ordinal));
 
         /// <summary>A field of an object kind, as the metadata describes it.</summary>
         /// <param name="Id">The field's four-character id.</param>
@@ -133,6 +137,17 @@ namespace Moonwell.Build
                 : throw new BuildException($"the standard data holds no gameplay constants for {set ?? BaseSet}");
         }
 
+        /// <summary>The experience constants of the gameplay constants (<c>units/miscgame.txt</c>) of a set of tables.</summary>
+        /// <param name="set">Null for the base tables, else <c>melee_v0</c>, <c>custom_v0</c> or <c>custom_v1</c>.</param>
+        /// <returns>The top level, the listed totals and the formula of the levels after them.</returns>
+        /// <exception cref="BuildException">The data holds no gameplay constants for the set.</exception>
+        public HeroExperience Experience(string? set)
+        {
+            return experience.TryGetValue(set ?? BaseSet, out var constants)
+                ? constants
+                : throw new BuildException($"the standard data holds no gameplay constants for {set ?? BaseSet}");
+        }
+
         /// <summary>Whether a standard object does not exist in the game under a set of tables (<see cref="GameData.ExistenceSet"/>).</summary>
         /// <param name="standardId">The id of the standard object.</param>
         /// <param name="set">Null for the base tables, else <c>melee_v0</c>, <c>custom_v0</c> or <c>custom_v1</c>.</param>
@@ -186,24 +201,31 @@ namespace Moonwell.Build
                 ids[kind] = kindIds;
             }
 
-            return new StandardData(fields, ids, objects, ReadMisc(assembly, objectsDll));
+            var (misc, experience) = ReadMisc(assembly, objectsDll);
+            return new StandardData(fields, ids, objects, misc, experience);
         }
 
-        private static Dictionary<string, HeroBonus> ReadMisc(Assembly assembly, string objectsDll)
+        private static (Dictionary<string, HeroBonus> Misc, Dictionary<string, HeroExperience> Experience) ReadMisc(Assembly assembly, string objectsDll)
         {
             const string resource = "Moonwell.Objects.Values.misc.json";
             using var stream = assembly.GetManifestResourceStream(resource)
                 ?? throw new BuildException($"{Path.GetFileName(objectsDll)} holds no {resource}");
             using var document = JsonDocument.Parse(stream);
             var misc = new Dictionary<string, HeroBonus>(StringComparer.Ordinal);
+            var experience = new Dictionary<string, HeroExperience>(StringComparer.Ordinal);
             foreach (var set in document.RootElement.EnumerateObject())
             {
-                misc[set.Name] = new HeroBonus(
-                    float.Parse(set.Value.GetProperty("StrHitPointBonus").GetString()!, CultureInfo.InvariantCulture),
-                    float.Parse(set.Value.GetProperty("IntManaBonus").GetString()!, CultureInfo.InvariantCulture));
+                float Number(string key) => float.Parse(set.Value.GetProperty(key).GetString()!, CultureInfo.InvariantCulture);
+                misc[set.Name] = new HeroBonus(Number("StrHitPointBonus"), Number("IntManaBonus"));
+                experience[set.Name] = new HeroExperience(
+                    int.Parse(set.Value.GetProperty("MaxHeroLevel").GetString()!, CultureInfo.InvariantCulture),
+                    set.Value.GetProperty("NeedHeroXP").GetString()!.Split(',').Select(part => float.Parse(part.Trim(), CultureInfo.InvariantCulture)).ToList(),
+                    Number("NeedHeroXPFormulaA"),
+                    Number("NeedHeroXPFormulaB"),
+                    Number("NeedHeroXPFormulaC"));
             }
 
-            return misc;
+            return (misc, experience);
         }
 
         private static IReadOnlyList<ObjectField> ReadFields(JsonElement array, Func<string, Choice> choiceOf)

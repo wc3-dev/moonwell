@@ -52,6 +52,124 @@ namespace Moonwell.Testing
             Expect.Equal("level 8 False", world.HeroCalls[1], "the second call");
         }
 
+        /// <summary>LevelUp gives the hero one level in the game, with the effect unless it is turned off; at the top level it asks nothing.</summary>
+        public static void LevelUp(FakeWorld world)
+        {
+            var hero = NewHero(world, out _);
+
+            hero.LevelUp();
+            hero.LevelUp(false);
+
+            Expect.Equal(3, hero.Level, "the level after two");
+            Expect.Equal(2, world.HeroCalls.Count, "calls that changed the hero");
+            Expect.Equal("level 2 True", world.HeroCalls[0], "the first call");
+            Expect.Equal("level 3 False", world.HeroCalls[1], "the second call");
+
+            hero.SetLevel(10);
+            hero.LevelUp();
+            Expect.Equal(10, hero.Level, "the top level");
+            Expect.Equal(3, world.HeroCalls.Count, "no call at the top level");
+        }
+
+        /// <summary>AddExperience adds to the game's experience, or takes with a negative amount, with the effect unless it is turned off.</summary>
+        public static void AddExperience(FakeWorld world)
+        {
+            var hero = NewHero(world, out var handle);
+
+            hero.AddExperience(150);
+            Expect.Equal(150, hero.Experience, "the experience after adding");
+            hero.AddExperience(-50, false);
+
+            Expect.Equal(100, hero.Experience, "the experience after taking");
+            Expect.Equal(100, world.ExperienceOf(handle), "the game's experience");
+            Expect.Equal(2, world.HeroCalls.Count, "calls that changed the hero");
+            Expect.Equal("add-experience 150 True", world.HeroCalls[0], "the first call");
+            Expect.Equal("add-experience -50 False", world.HeroCalls[1], "the second call");
+        }
+
+        /// <summary>The experience to the next level and the progress through the level come from the standard table (seen 11-02): 0 and 100 at the top level, and no progress below the level's own experience.</summary>
+        public static void ExperienceToNextLevel(FakeWorld world)
+        {
+            var hero = NewHero(world, out _);
+            Expect.Equal(200, hero.ExperienceToNextLevel, "a new hero needs level 2's");
+            Expect.Near(0.0f, hero.LevelProgress, "a new hero's progress");
+
+            hero.SetLevel(5);
+            hero.Experience = 1700;
+
+            Expect.Equal(300, hero.ExperienceToNextLevel, "level 6 is at 2000");
+            Expect.Near(50.0f, hero.LevelProgress, "half of 1400 to 2000");
+
+            hero.AddExperience(-1000);
+            Expect.Equal(1300, hero.ExperienceToNextLevel, "lowered below its level's");
+            Expect.Near(0.0f, hero.LevelProgress, "no progress below its level's");
+
+            hero.SetLevel(10);
+            hero.Experience = 5400;
+            Expect.Equal(0, hero.ExperienceToNextLevel, "nothing past the top level");
+            Expect.Near(100.0f, hero.LevelProgress, "the top level is full");
+        }
+
+        /// <summary>A table the build installs replaces the standard one, and its last level is the top.</summary>
+        public static void InstalledExperience(FakeWorld world)
+        {
+            Runtime.InstallHeroExperience(new int[] { 0, 100, 300, 495 });
+            var hero = NewHero(world, out _);
+            Expect.Equal(100, hero.ExperienceToNextLevel, "a new hero needs the table's level 2");
+
+            hero.SetLevel(3);
+            hero.Experience = 400;
+
+            Expect.Equal(95, hero.ExperienceToNextLevel, "level 4 is at 495");
+            Expect.Near(100.0f * 100.0f / 195.0f, hero.LevelProgress, "100 of 300 to 495");
+
+            hero.SetLevel(4);
+            Expect.Equal(0, hero.ExperienceToNextLevel, "the table's last level is the top");
+            Expect.Near(100.0f, hero.LevelProgress, "the top level is full");
+            var calls = world.HeroCalls.Count;
+            hero.LevelUp();
+            Expect.Equal(calls, world.HeroCalls.Count, "no call at the table's top level");
+        }
+
+        /// <summary>Once the game has removed the hero, the reads come from the last level and experience read, and LevelUp and AddExperience ask nothing.</summary>
+        public static void ExperienceGone(FakeWorld world)
+        {
+            var hero = NewHero(world, out var handle);
+            hero.SetLevel(5);
+            hero.Experience = 1700;
+
+            world.VanishUnit(handle);
+            world.Advance(0.3f);
+            Expect.True(hero.IsGone, "the sweep found the hero gone");
+            world.GoneCalls = 0;
+            var calls = world.HeroCalls.Count;
+
+            hero.LevelUp();
+            hero.AddExperience(100);
+
+            Expect.Equal(300, hero.ExperienceToNextLevel, "from the last values");
+            Expect.Near(50.0f, hero.LevelProgress, "from the last values");
+            Expect.Equal(1700, hero.Experience, "the experience kept");
+            Expect.Equal(0, world.GoneCalls, "no call to the game for the gone hero");
+            Expect.Equal(calls, world.HeroCalls.Count, "no call that changes the hero");
+        }
+
+        /// <summary>A hero with no handle, in its constructor or as a default object, reads as a new hero, asking the game nothing.</summary>
+        public static void ExperienceWithoutHandle(FakeWorld world)
+        {
+            var id = ObjectTypes.FourCC("H0rx");
+            ObjectTypes.Unit(id, () => new RecordingHero());
+            var hero = new RecordingHero();
+            world.CallsThrow = true;
+
+            var left = hero.ExperienceToNextLevel;
+            var progress = hero.LevelProgress;
+
+            world.CallsThrow = false;
+            Expect.Equal(200, left, "a new hero needs level 2's");
+            Expect.Near(0.0f, progress, "a new hero's progress");
+        }
+
         /// <summary>The stats are the game's base values, and With Bonus adds what items and auras give; setting changes the base for good.</summary>
         public static void Stats(FakeWorld world)
         {

@@ -914,6 +914,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.unregistered-is-hero", Run = HeroCases.UnregisteredIsHero });
             list.Add(new Case { Name = "heroes.experience", Run = HeroCases.Experience });
             list.Add(new Case { Name = "heroes.level", Run = HeroCases.Level });
+            list.Add(new Case { Name = "heroes.level-up", Run = HeroCases.LevelUp });
+            list.Add(new Case { Name = "heroes.add-experience", Run = HeroCases.AddExperience });
+            list.Add(new Case { Name = "heroes.experience-to-next-level", Run = HeroCases.ExperienceToNextLevel });
+            list.Add(new Case { Name = "heroes.installed-experience", Run = HeroCases.InstalledExperience });
+            list.Add(new Case { Name = "heroes.experience-gone", Run = HeroCases.ExperienceGone });
+            list.Add(new Case { Name = "heroes.experience-without-handle", Run = HeroCases.ExperienceWithoutHandle });
             list.Add(new Case { Name = "heroes.stats", Run = HeroCases.Stats });
             list.Add(new Case { Name = "heroes.skill-points", Run = HeroCases.SkillPoints });
             list.Add(new Case { Name = "heroes.revive", Run = HeroCases.Revive });
