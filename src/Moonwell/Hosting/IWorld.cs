@@ -170,8 +170,14 @@ namespace Moonwell.Hosting
         /// <summary>The level of an ability on a unit; 0 when the unit has none.</summary>
         int AbilityLevel(unit unit, int abilityId);
 
-        /// <summary>Gives a unit an ability.</summary>
-        void AddAbility(unit unit, int abilityId);
+        /// <summary>Gives a unit an ability at level 1; false, and nothing changes, when the unit has it already or there is no such ability.</summary>
+        bool AddAbility(unit unit, int abilityId);
+
+        /// <summary>Sets the level of an ability on a unit, kept within the ability's levels, and answers the level it set; 0, and nothing changes, when the unit lacks the ability.</summary>
+        int ChangeAbilityLevel(unit unit, int abilityId, int level);
+
+        /// <summary>Whether an ability the unit has is a hero skill; false when the unit lacks it.</summary>
+        bool IsHeroAbility(unit unit, int abilityId);
 
         /// <summary>Hides an ability on a unit.</summary>
         void HideAbility(unit unit, int abilityId);
@@ -179,8 +185,8 @@ namespace Moonwell.Hosting
         /// <summary>Makes an ability code gave a unit stay through a morph, which otherwise takes it away.</summary>
         void MakeAbilityPermanent(unit unit, int abilityId);
 
-        /// <summary>Takes an ability from a unit.</summary>
-        void RemoveAbility(unit unit, int abilityId);
+        /// <summary>Takes an ability from a unit; false when the unit lacks it.</summary>
+        bool RemoveAbility(unit unit, int abilityId);
 
         /// <summary>The life of a unit.</summary>
         float LifeOf(unit unit);

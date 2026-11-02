@@ -14,5 +14,19 @@ namespace Moonwell
                 throw new MoonwellException(message);
             }
         }
+
+        /// <summary>Reports a mistake as an error raised at the call, without throwing, so the call goes on as the game does.</summary>
+        [Conditional("DEBUG")]
+        internal static void Report(string label, string message)
+        {
+            try
+            {
+                throw new MoonwellException(message);
+            }
+            catch (MoonwellException error)
+            {
+                Errors.Report(label, error);
+            }
+        }
     }
 }
