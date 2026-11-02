@@ -392,23 +392,58 @@ namespace Moonwell.Testing
             Expect.Near(80.0f, watch.Y, "the item lies at the unit's y");
         }
 
-        /// <summary>An item picked up keeps the place it had (seen 10-21: GetItemX of a carried item is where it was picked up); a drop puts it at the unit's place.</summary>
-        public static void PlaceWhileCarried(FakeWorld world)
+        /// <summary>While a unit carries an item, X and Y read the unit's place, though the game keeps where the item lay (seen 11-02); a drop puts it at the unit's place.</summary>
+        public static void PlaceFollowsTheCarrier(FakeWorld world)
         {
             var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
             unit.PlaceAt(100.0f, 200.0f);
             var item = Item.Create(ObjectTypes.FourCC("ofoo"), 5.0f, 6.0f, Game.Instance);
 
             unit.Give(item);
+
+            Expect.Near(100.0f, item.X, "x once given");
+            Expect.Near(200.0f, item.Y, "y once given");
+
             unit.PlaceAt(300.0f, 400.0f);
 
-            Expect.Near(5.0f, item.X, "x while carried");
-            Expect.Near(6.0f, item.Y, "y while carried");
+            Expect.Near(300.0f, item.X, "x after the carrier moved");
+            Expect.Near(400.0f, item.Y, "y after the carrier moved");
 
             unit.Drop(item);
 
             Expect.Near(300.0f, item.X, "x after the drop");
             Expect.Near(400.0f, item.Y, "y after the drop");
+        }
+
+        /// <summary>An item in the 3.0 bag or equipment slots has no carrier, as the unit does not count it, but X and Y still follow the unit that picked it up.</summary>
+        public static void PlaceInTheBagFollowsTheHolder(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("H001"), hero: true);
+            var hero = Unit.Of(handle)!;
+            hero.PlaceAt(100.0f, 200.0f);
+            var item = Item.Create(ObjectTypes.FourCC("ofoo"), 5.0f, 6.0f, Game.Instance);
+
+            world.PutInBag(handle, item.Handle);
+            hero.PlaceAt(300.0f, 400.0f);
+
+            Expect.True(item.Carrier == null, "no carrier in the bag");
+            Expect.Near(300.0f, item.X, "x in the bag");
+            Expect.Near(400.0f, item.Y, "y in the bag");
+        }
+
+        /// <summary>An item Moonwell never saw picked up reads the game's place, where it lay before.</summary>
+        public static void PlaceOfAnUnseenPickUpIsTheGames(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            unit.PlaceAt(100.0f, 200.0f);
+            var placed = world.SpawnItem(ObjectTypes.FourCC("ofoo"), 5.0f, 6.0f);
+            world.PutInSlot(handle, 0, placed);
+
+            var found = unit.ItemIn(0)!;
+
+            Expect.Near(5.0f, found.X, "the game's x");
+            Expect.Near(6.0f, found.Y, "the game's y");
         }
 
         /// <summary>RemoveUnit takes the items out of the unit at once, but the drop events come after the call (seen 10-21), when the unit no longer has the item; the items are removed with the unit.</summary>

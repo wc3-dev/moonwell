@@ -947,6 +947,12 @@ namespace Moonwell.Engine
             return Natives.UnitHasItem(unit, item);
         }
 
+        /// <summary>Whether an item is in a unit's inventory, bag or equipment slots: IsItemOwned.</summary>
+        public bool IsItemHeld(item item)
+        {
+            return Natives.IsItemOwned(item);
+        }
+
         /// <summary>The charges of an item, from the game.</summary>
         public int ChargesOf(item item)
         {

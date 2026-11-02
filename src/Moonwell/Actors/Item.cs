@@ -82,6 +82,13 @@ namespace Moonwell
         /// <summary>The unit that last picked the item up, as the pick-up events Moonwell has seen say; a candidate that Carrier checks with the game.</summary>
         internal Unit? CarrierUnit;
 
+        /// <summary>The unit Moonwell last saw pick the item up, while the game says the item is still in an inventory, bag or equipment slots; null otherwise.</summary>
+        internal Unit? HoldingUnit()
+        {
+            var by = CarrierUnit;
+            return by == null || by.IsGone || !Runtime.World.IsItemHeld(Handle) ? null : by;
+        }
+
         /// <summary>Whether a getter that read 0 read it from an item the game has removed: the game gives 0 for everything then, and the type id 0, before the sweep finds the item. The getter then keeps the last value instead of the 0.</summary>
         internal bool RemovedByGame()
         {
@@ -167,7 +174,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The x of the item. While a unit carries it, this is the x where it was picked up, not the carrier's: read Carrier's X for that; a drop puts the item at the unit's place. Once the game has removed it, the last x read or set.</summary>
+        /// <summary>The x of the item. While it is in a unit's inventory, bag or equipment slots, the x of the unit Moonwell saw pick it up; the game itself keeps where the item lay, which is what an item picked up before Moonwell saw it reads. A drop puts the item at the unit's place. Once the game has removed it, the last x read or set.</summary>
         [LocalSafe]
         public float X
         {
@@ -178,8 +185,9 @@ namespace Moonwell
                     return lastX;
                 }
 
-                var now = Runtime.World.ItemX(Handle);
-                if (now == 0.0f && RemovedByGame())
+                var holder = HoldingUnit();
+                var now = holder != null ? holder.X : Runtime.World.ItemX(Handle);
+                if (holder == null && now == 0.0f && RemovedByGame())
                 {
                     return lastX;
                 }
@@ -193,7 +201,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The y of the item. While a unit carries it, this is the y where it was picked up, not the carrier's: read Carrier's Y for that; a drop puts the item at the unit's place. Once the game has removed it, the last y read or set.</summary>
+        /// <summary>The y of the item; see X.</summary>
         [LocalSafe]
         public float Y
         {
@@ -204,8 +212,9 @@ namespace Moonwell
                     return lastY;
                 }
 
-                var now = Runtime.World.ItemY(Handle);
-                if (now == 0.0f && RemovedByGame())
+                var holder = HoldingUnit();
+                var now = holder != null ? holder.Y : Runtime.World.ItemY(Handle);
+                if (holder == null && now == 0.0f && RemovedByGame())
                 {
                     return lastY;
                 }

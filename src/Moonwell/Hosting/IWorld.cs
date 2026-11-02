@@ -347,6 +347,9 @@ namespace Moonwell.Hosting
         /// <summary>Whether a unit has an item in its inventory.</summary>
         bool CarriesItem(unit unit, item item);
 
+        /// <summary>Whether an item is in a unit's inventory, its 3.0 bag or its equipment slots.</summary>
+        bool IsItemHeld(item item);
+
         /// <summary>The number of charges of an item.</summary>
         int ChargesOf(item item);
 
