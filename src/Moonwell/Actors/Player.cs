@@ -364,6 +364,43 @@ namespace Moonwell
             Runtime.World.SetAllianceOf(Handle, other.Handle, (int)alliance);
         }
 
+        /// <summary>Makes the two players allies, both ways, in place of what they gave each other, and lets each see what the other sees with sharedVision; does nothing for the player itself.</summary>
+        public void MakeAllies(Player other, bool sharedVision = false)
+        {
+            SetBothWays(other, sharedVision ? Alliance.Allied | Alliance.SharedVision : Alliance.Allied);
+        }
+
+        /// <summary>Makes the two players enemies, both ways, with nothing left between them, shared vision and control included; does nothing for the player itself.</summary>
+        public void MakeEnemies(Player other)
+        {
+            SetBothWays(other, Alliance.None);
+        }
+
+        /// <summary>Whether the other player sees what this player sees.</summary>
+        [LocalSafe]
+        public bool ShowsVisionTo(Player other)
+        {
+            return AllianceWith(other).HasFlag(Alliance.SharedVision);
+        }
+
+        /// <summary>Lets the other player see what this player sees; it goes one way and leaves the alliance as it is, and does nothing for the player itself.</summary>
+        public void ShowVisionTo(Player other)
+        {
+            if (other != this)
+            {
+                SetAlliance(other, AllianceWith(other) | Alliance.SharedVision);
+            }
+        }
+
+        /// <summary>Stops the other player seeing what this player sees; it goes one way and leaves the alliance as it is, and does nothing for the player itself.</summary>
+        public void HideVisionFrom(Player other)
+        {
+            if (other != this)
+            {
+                SetAlliance(other, AllianceWith(other) & ~Alliance.SharedVision);
+            }
+        }
+
         /// <summary>Whether the game counts the other player as this player's ally.</summary>
         [LocalSafe]
         public bool IsAlly(Player other)
@@ -380,6 +417,16 @@ namespace Moonwell
 
         /// <summary>Adds a component to the player, and returns it.</summary>
         public T Add<T>(T component) where T : PlayerComponent => AddComponent(component);
+
+        // What the two players give each other, unless they are one player.
+        private void SetBothWays(Player other, Alliance alliance)
+        {
+            if (other != this)
+            {
+                SetAlliance(other, alliance);
+                other.SetAlliance(this, alliance);
+            }
+        }
 
         // The playing players of the slots a person or computer can have, people only when asked.
         private static List<Player> InGame(bool usersOnly)

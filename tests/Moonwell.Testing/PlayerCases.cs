@@ -196,6 +196,77 @@ namespace Moonwell.Testing
             Expect.True(Alliance.Allied == (Alliance.Passive | Alliance.HelpRequest | Alliance.HelpResponse | Alliance.SharedXp | Alliance.SharedSpells), "Allied");
         }
 
+        /// <summary>MakeAllies goes both ways, and replaces what the two gave each other.</summary>
+        public static void PlayersMakeAllies(FakeWorld world)
+        {
+            Player.One.SetAlliance(Player.Two, Alliance.SharedControl);
+            Player.Two.SetAlliance(Player.One, Alliance.SharedVision);
+
+            Player.One.MakeAllies(Player.Two);
+
+            Expect.True(Player.One.AllianceWith(Player.Two) == Alliance.Allied, "one gives two the alliance");
+            Expect.True(Player.Two.AllianceWith(Player.One) == Alliance.Allied, "two gives one the alliance");
+            Expect.True(Player.Two.AllianceWith(Player.Three) == Alliance.None, "a third player is left out");
+        }
+
+        /// <summary>MakeAllies with shared vision adds the vision, both ways.</summary>
+        public static void PlayersMakeAlliesSharedVision(FakeWorld world)
+        {
+            Player.One.MakeAllies(Player.Two, sharedVision: true);
+
+            Expect.True(Player.One.AllianceWith(Player.Two) == (Alliance.Allied | Alliance.SharedVision), "one gives two");
+            Expect.True(Player.Two.AllianceWith(Player.One) == (Alliance.Allied | Alliance.SharedVision), "two gives one");
+        }
+
+        /// <summary>MakeEnemies goes both ways, and leaves nothing between the two.</summary>
+        public static void PlayersMakeEnemies(FakeWorld world)
+        {
+            Player.One.MakeAllies(Player.Two, sharedVision: true);
+            Player.One.SetAlliance(Player.Two, Alliance.Allied | Alliance.SharedControl);
+
+            Player.Two.MakeEnemies(Player.One);
+
+            Expect.True(Player.One.AllianceWith(Player.Two) == Alliance.None, "one gives two nothing");
+            Expect.True(Player.Two.AllianceWith(Player.One) == Alliance.None, "two gives one nothing");
+            Expect.True(Player.One.IsEnemy(Player.Two), "one is two's enemy");
+            Expect.True(Player.Two.IsEnemy(Player.One), "two is one's enemy");
+        }
+
+        /// <summary>A player given themself changes nothing, so a loop over every pair is safe.</summary>
+        public static void PlayersAllianceWithSelf(FakeWorld world)
+        {
+            Player.One.SetAlliance(Player.One, Alliance.Passive);
+
+            Player.One.MakeEnemies(Player.One);
+            Expect.True(Player.One.AllianceWith(Player.One) == Alliance.Passive, "MakeEnemies leaves it");
+
+            Player.One.MakeAllies(Player.One, sharedVision: true);
+            Expect.True(Player.One.AllianceWith(Player.One) == Alliance.Passive, "MakeAllies leaves it");
+
+            Player.One.ShowVisionTo(Player.One);
+            Expect.True(Player.One.AllianceWith(Player.One) == Alliance.Passive, "ShowVisionTo leaves it");
+
+            Player.One.SetAlliance(Player.One, Alliance.SharedVision);
+            Player.One.HideVisionFrom(Player.One);
+            Expect.True(Player.One.AllianceWith(Player.One) == Alliance.SharedVision, "HideVisionFrom leaves it");
+        }
+
+        /// <summary>ShowVisionTo and HideVisionFrom go one way, and leave the alliance as it was.</summary>
+        public static void PlayersShowVision(FakeWorld world)
+        {
+            Player.One.MakeAllies(Player.Two);
+
+            Player.One.ShowVisionTo(Player.Two);
+            Expect.True(Player.One.ShowsVisionTo(Player.Two), "one shows two");
+            Expect.True(!Player.Two.ShowsVisionTo(Player.One), "two does not show one");
+            Expect.True(Player.One.AllianceWith(Player.Two) == (Alliance.Allied | Alliance.SharedVision), "the alliance stays");
+            Expect.True(Player.Two.AllianceWith(Player.One) == Alliance.Allied, "the other way is left alone");
+
+            Player.One.HideVisionFrom(Player.Two);
+            Expect.True(!Player.One.ShowsVisionTo(Player.Two), "one no longer shows two");
+            Expect.True(Player.One.AllianceWith(Player.Two) == Alliance.Allied, "the alliance still stays");
+        }
+
         /// <summary>An upgrade's level, and how far a unit type or an upgrade is allowed, are the game's.</summary>
         public static void PlayersTech(FakeWorld world)
         {
