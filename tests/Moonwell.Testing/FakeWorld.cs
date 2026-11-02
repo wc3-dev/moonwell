@@ -1247,6 +1247,34 @@ namespace Moonwell.Testing
             return false;
         }
 
+        /// <summary>Whether an item is in a unit's slots or bag; false once it is removed or vanished, as the game's IsItemOwned.</summary>
+        public bool IsItemHeld(item item)
+        {
+            NoteGoneItem(item);
+            if (ItemTypeId(item) == 0)
+            {
+                return false;
+            }
+
+            if (bagged.Contains(item))
+            {
+                return true;
+            }
+
+            foreach (var slots in inventories.Values)
+            {
+                for (var i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == item)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>Moves an item to another, empty slot of the unit, as the game does when the player drags it; the game fires a drop for it (seen 10-15) while the unit still has the item.</summary>
         public void MoveItemSlot(unit unit, item item, int toSlot)
         {
@@ -1298,6 +1326,19 @@ namespace Moonwell.Testing
             NoteGoneItem(item);
             itemPlaces[item] = ItemLandsAt != null ? new float[] { ItemLandsAt[0], ItemLandsAt[1] } : new float[] { x, y };
             ItemCalls.Add("move");
+        }
+
+        /// <summary>The items in a unit's 3.0 bag or equipment slots: held, though the unit does not count them as carried.</summary>
+        private readonly HashSet<item> bagged = new HashSet<item>();
+
+        /// <summary>Puts an item in a unit's bag, as the game does when a hero with six full slots gets one: a pick-up event, when it is listened for, while UnitHasItem reads false (seen 10-28 and 11-02).</summary>
+        public void PutInBag(unit unit, item item)
+        {
+            bagged.Add(item);
+            if (Listening.Contains(GameEvent.PickUp))
+            {
+                Inbound.PickedUp(unit, item);
+            }
         }
 
         /// <summary>Puts an item in a slot of a unit without the game telling anyone, as when the item was there before the runtime came.</summary>

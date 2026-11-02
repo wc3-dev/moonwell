@@ -1010,7 +1010,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.carrier-slot-move", Run = ItemCases.CarrierSlotMove });
             list.Add(new Case { Name = "items.carrier-hero-dies", Run = ItemCases.CarrierHeroDies });
             list.Add(new Case { Name = "items.carrier-nonhero-dies", Run = ItemCases.CarrierNonHeroDiesSilently });
-            list.Add(new Case { Name = "items.place-while-carried", Run = ItemCases.PlaceWhileCarried });
+            list.Add(new Case { Name = "items.place-follows-the-carrier", Run = ItemCases.PlaceFollowsTheCarrier });
+            list.Add(new Case { Name = "items.place-in-the-bag-follows-the-holder", Run = ItemCases.PlaceInTheBagFollowsTheHolder });
+            list.Add(new Case { Name = "items.place-of-an-unseen-pick-up", Run = ItemCases.PlaceOfAnUnseenPickUpIsTheGames });
             list.Add(new Case { Name = "items.removed-unit-drops-after", Run = ItemCases.RemovedUnitDropsAfterTheCall });
             list.Add(new Case { Name = "items.give-full-inventory", Run = ItemCases.GiveFullInventory });
             list.Add(new Case { Name = "items.give-held-again", Run = ItemCases.GiveHeldItemAgain });
