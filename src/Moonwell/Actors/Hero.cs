@@ -349,6 +349,18 @@ namespace Moonwell
             }
         }
 
+        /// <summary>What items and auras add to the hero's strength: StrengthWithBonus less Strength. Once the game has removed the hero, the difference of the last values read; with no handle (in a declared class's constructor, on a default object), 0.</summary>
+        [LocalSafe]
+        public int StrengthBonus => Handle == null ? 0 : StrengthWithBonus - Strength;
+
+        /// <summary>What items and auras add to the hero's agility: AgilityWithBonus less Agility. Once the game has removed the hero, the difference of the last values read; with no handle (in a declared class's constructor, on a default object), 0.</summary>
+        [LocalSafe]
+        public int AgilityBonus => Handle == null ? 0 : AgilityWithBonus - Agility;
+
+        /// <summary>What items and auras add to the hero's intelligence: IntelligenceWithBonus less Intelligence. Once the game has removed the hero, the difference of the last values read; with no handle (in a declared class's constructor, on a default object), 0.</summary>
+        [LocalSafe]
+        public int IntelligenceBonus => Handle == null ? 0 : IntelligenceWithBonus - Intelligence;
+
         /// <summary>The skill points the hero has to spend. Setting it adds or takes the difference (UnitModifySkillPoints). Once the game has removed the hero, the last value read or set, and setting does nothing.</summary>
         [LocalSafe]
         public int SkillPoints

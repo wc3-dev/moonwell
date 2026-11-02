@@ -320,6 +320,7 @@ before Moonwell notices a removal, a read that gives 0 on a removed unit keeps t
 | `SetLevel(level)`, `Revive(x, y)` | `showEffect:` turns the effect off; a lower level takes levels away |
 | `Strength`, `Agility`, `Intelligence` | the base, read and set |
 | `StrengthWithBonus`, `AgilityWithBonus`, `IntelligenceWithBonus` | with items and auras, read |
+| `StrengthBonus`, `AgilityBonus`, `IntelligenceBonus` | what items and auras add alone, read |
 | `SkillPoints` | read and set |
 | `ProperName` | read inside `Local.For` only, set anywhere outside it |
 

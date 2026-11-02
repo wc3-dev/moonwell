@@ -915,6 +915,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.experience", Run = HeroCases.Experience });
             list.Add(new Case { Name = "heroes.level", Run = HeroCases.Level });
             list.Add(new Case { Name = "heroes.stats", Run = HeroCases.Stats });
+            list.Add(new Case { Name = "heroes.stat-bonus", Run = HeroCases.StatBonus });
+            list.Add(new Case { Name = "heroes.stat-bonus-without-handle", Run = HeroCases.StatBonusWithoutHandle });
             list.Add(new Case { Name = "heroes.skill-points", Run = HeroCases.SkillPoints });
             list.Add(new Case { Name = "heroes.revive", Run = HeroCases.Revive });
             list.Add(new Case { Name = "heroes.gone", Run = HeroCases.Gone });
