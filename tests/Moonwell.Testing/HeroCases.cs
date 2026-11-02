@@ -170,6 +170,48 @@ namespace Moonwell.Testing
             Expect.Near(0.0f, progress, "a new hero's progress");
         }
 
+        /// <summary>Experience gives the levels of the experience table that come with it, as the game does (seen 11-02): taking experience keeps the level, past the top level the experience stops at the top level's, and at the top level adding changes nothing.</summary>
+        public static void ExperienceGivesLevels(FakeWorld world)
+        {
+            var hero = NewHero(world, out _);
+
+            hero.AddExperience(500);
+            Expect.Equal("3 500", hero.Level + " " + hero.Experience, "after adding 500");
+            hero.Experience = 1450;
+            Expect.Equal("5 1450", hero.Level + " " + hero.Experience, "after setting 1450");
+            hero.AddExperience(-1000);
+            Expect.Equal("5 450", hero.Level + " " + hero.Experience, "taking keeps the level");
+            hero.Experience = 99999;
+            Expect.Equal("10 5400", hero.Level + " " + hero.Experience, "past the top level");
+            hero.AddExperience(100);
+            Expect.Equal("10 5400", hero.Level + " " + hero.Experience, "adding at the top level");
+        }
+
+        /// <summary>A higher level gives the hero that level's experience, up to the top level, and a lower one sets it to the lower level's, as SetHeroLevel and UnitStripHeroLevel do (seen 10-21 and 11-02).</summary>
+        public static void LevelGivesExperience(FakeWorld world)
+        {
+            var hero = NewHero(world, out _);
+
+            hero.SetLevel(5);
+            Expect.Equal("5 1400", hero.Level + " " + hero.Experience, "raised to 5");
+            hero.SetLevel(12);
+            Expect.Equal("10 5400", hero.Level + " " + hero.Experience, "raised past the top level");
+            hero.SetLevel(3);
+            Expect.Equal("3 500", hero.Level + " " + hero.Experience, "lowered to 3");
+        }
+
+        /// <summary>The levels experience gives come from the table the build installs.</summary>
+        public static void InstalledExperienceGivesLevels(FakeWorld world)
+        {
+            Runtime.InstallHeroExperience(new int[] { 0, 100, 300, 495 });
+            var hero = NewHero(world, out _);
+
+            hero.AddExperience(350);
+            Expect.Equal("3 350", hero.Level + " " + hero.Experience, "after adding 350");
+            hero.Experience = 9999;
+            Expect.Equal("4 495", hero.Level + " " + hero.Experience, "past the table's top level");
+        }
+
         /// <summary>The stats are the game's base values, and With Bonus adds what items and auras give; setting changes the base for good.</summary>
         public static void Stats(FakeWorld world)
         {
@@ -302,8 +344,8 @@ namespace Moonwell.Testing
             world.SetStats(handle, 22, 13, 17);
             world.SetStatBonuses(handle, 4, 5, 6);
             world.SetSkillPoints(handle, 2);
-            hero.Experience = 700;
             hero.SetLevel(6);
+            hero.Experience = 2100;
             Expect.Equal(22, hero.Strength, "strength read");
             Expect.Equal(13, hero.Agility, "agility read");
             Expect.Equal(17, hero.Intelligence, "intelligence read");
@@ -336,7 +378,7 @@ namespace Moonwell.Testing
             hero.SkillPoints = 9;
 
             Expect.True(!hero.Revive(1.0f, 2.0f), "a gone hero is not revived");
-            Expect.Equal(700, hero.Experience, "experience");
+            Expect.Equal(2100, hero.Experience, "experience");
             Expect.Equal(6, hero.Level, "level");
             Expect.Equal(22, hero.Strength, "strength");
             Expect.Equal(13, hero.Agility, "agility");
@@ -362,8 +404,8 @@ namespace Moonwell.Testing
             world.SetStats(handle, 22, 13, 17);
             world.SetStatBonuses(handle, 4, 5, 6);
             world.SetSkillPoints(handle, 2);
-            hero.Experience = 700;
             hero.SetLevel(6);
+            hero.Experience = 2100;
             Expect.Equal(22, hero.Strength, "strength read");
             Expect.Equal(13, hero.Agility, "agility read");
             Expect.Equal(17, hero.Intelligence, "intelligence read");
@@ -371,7 +413,7 @@ namespace Moonwell.Testing
             Expect.Equal(18, hero.AgilityWithBonus, "agility with bonus read");
             Expect.Equal(23, hero.IntelligenceWithBonus, "intelligence with bonus read");
             Expect.Equal(2, hero.SkillPoints, "skill points read");
-            Expect.Equal(700, hero.Experience, "experience read");
+            Expect.Equal(2100, hero.Experience, "experience read");
             Expect.Equal(6, hero.Level, "level read");
 
             world.VanishUnit(handle);
@@ -384,12 +426,12 @@ namespace Moonwell.Testing
             Expect.Equal(18, hero.AgilityWithBonus, "agility with bonus");
             Expect.Equal(23, hero.IntelligenceWithBonus, "intelligence with bonus");
             Expect.Equal(2, hero.SkillPoints, "skill points");
-            Expect.Equal(700, hero.Experience, "experience");
+            Expect.Equal(2100, hero.Experience, "experience");
             Expect.Equal(6, hero.Level, "level");
             world.Advance(0.3f);
             Expect.True(hero.IsGone, "the sweep found the hero gone");
             Expect.Equal(22, hero.Strength, "strength after the sweep");
-            Expect.Equal(700, hero.Experience, "experience after the sweep");
+            Expect.Equal(2100, hero.Experience, "experience after the sweep");
         }
 
         /// <summary>A hero's proper name is the game's: read inside Local.For, set for every machine; once the hero is gone, the last value set (a read keeps nothing), and a set calls nothing.</summary>

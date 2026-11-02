@@ -62,6 +62,23 @@ namespace Moonwell.Testing
             Expect.Equal(1, world.LevelEvents, "the game's level events");
         }
 
+        /// <summary>Experience that gives several levels fires one level event, and the reactions run once for each level gained.</summary>
+        public static void LevelUpFromExperience(FakeWorld world)
+        {
+            Arena();
+            var hero = NewHero(world);
+            TestLog.Lines.Clear();
+
+            hero.AddExperience(500);
+
+            ExpectLog(new string[]
+            {
+                "hero level 2 reads 3", "comp level 2", "game level 2", "p0 level 2",
+                "hero level 3 reads 3", "comp level 3", "game level 3", "p0 level 3",
+            }, "the log");
+            Expect.Equal(1, world.LevelEvents, "the game's level events");
+        }
+
         /// <summary>SetLevel runs the level-up reactions inside the call; a lower level runs none, and the levels gained again after it run again.</summary>
         public static void LevelUpThroughSetLevel(FakeWorld world)
         {

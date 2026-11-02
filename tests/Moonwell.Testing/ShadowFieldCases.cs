@@ -41,8 +41,8 @@ namespace Moonwell.Testing
             world.SetStatBonuses(handle, 4, 5, 6);
             world.SetSkillPoints(handle, 2);
             world.SetInventorySize(handle, 6);
-            hero.Experience = 700;
             hero.SetLevel(6);
+            hero.Experience = 2100;
             hero.IsPaused = true;
             hero.Scale = 2.5f;
             hero.FlyHeight = 120.0f;
@@ -77,7 +77,7 @@ namespace Moonwell.Testing
             Expect.Near(120.0f, hero.FlyHeight, "fly height");
             Expect.Equal(6, hero.Level, "level");
             Expect.Equal(6, hero.InventorySize, "inventory size");
-            Expect.Equal(700, hero.Experience, "experience");
+            Expect.Equal(2100, hero.Experience, "experience");
             Expect.Equal(22, hero.Strength, "strength");
             Expect.Equal(13, hero.Agility, "agility");
             Expect.Equal(17, hero.Intelligence, "intelligence");
