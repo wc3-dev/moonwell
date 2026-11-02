@@ -60,8 +60,13 @@ namespace Moonwell
             known[handle] = made;
             Live.Add(made);
             scope?.Adopt(made);
-            made.Mask = Hooks.MaskOf(made, Unit.UnitHooks);
+            made.Mask = Hooks.MaskOf(made, Unit.HooksOf(made));
             Events.Need(made.Mask);
+            if (made is Hero hero)
+            {
+                hero.leveledTo = Runtime.World.LevelOf(handle);
+            }
+
             for (var i = 0; i < made.StartComponents.Count; i++)
             {
                 made.Add(made.StartComponents[i]);
@@ -114,6 +119,18 @@ namespace Moonwell
         internal static Unit Plain(bool hero)
         {
             return hero ? new Hero() : new Unit();
+        }
+
+        /// <summary>Has each known hero's level-up reactions run to its level now: Events calls it as it starts listening for level-ups, since the levels gained before ran none.</summary>
+        internal static void RememberLevels()
+        {
+            for (var i = 0; i < Live.Count; i++)
+            {
+                if (Live[i] is Hero hero && !hero.IsGone)
+                {
+                    hero.leveledTo = Runtime.World.LevelOf(hero.Handle);
+                }
+            }
         }
 
         /// <summary>Forgets a unit that is ending, as it leaves the game, so that its handle makes no object again. A handle whose type id still reads (the runtime removed the unit in this frame) is kept in removed until the sweep reads its type id 0.</summary>

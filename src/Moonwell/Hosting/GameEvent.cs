@@ -20,5 +20,11 @@ namespace Moonwell.Hosting
 
         /// <summary>A player leaves the game.</summary>
         Leave,
+
+        /// <summary>A hero gains one level or more.</summary>
+        HeroLevel,
+
+        /// <summary>A hero learns a skill.</summary>
+        HeroSkill,
     }
 }

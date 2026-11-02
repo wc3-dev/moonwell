@@ -47,5 +47,17 @@ namespace Moonwell
 
         /// <summary>A player leaves the game.</summary>
         internal const int OnLeave = 16384;
+
+        /// <summary>A hero gains a level.</summary>
+        internal const int OnLevelUp = 32768;
+
+        /// <summary>A hero learns a skill, or an ability is learned.</summary>
+        internal const int OnSkillLearned = 65536;
+
+        /// <summary>A hero in the map gains a level.</summary>
+        internal const int OnHeroLevelUp = 131072;
+
+        /// <summary>A hero in the map learns a skill.</summary>
+        internal const int OnHeroSkillLearned = 262144;
     }
 }

@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (abilityHooks == null)
                 {
-                    abilityHooks = new HookTable(typeof(Ability), new string[] { "OnCast" }, new int[] { Hook.OnCast });
+                    abilityHooks = new HookTable(typeof(Ability), new string[] { "OnCast", "OnLearned" }, new int[] { Hook.OnCast, Hook.OnSkillLearned });
                 }
 
                 return abilityHooks;
@@ -37,6 +37,11 @@ namespace Moonwell
 
         /// <summary>Runs when the unit begins a cast of the ability. This ability object is a scope that lasts as long as the caster is in the game, so a delayed effect made here with After runs after the spell has ended; work that should stop with a channel is made on the cast: cast.Every(0.5f, Pulse).</summary>
         public virtual void OnCast(Cast cast)
+        {
+        }
+
+        /// <summary>Runs when a hero learns the ability or raises its level, before the hero's OnSkillLearned; Level reads the new level. The skill point is not spent yet: the hero's SkillPoints reads one more than after (seen 11-02).</summary>
+        public virtual void OnLearned()
         {
         }
     }

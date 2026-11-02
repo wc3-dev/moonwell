@@ -24,6 +24,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>The reactions of a unit's class: a hero's, which add the hero's own to Unit's, or Unit's.</summary>
+        internal static HookTable HooksOf(Unit unit)
+        {
+            return unit is Hero ? Hero.HeroHooks : UnitHooks;
+        }
+
         /// <summary>The bit mask of the reactions this class overrides, worked out when the unit is taken in.</summary>
         internal int Mask;
 

@@ -34,6 +34,88 @@ public class CoreReactionTests
     }
 
     [Fact]
+    public void a_hero_or_ability_reaction_without_override_is_an_error()
+    {
+        Assert.Equal(new[] { "MW0041: OnLevelUp", "MW0041: OnSkillLearned", "MW0041: OnLevelUp", "MW0041: OnHeroLevelUp", "MW0041: OnHeroSkillLearned", "MW0041: OnLearned", "MW0041: OnLevelUp" }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Champion : Hero
+                {
+                    public void OnLevelUp(int reachedLevel) { }
+
+                    public new void OnSkillLearned(Ability learnedAbility) { }
+                }
+
+                public class Trainer : UnitComponent
+                {
+                    public void OnLevelUp(int reachedLevel) { }
+                }
+
+                public class Log : GameComponent
+                {
+                    public void OnHeroLevelUp(Hero leveledHero, int reachedLevel) { }
+                }
+
+                public class Board : PlayerComponent
+                {
+                    public void OnHeroSkillLearned(Hero learningHero, Ability learnedAbility) { }
+                }
+
+                public class Toughness : Ability
+                {
+                    public void OnLearned() { }
+                }
+
+                public class Squire : Hero
+                {
+                    public override void OnLevelUp(int reachedLevel) { }
+
+                    public void OnLevelUp(string why) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void hero_and_ability_reactions_written_right_pass()
+    {
+        Assert.Empty(MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Champion : Hero
+                {
+                    public override void OnLevelUp(int reachedLevel) { }
+
+                    public override void OnSkillLearned(Ability learnedAbility) { }
+                }
+
+                public class Trainer : UnitComponent
+                {
+                    public override void OnLevelUp(int reachedLevel) { }
+
+                    public override void OnSkillLearned(Ability learnedAbility) { }
+                }
+
+                public class Log : GameComponent
+                {
+                    public override void OnHeroLevelUp(Hero leveledHero, int reachedLevel) { }
+
+                    public override void OnHeroSkillLearned(Hero learningHero, Ability learnedAbility) { }
+                }
+
+                public class Toughness : Ability
+                {
+                    public override void OnLearned() { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void a_missile_reaction_without_override_is_an_error()
     {
         Assert.Equal(new[] { "MW0041: OnImpact", "MW0041: OnRest", "MW0041: OnExpire" }, MapCode.CheckFile("""

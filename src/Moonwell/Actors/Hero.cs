@@ -3,6 +3,23 @@ namespace Moonwell
     /// <summary>A hero unit: the class of a unit the game makes as a hero when no class is registered for its type. It has experience, a level, stats and skill points, and can be revived.</summary>
     public class Hero : Unit
     {
+        /// <summary>The table behind HeroHooks, made on first use so that the class has no static initializer (see Unit.UnitHooks).</summary>
+        private static HookTable? heroHooks;
+
+        /// <summary>The reactions of heroes: their own, declared here so that an override in a subclass is found, and Unit's.</summary>
+        internal static HookTable HeroHooks
+        {
+            get
+            {
+                if (heroHooks == null)
+                {
+                    heroHooks = new HookTable(typeof(Hero), new string[] { "OnLevelUp", "OnSkillLearned" }, new int[] { Hook.OnLevelUp, Hook.OnSkillLearned }, UnitHooks);
+                }
+
+                return heroHooks;
+            }
+        }
+
         // The instance fields are internal, not private, as a map's subclass may name a field of its own the same (see Scope).
 
         /// <summary>The experience last read or set.</summary>
@@ -31,6 +48,9 @@ namespace Moonwell
 
         /// <summary>The proper name last set.</summary>
         internal string lastProperName = "";
+
+        /// <summary>The level the level-up reactions have run to: the hero's level when it was taken in or when Moonwell began to listen for level-ups, raised one level at a time by each level event and lowered by SetLevel. The game fires one event for a jump of several levels, which already reads the last, so this is how the levels between are known.</summary>
+        internal int leveledTo;
 
         /// <summary>The default object of the hero's type (see Unit.Default), a Hero.</summary>
         [LocalSafe]
@@ -199,6 +219,10 @@ namespace Moonwell
                 // The last values are what the game took, which the getters keep.
                 lastLevel = Level;
                 lastExperience = Experience;
+                if (lastLevel < leveledTo)
+                {
+                    leveledTo = lastLevel;
+                }
             }
         }
 
@@ -477,6 +501,18 @@ namespace Moonwell
             }
 
             return Runtime.World.ReviveAt(Handle, x, y, showEffect);
+        }
+
+        /// <summary>Runs when the hero gains a level, once for each level gained, before the hero's components see it. Levels taken away run nothing.</summary>
+        /// <param name="reachedLevel">The level gained. In a jump of several levels (the game fires one event for it) Level already reads the last.</param>
+        public virtual void OnLevelUp(int reachedLevel)
+        {
+        }
+
+        /// <summary>Runs when the hero learns a skill or raises its level, after the ability's OnLearned and before the hero's components see it. The skill point is not spent yet: SkillPoints reads one more than after (seen 11-02).</summary>
+        /// <param name="learnedAbility">The ability learned; its Level reads the new level.</param>
+        public virtual void OnSkillLearned(Ability learnedAbility)
+        {
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit enters the map: it is taken in when its type is registered, when a component wants to hear of entries, or once the interactions package tracks units (KnownUnits.EveryUnit).</summary>
+        /// <summary>A unit enters the map: it is taken in when its type is registered, when a component wants to hear of entries, or once the interactions package tracks units (KnownUnits.EveryUnit). A hero is also taken in while a component wants OnHeroLevelUp, so its level is known before its first level-up.</summary>
         internal static void Entered(unit handle)
         {
             if (KnownUnits.Find(handle) != null)
@@ -29,7 +29,8 @@ namespace Moonwell
                 return;
             }
 
-            if (KnownUnits.EveryUnit || ObjectTypes.UnitMaker(Runtime.World.UnitTypeId(handle)) != null || Events.Wants(Hook.OnUnitCreated))
+            if (KnownUnits.EveryUnit || ObjectTypes.UnitMaker(Runtime.World.UnitTypeId(handle)) != null || Events.Wants(Hook.OnUnitCreated)
+                || (Events.Wants(Hook.OnHeroLevelUp) && Runtime.World.IsHero(handle)))
             {
                 KnownUnits.TakeIn(handle, null, true);
             }
@@ -719,6 +720,214 @@ namespace Moonwell
             }
 
             caster.EndDispatch();
+        }
+
+        /// <summary>A hero gains one level or more, as one event that reads the last: for each level gained, in order, the hero's OnLevelUp and its components', then the map's and the hero's player's OnHeroLevelUp. A hero first taken in here, or whose level was known as this one or higher (taken away by a native), runs them once, for the level reached. The levels after one whose reactions ended the hero run nothing.</summary>
+        internal static void HeroLevel(unit handle)
+        {
+            if (KnownUnits.Find(handle) == null && !Events.Wants(Hook.OnHeroLevelUp))
+            {
+                return;
+            }
+
+            var hero = Unit.Of(handle) as Hero;
+            if (hero == null)
+            {
+                return;
+            }
+
+            var reached = Runtime.World.LevelOf(handle);
+            if (hero.leveledTo >= reached)
+            {
+                hero.leveledTo = reached - 1;
+            }
+
+            // One level at a time, so that a reaction that raises the hero again runs the new levels once, in order, inside
+            // its call, and this loop then finds them done; one that lowers it ends the loop.
+            var slot = hero.Owner.Slot;
+            while (hero.leveledTo < reached && !hero.HasEnded)
+            {
+                var level = hero.leveledTo + 1;
+                hero.leveledTo = level;
+                HeroLeveled(hero, level);
+                MapLeveled(Game.Instance, hero, level);
+                var player = Player.Existing(slot);
+                if (player != null)
+                {
+                    MapLeveled(player, hero, level);
+                }
+
+                if (hero.leveledTo < level)
+                {
+                    break;
+                }
+            }
+        }
+
+        /// <summary>A hero learns a skill or raises its level: the ability's OnLearned, the hero's OnSkillLearned and its components', then the map's and the hero's player's OnHeroSkillLearned. The game spends the skill point after the event (seen 11-02).</summary>
+        internal static void HeroSkill(unit handle, int abilityId)
+        {
+            if (KnownUnits.Find(handle) == null && ObjectTypes.AbilityMaker(abilityId) == null && !Events.Wants(Hook.OnHeroSkillLearned))
+            {
+                return;
+            }
+
+            var hero = Unit.Of(handle) as Hero;
+            if (hero == null)
+            {
+                return;
+            }
+
+            var slot = hero.Owner.Slot;
+            var ability = hero.AbilityOf(abilityId);
+            AbilityLearned(ability);
+            HeroLearned(hero, ability);
+            MapLearned(Game.Instance, hero, ability);
+            var player = Player.Existing(slot);
+            if (player != null)
+            {
+                MapLearned(player, hero, ability);
+            }
+        }
+
+        /// <summary>Runs OnLevelUp on a hero, then on its components, in add order.</summary>
+        private static void HeroLeveled(Hero hero, int level)
+        {
+            if (!hero.HasEnded && (hero.Mask & Hook.OnLevelUp) != 0)
+            {
+                try
+                {
+                    hero.OnLevelUp(level);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(hero) + ".OnLevelUp", error);
+                }
+            }
+
+            var count = hero.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = hero.ComponentAt(i) as UnitComponent;
+                if (component == null || component.HasEnded || (component.Mask & Hook.OnLevelUp) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    component.OnLevelUp(level);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(component) + ".OnLevelUp", error);
+                }
+            }
+
+            hero.EndDispatch();
+        }
+
+        /// <summary>Runs OnHeroLevelUp on the map components of an actor, in add order.</summary>
+        private static void MapLeveled(Actor actor, Hero hero, int level)
+        {
+            var count = actor.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = actor.ComponentAt(i) as MapComponent;
+                if (component == null || component.HasEnded || (component.Mask & Hook.OnHeroLevelUp) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    component.OnHeroLevelUp(hero, level);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(component) + ".OnHeroLevelUp", error);
+                }
+            }
+
+            actor.EndDispatch();
+        }
+
+        /// <summary>Runs OnLearned on an ability, unless it has ended or does not override it.</summary>
+        private static void AbilityLearned(Ability ability)
+        {
+            if (!ability.HasEnded && (ability.Mask & Hook.OnSkillLearned) != 0)
+            {
+                try
+                {
+                    ability.OnLearned();
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(ability) + ".OnLearned", error);
+                }
+            }
+        }
+
+        /// <summary>Runs OnSkillLearned on a hero, then on its components, in add order.</summary>
+        private static void HeroLearned(Hero hero, Ability ability)
+        {
+            if (!hero.HasEnded && (hero.Mask & Hook.OnSkillLearned) != 0)
+            {
+                try
+                {
+                    hero.OnSkillLearned(ability);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(hero) + ".OnSkillLearned", error);
+                }
+            }
+
+            var count = hero.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = hero.ComponentAt(i) as UnitComponent;
+                if (component == null || component.HasEnded || (component.Mask & Hook.OnSkillLearned) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    component.OnSkillLearned(ability);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(component) + ".OnSkillLearned", error);
+                }
+            }
+
+            hero.EndDispatch();
+        }
+
+        /// <summary>Runs OnHeroSkillLearned on the map components of an actor, in add order.</summary>
+        private static void MapLearned(Actor actor, Hero hero, Ability ability)
+        {
+            var count = actor.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = actor.ComponentAt(i) as MapComponent;
+                if (component == null || component.HasEnded || (component.Mask & Hook.OnHeroSkillLearned) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    component.OnHeroSkillLearned(hero, ability);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(component) + ".OnHeroSkillLearned", error);
+                }
+            }
+
+            actor.EndDispatch();
         }
 
         /// <summary>A player leaves the game: the game's components react, then the leaving player's.</summary>

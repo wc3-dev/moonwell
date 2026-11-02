@@ -4,6 +4,39 @@ namespace Moonwell.Analyzers.Tests;
 public class ReactionCallTests
 {
     [Fact]
+    public void calling_a_hero_or_ability_reaction_is_an_error()
+    {
+        Assert.Equal(new[]
+        {
+            "MW0047: hero.OnLevelUp(2)",
+            "MW0047: ability.OnLearned()",
+            "MW0047: OnHeroLevelUp(hero, 3)",
+        }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace MyMap
+            {
+                public static class Code
+                {
+                    public static void Run(Hero hero, Ability ability)
+                    {
+                        hero.OnLevelUp(2);
+                        ability.OnLearned();
+                    }
+                }
+
+                public class Log : GameComponent
+                {
+                    public void Replay(Hero hero)
+                    {
+                        OnHeroLevelUp(hero, 3);
+                    }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void calling_a_reaction_is_an_error()
     {
         Assert.Equal(new[]

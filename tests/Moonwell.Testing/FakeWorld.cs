@@ -64,6 +64,9 @@ namespace Moonwell.Testing
         /// <summary>The events the runtime asked to hear, once each.</summary>
         internal List<GameEvent> Listening = new List<GameEvent>();
 
+        /// <summary>How many level events the world fired.</summary>
+        public int LevelEvents;
+
         /// <summary>The destructables whose deaths the runtime asked to hear, once each.</summary>
         public List<destructable> Watched = new List<destructable>();
 
@@ -1528,8 +1531,38 @@ namespace Moonwell.Testing
             HeroCalls.Add("level " + level + " " + Flag(showEffect));
             if (level > LevelOf(hero))
             {
-                levels[hero] = level;
+                RaiseLevel(hero, level);
             }
+        }
+
+        /// <summary>Raises a hero to a level and fires one level event inside the call, as the game does for a jump of several levels (seen 11-02), when the runtime listens for it.</summary>
+        private void RaiseLevel(unit hero, int level)
+        {
+            levels[hero] = level;
+            if (Listening.Contains(GameEvent.HeroLevel))
+            {
+                LevelEvents++;
+                Inbound.HeroLevel(hero);
+            }
+        }
+
+        /// <summary>Has a hero learn a skill, as SelectHeroSkill does: with a skill point, the ability's level goes up by one and the skill event fires inside the call, before the point is spent (seen 11-02); with none, nothing happens. Answers whether it learned.</summary>
+        public bool LearnSkill(unit hero, int abilityId)
+        {
+            var points = SkillPointsOf(hero);
+            if (points <= 0)
+            {
+                return false;
+            }
+
+            SetAbilityLevel(hero, abilityId, AbilityLevel(hero, abilityId) + 1);
+            if (Listening.Contains(GameEvent.HeroSkill))
+            {
+                Inbound.HeroSkill(hero, abilityId);
+            }
+
+            skillPoints[hero] = points - 1;
+            return true;
         }
 
         /// <summary>Takes levels from a hero, down to 1, and records a "strip": UnitStripHeroLevel lowers the level (seen). What it does to the experience is not modelled.</summary>
