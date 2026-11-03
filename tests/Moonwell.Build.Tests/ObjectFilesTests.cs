@@ -16,7 +16,7 @@ namespace Moonwell.Build.Tests
         private static readonly Dictionary<string, string> FixtureHashes = new Dictionary<string, string>
         {
             ["war3map.w3a"] = "3b8f1064e64a2d0c4e5ca162f9223967a930d6a69840d00ec12c7891b4e70187",
-            ["war3map.w3b"] = "7b570b0c76efb1716e4c6f4e1206eae42ab73eab6ab1b59e74854e659b4a8e68",
+            ["war3map.w3b"] = "f47d9276d36742d373ce0fb8d6b7b7b45934777be2e824b61d3f64e7a4c11e70",
             ["war3map.w3d"] = "55fb9284c404f90d28d6db807d87ee09a0f15859a33efbe22acdfb8a312a9cc0",
             ["war3map.w3h"] = "e5e03195a88dd495e0718d6502efbce27bb8ca0bf36ce284f84ae0a487d5c4ed",
             ["war3map.w3q"] = "ede92a5ca93bd260130c56a5eef7f5aa44cb3a6136995d3e16c94c743e11cd01",
@@ -34,7 +34,7 @@ namespace Moonwell.Build.Tests
         private static readonly Dictionary<string, string> MergedHashes = new Dictionary<string, string>
         {
             ["war3map.w3a"] = "b275483d2689730002ad0314dc7f1c9746264fa274129cdd427087c3fa125236",
-            ["war3map.w3b"] = "26291b0f51897f7e13899fcf91a2e6b71d32dbbb132814e934ea580f30726707",
+            ["war3map.w3b"] = "e779dd8667410a94eda71b2183bc97b1a848005ab11066e1ad4467a6139e1e41",
             ["war3map.w3d"] = "a645cdb1fe9016f921bd5e35b9f2d951d3b7ac2035c8330c343279056a2bb489",
             ["war3map.w3h"] = "b3b1b3b9208f6e8f766f79ca6805aa0de3c50cc048455f24661756407726cca1",
             ["war3map.w3t"] = "54ceddff3165f0517c377cafb29921d8105a798269e906a8b70217fbf67c6c99",
@@ -379,7 +379,9 @@ namespace Moonwell.Build.Tests
             Assert.Equal(900, Assert.Single(claws.Modifications, one => one.Id == IdOf("igol")).Value);
             var flask = Assert.Single(ReadItems(staged, "war3map.w3t").NewItems, one => one.NewId == IdOf(ids["Objects.Flask"]));
             Assert.Equal(3, Assert.Single(flask.Modifications, one => one.Id == IdOf("iuse")).Value);
-            Assert.Equal(IdOf(ids["Objects.Gate"]), Assert.Single(ReadDestructables(staged, "war3map.w3b").NewDestructables).NewId);
+            var gate = Assert.Single(ReadDestructables(staged, "war3map.w3b").NewDestructables);
+            Assert.Equal(IdOf(ids["Objects.Gate"]), gate.NewId);
+            Assert.Equal(5000f, Assert.Single(gate.Modifications, one => one.Id == IdOf("bhps")).Value);
             Assert.Equal("Gate", Assert.Single(Assert.Single(ReadDestructables(staged, "war3mapSkin.w3b").NewDestructables).Modifications, one => one.Id == IdOf("bnam")).Value);
             Assert.Equal(IdOf(ids["Objects.Rock"]), Assert.Single(ReadDoodads(staged, "war3map.w3d").NewDoodads).NewId);
             Assert.Equal("Rock", Assert.Single(Assert.Single(ReadDoodads(staged, "war3map.w3d").NewDoodads).Modifications, one => one.Id == IdOf("dnam")).Value);

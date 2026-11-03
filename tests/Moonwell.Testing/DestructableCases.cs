@@ -164,6 +164,290 @@ namespace Moonwell.Testing
             ExpectLog(new string[0], "the log");
             Expect.True(gate.HasEnded, "the removed destructable has ended");
         }
+
+        /// <summary>Create makes a destructable of a type through the game, facing 270 at scale 1 and variation 0 unless given, takes it in where the game put it, and puts it in the scope, which removes it when it ends.</summary>
+        public static void CreateInScope(FakeWorld world)
+        {
+            var scope = new TestScope("scope", new List<string>());
+            var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 1000f, 1000f, scope);
+            var asked = world.DestructableSpawns[0];
+            Expect.Equal(ObjectTypes.FourCC("LTlt"), asked.TypeId, "the type the game was asked for");
+            Expect.Near(1000f, asked.X, "the x asked");
+            Expect.Near(1000f, asked.Y, "the y asked");
+            Expect.Near(270f, asked.Facing, "facing 270");
+            Expect.Near(1f, asked.Scale, "scale 1");
+            Expect.Equal(0, asked.Variation, "variation 0");
+            Expect.Equal(ObjectTypes.FourCC("LTlt"), tree.TypeId, "its type");
+            Expect.Near(960f, tree.X, "X, where the game put it");
+            Expect.Near(960f, tree.Y, "Y, where the game put it");
+            Expect.Same(scope, tree.Parent, "its scope");
+            var turned = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, scope, 90f, 1.5f, 3);
+            var given = world.DestructableSpawns[1];
+            Expect.Near(90f, given.Facing, "the facing given");
+            Expect.Near(1.5f, given.Scale, "the scale given");
+            Expect.Equal(3, given.Variation, "the variation given");
+            scope.End();
+            Expect.True(tree.HasEnded && turned.HasEnded, "both ended with the scope");
+            Expect.True(world.RemovedDestructables.Contains(tree.Handle) && world.RemovedDestructables.Contains(turned.Handle), "and the game removed both");
+        }
+
+        /// <summary>Create of a registered class makes it with its class's id, as an object of the class with its starting components.</summary>
+        public static void CreateClass(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            Expect.Equal(ObjectTypes.FourCC("B001"), gate.TypeId, "its type");
+            Expect.Equal(1, gate.GetAll<GatePart>().Count, "its starting part");
+            Expect.True(world.Watched.Contains(gate.Handle), "its death is watched");
+        }
+
+        /// <summary>Create of a type the game makes nothing of throws, naming the id.</summary>
+        public static void CreateUnmakeable(FakeWorld world)
+        {
+            world.Unmakeable.Add(ObjectTypes.FourCC("hfoo"));
+            Expect.Throws<MoonwellException>(() => Destructable.Create(ObjectTypes.FourCC("hfoo"), 0f, 0f, Game.Instance), "a unit's id");
+        }
+
+        /// <summary>A destructable made in a scope that has ended ends at once and is removed, and runs no OnCreated.</summary>
+        public static void CreateInEndedScope(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B003"), () => new CreatedGate());
+            var scope = new TestScope("ended", new List<string>());
+            scope.End();
+            TestLog.Lines.Clear();
+            var gate = Destructable.Create<CreatedGate>(0f, 0f, scope);
+            Expect.True(gate.HasEnded, "it ended at once");
+            Expect.True(world.RemovedDestructables.Contains(gate.Handle), "and the game removed it");
+            ExpectLog(new string[0], "no OnCreated");
+        }
+
+        /// <summary>Kill kills the destructable through the game, which runs OnDeath and its components' inside the call; it reads life 0 and is not alive after.</summary>
+        public static void KillRunsDeath(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            Expect.True(gate.IsAlive, "alive when made");
+            TestLog.Lines.Clear();
+            gate.Kill();
+            ExpectLog(new string[] { "gate died", "part died" }, "the deaths, inside the call");
+            Expect.Near(0f, gate.Life, "its life");
+            Expect.True(!gate.IsAlive, "not alive");
+            Expect.True(!gate.HasEnded, "a dead destructable stays in the game");
+        }
+
+        /// <summary>Kill on a dead destructable does nothing, as the game fires no second death; nor on one that is gone.</summary>
+        public static void KillDeadOrGone(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            gate.Kill();
+            TestLog.Lines.Clear();
+            gate.Kill();
+            ExpectLog(new string[0], "a second kill");
+            var other = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            other.Remove();
+            TestLog.Lines.Clear();
+            world.CallsThrow = true;
+            other.Kill();
+            world.CallsThrow = false;
+            ExpectLog(new string[0], "a kill once gone");
+            Expect.True(!other.IsAlive, "one that is gone is not alive");
+        }
+
+        /// <summary>Life reads the game's; setting it keeps a fraction and stays at most the most life.</summary>
+        public static void LifeSets(FakeWorld world)
+        {
+            var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, Game.Instance);
+            Expect.Near(50f, tree.Life, "a new tree's life");
+            tree.Life = 20.5f;
+            Expect.Near(20.5f, tree.Life, "set to 20.5");
+            tree.Life = 999f;
+            Expect.Near(50f, tree.Life, "set above the most");
+        }
+
+        /// <summary>Life set to 0.4 or less kills the destructable, OnDeath inside the call; 0.405 does not (seen 11-02).</summary>
+        public static void LifeLowKills(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var living = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            TestLog.Lines.Clear();
+            living.Life = 0.405f;
+            ExpectLog(new string[0], "0.405 kills nothing");
+            Expect.True(living.IsAlive, "alive at 0.405");
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            gate.Life = 0.4f;
+            ExpectLog(new string[] { "gate died", "part died" }, "0.4 kills, inside the call");
+            Expect.Near(0f, gate.Life, "its life");
+        }
+
+        /// <summary>Life set on a dead destructable does nothing, as the game would leave a stump that reads the life: Restore brings one back.</summary>
+        public static void LifeOnDead(FakeWorld world)
+        {
+            var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, Game.Instance);
+            tree.Kill();
+            tree.Life = 20f;
+            Expect.Near(0f, tree.Life, "its life");
+            Expect.True(!tree.IsAlive, "still dead");
+        }
+
+        /// <summary>Once the game has removed a destructable, Life and MaxLife read the last values read, setting them does nothing, and the game is not asked.</summary>
+        public static void LifeGone(FakeWorld world)
+        {
+            var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, Game.Instance);
+            tree.Life = 20f;
+            Expect.Near(50f, tree.MaxLife, "its most life");
+            world.VanishDestructable(tree.Handle);
+            Expect.Near(20f, tree.Life, "the last life");
+            Expect.Near(50f, tree.MaxLife, "the last most life");
+            Expect.True(!tree.IsAlive, "not alive");
+            world.Advance(0.3f);
+            world.CallsThrow = true;
+            tree.Life = 30f;
+            tree.MaxLife = 70f;
+            var life = tree.Life;
+            var most = tree.MaxLife;
+            tree.Kill();
+            tree.Restore();
+            world.CallsThrow = false;
+            Expect.Near(20f, life, "the last life, once swept");
+            Expect.Near(50f, most, "the last most life, once swept");
+        }
+
+        /// <summary>MaxLife is a whole number, as the game keeps it; a full destructable stays full, and one above a lower most falls to it.</summary>
+        public static void MaxLifeSets(FakeWorld world)
+        {
+            var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, Game.Instance);
+            tree.MaxLife = 80.7f;
+            Expect.Near(81f, tree.MaxLife, "80.7 is 81");
+            Expect.Near(81f, tree.Life, "full stays full");
+            tree.MaxLife = 10f;
+            Expect.Near(10f, tree.Life, "falls to a lower most");
+        }
+
+        /// <summary>A destructable with no handle calls no native for its most life: a set goes to Declare and a read to DeclaredValue, which reads the value of the type its class is registered with.</summary>
+        public static void MaxLifeWithoutHandle(FakeWorld world)
+        {
+            var id = ObjectTypes.FourCC("B0rc");
+            ObjectTypes.Destructable(id, () => new RecordingGate());
+            world.SetTypeValue(id, "bhps", 300f);
+            var gate = new RecordingGate();
+            world.CallsThrow = true;
+            gate.MaxLife = 500f;
+            var most = gate.MaxLife;
+            world.CallsThrow = false;
+            Expect.Near(300f, most, "the most life its type declares");
+            Expect.Equal(2, gate.Asked.Count, "hook calls");
+            Expect.Equal("declare bhps 500", gate.Asked[0], "the set");
+            Expect.Equal("read bhps", gate.Asked[1], "the read");
+        }
+
+        /// <summary>Restore brings a dead destructable back at its most life, without the birth animation unless asked, and runs OnRestored and its components' inside the call.</summary>
+        public static void RestoreRunsRestored(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            gate.MaxLife = 80f;
+            gate.Kill();
+            TestLog.Lines.Clear();
+            gate.Restore();
+            ExpectLog(new string[] { "gate restored", "part restored" }, "the reactions, inside the call");
+            Expect.Near(80f, world.RestoredLives[0], "the life the game was given");
+            Expect.True(!world.RestoredBirths[0], "without the birth animation");
+            Expect.Near(80f, gate.Life, "its most life");
+            Expect.True(gate.IsAlive, "alive");
+            gate.Kill();
+            gate.Restore(true);
+            Expect.True(world.RestoredBirths[1], "with the birth animation");
+        }
+
+        /// <summary>A destructable restored and killed again dies again.</summary>
+        public static void RestoreThenKill(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            gate.Kill();
+            gate.Restore();
+            TestLog.Lines.Clear();
+            gate.Kill();
+            ExpectLog(new string[] { "gate died", "part died" }, "the second death");
+        }
+
+        /// <summary>Restore on a living destructable does nothing, as the game does nothing, and runs no OnRestored.</summary>
+        public static void RestoreLiving(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B001"), () => new TestGate());
+            var gate = Destructable.Create<TestGate>(0f, 0f, Game.Instance);
+            gate.Life = 20f;
+            TestLog.Lines.Clear();
+            gate.Restore();
+            ExpectLog(new string[0], "no reaction");
+            Expect.Equal(0, world.RestoredLives.Count, "the game was not asked");
+            Expect.Near(20f, gate.Life, "its life");
+        }
+
+        /// <summary>A component that overrides only OnRestored hears a restore, and a reaction that throws is reported while the rest still run.</summary>
+        public static void RestoredReportsErrors(FakeWorld world)
+        {
+            ObjectTypes.Destructable(ObjectTypes.FourCC("B004"), () => new ThrowingGate());
+            var gate = Destructable.Create<ThrowingGate>(0f, 0f, Game.Instance);
+            gate.Add(new RestoredPart());
+            gate.Kill();
+            TestLog.Lines.Clear();
+            gate.Restore();
+            ExpectLog(new string[] { "restored part" }, "the component still ran");
+            Expect.Equal(1, world.Logged.Count, "one error");
+            Expect.Equal("Moonwell: ThrowingGate.OnRestored failed: boom", world.Logged[0], "the logged line");
+        }
+    }
+
+    /// <summary>A destructable that logs its OnCreated.</summary>
+    public class CreatedGate : Destructable
+    {
+        /// <summary>Logs that it came in.</summary>
+        protected override void OnCreated()
+        {
+            TestLog.Lines.Add("created");
+        }
+    }
+
+    /// <summary>A destructable whose OnRestored throws.</summary>
+    public class ThrowingGate : Destructable
+    {
+        /// <summary>Throws.</summary>
+        public override void OnRestored()
+        {
+            throw new System.InvalidOperationException("boom");
+        }
+    }
+
+    /// <summary>A component that logs only a restore.</summary>
+    public class RestoredPart : DestructableComponent
+    {
+        /// <summary>Logs the restore.</summary>
+        public override void OnRestored()
+        {
+            TestLog.Lines.Add("restored part");
+        }
+    }
+
+    /// <summary>A destructable that records its declared-value hooks.</summary>
+    public class RecordingGate : Destructable
+    {
+        /// <summary>The hook calls, in turn, as "read" or "declare", the field id, and the value declared.</summary>
+        public List<string> Asked = new List<string>();
+
+        /// <summary>Records the read, and reads the value as Destructable does.</summary>
+        protected override T DeclaredValue<T>(string field)
+        {
+            Asked.Add("read " + field);
+            return base.DeclaredValue<T>(field);
+        }
+
+        /// <summary>Records the declared value.</summary>
+        protected override void Declare(string field, object value)
+        {
+            Asked.Add("declare " + field + " " + value);
+        }
     }
 
     /// <summary>A destructable that takes others down as it leaves.</summary>

@@ -63,6 +63,55 @@ public class ConstructorTests
     }
 
     [Fact]
+    public void a_live_member_in_a_declared_destructable_class_constructor_is_an_error()
+    {
+        // MaxLife is the class's declared most life there, as a unit's is.
+        Assert.Equal(new[]
+        {
+            "MW0012: Life",
+            "MW0012: Kill",
+            "MW0012: Restore",
+            "MW0012: IsAlive",
+            "MW0012: X",
+        }, MapCode.CheckFile("""
+            using Moonwell;
+            using Moonwell.Objects;
+
+            namespace Map
+            {
+                public class Gate : Destructables.DemonicGate
+                {
+                    public Gate()
+                    {
+                        MaxLife = 5000f;
+                        Life = 10.0f;
+                        Kill();
+                        Restore();
+                        var alive = IsAlive;
+                        var x = X;
+                    }
+                }
+            }
+            """));
+        Assert.Equal(
+            new[] { "'Life' is the destructable's value in the game: a destructable starts with full life; set MaxLife" },
+            MapCode.MessagesOfFile("""
+                using Moonwell.Objects;
+
+                namespace Map
+                {
+                    public class Gate : Destructables.DemonicGate
+                    {
+                        public Gate()
+                        {
+                            Life = 10.0f;
+                        }
+                    }
+                }
+                """));
+    }
+
+    [Fact]
     public void the_message_says_what_to_set_instead()
     {
         Assert.Equal(

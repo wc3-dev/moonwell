@@ -130,6 +130,24 @@ namespace Moonwell.Testing
         /// <summary>Where PlaceDestructable put each destructable; one not placed stands at (100, -50).</summary>
         private readonly Dictionary<destructable, float[]> destructablePlaces = new Dictionary<destructable, float[]>();
 
+        /// <summary>The life of each destructable whose life has changed; one not here has DestructableLifeAtStart.</summary>
+        private readonly Dictionary<destructable, float> destructableLives = new Dictionary<destructable, float>();
+
+        /// <summary>The most life of each destructable whose most has changed; one not here has DestructableLifeAtStart.</summary>
+        private readonly Dictionary<destructable, float> destructableMaxLives = new Dictionary<destructable, float>();
+
+        /// <summary>The life and most life every destructable starts with, a Lordaeron tree's (LTlt).</summary>
+        public float DestructableLifeAtStart = 50f;
+
+        /// <summary>The destructables the runtime asked the game to make, in turn, null types included.</summary>
+        public List<DestructableSpawn> DestructableSpawns = new List<DestructableSpawn>();
+
+        /// <summary>The life each restore asked for, in turn, a living destructable's included.</summary>
+        public List<float> RestoredLives = new List<float>();
+
+        /// <summary>Whether each restore asked for the birth animation, in turn.</summary>
+        public List<bool> RestoredBirths = new List<bool>();
+
         /// <summary>The calls that changed a unit's place or facing, as "move", "place", "turn" or "face-now".</summary>
         public List<string> UnitCalls = new List<string>();
 
@@ -879,6 +897,121 @@ namespace Moonwell.Testing
             }
 
             return destructablePlaces.TryGetValue(destructable, out var place) ? place[1] : -50f;
+        }
+
+        /// <summary>Makes a destructable where the game would put a tree, on the 64 grid (1000 is 960, seen 10-26), and records what was asked; null for a type in Unmakeable, as CreateDestructable gives for a unit's id (seen 11-02).</summary>
+        public destructable SpawnDestructable(int typeId, float x, float y, float facing, float scale, int variation)
+        {
+            DestructableSpawns.Add(new DestructableSpawn { TypeId = typeId, X = x, Y = y, Facing = facing, Scale = scale, Variation = variation });
+            if (Unmakeable.Contains(typeId))
+            {
+                return null!;
+            }
+
+            var created = NewDestructable(typeId);
+            PlaceDestructable(created, 64f * (int)(x / 64f), 64f * (int)(y / 64f));
+            return created;
+        }
+
+        /// <summary>Kills a destructable as KillDestructable does: life 0 and its death inside the call when watched; nothing for one already dead (seen 11-02).</summary>
+        public void SlayDestructable(destructable destructable)
+        {
+            Refuse();
+            if (DestructableTypeId(destructable) != 0 && DestructableLifeOf(destructable) > 0f)
+            {
+                Fell(destructable);
+            }
+        }
+
+        /// <summary>The life of a destructable; 0 once it is removed or vanished.</summary>
+        public float DestructableLifeOf(destructable destructable)
+        {
+            Refuse();
+            if (DestructableTypeId(destructable) == 0)
+            {
+                return 0f;
+            }
+
+            return destructableLives.TryGetValue(destructable, out var life) ? life : DestructableLifeAtStart;
+        }
+
+        /// <summary>Sets a destructable's life as SetDestructableLife does: clamped to its most, and below 0.405 (0.4 and less, seen 11-02) it dies, its death inside the call when watched. On a dead one the life is set, as the game sets it.</summary>
+        public void PutDestructableLife(destructable destructable, float life)
+        {
+            Refuse();
+            if (DestructableTypeId(destructable) == 0)
+            {
+                return;
+            }
+
+            if (life < 0.405f)
+            {
+                if (DestructableLifeOf(destructable) > 0f)
+                {
+                    Fell(destructable);
+                }
+
+                return;
+            }
+
+            var most = DestructableMaxLifeOf(destructable);
+            destructableLives[destructable] = life < most ? life : most;
+        }
+
+        /// <summary>The most life of a destructable; 0 once it is removed or vanished.</summary>
+        public float DestructableMaxLifeOf(destructable destructable)
+        {
+            Refuse();
+            if (DestructableTypeId(destructable) == 0)
+            {
+                return 0f;
+            }
+
+            return destructableMaxLives.TryGetValue(destructable, out var most) ? most : DestructableLifeAtStart;
+        }
+
+        /// <summary>Sets a destructable's most life as SetDestructableMaxLife does, kept as a whole number (80.7 is 81): a full one stays full and one above the new most falls to it (seen 11-02); one below it keeps its life, which the game was not seen to do.</summary>
+        public void PutDestructableMaxLife(destructable destructable, float most)
+        {
+            Refuse();
+            if (DestructableTypeId(destructable) == 0)
+            {
+                return;
+            }
+
+            var whole = (float)(int)(most + 0.5f);
+            var life = DestructableLifeOf(destructable);
+            var full = life >= DestructableMaxLifeOf(destructable);
+            destructableMaxLives[destructable] = whole;
+            if (full || life > whole)
+            {
+                destructableLives[destructable] = whole;
+            }
+        }
+
+        /// <summary>Records the restore, and brings a dead destructable back as DestructableRestoreLife does: 0 or the most and above give the most, below 0.5 gives 0.5; nothing for a living one (seen 11-02).</summary>
+        public void RestoreDestructable(destructable destructable, float life, bool birth)
+        {
+            Refuse();
+            RestoredLives.Add(life);
+            RestoredBirths.Add(birth);
+            if (DestructableTypeId(destructable) == 0 || DestructableLifeOf(destructable) > 0f)
+            {
+                return;
+            }
+
+            var most = DestructableMaxLifeOf(destructable);
+            destructableLives[destructable] = life == 0f || life >= most ? most : (life < 0.5f ? 0.5f : life);
+        }
+
+        /// <summary>The death itself: life 0, and the death event inside the call for a watched destructable.</summary>
+        private void Fell(destructable destructable)
+        {
+            destructableLives[destructable] = 0f;
+            if (Watched.Contains(destructable))
+            {
+                Inbound.DestructableDied(destructable);
+            }
         }
 
         /// <summary>Records a destructable removed by the runtime, and reads its type id as 0. As the game does, it fires the death event of a watched destructable inside the call, for one that was alive and for one already dead (seen 10-23).</summary>
@@ -2100,6 +2233,28 @@ namespace Moonwell.Testing
                     return;
                 }
             }
+        }
+
+        /// <summary>A destructable the runtime asked the game to make: its type, place, facing, scale and variation.</summary>
+        public sealed class DestructableSpawn
+        {
+            /// <summary>The type asked for.</summary>
+            public int TypeId;
+
+            /// <summary>The x asked for.</summary>
+            public float X;
+
+            /// <summary>The y asked for.</summary>
+            public float Y;
+
+            /// <summary>The facing asked for.</summary>
+            public float Facing;
+
+            /// <summary>The scale asked for.</summary>
+            public float Scale;
+
+            /// <summary>The variation asked for.</summary>
+            public int Variation;
         }
     }
 }

@@ -33,8 +33,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 30;
                 MinimapColor2Green = 94;
@@ -94,8 +94,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 54;
@@ -155,8 +155,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 20f;
                 IsWalkable = false;
+                MaxLife = 20f;
                 MaximumScale = 1.5f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -215,8 +215,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 20f;
                 IsWalkable = false;
+                MaxLife = 20f;
                 MaximumScale = 1.5f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -275,8 +275,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 20f;
                 IsWalkable = false;
+                MaxLife = 20f;
                 MaximumScale = 1.5f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -335,8 +335,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 20f;
                 IsWalkable = false;
+                MaxLife = 20f;
                 MaximumScale = 1.5f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -395,8 +395,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 155;
                 MinimapColor2Green = 110;
@@ -456,8 +456,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 155;
                 MinimapColor2Green = 110;
@@ -516,8 +516,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -576,8 +576,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 0.85f;
                 MinimapColor1Red = 135;
                 MinimapColor2Green = 75;
@@ -636,8 +636,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -697,8 +697,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -758,8 +758,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -817,8 +817,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -879,8 +879,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -942,8 +942,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 75;
                 MinimapColor2Green = 50;
@@ -1003,8 +1003,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 32;
                 MinimapColor2Green = 90;
@@ -1064,8 +1064,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 110;
                 MinimapColor2Green = 170;
@@ -1125,8 +1125,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 32;
                 MinimapColor2Green = 90;
@@ -1186,8 +1186,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 80;
                 MinimapColor2Green = 160;
@@ -1247,8 +1247,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1308,8 +1308,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1369,8 +1369,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 20f;
                 IsWalkable = false;
+                MaxLife = 20f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1428,8 +1428,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1487,8 +1487,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 32;
                 MinimapColor2Green = 90;
@@ -1547,8 +1547,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1605,8 +1605,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1664,8 +1664,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1725,8 +1725,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1786,8 +1786,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1847,8 +1847,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1908,8 +1908,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 100f;
                 IsWalkable = false;
+                MaxLife = 100f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -1969,8 +1969,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 100f;
                 IsWalkable = false;
+                MaxLife = 100f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2030,8 +2030,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 100f;
                 IsWalkable = false;
+                MaxLife = 100f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2091,8 +2091,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 100f;
                 IsWalkable = false;
+                MaxLife = 100f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2151,8 +2151,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaxRollAngleDegrees = 45f;
                 MaximumPitchAngleDegrees = 45f;
                 MaximumScale = 1.2f;
@@ -2212,8 +2212,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 155;
                 MinimapColor2Green = 70;
@@ -2273,8 +2273,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 15f;
                 IsWalkable = false;
+                MaxLife = 15f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2333,8 +2333,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = true;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2395,8 +2395,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = true;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2456,8 +2456,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 9999f;
                 IsWalkable = true;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2514,8 +2514,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2574,8 +2574,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2635,8 +2635,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2696,8 +2696,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2757,8 +2757,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2818,8 +2818,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2880,8 +2880,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -2942,8 +2942,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3004,8 +3004,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1.1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3066,8 +3066,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 110;
                 MinimapColor2Green = 60;
@@ -3127,8 +3127,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 75;
                 MinimapColor2Green = 78;
@@ -3188,8 +3188,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 45;
                 MinimapColor2Green = 54;
@@ -3248,8 +3248,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = true;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3309,8 +3309,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = true;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3371,8 +3371,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3433,8 +3433,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3495,8 +3495,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3557,8 +3557,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3619,8 +3619,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3678,8 +3678,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3736,8 +3736,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3797,8 +3797,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3858,8 +3858,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3919,8 +3919,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -3980,8 +3980,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4041,8 +4041,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4100,8 +4100,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4159,8 +4159,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4221,8 +4221,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4283,8 +4283,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4345,8 +4345,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4406,8 +4406,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4464,8 +4464,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4522,8 +4522,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4580,8 +4580,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4639,8 +4639,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4700,8 +4700,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4761,8 +4761,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4822,8 +4822,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4883,8 +4883,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 157;
                 MinimapColor2Green = 163;
@@ -4942,8 +4942,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -4997,8 +4997,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5055,8 +5055,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5113,8 +5113,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5172,8 +5172,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 42;
                 MinimapColor2Green = 85;
@@ -5233,8 +5233,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5292,8 +5292,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5353,8 +5353,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5414,8 +5414,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5475,8 +5475,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5536,8 +5536,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5595,8 +5595,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 50f;
                 IsWalkable = true;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5653,8 +5653,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 50f;
                 IsWalkable = true;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5712,8 +5712,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5773,8 +5773,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5834,8 +5834,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5895,8 +5895,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -5955,8 +5955,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6013,8 +6013,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6071,8 +6071,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6130,8 +6130,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6192,8 +6192,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6253,8 +6253,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 5f;
                 IsWalkable = false;
+                MaxLife = 5f;
                 MaximumScale = 1.1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6313,8 +6313,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6370,8 +6370,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6428,8 +6428,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6485,8 +6485,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6543,8 +6543,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6605,8 +6605,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6667,8 +6667,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6729,8 +6729,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6791,8 +6791,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6853,8 +6853,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6915,8 +6915,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -6977,8 +6977,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7039,8 +7039,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7101,8 +7101,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7163,8 +7163,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7225,8 +7225,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7287,8 +7287,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7349,8 +7349,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7411,8 +7411,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7473,8 +7473,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7535,8 +7535,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7596,8 +7596,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7657,8 +7657,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7718,8 +7718,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7779,8 +7779,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7841,8 +7841,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7903,8 +7903,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -7965,8 +7965,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8027,8 +8027,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8089,8 +8089,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8151,8 +8151,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8213,8 +8213,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8275,8 +8275,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8337,8 +8337,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8399,8 +8399,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8461,8 +8461,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8523,8 +8523,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8585,8 +8585,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8647,8 +8647,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8709,8 +8709,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8771,8 +8771,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8832,8 +8832,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8893,8 +8893,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -8954,8 +8954,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9015,8 +9015,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9077,8 +9077,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9139,8 +9139,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9201,8 +9201,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9261,8 +9261,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9315,8 +9315,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9369,8 +9369,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9423,8 +9423,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9477,8 +9477,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9532,8 +9532,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9589,8 +9589,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9645,8 +9645,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9700,8 +9700,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9757,8 +9757,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9815,8 +9815,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9875,8 +9875,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1.05f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9936,8 +9936,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -9997,8 +9997,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10057,8 +10057,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10118,8 +10118,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10179,8 +10179,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 54;
                 MinimapColor2Green = 54;
@@ -10240,8 +10240,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 166;
                 MinimapColor2Green = 187;
@@ -10301,8 +10301,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 32;
                 MinimapColor2Green = 48;
@@ -10360,8 +10360,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10414,8 +10414,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10468,8 +10468,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10522,8 +10522,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10577,8 +10577,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = false;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10634,8 +10634,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 0.85f;
                 MinimapColor1Red = 170;
                 MinimapColor2Green = 92;
@@ -10694,8 +10694,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10752,8 +10752,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10810,8 +10810,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10868,8 +10868,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10926,8 +10926,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -10984,8 +10984,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11042,8 +11042,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11100,8 +11100,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = true;
-                HitPoints = 9999f;
                 IsWalkable = false;
+                MaxLife = 9999f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11158,8 +11158,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11219,8 +11219,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11280,8 +11280,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11341,8 +11341,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11403,8 +11403,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11463,8 +11463,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11523,8 +11523,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11583,8 +11583,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11643,8 +11643,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = false;
+                MaxLife = 250f;
                 MaxRollAngleDegrees = 20f;
                 MaximumPitchAngleDegrees = 20f;
                 MaximumScale = 1f;
@@ -11704,8 +11704,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11762,8 +11762,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11825,8 +11825,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11888,8 +11888,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -11951,8 +11951,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12014,8 +12014,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12077,8 +12077,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12140,8 +12140,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12203,8 +12203,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12266,8 +12266,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12329,8 +12329,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12392,8 +12392,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12455,8 +12455,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12518,8 +12518,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12579,8 +12579,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12640,8 +12640,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12701,8 +12701,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12762,8 +12762,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 135;
                 MinimapColor2Green = 116;
@@ -12822,8 +12822,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -12881,8 +12881,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.05f;
                 MinimapColor1Red = 88;
                 MinimapColor2Green = 124;
@@ -12942,8 +12942,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 30;
                 MinimapColor2Green = 32;
@@ -13003,8 +13003,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13061,8 +13061,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13120,8 +13120,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13182,8 +13182,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13244,8 +13244,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13306,8 +13306,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13368,8 +13368,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13430,8 +13430,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13492,8 +13492,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13554,8 +13554,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13616,8 +13616,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13678,8 +13678,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13740,8 +13740,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13802,8 +13802,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13864,8 +13864,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13926,8 +13926,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -13988,8 +13988,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14050,8 +14050,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14112,8 +14112,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14173,8 +14173,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14234,8 +14234,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14295,8 +14295,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14356,8 +14356,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14418,8 +14418,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14480,8 +14480,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14542,8 +14542,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14604,8 +14604,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14666,8 +14666,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14728,8 +14728,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14790,8 +14790,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14852,8 +14852,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14914,8 +14914,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -14976,8 +14976,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15038,8 +15038,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15100,8 +15100,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15162,8 +15162,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15224,8 +15224,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15286,8 +15286,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15348,8 +15348,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15410,8 +15410,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15472,8 +15472,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15534,8 +15534,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15596,8 +15596,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 125;
                 MinimapColor2Green = 108;
@@ -15656,8 +15656,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 110;
                 MinimapColor2Green = 170;
@@ -15715,8 +15715,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15773,8 +15773,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15835,8 +15835,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15897,8 +15897,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -15959,8 +15959,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16021,8 +16021,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16083,8 +16083,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16145,8 +16145,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16207,8 +16207,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16269,8 +16269,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16331,8 +16331,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16393,8 +16393,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16455,8 +16455,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16517,8 +16517,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16579,8 +16579,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16641,8 +16641,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16703,8 +16703,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1.33f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16765,8 +16765,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16824,8 +16824,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16883,8 +16883,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -16942,8 +16942,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17001,8 +17001,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17060,8 +17060,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17119,8 +17119,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17178,8 +17178,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17237,8 +17237,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17296,8 +17296,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17355,8 +17355,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17414,8 +17414,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 200f;
                 IsWalkable = false;
+                MaxLife = 200f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17473,8 +17473,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 32;
                 MinimapColor2Green = 90;
@@ -17534,8 +17534,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 0.9f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17594,8 +17594,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17656,8 +17656,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17718,8 +17718,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17780,8 +17780,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17842,8 +17842,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17904,8 +17904,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -17966,8 +17966,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18028,8 +18028,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 250f;
                 IsWalkable = true;
+                MaxLife = 250f;
                 MaximumScale = 0.8f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18090,8 +18090,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 60;
                 MinimapColor2Green = 124;
@@ -18151,8 +18151,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 32;
                 MinimapColor2Green = 90;
@@ -18211,8 +18211,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18269,8 +18269,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = true;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18328,8 +18328,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 500f;
                 IsWalkable = false;
+                MaxLife = 500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18386,8 +18386,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18448,8 +18448,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18510,8 +18510,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18572,8 +18572,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18634,8 +18634,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18696,8 +18696,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18758,8 +18758,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18820,8 +18820,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18882,8 +18882,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -18944,8 +18944,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19006,8 +19006,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19068,8 +19068,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19130,8 +19130,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19192,8 +19192,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19254,8 +19254,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19316,8 +19316,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19378,8 +19378,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19439,8 +19439,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19500,8 +19500,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19561,8 +19561,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19622,8 +19622,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19684,8 +19684,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19746,8 +19746,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19808,8 +19808,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19870,8 +19870,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19932,8 +19932,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -19994,8 +19994,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20056,8 +20056,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20118,8 +20118,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20180,8 +20180,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20242,8 +20242,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20304,8 +20304,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20366,8 +20366,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20428,8 +20428,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20490,8 +20490,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20552,8 +20552,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20614,8 +20614,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20676,8 +20676,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20738,8 +20738,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20800,8 +20800,8 @@ namespace Moonwell.Objects
                 FogVisibility = true;
                 HasTilesetSpecificData = true;
                 HiddenInGame = false;
-                HitPoints = 2500f;
                 IsWalkable = true;
+                MaxLife = 2500f;
                 MaximumScale = 1f;
                 MinimapColor1Red = 0;
                 MinimapColor2Green = 0;
@@ -20862,8 +20862,8 @@ namespace Moonwell.Objects
                 FogVisibility = false;
                 HasTilesetSpecificData = false;
                 HiddenInGame = false;
-                HitPoints = 50f;
                 IsWalkable = false;
+                MaxLife = 50f;
                 MaximumScale = 1.2f;
                 MinimapColor1Red = 80;
                 MinimapColor2Green = 160;

@@ -18,6 +18,12 @@ namespace Moonwell.Engine
             Decks.Gone(deck);
         }
 
+        /// <summary>The bridge was brought back to life by Restore: its deck is ground again.</summary>
+        public override void OnRestored()
+        {
+            Decks.Back(deck);
+        }
+
         /// <summary>The bridge left the game, or the watch was removed: its deck is gone.</summary>
         protected override void OnRemoved()
         {

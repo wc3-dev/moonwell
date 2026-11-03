@@ -423,6 +423,15 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_destructable_class_reads_the_most_life_it_declares_in_lua()
+        {
+            using var lua = compiled.Start();
+
+            // Gate's constructor sets MaxLife and reads it back with no handle, through the kind base's hooks.
+            Assert.Equal("5000", Query(lua, "Moonwell.ObjectTypes.DestructableMaker(Moonwell.ObjectTypes.FourCC('B001'))(); return Objects.Gate.Read"));
+        }
+
+        [Fact]
         public void every_list_call_runs_in_lua()
         {
             using var lua = compiled.Start();

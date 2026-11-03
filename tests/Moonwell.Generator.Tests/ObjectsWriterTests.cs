@@ -469,6 +469,10 @@ public class ObjectsWriterTests
         Assert.Contains("    [global::Moonwell.Objects.SharedField(\"unam\", \"Name\", Label = \"Name\", Required = true, Holds = typeof(string))]\n", unit);
         Assert.Contains("    [global::Moonwell.Objects.SharedField(\"umpm\", \"MaxMana\", Label = \"Mana Maximum\", Min = 0, Max = 100000, HasLimits = true, Holds = typeof(int))]\n", unit);
         Assert.Contains("    [global::Moonwell.Objects.SharedField(\"iuse\", \"Charges\", Label = \"Number of Charges\", Min = 0, Max = 1000, HasLimits = true, Holds = typeof(int))]\n", item);
+        var destructable = MiniFiles.Value["Kinds/StandardDestructable.g.cs"];
+        Assert.Contains("    [global::Moonwell.Objects.SharedField(\"bhps\", \"MaxLife\", Label = \"Hit Points\", Min = 0, Max = 99999, HasLimits = true, NonNegative = true, Holds = typeof(float))]\n", destructable);
+        Assert.DoesNotContain(" HitPoints\n        {", destructable);
+        Assert.Contains("            MaxLife = 50f;\n", MiniFiles.Value["Destructables.g.cs"]);
         foreach (var old in new[] { "HitPoints", "ManaPoints", "UnitLevel", "ScalingValue", "Height", "Name" })
         {
             Assert.DoesNotContain(" " + old + "\n        {", unit);
@@ -521,7 +525,12 @@ public class ObjectsWriterTests
         }
 
         Assert.DoesNotContain("Default", MiniFiles.Value["Kinds/StandardAbility.g.cs"]);
-        Assert.DoesNotContain("Declare", MiniFiles.Value["Kinds/StandardDestructable.g.cs"].Replace("Declared", "", StringComparison.Ordinal));
+
+        // A destructable reads and declares its most life the same way, but has no default object.
+        var destructable = MiniFiles.Value["Kinds/StandardDestructable.g.cs"];
+        Assert.Contains("        protected override T DeclaredValue<T>(string field)\n        {\n            return Fields.Get<T>(this, field);\n        }\n", destructable);
+        Assert.Contains("        protected override void Declare(string field, object value)\n", destructable);
+        Assert.DoesNotContain("Default", destructable);
     }
 
     [Fact]

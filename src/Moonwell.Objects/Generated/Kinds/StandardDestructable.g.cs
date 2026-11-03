@@ -8,6 +8,7 @@ namespace Moonwell.Objects
 {
     /// <summary>The fields of a destructable, which every standard destructable class has.</summary>
     /// @CSharpLua.Ignore
+    [global::Moonwell.Objects.SharedField("bhps", "MaxLife", Label = "Hit Points", Min = 0, Max = 99999, HasLimits = true, NonNegative = true, Holds = typeof(float))]
     public abstract class StandardDestructable : global::Moonwell.Destructable
     {
         private static readonly global::System.Collections.Generic.Dictionary<string, global::System.Type> fieldTypes =
@@ -79,6 +80,18 @@ namespace Moonwell.Objects
 
         /// <summary>The values put on this object so far, by field id; the build reads them.</summary>
         internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;
+
+        /// <summary>A shared field's declared value, which its live member reads with no handle.</summary>
+        protected override T DeclaredValue<T>(string field)
+        {
+            return Fields.Get<T>(this, field);
+        }
+
+        /// <summary>Puts a shared field's value, which its live member does when set with no handle.</summary>
+        protected override void Declare(string field, object value)
+        {
+            Fields.Put(field, global::Moonwell.Objects.FieldChecks.Declared(fieldTypes, field, value));
+        }
 
         /// <summary>Armor Type (barm).</summary>
         [global::Moonwell.Objects.Field("barm", Label = "Armor Type")]
@@ -214,16 +227,6 @@ namespace Moonwell.Objects
         {
             get { return Fields.Get<bool>(this, "bgse"); }
             protected set { Fields.Put("bgse", value); }
-        }
-
-        /// <summary>Hit Points (bhps), 0 to 99999.</summary>
-        [global::Moonwell.Objects.Field("bhps", Label = "Hit Points")]
-        [global::Moonwell.Objects.Limits(0, 99999)]
-        [global::Moonwell.Objects.NonNegative]
-        public float HitPoints
-        {
-            get { return Fields.Get<float>(this, "bhps"); }
-            protected set { Fields.Put("bhps", value); }
         }
 
         /// <summary>Model File - Has Lightweight Model (blit).</summary>

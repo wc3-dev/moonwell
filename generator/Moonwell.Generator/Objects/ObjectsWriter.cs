@@ -43,8 +43,8 @@ public static class ObjectsWriter
     /// </summary>
     /// <remarks>
     /// A shared field has no property: the kind base carries a <c>[SharedField]</c> with its rules, and overrides the runtime
-    /// class's hooks so that its live member reads and puts the declared value while the object has no handle. Its
-    /// <c>Default</c> is the runtime class's, typed as the kind base so that every field of the default object can be read.
+    /// class's hooks so that its live member reads and puts the declared value while the object has no handle. A unit's or an
+    /// item's <c>Default</c> is the runtime class's, typed as the kind base so that every field of the default object can be read.
     /// <c>StandardHero</c> reads most life, most mana and starting mana as the totals the hero starts with
     /// (<c>HeroTotals</c>), keeps a total put on them apart from the base fields (<c>Totals</c>), and declares no level.
     /// </remarks>
@@ -103,7 +103,7 @@ public static class ObjectsWriter
         text.Append("        internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Declared => Fields.Values;\n");
         if (SharedFields.Of(kind).Count > 0)
         {
-            AppendSharedMembers(text, name, hero);
+            AppendSharedMembers(text, kind, name, hero);
         }
 
         foreach (var field in common)
@@ -226,10 +226,11 @@ public static class ObjectsWriter
     }
 
     /// <summary>
-    /// The members of a kind base whose kind has shared fields: <c>Default</c> typed as the kind base, the hooks a shared
-    /// member reads and puts its declared value through, and for <c>StandardHero</c> the totals of its life and mana.
+    /// The members of a kind base whose kind has shared fields: <c>Default</c> typed as the kind base for a unit or an item
+    /// (a destructable has no default object), the hooks a shared member reads and puts its declared value through, and for
+    /// <c>StandardHero</c> the totals of its life and mana.
     /// </summary>
-    private static void AppendSharedMembers(StringBuilder text, string name, bool hero)
+    private static void AppendSharedMembers(StringBuilder text, ObjectKind kind, string name, bool hero)
     {
         var declared = $"{Root}.FieldChecks.Declared(fieldTypes, field, value)";
         if (hero)
@@ -238,8 +239,13 @@ public static class ObjectsWriter
             text.Append("        internal global::System.Collections.Generic.IReadOnlyDictionary<string, object?> Totals => Fields.Totals;\n");
         }
 
-        text.Append("\n        /// <summary>The default object of the type, as the runtime class gives it, with every field of the kind.</summary>\n");
-        text.Append($"        public new {Root}.{name} Default => ({Root}.{name})base.Default;\n\n");
+        text.Append('\n');
+        if (kind == ObjectKind.Unit || kind == ObjectKind.Item)
+        {
+            text.Append("        /// <summary>The default object of the type, as the runtime class gives it, with every field of the kind.</summary>\n");
+            text.Append($"        public new {Root}.{name} Default => ({Root}.{name})base.Default;\n\n");
+        }
+
         if (hero)
         {
             text.Append("        /// <summary>A shared field's declared value, which its live member reads with no handle: most life, most mana and starting mana as the totals the hero starts with.</summary>\n");

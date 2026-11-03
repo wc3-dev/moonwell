@@ -60,6 +60,9 @@ namespace Moonwell
         /// <summary>A hero in the map learns a skill.</summary>
         internal const int OnHeroSkillLearned = 262144;
 
+        /// <summary>A destructable is brought back to life by Restore.</summary>
+        internal const int OnRestored = 524288;
+
         /// <summary>A hero's skill is taken away by RemoveAbility; no game event.</summary>
         internal const int OnLost = 1048576;
     }
