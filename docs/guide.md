@@ -344,7 +344,7 @@ to 5400 for level 10. The build gives the map's own to the runtime.
 
 | Item | |
 |---|---|
-| `Charges`, `Owner` | read and set; 0 charges leaves the item in place; `Owner` is the player the item belongs to, which picking up or dropping does not change |
+| `Charges`, `Owner` | read and set; 0 charges leaves the item in place; `Owner` is the player the item belongs to: each pick-up makes it the carrier's player, and a drop leaves it |
 | `X`, `Y` | read; `MoveTo(x, y)` goes to a pathable spot; while a unit holds the item, in its inventory, bag or equipment slots, they read the unit's place |
 | `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop after `RemoveUnit` (below), where it is already null |
 

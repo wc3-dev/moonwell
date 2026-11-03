@@ -36,9 +36,20 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit picks up an item: the item's OnPickedUp and components, then the unit's OnItemPickedUp and components.</summary>
+        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components.</summary>
         internal static void PickedUp(unit u, item i)
         {
+            var carrierPlayer = Runtime.World.OwnerOf(u);
+            if (carrierPlayer != null)
+            {
+                Runtime.World.SetItemOwner(i, carrierPlayer);
+                var known = KnownItems.Find(i);
+                if (known != null)
+                {
+                    known.OwningPlayer = carrierPlayer;
+                }
+            }
+
             if (KnownUnits.Find(u) == null && KnownItems.Find(i) == null && ObjectTypes.ItemMaker(Runtime.World.ItemTypeId(i)) == null)
             {
                 return;
