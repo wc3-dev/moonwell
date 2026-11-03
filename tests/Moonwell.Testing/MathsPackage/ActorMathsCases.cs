@@ -96,5 +96,16 @@ namespace Moonwell.Testing
             Expect.Equal("face-now", world.UnitCalls[world.UnitCalls.Count - 1], "FaceNow faces at once");
             Expect.Near(180f, unit.Facing, "now 180");
         }
+
+        /// <summary>An effect's position is its X and Y, and PlaceAt a vector places it there.</summary>
+        public static void EffectPosition(FakeWorld world)
+        {
+            var fx = SpecialEffect.Create("Glow.mdl", 1f, 2f, Game.Instance);
+            Expect.True(fx.Position() == new Vector2(1f, 2f), "the position");
+            fx.PlaceAt(new Vector2(3f, 4f));
+            Expect.Near(3f, world.Effects[0].X, "the game's x");
+            Expect.Near(4f, world.Effects[0].Y, "the game's y");
+            Expect.True(fx.Position() == new Vector2(3f, 4f), "the position after");
+        }
     }
 }

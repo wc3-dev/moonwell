@@ -1,7 +1,7 @@
 namespace Moonwell
 {
     /// <summary>
-    /// Vector methods on units, items and destructables, from the maths package. Position is a method, not a property, as the package can
+    /// Vector methods on units, items, destructables and special effects, from the maths package. Position is a method, not a property, as the package can
     /// add only methods. Distances and angles are worked out from the floats, with no vector made. Angles are in degrees.
     /// </summary>
     public static class ActorMaths
@@ -233,6 +233,19 @@ namespace Moonwell
         public static float AngleToPoint(this Destructable destructable, Vector2 point)
         {
             return Maths.AngleToPoint(destructable.X, destructable.Y, point.X, point.Y);
+        }
+
+        /// <summary>The effect's place (its X and Y); a unit's effect gives the unit's.</summary>
+        [LocalSafe]
+        public static Vector2 Position(this SpecialEffect effect)
+        {
+            return new Vector2(effect.X, effect.Y);
+        }
+
+        /// <summary>Moves the effect to a place, keeping its height above the ground there, as SpecialEffect.PlaceAt(x, y).</summary>
+        public static void PlaceAt(this SpecialEffect effect, Vector2 place)
+        {
+            effect.PlaceAt(place.X, place.Y);
         }
     }
 }

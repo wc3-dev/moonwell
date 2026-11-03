@@ -2275,6 +2275,109 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>The effects the runtime made, in the order made.</summary>
+        public List<FakeEffect> Effects = new List<FakeEffect>();
+
+        /// <summary>The ground's height at a place; flat at 0 unless a case sets it.</summary>
+        public System.Func<float, float, float> Ground = (x, y) => 0.0f;
+
+        /// <summary>How many times the runtime read the ground's height.</summary>
+        public int GroundReads;
+
+        /// <summary>The fake behind each effect handle.</summary>
+        private readonly Dictionary<effect, FakeEffect> effects = new Dictionary<effect, FakeEffect>();
+
+        /// <summary>The fake behind an effect handle the runtime was given.</summary>
+        public FakeEffect EffectOf(effect fx)
+        {
+            return effects[fx];
+        }
+
+        /// <summary>Makes an effect of a model at a place, on the ground there.</summary>
+        public effect MakeEffect(string model, float x, float y)
+        {
+            var made = new effect();
+            var fake = new FakeEffect { Model = model, X = x, Y = y, Z = Ground(x, y) };
+            effects[made] = fake;
+            Effects.Add(fake);
+            return made;
+        }
+
+        /// <summary>Makes an effect of a model on a unit, at an attachment point, where the unit is.</summary>
+        public effect MakeEffectOn(string model, unit unit, string point)
+        {
+            var made = new effect();
+            var fake = new FakeEffect { Model = model, Unit = unit, Point = point, X = UnitX(unit), Y = UnitY(unit) };
+            effects[made] = fake;
+            Effects.Add(fake);
+            return made;
+        }
+
+        /// <summary>Moves an effect to a place and an absolute height, and counts the moves.</summary>
+        public void PlaceEffect(effect fx, float x, float y, float z)
+        {
+            var fake = Live(fx);
+            fake.Places++;
+            fake.X = x;
+            fake.Y = y;
+            fake.Z = z;
+        }
+
+        /// <summary>Turns an effect, in radians.</summary>
+        public void TurnEffect(effect fx, float yaw, float pitch, float roll)
+        {
+            var fake = Live(fx);
+            fake.Yaw = yaw;
+            fake.Pitch = pitch;
+            fake.Roll = roll;
+        }
+
+        /// <summary>Scales an effect.</summary>
+        public void ScaleEffect(effect fx, float scale)
+        {
+            Live(fx).Scale = scale;
+        }
+
+        /// <summary>Plays an animation of an effect by name, or queues it.</summary>
+        public void AnimateEffect(effect fx, string name, bool queued)
+        {
+            Live(fx).Animations.Add(queued ? "queue " + name : name);
+        }
+
+        /// <summary>Sets the speed of an effect's animations.</summary>
+        public void SetEffectSpeed(effect fx, float speed)
+        {
+            Live(fx).Speed = speed;
+        }
+
+        /// <summary>The fake behind an effect handle; the runtime asking anything of an effect it has ended fails the case.</summary>
+        private FakeEffect Live(effect fx)
+        {
+            var fake = effects[fx];
+            if (fake.Ended)
+            {
+                throw new ExpectationFailed("the runtime asked the game about an effect it had ended");
+            }
+
+            return fake;
+        }
+
+        /// <summary>Ends an effect, with its death or at once; a second end fails the case.</summary>
+        public void EndEffect(effect fx, bool playDeath)
+        {
+            var fake = Live(fx);
+            fake.Ends++;
+            fake.Ended = true;
+            fake.Death = playDeath;
+        }
+
+        /// <summary>The ground's height at a place, from Ground, and counts the read.</summary>
+        public float GroundZ(float x, float y)
+        {
+            GroundReads++;
+            return Ground(x, y);
+        }
+
         /// <summary>A destructable the runtime asked the game to make: its type, place, facing, scale and variation.</summary>
         public sealed class DestructableSpawn
         {

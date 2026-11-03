@@ -14,6 +14,7 @@ namespace Moonwell.Testing
             AddAuditTimers(list);
             AddMiddle(list);
             AddHeroes(list);
+            AddEffects(list);
             AddUnitAbilities(list);
             AddLast(list);
             AddCompiler(list);
@@ -716,6 +717,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.actors.place-and-move", Run = ActorMathsCases.PlaceAndMove });
             list.Add(new Case { Name = "maths.actors.distance-and-angle", Run = ActorMathsCases.DistanceAndAngle });
             list.Add(new Case { Name = "maths.actors.face", Run = ActorMathsCases.Face });
+            list.Add(new Case { Name = "maths.actors.effect-position", Run = ActorMathsCases.EffectPosition });
             list.Add(new Case { Name = "maths.actors.destructable", Run = ActorMathsCases.DestructableDistances });
             list.Add(new Case { Name = "maths.polygon.contains-floats", Run = ShapeCases.PolygonContainsFloats });
             list.Add(new Case { Name = "maths.lua.shared-not-copied", Run = LuaShapeCases.SharedNotCopied });
@@ -936,6 +938,36 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.inventory", Run = ItemCases.Inventory });
             list.Add(new Case { Name = "units.inventory-limits", Run = ItemCases.InventoryLimits });
             list.Add(new Case { Name = "units.inventory-gone", Run = ItemCases.InventoryGone });
+        }
+
+        /// <summary>Adds the special effect cases.</summary>
+        private static void AddEffects(List<Case> list)
+        {
+            list.Add(new Case { Name = "effects.create", Run = EffectCases.Create });
+            list.Add(new Case { Name = "effects.end-plays-death", Run = EffectCases.EndPlaysDeath });
+            list.Add(new Case { Name = "effects.end-at-once", Run = EffectCases.EndAtOnce });
+            list.Add(new Case { Name = "effects.scope-end", Run = EffectCases.ScopeEnd });
+            list.Add(new Case { Name = "effects.ended-scope", Run = EffectCases.EndedScope });
+            list.Add(new Case { Name = "effects.place", Run = EffectCases.Place });
+            list.Add(new Case { Name = "effects.height-follows-ground", Run = EffectCases.HeightFollowsGround });
+            list.Add(new Case { Name = "effects.place-at", Run = EffectCases.PlaceAt });
+            list.Add(new Case { Name = "effects.after-end", Run = EffectCases.AfterEnd });
+            list.Add(new Case { Name = "effects.facing-wraps", Run = EffectCases.FacingWraps });
+            list.Add(new Case { Name = "effects.on-unit-ended-scope", Run = EffectCases.OnUnitEndedScope });
+            list.Add(new Case { Name = "effects.facing", Run = EffectCases.Facing });
+            list.Add(new Case { Name = "effects.scale", Run = EffectCases.Scale });
+            list.Add(new Case { Name = "effects.animations", Run = EffectCases.Animations });
+            list.Add(new Case { Name = "effects.animation-speed", Run = EffectCases.AnimationSpeed });
+            list.Add(new Case { Name = "effects.on-unit", Run = EffectCases.OnUnit });
+            list.Add(new Case { Name = "effects.at-point-has-no-unit", Run = EffectCases.AtPointHasNoUnit });
+            list.Add(new Case { Name = "effects.ends-with-unit", Run = EffectCases.EndsWithUnit });
+            list.Add(new Case { Name = "effects.unit-swept", Run = EffectCases.UnitSwept });
+            list.Add(new Case { Name = "effects.unit-is-scope", Run = EffectCases.UnitIsScope });
+            list.Add(new Case { Name = "effects.on-gone-unit", Run = EffectCases.OnGoneUnit });
+            list.Add(new Case { Name = "effects.play-once", Run = EffectCases.PlayOnce });
+            list.Add(new Case { Name = "effects.play-once-on-unit", Run = EffectCases.PlayOnceOnUnit });
+            list.Add(new Case { Name = "effects.shown-to", Run = EffectCases.ShownTo });
+            list.Add(new Case { Name = "effects.shown-to-other", Run = EffectCases.ShownToOther });
         }
 
         /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>
