@@ -51,13 +51,32 @@ namespace Moonwell
             OnAdded();
         }
 
-        /// <summary>Puts a scope's hold on the component: the scope adopts the hold, so its end lets go.</summary>
+        /// <summary>Puts a scope's hold on the component: the scope adopts the hold, so its end lets go. A scope that holds it already keeps its one hold, and a component that is ending takes none.</summary>
         internal void HoldBy(Scope holder)
         {
+            if (ending || HasEnded || HeldBy(holder) != null)
+            {
+                return;
+            }
+
             var hold = new Hold(this);
             holds ??= new List<Hold>();
             holds.Add(hold);
             holder.Adopt(hold);
+        }
+
+        /// <summary>The hold a scope has on the component, or null.</summary>
+        internal Hold? HeldBy(Scope holder)
+        {
+            for (var i = 0; holds != null && i < holds.Count; i++)
+            {
+                if (holds[i].Parent == holder)
+                {
+                    return holds[i];
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Lets go of a hold: the component ends when that was its last and it was not also put on with no holder. While the component ends, its holds only go.</summary>

@@ -1029,7 +1029,8 @@ namespace Moonwell
 
             if (existing != null)
             {
-                existing.Refresh(buff, source);
+                // The holder holds it before OnApply runs, so a holder that ends there leaves it held by this one.
+                var timed = existing.expiry != null && !existing.expiry.HasEnded;
                 if (heldBy == null)
                 {
                     existing.unheld = true;
@@ -1037,6 +1038,14 @@ namespace Moonwell
                 else
                 {
                     existing.HoldBy(heldBy);
+                }
+
+                existing.Refresh(buff, source);
+
+                // A held refresh that ends the duration of an apply with no holder leaves only its holders to keep it on.
+                if (heldBy != null && timed && existing.Duration <= 0.0f)
+                {
+                    existing.unheld = false;
                 }
 
                 return (T)existing;

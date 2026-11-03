@@ -161,9 +161,28 @@ namespace Moonwell
             Choose();
         }
 
-        /// <summary>Adds an apply to a strongest buff: a hold its holder adopts, or one of its own with no holder, and a timer that ends it after its seconds.</summary>
+        /// <summary>Adds an apply to a strongest buff: a hold its holder adopts, or one of its own with no holder, and a timer that ends it after its seconds. A holder that holds it already has its own apply updated instead.</summary>
         private Hold Join(float strength, Unit? source, Scope? heldBy, float seconds)
         {
+            var held = heldBy == null ? null : HeldBy(heldBy);
+            if (held != null)
+            {
+                held.Strength = strength;
+                held.Source = source;
+                if (held.Expiry != null)
+                {
+                    held.Expiry.End();
+                    held.Expiry = null;
+                }
+
+                if (seconds > 0.0f)
+                {
+                    held.Expiry = OwnAfter(seconds, () => ExpireHold(held));
+                }
+
+                return held;
+            }
+
             var hold = new Hold(this);
             hold.Strength = strength;
             hold.Source = source;

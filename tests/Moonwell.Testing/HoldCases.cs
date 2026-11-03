@@ -292,6 +292,110 @@ namespace Moonwell.Testing
             ExpectLog(new string[] { "apply 2" }, "the log");
         }
 
+        /// <summary>A refresh from a second holder holds the buff before its OnApply, so the first holder ending there leaves it on.</summary>
+        public static void RefreshHoldsFirst(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var first = new TestScope("first", new List<string>());
+            var second = new TestScope("second", new List<string>());
+            var buff = unit.Apply(new Hooked(), heldBy: first);
+            buff.WhenApplied = () => first.End();
+            unit.Apply(new Hooked(), heldBy: second);
+            Expect.True(!buff.HasEnded, "the second holder holds it");
+            second.End();
+            Expect.True(buff.HasEnded, "it ended with the second holder");
+        }
+
+        /// <summary>A buff that ends itself in a refresh's OnApply leaves the new holder holding nothing.</summary>
+        public static void RefreshEndsItself(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var second = new TestScope("second", new List<string>());
+            var buff = unit.Apply(new Hooked(), heldBy: new TestScope("first", new List<string>()));
+            buff.WhenApplied = () => buff.End();
+            unit.Apply(new Hooked(), heldBy: second);
+            Expect.True(buff.HasEnded, "it ended itself");
+            Expect.Equal(0, second.ChildCount, "the second holder holds nothing");
+        }
+
+        /// <summary>One holder applying a buff again keeps one hold on it.</summary>
+        public static void SameHolderOnce(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var holder = new TestScope("holder", new List<string>());
+            var buff = unit.Apply(new Lasting(), heldBy: holder);
+            unit.Apply(new Lasting(), heldBy: holder);
+            unit.Apply(new Lasting(), heldBy: holder);
+            Expect.Equal(1, holder.ChildCount, "one hold");
+            holder.End();
+            Expect.True(buff.HasEnded, "it ended with its holder");
+        }
+
+        /// <summary>One holder applying a strongest buff again updates its own apply: its new strength counts, with one hold.</summary>
+        public static void StrongestSameHolderUpdates(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var aura = new TestScope("aura", new List<string>());
+            var other = new TestScope("other", new List<string>());
+            var buff = unit.Apply(new Strong(1f), heldBy: aura);
+            unit.Apply(new Strong(3f), heldBy: aura);
+            Expect.True(buff.Strength == 3f, "the strength reads 3");
+            Expect.Equal(1, aura.ChildCount, "one hold for the aura");
+            unit.Apply(new Strong(2f), heldBy: other);
+            unit.Apply(new Strong(1f), heldBy: aura);
+            Expect.True(buff.Strength == 2f, "the aura's own apply went down to 1, so the other's 2 counts");
+        }
+
+        /// <summary>An apply with no holder, then a held refresh that ends its duration: the buff ends with the holder, as nothing else keeps it on.</summary>
+        public static void UnheldThenHeldEnds(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var holder = new TestScope("holder", new List<string>());
+            var buff = unit.Apply(new Chilled(5f, 0f));
+            unit.Apply(new Chilled(0f, 0f), heldBy: holder);
+            holder.End();
+            Expect.True(buff.HasEnded, "it ended with its holder");
+        }
+
+        /// <summary>An apply with no holder and no duration, then a held one: it stays after the holder ends, until removed.</summary>
+        public static void UnheldLastingStays(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var holder = new TestScope("holder", new List<string>());
+            var buff = unit.Apply(new Chilled(0f, 0f));
+            unit.Apply(new Chilled(0f, 0f), heldBy: holder);
+            holder.End();
+            Expect.True(!buff.HasEnded, "it stays");
+        }
+
+        /// <summary>A held buff whose holder ends inside its own first OnApply ends then, once, as End() from inside does.</summary>
+        public static void HolderEndsInOnApply(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var holder = new TestScope("holder", new List<string>());
+            var buff = new Hooked();
+            buff.WhenApplied = () => holder.End();
+            TestLog.Lines.Clear();
+            unit.Apply(buff, heldBy: holder);
+            Expect.True(buff.HasEnded, "it ended");
+            Expect.Equal(1, TestLog.Lines.Count, "OnRemoved ran once");
+            Expect.Equal(0, holder.ChildCount, "the holder holds nothing");
+        }
+
+        /// <summary>A strongest buff whose only holder ends inside its first OnApply ends then, once.</summary>
+        public static void StrongestHolderEndsInOnApply(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var holder = new TestScope("holder", new List<string>());
+            var buff = new StrongHooked();
+            buff.WhenApplied = () => holder.End();
+            TestLog.Lines.Clear();
+            unit.Apply(buff, heldBy: holder);
+            Expect.True(buff.HasEnded, "it ended with its holder");
+            Expect.Equal(0, holder.ChildCount, "the holder holds nothing");
+            Expect.Equal(1, CountOf("strong hooked removed"), "OnRemoved ran once");
+        }
+
 #if DEBUG
         /// <summary>A component added with a holder that has ended is reported in a development build.</summary>
         public static void EndedHolderReported(FakeWorld world)

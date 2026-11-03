@@ -57,6 +57,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "buff.strongest-last", Run = HoldCases.StrongestLast });
             list.Add(new Case { Name = "buff.strongest-timed", Run = HoldCases.StrongestTimed });
             list.Add(new Case { Name = "buff.strongest-handover", Run = HoldCases.StrongestHandover });
+            list.Add(new Case { Name = "buff.held-refresh-holds-first", Run = HoldCases.RefreshHoldsFirst });
+            list.Add(new Case { Name = "buff.held-refresh-ends-itself", Run = HoldCases.RefreshEndsItself });
+            list.Add(new Case { Name = "buff.held-same-holder-once", Run = HoldCases.SameHolderOnce });
+            list.Add(new Case { Name = "buff.strongest-same-holder-updates", Run = HoldCases.StrongestSameHolderUpdates });
+            list.Add(new Case { Name = "buff.unheld-then-held-ends", Run = HoldCases.UnheldThenHeldEnds });
+            list.Add(new Case { Name = "buff.unheld-lasting-stays", Run = HoldCases.UnheldLastingStays });
+            list.Add(new Case { Name = "buff.held-holder-ends-in-onapply", Run = HoldCases.HolderEndsInOnApply });
+            list.Add(new Case { Name = "buff.strongest-holder-ends-in-onapply", Run = HoldCases.StrongestHolderEndsInOnApply });
             list.Add(new Case { Name = "item.carry-gift", Run = CarryCases.Gift });
             list.Add(new Case { Name = "item.carry-two-boots", Run = CarryCases.TwoBoots });
             list.Add(new Case { Name = "item.carry-bag-then-equip", Run = CarryCases.BagThenEquip });
