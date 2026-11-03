@@ -379,6 +379,56 @@ comment.
 
 A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
 
+## Special effects
+
+A special effect is a model the game draws at a point or on a unit: a glow while a buff lasts, a ring when a spell is
+cast. It is in the scope named where it is made, and ends with it.
+
+```csharp
+public sealed class Blessed : Buff
+{
+    protected override void OnAdded() // once: OnApply runs again at each refresh
+    {
+        Unit.AddEffect(@"Abilities\Spells\Human\InnerFire\InnerFireTarget.mdl", AttachPoint.Overhead, this);
+    }
+}
+
+SpecialEffect.PlayOnce(@"Abilities\Spells\Human\ThunderClap\ThunderClapCaster.mdl", x, y); // made and gone at once
+var mark = SpecialEffect.Create(@"Abilities\Spells\Other\TalkToMe\TalkToMe.mdl", x, y, this, shownTo: caster.Owner);
+mark.Height = 60f;
+After(3f, mark.End);
+```
+
+| SpecialEffect | |
+|---|---|
+| `X`, `Y`, `Height`, `PlaceAt(x, y)` | read and set; `Height` is above the ground and stays so as it moves; on a unit's effect `X` and `Y` read the unit's place, `Height` 0, and setting does nothing |
+| `Facing`, `Pitch`, `Roll` | read and set, in degrees; `Facing` reads 0 to 360 as a unit's does, and a positive pitch noses it down |
+| `Scale`, `AnimationSpeed` | read and set, 1 unless set |
+| `PlayAnimation(name)`, `QueueAnimation(name)` | by name: `Animation.Stand`, `Animation.Attack`, or any name the model has (`"attack slam"`) |
+| `PlaysDeath` | true unless set; false makes it vanish at once instead of playing its death |
+| `Model`, `Unit`, `AttachPoint`, `IsShownTo(player)` | read |
+| `Handle` | the game's effect, for anything Moonwell does not do: a player's team colour on the model, stretching by axis, the sub-animations |
+
+- `End()` ends an effect, and its scope's end does too. It plays its death animation, the way the game's effects go,
+  unless `PlaysDeath` is false. A model with no death animation stands about 4 to 5 seconds before it goes, so set
+  `PlaysDeath = false` for one to go at once. An effect on a unit also ends when the unit ends, if that comes first.
+- `unit.AddEffect(model, point, scope)` puts one on a unit, at an attachment point of its model, and it follows the
+  unit; it stays over the corpse when the unit dies, until the corpse goes. `AttachPoint` has the common points
+  (`Overhead`, `Origin`, `Chest`, `HandLeft`, `WeaponRight` and the rest) as the text the game takes, so any other text
+  works too (`"chest mount"`); Moonwell does not check it, and at a point the model lacks the game draws nothing. Effects on items
+  and destructables are not drawn, so only units have it.
+- `SpecialEffect.PlayOnce(model, x, y)` and `unit.PlayEffectOnce(model, point)` play one once: it is made and ended at
+  once, and the game shows its death. One that needs a scale first is made with `Create`, set, and `End()`ed.
+- `shownTo: player` on any of them shows it to that player only: the other machines make it with an empty model, so the
+  game's handles stay the same everywhere. Who sees it cannot change later. Seen in single player; with two players it
+  is not checked yet.
+- Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting and making are
+  not.
+- An effect made on a cast with no channel time can end in the instant it is made, and show only its birth and death:
+  make one that should last on the ability, as `mark` above, and end it with `After`.
+- With `Moonwell.Maths`, `effect.Position()` and `effect.PlaceAt(vector)`.
+- Missiles keep their own: `Model`, `Scale`, `Tint` and `AddEffect` on the missile, and `missile.Effect` for the rest.
+
 ## Damage
 
 `OnDamaged` sees a hit after armor. `source.Damage(target, 10f)` deals damage from code, as a spell does: magic,

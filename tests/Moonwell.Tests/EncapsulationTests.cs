@@ -81,6 +81,7 @@ public class EncapsulationTests
     [InlineData(typeof(Game))]
     [InlineData(typeof(MoonwellException))]
     [InlineData(typeof(TerrainHit))]
+    [InlineData(typeof(SpecialEffect))]
     public void OnlyMoonwellMakes(Type type)
     {
         Assert.Empty(type.GetConstructors());

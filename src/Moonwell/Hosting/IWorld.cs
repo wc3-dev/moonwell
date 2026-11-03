@@ -418,5 +418,32 @@ namespace Moonwell.Hosting
 
         /// <summary>Moves an item to a place.</summary>
         void MoveItem(item item, float x, float y);
+
+        /// <summary>Makes an effect of a model at a place, on the ground there.</summary>
+        effect MakeEffect(string model, float x, float y);
+
+        /// <summary>Makes an effect of a model on a unit, at an attachment point of its model; it follows the unit.</summary>
+        effect MakeEffectOn(string model, unit unit, string point);
+
+        /// <summary>Moves an effect to a place and an absolute height.</summary>
+        void PlaceEffect(effect fx, float x, float y, float z);
+
+        /// <summary>Turns an effect: yaw, pitch and roll in radians.</summary>
+        void TurnEffect(effect fx, float yaw, float pitch, float roll);
+
+        /// <summary>Scales an effect on all three axes.</summary>
+        void ScaleEffect(effect fx, float scale);
+
+        /// <summary>Plays an animation of an effect by name, or queues it after the one playing.</summary>
+        void AnimateEffect(effect fx, string name, bool queued);
+
+        /// <summary>Sets the speed of an effect's animations; 1 is the model's own.</summary>
+        void SetEffectSpeed(effect fx, float speed);
+
+        /// <summary>Ends an effect: with its death animation when asked, else at once.</summary>
+        void EndEffect(effect fx, bool playDeath);
+
+        /// <summary>The ground's height at a place, on this machine: it only places what is drawn.</summary>
+        float GroundZ(float x, float y);
     }
 }

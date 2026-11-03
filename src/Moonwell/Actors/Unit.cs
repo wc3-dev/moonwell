@@ -41,6 +41,9 @@ namespace Moonwell
 
         // The instance fields are internal, not private, as a map's subclass may name a field of its own the same (see Scope).
 
+        /// <summary>The effects on the unit that have not ended, which end when it ends; null until the first.</summary>
+        internal List<SpecialEffect>? effects;
+
         /// <summary>The ability objects of the unit, one per ability id, in the order they were first asked for.</summary>
         internal readonly OrderedMap<int, Ability> abilities = new OrderedMap<int, Ability>();
 
@@ -658,6 +661,18 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Puts an effect of a model on the unit, at an attachment point of its model (AttachPoint.Overhead, or any text the game takes), in a scope, and returns it. It follows the unit, stays over its corpse after a death, and ends when the scope ends or the unit ends, whichever is first; at a point the model lacks the game draws nothing. Given shownTo, only that player sees it. On a unit that is gone it ends at once and the game is not asked to make it.</summary>
+        public SpecialEffect AddEffect(string model, string point, Scope scope, Player? shownTo = null)
+        {
+            return SpecialEffect.On(this, model, point, scope, shownTo);
+        }
+
+        /// <summary>Plays an effect of a model once on the unit, at an attachment point of its model: it is made and ended at once, so its death animation plays. Given shownTo, only that player sees it. Does nothing once the unit is gone.</summary>
+        public void PlayEffectOnce(string model, string point, Player? shownTo = null)
+        {
+            SpecialEffect.PlayOnceOn(this, model, point, shownTo);
+        }
+
         /// <summary>Tints the unit's model (SetUnitVertexColor); each value is clamped to 0-255, and an alpha of 0 makes the unit and its shadow invisible, though its selection circle and health bar still show. The game keeps no tint to read back. Does nothing once the unit is gone.</summary>
         public void Tint(int red, int green, int blue, int alpha = 255)
         {
@@ -1126,9 +1141,18 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Removes the unit from the game unless the game has already, and forgets it.</summary>
+        /// <summary>Ends the unit's effects, removes the unit from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
+            if (effects != null)
+            {
+                var ending = new List<SpecialEffect>(effects);
+                for (var i = 0; i < ending.Count; i++)
+                {
+                    ending[i].End();
+                }
+            }
+
             if (!IsGone)
             {
                 Runtime.World.DeleteUnit(Handle);

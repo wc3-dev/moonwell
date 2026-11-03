@@ -40,6 +40,9 @@ namespace Moonwell.Engine
         /// <summary>The destructables the last DestructablesInWorld call has found.</summary>
         private List<destructable> foundDestructables = new List<destructable>();
 
+        /// <summary>The location GroundZ reads the ground through; made on the first read.</summary>
+        private location? spot;
+
         /// <summary>Starts the clock and the wake timer, and listens for units entering the map.</summary>
         public NativeWorld()
         {
@@ -1106,6 +1109,83 @@ namespace Moonwell.Engine
         public void MoveItem(item item, float x, float y)
         {
             Natives.SetItemPosition(item, x, y);
+        }
+
+        /// <summary>Makes an effect of a model at a place, on the ground there: AddSpecialEffect.</summary>
+        public effect MakeEffect(string model, float x, float y)
+        {
+            return Natives.AddSpecialEffect(model, x, y);
+        }
+
+        /// <summary>Makes an effect of a model on a unit, at an attachment point: AddSpecialEffectTarget.</summary>
+        public effect MakeEffectOn(string model, unit unit, string point)
+        {
+            return Natives.AddSpecialEffectTarget(model, unit, point);
+        }
+
+        /// <summary>Moves an effect to a place and an absolute height: BlzSetSpecialEffectPosition.</summary>
+        public void PlaceEffect(effect fx, float x, float y, float z)
+        {
+            Natives.BlzSetSpecialEffectPosition(fx, x, y, z);
+        }
+
+        /// <summary>Turns an effect, in radians: BlzSetSpecialEffectOrientation.</summary>
+        public void TurnEffect(effect fx, float yaw, float pitch, float roll)
+        {
+            Natives.BlzSetSpecialEffectOrientation(fx, yaw, pitch, roll);
+        }
+
+        /// <summary>Scales an effect: BlzSetSpecialEffectScale.</summary>
+        public void ScaleEffect(effect fx, float scale)
+        {
+            Natives.BlzSetSpecialEffectScale(fx, scale);
+        }
+
+        /// <summary>Plays an animation of an effect by name, BlzSetSpecialEffectAnimation, or queues it, BlzQueueSpecialEffectAnimation.</summary>
+        public void AnimateEffect(effect fx, string name, bool queued)
+        {
+            if (queued)
+            {
+                Natives.BlzQueueSpecialEffectAnimation(fx, name);
+            }
+            else
+            {
+                Natives.BlzSetSpecialEffectAnimation(fx, name);
+            }
+        }
+
+        /// <summary>Sets the speed of an effect's animations: BlzSetSpecialEffectTimeScale.</summary>
+        public void SetEffectSpeed(effect fx, float speed)
+        {
+            Natives.BlzSetSpecialEffectTimeScale(fx, speed);
+        }
+
+        /// <summary>Ends an effect: DestroyEffect, which plays its death animation, or BlzRemoveEffect, which removes it at once.</summary>
+        public void EndEffect(effect fx, bool playDeath)
+        {
+            if (playDeath)
+            {
+                Natives.DestroyEffect(fx);
+            }
+            else
+            {
+                Natives.BlzRemoveEffect(fx);
+            }
+        }
+
+        /// <summary>The ground's height at a place, on this machine: GetLocationZ through one location, made on the first read.</summary>
+        public float GroundZ(float x, float y)
+        {
+            if (spot == null)
+            {
+                spot = Natives.Location(x, y);
+            }
+            else
+            {
+                Natives.MoveLocation(spot, x, y);
+            }
+
+            return Natives.GetLocationZ(spot);
         }
 
         /// <summary>Runs a callback once, after the map's main function has returned.</summary>
