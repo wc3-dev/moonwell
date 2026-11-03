@@ -136,9 +136,13 @@ namespace Objects
     [Moonwell.Objects.ObjectId("B001")]
     public class Gate : Destructables.DemonicGate
     {
+        public static string? Read;
+
         public Gate()
         {
             Name = "Gate";
+            MaxLife = 5000f;
+            Read = "" + MaxLife;
         }
     }
 

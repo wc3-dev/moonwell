@@ -14,5 +14,11 @@ namespace Moonwell.Testing
         {
             TestLog.Lines.Add("gate died");
         }
+
+        /// <summary>Logs that the gate was restored.</summary>
+        public override void OnRestored()
+        {
+            TestLog.Lines.Add("gate restored");
+        }
     }
 }

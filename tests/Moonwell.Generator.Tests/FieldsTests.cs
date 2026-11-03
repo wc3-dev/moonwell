@@ -73,6 +73,7 @@ public class FieldsTests
     [InlineData(Kind.Unit, "uagi", "Agility")]
     [InlineData(Kind.Unit, "uint", "Intelligence")]
     [InlineData(Kind.Item, "iuse", "Charges")]
+    [InlineData(Kind.Destructable, "bhps", "MaxLife")]
     public void a_shared_field_takes_its_live_members_name_though_the_runtime_class_has_it(Kind kind, string id, string name)
     {
         var runtime = RuntimeMembers.Read(Path.Combine(AppContext.BaseDirectory, "Moonwell.dll")).Of(kind);
@@ -90,7 +91,7 @@ public class FieldsTests
             new[] { "uagi Agility", "uhpm MaxLife", "uint Intelligence", "ulev Level", "umpi Mana", "umpm MaxMana", "umvh FlyHeight", "unam Name", "usca Scale", "ustr Strength" },
             SharedFields.Of(Kind.Unit).OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + " " + p.Value));
         Assert.Equal(new[] { "iuse Charges" }, SharedFields.Of(Kind.Item).Select(p => p.Key + " " + p.Value));
-        Assert.Empty(SharedFields.Of(Kind.Destructable));
+        Assert.Equal(new[] { "bhps MaxLife" }, SharedFields.Of(Kind.Destructable).Select(p => p.Key + " " + p.Value));
         Assert.Null(SharedFields.MemberOf(Kind.Item, "unam"));
     }
 

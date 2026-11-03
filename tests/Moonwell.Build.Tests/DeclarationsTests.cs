@@ -148,7 +148,7 @@ namespace Moonwell.Build.Tests
 
             Assert.Equal(new[] { "uabi", "ugol", "uhab", "uhpm", "unam" }, Find(objects, "Objects.Arthas").Changed.Keys);
             Assert.Equal(new[] { "fnam" }, Find(objects, "Objects.Burn").Changed.Keys);
-            Assert.Equal(new[] { "bnam" }, Find(objects, "Objects.Gate").Changed.Keys);
+            Assert.Equal(new[] { "bhps", "bnam" }, Find(objects, "Objects.Gate").Changed.Keys);
         }
 
         [Fact]

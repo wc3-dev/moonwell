@@ -114,14 +114,16 @@ public sealed class Champion : Human.Units.Paladin
   the stab, claw and wood slice sounds are for hits, and are error MW0009 there, as what the game does with them on a
   unit is not known. In a unit's class the field goes straight into a hit:
   `this.Damage(target, 10f, sound: Attack1WeaponSound)`.
-- A field that a `Unit`, `Hero` or `Item` also has as a live value has one name for both. In the constructor it sets
-  what every object of the class starts with; anywhere else it is this object (`MaxLife += 10` in `OnKill`). The
-  names are `MaxLife`, `MaxMana`, `Mana` (what it starts with), `Scale`, `FlyHeight` and `Name` on a unit and hero,
-  `Level` on a unit that is not a hero, `Strength`, `Agility` and `Intelligence` on a hero, and `Charges` on an item.
-  They were `HitPoints`, `ManaPoints`, `ManaInitialAmount`, `ScalingValue`, `Height`, `UnitLevel`,
-  `StartingStrength`, `StartingAgility`, `StartingIntelligence` and `NumberOfCharges`, which are gone. Outside the
-  constructor the old names read the declared value; write `Default.MaxLife` (`Default.Name`) for that. An item's `Level`,
-  `Scale` and `HitPoints`, a doodad's `Scale` and a destructable's `HitPoints` keep their names, and six ability fields are
+- A field that a `Unit`, `Hero`, `Item` or `Destructable` also has as a live value has one name for both. In the
+  constructor it sets what every object of the class starts with; anywhere else it is this object (`MaxLife += 10` in
+  `OnKill`). The names are `MaxLife`, `MaxMana`, `Mana` (what it starts with), `Scale`, `FlyHeight` and `Name` on a unit
+  and hero, `Level` on a unit that is not a hero, `Strength`, `Agility` and `Intelligence` on a hero, `Charges` on an
+  item, and `MaxLife` on a destructable. They were `HitPoints`, `ManaPoints`, `ManaInitialAmount`, `ScalingValue`,
+  `Height`, `UnitLevel`, `StartingStrength`, `StartingAgility`, `StartingIntelligence`, `NumberOfCharges` and a
+  destructable's `HitPoints`, which are gone. Outside the constructor the old names read the declared value; write
+  `Default.MaxLife` (`Default.Name`) for that on a unit or item. A destructable has no `Default`, so its declared most
+  life is read only in its constructor. An item's `Level`, `Scale` and `HitPoints` and a doodad's `Scale` keep their
+  names, and six ability fields are
   named apart: `Inferno.InfernalDuration`, `Taunt.PreferHostiles` and `PreferFriendlies`, `WindWalk.BackstabDamage` and
   `Backstab`, `HealingModifier.HealingPercent`.
 - A field with no live value (`Model`, `Tooltip`, `GoldCost`) keeps World Editor's name, is set only in the constructor,
@@ -153,7 +155,7 @@ public sealed class Champion : Human.Units.Paladin
   numbers: any other part is error MW0009, which `[BeyondLimits]` doesn't lift.
 - A constructor may compute, but must not call the game: the build fails at such a line. A live member with no declared
   field there (`Life = 300`, `Kill()`, `X`) is error MW0012, which says what to set instead where there is one: a unit
-  starts with full life, so set `MaxLife`.
+  or destructable starts with full life, so set `MaxLife`.
 - A class with no `[ObjectId]` is error MW0013, and the build names a free id to use. A buff also gives the id of its
   carrier, the hidden ability the build makes to show its icon, so no class of the map declares that id:
   `[ObjectId("B001", Carrier = "A002")]`, or `[ObjectId(Carrier = "A002")]` with `[Replaces]`. An id is four ASCII
@@ -162,8 +164,10 @@ public sealed class Champion : Human.Units.Paladin
 - `[Replaces]` makes the class the game's object itself: every unit of that type is made as the class.
 - `Unit.Create<Champion>(player, x, y, scope)` makes one in the game, in the scope named (scopes, below), facing 270
   degrees unless a facing follows; `Item.Create<EmberBlade>(x, y, scope)` makes an item, `(hero, scope)` in a unit's
-  inventory and `(hero, slot, scope)` into a slot of it, or at the unit's feet when it has no room. `new Champion()`
-  gives an object with nothing in the game behind it, and is error MW0046.
+  inventory and `(hero, slot, scope)` into a slot of it, or at the unit's feet when it has no room, and
+  `Destructable.Create<Gate>(x, y, scope)` a destructable, facing 270 degrees, at scale 1 and in its type's first model
+  (variation 0) unless they follow. `new Champion()` gives an object with nothing in the game behind it, and is error
+  MW0046.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -209,7 +213,7 @@ default.
 ## Components and reactions
 
 A reaction is a method on the thing involved: `OnDamaged`, `OnDeath` and `OnKill` on a unit, `OnCast` on an ability,
-`OnPickedUp` on an item. A component is a class that carries reactions and state, and is added to a unit, item,
+`OnPickedUp` on an item, `OnDeath` and `OnRestored` on a destructable. A component is a class that carries reactions and state, and is added to a unit, item,
 destructable, player or the game: it inherits `UnitComponent`, `ItemComponent`, `DestructableComponent`,
 `PlayerComponent` or `GameComponent`.
 
@@ -302,9 +306,9 @@ static void Smoke(Scope scope, Unit unit) // a helper is told whose
 
 ## Units, heroes and items
 
-A unit's members read and change the game's. Once the game has removed a unit or item they give the last value read or
-set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the quarter second
-before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
+A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last
+value read or set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the
+quarter second before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
 `Local.For`, a change is not.
 
 | Unit | |
@@ -358,6 +362,15 @@ fires the drops after it. For a unit Moonwell removed (`Remove()`, or its scope 
 native removed, the drop reactions run for an object about to be swept, with `Carrier` already null. The items of a
 removed hero are removed with it, as seen; other units are assumed to do the same. A member's exact behaviour is in its
 comment.
+
+| Destructable | |
+|---|---|
+| `Life`, `MaxLife` | read and set; a `Life` of 0.4 or less kills (0.405 does not), above the most it clamps, and on a dead destructable it does nothing; the most is a whole number, and a full destructable stays full |
+| `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run; it stays in the game, dead, until it is removed or restored |
+| `Restore()` | brings a dead destructable back at its most life, with `OnRestored` run; `Restore(showBirth: true)` plays its birth animation; does nothing to a living one |
+| `X`, `Y` | read; where the game put it, which is not always where it was asked: a tree asked at 1000 stands at 960 |
+
+A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
 
 ## Damage
 
@@ -635,8 +648,9 @@ target.Knockback(caster.AngleToPoint(target), 300f, 0.5f); // 300 away over half
   1,200 a second). `IPushTarget` has `OnPushed`, `OnSlammed` and `OnGrounded`; an `OnPushed` that pushes its own unit
   calls itself again, without end.
 - **Bridges**: placed bridges are ground, for missiles landing (from above: one below a deck flies under it) and units
-  standing, until the bridge dies (brought back to life, it is not ground again); missiles do not meet it as a
-  destructable. A deck stands on the ground beneath any water at its bridge's place, as in the game; the build writes
+  standing, until the bridge dies; missiles do not meet it as a destructable. Brought back with `Restore()` it is ground
+  again at once. With its birth animation the game's own deck comes back lower and rises to its old height within 7
+  seconds (26 below at first on a Long Stone Bridge). Brought back by the native, it stays no ground. A deck stands on the ground beneath any water at its bridge's place, as in the game; the build writes
   that ground, which `Terrain.Height` does not read (it reads the water's surface). A bridge made by code is not
   ground, nor a type with no deck Moonwell knows (an ice floe, or the map's own type with its model changed): the build
   warns of it. A pushed unit uses the deck, whatever the pathing under it; the game's own pathing (move orders) walks a

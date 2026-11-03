@@ -8,5 +8,11 @@ namespace Moonwell.Testing
         {
             TestLog.Lines.Add("part died");
         }
+
+        /// <summary>Logs that the part saw the restore.</summary>
+        public override void OnRestored()
+        {
+            TestLog.Lines.Add("part restored");
+        }
     }
 }

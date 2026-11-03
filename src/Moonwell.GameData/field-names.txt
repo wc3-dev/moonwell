@@ -51,7 +51,6 @@ item ides Description
 item uhot Hotkey
 item ureq Requires
 destructable bnam Name
-destructable bhps HitPoints
 destructable bfil Model
 destructable bbut BuildTime
 destructable bret RepairTime

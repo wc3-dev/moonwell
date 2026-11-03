@@ -86,6 +86,27 @@ namespace Moonwell.Hosting
         /// <summary>The y of a destructable.</summary>
         float DestructableY(destructable destructable);
 
+        /// <summary>Creates a destructable of a type at a place, with a facing, a scale and a variation; null for a type the game makes none of.</summary>
+        destructable SpawnDestructable(int typeId, float x, float y, float facing, float scale, int variation);
+
+        /// <summary>Kills a destructable through the game (KillDestructable); the game delivers its death before the call returns, and nothing for one already dead.</summary>
+        void SlayDestructable(destructable destructable);
+
+        /// <summary>The life of a destructable; 0 when it is dead or the game has removed it.</summary>
+        float DestructableLifeOf(destructable destructable);
+
+        /// <summary>Sets the life of a destructable (SetDestructableLife), clamped to its most life; 0.4 or less kills it, the death delivered before the call returns.</summary>
+        void PutDestructableLife(destructable destructable, float life);
+
+        /// <summary>The most life of a destructable; 0 once the game has removed it.</summary>
+        float DestructableMaxLifeOf(destructable destructable);
+
+        /// <summary>Sets the most life of a destructable (SetDestructableMaxLife), which the game keeps as a whole number.</summary>
+        void PutDestructableMaxLife(destructable destructable, float most);
+
+        /// <summary>Brings a dead destructable back to life (DestructableRestoreLife), with or without its birth animation; nothing for a living one.</summary>
+        void RestoreDestructable(destructable destructable, float life, bool birth);
+
         /// <summary>Removes a unit from the world.</summary>
         void DeleteUnit(unit unit);
 

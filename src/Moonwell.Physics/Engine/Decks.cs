@@ -124,6 +124,18 @@ namespace Moonwell.Engine
             Pass.GroundGone(deck.minX, deck.minY, deck.maxX, deck.maxY);
         }
 
+        /// <summary>A deck's bridge was brought back to life by Restore: the deck is ground again. What rests beneath it stays, as one below a deck is under it.</summary>
+        internal static void Back(Deck deck)
+        {
+            if (deck.living)
+            {
+                return;
+            }
+
+            deck.living = true;
+            count++;
+        }
+
         /// <summary>Whether a living deck's box holds a point: something there may meet a deck that the terrain's height does not show.</summary>
         internal static bool Near(float x, float y)
         {

@@ -637,5 +637,47 @@ namespace Moonwell.Testing
             Expect.Equal(0, Decks.count, "a bridge that leaves the game takes its deck");
             Within(-20.0f, Physics.GroundHeight(1536.0f, 1536.0f), 0.01f, "GroundHeight reads the water there");
         }
+
+        /// <summary>
+        /// A bridge that dies and is brought back with Restore is ground again: GroundHeight reads its deck, a ball set down on
+        /// it rests on it, and a ball resting on the water beneath stays there. One brought back by the native, which tells
+        /// nothing, is not.
+        /// </summary>
+        public static void Restored(FakeWorld world)
+        {
+            FakeTerrainWorld terrain;
+            var fake = Fresh(-20.0f, true, out terrain);
+            var handle = Bridge(world, fake, FixedId, 512.0f, 512.0f);
+            var other = Bridge(world, fake, TurningId, 1536.0f, 1536.0f);
+            Physics.Install(FixedId + " 0 500 500 270 1 0 -60\n" + TurningId + " 0 1530 1530 270 1 1 -60", Shape);
+            var bridge = Destructable.Of(handle)!;
+            bridge.Kill();
+            Expect.Equal(1, Decks.count, "the other deck counts");
+            var below = new Ball();
+            below.GroundContact = Contact.Slide;
+            below.Gravity = 800.0f;
+            below.Friction = 1000.0f;
+            Missile.Create(below, 512.0f, 512.0f, 0.0f, Game.Instance);
+            Steps(world, 64);
+            Within(-4.0f, below.Z, 0.5f, "a ball rests on the water");
+
+            bridge.Restore();
+            Expect.Equal(2, Decks.count, "the deck counts again");
+            Within(70.0f, Physics.GroundHeight(512.0f, 512.0f), 0.01f, "GroundHeight reads the deck again");
+            var above = new Ball();
+            above.GroundContact = Contact.Slide;
+            above.Gravity = 800.0f;
+            above.Friction = 1000.0f;
+            above.VZ = -10.0f;
+            Missile.Create(above, 512.0f, 512.0f, 87.0f, Game.Instance);
+            Steps(world, 32);
+            Expect.True(above.Rested >= 1, "a ball set down on it rests");
+            Within(86.0f, above.Z, 0.5f, "on the deck");
+            Within(-4.0f, below.Z, 0.5f, "the ball beneath stays on the water");
+
+            Destructable.Of(other)!.Kill();
+            world.RestoreDestructable(other, 0.0f, false);
+            Expect.Equal(1, Decks.count, "a bridge the native brings back is not ground again");
+        }
     }
 }

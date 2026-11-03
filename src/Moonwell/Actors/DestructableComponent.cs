@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(DestructableComponent), new string[] { "OnDeath" }, new int[] { Hook.OnDeath });
+                    componentHooks = new HookTable(typeof(DestructableComponent), new string[] { "OnDeath", "OnRestored" }, new int[] { Hook.OnDeath, Hook.OnRestored });
                 }
 
                 return componentHooks;
@@ -29,6 +29,11 @@ namespace Moonwell
 
         /// <summary>Runs when the destructable dies.</summary>
         public virtual void OnDeath()
+        {
+        }
+
+        /// <summary>Runs when Restore brings the destructable back to life.</summary>
+        public virtual void OnRestored()
         {
         }
     }

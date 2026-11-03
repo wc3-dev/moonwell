@@ -10,9 +10,10 @@ namespace Moonwell.Analyzers;
 
 /// <summary>
 /// Rejects the game's live values and actions in the constructor of a declared object class (MW0012): a class that
-/// inherits <c>StandardUnit</c>, <c>StandardHero</c> or <c>StandardItem</c>, whose constructor the build runs with no game.
-/// A member of <c>Unit</c>, <c>Hero</c> or <c>Item</c> on the object itself is reported, except <c>Components</c> and the
-/// live members a declared field shares (<c>MaxMana</c>, <c>Name</c>, <c>Strength</c>, <c>Charges</c>), which there are the
+/// inherits <c>StandardUnit</c>, <c>StandardHero</c>, <c>StandardItem</c> or <c>StandardDestructable</c>, whose constructor
+/// the build runs with no game. A member of <c>Unit</c>, <c>Hero</c>, <c>Item</c> or <c>Destructable</c> on the object
+/// itself is reported, except <c>Components</c> and the live members a declared field shares (<c>MaxMana</c>,
+/// <c>Name</c>, <c>Strength</c>, <c>Charges</c>, a destructable's <c>MaxLife</c>), which there are the
 /// class's declared values; a hero's <c>Level</c> (and <c>Set("ulev", ...)</c>) is not one, since a hero starts at level 1.
 /// The class's own default object (<c>Default</c>, or <c>Unit.Default&lt;T&gt;()</c> of the class or a class under it) is
 /// what the constructor is making, and is reported too. Code in a lambda or a local function may run later in the game,
@@ -30,6 +31,7 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
         ["Unit"] = new HashSet<string> { "MaxLife", "MaxMana", "Mana", "Level", "Scale", "FlyHeight", "Name" },
         ["Hero"] = new HashSet<string> { "Strength", "Agility", "Intelligence" },
         ["Item"] = new HashSet<string> { "Charges" },
+        ["Destructable"] = new HashSet<string> { "MaxLife" },
     };
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Rules.Declared;
@@ -262,7 +264,9 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
         }
         else if (text == "Life")
         {
-            why = "is the unit's value in the game: a unit starts with full life; set MaxLife";
+            why = symbol.ContainingType.Name == "Destructable"
+                ? "is the destructable's value in the game: a destructable starts with full life; set MaxLife"
+                : "is the unit's value in the game: a unit starts with full life; set MaxLife";
         }
         else if (text == "Add")
         {
@@ -276,12 +280,12 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(Diagnostic.Create(Rules.LiveInDeclaration, name.GetLocation(), text, why));
     }
 
-    // A class that inherits a standard unit, hero or item of Moonwell.Objects: the build runs its constructor to read its fields.
+    // A class that inherits a standard unit, hero, item or destructable of Moonwell.Objects: the build runs its constructor to read its fields.
     internal static bool IsDeclared(INamedTypeSymbol type)
     {
         for (var at = type.BaseType; at != null; at = at.BaseType)
         {
-            if ((at.Name == "StandardUnit" || at.Name == "StandardHero" || at.Name == "StandardItem")
+            if ((at.Name == "StandardUnit" || at.Name == "StandardHero" || at.Name == "StandardItem" || at.Name == "StandardDestructable")
                 && at.ContainingNamespace is { Name: "Objects", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } })
             {
                 return true;
@@ -311,7 +315,7 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
 
     private static bool IsRuntimeType(INamedTypeSymbol? type)
     {
-        return IsNamed(type, "Unit") || IsNamed(type, "Hero") || IsNamed(type, "Item");
+        return IsNamed(type, "Unit") || IsNamed(type, "Hero") || IsNamed(type, "Item") || IsNamed(type, "Destructable");
     }
 
     private static bool IsNamed(INamedTypeSymbol? type, string name)

@@ -144,6 +144,15 @@ namespace Moonwell.Objects.Tests
         }
     }
 
+    /// <summary>A Demonic Gate of a map's own with more life.</summary>
+    public class StrongGate : Moonwell.Objects.Destructables.DemonicGate
+    {
+        public StrongGate()
+        {
+            MaxLife = 5000f;
+        }
+    }
+
     /// <summary>A Phoenix of a map's own: the Phoenix's standard regeneration, -25, is below World Editor's range of 0 to 1000.</summary>
     public class Firebird : Moonwell.Objects.Human.Units.Phoenix
     {
@@ -320,6 +329,9 @@ namespace Moonwell.Objects.Tests
             Assert.Equal(300, DeclaredOf(commander)["umpm"]);
             Assert.Equal(3, new BigPotion().Charges);
             Assert.Equal(3, DeclaredOf(new BigPotion())["iuse"]);
+            Assert.Equal(5000f, new StrongGate().MaxLife);
+            Assert.Equal(5000f, DeclaredOf(new StrongGate())["bhps"]);
+            Assert.Equal(50f, new Moonwell.Objects.Destructables.SummerTreeWall().MaxLife);
         }
 
         [Fact]

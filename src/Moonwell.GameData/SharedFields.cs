@@ -27,6 +27,10 @@ public static class SharedFields
         {
             ["iuse"] = "Charges",
         },
+        [Kind.Destructable] = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["bhps"] = "MaxLife",
+        },
     };
 
     private static readonly HashSet<string> HeroSetById = new(StringComparer.Ordinal) { "uhpm", "umpm", "umpi", "ulev" };

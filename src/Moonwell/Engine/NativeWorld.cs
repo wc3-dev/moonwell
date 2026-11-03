@@ -388,6 +388,48 @@ namespace Moonwell.Engine
             return Natives.GetDestructableY(destructable);
         }
 
+        /// <summary>Creates a destructable of a type at a place, with a facing, a scale and a variation.</summary>
+        public destructable SpawnDestructable(int typeId, float x, float y, float facing, float scale, int variation)
+        {
+            return Natives.CreateDestructable(typeId, x, y, facing, scale, variation);
+        }
+
+        /// <summary>Kills a destructable through the game: KillDestructable.</summary>
+        public void SlayDestructable(destructable destructable)
+        {
+            Natives.KillDestructable(destructable);
+        }
+
+        /// <summary>The life of a destructable, from the game.</summary>
+        public float DestructableLifeOf(destructable destructable)
+        {
+            return Natives.GetDestructableLife(destructable);
+        }
+
+        /// <summary>Sets the life of a destructable in the game.</summary>
+        public void PutDestructableLife(destructable destructable, float life)
+        {
+            Natives.SetDestructableLife(destructable, life);
+        }
+
+        /// <summary>The most life of a destructable, from the game.</summary>
+        public float DestructableMaxLifeOf(destructable destructable)
+        {
+            return Natives.GetDestructableMaxLife(destructable);
+        }
+
+        /// <summary>Sets the most life of a destructable in the game.</summary>
+        public void PutDestructableMaxLife(destructable destructable, float most)
+        {
+            Natives.SetDestructableMaxLife(destructable, most);
+        }
+
+        /// <summary>Brings a dead destructable back to life: DestructableRestoreLife.</summary>
+        public void RestoreDestructable(destructable destructable, float life, bool birth)
+        {
+            Natives.DestructableRestoreLife(destructable, life, birth);
+        }
+
         /// <summary>Removes a unit from the world.</summary>
         public void DeleteUnit(unit unit)
         {

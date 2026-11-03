@@ -429,6 +429,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "deck.push-rail-body", Run = DeckCases.PushRailBody });
             list.Add(new Case { Name = "deck.push-ramp", Run = DeckCases.PushRamp });
             list.Add(new Case { Name = "deck.dies", Run = DeckCases.Dies });
+            list.Add(new Case { Name = "deck.restored", Run = DeckCases.Restored });
             list.Add(new Case { Name = "deck.not-a-cylinder", Run = DeckCases.NotACylinder });
             list.Add(new Case { Name = "deck.slope-normal", Run = DeckCases.SlopeNormal });
         }
@@ -1042,6 +1043,22 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "destructables.sweep-while-the-list-empties", Run = DestructableCases.SweepWhileTheListEmpties });
             list.Add(new Case { Name = "destructables.remove-after-death", Run = DestructableCases.RemoveAfterDeath });
             list.Add(new Case { Name = "destructables.remove-living", Run = DestructableCases.RemoveLiving });
+            list.Add(new Case { Name = "destructables.create-in-scope", Run = DestructableCases.CreateInScope });
+            list.Add(new Case { Name = "destructables.create-class", Run = DestructableCases.CreateClass });
+            list.Add(new Case { Name = "destructables.create-unmakeable", Run = DestructableCases.CreateUnmakeable });
+            list.Add(new Case { Name = "destructables.create-in-ended-scope", Run = DestructableCases.CreateInEndedScope });
+            list.Add(new Case { Name = "destructables.kill-runs-death", Run = DestructableCases.KillRunsDeath });
+            list.Add(new Case { Name = "destructables.kill-dead-or-gone", Run = DestructableCases.KillDeadOrGone });
+            list.Add(new Case { Name = "destructables.life-sets", Run = DestructableCases.LifeSets });
+            list.Add(new Case { Name = "destructables.life-low-kills", Run = DestructableCases.LifeLowKills });
+            list.Add(new Case { Name = "destructables.life-on-dead", Run = DestructableCases.LifeOnDead });
+            list.Add(new Case { Name = "destructables.life-gone", Run = DestructableCases.LifeGone });
+            list.Add(new Case { Name = "destructables.max-life-sets", Run = DestructableCases.MaxLifeSets });
+            list.Add(new Case { Name = "destructables.max-life-without-handle", Run = DestructableCases.MaxLifeWithoutHandle });
+            list.Add(new Case { Name = "destructables.restore-runs-restored", Run = DestructableCases.RestoreRunsRestored });
+            list.Add(new Case { Name = "destructables.restore-then-kill", Run = DestructableCases.RestoreThenKill });
+            list.Add(new Case { Name = "destructables.restore-living", Run = DestructableCases.RestoreLiving });
+            list.Add(new Case { Name = "destructables.restored-reports-errors", Run = DestructableCases.RestoredReportsErrors });
             list.Add(new Case { Name = "components.ended-in-onremoved", Run = EndedCases.ReadInOnRemoved });
             list.Add(new Case { Name = "damage.order", Run = DamageCases.Order });
             list.Add(new Case { Name = "damage.change-amount", Run = DamageCases.ChangeAmount });
