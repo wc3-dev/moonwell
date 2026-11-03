@@ -227,11 +227,12 @@ namespace Moonwell
             internal Damage? Damage { get; set; }
         }
 
-        /// <summary>Runs a damage's reactions: the source's type and components deal it, the target's take it, then the map's and the players' reactions; a damage package calls it with its own kind of damage.</summary>
+        /// <summary>Runs a damage's reactions: the watch checks the target first (decision 163), then the source's type and components deal it, the target's take it, then the map's and the players' reactions; a damage package calls it with its own kind of damage.</summary>
         internal static void Dispatch(Damage damage)
         {
             var hit = damage.Target;
             var from = damage.Source;
+            SpellBuffs.Hit(hit, from);
             var hitSlot = hit.Owner.Slot;
             var fromSlot = from == null ? -1 : from.Owner.Slot;
             if (from != null)
@@ -328,6 +329,7 @@ namespace Moonwell
             var cast = new Cast(ability, by, target == null ? null : Unit.Of(target), x, y, Runtime.World.AbilityLevel(caster, abilityId));
             ability.Adopt(cast);
             by.ActiveCast = cast;
+            SpellBuffs.Cast(cast);
             AbilityCast(ability, cast);
             CasterCast(by, cast);
             MapCast(Game.Instance, cast);

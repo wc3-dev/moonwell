@@ -196,6 +196,7 @@ namespace Moonwell
                 }
             }
 
+            SpellBuffs.Begin();
             try
             {
                 Inbound.GameStarted();

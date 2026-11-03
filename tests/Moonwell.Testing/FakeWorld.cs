@@ -324,6 +324,7 @@ namespace Moonwell.Testing
         public static FakeWorld Install()
         {
             var world = new FakeWorld();
+            world.GameBuffs = new FakeGameBuffs(world);
             Runtime.Reset(world);
             Interactions.ResetSettings();
             Physics.ResetSettings();
@@ -493,12 +494,12 @@ namespace Moonwell.Testing
 
                 Time = next;
                 WakeAt = null;
-                StepGameBuffs(Time);
+                GameBuffs.Step(Time);
                 Runtime.Wake();
             }
 
             Time = target;
-            StepGameBuffs(Time);
+            GameBuffs.Step(Time);
         }
 
         /// <summary>
@@ -550,61 +551,11 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>The game buffs given with an end, as the game runs them out: each unit, buff id and end time.</summary>
-        private readonly List<(unit Unit, int Buff, float End)> gameBuffEnds = new List<(unit Unit, int Buff, float End)>();
-
-        /// <summary>The game buffs each unit was given, which a death takes off.</summary>
-        private readonly Dictionary<unit, List<int>> gameBuffs = new Dictionary<unit, List<int>>();
-
-        /// <summary>The auras of the game this world runs: each holder, ability, buff and reach, and when each unit left its reach.</summary>
-        private readonly List<FakeAura> fakeAuras = new List<FakeAura>();
+        /// <summary>The game buffs, spell hits and auras of this world (<see cref="FakeGameBuffs"/>); Install makes it.</summary>
+        public FakeGameBuffs GameBuffs = null!;
 
         /// <summary>The area of each ability, for every level, by its id; 0 when not set.</summary>
         public Dictionary<int, float> AbilityAreas = new Dictionary<int, float>();
-
-        /// <summary>Puts a game buff on a unit, as a spell, an aura or an attack does: its level reads 1 from now; with seconds above 0 it runs out after them, as the game's buff does.</summary>
-        public void GiveGameBuff(unit u, int buffId, float seconds = 0.0f)
-        {
-            SetAbilityLevel(u, buffId, 1);
-            if (!gameBuffs.TryGetValue(u, out var given))
-            {
-                given = new List<int>();
-                gameBuffs[u] = given;
-            }
-
-            if (!given.Contains(buffId))
-            {
-                given.Add(buffId);
-            }
-
-            gameBuffEnds.RemoveAll(entry => entry.Unit == u && entry.Buff == buffId);
-            if (seconds > 0.0f)
-            {
-                gameBuffEnds.Add((u, buffId, Time + seconds));
-            }
-        }
-
-        /// <summary>Takes a game buff off a unit, as the game does when it runs out or is dispelled.</summary>
-        public void TakeGameBuff(unit u, int buffId)
-        {
-            SetAbilityLevel(u, buffId, 0);
-            gameBuffEnds.RemoveAll(entry => entry.Unit == u && entry.Buff == buffId);
-        }
-
-        /// <summary>A spell's or an attack's hit that puts a game buff on, as seen 11-03: a hit of 0 from the source, whose damage event fires first, then the buff, in the same frame.</summary>
-        public void SpellHit(unit source, unit target, int buffId, float seconds = 0.0f)
-        {
-            DealDamage(source, target, 0.0f, false, false, 0, 0, 0);
-            GiveGameBuff(target, buffId, seconds);
-        }
-
-        /// <summary>Runs an aura of the game: each step of Advance, a unit within reach of the holder has the buff at once, and one that left loses it 3 s later (seen 11-03).</summary>
-        public void AddFakeAura(unit holder, int abilityId, int buffId, float reach)
-        {
-            SetAbilityLevel(holder, abilityId, AbilityLevel(holder, abilityId) > 0 ? AbilityLevel(holder, abilityId) : 1);
-            fakeAuras.Add(new FakeAura { Holder = holder, Buff = buffId, Reach = reach });
-            StepGameBuffs(Time);
-        }
 
         /// <summary>The area of an ability at a unit's level of it, as set in <see cref="AbilityAreas"/>.</summary>
         public float AbilityArea(unit u, int abilityId)
@@ -616,26 +567,11 @@ namespace Moonwell.Testing
         public List<unit> UnitsInRange(float x, float y, float radius)
         {
             var found = new List<unit>();
-            foreach (var u in EveryUnit())
-            {
-                var dx = UnitX(u) - x;
-                var dy = UnitY(u) - y;
-                if (dx * dx + dy * dy <= radius * radius)
-                {
-                    found.Add(u);
-                }
-            }
-
-            return found;
-        }
-
-        /// <summary>Every unit made and not removed, in the order made.</summary>
-        private List<unit> EveryUnit()
-        {
-            var found = new List<unit>();
             foreach (var entry in unitTypes)
             {
-                if (entry.Value != 0)
+                var dx = UnitX(entry.Key) - x;
+                var dy = UnitY(entry.Key) - y;
+                if (entry.Value != 0 && dx * dx + dy * dy <= radius * radius)
                 {
                     found.Add(entry.Key);
                 }
@@ -643,58 +579,6 @@ namespace Moonwell.Testing
 
             return found;
         }
-
-        /// <summary>Runs out the game buffs whose end has come, and steps the auras, at a time.</summary>
-        private void StepGameBuffs(float time)
-        {
-            for (var i = gameBuffEnds.Count - 1; i >= 0; i--)
-            {
-                if (gameBuffEnds[i].End <= time + 0.001f)
-                {
-                    var ended = gameBuffEnds[i];
-                    gameBuffEnds.RemoveAt(i);
-                    SetAbilityLevel(ended.Unit, ended.Buff, 0);
-                }
-            }
-
-            foreach (var aura in fakeAuras)
-            {
-                foreach (var u in EveryUnit())
-                {
-                    var near = !dead.Contains(aura.Holder) && !dead.Contains(u) && UnitsInRange(UnitX(aura.Holder), UnitY(aura.Holder), aura.Reach).Contains(u);
-                    if (near)
-                    {
-                        aura.LeftAt.Remove(u);
-                        if (AbilityLevel(u, aura.Buff) == 0)
-                        {
-                            GiveGameBuff(u, aura.Buff);
-                        }
-                    }
-                    else if (AbilityLevel(u, aura.Buff) > 0 && !aura.LeftAt.ContainsKey(u))
-                    {
-                        aura.LeftAt[u] = time;
-                    }
-                    else if (aura.LeftAt.TryGetValue(u, out var left) && left + 3.0f <= time + 0.001f)
-                    {
-                        aura.LeftAt.Remove(u);
-                        SetAbilityLevel(u, aura.Buff, 0);
-                    }
-                }
-            }
-        }
-
-        /// <summary>Takes a dying unit's game buffs off, as the game does before the death event (seen 11-03).</summary>
-        private void TakeGameBuffsAtDeath(unit u)
-        {
-            if (gameBuffs.TryGetValue(u, out var given))
-            {
-                foreach (var buffId in given)
-                {
-                    TakeGameBuff(u, buffId);
-                }
-            }
-        }
-
         /// <summary>The game seconds since the world was made; in a development build, Moonwell's time on its clock (Runtime.Clock), as NativeWorld's.</summary>
         public float Now()
         {
@@ -1907,7 +1791,7 @@ namespace Moonwell.Testing
 
             lives[unit] = 0.0f;
             DropAll(unit);
-            TakeGameBuffsAtDeath(unit);
+            GameBuffs.TakeAll(unit);
             if (Listening.Contains(GameEvent.Death))
             {
                 Inbound.Died(unit, killer);
@@ -2712,21 +2596,5 @@ namespace Moonwell.Testing
             /// <summary>The variation asked for.</summary>
             public int Variation;
         }
-    }
-
-    /// <summary>An aura of the game a fake world runs.</summary>
-    public sealed class FakeAura
-    {
-        /// <summary>The unit that holds it.</summary>
-        public unit Holder = null!;
-
-        /// <summary>The game buff it gives.</summary>
-        public int Buff;
-
-        /// <summary>How far it reaches, centre to centre.</summary>
-        public float Reach;
-
-        /// <summary>When each unit with the buff left its reach.</summary>
-        public Dictionary<unit, float> LeftAt = new Dictionary<unit, float>();
     }
 }

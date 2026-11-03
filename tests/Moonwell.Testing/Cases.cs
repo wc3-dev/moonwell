@@ -48,6 +48,17 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fake.spell-hit-order", Run = SpellBuffCases.FakeSpellHitOrder });
             list.Add(new Case { Name = "fake.buff-off-at-death", Run = SpellBuffCases.FakeBuffOffAtDeath });
             list.Add(new Case { Name = "fake.aura", Run = SpellBuffCases.FakeAura });
+            list.Add(new Case { Name = "spellbuff.after-hit", Run = SpellBuffCases.AfterHit });
+            list.Add(new Case { Name = "spellbuff.hit-sees-it", Run = SpellBuffCases.HitSeesIt });
+            list.Add(new Case { Name = "spellbuff.no-hit-cast", Run = SpellBuffCases.NoHitCast });
+            list.Add(new Case { Name = "spellbuff.area", Run = SpellBuffCases.Area });
+            list.Add(new Case { Name = "spellbuff.aura", Run = SpellBuffCases.Aura });
+            list.Add(new Case { Name = "spellbuff.given-again", Run = SpellBuffCases.GivenAgain });
+            list.Add(new Case { Name = "spellbuff.ends-with-game", Run = SpellBuffCases.EndsWithGame });
+            list.Add(new Case { Name = "spellbuff.sweep", Run = SpellBuffCases.Sweep });
+            list.Add(new Case { Name = "spellbuff.removed-from-code", Run = SpellBuffCases.RemovedFromCode });
+            list.Add(new Case { Name = "spellbuff.death", Run = SpellBuffCases.Death });
+            list.Add(new Case { Name = "spellbuff.unit-removed", Run = SpellBuffCases.UnitRemoved });
         }
 
         /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>
