@@ -292,6 +292,10 @@ namespace Moonwell.Testing
         /// <summary>The colours set for player slots.</summary>
         private readonly Dictionary<int, int> colors = new Dictionary<int, int>();
 
+        private float hourOfDay;
+        private float dayScale = 1.0f;
+        private bool dayStopped;
+
         /// <summary>The teams set for player slots.</summary>
         private readonly Dictionary<int, int> teams = new Dictionary<int, int>();
 
@@ -690,6 +694,42 @@ namespace Moonwell.Testing
         public void Log(string text)
         {
             Logged.Add(text);
+        }
+
+        /// <summary>The time of day as last set; 0 until then, as the template map starts at midnight.</summary>
+        public float HourOfDay()
+        {
+            return hourOfDay;
+        }
+
+        /// <summary>Sets the time of day.</summary>
+        public void SetHourOfDay(float hours)
+        {
+            hourOfDay = hours;
+        }
+
+        /// <summary>The day's speed as last set; 1 until then.</summary>
+        public float DayScale()
+        {
+            return dayScale;
+        }
+
+        /// <summary>Sets the day's speed.</summary>
+        public void SetDayScale(float scale)
+        {
+            dayScale = scale;
+        }
+
+        /// <summary>Whether the day was last stopped.</summary>
+        public bool IsDayStopped()
+        {
+            return dayStopped;
+        }
+
+        /// <summary>Stops the day or lets it go on.</summary>
+        public void StopDay(bool stopped)
+        {
+            dayStopped = stopped;
         }
 
         /// <summary>The player in a slot; one is made the first time its slot is asked for.</summary>

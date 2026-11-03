@@ -106,7 +106,8 @@ namespace Moonwell.Build
 
             var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), MapObjectIds.Defined(project));
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
-            EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, log));
+            var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
+            EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log));
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
             StageWith(project, () => Stage.Write(project, map, declarations.Objects, ids, declarations.StandardClassIds, standard, log));
@@ -135,22 +136,33 @@ namespace Moonwell.Build
 
             // Without the standard data the map's own constants still count, over the standard ones the runtime has.
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), HeroExperience.Standard);
-            EntryWriter.Write(project, settings, false, Installs(project, map, targetPath, new List<BridgeWriter.OwnType>(), null, experience, log));
+            var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
+            EntryWriter.Write(project, settings, false, Installs(project, map, targetPath, new List<BridgeWriter.OwnType>(), null, experience, day, log));
             LuaCompiler.Compile(project, map, targetPath, options.Release);
             StageWith(project, () => Stage.WriteWithoutObjects(project, map, log));
         }
 
-        // What the map's Main installs before anything registers: the hero experience table when the map's gameplay constants change it, then each package the map or a library of its own references, in this order. The terrain's grid, the
+        // What the map's Main installs before anything registers: the hero experience table and the day's hours when the map's gameplay constants change them, then each package the map or a library of its own references, in this order. The terrain's grid, the
         // areas' regions, the input's cameras and the physics' bridges are written here too, from the map's ground, regions, cameras and
         // placed destructables (with the destructable types the map declares and the standard ids, when it uses Moonwell.Objects),
         // and a file an earlier build wrote is removed when the map no longer uses the package.
-        private static List<string> Installs(MapProject project, War3Net.Build.Map map, string targetPath, IReadOnlyList<BridgeWriter.OwnType> declared, IReadOnlySet<string>? standardIds, HeroExperience experience, TextWriter log)
+        private static List<string> Installs(MapProject project, War3Net.Build.Map map, string targetPath, IReadOnlyList<BridgeWriter.OwnType> declared, IReadOnlySet<string>? standardIds, HeroExperience experience, GameDay day, TextWriter log)
         {
             var installs = new List<string>();
             var table = experience.Table();
             if (!table.SequenceEqual(HeroExperience.Standard.Table()))
             {
                 installs.Add("global::Moonwell.Runtime.InstallHeroExperience(new int[] { " + string.Join(", ", table.Select(total => total.ToString(CultureInfo.InvariantCulture))) + " });");
+            }
+
+            if (day != GameDay.Standard)
+            {
+                installs.Add(day.Install());
+            }
+
+            if (day.Warning != null)
+            {
+                log.WriteLine(day.Warning);
             }
 
             if (Declarations.References(targetPath, DamageAssemblyName))

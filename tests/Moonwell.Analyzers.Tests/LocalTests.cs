@@ -464,6 +464,33 @@ public class LocalTests
     }
 
     [Fact]
+    public void reading_the_clock_and_the_day_inside_is_fine()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                var late = Game.Time > 600f && Game.IsDay && !Game.DayStopped;
+                var hour = Game.TimeOfDay * Game.DaySpeed;
+            });
+            """));
+    }
+
+    [Fact]
+    public void setting_the_day_inside_is_rejected()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Game.TimeOfDay = 12f;
+                Game.DaySpeed = 2f;
+                Game.DayStopped = true;
+            });
+            """);
+
+        Assert.Equal(new[] { "MW0001: Game.TimeOfDay", "MW0001: Game.DaySpeed", "MW0001: Game.DayStopped" }, found);
+    }
+
+    [Fact]
     public void reading_gold_inside_is_fine()
     {
         Assert.Empty(MapCode.Check("""

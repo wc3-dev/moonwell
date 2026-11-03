@@ -29,6 +29,24 @@ namespace Moonwell.Hosting
         /// <summary>Appends a line to CustomMapData\Moonwell\log.txt.</summary>
         void Log(string text);
 
+        /// <summary>The game's time of day, in hours.</summary>
+        float HourOfDay();
+
+        /// <summary>Sets the game's time of day, in hours from 0 up to the day's hours.</summary>
+        void SetHourOfDay(float hours);
+
+        /// <summary>How fast the time of day goes: 1 is the game's own, 0 stops it, below 0 runs it backward.</summary>
+        float DayScale();
+
+        /// <summary>Sets how fast the time of day goes.</summary>
+        void SetDayScale(float scale);
+
+        /// <summary>Whether the time of day stands still, apart from its speed; the game has no reading for it, so the world remembers what was set.</summary>
+        bool IsDayStopped();
+
+        /// <summary>Stops the time of day or lets it go on, keeping its speed.</summary>
+        void StopDay(bool stopped);
+
         /// <summary>The player in a slot.</summary>
         player PlayerAt(int slot);
 

@@ -30,6 +30,7 @@ namespace Moonwell.Testing
             AddScope(list);
             AddAuditDocs(list);
             AddLog(list);
+            AddDay(list);
             AddDebug(list);
             return list;
         }
@@ -42,6 +43,19 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "log.file-splits-long-lines", Run = LogCases.SplitsLongLines });
             list.Add(new Case { Name = "log.file-splits-between-letters", Run = LogCases.SplitsBetweenLetters });
             list.Add(new Case { Name = "log.file-writes-at-most-once-a-second", Run = LogCases.WritesAtMostOnceASecond });
+        }
+
+        /// <summary>Adds the cases for the game clock and the time of day.</summary>
+        private static void AddDay(List<Case> list)
+        {
+            list.Add(new Case { Name = "day.game-time", Run = DayCases.GameTime });
+            list.Add(new Case { Name = "day.time-of-day", Run = DayCases.TimeOfDay });
+            list.Add(new Case { Name = "day.time-of-day-wraps", Run = DayCases.TimeOfDayWraps });
+            list.Add(new Case { Name = "day.is-day", Run = DayCases.IsDay });
+            list.Add(new Case { Name = "day.maps-own-day", Run = DayCases.MapsOwnDay });
+            list.Add(new Case { Name = "day.over-midnight", Run = DayCases.DayOverMidnight });
+            list.Add(new Case { Name = "day.speed", Run = DayCases.DaySpeed });
+            list.Add(new Case { Name = "day.stopped", Run = DayCases.DayStopped });
         }
 
         /// <summary>Adds the cases for explicit scopes: what code makes belongs to the scope named where it is made.</summary>

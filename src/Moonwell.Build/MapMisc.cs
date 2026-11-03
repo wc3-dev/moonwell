@@ -59,6 +59,32 @@ namespace Moonwell.Build
                 Number(values, "NeedHeroXPFormulaC", standard.Constant, path));
         }
 
+        /// <summary>Reads the day's hours the map's file sets over the standard ones.</summary>
+        /// <param name="mapFolder">The map's folder.</param>
+        /// <param name="standard">The standard hours, which a key the file leaves out keeps.</param>
+        /// <returns>The map's day; the standard one when the map has no file.</returns>
+        /// <exception cref="BuildException">A value is not a number, or the day has no hours.</exception>
+        public static GameDay ReadDay(string mapFolder, GameDay standard)
+        {
+            var path = Path.Combine(mapFolder, FileName);
+            if (!File.Exists(path))
+            {
+                return standard;
+            }
+
+            var values = Values(path);
+            var day = new GameDay(
+                Number(values, "Dawn", standard.Dawn, path),
+                Number(values, "Dusk", standard.Dusk, path),
+                Number(values, "DayHours", standard.Hours, path));
+            if (day.Hours <= 0f)
+            {
+                throw new BuildException($"{path}: DayHours is {day.Hours.ToString(CultureInfo.InvariantCulture)}, and a day needs more than 0 hours");
+            }
+
+            return day;
+        }
+
         // The keys of the file's [Misc] section and their values.
         private static Dictionary<string, string> Values(string path)
         {
