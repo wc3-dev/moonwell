@@ -165,6 +165,8 @@ namespace Moonwell.Testing
             Expect.True("abc".StartsWith('a') && !"abc".StartsWith('b'), "StartsWith(char)");
             Expect.True("abc".EndsWith('c') && !"".EndsWith('c'), "EndsWith(char)");
             Expect.Equal(2, "Hello".IndexOf("LL", StringComparison.OrdinalIgnoreCase), "IndexOf, ignoring case");
+            Expect.Equal(6, "Hello hello".IndexOf("hello", 1, StringComparison.Ordinal), "IndexOf from an index");
+            Expect.Equal(6, "Hello hello".IndexOf("HE", 1, StringComparison.OrdinalIgnoreCase), "IndexOf from an index, ignoring case");
             Expect.True("Hello".StartsWith("he", StringComparison.OrdinalIgnoreCase), "StartsWith, ignoring case");
             Expect.True("Hello".EndsWith("LO", StringComparison.OrdinalIgnoreCase), "EndsWith, ignoring case");
             Expect.Equal("cba", new string("abc".Reverse().ToArray()), "Reverse() on a string");
