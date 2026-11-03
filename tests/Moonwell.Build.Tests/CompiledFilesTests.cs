@@ -64,7 +64,7 @@ namespace Moonwell.Build.Tests
             // The Sample's own output, which the collection's build makes.
             Assert.Equal(0, builds.Development.ExitCode);
             var assembly = Path.Combine(builds.Folder, "bin", "Debug", "net10.0", "Sample.dll");
-            var found = NamedChoices.Read(MapProject.Find(copy), assembly, new HashSet<string> { "Targets", "ArmorType" });
+            var found = SourceNames.Read(MapProject.Find(copy), assembly, new HashSet<string> { "Targets", "ArmorType" }).Choices;
 
             Assert.Equal(new[] { "Targets" }, found);
         }

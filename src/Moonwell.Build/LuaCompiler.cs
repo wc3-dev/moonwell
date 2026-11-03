@@ -130,10 +130,11 @@ namespace Moonwell.Build
                 var failures = result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToList();
                 var errors = failures.Select(diagnostic => marked.Unstage(diagnostic.ToString())).ToList();
 
-                // dotnet build compiled the same code, so an error inside a nameof is a name missing from the stubs.
+                // dotnet build compiled the same code, so an error inside a nameof is a name missing from the stubs: the stubs read the
+                // map's source for nameof, but a library's only for what its assembly references.
                 if (objects != null && failures.Any(IsInNameof))
                 {
-                    errors.Add("CSharp.lua sees only the members of Moonwell.Objects that the map's assembly references: a name used only in nameof is not one");
+                    errors.Add("CSharp.lua sees only the members of Moonwell.Objects that the map's code names, and of a library of the map's own those its assembly references: a name a library uses only in nameof is not one");
                 }
 
                 throw new BuildException(string.Join(Environment.NewLine, errors));

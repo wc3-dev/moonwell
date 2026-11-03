@@ -51,14 +51,15 @@ namespace Moonwell.Build
         };
 
         /// <summary>
-        /// The declared classes of the map, every class of <c>Moonwell.Objects</c> the map assembly's type references name that is
-        /// a kind base or inherits one, and their bases up to the kind base; each base before the classes that inherit it. A class
-        /// of <c>Moonwell.Objects</c> keeps the fields and methods the assembly's member references name.
+        /// The declared classes of the map, every class of <c>Moonwell.Objects</c> that the type references of the map assembly or of a
+        /// library of its own (<see cref="CompiledFiles.MapAssemblies"/>) name and that is a kind base or inherits one, and their bases
+        /// up to the kind base; each base before the classes that inherit it. A class of <c>Moonwell.Objects</c> keeps the fields and
+        /// methods their member references name.
         /// </summary>
         /// <param name="project">The map project, whose source names the enums that a constant, a <c>case</c> or <c>nameof</c> leaves no reference to.</param>
         /// <param name="map">The map assembly, loaded in the build's load context.</param>
         /// <param name="objects">The map's copy of <c>Moonwell.Objects</c>, in the same context.</param>
-        /// <param name="assemblyPath">The map assembly's file, whose metadata holds the type references.</param>
+        /// <param name="assemblyPath">The map assembly's file; its libraries are beside it.</param>
         /// <param name="support">The stubs of the enums the map names, and of the rule attributes and <c>FieldRuleException</c> when it names them (<see cref="ObjectStubs.Support"/>).</param>
         /// <returns>The used classes.</returns>
         internal static IReadOnlyList<UsedClass> UsedClasses(MapProject project, Assembly map, Assembly objects, string assemblyPath, out string support)
@@ -74,27 +75,20 @@ namespace Moonwell.Build
                 }
             }
 
-            // The names of the members each class of Moonwell.Objects is referenced for, a property by its own name.
+            // The names of the members each class of Moonwell.Objects is referenced for, a property by its own name. A library of the
+            // map's own is compiled from source with the map, so what it names needs stubs too.
             var members = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
-            using (var pe = new PEReader(new MemoryStream(File.ReadAllBytes(assemblyPath))))
+            foreach (var path in CompiledFiles.MapAssemblies(assemblyPath))
             {
+                using var pe = new PEReader(new MemoryStream(File.ReadAllBytes(path)));
                 var reader = pe.GetMetadataReader();
                 foreach (var handle in reader.TypeReferences)
                 {
                     var name = TypeNameIn(reader, handle, Declarations.ObjectsAssemblyName);
                     var type = name == null ? null : objects.GetType(name);
-                    if (type != null && (IsKindBase(type) || Declarations.KindBaseOf(type) != null))
-                    {
-                        starts.Add(type);
-                    }
-
                     if (type != null)
                     {
-                        ObjectStubs.AddEnums(type, enums);
-                        if (ObjectStubs.IsIgnoredType(type))
-                        {
-                            ignored.Add(type);
-                        }
+                        Use(type, starts, enums, ignored);
                     }
                 }
 
@@ -124,6 +118,40 @@ namespace Moonwell.Build
                 }
             }
 
+            // What the source names that the assembly does not reference: an enum whose uses the compiler folded into numbers and
+            // text, and the classes and members a nameof names.
+            var all = objects.GetTypes();
+            var choices = all.Where(ObjectStubs.IsChoice).ToDictionary(type => type.Name, StringComparer.Ordinal);
+            var named = SourceNames.Read(project, assemblyPath, new HashSet<string>(choices.Keys, StringComparer.Ordinal));
+            foreach (var name in named.Choices)
+            {
+                ObjectStubs.AddEnums(choices[name], enums);
+            }
+
+            var types = new Dictionary<string, Type>(StringComparer.Ordinal);
+            foreach (var type in all)
+            {
+                types.TryAdd(MapClasses.Describe(type), type);
+            }
+
+            foreach (var name in named.Classes)
+            {
+                if (types.TryGetValue(name, out var type))
+                {
+                    Use(type, starts, enums, ignored);
+                }
+            }
+
+            foreach (var (name, names) in named.Members)
+            {
+                if (!members.TryGetValue(name, out var referenced))
+                {
+                    members[name] = referenced = new HashSet<string>(StringComparer.Ordinal);
+                }
+
+                referenced.UnionWith(names);
+            }
+
             var used = new List<UsedClass>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var type in starts.OrderBy(MapClasses.Describe, StringComparer.Ordinal))
@@ -131,15 +159,23 @@ namespace Moonwell.Build
                 Add(type, used, seen, members, enums);
             }
 
-            // An enum the assembly does not reference: the compiler folded its uses into numbers and text.
-            var choices = objects.GetTypes().Where(ObjectStubs.IsChoice).ToDictionary(type => type.Name, StringComparer.Ordinal);
-            foreach (var name in NamedChoices.Read(project, assemblyPath, new HashSet<string>(choices.Keys, StringComparer.Ordinal)))
-            {
-                ObjectStubs.AddEnums(choices[name], enums);
-            }
-
             support = ObjectStubs.Support(enums, ignored, members);
             return used;
+        }
+
+        // A type of Moonwell.Objects the map uses: a class of a kind is stubbed, and the enums and ignored types it names come with it.
+        private static void Use(Type type, List<Type> starts, HashSet<Type> enums, HashSet<Type> ignored)
+        {
+            if (IsKindBase(type) || Declarations.KindBaseOf(type) != null)
+            {
+                starts.Add(type);
+            }
+
+            ObjectStubs.AddEnums(type, enums);
+            if (ObjectStubs.IsIgnoredType(type))
+            {
+                ignored.Add(type);
+            }
         }
 
         /// <summary>

@@ -813,25 +813,65 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void a_name_the_assembly_does_not_reference_is_an_error_that_says_why()
+        public void a_member_named_only_in_nameof_is_stubbed()
         {
-            // nameof leaves no reference in the assembly, so the stubs lack GoldCost and CSharp.lua cannot compile the map.
-            var copy = folders.TemporaryCopyOfSample();
-            File.AppendAllText(Path.Combine(copy, "Objects.cs"), """
-
-                namespace Sample
+            // nameof leaves no reference in the assembly, so the build reads the map's source for it.
+            var stubs = StubsWith("""
+                public static class Names
                 {
-                    public static class Names
-                    {
-                        public static readonly string Life = nameof(Moonwell.Objects.Human.Units.Paladin.GoldCost);
-                    }
+                    public static readonly string Life = nameof(Moonwell.Objects.Human.Units.Paladin.GoldCost);
                 }
                 """);
 
-            var error = Assert.Throws<BuildException>(() => MapBuild.Run(copy, new BuildOptions(), new StringWriter()));
+            Assert.Contains("GoldCost", stubs);
+        }
 
-            Assert.Contains("GoldCost", error.Message);
-            Assert.Contains("only the members of Moonwell.Objects that the map's assembly references", error.Message);
+        [Fact]
+        public void a_class_named_only_in_nameof_is_stubbed()
+        {
+            var stubs = StubsWith("""
+                public static class Names
+                {
+                    public static readonly string Cost = nameof(Moonwell.Objects.Orc.Units.Grunt.GoldCost);
+                }
+                """);
+
+            Assert.Contains("class Grunt", stubs);
+            Assert.Contains("GoldCost", stubs);
+        }
+
+        [Fact]
+        public void a_method_named_only_in_nameof_brings_every_overload()
+        {
+            var stubs = StubsWith("""
+                [Moonwell.Objects.ObjectId("h002")]
+                public sealed class Squire : Moonwell.Objects.Human.Units.Footman
+                {
+                    public static readonly string Method = nameof(Set);
+                }
+                """);
+
+            Assert.Contains("protected void Set(string field, object value)", stubs);
+            Assert.Contains("protected void Set(string field, int level, object value)", stubs);
+        }
+
+        [Fact]
+        public void a_name_in_nameof_only_in_debug_code_is_stubbed_for_the_release_build_too()
+        {
+            // The stubs are written once for both builds, so they hold what either build's code names.
+            var stubs = StubsWith("""
+                public static class Names
+                {
+                #if DEBUG
+                    public static readonly string Cost = nameof(Moonwell.Objects.Human.Units.Paladin.GoldCost);
+                #else
+                    public static readonly string Cost = nameof(Moonwell.Objects.Human.Units.Paladin.LumberCost);
+                #endif
+                }
+                """, release: true);
+
+            Assert.Contains("GoldCost", stubs);
+            Assert.Contains("LumberCost", stubs);
         }
 
         [Fact]
@@ -925,6 +965,15 @@ namespace Moonwell.Build.Tests
             var after = before.Replace(text, with, StringComparison.Ordinal);
             Assert.NotEqual(before, after);
             File.WriteAllText(path, after);
+        }
+
+        // The stubs of a copy of the Sample built with code added to its namespace.
+        private string StubsWith(string code, bool release = false)
+        {
+            var copy = folders.TemporaryCopyOfSample();
+            File.AppendAllText(Path.Combine(copy, "Objects.cs"), "\nnamespace Sample\n{\n" + code + "\n}\n");
+            MapBuild.Run(copy, new BuildOptions { Release = release }, new StringWriter());
+            return File.ReadAllText(Path.Combine(copy, "build", "generated", "ObjectStubs.g.cs"));
         }
 
         // The staged unit file of a built copy of the Sample.

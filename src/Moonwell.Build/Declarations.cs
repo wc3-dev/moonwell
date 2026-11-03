@@ -25,12 +25,12 @@ namespace Moonwell.Build
             ["Moonwell.Objects.StandardUpgrade"] = "upgrade",
         };
 
-        /// <summary>Tells whether the built assembly references <c>Moonwell.Objects</c>, read from its metadata without loading it.</summary>
+        /// <summary>Tells whether the built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), references <c>Moonwell.Objects</c>, read from their metadata without loading them.</summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
-        /// <returns>True when it references the library.</returns>
+        /// <returns>True when one of them references the library.</returns>
         public static bool UsesObjects(string assemblyPath)
         {
-            return CompiledFiles.ReferencedAssemblies(assemblyPath).Contains(ObjectsAssemblyName);
+            return References(assemblyPath, ObjectsAssemblyName);
         }
 
         /// <summary>Whether a map's built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), references an assembly by name; the compiler keeps only the references the code uses.</summary>
@@ -122,17 +122,32 @@ namespace Moonwell.Build
             }
         }
 
+        // Object classes are read from the map's assembly only, so one a library of its own declares would be left out of the map.
+        private static void CheckLibraries(MapLoadContext context, string assemblyPath)
+        {
+            foreach (var path in CompiledFiles.MapAssemblies(assemblyPath).Skip(1))
+            {
+                var library = context.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path)));
+                var declared = library.GetTypes().Where(IsDeclaredClass).OrderBy(MapClasses.Describe, StringComparer.Ordinal).FirstOrDefault();
+                if (declared != null)
+                {
+                    throw new BuildException($"{MapClasses.Describe(declared)} in the library {library.GetName().Name} is an object class: the build reads object classes from the map's own project only, so declare it in the map's own project");
+                }
+            }
+        }
+
         // Kept apart from Read so that nothing of the loaded assembly is on Read's frame when the context unloads.
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static DeclarationSet ReadIn(MapLoadContext context, string assemblyPath, MapProject project, StandardData standard, string? set)
         {
             var map = context.Open(assemblyPath);
             SetterScan.Check(map);
-            if (!map.GetReferencedAssemblies().Any(name => name.Name == ObjectsAssemblyName))
+            if (!UsesObjects(assemblyPath))
             {
                 return new DeclarationSet(Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), Array.Empty<UsedClass>(), string.Empty, new HeroBonus(0f, 0f), new Dictionary<string, IReadOnlyList<string>>());
             }
 
+            CheckLibraries(context, assemblyPath);
             var objects = context.LoadFromAssemblyName(new AssemblyName(ObjectsAssemblyName));
             var used = ObjectLua.UsedClasses(project, map, objects, assemblyPath, out var support);
 
