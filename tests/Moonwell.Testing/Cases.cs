@@ -29,8 +29,19 @@ namespace Moonwell.Testing
             AddLifecycle(list);
             AddScope(list);
             AddAuditDocs(list);
+            AddLog(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the log: a map's own lines, and the log file's lines and timing.</summary>
+        private static void AddLog(List<Case> list)
+        {
+            list.Add(new Case { Name = "log.map-line", Run = LogCases.MapLine });
+            list.Add(new Case { Name = "log.file-keeps-last-lines", Run = LogCases.KeepsLastLines });
+            list.Add(new Case { Name = "log.file-splits-long-lines", Run = LogCases.SplitsLongLines });
+            list.Add(new Case { Name = "log.file-splits-between-letters", Run = LogCases.SplitsBetweenLetters });
+            list.Add(new Case { Name = "log.file-writes-at-most-once-a-second", Run = LogCases.WritesAtMostOnceASecond });
         }
 
         /// <summary>Adds the cases for explicit scopes: what code makes belongs to the scope named where it is made.</summary>
