@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered });
                 }
 
                 return unitHooks;
@@ -682,6 +682,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Tints the unit's model in a colour, its alpha included; as Tint(red, green, blue, alpha).</summary>
+        public void Tint(Color color)
+        {
+            Tint(color.R, color.G, color.B, color.A);
+        }
+
         /// <summary>How high the unit flies above the ground, set at once (SetUnitFlyHeight with a rate of 0). A unit that does not fly only shows the height once Amrf has been added to it and removed (seen 10-21), so the first set on such a unit does that; reading gives the height set either way. Once the game has removed the unit, the last value read or set, and setting does nothing. In a declared class's constructor, the height every unit of the class flies at (umvh); on a default object, its type's.</summary>
         [LocalSafe]
         public float FlyHeight
@@ -783,6 +789,89 @@ namespace Moonwell
 
             return false;
         }
+
+        /// <summary>
+        /// The unit's last order worth giving again, by a player or by code: a move, an attack, a right-click, a patrol, holding
+        /// position, attacking the ground or a spell, not a stop, a toggle, an item's slot or the game's own orders. The two
+        /// before it are its <c>Previous</c>. Null until the unit has had one while Moonwell listens for orders, which it does
+        /// in a map whose code reads LastOrder or Reissue, or writes an order reaction.
+        /// </summary>
+        [LocalSafe]
+        public Order? LastOrder { get; internal set; }
+
+        /// <summary>What the game reads for a patrol under way (seen 11-03), a number with no name.</summary>
+        private const int PatrolUnderWay = 851991;
+
+        /// <summary>The game's string of the order the unit carries out now, as the game says (GetUnitCurrentOrder); "" when it is idle or gone, and "patrol" for a patrol under way, which the game reads as a number with no name. Compare it with the constants: <c>unit.CurrentOrder == Orders.Move</c>.</summary>
+        [LocalSafe]
+        public string CurrentOrder
+        {
+            get
+            {
+                if (IsGone)
+                {
+                    return "";
+                }
+
+                var id = Runtime.World.CurrentOrderOf(Handle);
+                if (id == PatrolUnderWay)
+                {
+                    return Orders.Patrol;
+                }
+
+                return id == 0 ? "" : Runtime.World.OrderName(id);
+            }
+        }
+
+        /// <summary>Gives the last order again, as after a knockback or a stop of the map's own, and returns the game's answer. False, and no order, for a unit with none, a dead or removed unit, a target that is dead or gone, and a spell already cast.</summary>
+        public bool Reissue()
+        {
+            var last = LastOrder;
+            if (last == null || last.Done || last.Name == "" || !IsAlive)
+            {
+                return false;
+            }
+
+            switch (last.Kind)
+            {
+                case OrderKind.Place:
+                    return OrderAt(last.Name, last.X, last.Y);
+                case OrderKind.Target:
+                    return last.Target != null && Stands(last.Target) && OrderOn(last.Name, last.Target);
+                default:
+                    return Order(last.Name);
+            }
+        }
+
+        /// <summary>Whether an order's target is still there to be given the order again.</summary>
+        internal static bool Stands(Widget target)
+        {
+            var unit = target as Unit;
+            if (unit != null)
+            {
+                return unit.IsAlive;
+            }
+
+            var destructable = target as Destructable;
+            if (destructable != null)
+            {
+                return destructable.IsAlive;
+            }
+
+            return !target.IsGone;
+        }
+
+        /// <summary>Whether the game's stunned order came, so that the unit's next order may be the one a stun's end gives back.</summary>
+        internal bool StunnedOrderCame;
+
+        /// <summary>How many of the unit's orders ran their reactions: a count that changes inside an order's reactions means a reaction gave the unit another.</summary>
+        internal int OrdersHeard;
+
+        /// <summary>The id of the unit's last order that ran its reactions.</summary>
+        internal int LastHeardId;
+
+        /// <summary>The order the unit carries out, to give back when one is refused: the last order kept, until a stop, a build or another order not worth giving again replaced it; instant orders leave it.</summary>
+        internal Order? Carried;
 
         /// <summary>Orders the unit to stop. Does nothing once the unit is gone.</summary>
         public void Stop()
@@ -1119,6 +1208,15 @@ namespace Moonwell
 
         /// <summary>Runs when the unit begins a cast, after the cast's ability has seen it and before the unit's components see it.</summary>
         public virtual void OnCast(Cast cast)
+        {
+        }
+
+        /// <summary>
+        /// Runs when the unit is given an order, by a player or by code (inside the call), before the order is carried out and
+        /// before the unit's components hear it. <c>order.Cancel()</c> refuses it; an order given here replaces it. The game's own
+        /// orders (the stunned order, undefend, the order a stun's end gives back) and Moonwell's own refusing orders run nothing.
+        /// </summary>
+        public virtual void OnOrdered(Order order)
         {
         }
 

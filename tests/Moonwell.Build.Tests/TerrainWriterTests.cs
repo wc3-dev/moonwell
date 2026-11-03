@@ -119,6 +119,22 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void entry_runs_the_loading_lines_before_the_start()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var settings = new MapSettings("Sample.SampleMap", "n", "a", "d", "Any");
+            var installs = new[] { "global::Moonwell.InputSystem.InstallKeyboard();" };
+            var loading = new[] { "global::Moonwell.InputSystem.RegisterKeys();" };
+
+            var text = File.ReadAllText(EntryWriter.Write(project, settings, false, installs, loading));
+
+            var register = text.IndexOf("InputSystem.RegisterKeys();", StringComparison.Ordinal);
+            var start = text.IndexOf("global::Moonwell.Runtime.Start(", StringComparison.Ordinal);
+            var install = text.IndexOf("InputSystem.InstallKeyboard();", StringComparison.Ordinal);
+            Assert.True(register >= 0 && register < start && start < install, text);
+        }
+
+        [Fact]
         public void a_real_map_has_one_more_corner_than_tiles_each_way()
         {
             var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "template", "MoonwellMap", "map", "war3map.w3e"));

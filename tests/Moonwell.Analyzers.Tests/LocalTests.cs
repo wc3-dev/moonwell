@@ -357,6 +357,30 @@ public class LocalTests
     }
 
     [Fact]
+    public void keyboard_state_is_allowed_outside()
+    {
+        Assert.Empty(MapCode.Check("""
+            var down = p.Keyboard().IsDown(Key.W);
+            var shift = p.Keyboard().Shift && p.Keyboard().Control && p.Keyboard().Alt;
+            var who = p.Keyboard().Player;
+            """));
+    }
+
+    [Fact]
+    public void key_held_now_is_rejected_outside()
+    {
+        var found = MapCode.Check("""
+            var held = p.Keyboard().IsHeldNow(Key.W);
+            Local.For(p, () =>
+            {
+                var inside = p.Keyboard().IsHeldNow(Key.W);
+            });
+            """);
+
+        Assert.Equal(new[] { "MW0002: p.Keyboard().IsHeldNow(Key.W)" }, found);
+    }
+
+    [Fact]
     public void camera_read_is_rejected_outside()
     {
         var found = MapCode.Check("""
@@ -488,6 +512,20 @@ public class LocalTests
             """);
 
         Assert.Equal(new[] { "MW0001: Game.TimeOfDay", "MW0001: Game.DaySpeed", "MW0001: Game.DayStopped" }, found);
+    }
+
+    [Fact]
+    public void colours_and_text_are_allowed_inside()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                var gold = Color.FromHtml("#ffcc00").Lerp(Color.Of(p.Color), 0.5f);
+                p.Print(p.ColoredName + " " + "Win".Rainbow() + "x".Gradient(gold, Color.Red) + "y".Colored(gold));
+                p.Print("z".Alternate(Color.Red) + "v".Confetti() + "w".Sweep(gold, Color.White, 1f, SweepShape.Comet));
+                p.Print(Text.Clock(125f) + Text.TimeOfDay(6.5f) + "a".Highlight("a", Color.White.Darkened(0.5f)));
+            });
+            """));
     }
 
     [Fact]

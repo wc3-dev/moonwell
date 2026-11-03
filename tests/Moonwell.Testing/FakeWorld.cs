@@ -1429,7 +1429,7 @@ namespace Moonwell.Testing
                 return false;
             }
 
-            if (bagged.Contains(item))
+            if (bagged.Contains(item) || dropping.Contains(item))
             {
                 return true;
             }
@@ -1503,6 +1503,9 @@ namespace Moonwell.Testing
 
         /// <summary>The items in a unit's 3.0 bag or equipment slots: held, though the unit does not count them as carried.</summary>
         private readonly HashSet<item> bagged = new HashSet<item>();
+
+        /// <summary>The items a dying unit is dropping: out of their slots, but still held while their drop events run (seen 11-02).</summary>
+        private readonly HashSet<item> dropping = new HashSet<item>();
 
         /// <summary>Puts an item in a unit's bag, as the game does when a hero with six full slots gets one: a pick-up event, when it is listened for, while UnitHasItem reads false (seen 10-28 and 11-02).</summary>
         public void PutInBag(unit unit, item item)
@@ -1717,7 +1720,7 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>Drops a dying unit's items as the game drops a footman's: before the death event, last slot first, each out of its slot when its drop event fires, while the unit is already dead, then at the unit's place (seen 11-02). A hero keeps its items, with no event; the game decides by the inventory ability, so a unit given a hero's inventory keeps them too.</summary>
+        /// <summary>Drops a dying unit's items as the game drops a footman's: before the death event, last slot first, each out of its slot but still held when its drop event fires, while the unit is already dead, then at the unit's place (seen 11-02). A hero keeps its items, with no event; the game decides by the inventory ability, so a unit given a hero's inventory keeps them too.</summary>
         private void DropAll(unit unit)
         {
             if (heroes.TryGetValue(unit, out var isHero) && isHero)
@@ -1732,11 +1735,13 @@ namespace Moonwell.Testing
                 if (carried != null)
                 {
                     slots[i] = null!;
+                    dropping.Add(carried);
                     if (Listening.Contains(GameEvent.Drop))
                     {
                         Inbound.Dropped(unit, carried);
                     }
 
+                    dropping.Remove(carried);
                     LandAt(unit, carried);
                 }
             }
@@ -2107,31 +2112,139 @@ namespace Moonwell.Testing
             return slots;
         }
 
-        /// <summary>Records an order and gives the answer set in OrderAnswer.</summary>
+        /// <summary>Records an order and gives the answer set in OrderAnswer; when the runtime listens for orders, delivers the order event inside the call, as the game does (seen 11-03).</summary>
         public bool OrderUnit(unit unit, string order)
         {
             NoteGone(unit);
             Orders.Add("immediate " + order);
+            if (OrderAnswer)
+            {
+                DeliverOrder(unit, OrderIdOf(order), OrderKind.None, 0f, 0f, null, null);
+            }
+
             return OrderAnswer;
         }
 
-        /// <summary>Records an order to a place and gives the answer set in OrderAnswer.</summary>
+        /// <summary>Records an order to a place and gives the answer set in OrderAnswer; delivers the order event inside the call when listened for.</summary>
         public bool OrderUnitAt(unit unit, string order, float x, float y)
         {
             NoteGone(unit);
             Orders.Add("point " + order);
             OrderPoints.Add(x);
             OrderPoints.Add(y);
+            if (OrderAnswer)
+            {
+                DeliverOrder(unit, OrderIdOf(order), OrderKind.Place, x, y, null, null);
+            }
+
             return OrderAnswer;
         }
 
-        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer.</summary>
+        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer; delivers the order event inside the call when listened for.</summary>
         public bool OrderUnitOn(unit unit, string order, widget target)
         {
             NoteGone(unit);
             Orders.Add("target " + order);
             OrderTargets.Add(target);
+            if (OrderAnswer)
+            {
+                DeliverOrder(unit, OrderIdOf(order), OrderKind.Target, 0f, 0f, target as unit, target as item);
+            }
+
             return OrderAnswer;
+        }
+
+        /// <summary>The ids of the orders the cases use, by the game's string (seen 11-03).</summary>
+        private static readonly Dictionary<string, int> orderIds = new Dictionary<string, int>
+        {
+            { "smart", 851971 }, { "stop", 851972 }, { "attack", 851983 }, { "attackground", 851984 }, { "move", 851986 },
+            { "patrol", 851990 }, { "holdposition", 851993 }, { "defend", 852055 }, { "undefend", 852056 },
+            { "holybolt", 852092 }, { "immolation", 852177 }, { "unimmolation", 852178 },
+        };
+
+        /// <summary>The order each unit carries out now, by id; 0 when idle.</summary>
+        private readonly Dictionary<unit, int> currentOrders = new Dictionary<unit, int>();
+
+        /// <summary>How many orders each unit has queued after the one it carries out, as a case set them; none until set.</summary>
+        private readonly Dictionary<unit, int> queued = new Dictionary<unit, int>();
+
+        /// <summary>The id of an order string the cases use; 0 for one the fake does not know.</summary>
+        private static int OrderIdOf(string order)
+        {
+            return orderIds.TryGetValue(order, out var id) ? id : 0;
+        }
+
+        /// <summary>The order a unit carries out now, as the game's GetUnitCurrentOrder reads it.</summary>
+        public int CurrentOrderOf(unit unit)
+        {
+            return currentOrders.TryGetValue(unit, out var id) ? id : 0;
+        }
+
+        /// <summary>The game's string of an order id; "" for one the fake does not know.</summary>
+        public string OrderName(int id)
+        {
+            foreach (var pair in orderIds)
+            {
+                if (pair.Value == id)
+                {
+                    return pair.Key;
+                }
+            }
+
+            return "";
+        }
+
+        /// <summary>Sets the order a unit carries out now, with no event, as the game's own reading (a patrol under way reads 851991).</summary>
+        public void SetCurrentOrder(unit unit, int id)
+        {
+            currentOrders[unit] = id;
+        }
+
+        /// <summary>Sets the orders a unit has queued after the one it starts next, as a Shift-queue leaves them.</summary>
+        public void SetQueued(unit unit, int count)
+        {
+            queued[unit] = count;
+        }
+
+        /// <summary>Gives a unit an order as a player does, to a place: the event, when listened for, and no call recorded.</summary>
+        public void PlayerOrders(unit unit, string order, float x, float y)
+        {
+            DeliverOrder(unit, OrderIdOf(order), OrderKind.Place, x, y, null, null);
+        }
+
+        /// <summary>Gives a unit an order as a player does, on a unit or an item.</summary>
+        public void PlayerOrdersOn(unit unit, string order, widget target)
+        {
+            DeliverOrder(unit, OrderIdOf(order), OrderKind.Target, 0f, 0f, target as unit, target as item);
+        }
+
+        /// <summary>Gives a unit an order as a player does, with no place and no target.</summary>
+        public void PlayerOrdersNone(unit unit, string order)
+        {
+            DeliverOrder(unit, OrderIdOf(order), OrderKind.None, 0f, 0f, null, null);
+        }
+
+        /// <summary>Fires an order event of any id, as the game does for its own orders.</summary>
+        public void PlayerOrdersId(unit unit, int id, OrderKind kind)
+        {
+            DeliverOrder(unit, id, kind, 0f, 0f, null, null);
+        }
+
+        /// <summary>Makes an order the unit's current one and, when the runtime listens for orders, hands its event to Inbound with the queue the case set; a stop leaves the unit idle after its event.</summary>
+        private void DeliverOrder(unit unit, int id, OrderKind kind, float x, float y, unit? targetUnit, item? targetItem)
+        {
+            currentOrders[unit] = id;
+            var queue = 1 + (queued.TryGetValue(unit, out var count) ? count : 0);
+            queued.Remove(unit);
+            if (Listening.Contains(GameEvent.Order))
+            {
+                Inbound.Ordered(unit, id, kind, x, y, targetUnit, targetItem, null, queue);
+            }
+
+            if (id == 851972 && currentOrders.TryGetValue(unit, out var now) && now == 851972)
+            {
+                currentOrders[unit] = 0;
+            }
         }
 
         /// <summary>The number of inventory slots of a unit; 6 until set.</summary>

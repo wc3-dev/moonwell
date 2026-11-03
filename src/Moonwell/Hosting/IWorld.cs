@@ -377,6 +377,12 @@ namespace Moonwell.Hosting
         /// <summary>Gives a unit an order on a widget (a unit, an item or a destructable); the game's answer.</summary>
         bool OrderUnitOn(unit unit, string order, widget target);
 
+        /// <summary>The id of the order a unit carries out now; 0 when it is idle.</summary>
+        int CurrentOrderOf(unit unit);
+
+        /// <summary>The game's string of an order id; "" for the few with none.</summary>
+        string OrderName(int id);
+
         /// <summary>The number of inventory slots of a unit.</summary>
         int InventorySizeOf(unit unit);
 

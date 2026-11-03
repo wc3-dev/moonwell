@@ -376,6 +376,52 @@ public class ReactionTests
     }
 
     [Fact]
+    public void a_key_reaction_the_input_package_never_calls_is_an_error()
+    {
+        Assert.Equal(new[]
+        {
+            "MW0036: IKeyWatch",
+            "MW0036: OnKeyPressed",
+            "MW0036: OnKeyPressed",
+            "MW0036: OnKeyReleased",
+            "MW0036: OnKeyPresed",
+            "MW0036: OnKeyReleased",
+        }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Dash : UnitComponent, IKeyWatch
+                {
+                    public void OnKeyPressed(Keyboard keyboard, Key key) { }
+                }
+
+                public class Explicit : PlayerComponent, IKeyWatch
+                {
+                    void IKeyWatch.OnKeyPressed(Keyboard keyboard, Key key) { }
+                }
+
+                public class NoKey : PlayerComponent, IKeyWatch
+                {
+                    public void OnKeyPressed(Keyboard keyboard) { }
+
+                    void OnKeyReleased(Keyboard keyboard, Key key) { }
+                }
+
+                public class Typo : GameComponent, IKeyWatch
+                {
+                    public void OnKeyPresed(Keyboard keyboard, Key key) { }
+                }
+
+                public class Forgot : GameComponent
+                {
+                    public void OnKeyReleased(Keyboard keyboard, Key key) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void a_mouse_reaction_the_input_package_never_calls_is_an_error()
     {
         Assert.Equal(new[]

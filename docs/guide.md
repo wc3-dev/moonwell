@@ -330,13 +330,43 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
-| `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string (`"move"`, `"attack"`) |
+| `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
+| `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
 
 `unit.AddAbility<Smite>().Level = 3` gives an ability and sets its level. A level the ability doesn't have is kept
 between 1 and its last, as the game does, and a level set on an ability the unit lacks does nothing; a development
 build reports both. Removing an ability ends a cast of it that is running, and adding it back clears its cooldown.
+
+`OnOrdered(Order order)` on a unit's class and its components, and `OnUnitOrdered(Order order)` on game and player
+components, hear each order a player or code gives (code's inside the call), before the unit carries it out:
+
+```csharp
+public sealed class Border : GameComponent
+{
+    public override void OnUnitOrdered(Order order)
+    {
+        // No walking past x 2000: a right-click is Orders.Smart.
+        if (order.Kind == OrderKind.Place && order.X > 2000f && (order.Name == Orders.Move || order.Name == Orders.Smart))
+        {
+            order.Cancel();
+        }
+    }
+}
+```
+
+- `order.Cancel()` refuses it: the unit carries on with the order it was carrying out, which Moonwell gives back, or stops
+  when it had none (after a stop or a build), and the order's other reactions still run and read `IsCancelled`. An order
+  given in a reaction replaces the one heard; a stop given there holds too, as Moonwell repeats it a moment later. A
+  refused Shift-queued order ends the queue, as the game can't skip one.
+- `order.Kind` is `None`, `Place` or `Target`; a target order's `X` and `Y` are its target's place, and one with
+  neither the unit's. The game's own orders run nothing: the stunned order, undefend, and the order a stun's end gives
+  back.
+- `LastOrder` keeps the last three orders worth giving again (moves, attacks, right-clicks, patrols, holding position,
+  spells; not stops, toggles or items), each reaching the one before with `Previous`, and `Reissue()` gives the last
+  again, after a knockback say; a spell already cast is not cast again. A map listens for orders only when its code
+  writes an order reaction or reads `LastOrder` or `Reissue`.
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|
@@ -770,9 +800,10 @@ public sealed class ShopFloor : Area // a game component: Components.Add(new Sho
   runs only while an area with a `Tick` has a unit inside. Adding an area lists every unit of every player once to find
   those already inside, so on a map of thousands of units an area made at each cast pays that at each cast.
 
-## Mouse and camera
+## Mouse, keyboard and camera
 
-Add the `Moonwell.Input` package (the template's `.csproj` has the line, commented) for each player's mouse and camera.
+Add the `Moonwell.Input` package (the template's `.csproj` has the line, commented) for each player's mouse, keyboard and
+camera.
 A map that never names `Mouse` or `IMouseWatch` listens to no mouse event. One that never reads a mouse's `X`, `Y`,
 `Position` or `HasPosition` and writes no `OnMouseMoved` listens to presses and releases only, not to the moves, which
 are synced events, 120 to 240 a second for each player moving the mouse.
@@ -794,8 +825,50 @@ player.Camera().Apply(CameraSetup.Named("Intro"), 2f); // World Editor's camera,
   not places: the mouse keeps its last position on them.
 - A camera is read inside `Local.For`, and a read is this machine's camera whichever player's it is read from; changing
   it (`PanTo`, `SetDistance`, `Follow`, `Apply`, `Reset`) is safe anywhere and moves only that player's camera.
-  `CameraSetup.Named` may sit in a field: named before the package starts, it is looked up when applied. Key presses are
-  not in Moonwell yet.
+  `CameraSetup.Named` may sit in a field: named before the package starts, it is looked up when applied.
+
+A map whose code names `Keyboard` or `IKeyWatch` hears every key of each person playing, with any modifiers, as synced
+events; the registrations (about 6,000 for each person) are made only for such a map, while it loads.
+
+```csharp
+public sealed class Dash : PlayerComponent, IKeyWatch // write only the reactions needed
+{
+    public void OnKeyPressed(Keyboard keyboard, Key key)
+    {
+        if (key == Key.Q && keyboard.Shift) { /* the press is synced: safe to change the game */ }
+    }
+}
+```
+
+- `OnKeyPressed` runs once per press: a held key's repeats run nothing, and `keyboard.IsDown(Key.W)` stays true until
+  its release, which is what movement reads. `Shift`, `Control` and `Alt` are what the player's last key event held, the
+  same on every machine, so a mouse reaction reads them too (`mouse.Player.Keyboard().Shift`). `IsHeldNow` is this
+  machine's own, inside `Local.For`.
+- The game sends no release for a key held when it loses the keyboard (Alt+Tab, a click outside its window, the Start
+  menu): each machine checks its own keyboard every quarter second and sends one, so that `OnKeyReleased` comes a
+  quarter second and the network delay late. Windows' switch of keyboard language (Alt+Shift) makes the game forget the
+  keys held, so they come up then too, though still held. A player who leaves holds no keys from then on, and no
+  reaction runs for them.
+- The game still does what it does with a key (a hotkey, the arrows moving the camera), and keys typed in the chat box
+  fire nothing. `Key` has .NET's names (`Key.Enter`, `Key.D0` for the 0 above the letters, `Key.LeftShift`); the
+  punctuation keys are numbered (`Key.Oem1`), as each keyboard layout puts other characters there.
+
+## Colours and text
+
+`Color` is a colour as the game takes it, each part 0 to 255: `new Color(255, 204, 0)`, `Color.FromHtml("#ffcc00")`,
+the named ones (`Color.Red`, and `Color.TooltipGold` for the game's own gold) and `Color.Of(PlayerColor.Blue)`. `Lerp`,
+`Darkened`, `Lightened`, `Inverted` and `Color.FromHsv` make one from another, as in Godot. `unit.Tint(color)` takes
+one too.
+
+`"Gold".Colored(Color.TooltipGold)` colours text, and `player.ColoredName` is a player's name in their colour. Letter by
+letter: `Rainbow()` (a shift turns it round, for text that is redrawn), `Gradient(a, b)` through two colours or more,
+`Alternate(a, b)` and `Confetti()`; `Highlight("Stun", Color.Red)` colours a word wherever it appears.
+`"Victory".Sweep(Color.Gold, Color.White, Game.Time)` moves a band of white through gold, 20 letters a second, in text
+that is redrawn, such as floating text set every 0.05 s; `SweepShape.Wide`, `Sharp`, `Comet` and `Repeating` (a new
+band every second) change its shape. A screen line shows 1,023 characters, and a colour code takes 10: `Rainbow` and
+`Gradient` share codes on a long text to keep within them, while `Alternate` and `Confetti` fit about 90 letters. The
+game shows no alpha in text, and `|r` goes back to white, not to an outer colour. `Text.Clock(125f)` writes "2:05", and
+`Text.TimeOfDay(6.5f)` "06:30".
 
 ## Players
 

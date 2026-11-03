@@ -84,6 +84,13 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
                         && first.ContainingNamespace?.ToDisplayString() == "Moonwell", true));
             }
 
+            if (compilation.GetTypeByMetadataName("Moonwell.IKeyWatch") is { } keys)
+            {
+                families.Add(new Family(keys, "input package", mapHosts, MapHosts, ImmutableDictionary<string, string>.Empty,
+                    method => method.Parameters.Length is 1 or 2 && method.Parameters[0].Type is { Name: "Keyboard" } first
+                        && first.ContainingNamespace?.ToDisplayString() == "Moonwell", true));
+            }
+
             foreach (var name in new[] { "IPushTarget", "IMissileTarget" })
             {
                 if (compilation.GetTypeByMetadataName("Moonwell." + name) is { } face)
