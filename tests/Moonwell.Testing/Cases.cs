@@ -67,6 +67,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "spellbuff.stray-target-area", Run = SpellBuffCases.StrayTargetArea });
             list.Add(new Case { Name = "spellbuff.step-survives-ends", Run = SpellBuffCases.StepSurvivesEnds });
             list.Add(new Case { Name = "spellbuff.equal-auras-keep-source", Run = SpellBuffCases.EqualAurasKeepSource });
+            list.Add(new Case { Name = "spellbuff.hit-and-cast-once", Run = SpellBuffCases.HitAndCastOnce });
+            list.Add(new Case { Name = "spellbuff.sweep-finds-holders-first", Run = SpellBuffCases.SweepFindsHoldersFirst });
         }
 
         /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>

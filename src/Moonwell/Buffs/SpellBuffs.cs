@@ -291,6 +291,7 @@ namespace Moonwell
                 recent.RemoveAt(0);
             }
 
+            // The holders first, so a buff made in this sweep in reach of one is that holder's.
             var units = KnownUnits.Live;
             for (var i = 0; i < units.Count; i++)
             {
@@ -300,7 +301,6 @@ namespace Moonwell
                     continue;
                 }
 
-                Check(unit, null, false);
                 var holds = HoldsAura(unit);
                 if (holds && !holders.Contains(unit))
                 {
@@ -310,6 +310,15 @@ namespace Moonwell
                 else if (!holds && holders.Remove(unit))
                 {
                     heldAt = -1.0f;
+                }
+            }
+
+            for (var i = 0; i < units.Count; i++)
+            {
+                var unit = units[i];
+                if (!unit.HasEnded && !unit.IsGone)
+                {
+                    Check(unit, null, false);
                 }
             }
         }
@@ -340,7 +349,7 @@ namespace Moonwell
                 else if (on && existing != null && again && given != null)
                 {
                     var giver = given(buffId);
-                    if (giver != null && !SameCast(existing, giver))
+                    if (giver != null && !SameCast(existing, giver) && !(existing.givenBy == giver.Source && existing.givenAt == Runtime.World.Now()))
                     {
                         GiveAgain(existing, giver);
                     }
@@ -366,7 +375,9 @@ namespace Moonwell
             buff.gameBuff = buffId;
             buff.Source = giver?.Source;
             buff.Level = giver == null ? 0 : giver.Level;
-            buff.byAura = giver != null && giver.ByAura;
+            buff.byAura = giver == null ? AuraListed(buffId) : giver.ByAura;
+            buff.givenBy = giver?.Source;
+            buff.givenAt = Runtime.World.Now();
             unit.Add(buff);
             if (buff.HasEnded)
             {
@@ -389,6 +400,8 @@ namespace Moonwell
         private static void GiveAgain(Buff buff, Giver giver)
         {
             buff.byAura = giver.ByAura;
+            buff.givenBy = giver.Source;
+            buff.givenAt = Runtime.World.Now();
             if (giver.ByCast)
             {
                 buff.castBy = giver.Source;
@@ -574,6 +587,20 @@ namespace Moonwell
             for (var i = 0; i < watched.Count; i++)
             {
                 if (listers[watched[i]].Contains(abilityId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether an aura lists a watched buff, so a buff made with no giver follows the strongest holder once one is found.</summary>
+        private static bool AuraListed(int buffId)
+        {
+            for (var a = 0; a < auras.Count; a++)
+            {
+                if (Listed(auras[a], buffId))
                 {
                     return true;
                 }

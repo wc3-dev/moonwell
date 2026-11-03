@@ -443,6 +443,40 @@ namespace Moonwell.Testing
             Expect.Same(first, buff.Source, "the holder stays");
             Expect.Equal(applied, buff.Applied, "no OnApply for the move");
         }
+        /// <summary>A spell whose hit of 0 comes in its effect's instant (Slow, seen 11-03) gives a buff that is on again once, not once for the hit and once for the cast.</summary>
+        public static void HitAndCastOnce(FakeWorld world)
+        {
+            Watch();
+            var target = NewUnit(world);
+            var first = Caster(world, 1);
+            var second = Caster(world, 2);
+            world.GameBuffs.Hit(first.Handle, target.Handle, Frozen);
+            world.Advance(0.01f);
+            var buff = target.Get<FrozenBuff>()!;
+            Inbound.SpellEffect(second.Handle, Bolt, target.Handle, 0.0f, 0.0f);
+            world.GameBuffs.Hit(second.Handle, target.Handle, Frozen);
+            world.Advance(0.01f);
+            Expect.Equal(2, buff.Applied, "OnApply ran once for the second cast");
+            Expect.Same(second, buff.Source, "the second caster's");
+        }
+
+        /// <summary>The sweep finds the holders of an aura before it checks the units, so a buff it makes in reach of one has that holder as its source.</summary>
+        public static void SweepFindsHoldersFirst(FakeWorld world)
+        {
+            Watch();
+            world.AbilityAreas[Frost] = 300.0f;
+            var other = NewUnit(world);
+            var holder = NewUnit(world);
+            world.PlaceUnit(other.Handle, 100.0f, 0.0f);
+            world.PlaceUnit(holder.Handle, 0.0f, 0.0f);
+            world.SetAbilityLevel(holder.Handle, Frost, 2);
+            world.GameBuffs.Aura(holder.Handle, Frost, Frozen, 300.0f);
+            world.Advance(1.1f);
+            var buff = other.Get<FrozenBuff>();
+            Expect.True(buff != null, "found by the sweep");
+            Expect.Same(holder, buff!.Source, "the holder's");
+            Expect.Equal(2, buff.Level, "at its level");
+        }
         /// <summary>Apply of a class a spell lists is refused, and reported, in every build (decision 154).</summary>
         public static void ApplyRefused(FakeWorld world)
         {

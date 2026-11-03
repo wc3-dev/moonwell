@@ -40,6 +40,12 @@ namespace Moonwell
         /// <summary>When castBy gave it again.</summary>
         internal float castAt;
 
+        /// <summary>The source that gave it last, and when, so one source gives it once in an instant (a spell's hit of 0 and its cast).</summary>
+        internal Unit? givenBy;
+
+        /// <summary>When givenBy gave it; -1 before.</summary>
+        internal float givenAt = -1.0f;
+
         /// <summary>The level of the spell, attack or aura that put this buff on (decision 153): of the matched cast or hit's ability, or the strongest aura holder's; 0 when nothing matched, and for a buff put on by Apply.</summary>
         [LocalSafe]
         public int Level { get; internal set; }
