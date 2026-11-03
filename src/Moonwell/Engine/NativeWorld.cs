@@ -966,6 +966,12 @@ namespace Moonwell.Engine
             return Natives.IsItemOwned(item);
         }
 
+        /// <summary>Moves an item a unit holds into a slot, swapping it with the item there: UnitDropItemSlot.</summary>
+        public bool MoveItemToSlot(unit unit, item item, int slot)
+        {
+            return Natives.UnitDropItemSlot(unit, item, slot);
+        }
+
         /// <summary>The charges of an item, from the game.</summary>
         public int ChargesOf(item item)
         {

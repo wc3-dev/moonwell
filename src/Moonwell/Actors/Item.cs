@@ -306,6 +306,36 @@ namespace Moonwell
             return (T)Create(ObjectTypes.IdOf<T>(), x, y, scope);
         }
 
+        /// <summary>Creates an item of a type at a unit's place, in a scope, and gives it to the unit (Unit.Give): OnCreated runs, then the pick-up reactions. With a full inventory, or none, it stays on the ground there. The game's own native would make an item there with no handle to it (seen 11-02). Throws as Create at a place does.</summary>
+        public static Item Create(int typeId, Unit unit, Scope scope)
+        {
+            var made = Create(typeId, unit.X, unit.Y, scope);
+            unit.Give(made);
+            return made;
+        }
+
+        /// <summary>Creates an item of a registered class for a unit; see Create with a type id.</summary>
+        public static T Create<T>(Unit unit, Scope scope)
+            where T : Item
+        {
+            return (T)Create(ObjectTypes.IdOf<T>(), unit, scope);
+        }
+
+        /// <summary>Creates an item of a type at a unit's place, in a scope, and gives it into a slot (Unit.Give with a slot): onto a taken slot the two swap. With a full inventory, or a slot the unit does not have, it stays on the ground there. The game's own native would make an item there with no handle to it (seen 11-02). Throws as Create at a place does.</summary>
+        public static Item Create(int typeId, Unit unit, int slot, Scope scope)
+        {
+            var made = Create(typeId, unit.X, unit.Y, scope);
+            unit.Give(made, slot);
+            return made;
+        }
+
+        /// <summary>Creates an item of a registered class into a slot of a unit's inventory; see Create with a type id.</summary>
+        public static T Create<T>(Unit unit, int slot, Scope scope)
+            where T : Item
+        {
+            return (T)Create(ObjectTypes.IdOf<T>(), unit, slot, scope);
+        }
+
         /// <summary>Adds a component to the item, and returns it.</summary>
         public T Add<T>(T component)
             where T : ItemComponent => AddComponent(component);

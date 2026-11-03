@@ -818,6 +818,31 @@ namespace Moonwell
             return !IsGone && !item.IsGone && Runtime.World.GiveItem(Handle, item.Handle);
         }
 
+        /// <summary>Gives the unit an item into a slot of its inventory, counting from 0, and answers whether it is there. An item the unit does not hold is picked up first, as Give does, so OnPickedUp and OnItemPickedUp run inside this call; then it moves into the slot, which the game does with no event. Onto a taken slot the two items swap, as the game's slot move does. False, and no call to the game, for a slot the inventory does not have, for a full inventory that does not hold the item, and once the unit or the item is gone.</summary>
+        public bool Give(Item item, int slot)
+        {
+            if (IsGone || item.IsGone || slot < 0 || slot >= InventorySize)
+            {
+                return false;
+            }
+
+            if (!Runtime.World.CarriesItem(Handle, item.Handle))
+            {
+                var free = false;
+                for (var i = 0; i < InventorySize && !free; i++)
+                {
+                    free = Runtime.World.ItemInSlot(Handle, i) == null;
+                }
+
+                if (!free || !Runtime.World.GiveItem(Handle, item.Handle) || IsGone || item.IsGone)
+                {
+                    return false;
+                }
+            }
+
+            return Runtime.World.MoveItemToSlot(Handle, item.Handle, slot);
+        }
+
         /// <summary>Makes the unit drop an item from its inventory where it stands (UnitRemoveItem). The game counts it as a drop, so OnDropped and OnItemDropped run, inside this call and while the unit still has the item: the item's Carrier is the unit there, and null after the call. Does nothing for an item that lies on the ground, and once the unit or the item is gone. A unit whose inventory drops its items at death (a footman's; a hero's keeps them) drops them as it dies, and the drop reactions run before its OnDeath, with Carrier already null. The items of a unit removed with RemoveUnit leave it inside that call, but the game fires their drop events after the call, while the unit's type id still reads. For a unit Moonwell removed (Remove(), or its scope ending) no drop reaction runs, neither the item's nor the unit's, and its handle makes no second object; for one a native removed, which Moonwell has not noticed yet, the drop reactions run for an object that is about to be swept, with Carrier already null. Seen for a hero, whose items are then removed with it; other units are assumed to do the same.</summary>
         public void Drop(Item item)
         {
