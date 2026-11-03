@@ -346,7 +346,7 @@ namespace Moonwell.Testing
             Expect.True(watch.Carrier == null, "no carrier after the drop");
         }
 
-        /// <summary>A carrier that is not a hero drops its item when it dies, with no drop event (seen 10-21), so the item has no carrier then.</summary>
+        /// <summary>A carrier that is not a hero drops its item when it dies (seen 11-02), so the item has no carrier then.</summary>
         public static void CarrierDies(FakeWorld world)
         {
             var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
@@ -419,22 +419,39 @@ namespace Moonwell.Testing
             Expect.True(!orb.DropSeen, "no drop event");
         }
 
-        /// <summary>A unit that is not a hero drops its items when it dies, at its place, and the game fires no drop event for them (seen 10-21).</summary>
-        public static void CarrierNonHeroDiesSilently(FakeWorld world)
+        /// <summary>A unit whose inventory drops its items at death (a footman's) drops them inside the kill and before the death event, each with a drop event while the unit is already dead (seen 11-02), so the drop reactions run before OnDeath, with no carrier, and the item lands where the unit died.</summary>
+        public static void DyingUnitDropsBeforeItsDeath(FakeWorld world)
         {
-            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new CarrierWatch());
-            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            ObjectTypes.Unit(ObjectTypes.FourCC("U001"), () => new Dummy());
+            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new DropLog("orb"));
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("U001")))!;
             unit.PlaceAt(70.0f, 80.0f);
-            var watch = (CarrierWatch)Item.Create(ObjectTypes.FourCC("I001"), 5.0f, 6.0f, Game.Instance);
-            unit.Give(watch);
+            var orb = Item.Create(ObjectTypes.FourCC("I001"), 5.0f, 6.0f, Game.Instance);
+            unit.Give(orb);
+            TestLog.Lines.Clear();
 
             unit.Kill();
 
-            Expect.True(!watch.DropSeen, "no drop event for the death");
-            Expect.True(watch.Carrier == null, "no carrier after the death");
+            ExpectLog(new string[] { "dropped orb no carrier", "dummy died", "dummy comp died" }, "the log");
+            Expect.True(orb.Carrier == null, "no carrier after the death");
             Expect.True(unit.ItemIn(0) == null, "the slot is empty");
-            Expect.Near(70.0f, watch.X, "the item lies at the unit's x");
-            Expect.Near(80.0f, watch.Y, "the item lies at the unit's y");
+            Expect.Near(70.0f, orb.X, "the item lies at the unit's x");
+            Expect.Near(80.0f, orb.Y, "the item lies at the unit's y");
+        }
+
+        /// <summary>A dying unit's items drop last slot first, as the game drops them (seen 11-02).</summary>
+        public static void DyingUnitDropsLastSlotFirst(FakeWorld world)
+        {
+            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new DropLog("first"));
+            ObjectTypes.Item(ObjectTypes.FourCC("I002"), () => new DropLog("second"));
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            unit.Give(Item.Create(ObjectTypes.FourCC("I001"), 0.0f, 0.0f, Game.Instance));
+            unit.Give(Item.Create(ObjectTypes.FourCC("I002"), 0.0f, 0.0f, Game.Instance));
+            TestLog.Lines.Clear();
+
+            unit.Kill();
+
+            ExpectLog(new string[] { "dropped second no carrier", "dropped first no carrier" }, "the log");
         }
 
         /// <summary>While a unit carries an item, X and Y read the unit's place, though the game keeps where the item lay (seen 11-02); a drop puts it at the unit's place.</summary>

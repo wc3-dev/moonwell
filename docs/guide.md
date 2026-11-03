@@ -346,16 +346,17 @@ to 5400 for level 10. The build gives the map's own to the runtime.
 |---|---|
 | `Charges`, `Owner` | read and set; 0 charges leaves the item in place; `Owner` is the player the item belongs to: each pick-up makes it the carrier's player, and a drop leaves it |
 | `X`, `Y` | read; `MoveTo(x, y)` goes to a pathable spot; while a unit holds the item, in its inventory, bag or equipment slots, they read the unit's place |
-| `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop after `RemoveUnit` (below), where it is already null |
+| `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop at a death or after `RemoveUnit` (below), where it is already null |
 
 `ItemIn` is not for `Local.For`: it takes in an item Moonwell has not seen, which has to happen on every machine.
 Moonwell listens for pick-ups and drops from the start, so an item a unit picks up is taken in; one a unit held before
-the map began has no `Carrier`, and its `X` and `Y` read where it lay before. A unit that is not a hero drops its items
-when it dies, with no drop reactions; a hero keeps them. When a unit is removed from the game (`RemoveUnit`), its items
-leave it inside the call, but the game fires the drops after it. For a unit Moonwell removed (`Remove()`, or its scope
-ending) no drop reaction runs; for one a native removed, the drop reactions run for an object about to be swept, with
-`Carrier` already null. The items of a removed hero are removed with it, as seen; other units are assumed to do the
-same. A member's exact behaviour is in its comment.
+the map began has no `Carrier`, and its `X` and `Y` read where it lay before. A unit whose inventory drops its items at
+death (a footman's) drops them as it dies, and the drop reactions run before its `OnDeath`, with `Carrier` already null;
+a hero keeps them. When a unit is removed from the game (`RemoveUnit`), its items leave it inside the call, but the game
+fires the drops after it. For a unit Moonwell removed (`Remove()`, or its scope ending) no drop reaction runs; for one a
+native removed, the drop reactions run for an object about to be swept, with `Carrier` already null. The items of a
+removed hero are removed with it, as seen; other units are assumed to do the same. A member's exact behaviour is in its
+comment.
 
 ## Damage
 

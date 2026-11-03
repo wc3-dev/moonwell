@@ -1537,15 +1537,14 @@ namespace Moonwell.Testing
             }
 
             lives[unit] = 0.0f;
+            DropAll(unit);
             if (Listening.Contains(GameEvent.Death))
             {
                 Inbound.Died(unit, killer);
             }
-
-            DropAll(unit);
         }
 
-        /// <summary>Empties a dead unit's slots as the game drops the items of a unit that is not a hero, at its place, with no drop event (seen 10-21); a hero keeps its items.</summary>
+        /// <summary>Drops a dying unit's items as the game drops a footman's: before the death event, last slot first, each out of its slot when its drop event fires, while the unit is already dead, then at the unit's place (seen 11-02). A hero keeps its items, with no event; the game decides by the inventory ability, so a unit given a hero's inventory keeps them too.</summary>
         private void DropAll(unit unit)
         {
             if (heroes.TryGetValue(unit, out var isHero) && isHero)
@@ -1554,12 +1553,17 @@ namespace Moonwell.Testing
             }
 
             var slots = SlotsOf(unit);
-            for (var i = 0; i < slots.Length; i++)
+            for (var i = slots.Length - 1; i >= 0; i--)
             {
                 var carried = slots[i];
                 if (carried != null)
                 {
                     slots[i] = null!;
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, carried);
+                    }
+
                     LandAt(unit, carried);
                 }
             }
