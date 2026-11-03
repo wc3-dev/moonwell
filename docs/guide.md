@@ -258,11 +258,19 @@ public sealed class KillCounter : UnitComponent
 - A buff is a class that inherits `Buff`, or a standard buff to show its icon. `Duration` and `Tick` set its time,
   `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
   apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
-  `Duration` from then on, and keeps its other values and what it has counted.
+  `Duration` from then on, and keeps its other values and what it has counted. `Stacking.Strongest` keeps one buff whose
+  `Strength` (set in the constructor) is the strongest of its applies still on: `OnApply` runs again whenever that
+  changes, up or down, so a stronger aura takes over at once and a weaker one takes over again with no gap when it
+  leaves. A buff class's own member named `Strength` hides it.
 - The game's dispels (Dispel Magic, Abolish Magic, Purge) and spell immunity do not reach a buff: it goes on and its
-  icon stays, on a spell-immune unit too. A dispel of the map's own removes it, with `unit.Remove<Burn>()`.
+  icon stays, on a spell-immune unit too. A dispel of the map's own removes it, with `unit.Remove<Burn>()`, which takes
+  the first of a class, whoever added it.
 - A component or buff belongs to the actor it is added to, whoever added it: it ends when it is removed or that actor
-  ends, so an aura that buffs others removes its buff in `OnPart` (Interactions, below).
+  ends. Held by a scope, it also ends when that scope ends: `unit.Add(new Haste(), heldBy: Item.Carry)`,
+  `pair.Other.Apply(new Chilled(), Holder, heldBy: pair)`. A buff given again from another holder joins the one there,
+  as its `Stacking` says, and ends with its last holder or at its `Duration`, whichever comes first; one given with no
+  holder stays after its holders let go. A component is never joined, so two holders give two. A holder that has
+  ended adds nothing, and a player as the holder is error MW0043.
 - Game work starts in a reaction. Top-level code and static fields make nothing in the game.
 
 **Scopes.** What code makes belongs to the scope named where it is made, and ends when that scope ends: the game, a
@@ -359,6 +367,7 @@ to 5400 for level 10. The build gives the map's own to the runtime.
 | `Charges`, `Owner` | read and set; 0 charges leaves the item in place; `Owner` is the player the item belongs to: each pick-up makes it the carrier's player, and a drop leaves it |
 | `X`, `Y` | read; `MoveTo(x, y)` goes to a pathable spot; while a unit holds the item, in its inventory, bag or equipment slots, they read the unit's place |
 | `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop at a death or after `RemoveUnit` (below), where it is already null |
+| `Carry` | a scope from each pick-up into the inventory or an equipment slot to the drop: what it holds, `heldBy: Item.Carry` in `OnPickedUp`, ends at the drop, with no `OnDropped` to write; still live in `OnDropped`; the 3.0 bag starts none, so a gift held by it is not given there |
 
 `ItemIn` is not for `Local.For`: it takes in an item Moonwell has not seen, which has to happen on every machine.
 Moonwell listens for pick-ups and drops from the start, so an item a unit picks up is taken in; one a unit held before
@@ -592,8 +601,13 @@ public sealed class FireAura : Interaction<Unit, Unit> // held by a unit, pairs 
 public sealed class FrostAura : Interaction<Unit, Unit>
 {
     public FrostAura() { Range = 600f; }
-    public override void OnMeet(Pair pair) { pair.Other.Apply(new Chilled()); }
-    public override void OnPart(Pair pair) { pair.Other.Remove<Chilled>(); } // the buff is the unit's, not the pair's
+    public override void OnMeet(Pair pair) { pair.Other.Apply(new Chilled(Holder.Level), Holder, heldBy: pair); } // ends when the last aura parts
+}
+
+public sealed class Chilled : Buff
+{
+    public Chilled(int level) { Stacking = Stacking.Strongest; Strength = 0.1f * level; } // two levels: the stronger counts
+    public override void OnApply() { /* slow the unit by Strength */ }
 }
 
 unit.Interact(new FireAura(), this); // in a buff's scope: it ends with the buff, or with the unit
@@ -605,8 +619,8 @@ var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find
   may start up to 1 s late (interactions started together take turns over its steps). Only a unit in the game (alive,
   not hidden, not loaded), a visible item on the ground, a live destructable and a gizmo have a place; `OnPart` runs
   once, when a pair ends. A timer made on the pair (`pair.After`) ends when it parts, one made with plain `After`
-  is the interaction's; a buff or component the reactions add is the unit's, so `OnPart` removes it, as `FrostAura`
-  does.
+  is the interaction's; a buff or component the reactions add is the unit's, and held by the pair (`heldBy: pair`) it
+  ends when the pair parts, as `FrostAura`'s does, or with the last of several auras that give it.
 - `Accepts` is asked before a meeting and again before each tick: a no parts the pair (`OnPart`), and the two meet
   again once it says yes, so `FireAura` stops burning a unit that changes sides (Charm, a new owner). Set
   `RecheckAccepts = false` in the constructor to ask only before a meeting, a call less per pair at each tick. Units
