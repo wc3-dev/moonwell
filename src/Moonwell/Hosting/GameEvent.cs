@@ -29,5 +29,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A unit is given an order: none, to a place, or on a target.</summary>
         Order,
+
+        /// <summary>A unit changes hands: given away by code, charmed or possessed.</summary>
+        OwnerChange,
     }
 }

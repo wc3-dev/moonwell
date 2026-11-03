@@ -13,6 +13,12 @@ namespace Moonwell.Engine
         /// <summary>The seconds the clock runs before it starts again: its elapsed time reads exact at 10 s, and steps by 0.0625 s at 604800 s.</summary>
         private const float Lap = 10.0f;
 
+        /// <summary>A dummy's reach: farther than any map.</summary>
+        private const float DummyRange = 99999.0f;
+
+        /// <summary>How far a patch of vision reaches around a place; the probe's 128 let a unit there be targeted (11-03).</summary>
+        private const float PatchReach = 128.0f;
+
         /// <summary>The clock: the game time is the laps it has run plus its elapsed time.</summary>
         private readonly timer clock;
 
@@ -138,6 +144,22 @@ namespace Moonwell.Engine
                     Register(Natives.EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, () => OrderAction(OrderKind.Place));
                     Register(Natives.EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, () => OrderAction(OrderKind.Target));
                     break;
+                case GameEvent.OwnerChange:
+                    Register(Natives.EVENT_PLAYER_UNIT_CHANGE_OWNER, OwnerChangeAction);
+                    break;
+            }
+        }
+
+        /// <summary>Hands a unit's change of hands to Inbound.</summary>
+        private static void OwnerChangeAction()
+        {
+            try
+            {
+                Inbound.OwnerChanged(Natives.GetTriggerUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.OwnerChanged", error);
             }
         }
 
@@ -1109,6 +1131,56 @@ namespace Moonwell.Engine
             }
 
             return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_AREA_OF_EFFECT, level - 1);
+        }
+
+        /// <summary>Range 99999, mana 0 and cooldown 0 on a unit's copy of an ability at a level: BlzSetAbilityRealLevelField, BlzSetUnitAbilityManaCost, BlzSetUnitAbilityCooldown.</summary>
+        public void FreeCasting(unit unit, int abilityId, int level)
+        {
+            Natives.BlzSetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_CAST_RANGE, level - 1, DummyRange);
+            Natives.BlzSetUnitAbilityManaCost(unit, abilityId, level - 1, 0);
+            Natives.BlzSetUnitAbilityCooldown(unit, abilityId, level - 1, 0.0f);
+        }
+
+        /// <summary>The longer of ABILITY_RLF_DURATION_NORMAL and _HERO at a level.</summary>
+        public float SpellLasts(unit unit, int abilityId, int level)
+        {
+            var ability = Natives.BlzGetUnitAbility(unit, abilityId);
+            var normal = Natives.BlzGetAbilityRealLevelField(ability, Natives.ABILITY_RLF_DURATION_NORMAL, level - 1);
+            var hero = Natives.BlzGetAbilityRealLevelField(ability, Natives.ABILITY_RLF_DURATION_HERO, level - 1);
+            return normal > hero ? normal : hero;
+        }
+
+        /// <summary>ABILITY_IF_MISSILE_SPEED of a unit's copy of an ability.</summary>
+        public int ProjectileSpeedOf(unit unit, int abilityId)
+        {
+            return Natives.BlzGetAbilityIntegerField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_IF_MISSILE_SPEED);
+        }
+
+        /// <summary>GetPlayerTechCount, counting all.</summary>
+        public int TechCount(player player, int techId)
+        {
+            return Natives.GetPlayerTechCount(player, techId, true);
+        }
+
+        /// <summary>IsUnitVisible.</summary>
+        public bool Sees(player player, unit unit)
+        {
+            return Natives.IsUnitVisible(unit, player);
+        }
+
+        /// <summary>A visible fog modifier of radius 128, started: CreateFogModifierRadius and FogModifierStart.</summary>
+        public fogmodifier SeeAround(player player, float x, float y)
+        {
+            var patch = Natives.CreateFogModifierRadius(player, Natives.FOG_OF_WAR_VISIBLE, x, y, PatchReach, true, false);
+            Natives.FogModifierStart(patch);
+            return patch;
+        }
+
+        /// <summary>FogModifierStop and DestroyFogModifier.</summary>
+        public void StopSeeing(fogmodifier patch)
+        {
+            Natives.FogModifierStop(patch);
+            Natives.DestroyFogModifier(patch);
         }
 
         /// <summary>Whether an item is in a unit's 3.0 bag: IsItemInBag.</summary>

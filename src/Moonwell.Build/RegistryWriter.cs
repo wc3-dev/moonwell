@@ -19,7 +19,7 @@ namespace Moonwell.Build
         /// <param name="declared">The declared objects.</param>
         /// <param name="ids">The object id of each declared class, and of each buff's carrier as <c>&lt;class&gt;#carrier</c>.</param>
         /// <returns>The path of the written file.</returns>
-        /// <param name="watch">The registrations of the buffs the runtime watches for (<see cref="BuffWatch"/>), written after the rest; none when null.</param>
+        /// <param name="watch">The registrations written after the rest: the buffs the runtime watches for (<see cref="BuffWatch"/>) and the dummy's casts (<see cref="DummyType"/>); none when null.</param>
         /// <exception cref="BuildException">A declared class or a buff's carrier has no id.</exception>
         public static string Write(MapProject project, IReadOnlyList<UsedClass> used, IReadOnlyList<DeclaredObject> declared, IReadOnlyDictionary<string, string> ids, IReadOnlyList<string>? watch = null)
         {

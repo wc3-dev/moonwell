@@ -20,6 +20,9 @@ namespace Moonwell
         [LocalSafe]
         public Unit? Source { get; }
 
+        /// <summary>The dummy that dealt the damage for its Source, or for a player, when one did; the spell-buff watch reads the dummy's spells.</summary>
+        internal unit? Dummy;
+
         /// <summary>The amount of the damage; a reaction may change it.</summary>
         [LocalSafe]
         public float Amount { get; set; } = 0.0f;

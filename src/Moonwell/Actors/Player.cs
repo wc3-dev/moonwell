@@ -534,6 +534,30 @@ namespace Moonwell
         /// <summary>Adds a component to the player, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
         public T Add<T>(T component, Scope? heldBy = null) where T : PlayerComponent => AddComponent(component, heldBy);
 
+        /// <summary>
+        /// Casts a spell of a registered class at a unit, item or destructable for this player, with no unit of its own: a hidden
+        /// dummy of this player's casts it, standing at the target, as a unit's CastOn&lt;T&gt; does. The game gives this player the
+        /// bounty and experience; Moonwell names no unit as the spell's buff's or hit's source, nor as the killer (decision 172).
+        /// </summary>
+        public bool CastOn<T>(Widget target, Scope scope, int level = 1)
+            where T : Ability => CastOn(ObjectTypes.IdOf<T>(), target, scope, level);
+
+        /// <summary>Casts a spell by its ability id at a unit, item or destructable for this player, as CastOn&lt;T&gt; does.</summary>
+        public bool CastOn(int abilityId, Widget target, Scope scope, int level = 1)
+        {
+            return Dummies.Cast(null, this, abilityId, target, 0.0f, 0.0f, scope, level);
+        }
+
+        /// <summary>Casts a spell of a registered class at a place for this player, through a hidden dummy of this player's standing at the place, as CastOn&lt;T&gt; does.</summary>
+        public bool CastAt<T>(float x, float y, Scope scope, int level = 1)
+            where T : Ability => CastAt(ObjectTypes.IdOf<T>(), x, y, scope, level);
+
+        /// <summary>Casts a spell by its ability id at a place for this player, as CastAt&lt;T&gt; does.</summary>
+        public bool CastAt(int abilityId, float x, float y, Scope scope, int level = 1)
+        {
+            return Dummies.Cast(null, this, abilityId, null, x, y, scope, level);
+        }
+
         // What the two players give each other, unless they are one player.
         private void SetBothWays(Player other, Alliance alliance)
         {

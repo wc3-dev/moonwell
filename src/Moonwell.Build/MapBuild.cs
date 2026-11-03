@@ -107,14 +107,29 @@ namespace Moonwell.Build
             var declarations = Declarations.Read(targetPath, project, standard, data.ValueSet);
             BalanceCheck.Run(declarations, standard, data);
 
-            var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), MapObjectIds.Defined(project));
+            var sourceMapIds = MapObjectIds.Defined(project);
+            var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), sourceMapIds);
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
             EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log), Loading(targetPath));
-            var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects));
+
+            // A map whose code casts with a dummy gets the dummy's type in its object files, kept free of its own ids.
+            var casts = DummyType.UsedBy(targetPath);
+            var written = declarations.Objects;
+            var writtenIds = ids;
+            if (casts)
+            {
+                DummyType.Check(ids, sourceMapIds);
+                written = declarations.Objects.Append(DummyType.Object).ToList();
+                writtenIds = new Dictionary<string, string>(ids) { [DummyType.ClassName] = DummyType.Id };
+            }
+
+            var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
+                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? DummyType.MapAbilities(project.MapFolder) : null))
+                .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
-            StageWith(project, () => Stage.Write(project, map, declarations.Objects, ids, declarations.StandardClassIds, standard, log));
+            StageWith(project, () => Stage.Write(project, map, written, writtenIds, declarations.StandardClassIds, standard, log));
         }
 
         // The map does not reference Moonwell.Objects: its own object files are used as they are.

@@ -83,11 +83,12 @@ namespace Moonwell
             internal float Y;
         }
 
-        /// <summary>A cast of a listing ability, kept for matching.</summary>
+        /// <summary>A cast of a listing ability, kept for matching: the unit credited with it (null for a player's dummy), and the unit that cast it when that is no dummy.</summary>
         private sealed class Recent
         {
             internal float Time;
-            internal Unit Caster = null!;
+            internal Unit? Caster;
+            internal Unit? Self;
             internal int Ability;
             internal int Level;
             internal Unit? Target;
@@ -159,52 +160,56 @@ namespace Moonwell
 
         /// <summary>
         /// A hit, before its reactions run: its target is checked now, so a reaction sees a buff that came on just before, made
-        /// as its source's when the source has a listing ability. Only a hit that gives (a hit of 0 the game starts, as a spell's
+        /// as its source's when the source, or the dummy that dealt it, has a listing ability. Only a hit that gives (a hit of 0 the game starts, as a spell's
         /// and an attack's buff comes, seen 11-03) gives a buff that is on again, and is checked once more just after, when the
         /// buff it puts on is on. Nothing gives again while a buff's own OnApply runs.
         /// </summary>
-        internal static void Hit(Unit target, Unit? source, bool gives)
+        internal static void Hit(Unit target, Unit? source, unit? dummy, bool gives)
         {
             if (!started || target.IsGone)
             {
                 return;
             }
 
-            Check(target, buffId => HitGiver(source, buffId), gives && giving == 0);
+            Check(target, buffId => HitGiver(source, dummy, buffId), gives && giving == 0);
             if (gives)
             {
-                Game.Instance.OwnAfter(0.0f, () => Check(target, buffId => HitGiver(source, buffId), false));
+                Game.Instance.OwnAfter(0.0f, () => Check(target, buffId => HitGiver(source, dummy, buffId), false));
             }
         }
 
-        /// <summary>A spell takes effect: a cast of a listing ability is kept for matching, and just after, its target, or the units in its area around its point (around the caster for a spell with no target), are checked.</summary>
-        internal static void Cast(Cast cast)
+        /// <summary>
+        /// A spell takes effect, cast by a unit (a dummy, or the caster itself) for the unit credited with it (null for a player's
+        /// dummy): a cast of a listing ability is kept for matching, and just after, its target, or the units in its area around its
+        /// point (around the one that cast it for a spell with no target), are checked.
+        /// </summary>
+        internal static void Cast(unit casting, Unit? caster, int abilityId, int level, Unit? target, float x, float y)
         {
-            if (!started || !Lists(cast.Ability.Id))
+            if (!started || !Lists(abilityId))
             {
                 return;
             }
 
             // A spell with no target gives the point (0, 0), and Thunder Clap a stray target too (seen 11-03).
-            var caster = cast.Caster;
-            var noPoint = cast.X == 0.0f && cast.Y == 0.0f
-                && (cast.Target == null || Runtime.World.UnitX(cast.Target.Handle) != 0.0f || Runtime.World.UnitY(cast.Target.Handle) != 0.0f);
+            var noPoint = x == 0.0f && y == 0.0f
+                && (target == null || Runtime.World.UnitX(target.Handle) != 0.0f || Runtime.World.UnitY(target.Handle) != 0.0f);
             var kept = new Recent
             {
                 Time = Runtime.World.Now(),
                 Caster = caster,
-                Ability = cast.Ability.Id,
-                Level = cast.Level,
-                Target = noPoint ? null : cast.Target,
-                X = noPoint ? Runtime.World.UnitX(caster.Handle) : cast.X,
-                Y = noPoint ? Runtime.World.UnitY(caster.Handle) : cast.Y,
-                Area = Runtime.World.AbilityArea(caster.Handle, cast.Ability.Id),
+                Self = caster != null && caster.Handle == casting ? caster : null,
+                Ability = abilityId,
+                Level = level,
+                Target = noPoint ? null : target,
+                X = noPoint ? Runtime.World.UnitX(casting) : x,
+                Y = noPoint ? Runtime.World.UnitY(casting) : y,
+                Area = Runtime.World.AbilityArea(casting, abilityId),
             };
             recent.Add(kept);
             Game.Instance.OwnAfter(0.0f, () => AfterCast(kept));
         }
 
-        /// <summary>Checks a cast's target, or for a spell with no target its caster and the units in its area around it, as given by that cast.</summary>
+        /// <summary>Checks a cast's target, or for a spell with no target the unit that cast it, when no dummy, and the units in its area around it, as given by that cast.</summary>
         private static void AfterCast(Recent cast)
         {
             Func<int, Giver?> giver = buffId => Listed(cast.Ability, buffId) ? new Giver { Source = cast.Caster, Level = cast.Level, ByCast = true } : null;
@@ -214,7 +219,10 @@ namespace Moonwell
                 return;
             }
 
-            Check(cast.Caster, giver, true);
+            if (cast.Self != null)
+            {
+                Check(cast.Self, giver, true);
+            }
             if (cast.Area <= 0.0f)
             {
                 return;
@@ -433,18 +441,19 @@ namespace Moonwell
             return null;
         }
 
-        /// <summary>The giver of a hit: its source, when it has an ability that lists the buff, at that ability's level.</summary>
-        private static Giver? HitGiver(Unit? source, int buffId)
+        /// <summary>The giver of a hit: its source, when it, or the dummy that dealt the hit for it, has an ability that lists the buff, at that ability's level; a player's dummy gives with no source.</summary>
+        private static Giver? HitGiver(Unit? source, unit? dummy, int buffId)
         {
-            if (source == null || source.IsGone)
+            if (dummy == null && (source == null || source.IsGone))
             {
                 return null;
             }
 
+            var dealer = dummy ?? source!.Handle;
             var abilities = listers[buffId];
             for (var i = 0; i < abilities.Count; i++)
             {
-                var level = Runtime.World.AbilityLevel(source.Handle, abilities[i]);
+                var level = Runtime.World.AbilityLevel(dealer, abilities[i]);
                 if (level > 0)
                 {
                     return new Giver { Source = source, Level = level };
@@ -466,7 +475,7 @@ namespace Moonwell
                     continue;
                 }
 
-                if (cast.Target == unit || (cast.Target == null && (cast.Caster == unit || Within(unit, cast.X, cast.Y, cast.Area))))
+                if (cast.Target == unit || (cast.Target == null && (cast.Self == unit || Within(unit, cast.X, cast.Y, cast.Area))))
                 {
                     return new Giver { Source = cast.Caster, Level = cast.Level, ByCast = true };
                 }
