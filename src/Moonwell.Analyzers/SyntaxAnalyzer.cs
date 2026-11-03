@@ -11,9 +11,10 @@ namespace Moonwell.Analyzers;
 
 /// <summary>
 /// Rejects the C# syntax and library calls that CSharp.lua stops on, writes wrong or leaves to a Lua core that does not have
-/// them, so the editor and dotnet build show it with its line (MW0017 to MW0032). Found by running about 770 checks
-/// against .NET; each rule's description says what was seen. MW0019, MW0021, MW0033 and MW0034 are gone: the fork's
-/// CSharp.lua writes their forms right. MW0042 is the game's own numbers, which have no NaN or infinity (the 0.3 gate).
+/// them, so the editor and dotnet build show it with its line (MW0023 to MW0032). Found by running about 770 checks
+/// against .NET; each rule's description says what was seen. MW0017 to MW0022, MW0024, MW0026, MW0027, MW0029, MW0031,
+/// MW0033 and MW0034 are gone: the fork's CSharp.lua writes their forms right (2.0.4-moonwell.15 for most; the cases in
+/// FormCases). MW0042 is the game's own numbers, which have no NaN or infinity (the 0.3 gate).
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
@@ -26,439 +27,18 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(SwitchArm, SyntaxKind.SwitchExpressionArm);
-        context.RegisterSyntaxNodeAction(IsPattern, SyntaxKind.IsPatternExpression);
-        context.RegisterSyntaxNodeAction(DeclaredFromElement, SyntaxKind.VariableDeclarator);
-        context.RegisterSyntaxNodeAction(AssignedFromElement, SyntaxKind.SimpleAssignmentExpression);
-        context.RegisterSyntaxNodeAction(Deconstruction, SyntaxKind.SimpleAssignmentExpression);
-        context.RegisterSyntaxNodeAction(TupleSum, SyntaxKind.AddExpression);
-        context.RegisterSyntaxNodeAction(TupleHole, SyntaxKind.Interpolation);
-        context.RegisterSyntaxNodeAction(TupleArgument, SyntaxKind.Argument);
-        context.RegisterSyntaxNodeAction(Operator, SyntaxKind.OperatorDeclaration);
         context.RegisterSyntaxNodeAction(InterfaceMember, SyntaxKind.MethodDeclaration, SyntaxKind.PropertyDeclaration, SyntaxKind.OperatorDeclaration);
-        context.RegisterSyntaxNodeAction(DerivedRecord, SyntaxKind.RecordDeclaration);
         context.RegisterSyntaxNodeAction(TwoConstructions, SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration);
-        context.RegisterSyntaxNodeAction(WithAnonymous, SyntaxKind.WithExpression);
-        context.RegisterSyntaxNodeAction(Range, SyntaxKind.RangeExpression);
-        context.RegisterSyntaxNodeAction(IndexFromEnd, SyntaxKind.IndexExpression);
         context.RegisterSyntaxNodeAction(RefType, SyntaxKind.RefType);
         context.RegisterSyntaxNodeAction(RefLocal, SyntaxKind.RefExpression);
-        context.RegisterSyntaxNodeAction(Params, SyntaxKind.Parameter);
-        context.RegisterSyntaxNodeAction(StringCall, SyntaxKind.InvocationExpression);
         context.RegisterOperationAction(Boxed, OperationKind.Conversion);
-        context.RegisterSyntaxNodeAction(CatchType, SyntaxKind.CatchDeclaration);
-        context.RegisterSyntaxNodeAction(CatchFilter, SyntaxKind.CatchFilterClause);
         context.RegisterSyntaxNodeAction(Name, SyntaxKind.IdentifierName, SyntaxKind.GenericName);
         context.RegisterSyntaxNodeAction(Await, SyntaxKind.AwaitExpression);
         context.RegisterSyntaxNodeAction(Pointer, SyntaxKind.PointerType);
-        context.RegisterSyntaxNodeAction(Checked, SyntaxKind.CheckedExpression, SyntaxKind.CheckedStatement);
         context.RegisterSyntaxNodeAction(EnumInvocation, SyntaxKind.InvocationExpression);
-        context.RegisterSyntaxNodeAction(EnumSum, SyntaxKind.AddExpression);
-        context.RegisterSyntaxNodeAction(EnumHole, SyntaxKind.Interpolation);
-        context.RegisterSyntaxNodeAction(EnumCast, SyntaxKind.CastExpression);
-    }
-
-    // ---- patterns (MW0017, MW0018) ----
-
-    private static void SwitchArm(SyntaxNodeAnalysisContext context)
-    {
-        Walk(context, ((SwitchExpressionArmSyntax)context.Node).Pattern, arm: true, sub: false, nested: false);
-    }
-
-    private static void IsPattern(SyntaxNodeAnalysisContext context)
-    {
-        Walk(context, ((IsPatternExpressionSyntax)context.Node).Pattern, arm: false, sub: false, nested: false);
-    }
-
-    // arm: at the top of a switch expression arm; sub: a member of a property pattern; nested: inside a property or
-    // positional pattern. Parentheses, not in a property pattern and an extended property pattern work since the fork's
-    // 2.0.4-moonwell.12, except at the top of an arm (decision 80; the cases in PatternCases).
-    private static void Walk(SyntaxNodeAnalysisContext context, PatternSyntax pattern, bool arm, bool sub, bool nested)
-    {
-        switch (pattern)
-        {
-            case BinaryPatternSyntax binary:
-                Walk(context, binary.Left, arm, sub, nested);
-                Walk(context, binary.Right, arm, sub, nested);
-                break;
-            case ParenthesizedPatternSyntax parenthesized:
-                if (arm)
-                {
-                    Stops(context, pattern, "a pattern in parentheses in a switch expression");
-                }
-                else
-                {
-                    Walk(context, parenthesized.Pattern, false, sub, nested);
-                }
-
-                break;
-            case UnaryPatternSyntax not:
-                if (arm)
-                {
-                    Stops(context, pattern, "not in a switch expression");
-                }
-                else
-                {
-                    Walk(context, not.Pattern, false, sub, nested);
-                }
-
-                break;
-            case RelationalPatternSyntax when arm:
-                Stops(context, pattern, "a relational pattern in a switch expression");
-                break;
-            case VarPatternSyntax when arm || sub:
-                Stops(context, pattern, "var in " + (arm ? "a switch expression" : "a property pattern"));
-                break;
-            case DeclarationPatternSyntax when sub:
-                Stops(context, pattern, "a name in a property pattern");
-                break;
-            case RecursivePatternSyntax recursive:
-                if (recursive.PositionalPatternClause != null)
-                {
-                    if (!arm)
-                    {
-                        Positional(context, recursive, nested);
-                    }
-
-                    foreach (var subpattern in recursive.PositionalPatternClause.Subpatterns)
-                    {
-                        Walk(context, subpattern.Pattern, false, false, true);
-                    }
-                }
-
-                if (recursive.PropertyPatternClause != null)
-                {
-                    foreach (var subpattern in recursive.PropertyPatternClause.Subpatterns)
-                    {
-                        Walk(context, subpattern.Pattern, false, true, true);
-                    }
-                }
-
-                break;
-            case ListPatternSyntax list:
-                foreach (var item in list.Patterns)
-                {
-                    if (item is SlicePatternSyntax { Pattern: not null })
-                    {
-                        Stops(context, item, "a slice with a name in a list pattern (it needs Slice, which the game's Lua does not have)");
-                    }
-                }
-
-                break;
-        }
-    }
-
-    private static void Stops(SyntaxNodeAnalysisContext context, SyntaxNode node, string what)
-    {
-        context.ReportDiagnostic(Diagnostic.Create(Rules.PatternStops, node.GetLocation(), what));
-    }
-
-    // A positional pattern outside a switch expression arm works only at the top of the pattern, with no names, on a
-    // value that cannot be null: a tuple or a struct, not a class, a record, a nullable struct or object.
-    private static void Positional(SyntaxNodeAnalysisContext context, RecursivePatternSyntax pattern, bool nested)
-    {
-        string? why = null;
-        if (nested)
-        {
-            why = "A positional pattern inside another pattern stops the compiler; test it on its own";
-        }
-        else if (pattern.PositionalPatternClause!.Subpatterns.Any(subpattern => subpattern.NameColon != null))
-        {
-            why = "A positional pattern with names ((A: 1, B: 2)) is false or stops the compiler; leave the names out";
-        }
-        else if (context.SemanticModel.GetOperation(pattern, context.CancellationToken) is not IRecursivePatternOperation
-                 {
-                     InputType: { IsValueType: true, OriginalDefinition.SpecialType: not SpecialType.System_Nullable_T }
-                 })
-        {
-            why = "A positional pattern on a value that can be null (a class, a record, a nullable struct, object) stops the compiler; use a property pattern ({ X: 1 })";
-        }
-
-        if (why != null)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.PatternWrong, pattern.GetLocation(), why));
-        }
-    }
-
-    // ---- MW0020 ----
-
-    private static void DeclaredFromElement(SyntaxNodeAnalysisContext context)
-    {
-        var declarator = (VariableDeclaratorSyntax)context.Node;
-        if (declarator.Initializer?.Value is ElementAccessExpressionSyntax access
-            && context.SemanticModel.GetDeclaredSymbol(declarator, context.CancellationToken) is ILocalSymbol local)
-        {
-            CheckCopy(context, local, access, declarator);
-        }
-    }
-
-    private static void AssignedFromElement(SyntaxNodeAnalysisContext context)
-    {
-        var assignment = (AssignmentExpressionSyntax)context.Node;
-        if (assignment.Right is ElementAccessExpressionSyntax access && assignment.Left is IdentifierNameSyntax name
-            && context.SemanticModel.GetSymbolInfo(name, context.CancellationToken).Symbol is ILocalSymbol local)
-        {
-            CheckCopy(context, local, access, assignment);
-        }
-    }
-
-    private static void CheckCopy(SyntaxNodeAnalysisContext context, ILocalSymbol local, ElementAccessExpressionSyntax access, SyntaxNode scopeStart)
-    {
-        var model = context.SemanticModel;
-        var type = model.GetTypeInfo(access, context.CancellationToken).Type;
-        if (type is not INamedTypeSymbol { TypeKind: TypeKind.Struct, SpecialType: SpecialType.None, IsReadOnly: false, OriginalDefinition.SpecialType: not SpecialType.System_Nullable_T })
-        {
-            return;
-        }
-
-        var scope = scopeStart.Ancestors().OfType<BlockSyntax>().FirstOrDefault();
-        if (scope == null)
-        {
-            return;
-        }
-
-        SyntaxNode? lastChange = null;
-        foreach (var node in scope.DescendantNodes())
-        {
-            if (node.SpanStart >= scopeStart.Span.End && Changes(context.Compilation, model, node, local))
-            {
-                lastChange = node;
-            }
-        }
-
-        if (lastChange != null && !WrittenBack(model, scope, access, local, scopeStart, lastChange))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.StructCopy, access.GetLocation(), local.Name));
-        }
-    }
-
-    /// <summary>
-    /// Whether a node changes a struct local in place: an assignment, ++ or -- to a field of it (c.X, c.Inner.X), a
-    /// call of a method of the struct that changes it (c.Move()), or passing it or a field of it by ref.
-    /// </summary>
-    private static bool Changes(Compilation compilation, SemanticModel model, SyntaxNode node, ILocalSymbol local)
-    {
-        switch (node)
-        {
-            case AssignmentExpressionSyntax assignment:
-                return RootedAt(model, assignment.Left, local);
-            case PrefixUnaryExpressionSyntax prefix when prefix.IsKind(SyntaxKind.PreIncrementExpression) || prefix.IsKind(SyntaxKind.PreDecrementExpression):
-                return RootedAt(model, prefix.Operand, local);
-            case PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.PostIncrementExpression) || postfix.IsKind(SyntaxKind.PostDecrementExpression):
-                return RootedAt(model, postfix.Operand, local);
-            case InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax member } invocation:
-                return (Is(model, member.Expression, local) || RootedAt(model, member.Expression, local))
-                    && model.GetSymbolInfo(invocation).Symbol is IMethodSymbol method && Mutates(compilation, method, new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default));
-            case ArgumentSyntax argument when argument.RefKindKeyword.IsKind(SyntaxKind.RefKeyword):
-                return Is(model, argument.Expression, local) || RootedAt(model, argument.Expression, local);
-            default:
-                return false;
-        }
-    }
-
-    private static bool Is(SemanticModel model, ExpressionSyntax expression, ILocalSymbol local) =>
-        expression is IdentifierNameSyntax && SymbolEqualityComparer.Default.Equals(model.GetSymbolInfo(expression).Symbol, local);
-
-    // A field of a struct local reached through struct fields only (c.X, c.Inner.X), which is part of the local's own value.
-    private static bool RootedAt(SemanticModel model, ExpressionSyntax target, ILocalSymbol local)
-    {
-        for (var at = target; at is MemberAccessExpressionSyntax member; at = member.Expression)
-        {
-            if (Is(model, member.Expression, local))
-            {
-                return true;
-            }
-
-            if (model.GetTypeInfo(member.Expression).Type is not { IsValueType: true })
-            {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>Whether an instance method of a struct of the map changes the struct: it is not readonly, and sets a field of it or calls a method of it that does.</summary>
-    private static bool Mutates(Compilation compilation, IMethodSymbol method, HashSet<IMethodSymbol> seen)
-    {
-        method = method.OriginalDefinition;
-        if (method.IsStatic || method.IsReadOnly || method.ContainingType is not { TypeKind: TypeKind.Struct } type || !seen.Add(method))
-        {
-            return false;
-        }
-
-        foreach (var reference in method.DeclaringSyntaxReferences)
-        {
-            var syntax = reference.GetSyntax();
-            var model = Models.Of(compilation, syntax.SyntaxTree);
-            foreach (var node in syntax.DescendantNodes())
-            {
-                var target = node switch
-                {
-                    AssignmentExpressionSyntax assignment => assignment.Left,
-                    PrefixUnaryExpressionSyntax prefix when prefix.IsKind(SyntaxKind.PreIncrementExpression) || prefix.IsKind(SyntaxKind.PreDecrementExpression) => prefix.Operand,
-                    PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.PostIncrementExpression) || postfix.IsKind(SyntaxKind.PostDecrementExpression) => postfix.Operand,
-                    ArgumentSyntax argument when argument.RefKindKeyword.IsKind(SyntaxKind.RefKeyword) => argument.Expression,
-                    _ => null,
-                };
-                if (target != null && OwnState(model, target, type))
-                {
-                    return true;
-                }
-
-                if (node is InvocationExpressionSyntax { Expression: IdentifierNameSyntax or MemberAccessExpressionSyntax { Expression: ThisExpressionSyntax } } call
-                    && model.GetSymbolInfo(call).Symbol is IMethodSymbol callee
-                    && SymbolEqualityComparer.Default.Equals(callee.ContainingType?.OriginalDefinition, type.OriginalDefinition)
-                    && Mutates(compilation, callee, seen))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    // Whether an expression in a struct's method is the struct's own state: this, or a field or property of it.
-    private static bool OwnState(SemanticModel model, ExpressionSyntax target, INamedTypeSymbol type)
-    {
-        var at = target;
-        while (at is MemberAccessExpressionSyntax member && member.Expression is not ThisExpressionSyntax)
-        {
-            at = member.Expression;
-        }
-
-        if (at is ThisExpressionSyntax or MemberAccessExpressionSyntax { Expression: ThisExpressionSyntax })
-        {
-            return true;
-        }
-
-        return at is IdentifierNameSyntax && model.GetSymbolInfo(at).Symbol is { IsStatic: false, Kind: SymbolKind.Field or SymbolKind.Property } own
-            && SymbolEqualityComparer.Default.Equals(own.ContainingType?.OriginalDefinition, type.OriginalDefinition);
-    }
-
-    /// <summary>
-    /// Whether the copy is stored back into the same element after its last change (arr[0] = c), with no other use of
-    /// that element and no change to what its index names in between: then .NET and the game's Lua end the same.
-    /// </summary>
-    private static bool WrittenBack(SemanticModel model, BlockSyntax scope, ElementAccessExpressionSyntax access, ILocalSymbol local, SyntaxNode scopeStart, SyntaxNode lastChange)
-    {
-        var text = Tokens(access);
-        var back = scope.DescendantNodes().OfType<AssignmentExpressionSyntax>().FirstOrDefault(a =>
-            a.SpanStart > lastChange.Span.End && a.IsKind(SyntaxKind.SimpleAssignmentExpression)
-            && a.Left is ElementAccessExpressionSyntax left && Tokens(left) == text && Is(model, a.Right, local));
-        if (back == null)
-        {
-            return false;
-        }
-
-        var named = new HashSet<ISymbol>(access.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>()
-            .Select(n => model.GetSymbolInfo(n).Symbol).Where(symbol => symbol is ILocalSymbol or IParameterSymbol or IFieldSymbol)!, SymbolEqualityComparer.Default);
-        foreach (var node in scope.DescendantNodes())
-        {
-            if (node.SpanStart < scopeStart.Span.End || node.SpanStart >= back.SpanStart)
-            {
-                continue;
-            }
-
-            if (node is ElementAccessExpressionSyntax other && Tokens(other) == text)
-            {
-                return false;
-            }
-
-            var changed = node switch
-            {
-                AssignmentExpressionSyntax assignment => assignment.Left,
-                PrefixUnaryExpressionSyntax prefix => prefix.Operand,
-                PostfixUnaryExpressionSyntax postfix => postfix.Operand,
-                _ => null,
-            };
-            if (changed is IdentifierNameSyntax && model.GetSymbolInfo(changed).Symbol is { } symbol && named.Contains(symbol))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static string Tokens(SyntaxNode node) => string.Concat(node.DescendantTokens().Select(token => token.Text));
-
-    // ---- MW0022 ----
-
-    private static void Deconstruction(SyntaxNodeAnalysisContext context)
-    {
-        var assignment = (AssignmentExpressionSyntax)context.Node;
-        if (assignment.Left is DeclarationExpressionSyntax { Type.IsVar: true, Designation: ParenthesizedVariableDesignationSyntax } && assignment.Right is TupleExpressionSyntax)
-        {
-            Tuple(context, assignment, "var (a, b) = (...) gives the first name the whole tuple; write the types, (int a, int b) = (...)");
-        }
-        else if (assignment.Left is TupleExpressionSyntax left && left.Arguments.Any(a => a.Expression is ElementAccessExpressionSyntax))
-        {
-            Tuple(context, assignment, "assigning to a tuple of array elements is a Lua syntax error; use a temporary");
-        }
-    }
-
-    private static void TupleSum(SyntaxNodeAnalysisContext context)
-    {
-        var add = (BinaryExpressionSyntax)context.Node;
-        if (context.SemanticModel.GetTypeInfo(add, context.CancellationToken).Type?.SpecialType != SpecialType.System_String)
-        {
-            return;
-        }
-
-        foreach (var side in new[] { add.Left, add.Right })
-        {
-            if (IsTuple(context, side))
-            {
-                Tuple(context, side, "a tuple turned into text fails in ValueTuple.ToString; join its items");
-            }
-        }
-    }
-
-    private static void TupleHole(SyntaxNodeAnalysisContext context)
-    {
-        var hole = (InterpolationSyntax)context.Node;
-        if (IsTuple(context, hole.Expression))
-        {
-            Tuple(context, hole, "a tuple turned into text fails in ValueTuple.ToString; write its items");
-        }
-    }
-
-    private static void TupleArgument(SyntaxNodeAnalysisContext context)
-    {
-        var argument = (ArgumentSyntax)context.Node;
-        var info = context.SemanticModel.GetTypeInfo(argument.Expression, context.CancellationToken);
-        if (info.Type is INamedTypeSymbol { IsTupleType: true } && info.ConvertedType?.SpecialType == SpecialType.System_Object)
-        {
-            Tuple(context, argument, "a tuple given as an object fails in ValueTuple.ToString; write its items");
-        }
-        else if (argument.Parent?.Parent is InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax { Name.Identifier.Text: "ToString" } member }
-            && IsTuple(context, member.Expression) && argument == ((InvocationExpressionSyntax)argument.Parent.Parent).ArgumentList.Arguments.FirstOrDefault())
-        {
-            Tuple(context, argument, "a tuple turned into text fails in ValueTuple.ToString; write its items");
-        }
-    }
-
-    private static bool IsTuple(SyntaxNodeAnalysisContext context, ExpressionSyntax expression) =>
-        context.SemanticModel.GetTypeInfo(expression, context.CancellationToken).Type is INamedTypeSymbol { IsTupleType: true };
-
-    private static void Tuple(SyntaxNodeAnalysisContext context, SyntaxNode node, string message)
-    {
-        context.ReportDiagnostic(Diagnostic.Create(Rules.TupleForm, node.GetLocation(), char.ToUpperInvariant(message[0]) + message.Substring(1)));
     }
 
     // ---- MW0023 ----
-
-    private static void Operator(SyntaxNodeAnalysisContext context)
-    {
-        var declaration = (OperatorDeclarationSyntax)context.Node;
-        var token = declaration.OperatorToken.Kind();
-        if (token is SyntaxKind.PlusPlusToken or SyntaxKind.MinusMinusToken or SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword)
-        {
-            Wrong(context, declaration, "A user-defined " + declaration.OperatorToken.Text + " is written as a + 1 or ignored; use a method");
-        }
-    }
 
     private static void InterfaceMember(SyntaxNodeAnalysisContext context)
     {
@@ -479,15 +59,6 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static void DerivedRecord(SyntaxNodeAnalysisContext context)
-    {
-        var record = (RecordDeclarationSyntax)context.Node;
-        if (record.BaseList?.Types.Any(t => t is PrimaryConstructorBaseTypeSyntax) == true)
-        {
-            Wrong(context, record, "A record that derives from a record: == is a Lua error and ToString leaves out the base's members");
-        }
-    }
-
     private static void TwoConstructions(SyntaxNodeAnalysisContext context)
     {
         var declaration = (TypeDeclarationSyntax)context.Node;
@@ -503,37 +74,9 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static void WithAnonymous(SyntaxNodeAnalysisContext context)
-    {
-        var with = (WithExpressionSyntax)context.Node;
-        if (context.SemanticModel.GetTypeInfo(with.Expression, context.CancellationToken).Type is { IsAnonymousType: true })
-        {
-            Wrong(context, with, "with on an anonymous type is a Lua error");
-        }
-    }
-
     private static void Wrong(SyntaxNodeAnalysisContext context, SyntaxNodeOrToken node, string message)
     {
         context.ReportDiagnostic(Diagnostic.Create(Rules.FormWrong, node.GetLocation(), message));
-    }
-
-    // ---- MW0024 ----
-
-    private static void Range(SyntaxNodeAnalysisContext context)
-    {
-        context.ReportDiagnostic(Diagnostic.Create(Rules.RangeIndex, context.Node.GetLocation(), context.Node.ToString()));
-    }
-
-    private static void IndexFromEnd(SyntaxNodeAnalysisContext context)
-    {
-        // a[^1] on an array works.
-        if (context.Node.Parent is ArgumentSyntax { Parent: BracketedArgumentListSyntax { Parent: ElementAccessExpressionSyntax access } }
-            && context.SemanticModel.GetTypeInfo(access.Expression, context.CancellationToken).Type is IArrayTypeSymbol)
-        {
-            return;
-        }
-
-        context.ReportDiagnostic(Diagnostic.Create(Rules.RangeIndex, context.Node.GetLocation(), context.Node.ToString()));
     }
 
     // ---- MW0025 ----
@@ -556,94 +99,18 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         }
     }
 
+    // A ref local of an element works since the fork's 2.0.4-moonwell.15; one of a call's result is the value it returns.
     private static void RefLocal(SyntaxNodeAnalysisContext context)
     {
         var reference = (RefExpressionSyntax)context.Node;
-        if (reference.Parent is EqualsValueClauseSyntax && reference.Expression is ElementAccessExpressionSyntax or InvocationExpressionSyntax)
+        if (reference.Parent is EqualsValueClauseSyntax && reference.Expression is InvocationExpressionSyntax)
         {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.RefForm, reference.GetLocation(),
-                reference.Expression is InvocationExpressionSyntax
-                    ? "A ref local of a call's result is a copy in the game's Lua: writes through it are lost"
-                    : "A ref local of an element is a Lua syntax error; index the array each time"));
+            context.ReportDiagnostic(Diagnostic.Create(Rules.RefForm, reference.GetLocation(), "A ref local of a call's result is a copy in the game's Lua: writes through it are lost"));
         }
-    }
-
-    // ---- MW0026 ----
-
-    private static void Params(SyntaxNodeAnalysisContext context)
-    {
-        var parameter = (ParameterSyntax)context.Node;
-        if (!parameter.Modifiers.Any(SyntaxKind.ParamsKeyword))
+        else if (reference.Parent is AssignmentExpressionSyntax assignment && assignment.Right == reference)
         {
-            return;
+            context.ReportDiagnostic(Diagnostic.Create(Rules.RefForm, assignment.GetLocation(), "A ref reassignment writes the value into what the ref local named before in the game's Lua; make a new ref local"));
         }
-
-        if (parameter.Parent?.Parent is ParenthesizedLambdaExpressionSyntax)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.ParamsForm, parameter.GetLocation(), "params in a lambda is a Lua error; take an array"));
-        }
-        else if (parameter.Type != null && context.SemanticModel.GetTypeInfo(parameter.Type, context.CancellationToken).Type is { } type && type is not IArrayTypeSymbol)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.ParamsForm, parameter.GetLocation(), "params " + type.Name + " (C# 13) stops the compiler; use params with an array"));
-        }
-    }
-
-    // ---- MW0027 ----
-
-    private static void StringCall(SyntaxNodeAnalysisContext context)
-    {
-        var invocation = (InvocationExpressionSyntax)context.Node;
-        if (context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken).Symbol is not IMethodSymbol method)
-        {
-            return;
-        }
-
-        var reduced = method.ReducedFrom ?? method;
-        if (reduced.ContainingType?.SpecialType == SpecialType.System_String)
-        {
-            var first = reduced.Parameters.FirstOrDefault()?.Type;
-            if (reduced.Name == "Split" && first?.SpecialType == SpecialType.System_String)
-            {
-                Report(context, invocation, "Split(string) runs out of memory in the game's Lua; split on a char");
-            }
-            else if (reduced.Name == "Split" && first is IArrayTypeSymbol { ElementType.SpecialType: SpecialType.System_String })
-            {
-                Report(context, invocation, "Split(string[]) never ends in the game's Lua; split on a char");
-            }
-            else if (reduced.Name is "StartsWith" or "EndsWith" && first?.SpecialType == SpecialType.System_Char)
-            {
-                Report(context, invocation, reduced.Name + "(char) fails in the game's Lua; use a string");
-            }
-            else if (reduced.Name is "IndexOf" or "StartsWith" or "EndsWith" && first?.SpecialType == SpecialType.System_String
-                && invocation.ArgumentList.Arguments.Any(a => IgnoresCase(context, a.Expression)))
-            {
-                Report(context, invocation, reduced.Name + " with an ignore-case comparison gives the wrong answer or an error; lower-case both strings");
-            }
-        }
-        else if (reduced.ContainingType is { Name: "Enumerable", ContainingNamespace: { Name: "Linq" } } && reduced.Name == "Reverse"
-            && invocation.Expression is MemberAccessExpressionSyntax access
-            && context.SemanticModel.GetTypeInfo(access.Expression, context.CancellationToken).Type?.SpecialType == SpecialType.System_String)
-        {
-            Report(context, invocation, "Reverse() on a string fails in the game's Lua; reverse a char array with Array.Reverse");
-        }
-    }
-
-    // An argument that is a constant StringComparison with IgnoreCase in its name: CurrentCultureIgnoreCase 1, InvariantCultureIgnoreCase 3, OrdinalIgnoreCase 5.
-    private static bool IgnoresCase(SyntaxNodeAnalysisContext context, ExpressionSyntax expression)
-    {
-        var type = context.SemanticModel.GetTypeInfo(expression, context.CancellationToken).Type;
-        if (type is not { Name: "StringComparison", TypeKind: TypeKind.Enum })
-        {
-            return false;
-        }
-
-        var value = context.SemanticModel.GetConstantValue(expression, context.CancellationToken);
-        return value.HasValue && value.Value is int number && number is 1 or 3 or 5;
-    }
-
-    private static void Report(SyntaxNodeAnalysisContext context, SyntaxNode node, string message)
-    {
-        context.ReportDiagnostic(Diagnostic.Create(Rules.StringCall, node.GetLocation(), node.ToString(), message));
     }
 
     // ---- MW0028 ----
@@ -671,7 +138,8 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        // Only the library methods that make the text: an argument of a method that is not the map's own.
+        // Only the library methods that make the text: an argument of a method that is not the map's own. String's, Console's and
+        // StringBuilder's write it right since the fork's 2.0.4-moonwell.15.
         var up = conversion.Parent;
         while (up is IArrayInitializerOperation or IArrayCreationOperation or ICollectionExpressionOperation)
         {
@@ -680,53 +148,20 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
 
         if (up is IArgumentOperation { Parent: IInvocationOperation invocation }
             && invocation.TargetMethod.Locations.All(l => !l.IsInSource)
-            && invocation.TargetMethod.Name is "WriteLine" or "Write" or "Format" or "Concat" or "Append" or "AppendFormat" or "Join")
+            && invocation.TargetMethod.Name is "WriteLine" or "Write" or "Format" or "Concat" or "Append" or "AppendFormat" or "Join"
+            && !WritesBoxedText(invocation.TargetMethod.ContainingType))
         {
             context.ReportDiagnostic(Diagnostic.Create(Rules.BoxedValue, conversion.Operand.Syntax.GetLocation(), conversion.Operand.Syntax.ToString(), why));
         }
     }
 
+    private static bool WritesBoxedText(INamedTypeSymbol type) =>
+        type is { SpecialType: SpecialType.System_String }
+            or { Name: "Console", ContainingNamespace: { Name: "System", ContainingNamespace.IsGlobalNamespace: true } }
+            or { Name: "StringBuilder", ContainingNamespace: { Name: "Text", ContainingNamespace.Name: "System" } };
+
     private static bool IsChoice(ITypeSymbol type) =>
         type.ContainingNamespace is { Name: "Objects", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } };
-
-    // ---- MW0029 ----
-
-    private static void CatchType(SyntaxNodeAnalysisContext context)
-    {
-        var declaration = (CatchDeclarationSyntax)context.Node;
-        var type = context.SemanticModel.GetTypeInfo(declaration.Type, context.CancellationToken).Type;
-        if (type is not { ContainingNamespace: { Name: "System", ContainingNamespace.IsGlobalNamespace: true } })
-        {
-            return;
-        }
-
-        if (type.Name is "NullReferenceException" or "IndexOutOfRangeException")
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.CatchForm, declaration.Type.GetLocation(),
-                "catch (" + type.Name + ") may never catch in the game's Lua: a null dereference or an array index out of range is a plain Exception there; catch (Exception), or test for null and the length first"));
-        }
-        // An integer / by zero throws DivideByZeroException there too; only % is a plain Lua error.
-        else if (type.Name == "DivideByZeroException" && declaration.Parent is CatchClauseSyntax { Parent: TryStatementSyntax tryStatement }
-            && tryStatement.Block.DescendantNodes().Any(node => IsIntegerModulo(node, context)))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.CatchForm, declaration.Type.GetLocation(),
-                "catch (DivideByZeroException) does not catch % by zero in the game's Lua, which is a plain Exception there; catch (Exception), or test the divisor first"));
-        }
-    }
-
-    private static bool IsIntegerModulo(SyntaxNode node, SyntaxNodeAnalysisContext context) =>
-        node is BinaryExpressionSyntax { RawKind: (int)SyntaxKind.ModuloExpression } or AssignmentExpressionSyntax { RawKind: (int)SyntaxKind.ModuloAssignmentExpression }
-        && context.SemanticModel.GetTypeInfo(node, context.CancellationToken).Type?.SpecialType is SpecialType.System_Int32 or SpecialType.System_Int64 or SpecialType.System_UInt32 or SpecialType.System_Int16 or SpecialType.System_Byte or SpecialType.System_SByte or SpecialType.System_UInt16 or SpecialType.System_UInt64;
-
-    private static void CatchFilter(SyntaxNodeAnalysisContext context)
-    {
-        var filter = (CatchFilterClauseSyntax)context.Node;
-        foreach (var pattern in filter.FilterExpression.DescendantNodesAndSelf().OfType<DeclarationPatternSyntax>())
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.CatchForm, pattern.GetLocation(),
-                "A pattern variable in a catch filter is nil in the game's Lua; test with is and cast in the block"));
-        }
-    }
 
     // ---- MW0030 ----
 
@@ -759,7 +194,7 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
     }.ToImmutableDictionary();
 
     private static readonly ImmutableHashSet<string> MissingTypes = ImmutableHashSet.Create(
-        "System.Range", "System.Index", "System.StringComparer", "System.Threading.Monitor", "System.Threading.Lock",
+        "System.StringComparer", "System.Threading.Monitor", "System.Threading.Lock",
         "System.Threading.Thread", "System.Threading.Tasks.Task", "System.Threading.Tasks.Task`1", "System.Collections.BitArray",
         "System.Numerics.BitOperations", "System.HashCode", "System.Guid", "System.FormattableString");
 
@@ -912,24 +347,6 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, context.Node.GetLocation(), context.Node.ToString(), "is a pointer, which CSharp.lua cannot compile"));
     }
 
-    // ---- MW0031 ----
-
-    private static void Checked(SyntaxNodeAnalysisContext context)
-    {
-        // A checked cast does throw; only checked arithmetic on the integer types is missed.
-        var arithmetic = context.Node.DescendantNodes().Any(node =>
-            node is BinaryExpressionSyntax or PrefixUnaryExpressionSyntax or PostfixUnaryExpressionSyntax or AssignmentExpressionSyntax
-            && !node.IsKind(SyntaxKind.SimpleAssignmentExpression) && !node.IsKind(SyntaxKind.LogicalNotExpression)
-            && IsInteger(context.SemanticModel.GetTypeInfo(node, context.CancellationToken).Type));
-        if (arithmetic)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.CheckedForm, context.Node.GetLocation()));
-        }
-    }
-
-    private static bool IsInteger(ITypeSymbol? type) => type?.SpecialType is SpecialType.System_Int16 or SpecialType.System_Int32 or SpecialType.System_Int64
-        or SpecialType.System_UInt16 or SpecialType.System_UInt32 or SpecialType.System_UInt64 or SpecialType.System_Byte or SpecialType.System_SByte;
-
     // ---- MW0032 ----
 
     private static void EnumInvocation(SyntaxNodeAnalysisContext context)
@@ -940,18 +357,14 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (method.IsStatic && method.ContainingType?.SpecialType == SpecialType.System_Enum && method.Name is "Parse" or "GetValues" or "GetNames")
+        // Enum.Parse<T> works since the fork's 2.0.4-moonwell.15; Enum.Parse(typeof(T), ...) gives an object, which in Lua is the bare number.
+        if (method is { IsStatic: true, Name: "Parse", IsGenericMethod: false, ContainingType.SpecialType: SpecialType.System_Enum })
         {
-            var choice = method.TypeArguments.Any(IsChoice)
-                || invocation.ArgumentList.Arguments.Any(a => a.Expression is TypeOfExpressionSyntax typeOf
-                    && context.SemanticModel.GetTypeInfo(typeOf.Type, context.CancellationToken).Type is { } t && IsChoice(t));
-            // Enum.GetNames(...).Length counts; it does not depend on the order.
-            var counted = invocation.Parent is MemberAccessExpressionSyntax { Name.Identifier.Text: "Length" or "Count" };
-            if (!choice && !(counted && method.Name != "Parse"))
+            var choice = invocation.ArgumentList.Arguments.Any(a => a.Expression is TypeOfExpressionSyntax typeOf
+                && context.SemanticModel.GetTypeInfo(typeOf.Type, context.CancellationToken).Type is { } t && IsChoice(t));
+            if (!choice)
             {
-                Enum(context, invocation, method.Name == "Parse"
-                    ? "Enum.Parse gives the number, not the enum value in the game's Lua; compare strings or use a switch"
-                    : "Enum." + method.Name + " comes in no fixed order in the game's Lua; list the values yourself");
+                Enum(context, invocation, "Enum.Parse(typeof(...), ...) gives the number, not the enum value in the game's Lua; use Enum.Parse<T>");
             }
 
             return;
@@ -977,64 +390,6 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        if (method is { Name: "ToString", IsStatic: false, Parameters.Length: > 0 } && invocation.Expression is MemberAccessExpressionSyntax access
-            && context.SemanticModel.GetTypeInfo(access.Expression, context.CancellationToken).Type is { TypeKind: TypeKind.Enum } format && !IsChoice(format))
-        {
-            Enum(context, invocation, "ToString(format) on an enum gives the name whatever the format; cast to int for the number");
-            return;
-        }
-
-        if (method is { Name: "ToString", IsStatic: false, Parameters.Length: 0 } && invocation.Expression is MemberAccessExpressionSyntax receiver)
-        {
-            FlagsText(context, receiver.Expression, invocation);
-        }
-    }
-
-    private static void EnumSum(SyntaxNodeAnalysisContext context)
-    {
-        var add = (BinaryExpressionSyntax)context.Node;
-        if (context.SemanticModel.GetTypeInfo(add, context.CancellationToken).Type?.SpecialType != SpecialType.System_String)
-        {
-            return;
-        }
-
-        foreach (var side in new[] { add.Left, add.Right })
-        {
-            FlagsText(context, side, side);
-        }
-    }
-
-    private static void EnumHole(SyntaxNodeAnalysisContext context)
-    {
-        var hole = (InterpolationSyntax)context.Node;
-        FlagsText(context, hole.Expression, hole);
-    }
-
-    private static void FlagsText(SyntaxNodeAnalysisContext context, ExpressionSyntax expression, SyntaxNode reported)
-    {
-        if (context.SemanticModel.GetTypeInfo(expression, context.CancellationToken).Type is { TypeKind: TypeKind.Enum } type && !IsChoice(type)
-            && type.GetAttributes().Any(a => a.AttributeClass is { Name: "FlagsAttribute", ContainingNamespace.Name: "System" }))
-        {
-            Enum(context, reported, "A [Flags] value turned into text prints its number in the game's Lua when it is a combination; build the text from HasFlag");
-        }
-    }
-
-    // (Color)5 + " x": a constant cast to an enum, joined to text, stops the compiler.
-    private static void EnumCast(SyntaxNodeAnalysisContext context)
-    {
-        var cast = (CastExpressionSyntax)context.Node;
-        if (context.SemanticModel.GetTypeInfo(cast, context.CancellationToken).Type is not { TypeKind: TypeKind.Enum } type || IsChoice(type)
-            || !context.SemanticModel.GetConstantValue(cast.Expression, context.CancellationToken).HasValue)
-        {
-            return;
-        }
-
-        var joined = cast.Parent is BinaryExpressionSyntax add && add.IsKind(SyntaxKind.AddExpression)
-            && context.SemanticModel.GetTypeInfo(add, context.CancellationToken).Type?.SpecialType == SpecialType.System_String;
-        if (joined || cast.Parent is InterpolationSyntax)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.EnumText, cast.GetLocation(), "A constant cast to an enum, joined to text, stops the compiler; write the member's name, or put the cast in a variable"));
-        }
     }
 
     private static void Enum(SyntaxNodeAnalysisContext context, SyntaxNode node, string message)

@@ -133,7 +133,7 @@ public class AnywhereTests
                         var me = Natives.GetLocalPlayer();
                         Local.For(p, () => Natives.KillUnit(u));
                         var id = Natives.GetHandleId(u);
-                        var parts = "a--b".Split("--");
+                        var day = System.Enum.Parse(typeof(System.DayOfWeek), "Monday");
                     }
                 }
             }
@@ -144,7 +144,7 @@ public class AnywhereTests
             "MW0002: Natives.GetLocalPlayer()",
             "MW0001: Natives.KillUnit(u)",
             "MW0003: Natives.GetHandleId(u)",
-            "MW0027: \"a--b\".Split(\"--\")",
+            "MW0032: System.Enum.Parse(typeof(System.DayOfWeek), \"Monday\")",
         }, found);
     }
 }
