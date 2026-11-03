@@ -16,6 +16,90 @@ namespace Moonwell.Testing
             Expect.True(TestLog.Lines.Contains("gate died"), "the death came inside the call");
         }
 
+        private static readonly int DummyBolt = ObjectTypes.FourCC("A010");
+        private static readonly int DummyStorm = ObjectTypes.FourCC("A011");
+
+        /// <summary>A unit of slot 0 with a fake spell at level 1.</summary>
+        private static unit SpellCaster(FakeWorld world, int abilityId)
+        {
+            var caster = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 0);
+            world.SetAbilityLevel(caster, abilityId, 1);
+            return caster;
+        }
+
+        /// <summary>A dummy's spell takes effect inside the order call, after the order's own event, and an instant spell's end-cast comes in the same call (seen 11-03).</summary>
+        public static void DummyEffectInOrder(FakeWorld world)
+        {
+            var watch = new FakeCastWatch();
+            Game.Instance.Add(watch);
+            world.Dummies.Spell(DummyBolt, "thunderbolt", SpellKind.Target, (caster, target, x, y) => TestLog.Lines.Add("effect"));
+            var bolter = SpellCaster(world, DummyBolt);
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 1);
+            TestLog.Lines.Clear();
+            Expect.True(world.OrderUnitOn(bolter, "thunderbolt", target), "the order is taken");
+            Expect.Equal("cast,effect", string.Join(",", TestLog.Lines), "the cast's reactions, then the spell's effect, inside the call");
+            Expect.True(watch.Last != null && watch.Last.HasEnded, "an instant spell's cast ended inside the call");
+        }
+
+        /// <summary>The game refuses a dummy's order of the wrong kind, and a target a case refuses (seen 11-03: a target the spell does not allow).</summary>
+        public static void DummyWrongKind(FakeWorld world)
+        {
+            var watch = new FakeCastWatch();
+            Game.Instance.Add(watch);
+            world.Dummies.Spell(DummyStorm, "thunderclap", SpellKind.None, (caster, target, x, y) => { });
+            world.Dummies.Spell(DummyBolt, "thunderbolt", SpellKind.Target, (caster, target, x, y) => { });
+            var both = SpellCaster(world, DummyStorm);
+            world.SetAbilityLevel(both, DummyBolt, 1);
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 1);
+            Expect.True(!world.OrderUnitAt(both, "thunderclap", 100.0f, 0.0f), "a spell with no target, ordered at a place");
+            Expect.True(!world.OrderUnit(both, "thunderbolt"), "a spell at a unit, ordered with no target");
+            world.Dummies.Refuse(DummyBolt);
+            Expect.True(!world.OrderUnitOn(both, "thunderbolt", target), "a refusal the case sets");
+            Expect.True(world.OrderUnit(both, "thunderclap"), "the spell with no target, ordered as it is");
+            Expect.Equal(1, watch.Casts, "only the last took effect");
+        }
+
+        /// <summary>A target its caster's player does not see is refused until a vision patch covers it, and an invisible one always (seen 11-03).</summary>
+        public static void DummyHiddenTarget(FakeWorld world)
+        {
+            world.Dummies.Spell(DummyBolt, "thunderbolt", SpellKind.Target, (caster, target, x, y) => { });
+            var bolter = SpellCaster(world, DummyBolt);
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 1);
+            world.PlaceUnit(target, 500.0f, 0.0f);
+            var owner = world.PlayerAt(0);
+            world.Dummies.Hide(owner, target);
+            Expect.True(!world.OrderUnitOn(bolter, "thunderbolt", target), "a target in fog");
+            var patch = world.Dummies.Patch(owner, 500.0f, 0.0f);
+            Expect.True(world.OrderUnitOn(bolter, "thunderbolt", target), "the patch shows it");
+            world.Dummies.Unpatch(patch);
+            Expect.True(!world.OrderUnitOn(bolter, "thunderbolt", target), "hidden again once the patch is gone");
+            world.Dummies.Invisible(target);
+            var again = world.Dummies.Patch(owner, 500.0f, 0.0f);
+            Expect.True(!world.OrderUnitOn(bolter, "thunderbolt", target), "an invisible target, patch or not");
+            world.Dummies.Unpatch(again);
+            Expect.Equal("made,stopped,made,stopped", string.Join(",", world.Dummies.Patches), "each patch made and stopped, in order");
+        }
+
+        /// <summary>A channel's end-cast comes at its end or at a stop order, not inside the order (seen 11-03).</summary>
+        public static void DummyChannelStop(FakeWorld world)
+        {
+            var watch = new FakeCastWatch();
+            Game.Instance.Add(watch);
+            world.Dummies.Spell(DummyStorm, "blizzard", SpellKind.Point, (caster, target, x, y) => { }, channel: true);
+            var stopped = SpellCaster(world, DummyStorm);
+            var ended = SpellCaster(world, DummyStorm);
+            Expect.True(world.OrderUnitAt(stopped, "blizzard", 300.0f, 0.0f), "the channel starts");
+            var first = watch.Last!;
+            Expect.True(!first.HasEnded, "a channel's cast goes on after the call");
+            world.OrderUnit(stopped, "stop");
+            Expect.True(first.HasEnded, "a stop ends it");
+            world.OrderUnitAt(ended, "blizzard", 300.0f, 0.0f);
+            var second = watch.Last!;
+            Expect.True(!second.HasEnded, "the second channel goes on");
+            world.Dummies.EndChannel(ended);
+            Expect.True(second.HasEnded, "its end ends it");
+        }
+
         /// <summary>Damage lowers the life, by the amount the reactions left, after the damage event and before the call returns (seen 10-20).</summary>
         public static void DamageLowersLife(FakeWorld world)
         {
@@ -132,6 +216,24 @@ namespace Moonwell.Testing
             Hits++;
             LifeSeen = Life;
             damage.Amount = damage.Amount / 2.0f;
+        }
+    }
+
+    /// <summary>A game component that logs "cast" for each cast and keeps the last.</summary>
+    public sealed class FakeCastWatch : GameComponent
+    {
+        /// <summary>How many casts it saw.</summary>
+        public int Casts;
+
+        /// <summary>The last cast it saw; null before the first.</summary>
+        public Cast? Last;
+
+        /// <summary>Logs "cast" and keeps it.</summary>
+        public override void OnUnitCast(Cast cast)
+        {
+            Casts++;
+            Last = cast;
+            TestLog.Lines.Add("cast");
         }
     }
 }

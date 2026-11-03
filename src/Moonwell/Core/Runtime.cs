@@ -37,6 +37,7 @@ namespace Moonwell
             KnownItems.Reset();
             KnownDestructables.Reset();
             ObjectTypes.Reset();
+            Dummies.Reset();
             HeroTable.Reset();
             DayConstants.Reset();
 #if DEBUG

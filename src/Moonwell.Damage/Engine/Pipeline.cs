@@ -84,10 +84,11 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Whether anything can react to a hit between two units: a unit the runtime holds, or a map-wide reaction.</summary>
+        /// <summary>Whether anything can react to a hit between two units: a unit the runtime holds, a dummy casting for one, or a map-wide reaction.</summary>
         private static bool Wanted(unit target, unit? source)
         {
-            return KnownUnits.Find(target) != null || (source != null && KnownUnits.Find(source) != null) || Watched || Events.Wants(Hook.OnUnitDamaged);
+            var knownSource = source != null && (Dummies.IsDummy(source) ? Dummies.CastFor(source) != null : KnownUnits.Find(source) != null);
+            return KnownUnits.Find(target) != null || knownSource || Watched || Events.Wants(Hook.OnUnitDamaged);
         }
 
         /// <summary>Deals damage from code: the hit its before-armor event makes is marked as code's and returned. A deal from a reaction continues the reacting hit's chain; one that would make the chain longer than MaxChain throws, which the reaction reports.</summary>
@@ -128,9 +129,12 @@ namespace Moonwell
                 return null;
             }
 
-            var source = sourceHandle == null ? null : Unit.Of(sourceHandle);
+            // A dummy's hit is the unit it casts for's, or no one's for a player's cast (decisions 168, 172).
+            var dummy = sourceHandle != null && Dummies.IsDummy(sourceHandle) ? sourceHandle : null;
+            var source = dummy != null ? Dummies.CastFor(dummy) : sourceHandle == null ? null : Unit.Of(sourceHandle);
             var deal = pending != null && pending.Hit == null && pending.Target == targetHandle && pending.Source == sourceHandle ? pending : null;
             var hit = new Hit(target, source, World.EventAmount(), deal != null ? deal.IsAttack : World.EventIsAttack());
+            hit.Dummy = dummy;
             if (deal != null)
             {
                 deal.Hit = hit;

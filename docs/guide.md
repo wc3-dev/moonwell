@@ -353,6 +353,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
+| `CastOn<T>(target, scope)`, `CastAt<T>(x, y, scope)` | cast a real spell for the unit through a hidden dummy ([below](#casting-real-spells)) |
 
 `unit.AddAbility<Smite>().Level = 3` gives an ability and sets its level. A level the ability doesn't have is kept
 between 1 and its last, as the game does, and a level set on an ability the unit lacks does nothing; a development
@@ -428,6 +429,57 @@ comment.
 | `X`, `Y` | read; where the game put it, which is not always where it was asked: a tree asked at 1000 stands at 960 |
 
 A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
+
+## Casting real spells
+
+A unit, or a player with no unit, casts any spell through a hidden dummy: a Storm Bolt from a hero's passive, a trap's
+Flame Strike, an item's Polymorph. The spell is the game's own, with its looks, immunities and rules.
+
+```csharp
+public sealed class Tempest : Creeps.Abilities.Channel
+{
+    public override void OnCast(Cast cast)
+    {
+        Unit.CastOn<Human.Abilities.StormBolt>(cast.Target!, cast, level: Level);
+        Unit.CastAt<Human.Abilities.Blizzard>(cast.X, cast.Y, cast); // stops when this cast ends
+    }
+}
+
+Player.NeutralAggressive.CastAt<Human.Abilities.FlameStrike>(x, y, Game.Instance);
+```
+
+- `CastOn<T>(target, scope, level: 1)` casts at a unit, item or destructable, `CastAt<T>(x, y, scope, level: 1)` at a
+  place, and each takes an id too: of the map's own abilities, declared or from World Editor, or of a standard one its
+  code names as a class. A spell with no target (Thunder Clap) is cast around the target or the place. They
+  answer as the game does: false for a target the spell can't take (an ally for an enemy spell, a spell-immune or dead
+  unit), a spell the player hasn't researched, a unit cast for that is gone, or a scope that has ended.
+- The dummy stands at the unit cast for, so a missile flies from it, and the spell's range, mana and cooldown are taken
+  off the dummy's own copy: the unit spends none and needn't have the spell. Hero skills cast at any level they have.
+- The spell's buff, hits and kills are the unit's: a spell buff's `Source`, a hit's `Source` (the unit's
+  `OnDealtDamage` runs), and the killer in `OnDeath`, `OnKill` and `OnUnitDied`; the game gives the bounty and
+  experience to its player. A player's cast names no unit: the `Source` and the killer are null.
+- A dummy's cast runs no cast reaction: not the spell class's `OnCast`, not the unit's, not `OnUnitCast`. Call a spell's
+  own code directly.
+- Ending the scope stops what the dummy still does, a channel; a missile or a wave already on its way still lands. A
+  channel also stops when the unit cast for changes hands, as the unit's own would.
+- A target in the player's fog is seen for the instant of the cast: its ground stays explored afterwards, and the game
+  shows it for a moment as the spell lands. An invisible target is refused, as for any caster.
+- A spell that needs research the player lacks is refused, and a development build says which; a copy without the
+  requirement casts:
+  ```csharp
+  [ObjectId("A0P1")]
+  public sealed class DummyPolymorph : Human.Abilities.Polymorph
+  {
+      public DummyPolymorph() { Requires.Remove<Human.Upgrades.SorceressAdeptTraining>(); }
+  }
+  ```
+- A spell aimed at its caster lands on the dummy: one whose targets are only "self" is reported in a development build,
+  and one with no target that acts on its caster alone (Avatar, Divine Shield) does nothing useful.
+- The dummy is a unit type the build declares when the map's code names `CastOn` or `CastAt`, with the id `hMWd`, which
+  no class or object of the map may have. Map code never meets a dummy: no `OnUnitCreated`, no order reactions, no object
+  from `Unit.Of`. A dummy keeps its player until its spell is over (its channel, its duration and its missile's
+  flight), as a hit names its source when it lands, and goes with its unit when the unit changes hands.
+- The calls change what every machine shares, so they are not for `Local.For`.
 
 ## Special effects
 

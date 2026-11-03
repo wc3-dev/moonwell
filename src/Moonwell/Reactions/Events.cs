@@ -7,7 +7,7 @@ namespace Moonwell
     internal static class Events
     {
         /// <summary>Whether the world already listens for each game event, indexed by GameEvent.</summary>
-        private static bool[] listening = new bool[9];
+        private static bool[] listening = new bool[10];
 
         /// <summary>The reaction bits that some class overrides, once any has been needed.</summary>
         private static int wanted;
@@ -90,14 +90,14 @@ namespace Moonwell
         /// <summary>Forgets every registration and need; Runtime.Reset calls it.</summary>
         internal static void Reset()
         {
-            listening = new bool[9];
+            listening = new bool[10];
             wanted = 0;
             DamageListener = null;
             DamageDealer = null;
         }
 
         /// <summary>Asks the world to deliver an event, once.</summary>
-        private static void Listen(GameEvent gameEvent)
+        internal static void Listen(GameEvent gameEvent)
         {
             var index = (int)gameEvent;
             if (listening[index])

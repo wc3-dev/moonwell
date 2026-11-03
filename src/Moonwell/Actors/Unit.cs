@@ -89,7 +89,7 @@ namespace Moonwell
         /// <summary>The game's player that owned the unit when it was last read; kept for when the game no longer gives it.</summary>
         internal player owner = null!;
 
-        /// <summary>The player that owns the unit. Setting it takes effect at once and gives the unit the new player's colour (SetUnitOwner). Once the game has removed the unit, the last owner read or set, and setting does nothing.</summary>
+        /// <summary>The player that owns the unit. Setting it takes effect at once and gives the unit the new player's colour (SetUnitOwner), and a dummy whose spell still acts for the unit goes with it. Once the game has removed the unit, the last owner read or set, and setting does nothing.</summary>
         [LocalSafe]
         public Player Owner
         {
@@ -118,6 +118,7 @@ namespace Moonwell
                 {
                     owner = value.Handle;
                     Runtime.World.SetOwner(Handle, value.Handle);
+                    Dummies.OwnerChanged(this);
                 }
             }
         }
@@ -788,6 +789,37 @@ namespace Moonwell
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Casts a spell of a registered class at a unit, item or destructable for this unit, through a hidden dummy that stands at
+        /// this unit (decision 169): none of this unit's mana, cooldown or animation is used, and it needn't have the spell. The
+        /// spell's buff, hits and kills are this unit's (decision 168), and the cast runs no cast reactions (decision 171). A
+        /// spell with no target is cast with the dummy standing at the target. A target in the player's fog is seen for the
+        /// instant; an invisible one is refused (decision 186). Ending the scope stops what the dummy still does, a channel.
+        /// Returns the game's answer: false for a target the spell can't take, a spell the player hasn't researched (decision
+        /// 185, reported in a development build), or a unit that is gone.
+        /// </summary>
+        public bool CastOn<T>(Widget target, Scope scope, int level = 1)
+            where T : Ability => CastOn(ObjectTypes.IdOf<T>(), target, scope, level);
+
+        /// <summary>Casts a spell by its ability id at a unit, item or destructable for this unit, as CastOn&lt;T&gt; does.</summary>
+        public bool CastOn(int abilityId, Widget target, Scope scope, int level = 1)
+        {
+            return !IsGone && Dummies.Cast(this, Owner, abilityId, target, 0.0f, 0.0f, scope, level);
+        }
+
+        /// <summary>
+        /// Casts a spell of a registered class at a place for this unit, through a hidden dummy that stands at this unit, as
+        /// CastOn&lt;T&gt; does; a spell with no target is cast with the dummy standing at the place.
+        /// </summary>
+        public bool CastAt<T>(float x, float y, Scope scope, int level = 1)
+            where T : Ability => CastAt(ObjectTypes.IdOf<T>(), x, y, scope, level);
+
+        /// <summary>Casts a spell by its ability id at a place for this unit, as CastAt&lt;T&gt; does.</summary>
+        public bool CastAt(int abilityId, float x, float y, Scope scope, int level = 1)
+        {
+            return !IsGone && Dummies.Cast(this, Owner, abilityId, null, x, y, scope, level);
         }
 
         /// <summary>

@@ -221,6 +221,21 @@ public class LocalTests
     }
 
     [Fact]
+    public void a_dummy_cast_is_rejected_inside()
+    {
+        var found = MapCode.Check("""
+            var unit = Unit.Of(u)!;
+            Local.For(p, () =>
+            {
+                unit.CastOn(0, unit, Game.Instance);
+                p.CastAt(0, 0f, 0f, Game.Instance);
+            });
+            """);
+
+        Assert.Equal(new[] { "MW0001: unit.CastOn(0, unit, Game.Instance)", "MW0001: p.CastAt(0, 0f, 0f, Game.Instance)" }, found);
+    }
+
+    [Fact]
     public void gizmo_create_is_rejected_inside()
     {
         var found = MapCode.Check("""
