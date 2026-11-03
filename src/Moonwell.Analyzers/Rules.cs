@@ -247,7 +247,7 @@ public static class Rules
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The build writes code into a map that registers its classes and starts the game, and that code compiles as part of the map, so what it calls has to be public. Moonwell hides those members from the editor (ObjectTypes.Unit, Item, Destructable, Ability, Id and BuffDisplay, Runtime.Start, each package's Install, a declared class's Declare and DeclaredValue). The rule rejects a call to one, or a method group of one, anywhere but the namespace Moonwell.Generated, which is the build's. ObjectTypes.FourCC and IdOf are a map's to call.");
+        description: "The build writes code into a map that registers its classes and starts the game, and that code compiles as part of the map, so what it calls has to be public. Moonwell hides those members from the editor (ObjectTypes.Unit, Item, Destructable, Ability, Id, BuffDisplay, WatchedBuff and ListsBuff, Runtime.Start, each package's Install, a declared class's Declare and DeclaredValue). The rule rejects a call to one, or a method group of one, anywhere but the namespace Moonwell.Generated, which is the build's. ObjectTypes.FourCC and IdOf are a map's to call.");
 
     public static readonly DiagnosticDescriptor NewOfGameObject = new(
         "MW0046",
