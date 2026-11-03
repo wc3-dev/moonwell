@@ -6,7 +6,7 @@ using Moonwell.Hosting;
 
 namespace Moonwell
 {
-    /// <summary>Starts the input package; a map's generated Main calls Install when the map uses the package, with whether the map names the mouse, whether it needs the mouse's moves, and the World Editor cameras the build wrote.</summary>
+    /// <summary>Starts the input package; a map's generated Main calls Install when the map uses the package, with whether the map names the mouse, whether it needs the mouse's moves, and the World Editor cameras the build wrote, and RegisterKeys and InstallKeyboard when the map's code names the keyboard.</summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class InputSystem
     {
@@ -21,6 +21,18 @@ namespace Moonwell
 
         /// <summary>World Editor's cameras as setups, in the order the build wrote them; null until Install.</summary>
         private static List<CameraSetup>? setups;
+
+        /// <summary>The world the keyboard talks to; null until InstallKeyboard.</summary>
+        private static IKeyWorld? keyWorld;
+
+        /// <summary>Each slot's keyboard; null until InstallKeyboard.</summary>
+        private static Keyboard[]? keyboards;
+
+        /// <summary>The players the keyboard listens for, in slot order.</summary>
+        private static List<Player> keyPlayers = new List<Player>();
+
+        /// <summary>The keys RegisterKeys registered while the map loaded, for InstallKeyboard; null before and after.</summary>
+        private static NativeKeyWorld? registeredKeys;
 
         /// <summary>The x of the world's top-right corner less 32, a reading the game gives at times past the map's edge.</summary>
         private static float cornerX;
@@ -95,6 +107,86 @@ namespace Moonwell
             {
                 host.ListenMouse(users[i].Handle, moved, MouseReactions.OnPressed, MouseReactions.OnReleased);
             }
+        }
+
+        /// <summary>
+        /// Installs the keyboard on the game: a map's generated Main calls it when the map's code names Keyboard or IKeyWatch.
+        /// It listens for every key, with every modifier, pressed and released, of every user player playing now (about 6,000
+        /// registrations each), and every quarter second each machine asks its own keyboard about the keys its player's events
+        /// say are down, sending a release message for one let go while the game took no keyboard input.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void InstallKeyboard()
+        {
+            var host = registeredKeys ?? new NativeKeyWorld();
+            registeredKeys = null;
+            InstallKeyboard(host);
+        }
+
+        /// <summary>Registers the keys of every person playing, about 0.1 s each: a map's generated Main calls it before the runtime starts, while the map loads, so the loading screen hides the cost, and InstallKeyboard then uses those registrations.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void RegisterKeys()
+        {
+            registeredKeys = new NativeKeyWorld();
+            registeredKeys.RegisterPeople();
+        }
+
+        /// <summary>Installs the keyboard on a world; tests give a fake one. It makes a keyboard for each slot and listens for the keys of every user player playing now, in slot order.</summary>
+        internal static void InstallKeyboard(IKeyWorld host)
+        {
+            keyWorld = host;
+            keyboards = new Keyboard[Player.MaxSlots];
+            for (var slot = 0; slot < Player.MaxSlots; slot++)
+            {
+                keyboards[slot] = new Keyboard(slot);
+            }
+
+            KeyReactions.Reset();
+            keyPlayers = new List<Player>();
+            var users = Player.Users;
+            for (var i = 0; i < users.Count; i++)
+            {
+                host.ListenKeys(users[i].Handle, KeyReactions.OnKey);
+                host.ListenReleases(users[i].Handle, KeyReactions.OnReleaseArrived);
+                host.ListenLeave(users[i].Handle, KeyReactions.OnLeft);
+                keyPlayers.Add(users[i]);
+            }
+
+            Game.Instance.Every(KeyReactions.CheckPeriod, KeyReactions.Check);
+        }
+
+        /// <summary>The players the keyboard listens for, in slot order; empty before InstallKeyboard.</summary>
+        internal static List<Player> KeyPlayers => keyPlayers;
+
+        /// <summary>The world the keyboard talks to.</summary>
+        internal static IKeyWorld KeyWorld
+        {
+            get
+            {
+                if (keyWorld == null)
+                {
+                    throw KeyboardNotInstalled();
+                }
+
+                return keyWorld;
+            }
+        }
+
+        /// <summary>The keyboard of a slot. Throws before InstallKeyboard.</summary>
+        internal static Keyboard KeyboardOf(int slot)
+        {
+            if (keyboards == null)
+            {
+                throw KeyboardNotInstalled();
+            }
+
+            return keyboards[slot];
+        }
+
+        /// <summary>The error of a keyboard read before InstallKeyboard.</summary>
+        private static InvalidOperationException KeyboardNotInstalled()
+        {
+            return new InvalidOperationException("The keyboard is not installed: the build installs it in a map whose code names Keyboard or IKeyWatch");
         }
 
         /// <summary>The world the package talks to.</summary>
@@ -212,6 +304,10 @@ namespace Moonwell
             eachCamera = null;
             setups = null;
             MouseReactions.Reset();
+            keyWorld = null;
+            keyboards = null;
+            keyPlayers = new List<Player>();
+            KeyReactions.Reset();
         }
 
         /// <summary>The error of a read before Install.</summary>

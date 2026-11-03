@@ -27,6 +27,7 @@ namespace Moonwell.Testing
             AddAreas(list);
             AddAuditAreas(list);
             AddInput(list);
+            AddKeys(list);
             AddLifecycle(list);
             AddScope(list);
             AddAuditDocs(list);
@@ -581,6 +582,35 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "audit.input.watchers-kept", Run = AuditInputCases.WatchersKept });
             list.Add(new Case { Name = "audit.input.watchers-changed-in-dispatch", Run = AuditInputCases.WatchersChangedInDispatch });
             list.Add(new Case { Name = "audit.input.camera-named-before-start", Run = AuditInputCases.CameraNamedBeforeStart });
+        }
+
+        /// <summary>Adds the input package's keyboard cases.</summary>
+        private static void AddKeys(List<Case> list)
+        {
+            list.Add(new Case { Name = "input.keys.codes", Run = KeyCases.Codes });
+            list.Add(new Case { Name = "input.keys.down-and-up", Run = KeyCases.DownAndUp });
+            list.Add(new Case { Name = "input.keys.modifiers", Run = KeyCases.Modifiers });
+            list.Add(new Case { Name = "input.keys.held-now", Run = KeyCases.HeldNow });
+            list.Add(new Case { Name = "input.keys.unknown-code", Run = KeyCases.UnknownCode });
+            list.Add(new Case { Name = "input.keys.before-install", Run = KeyCases.BeforeInstall });
+            list.Add(new Case { Name = "input.keys.people-only", Run = KeyCases.PeopleOnly });
+            list.Add(new Case { Name = "input.keys.order", Run = KeyCases.Order });
+            list.Add(new Case { Name = "input.keys.once-per-press", Run = KeyCases.OncePerPress });
+            list.Add(new Case { Name = "input.keys.long-gap", Run = KeyCases.LongGap });
+            list.Add(new Case { Name = "input.keys.modifier-repeat", Run = KeyCases.ModifierRepeat });
+            list.Add(new Case { Name = "input.keys.changed-in-reaction", Run = KeyCases.ChangedInReaction });
+            list.Add(new Case { Name = "input.keys.throwing", Run = KeyCases.Throwing });
+            list.Add(new Case { Name = "input.keys.press-only", Run = KeyCases.PressOnly });
+            list.Add(new Case { Name = "input.keys.let-go-unseen", Run = KeyCases.LetGoUnseen });
+            list.Add(new Case { Name = "input.keys.still-held", Run = KeyCases.StillHeld });
+            list.Add(new Case { Name = "input.keys.down-again", Run = KeyCases.DownAgain });
+            list.Add(new Case { Name = "input.keys.repeat-after-send", Run = KeyCases.RepeatAfterSend });
+            list.Add(new Case { Name = "input.keys.press-after-release", Run = KeyCases.PressAfterRelease });
+            list.Add(new Case { Name = "input.keys.already-up", Run = KeyCases.AlreadyUp });
+            list.Add(new Case { Name = "input.keys.modifier-let-go", Run = KeyCases.ModifierLetGo });
+            list.Add(new Case { Name = "input.keys.left-player", Run = KeyCases.LeftPlayer });
+            list.Add(new Case { Name = "input.keys.only-sender", Run = KeyCases.OnlySender });
+            list.Add(new Case { Name = "input.keys.leaver-holds-nothing", Run = KeyCases.LeaverHoldsNothing });
         }
 
         /// <summary>Adds the input package's cases.</summary>
