@@ -25,6 +25,7 @@ namespace Moonwell.Build.Tests
             Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Physics", "Moonwell.Physics.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
             Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Areas", "Moonwell.Areas.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
             Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Input", "Moonwell.Input.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
+            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Frames", "Moonwell.Frames.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
             Dotnet(repository, "pack", Path.Combine("template", "Moonwell.Templates.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
         }
 
@@ -61,6 +62,9 @@ namespace Moonwell.Build.Tests
         /// <summary>The path of the Moonwell.Input package.</summary>
         public string InputPackage => Path.Combine(Feed, "Moonwell.Input." + Version + ".nupkg");
 
+        /// <summary>The path of the Moonwell.Frames package.</summary>
+        public string FramesPackage => Path.Combine(Feed, "Moonwell.Frames." + Version + ".nupkg");
+
         /// <summary>The path of the Moonwell.Templates package.</summary>
         public string TemplatesPackage => Path.Combine(Feed, "Moonwell.Templates." + Version + ".nupkg");
 
@@ -68,7 +72,7 @@ namespace Moonwell.Build.Tests
         public void Dispose()
         {
             var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
-            foreach (var id in new[] { "moonwell", "moonwell.natives", "moonwell.objects", "moonwell.damage", "moonwell.maths", "moonwell.interactions", "moonwell.terrain", "moonwell.physics", "moonwell.areas", "moonwell.input" })
+            foreach (var id in new[] { "moonwell", "moonwell.natives", "moonwell.objects", "moonwell.damage", "moonwell.maths", "moonwell.interactions", "moonwell.terrain", "moonwell.physics", "moonwell.areas", "moonwell.input", "moonwell.frames" })
             {
                 TestFolders.Delete(Path.Combine(packages, id, Version.ToLowerInvariant()));
 

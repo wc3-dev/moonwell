@@ -65,6 +65,7 @@ namespace Moonwell.Build.Tests
         [InlineData("Moonwell.Physics")]
         [InlineData("Moonwell.Areas")]
         [InlineData("Moonwell.Input")]
+        [InlineData("Moonwell.Frames")]
         public void package_ships_xml_docs_beside_its_library(string id)
         {
             using var archive = ZipFile.OpenRead(Path.Combine(packed.Feed, id + "." + packed.Version + ".nupkg"));
@@ -271,6 +272,16 @@ namespace Moonwell.Build.Tests
             Assert.Equal(packed.Version,moonwell.Attribute("version")!.Value);
             var maths = Assert.Single(dependencies, element => element.Attribute("id")!.Value == "Moonwell.Maths");
             Assert.Equal(packed.Version,maths.Attribute("version")!.Value);
+        }
+
+        [Fact]
+        public void frames_package_carries_its_source()
+        {
+            using var archive = ZipFile.OpenRead(packed.FramesPackage);
+            var names = archive.Entries.Select(entry => entry.FullName).ToList();
+            Assert.Contains("contentFiles/cs/net10.0/Moonwell.Frames/FramesSystem.cs", names);
+            Assert.Contains(names, name => name.StartsWith("lib/", StringComparison.Ordinal) && name.EndsWith("/Moonwell.Frames.dll", StringComparison.Ordinal));
+            Assert.DoesNotContain(names, name => name.Contains("/obj/") || name.Contains("/bin/"));
         }
 
         [Fact]

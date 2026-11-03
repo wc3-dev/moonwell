@@ -1,0 +1,136 @@
+using Moonwell.Hosting;
+
+namespace Moonwell.Engine
+{
+    /// <summary>The game as the frames package sees it, through the game's natives.</summary>
+    internal sealed class NativeFramesWorld : IFramesWorld
+    {
+        /// <summary>Makes a BACKDROP painted blank under ConsoleUIBackdrop, over the 4:3 middle until the window's edges are known: a FRAME by type there takes every click on the world, even turned off, and a BACKDROP lets them through (seen 11-03).</summary>
+        public framehandle ScreenRoot()
+        {
+            var root = Natives.BlzCreateFrameByType("BACKDROP", "MoonwellScreen", Natives.BlzGetFrameByName("ConsoleUIBackdrop", 0), "", 0);
+            Natives.BlzFrameSetTexture(root, Image.Blank, 0, true);
+            Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_BOTTOMLEFT, 0.0f, 0.0f);
+            Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_TOPRIGHT, 0.8f, 0.6f);
+            return root;
+        }
+
+        /// <summary>Makes a frame from a template, BlzCreateFrame, or by type when the template is empty, BlzCreateFrameByType.</summary>
+        public framehandle? MakeFrame(string type, string template, framehandle parent)
+        {
+            if (template.Length > 0)
+            {
+                return Natives.BlzCreateFrame(template, parent, 0, 0);
+            }
+
+            return Natives.BlzCreateFrameByType(type, "MoonwellFrame", parent, "", 0);
+        }
+
+        /// <summary>Shows or hides a frame on this machine: BlzFrameSetVisible.</summary>
+        public void ShowFrame(framehandle frame, bool shown)
+        {
+            Natives.BlzFrameSetVisible(frame, shown);
+        }
+
+        /// <summary>Ties a point of a frame to a point of another: BlzFrameSetPoint.</summary>
+        public void PlaceFrame(framehandle frame, int point, framehandle other, int otherPoint, float x, float y)
+        {
+            Natives.BlzFrameSetPoint(frame, Natives.ConvertFramePointType(point), other, Natives.ConvertFramePointType(otherPoint), x, y);
+        }
+
+        /// <summary>Clears a frame's points: BlzFrameClearAllPoints.</summary>
+        public void ClearFramePoints(framehandle frame)
+        {
+            Natives.BlzFrameClearAllPoints(frame);
+        }
+
+        /// <summary>Sets a frame to cover another: BlzFrameSetAllPoints.</summary>
+        public void FillFrame(framehandle frame, framehandle other)
+        {
+            Natives.BlzFrameSetAllPoints(frame, other);
+        }
+
+        /// <summary>Sizes a frame: BlzFrameSetSize.</summary>
+        public void SizeFrame(framehandle frame, float width, float height)
+        {
+            Natives.BlzFrameSetSize(frame, width, height);
+        }
+
+        /// <summary>Scales a frame: BlzFrameSetScale.</summary>
+        public void ScaleFrame(framehandle frame, float scale)
+        {
+            Natives.BlzFrameSetScale(frame, scale);
+        }
+
+        /// <summary>Lets a frame take the mouse, or not: BlzFrameSetEnable.</summary>
+        public void EnableFrame(framehandle frame, bool enabled)
+        {
+            Natives.BlzFrameSetEnable(frame, enabled);
+        }
+
+        /// <summary>Sets a frame's opacity: BlzFrameSetAlpha.</summary>
+        public void FadeFrame(framehandle frame, int alpha)
+        {
+            Natives.BlzFrameSetAlpha(frame, alpha);
+        }
+
+        /// <summary>Sets a frame's drawing level: BlzFrameSetLevel.</summary>
+        public void LevelFrame(framehandle frame, int level)
+        {
+            Natives.BlzFrameSetLevel(frame, level);
+        }
+
+        /// <summary>Writes a frame's text: BlzFrameSetText.</summary>
+        public void WriteFrameText(framehandle frame, string text)
+        {
+            Natives.BlzFrameSetText(frame, text);
+        }
+
+        /// <summary>Aligns a frame's text: BlzFrameSetTextAlignment.</summary>
+        public void AlignFrameText(framehandle frame, int vertical, int horizontal)
+        {
+            Natives.BlzFrameSetTextAlignment(frame, Natives.ConvertTextAlignType(vertical), Natives.ConvertTextAlignType(horizontal));
+        }
+
+        /// <summary>Paints a frame with a texture: BlzFrameSetTexture, not tiled, with blending.</summary>
+        public void PaintFrame(framehandle frame, string texture)
+        {
+            Natives.BlzFrameSetTexture(frame, texture, 0, true);
+        }
+
+        /// <summary>Moves a frame under another parent: BlzFrameSetParent.</summary>
+        public void ParentFrame(framehandle frame, framehandle parent)
+        {
+            Natives.BlzFrameSetParent(frame, parent);
+        }
+
+        /// <summary>Sets where a frame's corners sit: BlzFrameSetAbsPoint at the bottom left and the top right.</summary>
+        public void SpanFrame(framehandle frame, float left, float bottom, float right, float top)
+        {
+            Natives.BlzFrameSetAbsPoint(frame, Natives.FRAMEPOINT_BOTTOMLEFT, left, bottom);
+            Natives.BlzFrameSetAbsPoint(frame, Natives.FRAMEPOINT_TOPRIGHT, right, top);
+        }
+
+        /// <summary>This machine's window's width: BlzGetLocalClientWidth.</summary>
+        public int ClientWidth()
+        {
+            return Natives.BlzGetLocalClientWidth();
+        }
+
+        /// <summary>This machine's window's height: BlzGetLocalClientHeight.</summary>
+        public int ClientHeight()
+        {
+            return Natives.BlzGetLocalClientHeight();
+        }
+
+        /// <summary>Makes a BACKDROP painted blank under the game UI over the 4:3 middle, 0.8 by 0.6, which lets clicks through, as the screen root does.</summary>
+        public framehandle OverRoot()
+        {
+            var root = Natives.BlzCreateFrameByType("BACKDROP", "MoonwellOver", Natives.BlzGetOriginFrame(Natives.ORIGIN_FRAME_GAME_UI, 0), "", 0);
+            Natives.BlzFrameSetTexture(root, Image.Blank, 0, true);
+            Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_BOTTOMLEFT, 0.0f, 0.0f);
+            Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_TOPRIGHT, 0.8f, 0.6f);
+            return root;
+        }
+    }
+}

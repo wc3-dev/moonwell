@@ -10,6 +10,7 @@
     <Project Path="src/Moonwell.Damage/Moonwell.Damage.csproj" />
     <Project Path="src/Moonwell.GameData/Moonwell.GameData.csproj" />
     <Project Path="src/Moonwell.Input/Moonwell.Input.csproj" />
+    <Project Path="src/Moonwell.Frames/Moonwell.Frames.csproj" />
     <Project Path="src/Moonwell.Interactions/Moonwell.Interactions.csproj" />
     <Project Path="src/Moonwell.MapFiles/Moonwell.MapFiles.csproj" />
     <Project Path="src/Moonwell.Maths/Moonwell.Maths.csproj" />

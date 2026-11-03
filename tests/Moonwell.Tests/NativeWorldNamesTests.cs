@@ -25,6 +25,22 @@ public class NativeWorldNamesTests
         Assert.True(shared.Count == 0, "NativeWorld methods named like natives: " + string.Join(", ", shared));
     }
 
+    // The frames package's native world has the same hazard.
+    [Fact]
+    public void NativeFramesWorldMethodsDoNotShareNamesWithNatives()
+    {
+        var world = typeof(Moonwell.FramesSystem).Assembly.GetType("Moonwell.Engine.NativeFramesWorld", throwOnError: true)!;
+        var natives = typeof(Natives).GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+            .Select(member => member.Name)
+            .ToHashSet();
+        var methods = world.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
+                | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(method => !method.IsSpecialName)
+            .Select(method => method.Name);
+        var shared = methods.Where(natives.Contains).Distinct().OrderBy(name => name).ToList();
+        Assert.True(shared.Count == 0, "NativeFramesWorld methods named like natives: " + string.Join(", ", shared));
+    }
+
     // The damage package's native world has the same hazard.
     [Fact]
     public void NativeDamageWorldMethodsDoNotShareNamesWithNatives()
@@ -46,7 +62,7 @@ public class ClassMethodsShadowingNativesTests
 {
     private static readonly string[] Packages =
     {
-        "Moonwell", "Moonwell.Damage", "Moonwell.Terrain", "Moonwell.Interactions", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input",
+        "Moonwell", "Moonwell.Damage", "Moonwell.Terrain", "Moonwell.Interactions", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input", "Moonwell.Frames",
     };
 
     // The same hazard as above, for every class of the seven packages: CSharp.lua declares a class's methods as chunk-level

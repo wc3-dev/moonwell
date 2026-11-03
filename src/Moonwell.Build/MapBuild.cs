@@ -20,6 +20,9 @@ namespace Moonwell.Build
         /// <summary>The input package's assembly: a map that references it gets World Editor's cameras written from <c>war3map.w3c</c>, their names in its code checked, and the package installed by its Main, listening for the mouse only when the code names <c>Mouse</c> or <c>IMouseWatch</c>, and for its moves only when the code needs them.</summary>
         private const string InputAssemblyName = "Moonwell.Input";
 
+        /// <summary>The frames package's assembly: a map that references it gets the package installed, which makes no frame until the map adds one.</summary>
+        private const string FramesAssemblyName = "Moonwell.Frames";
+
         /// <summary>The physics package's assembly: a map that references it gets its placed bridges written from <c>war3map.doo</c> and installed by its Main.</summary>
         private const string PhysicsAssemblyName = "Moonwell.Physics";
 
@@ -243,6 +246,11 @@ namespace Moonwell.Build
             else
             {
                 PlaceWriter.DeleteInput(project);
+            }
+
+            if (Declarations.References(targetPath, FramesAssemblyName))
+            {
+                installs.Add("global::Moonwell.FramesSystem.Install();");
             }
 
             if (physics)
