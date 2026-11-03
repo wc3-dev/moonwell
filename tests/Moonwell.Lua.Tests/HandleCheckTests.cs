@@ -7,12 +7,11 @@ namespace Moonwell.Lua.Tests;
 
 public class HandleCheckTests
 {
-    // CSharp.lua writes (lightning)data as System.cast(Moonwell.lightning, data), data as unit as System.as and data is unit
-    // as System.is, which look for the class in the value's metatable. The game's handles are userdata with the game's own
-    // metatable, so the check never passes there; analyzer rule MW0035 rejects these forms. The cases cannot show it: the fake
-    // world's handles are CSharp.lua objects. Here a .NET object stands in for a handle, as NLua gives it to Lua as userdata
-    // with NLua's own metatable. If the fork's CSharp.lua stops checking casts to handle types, this test fails: then casts
-    // can leave MW0035.
+    // CSharp.lua writes data as unit as System.as and data is unit as System.is, which look for the class in the value's
+    // metatable; a cast to a handle type it writes with no check since the fork's 2.0.4-moonwell.15 (LuaRuntimeTests looks for
+    // one in the compiled cases). The game's handles are userdata with the game's own metatable, so a check never passes
+    // there; analyzer rule MW0035 rejects these forms. The cases cannot show it: the fake world's handles are CSharp.lua
+    // objects. Here a .NET object stands in for a handle, as NLua gives it to Lua as userdata with NLua's own metatable.
     [Fact]
     public void A_game_handle_fails_every_check_for_its_type()
     {

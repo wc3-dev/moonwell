@@ -83,12 +83,7 @@ namespace Moonwell
             host.WorldTopRight(out var maxX, out var maxY);
             cornerX = maxX - 32f;
             cornerY = maxY - 32f;
-            // Set by an if: CSharp.lua 2.0.4-moonwell.12 fails with a BugErrorException on moves ? MouseReactions.OnMoved : null.
-            Action? moved = null;
-            if (moves)
-            {
-                moved = MouseReactions.OnMoved;
-            }
+            Action? moved = moves ? MouseReactions.OnMoved : null;
 
             var users = Player.Users;
             for (var i = 0; i < users.Count; i++)

@@ -890,21 +890,12 @@ compared, and from later checks of the compiler Moonwell builds with.
 | Rule | Rejects | Write instead |
 |---|---|---|
 | MW0005 | `decimal` (`long`, `ulong`, `uint` and `double` are under Multiplayer) | `int` or `float` |
-| MW0017 | at the top of a `switch` expression arm: `> 10 =>`, `var n`, `not 1`, `(1 or 2) =>`; in any pattern: a name inside `{ X: int y }` or `{ X: var y }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
-| MW0018 | outside a `switch` expression arm, a positional pattern on a class, a record, a nullable struct or `object` (`p is (1, 2)`), inside another pattern (`{ T: (1, _) }`) or with names (`(A: 1, B: 2)`) | `{ X: 1 }`; on a tuple or a struct, `t is (1, _)` works |
-| MW0020 | `var c = arr[0];` on a struct, then `c.X = 6`, `c.Inner.X = 6`, `c.Move()` or `Bump(ref c)` (it changes `arr[0]`) | make a new struct, or write `c` back with `arr[0] = c` |
-| MW0022 | `var (a, b) = (1, 2)`, `(x[0], x[1]) = (x[1], x[0])`, a tuple turned into text | `(int a, int b) = (1, 2)`, a temporary, its items |
-| MW0023 | a user-defined `++`, `--`, `operator true/false`; `static abstract`; a record deriving from a record; one class implementing `IG<int>` and `IG<string>`; `with` on an anonymous type | a method; an ordinary class |
-| MW0024 | `a[1..3]`, `s[1..]`, `list[^1]` (`array[^1]` is fine) | `Substring`, `Skip`/`Take`, `list[list.Count - 1]` |
-| MW0025 | a `ref` return, `ref int r = ref First(a)`, `ref int r = ref a[i]` | index the array each time |
-| MW0026 | `params List<int>`, `params` in a lambda | `params int[]` |
-| MW0027 | `s.Split("--")` (runs out of memory), `s.Split(new[] { ", " }, options)` (never ends), `StartsWith('a')`, `EndsWith('a')`, ignore-case `IndexOf`/`StartsWith`/`EndsWith`, `"abc".Reverse()` | split on a char, a string argument, lower-case both |
-| MW0028 | a `char` or an enum given to `string.Format`, `Console.WriteLine(object)`, `StringBuilder.Append(object)`, `string.Join`, `string.Concat` (shown as its number) | `.ToString()` |
-| MW0029 | `catch (NullReferenceException)`, `catch (IndexOutOfRangeException)`, `catch (DivideByZeroException)` around an integer `%` (an integer `/` by zero does throw it), a pattern variable in a `catch ... when` | `catch (Exception)`, test first |
-| MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, `Index`/`Range`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, `Random.Shared`, and more (the rule's description lists them); also `SetEquals` (of a `HashSet`, an `ISet` or an `IReadOnlySet`), `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary` (of an `OrderedMap` it works), which give wrong answers | `TryGetValue`, `"\n"`, a loop |
-| MW0031 | `checked(a + b)`, `checked { }` (an overflow is never detected) | test the range yourself |
-| MW0032 | `Enum.Parse`, `Enum.GetValues`/`GetNames`, `ToString("D")` on an enum, a `[Flags]` combination turned into text, `(Color)5 + "x"` | a `switch` on the value, `HasFlag` |
-| MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, `foreach (unit u in widgets)`, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
+| MW0023 | `static abstract`; one class implementing `IG<int>` and `IG<string>` | a method; an ordinary class |
+| MW0025 | a `ref` return, `ref int r = ref First(a)`, a ref reassignment `r = ref other` | a ref local of the element itself (`ref int r = ref a[i]` works), or a new ref local |
+| MW0028 | a `char` or an enum given as an `object` to a text method other than `string`'s, `Console`'s and `StringBuilder`'s (a `TextWriter`'s `Write`), and a list of enums given to `string.Join` (shown as numbers) | `.ToString()` |
+| MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, `Random.Shared`, and more (the rule's description lists them); also `SetEquals` (of a `HashSet`, an `ISet` or an `IReadOnlySet`), `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary` (of an `OrderedMap` it works), which give wrong answers | `TryGetValue`, `"\n"`, a loop |
+| MW0032 | `Enum.Parse(typeof(Color), text)` (gives the number) | `Enum.Parse<Color>(text)` |
+| MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
@@ -926,17 +917,12 @@ The analyzer does not see these, so they build and then go wrong in the game:
 | a `where T : struct` or `unmanaged` method that copies its value (`var y = x;`, `foreach (var x in e) return x;`), given an `int`, a `float` or a `bool` | fails: "attempt to index a number value" | the method without the constraint |
 | a number format other than `F`, `D`, `X`, `E`, `G` and a width: `N0`, `P0`, `00`, `0.0`, `#,##0.00` | the number as it is (`{x:N0}` of 1234567 shows `1234567`, `{x:P0}` of 0.5 shows `0.5`); `D3` of a negative number has a digit too few | `F` and a width (`{x,6:F1}`), `$"{x * 100:F0}%"` |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
-| `break` or `continue` after a `using var` in a loop | the script does not load | `using (var d = ...) { }` around the loop's body |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
-| a positional pattern on a class or record (`case (1, 2):`, `(1, 2) =>`) given null | fails: `Deconstruct` is called before the null check | a property pattern (`{ X: 1, Y: 2 }`), or a test for null first |
-| a local function called from another `switch` section than the one it is declared in | fails: "attempt to call a nil value" | declare it before the `switch` |
-| a `const string` local longer than 27 characters that is not one literal (`const string L = Prefix + "...";`), read on its own | nil, which shows as empty | one literal, or a `const` field |
-| `byte` and `short` arithmetic | does not wrap | `int`, wrapped yourself |
 
 What works is most of the language: classes, structs, records, primary constructors, interfaces and default methods,
-generics with constraints, enums, delegates, events, `switch` statements, `is` patterns with constants, types,
-properties (`{ Inner.X: 9 }` too) and positions on a tuple or a struct, `??`, `?.`, collection expressions, `foreach`
-over every collection, `yield`, lambdas and closures, `ref`/`out`/`in` parameters, `lock`, string interpolation, `List`,
+generics with constraints, enums as text, delegates, events, `switch` statements and expressions, patterns of every
+kind, tuples, ranges and indexes, `??`, `?.`, collection expressions, `foreach` over every collection, `yield`, lambdas
+and closures, `ref`/`out`/`in` parameters and ref locals, `params`, `checked`, `lock`, string interpolation, `List`,
 `Dictionary`, `HashSet`, `Queue`, `Stack`, arrays and most of LINQ. `float` and `int` arithmetic is the game's, see
 MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF.Sqrt` is off by up to 2 parts in
 100,000 (Maths).

@@ -27,7 +27,6 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         context.RegisterOperationAction(HandleConversion, OperationKind.Conversion);
         context.RegisterOperationAction(HandleIsType, OperationKind.IsType);
         context.RegisterOperationAction(HandlePattern, OperationKind.DeclarationPattern, OperationKind.TypePattern, OperationKind.RecursivePattern);
-        context.RegisterSyntaxNodeAction(HandleLoop, SyntaxKind.ForEachStatement);
     }
 
     // The methods of System.Enum that read an enum's names or members from its type.
@@ -201,13 +200,18 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         } choice ? choice : null;
     }
 
-    /// <summary>MW0035: a cast or as to a handle type the value is not known to be, which CSharp.lua checks against a class the game's handles do not have.</summary>
+    /// <summary>
+    /// MW0035: as to a handle type the value is not known to be, or a cast to a type parameter limited to one, which CSharp.lua
+    /// checks against a class the game's handles do not have. A cast to a handle type, also the one a foreach makes, checks
+    /// nothing since the fork's 2.0.4-moonwell.15.
+    /// </summary>
     private static void HandleConversion(OperationAnalysisContext context)
     {
         var conversion = (IConversionOperation)context.Operation;
-        if (!conversion.Conversion.IsImplicit && conversion.Operand.Type != null && IsHandle(conversion.Type))
+        if (!conversion.Conversion.IsImplicit && (conversion.IsTryCast || conversion.Type is ITypeParameterSymbol)
+            && conversion.Operand.Type != null && IsHandle(conversion.Type))
         {
-            ReportHandle(context, conversion.Type!);
+            ReportHandle(context, conversion.Type!.WithNullableAnnotation(NullableAnnotation.NotAnnotated));
         }
     }
 
@@ -262,22 +266,6 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         }
 
         return null;
-    }
-
-    /// <summary>MW0035: foreach (unit u in widgets), whose loop casts each item to a handle type it is not known to be.</summary>
-    private static void HandleLoop(SyntaxNodeAnalysisContext context)
-    {
-        var loop = (ForEachStatementSyntax)context.Node;
-        var info = context.SemanticModel.GetForEachStatementInfo(loop);
-        var variable = context.SemanticModel.GetTypeInfo(loop.Type, context.CancellationToken).Type;
-        if (variable == null || !IsHandle(variable) || info.ElementType == null || info.ElementConversion.IsImplicit || info.ElementConversion.IsIdentity)
-        {
-            return;
-        }
-
-        var span = Microsoft.CodeAnalysis.Text.TextSpan.FromBounds(loop.Type.SpanStart, loop.Identifier.Span.End);
-        context.ReportDiagnostic(Diagnostic.Create(Rules.HandleCheck, Location.Create(loop.SyntaxTree, span),
-            loop.SyntaxTree.GetText(context.CancellationToken).ToString(span), variable.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
     }
 
     /// <summary>MW0035: x is T for a handle type T that x is not known to be.</summary>
