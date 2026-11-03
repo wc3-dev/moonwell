@@ -1233,9 +1233,11 @@ lines.
 costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
 game closes first. A line longer than 253 characters is split.
 
-To place objects declared in code in World Editor, save `build\MyMap.w3x` from World Editor as the `map/` folder. The
-next build keeps the placed units; code wins over any object it also declares. World Editor's own changes to an object
-get a warning at each build: kept when no class declares the object, dropped, with the fields named, when one does.
+To place objects declared in code in World Editor, open `build\MyMap.w3x` there and Save Map As a folder beside `map/`:
+World Editor will not save over `map/` and names the new folder `map2.w3m`. Delete `map/`, rename `map2.w3m` to `map`,
+and open `map/` in World Editor again, so that later saves go there. The next build keeps the placed units; code wins
+over any object it also declares. World Editor's own changes to an object get a warning at each build: kept when no
+class declares the object, dropped, with the fields named, when one does.
 
 ## Debug mode
 
