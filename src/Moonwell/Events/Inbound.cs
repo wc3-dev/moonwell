@@ -36,7 +36,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components.</summary>
+        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; a new carry starts, unless the item went into the 3.0 bag (decision 166); then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components.</summary>
         internal static void PickedUp(unit u, item i)
         {
             var carrierPlayer = Runtime.World.OwnerOf(u);
@@ -63,11 +63,24 @@ namespace Moonwell
             }
 
             picked.CarrierUnit = by;
+            if (picked.carry != null)
+            {
+                picked.carry.End();
+                picked.carry = null;
+            }
+
+            if (!Runtime.World.IsInBag(i))
+            {
+                var carry = new Carrying();
+                by.Adopt(carry);
+                picked.carry = carry;
+            }
+
             ItemPickedUp(picked, by);
             UnitItemPickedUp(by, picked);
         }
 
-        /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components.</summary>
+        /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the item's carry ends.</summary>
         internal static void Dropped(unit u, item i)
         {
             if (KnownUnits.Find(u) == null && KnownItems.Find(i) == null && ObjectTypes.ItemMaker(Runtime.World.ItemTypeId(i)) == null)
@@ -84,6 +97,12 @@ namespace Moonwell
 
             ItemDropped(dropped, by);
             UnitItemDropped(by, dropped);
+            var carry = dropped.carry;
+            if (carry != null)
+            {
+                dropped.carry = null;
+                carry.End();
+            }
         }
 
         /// <summary>A destructable dies: its type's OnDeath, then its components' OnDeath; one that is ending reacts to none, since the game fires the death event inside RemoveDestructable.</summary>

@@ -57,6 +57,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "buff.strongest-last", Run = HoldCases.StrongestLast });
             list.Add(new Case { Name = "buff.strongest-timed", Run = HoldCases.StrongestTimed });
             list.Add(new Case { Name = "buff.strongest-handover", Run = HoldCases.StrongestHandover });
+            list.Add(new Case { Name = "item.carry-gift", Run = CarryCases.Gift });
+            list.Add(new Case { Name = "item.carry-two-boots", Run = CarryCases.TwoBoots });
+            list.Add(new Case { Name = "item.carry-bag-then-equip", Run = CarryCases.BagThenEquip });
+            list.Add(new Case { Name = "item.carry-death", Run = CarryCases.Death });
+            list.Add(new Case { Name = "item.carry-item-gone", Run = CarryCases.ItemGone });
+            list.Add(new Case { Name = "item.carry-carrier-gone", Run = CarryCases.CarrierGone });
+            list.Add(new Case { Name = "item.carry-bag-is-quiet", Run = CarryCases.BagIsQuiet });
         }
 
         /// <summary>Adds the cases for the log: a map's own lines, and the log file's lines and timing.</summary>
@@ -211,6 +218,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.abilities.level-out-of-range-reported", Run = UnitAbilityCases.LevelOutOfRangeReported });
             list.Add(new Case { Name = "debug.abilities.level-of-missing-reported", Run = UnitAbilityCases.LevelOfMissingReported });
             list.Add(new Case { Name = "debug.hold.ended-holder-reported", Run = HoldCases.EndedHolderReported });
+            list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });

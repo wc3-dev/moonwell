@@ -138,7 +138,13 @@ namespace Moonwell
 
             if (heldBy != null && (heldBy.HasEnded || heldBy.childrenEnded))
             {
-                Dev.Report(Names.NameOf(this) + ".Add", Names.NameOf(component) + " is held by " + Names.NameOf(heldBy) + ", which has ended, so it was not added");
+                // An item's carry read where there is none (in the 3.0 bag) holds nothing, quietly.
+                var quiet = heldBy is Carrying carrying && carrying.quiet;
+                if (!quiet)
+                {
+                    Dev.Report(Names.NameOf(this) + ".Add", Names.NameOf(component) + " is held by " + Names.NameOf(heldBy) + ", which has ended, so it was not added");
+                }
+
                 component.End();
                 return component;
             }

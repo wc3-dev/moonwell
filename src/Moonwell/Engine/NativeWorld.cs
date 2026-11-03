@@ -1063,6 +1063,12 @@ namespace Moonwell.Engine
             return Natives.IsItemOwned(item);
         }
 
+        /// <summary>Whether an item is in a unit's 3.0 bag: IsItemInBag.</summary>
+        public bool IsInBag(item item)
+        {
+            return Natives.IsItemInBag(item);
+        }
+
         /// <summary>Moves an item a unit holds into a slot, swapping it with the item there: UnitDropItemSlot.</summary>
         public bool MoveItemToSlot(unit unit, item item, int slot)
         {
