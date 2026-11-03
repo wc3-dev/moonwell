@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using Moonwell.Engine;
 using Moonwell.Hosting;
@@ -14,7 +15,12 @@ namespace Moonwell
 
         private static framehandle? overRoot;
 
+        /// <summary>The tooltip slot of each game frame that takes a frame's mouse, by that frame.</summary>
+        private static Dictionary<framehandle, framehandle> slots = new Dictionary<framehandle, framehandle>();
+
         private static FramePool pool = new FramePool();
+
+        private static FrameEvents events = new FrameEvents();
 
         /// <summary>The window the screen root was last spanned to, in pixels; 0 until it is.</summary>
         private static int windowWidth, windowHeight;
@@ -22,7 +28,10 @@ namespace Moonwell
         /// <summary>How often the window is checked for a new size, in seconds.</summary>
         internal const float WindowCheck = 0.5f;
 
-        /// <summary>Installs the package on the game. It makes no frame: a frame made while the script loads can desync (a claim in the game facts), so the roots are made at their first use, in a reaction.</summary>
+        /// <summary>The TOC the build writes into the map, listing the game's template files the kinds are made from.</summary>
+        internal const string TocFile = "MoonwellFrames.toc";
+
+        /// <summary>Installs the package on the game and loads its TOC, which the script load allows (seen 10-15). It makes no frame: a frame made while the script loads can desync (a claim in the game facts), so the roots are made at their first use, in a reaction.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install()
         {
@@ -35,11 +44,41 @@ namespace Moonwell
             world = host;
             screenRoot = null;
             overRoot = null;
+            slots = new Dictionary<framehandle, framehandle>();
             pool = new FramePool();
+            events = new FrameEvents();
+            host.LoadToc(TocFile);
         }
 
         /// <summary>The world the package talks to.</summary>
         internal static IFramesWorld World => world!;
+
+        /// <summary>The game's frame events, sent to the frames that own them.</summary>
+        internal static FrameEvents Events => events;
+
+        /// <summary>
+        /// The slot a tooltip is made in for a game frame that takes a frame's mouse: a blank frame of no size on the
+        /// frame's layer, given to the game as that frame's tooltip the first time and never to another, as a frame given
+        /// to a second crashes the game (seen 11-03). The game shows the slot while the mouse is on the frame, and the
+        /// tooltip in it with it; with none in it, nothing. A game frame keeps its layer, as the pool gives it out again
+        /// only under its parent, so the slot never moves.
+        /// </summary>
+        internal static framehandle SlotFor(framehandle mouse, bool over)
+        {
+            if (slots.TryGetValue(mouse, out var slot))
+            {
+                return slot;
+            }
+
+            var root = over ? OverRoot : ScreenRoot;
+            var made = World.MakeFrame("BACKDROP", "", root)!;
+            World.PaintFrame(made, Image.Blank);
+            World.SizeFrame(made, 0.0f, 0.0f);
+            World.PlaceFrame(made, (int)FramePoint.Center, root, (int)FramePoint.Center, 0.0f, 0.0f);
+            World.TipFrame(mouse, made);
+            slots[mouse] = made;
+            return made;
+        }
 
         /// <summary>The ended frames, kept for reuse.</summary>
         internal static FramePool Pool => pool;

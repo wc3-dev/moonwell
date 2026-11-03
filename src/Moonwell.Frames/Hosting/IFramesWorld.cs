@@ -1,3 +1,5 @@
+using System;
+
 namespace Moonwell.Hosting
 {
     /// <summary>The game as the frames package sees it: the frames it makes and what it sets on them. Types are the game's.</summary>
@@ -8,6 +10,48 @@ namespace Moonwell.Hosting
 
         /// <summary>Makes the over-the-HUD root: a frame under the game UI covering the 4:3 middle, drawn over the HUD.</summary>
         framehandle OverRoot();
+
+        /// <summary>Registers a frame for a kind of event, the game's FRAMEEVENT_ number: one trigger a kind, made at its first use, which runs the action given then; inside it EventFrame, EventPlayer, EventValue and EventText are the event's.</summary>
+        void ListenFrame(framehandle frame, int kind, Action action);
+
+        /// <summary>Makes a frame the tooltip of another, which the game shows while the mouse is on it, on that machine alone.</summary>
+        void TipFrame(framehandle frame, framehandle tooltip);
+
+        /// <summary>Adds a line to a frame's text: a text area's.</summary>
+        void AddFrameText(framehandle frame, string line);
+
+        /// <summary>Colours a frame's text, each channel 0 to 255.</summary>
+        void ColourFrameText(framehandle frame, int r, int g, int b, int a);
+
+        /// <summary>Sets a frame's value: a slider's.</summary>
+        void SetFrameValue(framehandle frame, float value);
+
+        /// <summary>Sets a frame's range: a slider's.</summary>
+        void SetFrameRange(framehandle frame, float min, float max);
+
+        /// <summary>Sets a frame's step: a slider's.</summary>
+        void SetFrameStep(framehandle frame, float step);
+
+        /// <summary>Limits a frame's text to a number of characters: a text box's.</summary>
+        void LimitFrameText(framehandle frame, int characters);
+
+        /// <summary>Gives the keyboard back to the game from a frame clicked on this machine: off, then on (seen 11-03).</summary>
+        void ReleaseKeyboard(framehandle frame);
+
+        /// <summary>The frame of the event being delivered.</summary>
+        framehandle EventFrame();
+
+        /// <summary>The player of the event being delivered.</summary>
+        player EventPlayer();
+
+        /// <summary>The value of the event being delivered: a slider's, a check box's, the wheel's.</summary>
+        float EventValue();
+
+        /// <summary>The text of the event being delivered: a text box's.</summary>
+        string EventText();
+
+        /// <summary>Loads a TOC file, which makes the templates of the files it lists; true when the game loaded it.</summary>
+        bool LoadToc(string path);
 
         /// <summary>Makes a frame from a template, or by type when the template is empty, under a parent; null when the game has no such template (game facts).</summary>
         framehandle? MakeFrame(string type, string template, framehandle parent);
@@ -47,9 +91,6 @@ namespace Moonwell.Hosting
 
         /// <summary>Paints a frame with a texture.</summary>
         void PaintFrame(framehandle frame, string texture);
-
-        /// <summary>Moves a frame under another parent.</summary>
-        void ParentFrame(framehandle frame, framehandle parent);
 
         /// <summary>Sets where a frame's corners sit on the screen: its bottom left at left, bottom and its top right at right, top.</summary>
         void SpanFrame(framehandle frame, float left, float bottom, float right, float top);

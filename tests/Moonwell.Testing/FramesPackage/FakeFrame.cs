@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Moonwell.Testing
 {
     /// <summary>A frame the package asked the fake world for, and everything it set on it since.</summary>
@@ -47,6 +49,27 @@ namespace Moonwell.Testing
 
         /// <summary>Its text's alignment as the game numbers it: vertical 0 top to 2 bottom, horizontal 3 left to 5 right; -1 until set.</summary>
         public int Vertical = -1, Horizontal = -1;
+
+        /// <summary>The kinds of frame event (the game's FRAMEEVENT_ numbers) the package registered on it, in the order registered.</summary>
+        public List<int> Listened = new List<int>();
+
+        /// <summary>The frame the game shows as its tooltip while the mouse is over it; null until set.</summary>
+        public FakeFrame? Tip;
+
+        /// <summary>The frame it was given to as a tooltip; null until given. The game crashes when it is given to a second (seen 11-03).</summary>
+        public FakeFrame? TipOf;
+
+        /// <summary>Its text's colour, white until set.</summary>
+        public Color TextColor = Color.White;
+
+        /// <summary>Its value, range and step, as a slider's; 0 until set.</summary>
+        public float Value, Min, Max, Step;
+
+        /// <summary>The most characters its text takes, as a text box's; 0 until set.</summary>
+        public int TextLimit;
+
+        /// <summary>How many times the keyboard was given back from it: turned off and on, on this machine.</summary>
+        public int KeyboardReleases;
 
         /// <summary>Its texture; empty until set.</summary>
         public string Texture = "";

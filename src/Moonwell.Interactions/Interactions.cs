@@ -14,7 +14,7 @@ namespace Moonwell
         internal static IInteractionWorld? host;
 
         /// <summary>The grid; made on first use after an Install. The cycle and a search read it here rather than through Grid, which checks the install at every read, and take Grid when it is not made.</summary>
-        internal static Grid? grid;
+        internal static CellGrid? grid;
 
         /// <summary>The game's own world: the package installs itself on it at first use, and the reads that must make nothing ask it. Made from the natives on first use; a test sets a fake one to take the game's first-use path, and null after.</summary>
         internal static IInteractionWorld? native;
@@ -81,7 +81,7 @@ namespace Moonwell
         }
 
         /// <summary>The grid, made from the world's bounds on first use. The package installs itself on the game first if it is not installed.</summary>
-        internal static Grid Grid
+        internal static CellGrid Grid
         {
             get
             {
@@ -89,7 +89,7 @@ namespace Moonwell
                 if (grid == null)
                 {
                     host!.WorldBounds(out var minX, out var minY, out var maxX, out var maxY);
-                    grid = new Grid(minX, minY, maxX, maxY, Current().CellSize);
+                    grid = new CellGrid(minX, minY, maxX, maxY, Current().CellSize);
                 }
 
                 return grid;
@@ -97,7 +97,7 @@ namespace Moonwell
         }
 
         /// <summary>The grid when the package is installed and it has been made; null otherwise. Unlike Grid it installs nothing and makes nothing, for a search inside Local.For, which may change no shared state.</summary>
-        internal static Grid? GridIfMade
+        internal static CellGrid? GridIfMade
         {
             get { return Installed() ? grid : null; }
         }

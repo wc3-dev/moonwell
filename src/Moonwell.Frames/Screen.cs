@@ -23,13 +23,15 @@ namespace Moonwell
         private static T Put<T>(T frame, Scope scope, Player? shownTo, bool over)
             where T : Frame
         {
-            frame.player = shownTo;
             scope.Adopt(frame);
-            if (!frame.HasEnded)
+            if (frame.Parent != scope || frame.HasEnded)
             {
-                frame.MakeTree(over ? FramesSystem.OverRoot : FramesSystem.ScreenRoot, shownTo);
+                return frame;
             }
 
+            frame.player = shownTo;
+            frame.over = over;
+            frame.MakeTree(over ? FramesSystem.OverRoot : FramesSystem.ScreenRoot, shownTo);
             return frame;
         }
     }

@@ -21,8 +21,8 @@ namespace Moonwell.Engine
             frames.Add(frame);
         }
 
-        /// <summary>Takes the last kept frame of a frame's class made from the template it is to be made from, and that fits it (Frame.Fits); null when there is none.</summary>
-        internal Frame? Take(Frame frame)
+        /// <summary>Takes the last kept frame of a frame's class made from the template it is to be made from, under the parent it is to be made under, and that fits it (Frame.Fits); null when there is none. A frame is never moved to another parent, as it would still hide with its old one (seen 11-03).</summary>
+        internal Frame? Take(Frame frame, framehandle parent)
         {
             if (!kept.TryGetValue(Names.ClassOf(frame), out var frames))
             {
@@ -31,7 +31,7 @@ namespace Moonwell.Engine
 
             for (var i = frames.Count - 1; i >= 0; i--)
             {
-                if (frames[i].madeTemplate == frame.Template && frame.Fits(frames[i]))
+                if (frames[i].parentHandle == parent && frames[i].madeTemplate == frame.Template && frame.Fits(frames[i]))
                 {
                     var old = frames[i];
                     frames.RemoveAt(i);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Moonwell.Engine
 {
     /// <summary>Square cells over the world's bounds, each keeping its entries in the order they came in. A cell's list is made when the first entry goes in it, so memory follows what is on the map and not its size. A place outside the world counts in the edge cell.</summary>
-    internal sealed class Grid
+    internal sealed class CellGrid
     {
         /// <summary>The world's left edge.</summary>
         private readonly float left;
@@ -27,7 +27,7 @@ namespace Moonwell.Engine
         public int Made;
 
         /// <summary>Makes a grid over a world's bounds with cells of the given side; no cell has a list yet.</summary>
-        public Grid(float minX, float minY, float maxX, float maxY, float cellSide)
+        public CellGrid(float minX, float minY, float maxX, float maxY, float cellSide)
         {
             left = minX;
             bottom = minY;

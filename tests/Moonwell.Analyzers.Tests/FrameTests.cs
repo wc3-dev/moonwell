@@ -15,6 +15,18 @@ public class FrameTests
     }
 
     [Fact]
+    public void subscribing_inside_local_for_is_refused()
+    {
+        var found = MapCode.Check("""
+            var label = Screen.Add(new Label(), Game.Instance);
+            label.Wheel += (who, notches) => { };
+            Local.For(p, () => label.Wheel += (who, notches) => { });
+            """);
+
+        Assert.Equal(new[] { "MW0048: label.Wheel" }, found);
+    }
+
+    [Fact]
     public void show_local_runs_only_inside_local_for()
     {
         var found = MapCode.Check("""

@@ -462,7 +462,7 @@ namespace Moonwell.Engine
         }
 
         /// <summary>The grid lines across a block of cells: an upright line at each column's edge, left to right, then a level line at each row's edge, bottom to top.</summary>
-        private static void GridLines(DebugDraw draw, Grid grid, int firstColumn, int lastColumn, int firstRow, int lastRow)
+        private static void GridLines(DebugDraw draw, CellGrid grid, int firstColumn, int lastColumn, int firstRow, int lastRow)
         {
             var left = grid.ColumnLeft(firstColumn);
             var right = grid.ColumnLeft(lastColumn + 1);

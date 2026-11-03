@@ -87,6 +87,18 @@ namespace Moonwell.Build.Tests
 
             Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
             Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "Input", "war3map.lua")));
+            Assert.False(File.Exists(Path.Combine(project, "build", "Input", "MoonwellFrames.toc")));
+        }
+
+        [Fact]
+        public void map_with_frames_carries_the_toc()
+        {
+            var project = folders.TemporaryCopyOf("Frames");
+            Build(project);
+
+            var toc = File.ReadAllBytes(Path.Combine(project, "build", "Frames", "MoonwellFrames.toc"));
+            var expected = "UI\\FrameDef\\UI\\EscMenuTemplates.fdf\r\nUI\\FrameDef\\Glue\\StandardTemplates.fdf\r\nUI\\FrameDef\\Glue\\BattleNetTemplates.fdf\r\nUI\\FrameDef\\UI\\QuestDialog.fdf\r\n\r\n";
+            Assert.Equal(System.Text.Encoding.ASCII.GetBytes(expected), toc);
         }
 
         [Fact]
