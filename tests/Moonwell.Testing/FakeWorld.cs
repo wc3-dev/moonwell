@@ -1429,7 +1429,7 @@ namespace Moonwell.Testing
                 return false;
             }
 
-            if (bagged.Contains(item))
+            if (bagged.Contains(item) || dropping.Contains(item))
             {
                 return true;
             }
@@ -1503,6 +1503,9 @@ namespace Moonwell.Testing
 
         /// <summary>The items in a unit's 3.0 bag or equipment slots: held, though the unit does not count them as carried.</summary>
         private readonly HashSet<item> bagged = new HashSet<item>();
+
+        /// <summary>The items a dying unit is dropping: out of their slots, but still held while their drop events run (seen 11-02).</summary>
+        private readonly HashSet<item> dropping = new HashSet<item>();
 
         /// <summary>Puts an item in a unit's bag, as the game does when a hero with six full slots gets one: a pick-up event, when it is listened for, while UnitHasItem reads false (seen 10-28 and 11-02).</summary>
         public void PutInBag(unit unit, item item)
@@ -1717,7 +1720,7 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>Drops a dying unit's items as the game drops a footman's: before the death event, last slot first, each out of its slot when its drop event fires, while the unit is already dead, then at the unit's place (seen 11-02). A hero keeps its items, with no event; the game decides by the inventory ability, so a unit given a hero's inventory keeps them too.</summary>
+        /// <summary>Drops a dying unit's items as the game drops a footman's: before the death event, last slot first, each out of its slot but still held when its drop event fires, while the unit is already dead, then at the unit's place (seen 11-02). A hero keeps its items, with no event; the game decides by the inventory ability, so a unit given a hero's inventory keeps them too.</summary>
         private void DropAll(unit unit)
         {
             if (heroes.TryGetValue(unit, out var isHero) && isHero)
@@ -1732,11 +1735,13 @@ namespace Moonwell.Testing
                 if (carried != null)
                 {
                     slots[i] = null!;
+                    dropping.Add(carried);
                     if (Listening.Contains(GameEvent.Drop))
                     {
                         Inbound.Dropped(unit, carried);
                     }
 
+                    dropping.Remove(carried);
                     LandAt(unit, carried);
                 }
             }
