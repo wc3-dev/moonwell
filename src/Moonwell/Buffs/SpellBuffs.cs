@@ -48,6 +48,12 @@ namespace Moonwell
         /// <summary>Whether any buff is watched.</summary>
         internal static bool Any => watched.Count > 0;
 
+        /// <summary>Whether a game buff is watched: a class that shows it is a spell's, which Apply refuses.</summary>
+        internal static bool Watches(int buffId)
+        {
+            return buffId != 0 && makers.ContainsKey(buffId);
+        }
+
         /// <summary>Who gave a buff and at what level.</summary>
         private sealed class Giver
         {

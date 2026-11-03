@@ -59,6 +59,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "spellbuff.removed-from-code", Run = SpellBuffCases.RemovedFromCode });
             list.Add(new Case { Name = "spellbuff.death", Run = SpellBuffCases.Death });
             list.Add(new Case { Name = "spellbuff.unit-removed", Run = SpellBuffCases.UnitRemoved });
+            list.Add(new Case { Name = "spellbuff.apply-refused", Run = SpellBuffCases.ApplyRefused });
         }
 
         /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>

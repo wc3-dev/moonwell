@@ -298,6 +298,17 @@ namespace Moonwell.Testing
             Expect.Equal(1, CountOf("frozen removed"), "removed once");
         }
 
+        /// <summary>Apply of a class a spell lists is refused, and reported, in every build (decision 154).</summary>
+        public static void ApplyRefused(FakeWorld world)
+        {
+            Watch();
+            var unit = NewUnit(world);
+            var before = world.Printed.Count;
+            var buff = unit.Apply(new FrozenBuff());
+            Expect.True(!unit.Has<FrozenBuff>(), "not applied");
+            Expect.True(world.Printed.Count > before && world.Printed[before].Contains("a spell lists"), "reported");
+            Expect.True(!buff.HasEnded, "the given buff is left as it is");
+        }
         /// <summary>A unit that dies and is removed in one frame ends its buff once.</summary>
         public static void UnitRemoved(FakeWorld world)
         {

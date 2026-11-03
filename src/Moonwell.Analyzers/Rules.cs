@@ -186,6 +186,18 @@ public static class Rules
     /// <summary>The rule for a bare Damage(...) in a unit class.</summary>
     public static ImmutableArray<DiagnosticDescriptor> BareDamages { get; } = ImmutableArray.Create(BareDamage);
 
+    public static readonly DiagnosticDescriptor SpellBuff = new(
+        "MW0051",
+        "A buff a spell lists",
+        "{0}",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "A buff class an ability lists (Buffs.Set, Add or Replace in an ability class, or a [Replaces] class of a standard buff) is the game's to put on: Moonwell watches for its game buff and runs its code when a spell, an aura or an attack puts it on, and the game decides when it ends (decision 152). An applied buff's carrier puts the same game buff on the unit, and a unit holds one game buff of an id, so the two could not be told apart: such a class cannot go through Apply (decision 154), and a map that wants both writes two classes, sharing the code through a base class. Its Duration, Stacking and EndsOnDeath are the game's, so it does not set them; its Tick works. Moonwell makes it, so it has a public constructor with no parameters. Which classes a spell lists is known once every file is seen, so the rule reports when the build's analysis ends.",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+    /// <summary>The rule for a buff a spell lists.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> SpellBuffs { get; } = ImmutableArray.Create(SpellBuff);
     public static readonly DiagnosticDescriptor PlayerScope = new(
         "MW0043",
         "A player where a scope goes",
@@ -193,7 +205,7 @@ public static class Rules
         "Scopes",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "What code makes belongs to the scope named where it is made (decision 81). A player is a scope, as every actor is, but it never ends during a game, so Game.Instance does the same, and a player there is most often meant as the owner: Gizmo.Create(gizmo, x, y, scope, owner) and Missile.Create(missile, x, y, z, scope, owner) take the owning player after the scope, and the compiler cannot tell the two apart. The rule checks the scope argument of Moonwell's methods (Create, Fire, Interact) and what a scope's After and Every are called on; a player held in a variable typed Scope is not seen.");
+        description: "What code makes belongs to the scope named where it is made (decision 81). A player is a scope, as every actor is, but it never ends during a game, so Game.Instance does the same, and a player there is most often meant as the owner: Gizmo.Create(gizmo, x, y, scope, owner) and Missile.Create(missile, x, y, z, scope, owner) take the owning player after the scope, and the compiler cannot tell the two apart. The rule checks the scope and heldBy arguments of Moonwell's methods (Create, Fire, Interact, Add, Apply) and what a scope's After and Every are called on; a player held in a variable typed Scope is not seen.");
 
     /// <summary>The rules for the scopes code makes things in.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Scopes { get; } = ImmutableArray.Create(PlayerScope);
