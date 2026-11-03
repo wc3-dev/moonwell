@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Moonwell.Engine;
 
 namespace Moonwell
 {
@@ -46,9 +48,22 @@ namespace Moonwell
 
         internal bool enabled = true;
 
+        internal bool keepsKeyboard;
+
         internal int alpha = 255;
 
         internal int level;
+
+        /// <summary>The kinds of the game's frame events the frame is listened to for, a bit each by the game's number.</summary>
+        internal int listened;
+
+        internal List<Action<Player, int>>? wheeled;
+
+        /// <summary>Whether the frame is on the layer over the HUD, as one added with Screen.AddOver, or added to a frame there.</summary>
+        internal bool over;
+
+        /// <summary>The frame's tooltip; null unless set.</summary>
+        internal Tooltip? tooltip;
 
         /// <summary>The template the game's frame was made from, which the pool matches; empty until made.</summary>
         internal string madeTemplate = "";
@@ -180,6 +195,14 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether a button, an icon button or a check box keeps the keyboard after a click. Unless set, it gives the keyboard back to the game on the clicking player's machine, so the hotkeys go on, and its tooltip and the cursor blink once (seen); set, nothing blinks, and the game's hotkeys stop until the player clicks the world (Sven, 11-03). False unless set.</summary>
+        [LocalSafe]
+        public bool KeepsKeyboard
+        {
+            get { return keepsKeyboard; }
+            set { keepsKeyboard = value; }
+        }
+
         /// <summary>The frame's opacity, 0 to 255, kept within them; 255 unless set.</summary>
         [LocalSafe]
         public int Alpha
@@ -219,6 +242,88 @@ namespace Moonwell
                 }
             }
         }
+
+        /// <summary>Runs when a player turns the mouse wheel over the frame, with the player and the notches, up positive. A frame listened to takes the mouse, so a click on it stops there (decision 158). There are no events for the mouse coming onto a frame or going off it: listening for them makes the cursor and a tooltip flicker (seen 11-03). Not inside Local.For.</summary>
+        public event Action<Player, int>? Wheel
+        {
+            add { Subscribe(ref wheeled, value, FrameEvents.Wheel, FrameEvents.Wheel); }
+            remove { Unsubscribe(wheeled, value); }
+        }
+
+        /// <summary>A tooltip the game shows while a player's mouse is on the frame: made on the frame's layer for the frame's player (the screen's whole width, beneath the HUD, or over the HUD for a frame added with Screen.AddOver), above the frame unless the map places it, and ended with the frame; setting another ends the one before. The frame takes the mouse for it, but no event is sent, as listening to the mouse's enter and leave makes a tooltip and the cursor flicker (seen 11-03). Null unless set.</summary>
+        [LocalSafe]
+        public Tooltip? Tooltip
+        {
+            get { return tooltip; }
+            set
+            {
+                if (HasEnded || value == tooltip)
+                {
+                    return;
+                }
+
+                if (value != null && (value.Parent != null || value.HasEnded || value == this))
+                {
+                    Errors.Refuse(Names.NameOf(this) + ".Tooltip", Names.NameOf(value) + " is another frame's, has ended, or is this frame: a tooltip is one frame's, made once");
+                    return;
+                }
+
+                var wanted = WantsMouse();
+                var before = tooltip;
+                tooltip = null;
+                before?.End();
+                if (value == null)
+                {
+                    return;
+                }
+
+                value.player = player;
+                Adopt(value);
+                if (value.HasEnded)
+                {
+                    return;
+                }
+
+                tooltip = value;
+                if (!wanted)
+                {
+                    PrepareMouse();
+                }
+
+                if (handle != null)
+                {
+                    MakeTip();
+                }
+            }
+        }
+
+        /// <summary>Whether the frame takes the mouse for the map's sake: it is listened to, or has a tooltip.</summary>
+        internal bool WantsMouse()
+        {
+            return listened != 0 || tooltip != null;
+        }
+
+        /// <summary>Makes the tooltip in the slot of the frame's mouse on the frame's layer (Sven, 11-03: the screen's whole width beneath the HUD, or over the HUD), above the frame unless the map placed it; a tooltip taken away, ended or left by an ended frame leaves the slot showing nothing.</summary>
+        private void MakeTip()
+        {
+            var mouse = MouseHandle;
+            if (mouse == null)
+            {
+                return;
+            }
+
+            var tip = tooltip!;
+            if (tip.ties == null && tip.filled == null && tip.anchor == FramePoint.Center && tip.offset.X == 0.0f && tip.offset.Y == 0.0f)
+            {
+                tip.PlaceBy(FramePoint.Bottom, this, FramePoint.Top, 0.0f, 0.01f);
+            }
+
+            tip.over = over;
+            tip.MakeTree(FramesSystem.SlotFor(mouse, over), player);
+        }
+
+        /// <summary>The game's frame that takes the frame's mouse and gets its events: its own, or a catcher over it; null until there is one.</summary>
+        internal virtual framehandle? MouseHandle => handle;
 
         /// <summary>The game's frame type the frame is made by when it has no template: a FRAME, which draws nothing, unless the kind says otherwise. Not abstract: CSharp.lua reads an abstract property by its bare name, in its own class, as a field (C45 in docs/upstream.md).</summary>
         internal virtual string GameType => "FRAME";
@@ -274,21 +379,156 @@ namespace Moonwell
         public T Add<T>(T child)
             where T : Frame
         {
-            child.player = player;
             Adopt(child);
-            if (!child.HasEnded)
+            if (child.Parent != this || child.HasEnded)
             {
-                if (handle != null)
-                {
-                    child.MakeTree(handle, player);
-                }
-                else
-                {
-                    children.Add(child);
-                }
+                return child;
+            }
+
+            child.player = player;
+            child.over = over;
+            Adopted(child);
+            if (handle != null)
+            {
+                child.MakeTree(handle, player);
+            }
+            else
+            {
+                children.Add(child);
             }
 
             return child;
+        }
+
+        /// <summary>Adds a handler, and listens for its kinds of event; nothing once the frame has ended.</summary>
+        internal void Subscribe<T>(ref List<T>? handlers, T? handler, int kind, int other)
+            where T : class
+        {
+            if (HasEnded || handler == null)
+            {
+                return;
+            }
+
+            handlers ??= new List<T>();
+            handlers.Add(handler);
+            Listen(kind);
+            Listen(other);
+        }
+
+        /// <summary>Takes a handler away.</summary>
+        internal void Unsubscribe<T>(List<T>? handlers, T? handler)
+            where T : class
+        {
+            if (handlers != null && handler != null)
+            {
+                handlers.Remove(handler);
+            }
+        }
+
+        /// <summary>Listens for a kind of event: the first makes the frame take the mouse; the game frame is registered once it is made.</summary>
+        internal void Listen(int kind)
+        {
+            var first = listened == 0;
+            listened |= 1 << kind;
+            if (first)
+            {
+                PrepareMouse();
+            }
+
+            if (handle != null)
+            {
+                FramesSystem.Events.Own(this);
+            }
+        }
+
+        /// <summary>Makes the frame take the mouse once it is listened to; a kind that does not take it on its own does more.</summary>
+        internal virtual void PrepareMouse()
+        {
+        }
+
+        /// <summary>Runs an event of the frame's for a player: the kinds every frame has here, the rest in the kinds'.</summary>
+        internal virtual void Receive(int kind, Player who, float value, string text)
+        {
+            if (kind == FrameEvents.Wheel)
+            {
+                Raise(wheeled, who, (int)(value / 120.0f), "Wheel");
+            }
+        }
+
+        /// <summary>Gives the keyboard back to the game after a click, on the clicking player's machine only (decision 161): a clicked frame keeps it, and the hotkeys stop (seen). Not for a frame the map has turned off, which giving back would turn on again, nor for one that keeps the keyboard (KeepsKeyboard).</summary>
+        internal void GiveKeyboardBack(Player who)
+        {
+            var mouse = MouseHandle;
+            if (enabled && !keepsKeyboard && mouse != null && Runtime.World.IsLocal(who.Handle))
+            {
+                FramesSystem.World.ReleaseKeyboard(mouse);
+            }
+        }
+
+        /// <summary>Runs each handler, in the order added; one that throws is reported with the frame and the event, and the rest still run.</summary>
+        internal void Raise(List<Action<Player>>? handlers, Player who, string name)
+        {
+            if (handlers == null || HasEnded)
+            {
+                return;
+            }
+
+            var now = handlers.ToArray();
+            for (var i = 0; i < now.Length; i++)
+            {
+                try
+                {
+                    now[i](who);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(this) + "." + name, error);
+                }
+            }
+        }
+
+        /// <summary>Runs each handler with a value, as Raise does.</summary>
+        internal void Raise<T>(List<Action<Player, T>>? handlers, Player who, T value, string name)
+        {
+            if (handlers == null || HasEnded)
+            {
+                return;
+            }
+
+            var now = handlers.ToArray();
+            for (var i = 0; i < now.Length; i++)
+            {
+                try
+                {
+                    now[i](who, value);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(this) + "." + name, error);
+                }
+            }
+        }
+
+        /// <summary>Runs when a frame is added to this one, before it is made: a container places it here.</summary>
+        internal virtual void Adopted(Frame child)
+        {
+        }
+
+        /// <summary>Runs when a frame added to this one ends on its own, not with this one: the frame's own tooltip is taken away, and a container closes up.</summary>
+        internal virtual void ChildEnded(Frame child)
+        {
+            if (child == tooltip)
+            {
+                tooltip = null;
+            }
+        }
+
+        /// <summary>Ties the frame by one point only, replacing its anchor, ties and what it covers: how a container places the frames added to it.</summary>
+        internal void PlaceBy(FramePoint point, Frame other, FramePoint otherPoint, float x, float y)
+        {
+            ties = null;
+            filled = null;
+            Attach(point, other, otherPoint, x, y);
         }
 
         /// <summary>Makes the frame and the frames added to it, then places them all, so a point tied to a frame added later finds it made.</summary>
@@ -298,12 +538,12 @@ namespace Moonwell
             Place();
         }
 
-        /// <summary>Makes the frame in the game under a parent, for a player or everyone, taking an ended one of its kind when the pool has one, and then the frames added to it.</summary>
+        /// <summary>Makes the frame in the game under a parent, for a player or everyone, taking an ended one of its kind made under the same parent when the pool has one, and then the frames added to it.</summary>
         internal void Make(framehandle parent, Player? shownTo)
         {
             player = shownTo;
             parentHandle = parent;
-            var old = FramesSystem.Pool.Take(this);
+            var old = FramesSystem.Pool.Take(this, parent);
             if (old == null)
             {
                 var made = FramesSystem.World.MakeFrame(GameType, Template, parent);
@@ -322,17 +562,38 @@ namespace Moonwell
             {
                 handle = old.handle!;
                 madeTemplate = old.madeTemplate;
-                FramesSystem.World.ParentFrame(handle, parent);
                 TakeOver(old);
+            }
+
+            if (listened != 0)
+            {
+                FramesSystem.Events.Own(this);
+            }
+
+            if (tooltip != null && !tooltip.HasEnded)
+            {
+                MakeTip();
+            }
+
+            if (player == null && ForOnePlayerOnly())
+            {
+                Dev.Report(Names.NameOf(this), "a check box, slider or text box is one player's only (decision 156): add it to a frame made for one player, shownTo, so the screens never disagree");
             }
 
             for (var i = 0; i < children.Count; i++)
             {
                 if (!children[i].HasEnded)
                 {
+                    children[i].over = over;
                     children[i].Make(handle, player);
                 }
             }
+        }
+
+        /// <summary>Whether the kind is one player's only, as a control with a value is (decision 156).</summary>
+        internal virtual bool ForOnePlayerOnly()
+        {
+            return false;
         }
 
         /// <summary>Makes the game's frames a kind keeps under its own, before the frames added to it, so those draw above them.</summary>
@@ -496,6 +757,13 @@ namespace Moonwell
             {
                 FramesSystem.World.SizeFrame(handle, width, height);
             }
+
+            Resized();
+        }
+
+        /// <summary>Runs when the map gives the frame a new size: a progress bar refills here.</summary>
+        internal virtual void Resized()
+        {
         }
 
         /// <summary>Whether the frame is to be shown on this machine: it is everyone's, or this machine's player's.</summary>
@@ -510,7 +778,13 @@ namespace Moonwell
             if (handle != null)
             {
                 FramesSystem.World.ShowFrame(handle, false);
+                FramesSystem.Events.Disown(this);
                 FramesSystem.Pool.Keep(this);
+            }
+
+            if (Parent is Frame holder && !holder.ending && !holder.HasEnded)
+            {
+                holder.ChildEnded(this);
             }
         }
     }

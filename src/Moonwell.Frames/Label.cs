@@ -11,6 +11,8 @@ namespace Moonwell
 
         internal FramePoint alignment = FramePoint.TopLeft;
 
+        internal Color color = Color.White;
+
         /// <summary>Makes a label, to be added to the screen or to another frame.</summary>
         public Label()
         {
@@ -33,6 +35,26 @@ namespace Moonwell
                 if (handle != null)
                 {
                     FramesSystem.World.WriteFrameText(handle, value);
+                }
+            }
+        }
+
+        /// <summary>The text's colour, its alpha the text's opacity, the same on every machine; white unless set. Colour codes in the text (B9's Text) draw over it.</summary>
+        [LocalSafe]
+        public Color Color
+        {
+            get { return color; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                color = value;
+                if (handle != null)
+                {
+                    FramesSystem.World.ColourFrameText(handle, value.R, value.G, value.B, value.A);
                 }
             }
         }
@@ -70,10 +92,28 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Clears an ended label's text, shared or local, when this one has none; Place writes one it has.</summary>
+        /// <summary>A label listened to takes the mouse: it is turned on for it, and Enabled reads so.</summary>
+        internal override void PrepareMouse()
+        {
+            if (!enabled)
+            {
+                enabled = true;
+                if (handle != null)
+                {
+                    TakeMouse(true);
+                }
+            }
+        }
+
+        /// <summary>Clears an ended label's text, shared or local, when this one has none, and its colour; Place writes what this one has.</summary>
         internal override void TakeOver(Frame old)
         {
             base.TakeOver(old);
+            if (!((Label)old).color.Equals(Color.White) && color.Equals(Color.White))
+            {
+                FramesSystem.World.ColourFrameText(handle!, 255, 255, 255, 255);
+            }
+
             if (text.Length == 0)
             {
                 FramesSystem.World.WriteFrameText(handle!, "");
@@ -86,6 +126,11 @@ namespace Moonwell
             if (text.Length > 0)
             {
                 FramesSystem.World.WriteFrameText(handle!, text);
+            }
+
+            if (!color.Equals(Color.White))
+            {
+                FramesSystem.World.ColourFrameText(handle!, color.R, color.G, color.B, color.A);
             }
 
             Align();

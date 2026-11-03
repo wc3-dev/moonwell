@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Moonwell.Hosting;
 
 namespace Moonwell.Engine
@@ -13,6 +15,89 @@ namespace Moonwell.Engine
             Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_BOTTOMLEFT, 0.0f, 0.0f);
             Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_TOPRIGHT, 0.8f, 0.6f);
             return root;
+        }
+
+        /// <summary>The trigger of each kind of frame event, made at its first use.</summary>
+        private readonly Dictionary<int, trigger> triggers = new Dictionary<int, trigger>();
+
+        /// <summary>Registers a frame for a kind of event on that kind's trigger: BlzTriggerRegisterFrameEvent.</summary>
+        public void ListenFrame(framehandle frame, int kind, Action action)
+        {
+            if (!triggers.TryGetValue(kind, out var listening))
+            {
+                listening = Natives.CreateTrigger();
+                Natives.TriggerAddAction(listening, action);
+                triggers[kind] = listening;
+            }
+
+            Natives.BlzTriggerRegisterFrameEvent(listening, frame, Natives.ConvertFrameEventType(kind));
+        }
+
+        /// <summary>Makes a frame the tooltip of another: BlzFrameSetTooltip.</summary>
+        public void TipFrame(framehandle frame, framehandle tooltip)
+        {
+            Natives.BlzFrameSetTooltip(frame, tooltip);
+        }
+
+        /// <summary>Adds a line to a frame's text: BlzFrameAddText.</summary>
+        public void AddFrameText(framehandle frame, string line)
+        {
+            Natives.BlzFrameAddText(frame, line);
+        }
+
+        /// <summary>Colours a frame's text: BlzFrameSetTextColor with BlzConvertColor.</summary>
+        public void ColourFrameText(framehandle frame, int r, int g, int b, int a)
+        {
+            Natives.BlzFrameSetTextColor(frame, Natives.BlzConvertColor(a, r, g, b));
+        }
+
+        /// <summary>Sets a frame's value: BlzFrameSetValue.</summary>
+        public void SetFrameValue(framehandle frame, float value)
+        {
+            Natives.BlzFrameSetValue(frame, value);
+        }
+
+        /// <summary>Sets a frame's range: BlzFrameSetMinMaxValue.</summary>
+        public void SetFrameRange(framehandle frame, float min, float max)
+        {
+            Natives.BlzFrameSetMinMaxValue(frame, min, max);
+        }
+
+        /// <summary>Sets a frame's step: BlzFrameSetStepSize.</summary>
+        public void SetFrameStep(framehandle frame, float step)
+        {
+            Natives.BlzFrameSetStepSize(frame, step);
+        }
+
+        /// <summary>Limits a frame's text: BlzFrameSetTextSizeLimit.</summary>
+        public void LimitFrameText(framehandle frame, int characters)
+        {
+            Natives.BlzFrameSetTextSizeLimit(frame, characters);
+        }
+
+        /// <summary>Gives the keyboard back: BlzFrameSetEnable off, then on.</summary>
+        public void ReleaseKeyboard(framehandle frame)
+        {
+            Natives.BlzFrameSetEnable(frame, false);
+            Natives.BlzFrameSetEnable(frame, true);
+        }
+
+        /// <summary>The frame of the event: BlzGetTriggerFrame.</summary>
+        public framehandle EventFrame() => Natives.BlzGetTriggerFrame();
+
+        /// <summary>The player of the event: GetTriggerPlayer.</summary>
+        public player EventPlayer() => Natives.GetTriggerPlayer();
+
+        /// <summary>The value of the event: BlzGetTriggerFrameValue.</summary>
+        public float EventValue() => Natives.BlzGetTriggerFrameValue();
+
+        /// <summary>The text of the event: BlzGetTriggerFrameText.</summary>
+        public string EventText() => Natives.BlzGetTriggerFrameText();
+
+        /// <summary>Loads a TOC file: BlzLoadTOCFile.</summary>
+        public bool LoadToc(string path)
+        {
+            return Natives.BlzLoadTOCFile(path);
         }
 
         /// <summary>Makes a frame from a template, BlzCreateFrame, or by type when the template is empty, BlzCreateFrameByType.</summary>
@@ -96,12 +181,6 @@ namespace Moonwell.Engine
         public void PaintFrame(framehandle frame, string texture)
         {
             Natives.BlzFrameSetTexture(frame, texture, 0, true);
-        }
-
-        /// <summary>Moves a frame under another parent: BlzFrameSetParent.</summary>
-        public void ParentFrame(framehandle frame, framehandle parent)
-        {
-            Natives.BlzFrameSetParent(frame, parent);
         }
 
         /// <summary>Sets where a frame's corners sit: BlzFrameSetAbsPoint at the bottom left and the top right.</summary>

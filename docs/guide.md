@@ -942,8 +942,8 @@ public sealed class Dash : PlayerComponent, IKeyWatch // write only the reaction
 
 ## Frames
 
-Add the `Moonwell.Frames` package (the template's `.csproj` has the line, commented) for the map's own UI: panels, labels
-and images on each player's screen. A frame is made with `new`, set, and added: to the screen in a scope, which ends it
+Add the `Moonwell.Frames` package (the template's `.csproj` has the line, commented) for the map's own UI: panels, labels,
+images, buttons and the other controls on each player's screen. A frame is made with `new`, set, and added: to the screen in a scope, which ends it
 when it ends, or to another frame, which ends it with itself.
 
 ```csharp
@@ -955,6 +955,20 @@ public sealed class Hud : GameComponent
         quest.Add(new Label { Text = "Find the sword", Anchor = FramePoint.Top, Offset = new Vector2(0f, -0.015f), Alignment = FramePoint.Top });
         quest.Add(new Image { Texture = @"ReplaceableTextures\CommandButtons\BTNFootman.blp", Width = 0.03f, Height = 0.03f, Anchor = FramePoint.Left, Offset = new Vector2(0.015f, 0f) });
         Screen.Add(new Label { Text = "Only you see this" }, this, shownTo: Player.One);
+    }
+}
+
+public sealed class Shop : Panel // a window of the map's own, made for one buyer: Screen.Add(new Shop(), this, shownTo: buyer)
+{
+    public Shop()
+    {
+        Width = 0.3f;
+        Height = 0.16f;
+        var row = Add(new Row { Width = 0.26f, Height = 0.04f, Gap = 0.01f, Anchor = FramePoint.Top, Offset = new Vector2(0f, -0.03f) });
+        var buy = row.Add(new Button { Text = "Buy", Width = 0.12f, Height = 0.035f });
+        buy.Clicked += who => who.Gold -= 100; // synced: safe to change the game
+        var amount = Add(new Slider { Max = 10f, Anchor = FramePoint.Bottom, Offset = new Vector2(0f, 0.03f) });
+        amount.ValueChanged += (who, value) => buy.Text = "Buy " + value;
     }
 }
 ```
@@ -974,7 +988,34 @@ public sealed class Hud : GameComponent
   bigger, as the game takes no other font or height for it (seen). `Image` shows a `Texture`. A map's own panel
   inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
-  Labels, images and empty panels let clicks through.
+  Labels, images and empty panels let clicks through, until they are listened to for the mouse.
+- A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
+  may change the game. Every frame has `Wheel` (notches, up positive); `Button` has
+  `Clicked` and `DoubleClicked` (two clicks by one player within 0.3 s), `IconButton` `Clicked`, `CheckBox` `Toggled`,
+  `Slider` `ValueChanged`, and `TextBox` `TextChanged` and `Submitted` (Enter). A frame listened to for the mouse takes
+  it, so a click there stops there. There are no events for the mouse coming onto a frame or going off it: listening for
+  them makes the cursor flicker over the frame (seen), and a tooltip shows what hovering is for. A handler that throws is reported, and the frame's other handlers still run. A frame for one
+  player hears only that player, and subscribing inside `Local.For` is refused (MW0048).
+- After a click on a button, an icon button or a check box, Moonwell gives the keyboard back to the game on that
+  player's machine, so the hotkeys go on (a clicked button keeps it otherwise, seen); a text box keeps it while typed in.
+  Giving it back blinks the clicked frame's tooltip and the cursor once (seen). `KeepsKeyboard = true` leaves the
+  keyboard with the frame instead: no blink, but the game's hotkeys stop until the player clicks the world.
+- `CheckBox` (`Checked`), `Slider` (`Min`, `Max`, `Step`, `Value`) and `TextBox` (`Text`, `MaxLength`) are one player's
+  only: add them to a frame made for that player, as the shop above; a development build reports one that is not, so
+  the screens never disagree. They read what their last event brought or what the map last set, the same on every
+  machine, and an event that brings the value they already read runs nothing, so a value the map sets never runs its
+  own handler. Moonwell draws the check box from the game's textures, as the game's own cannot be set from code (seen).
+  A slider being dragged sends about 85 events a second, each synced; what that costs online is not measured yet.
+- `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
+  the share of its width that `Value` is of `Min` to `Max`; a label's `Color` colours its text, white unless set.
+- `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
+  mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
+  frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
+  `Screen.AddOver`), and ends with the frame; taken away, or ended, it shows no more; it is 0.2 by 0.06 unless sized, and placing it (`Anchor`,
+  `Attach`) puts it elsewhere.
+- `Row`, `Column` and `Grid` draw nothing unless given a `Template`, and place the frames added to them in the order
+  added: a row left to right, a column top to bottom, a grid in cells (`Columns`, `CellWidth`, `CellHeight`), with `Gap`
+  between and `Padding` around; when one ends the rest close up. Their size, and their frames', are the map's.
 - `shownTo: player` makes a frame for that player only: it is made on every machine, so the game's handles stay the same
   everywhere, and shown on that player's. A frame added to it is shown to the same player. Seen in single player; with
   two players it is not checked yet.
@@ -986,8 +1027,8 @@ public sealed class Hud : GameComponent
   template goes only to a frame given a size.
 - A template the game does not have, as one from an `.fdf` whose TOC is not loaded, is reported in every build, and the
   frame is made by its type instead.
-- `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: buttons, check boxes, sliders,
-  text boxes and their events, tooltips, rows and grids, the game's own HUD per player, and the map's `.fdf` templates.
+- `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: the game's own HUD per player,
+  model views, and the map's `.fdf` templates.
 
 ## Colours and text
 
@@ -1127,6 +1168,7 @@ The analyzer does not see these, so they build and then go wrong in the game:
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
 | an `abstract` property read by its bare name or through `this.` in the class that declares it (`abstract string Kind { get; }`, then `Kind` in that class) | nil: the class's own override is never asked | a `virtual` property with a body (`virtual string Kind => "";`) |
+| an `out` variable declared after the first test of a `||` chain and read by a later test of it (`if (a == null || !map.TryGetValue(k, out var v) || v > 3)`) | the later test reads nil, so the condition is true | the tests before it in a condition of their own |
 
 What works is most of the language: classes, structs, records, primary constructors, interfaces and default methods,
 generics with constraints, enums as text, delegates, events, `switch` statements and expressions, patterns of every

@@ -79,6 +79,11 @@ namespace Moonwell.Build
                 BuildWithoutObjects(project, settings, map, targetPath, options, log);
             }
 
+            if (Declarations.References(targetPath, FramesAssemblyName))
+            {
+                StageWith(project, () => FramesToc.Write(project.StagedFolder));
+            }
+
             try
             {
                 Archive.Pack(project.StagedFolder, project.ArchivePath);

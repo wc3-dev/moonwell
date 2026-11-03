@@ -19,35 +19,76 @@ namespace Moonwell
         /// <summary>A BACKDROP, which an empty panel is made as: a FRAME by type takes every click on the world, even turned off (seen 11-03).</summary>
         internal override string GameType => "BACKDROP";
 
-        /// <summary>Makes the catcher over a panel's look; an empty panel is painted blank instead, so it draws nothing.</summary>
+        /// <summary>Makes the catcher, before the frames added to the panel so it lies beneath them: on over a panel's look, and off over an empty panel, which is painted blank and draws nothing, until it is listened to or given a tooltip.</summary>
         internal override void MakeParts()
         {
             var world = FramesSystem.World;
             if (madeTemplate.Length == 0)
             {
-                catcher = null;
                 world.PaintFrame(handle!, Image.Blank);
+            }
+
+            MakeCatcher();
+            if (!Catches(enabled))
+            {
+                world.EnableFrame(catcher!, false);
+            }
+        }
+
+        /// <summary>The catcher; an empty panel's own frame until it is listened to, which gets no events.</summary>
+        internal override framehandle? MouseHandle => catcher ?? handle;
+
+        /// <summary>An empty panel listened to gets a catcher, or has an ended one's turned back on.</summary>
+        internal override void PrepareMouse()
+        {
+            if (handle == null)
+            {
                 return;
             }
 
-            catcher = world.MakeFrame("TEXT", "", handle!)!;
-            world.FillFrame(catcher, handle!);
+            if (catcher == null)
+            {
+                MakeCatcher();
+            }
+            else
+            {
+                FramesSystem.World.EnableFrame(catcher, enabled);
+            }
         }
 
-        /// <summary>Takes an ended panel's catcher with its frame.</summary>
+        /// <summary>Takes an ended panel's catcher with its frame: on as Enabled says, and for an empty panel only when it is listened to.</summary>
         internal override void TakeOver(Frame old)
         {
             catcher = ((Panel)old).catcher;
             base.TakeOver(old);
+            if (catcher != null)
+            {
+                FramesSystem.World.EnableFrame(catcher, Catches(enabled));
+            }
+            else if (WantsMouse())
+            {
+                MakeCatcher();
+            }
         }
 
-        /// <summary>Turns the catcher on or off: an empty panel never takes the mouse, whatever Enabled reads.</summary>
+        /// <summary>Turns the catcher on or off: an empty panel takes the mouse only when it is listened to, whatever Enabled reads.</summary>
         internal override void TakeMouse(bool on)
         {
             if (catcher != null)
             {
-                FramesSystem.World.EnableFrame(catcher, on);
+                FramesSystem.World.EnableFrame(catcher, Catches(on));
             }
+        }
+
+        private bool Catches(bool on)
+        {
+            return on && (madeTemplate.Length > 0 || WantsMouse());
+        }
+
+        private void MakeCatcher()
+        {
+            catcher = FramesSystem.World.MakeFrame("TEXT", "", handle!)!;
+            FramesSystem.World.FillFrame(catcher, handle!);
         }
     }
 }

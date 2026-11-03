@@ -6,6 +6,20 @@ namespace Moonwell.Testing
     /// <summary>The game as the frames package sees it, faked: it records each frame the package makes and what it sets.</summary>
     public sealed class FakeFramesWorld : IFramesWorld
     {
+        /// <summary>The action the package gave for each kind of frame event, by the game's FRAMEEVENT_ number.</summary>
+        private readonly Dictionary<int, System.Action> fired = new Dictionary<int, System.Action>();
+
+        private framehandle? eventFrame;
+
+        private player? eventPlayer;
+
+        private float eventValue;
+
+        private string eventText = "";
+
+        /// <summary>The TOC files loaded, in the order loaded.</summary>
+        public List<string> LoadedTocs = new List<string>();
+
         /// <summary>The frames made, in the order made.</summary>
         public List<FakeFrame> Frames = new List<FakeFrame>();
 
@@ -32,6 +46,125 @@ namespace Moonwell.Testing
             frames[made] = fake;
             Frames.Add(fake);
             return made;
+        }
+
+        /// <summary>Registers a frame for a kind of event, recording it; every frame of a kind gets the same action.</summary>
+        public void ListenFrame(framehandle frame, int kind, System.Action action)
+        {
+            Asked(frame).Listened.Add(kind);
+            fired[kind] = action;
+        }
+
+        /// <summary>Makes a frame the tooltip of another; throws for one already given to a different frame, which crashes the game (seen 11-03).</summary>
+        public void TipFrame(framehandle frame, framehandle tooltip)
+        {
+            var owner = Asked(frame);
+            var tip = frames[tooltip];
+            if (tip.TipOf != null && tip.TipOf != owner)
+            {
+                throw new System.InvalidOperationException("the game crashes: a frame given as one frame's tooltip was given to a second");
+            }
+
+            tip.TipOf = owner;
+            owner.Tip = tip;
+        }
+
+        /// <summary>Adds a line to a frame's text, as the game's text area does.</summary>
+        public void AddFrameText(framehandle frame, string line)
+        {
+            var fake = Asked(frame);
+            fake.Text = fake.Text.Length == 0 ? line : fake.Text + "\n" + line;
+        }
+
+        /// <summary>Colours a frame's text.</summary>
+        public void ColourFrameText(framehandle frame, int r, int g, int b, int a)
+        {
+            Asked(frame).TextColor = new Color(r, g, b, a);
+        }
+
+        /// <summary>Sets a frame's value.</summary>
+        public void SetFrameValue(framehandle frame, float value)
+        {
+            Asked(frame).Value = value;
+        }
+
+        /// <summary>Sets a frame's range.</summary>
+        public void SetFrameRange(framehandle frame, float min, float max)
+        {
+            var fake = Asked(frame);
+            fake.Min = min;
+            fake.Max = max;
+        }
+
+        /// <summary>Sets a frame's step.</summary>
+        public void SetFrameStep(framehandle frame, float step)
+        {
+            Asked(frame).Step = step;
+        }
+
+        /// <summary>Limits a frame's text to a number of characters.</summary>
+        public void LimitFrameText(framehandle frame, int characters)
+        {
+            Asked(frame).TextLimit = characters;
+        }
+
+        /// <summary>Gives the keyboard back from a frame on this machine, recording it.</summary>
+        public void ReleaseKeyboard(framehandle frame)
+        {
+            Asked(frame).KeyboardReleases++;
+        }
+
+        /// <summary>The frame of the event being delivered.</summary>
+        public framehandle EventFrame()
+        {
+            return eventFrame!;
+        }
+
+        /// <summary>The player of the event being delivered.</summary>
+        public player EventPlayer()
+        {
+            return eventPlayer!;
+        }
+
+        /// <summary>The value of the event being delivered.</summary>
+        public float EventValue()
+        {
+            return eventValue;
+        }
+
+        /// <summary>The text of the event being delivered.</summary>
+        public string EventText()
+        {
+            return eventText;
+        }
+
+        /// <summary>Sends a frame event, as the game does, from the player in a slot: it reaches the package only when the frame was registered for the kind.</summary>
+        public void Fire(FakeFrame frame, int kind, int slot, float value = 0.0f, string text = "")
+        {
+            if (!frame.Listened.Contains(kind))
+            {
+                return;
+            }
+
+            foreach (var pair in frames)
+            {
+                if (pair.Value == frame)
+                {
+                    eventFrame = pair.Key;
+                }
+            }
+
+            eventPlayer = Player.Get(slot).Handle;
+            eventValue = value;
+            eventText = text;
+            fired[kind]();
+        }
+
+        /// <summary>Loads a TOC file, recording its path.</summary>
+        public bool LoadToc(string path)
+        {
+            LoadedTocs.Add(path);
+            return true;
         }
 
         /// <summary>Makes a frame from a template, or by type when the template is empty, under a parent.</summary>
@@ -127,12 +260,6 @@ namespace Moonwell.Testing
         public void PaintFrame(framehandle frame, string texture)
         {
             Asked(frame).Texture = texture;
-        }
-
-        /// <summary>Moves a frame under another parent.</summary>
-        public void ParentFrame(framehandle frame, framehandle parent)
-        {
-            Asked(frame).Parent = frames[parent];
         }
 
         /// <summary>Sets where a frame's corners sit on the screen.</summary>

@@ -46,7 +46,7 @@ namespace Moonwell.Engine
         /// MaxDistance, which end it after OnExpire, and the world's bounds, which end it. Then the ground, and its effects are
         /// placed and turned. A rolling missile rolls instead, and a resting one lies still until something gives it a velocity.
         /// </summary>
-        public static void Step(Missile missile, float step, Grid grid, IPhysicsWorld world)
+        public static void Step(Missile missile, float step, CellGrid grid, IPhysicsWorld world)
         {
             stepping = step;
             var start = missile.entry!;
@@ -218,7 +218,7 @@ namespace Moonwell.Engine
         /// it): it could only find the ground below, which changes nothing but what is kept of the read, and the next
         /// step's check is made from the span's bounds while they decide it, as they do for whatever the read finds.
         /// </summary>
-        private static bool Land(Missile missile, float step, Grid grid, IPhysicsWorld world, Entry entry, float fromX, float fromY, float fromZ, float x, float y, float z, float rise, bool along)
+        private static bool Land(Missile missile, float step, CellGrid grid, IPhysicsWorld world, Entry entry, float fromX, float fromY, float fromZ, float x, float y, float z, float rise, bool along)
         {
             var radius = missile.radius;
             var bottom = z - radius;
@@ -439,7 +439,7 @@ namespace Moonwell.Engine
         /// where the slope's pull (by Physics.Gravity, as Roll's) is no more than its friction, it rests and OnRest runs. A Stop that touches the ground
         /// stops, however slowly.
         /// </summary>
-        private static void Meet(Missile missile, float step, Grid grid, IPhysicsWorld world, Entry entry, float hitX, float hitY, float hitZ, float nx, float ny, float nz, float vx, float vy, float vz, float endX, float endY, float endZ, bool along)
+        private static void Meet(Missile missile, float step, CellGrid grid, IPhysicsWorld world, Entry entry, float hitX, float hitY, float hitZ, float nx, float ny, float nz, float vx, float vy, float vz, float endX, float endY, float endZ, bool along)
         {
             var radius = missile.radius;
             var into = vx * nx + vy * ny + vz * nz;
@@ -573,7 +573,7 @@ namespace Moonwell.Engine
         /// and the slope cannot move it against its friction, it rests and OnRest runs. False, and it flies this step
         /// instead, when it is no longer a Slide or something is moving it out of the ground.
         /// </summary>
-        private static bool Roll(Missile missile, float step, Grid grid, IPhysicsWorld world, Entry entry, float fromX, float fromY, float fromZ)
+        private static bool Roll(Missile missile, float step, CellGrid grid, IPhysicsWorld world, Entry entry, float fromX, float fromY, float fromZ)
         {
             if (missile.groundContact != Contact.Slide)
             {
