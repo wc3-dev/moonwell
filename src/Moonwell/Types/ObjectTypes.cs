@@ -28,6 +28,18 @@ namespace Moonwell
         /// <summary>The hidden ability that carries each registered buff class on its unit, keyed by the class; a lookup only.</summary>
         private static Dictionary<object, int> carriers = new Dictionary<object, int>();
 
+        /// <summary>The order string a dummy casts each spell with, keyed by the ability's id; a lookup only.</summary>
+        private static Dictionary<int, string> castOrders = new Dictionary<int, string>();
+
+        /// <summary>The spells whose targets are only their caster, which land on the dummy; by the ability's id.</summary>
+        private static HashSet<int> landsOnCaster = new HashSet<int>();
+
+        /// <summary>The research each spell requires and at what level, keyed by the ability's id; a lookup only.</summary>
+        private static Dictionary<int, List<(int Tech, int Level)>> requirements = new Dictionary<int, List<(int Tech, int Level)>>();
+
+        /// <summary>What a spell with no requirement reads.</summary>
+        private static readonly List<(int Tech, int Level)> NoRequirements = new List<(int Tech, int Level)>();
+
         /// <summary>The default object of each unit type, keyed by its id; made on first use.</summary>
         private static Dictionary<int, Unit>? unitDefaults;
 
@@ -185,6 +197,72 @@ namespace Moonwell
         public static void ListsBuff(int abilityId, int buffId, bool aura)
         {
             SpellBuffs.List(abilityId, buffId, aura);
+        }
+
+        /// <summary>Registers the unit type of the dummy that casts spells for <c>CastOn</c> and <c>CastAt</c>, which the build declares.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void DummyType(int unitTypeId)
+        {
+            DummyTypeId = unitTypeId;
+        }
+
+        /// <summary>Registers the order string a dummy casts a spell with, and whether the spell's targets are only its caster.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void CastOrder(int abilityId, string order, bool selfOnly)
+        {
+            castOrders[abilityId] = order;
+            if (selfOnly)
+            {
+                landsOnCaster.Add(abilityId);
+            }
+        }
+
+        /// <summary>Registers a research a spell requires, at the level it requires, for the report of a refused dummy cast.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Requires(int abilityId, int techId, int level)
+        {
+            if (!requirements.TryGetValue(abilityId, out var list))
+            {
+                list = new List<(int Tech, int Level)>();
+                requirements[abilityId] = list;
+            }
+
+            list.Add((techId, level));
+        }
+
+        /// <summary>The dummy's unit type; 0 when the map's code casts with none.</summary>
+        internal static int DummyTypeId { get; private set; }
+
+        /// <summary>The order string a dummy casts a spell with; null when none is registered.</summary>
+        internal static string? OrderOf(int abilityId)
+        {
+            return castOrders.TryGetValue(abilityId, out var order) ? order : null;
+        }
+
+        /// <summary>Whether a spell's targets are only its caster, so that a dummy's cast lands on the dummy.</summary>
+        internal static bool SelfOnly(int abilityId)
+        {
+            return landsOnCaster.Contains(abilityId);
+        }
+
+        /// <summary>The name of the class registered with an id, for a report; the id's text when none is.</summary>
+        internal static string NameOfId(int id)
+        {
+            foreach (var entry in ids)
+            {
+                if (entry.Value == id)
+                {
+                    return entry.Key.Name;
+                }
+            }
+
+            return Names.IdText(id);
+        }
+
+        /// <summary>The research a spell requires, each with its level; none when the spell requires none.</summary>
+        internal static IReadOnlyList<(int Tech, int Level)> RequirementsOf(int abilityId)
+        {
+            return requirements.TryGetValue(abilityId, out var list) ? list : NoRequirements;
         }
 
         /// <summary>The object id a class is registered with; throws when the class is not registered.</summary>
@@ -477,6 +555,10 @@ namespace Moonwell
             ids = new Dictionary<Type, int>();
             buffIds = new Dictionary<object, int>();
             carriers = new Dictionary<object, int>();
+            castOrders = new Dictionary<int, string>();
+            landsOnCaster = new HashSet<int>();
+            requirements = new Dictionary<int, List<(int Tech, int Level)>>();
+            DummyTypeId = 0;
             SpellBuffs.Reset();
             unitDefaults = null;
             itemDefaults = null;

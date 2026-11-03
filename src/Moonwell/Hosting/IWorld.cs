@@ -410,6 +410,27 @@ namespace Moonwell.Hosting
         /// <summary>The area of an ability a unit has, at its level; 0 when it has none.</summary>
         float AbilityArea(unit unit, int abilityId);
 
+        /// <summary>Takes the range, mana and cooldown off a unit's own copy of an ability at a level, so a dummy casts it anywhere at once (seen 11-03): range 99999, mana 0, cooldown 0.</summary>
+        void FreeCasting(unit unit, int abilityId, int level);
+
+        /// <summary>The longer of an ability's normal and hero duration at a level, on a unit's copy.</summary>
+        float SpellLasts(unit unit, int abilityId, int level);
+
+        /// <summary>The missile speed of a unit's copy of an ability; 0 for one with no missile.</summary>
+        int ProjectileSpeedOf(unit unit, int abilityId);
+
+        /// <summary>How many of a research's levels, or of a unit type, a player has: GetPlayerTechCount, counting all.</summary>
+        int TechCount(player player, int techId);
+
+        /// <summary>Whether a player sees a unit, so that a unit of the player's may target it.</summary>
+        bool Sees(player player, unit unit);
+
+        /// <summary>Starts a patch of vision for a player over a place, as small as lets a unit there be targeted (128 was seen, 11-03).</summary>
+        fogmodifier SeeAround(player player, float x, float y);
+
+        /// <summary>Stops and ends a patch of vision.</summary>
+        void StopSeeing(fogmodifier patch);
+
         /// <summary>Moves an item a unit holds into a slot of its inventory, swapping it with the item there, with no event; the game's answer.</summary>
         bool MoveItemToSlot(unit unit, item item, int slot);
 

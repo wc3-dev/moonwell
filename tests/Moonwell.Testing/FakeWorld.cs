@@ -325,6 +325,7 @@ namespace Moonwell.Testing
         {
             var world = new FakeWorld();
             world.GameBuffs = new FakeGameBuffs(world);
+            world.Dummies = new FakeDummies(world);
             Runtime.Reset(world);
             Interactions.ResetSettings();
             Physics.ResetSettings();
@@ -554,6 +555,9 @@ namespace Moonwell.Testing
         /// <summary>The game buffs, spell hits and auras of this world (<see cref="FakeGameBuffs"/>); Install makes it.</summary>
         public FakeGameBuffs GameBuffs = null!;
 
+        /// <summary>The spells dummies cast in this world, and what the runtime sets and reads of them (<see cref="FakeDummies"/>); Install makes it.</summary>
+        public FakeDummies Dummies = null!;
+
         /// <summary>The area of each ability, for every level, by its id; 0 when not set.</summary>
         public Dictionary<int, float> AbilityAreas = new Dictionary<int, float>();
 
@@ -561,6 +565,48 @@ namespace Moonwell.Testing
         public float AbilityArea(unit u, int abilityId)
         {
             return AbilityAreas.TryGetValue(abilityId, out var area) ? area : 0.0f;
+        }
+
+        /// <summary>Records the free cast in <see cref="FakeDummies.Fields"/>.</summary>
+        public void FreeCasting(unit unit, int abilityId, int level)
+        {
+            Dummies.Freed(unit, abilityId, level);
+        }
+
+        /// <summary>The longer of the durations a case set for the spell; 0 until set.</summary>
+        public float SpellLasts(unit unit, int abilityId, int level)
+        {
+            return Dummies.Lasts(abilityId);
+        }
+
+        /// <summary>The missile speed a case set for the spell; 0 until set.</summary>
+        public int ProjectileSpeedOf(unit unit, int abilityId)
+        {
+            return Dummies.SpeedOf(abilityId);
+        }
+
+        /// <summary>The count a case set; 0 until set.</summary>
+        public int TechCount(player player, int techId)
+        {
+            return Dummies.TechCount(player, techId);
+        }
+
+        /// <summary>Whether the player sees the unit, as the case hid it or not.</summary>
+        public bool Sees(player player, unit unit)
+        {
+            return Dummies.Sees(player, unit);
+        }
+
+        /// <summary>A patch of vision, recorded "made".</summary>
+        public fogmodifier SeeAround(player player, float x, float y)
+        {
+            return Dummies.Patch(player, x, y);
+        }
+
+        /// <summary>The patch ended, recorded "stopped".</summary>
+        public void StopSeeing(fogmodifier patch)
+        {
+            Dummies.Unpatch(patch);
         }
 
         /// <summary>The units in the world within a radius of a place, centre to centre, alive or dead, in the order made.</summary>
@@ -1334,6 +1380,7 @@ namespace Moonwell.Testing
                 floaters.Add(unit);
             }
 
+            Dummies.AbilityRemoved(unit, abilityId);
             if (had && Listening.Contains(GameEvent.Spell))
             {
                 Inbound.SpellEnded(unit, abilityId);
@@ -1699,12 +1746,17 @@ namespace Moonwell.Testing
             return Kept(unitYs, unit);
         }
 
-        /// <summary>Sets the player of a unit and records "owner" with the slot and True, since the unit's colour changes too.</summary>
+        /// <summary>Sets the player of a unit and records "owner" with the slot and True, since the unit's colour changes too; delivers the change-owner event inside the call when listened for, as Charm's would come. First it ends the unit's channel, as the game stops a unit it gives away, before the change (seen 11-03).</summary>
         public void SetOwner(unit unit, player player)
         {
             NoteGone(unit);
+            Dummies.Stopped(unit);
             unitSlots[unit] = SlotOf(player);
             UnitCalls.Add("owner " + SlotOf(player) + " True");
+            if (Listening.Contains(GameEvent.OwnerChange))
+            {
+                Inbound.OwnerChanged(unit);
+            }
         }
 
         /// <summary>Puts a unit at the place, and records a "move".</summary>
@@ -2190,50 +2242,77 @@ namespace Moonwell.Testing
             return slots;
         }
 
-        /// <summary>Records an order and gives the answer set in OrderAnswer; when the runtime listens for orders, delivers the order event inside the call, as the game does (seen 11-03).</summary>
+        /// <summary>Records an order and gives the answer set in OrderAnswer, or a spell's (<see cref="FakeDummies"/>); when the runtime listens for orders, delivers the order event inside the call, as the game does (seen 11-03), then a spell's effect; a stop ends a channel.</summary>
         public bool OrderUnit(unit unit, string order)
         {
             NoteGone(unit);
             Orders.Add("immediate " + order);
-            if (OrderAnswer)
+            var spell = Dummies.Answer(unit, order, SpellKind.None, null);
+            var answer = spell ?? OrderAnswer;
+            if (answer)
             {
                 DeliverOrder(unit, OrderIdOf(order), OrderKind.None, 0f, 0f, null, null);
             }
 
-            return OrderAnswer;
+            if (spell == true)
+            {
+                Dummies.TakeEffect(unit, order, null, 0f, 0f);
+            }
+
+            if (order == "stop")
+            {
+                Dummies.Stopped(unit);
+            }
+
+            return answer;
         }
 
-        /// <summary>Records an order to a place and gives the answer set in OrderAnswer; delivers the order event inside the call when listened for.</summary>
+        /// <summary>Records an order to a place and gives the answer set in OrderAnswer, or a spell's; delivers the order event inside the call when listened for, then a spell's effect.</summary>
         public bool OrderUnitAt(unit unit, string order, float x, float y)
         {
             NoteGone(unit);
             Orders.Add("point " + order);
             OrderPoints.Add(x);
             OrderPoints.Add(y);
-            if (OrderAnswer)
+            var spell = Dummies.Answer(unit, order, SpellKind.Point, null);
+            var answer = spell ?? OrderAnswer;
+            if (answer)
             {
                 DeliverOrder(unit, OrderIdOf(order), OrderKind.Place, x, y, null, null);
             }
 
-            return OrderAnswer;
+            if (spell == true)
+            {
+                Dummies.TakeEffect(unit, order, null, x, y);
+            }
+
+            return answer;
         }
 
-        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer; delivers the order event inside the call when listened for.</summary>
+        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer, or a spell's; delivers the order event inside the call when listened for, then a spell's effect at the target and its place.</summary>
         public bool OrderUnitOn(unit unit, string order, widget target)
         {
             NoteGone(unit);
             Orders.Add("target " + order);
             OrderTargets.Add(target);
-            if (OrderAnswer)
+            var spell = Dummies.Answer(unit, order, SpellKind.Target, target as unit);
+            var answer = spell ?? OrderAnswer;
+            if (answer)
             {
                 DeliverOrder(unit, OrderIdOf(order), OrderKind.Target, 0f, 0f, target as unit, target as item);
             }
 
-            return OrderAnswer;
+            var aimed = target as unit;
+            if (spell == true)
+            {
+                Dummies.TakeEffect(unit, order, aimed, aimed == null ? 0f : UnitX(aimed), aimed == null ? 0f : UnitY(aimed));
+            }
+
+            return answer;
         }
 
-        /// <summary>The ids of the orders the cases use, by the game's string (seen 11-03).</summary>
-        private static readonly Dictionary<string, int> orderIds = new Dictionary<string, int>
+        /// <summary>The ids of the orders the cases use, by the game's string (seen 11-03). An instance field: past the class's 200th member, CSharp.lua reads a private static field by its bare name, which the game does not have.</summary>
+        private readonly Dictionary<string, int> orderIds = new Dictionary<string, int>
         {
             { "smart", 851971 }, { "stop", 851972 }, { "attack", 851983 }, { "attackground", 851984 }, { "move", 851986 },
             { "patrol", 851990 }, { "holdposition", 851993 }, { "defend", 852055 }, { "undefend", 852056 },
@@ -2247,7 +2326,7 @@ namespace Moonwell.Testing
         private readonly Dictionary<unit, int> queued = new Dictionary<unit, int>();
 
         /// <summary>The id of an order string the cases use; 0 for one the fake does not know.</summary>
-        private static int OrderIdOf(string order)
+        private int OrderIdOf(string order)
         {
             return orderIds.TryGetValue(order, out var id) ? id : 0;
         }

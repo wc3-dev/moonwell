@@ -148,10 +148,13 @@ namespace Moonwell
             dead.EndDispatch();
         }
 
-        /// <summary>A unit takes damage: the source's type and components deal it, the target's take it, then the map's and the players' reactions; returns the amount after them.</summary>
+        /// <summary>A unit takes damage: the source's type and components deal it, the target's take it, then the map's and the players' reactions; returns the amount after them. A dummy's damage is the unit it casts for's, or no one's for a player's cast (decisions 168, 172).</summary>
         internal static float Damaged(unit target, unit? source, float amount, bool isAttack)
         {
-            if (KnownUnits.Find(target) == null && (source == null || KnownUnits.Find(source) == null) && !Events.Wants(Hook.OnUnitDamaged))
+            var dummy = source != null && Dummies.IsDummy(source) ? source : null;
+            Unit? from = dummy != null ? Dummies.CastFor(dummy) : null;
+            var knownSource = dummy != null ? from != null : source != null && KnownUnits.Find(source) != null;
+            if (KnownUnits.Find(target) == null && !knownSource && !Events.Wants(Hook.OnUnitDamaged))
             {
                 return amount;
             }
@@ -162,11 +165,15 @@ namespace Moonwell
                 return amount;
             }
 
-            Unit? from = source == null ? null : Unit.Of(source);
+            if (dummy == null)
+            {
+                from = source == null ? null : Unit.Of(source);
+            }
 
             // The game's event says no attack for damage from code even when dealt as one, so Unit.Damage's own flag counts.
             var deal = dealing != null && dealing.Damage == null && dealing.Target == target && dealing.Source == source ? dealing : null;
             var damage = new Damage(hit, from, amount, deal != null ? deal.IsAttack : isAttack);
+            damage.Dummy = dummy;
             if (deal != null)
             {
                 deal.Damage = damage;
@@ -234,7 +241,7 @@ namespace Moonwell
             var from = damage.Source;
 
             // Only a hit of 0 the game starts gives a spell's buff (seen 11-03); any hit checks for one put on just before.
-            SpellBuffs.Hit(hit, from, damage.Amount == 0.0f && dealing == null);
+            SpellBuffs.Hit(hit, from, damage.Dummy, damage.Amount == 0.0f && dealing == null);
             var hitSlot = hit.Owner.Slot;
             var fromSlot = from == null ? -1 : from.Owner.Slot;
             if (from != null)
@@ -260,11 +267,14 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit dies: its type's OnDeath and components, then the killer's OnKill and components, then the map's and the players' reactions, then the buffs a death ends end, of those on the unit as it died; a killer equal to the dying unit counts as none.</summary>
+        /// <summary>A unit dies: its type's OnDeath and components, then the killer's OnKill and components, then the map's and the players' reactions, then the buffs a death ends end, of those on the unit as it died; a killer equal to the dying unit counts as none, and a dummy is the unit it casts for, or none for a player's cast (decisions 168, 172).</summary>
         internal static void Died(unit dying, unit? killer)
         {
             unit? slain = killer == dying ? null : killer;
-            if (KnownUnits.Find(dying) == null && (slain == null || KnownUnits.Find(slain) == null) && !Events.Wants(Hook.OnUnitDied))
+            var byDummy = slain != null && Dummies.IsDummy(slain);
+            Unit? slayer = byDummy ? Dummies.CastFor(slain!) : null;
+            var knownSlayer = byDummy ? slayer != null : slain != null && KnownUnits.Find(slain) != null;
+            if (KnownUnits.Find(dying) == null && !knownSlayer && !Events.Wants(Hook.OnUnitDied))
             {
                 return;
             }
@@ -277,7 +287,11 @@ namespace Moonwell
 
             // The buffs the death ends are those on the unit now, which see it; one its reactions apply stays.
             var buffs = dead.GetAll<Buff>();
-            Unit? slayer = slain == null ? null : Unit.Of(slain);
+            if (!byDummy)
+            {
+                slayer = slain == null ? null : Unit.Of(slain);
+            }
+
             var deadSlot = dead.Owner.Slot;
             var slayerSlot = slayer == null ? -1 : slayer.Owner.Slot;
             Dying(dead, slayer);
@@ -305,9 +319,16 @@ namespace Moonwell
             Buff.EndOnDeath(buffs);
         }
 
-        /// <summary>A unit's spell takes effect: its previous cast ends, the ability and the caster see the new cast, then the map's and the caster's player's reactions run.</summary>
+        /// <summary>A unit's spell takes effect: its previous cast ends, the ability and the caster see the new cast, then the map's and the caster's player's reactions run. A dummy's cast runs none (decision 171); only the spell-buff watch sees it, as the cast of the unit it casts for.</summary>
         internal static void SpellEffect(unit caster, int abilityId, unit? target, float x, float y)
         {
+            if (Dummies.IsDummy(caster))
+            {
+                Dummies.TookEffect(caster);
+                SpellBuffs.Cast(caster, Dummies.CastFor(caster), abilityId, Runtime.World.AbilityLevel(caster, abilityId), target == null ? null : Unit.Of(target), x, y);
+                return;
+            }
+
             if (KnownUnits.Find(caster) == null && ObjectTypes.AbilityMaker(abilityId) == null && !Events.Wants(Hook.OnUnitCast))
             {
                 return;
@@ -331,7 +352,7 @@ namespace Moonwell
             var cast = new Cast(ability, by, target == null ? null : Unit.Of(target), x, y, Runtime.World.AbilityLevel(caster, abilityId));
             ability.Adopt(cast);
             by.ActiveCast = cast;
-            SpellBuffs.Cast(cast);
+            SpellBuffs.Cast(caster, by, abilityId, cast.Level, cast.Target, x, y);
             AbilityCast(ability, cast);
             CasterCast(by, cast);
             MapCast(Game.Instance, cast);
@@ -342,9 +363,15 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit's spell ends: the cast it is making ends, when that cast is live and is for this ability.</summary>
+        /// <summary>A unit's spell ends: the cast it is making ends, when that cast is live and is for this ability; a dummy's spell ending starts its time to be free again.</summary>
         internal static void SpellEnded(unit caster, int abilityId)
         {
+            if (Dummies.IsDummy(caster))
+            {
+                Dummies.SpellEnded(caster);
+                return;
+            }
+
             var ended = KnownUnits.Find(caster);
             if (ended == null)
             {
@@ -984,6 +1011,16 @@ namespace Moonwell
             }
 
             actor.EndDispatch();
+        }
+
+        /// <summary>A unit changes hands, given away by code, charmed or possessed: its busy dummies go with it (the dummy design's call 11).</summary>
+        internal static void OwnerChanged(unit handle)
+        {
+            var changed = KnownUnits.Find(handle);
+            if (changed != null)
+            {
+                Dummies.OwnerChanged(changed);
+            }
         }
 
         /// <summary>A player leaves the game: the game's components react, then the leaving player's.</summary>

@@ -38,8 +38,46 @@ namespace Moonwell.Testing
             AddText(list);
             AddHolds(list);
             AddSpellBuffs(list);
+            AddDummies(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for dummy casters.</summary>
+        private static void AddDummies(List<Case> list)
+        {
+            list.Add(new Case { Name = "fake.dummy-effect-in-order", Run = FakeGameCases.DummyEffectInOrder });
+            list.Add(new Case { Name = "fake.dummy-wrong-kind", Run = FakeGameCases.DummyWrongKind });
+            list.Add(new Case { Name = "fake.dummy-hidden-target", Run = FakeGameCases.DummyHiddenTarget });
+            list.Add(new Case { Name = "fake.dummy-channel-stop", Run = FakeGameCases.DummyChannelStop });
+            list.Add(new Case { Name = "dummy.registry", Run = DummyCases.Registry });
+            list.Add(new Case { Name = "dummy.cast-on", Run = DummyCases.CastOn });
+            list.Add(new Case { Name = "dummy.cast-at", Run = DummyCases.CastAt });
+            list.Add(new Case { Name = "dummy.cast-around", Run = DummyCases.CastAround });
+            list.Add(new Case { Name = "dummy.level", Run = DummyCases.Level });
+            list.Add(new Case { Name = "dummy.player", Run = DummyCases.ForPlayer });
+            list.Add(new Case { Name = "dummy.refused", Run = DummyCases.Refused });
+            list.Add(new Case { Name = "dummy.gone-or-dead-caster", Run = DummyCases.GoneOrDeadCaster });
+            list.Add(new Case { Name = "dummy.ended-scope", Run = DummyCases.EndedScope });
+            list.Add(new Case { Name = "dummy.fog", Run = DummyCases.Fog });
+            list.Add(new Case { Name = "dummy.held-order", Run = DummyCases.HeldOrder });
+            list.Add(new Case { Name = "dummy.nested", Run = DummyCases.Nested });
+            list.Add(new Case { Name = "dummy.fifty-at-once", Run = DummyCases.FiftyAtOnce });
+            list.Add(new Case { Name = "dummy.hidden", Run = DummyCases.Hidden });
+            list.Add(new Case { Name = "dummy.no-cast-reactions", Run = DummyCases.NoCastReactions });
+            list.Add(new Case { Name = "dummy.hit-credit", Run = DummyCases.HitCredit });
+            list.Add(new Case { Name = "dummy.kill-credit", Run = DummyCases.KillCredit });
+            list.Add(new Case { Name = "dummy.player-credit", Run = DummyCases.PlayerCredit });
+            list.Add(new Case { Name = "dummy.spell-buff", Run = DummyCases.SpellBuff });
+            list.Add(new Case { Name = "dummy.caster-gone-between-hits", Run = DummyCases.CasterGoneBetweenHits });
+            list.Add(new Case { Name = "dummy.package-hit-credit", Run = DummyCases.PackageHitCredit });
+            list.Add(new Case { Name = "dummy.reuse", Run = DummyCases.Reuse });
+            list.Add(new Case { Name = "dummy.busy-duration", Run = DummyCases.BusyDuration });
+            list.Add(new Case { Name = "dummy.channel-stop", Run = DummyCases.ChannelStop });
+            list.Add(new Case { Name = "dummy.scope-ends-in-effect", Run = DummyCases.ScopeEndsInEffect });
+            list.Add(new Case { Name = "dummy.owner-change", Run = DummyCases.OwnerChange });
+            list.Add(new Case { Name = "dummy.never-removed", Run = DummyCases.NeverRemoved });
+            list.Add(new Case { Name = "dummy.package-unknown-target", Run = DummyCases.PackageUnknownTarget });
         }
 
         /// <summary>Adds the cases for the buffs the game puts on: the fake world's game buffs, then the watch.</summary>
@@ -260,6 +298,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.abilities.level-out-of-range-reported", Run = UnitAbilityCases.LevelOutOfRangeReported });
             list.Add(new Case { Name = "debug.abilities.level-of-missing-reported", Run = UnitAbilityCases.LevelOfMissingReported });
             list.Add(new Case { Name = "debug.hold.ended-holder-reported", Run = HoldCases.EndedHolderReported });
+            list.Add(new Case { Name = "debug.dummy.level-reported", Run = DummyCases.LevelReported });
+            list.Add(new Case { Name = "debug.dummy.ended-scope-reported", Run = DummyCases.EndedScopeReported });
+            list.Add(new Case { Name = "debug.dummy.research-reported", Run = DummyCases.ResearchReported });
+            list.Add(new Case { Name = "debug.dummy.self-only-reported", Run = DummyCases.SelfOnlyReported });
+            list.Add(new Case { Name = "debug.dummy.nested-reported", Run = DummyCases.NestedReported });
+            list.Add(new Case { Name = "debug.dummy.no-order-reported", Run = DummyCases.NoOrderReported });
             list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });

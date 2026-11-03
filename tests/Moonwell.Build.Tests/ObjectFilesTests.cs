@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using War3Net.Build.Extensions;
@@ -368,6 +369,36 @@ namespace Moonwell.Build.Tests
             var carrier = Assert.Single(ReadAbilities(staged, "war3map.w3a").NewAbilities);
             Assert.Equal(IdOf("A001"), carrier.NewId);
             Assert.Equal("BEim", Assert.Single(carrier.Modifications, one => one.Id == IdOf("abuf")).Value);
+        }
+
+        [Fact]
+        public void the_dummy_type_is_a_hidden_footman_that_sees_nothing()
+        {
+            var staged = WriteObjects(new[] { DummyType.Object }, new Dictionary<string, string> { [DummyType.ClassName] = DummyType.Id }, new Dictionary<string, string>());
+
+            var units = ReadUnits(staged, "war3map.w3u").NewUnits.Concat(ReadUnits(staged, "war3mapSkin.w3u").NewUnits).Where(one => one.NewId == IdOf(DummyType.Id)).ToList();
+            Assert.NotEmpty(units);
+            Assert.All(units, one => Assert.Equal(IdOf("hfoo"), one.OldId));
+            var values = units.SelectMany(one => one.Modifications).ToDictionary(one => Encoding.ASCII.GetString(BitConverter.GetBytes(one.Id)), one => Convert.ToString(one.Value, CultureInfo.InvariantCulture));
+
+            // As the probe's dummy (run 3, 11-03): Locust, nothing drawn, no shadow, a flyer that cannot move, casts at once, no
+            // attack, mana or food, hidden on the minimap, and seeing nothing.
+            Assert.Equal("Aloc", values["uabi"]);
+            Assert.Equal(".mdl", values["umdl"]);
+            Assert.Equal("0", values["ushw"]);
+            Assert.Equal("0", values["ushh"]);
+            Assert.Equal("fly", values["umvt"]);
+            Assert.Equal("0", values["umvs"]);
+            Assert.Equal("3", values["umvr"]);
+            Assert.Equal("0", values["ucpt"]);
+            Assert.Equal("0", values["ucbs"]);
+            Assert.Equal("0", values["ucol"]);
+            Assert.Equal("0", values["uaen"]);
+            Assert.Equal("0", values["ufoo"]);
+            Assert.Equal("1", values["uhom"]);
+            Assert.Equal("0", values["umpm"]);
+            Assert.Equal("0", values["usid"]);
+            Assert.Equal("0", values["usin"]);
         }
 
         [Fact]
