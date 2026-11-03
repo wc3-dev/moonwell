@@ -1480,6 +1480,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.forms.enum-text", Run = FormCases.EnumText });
             list.Add(new Case { Name = "compiler.forms.handle-casts", Run = FormCases.HandleCasts });
             list.Add(new Case { Name = "compiler.forms.silent", Run = FormCases.Silent });
+            list.Add(new Case { Name = "compiler.library.collections", Run = LibraryCases.Collections });
+            list.Add(new Case { Name = "compiler.library.linq", Run = LibraryCases.Linq });
+            list.Add(new Case { Name = "compiler.library.text", Run = LibraryCases.Text });
+            list.Add(new Case { Name = "compiler.library.numbers", Run = LibraryCases.Numbers });
+            list.Add(new Case { Name = "compiler.library.types", Run = LibraryCases.Types });
+            list.Add(new Case { Name = "compiler.library.forms", Run = LibraryCases.Forms });
             list.Add(new Case { Name = "flags.core-enum", Run = FlagCases.CoreEnum });
             list.Add(new Case { Name = "flags.ignored-enum", Run = FlagCases.IgnoredEnum });
             list.Add(new Case { Name = "flags.top-bits", Run = FlagCases.TopBits });

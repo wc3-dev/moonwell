@@ -24,29 +24,15 @@ public class SyntaxTests
     // MW0028: char or enum given to an object parameter of a library method other than string's, Console's and StringBuilder's
     [InlineData("MW0028", "var w = new System.IO.StringWriter(); w.Write(Color.Green);", "Color.Green")]
     [InlineData("MW0028", "var s = string.Join(\",\", new[] { Color.Red, Color.Blue });", "new[] { Color.Red, Color.Blue }")]
-    // MW0030: members the Lua core does not have
-    [InlineData("MW0030", "var q = new[] { 1 }.Append(2);", "Append")]
-    [InlineData("MW0030", "var q = new[] { 1 }.TakeLast(1);", "TakeLast")]
-    [InlineData("MW0030", "var q = new[] { 1 }.Zip(new[] { 2 });", "Zip")]
-    [InlineData("MW0030", "var q = new[] { 1 }.ToHashSet();", "ToHashSet")]
-    [InlineData("MW0030", "var q = new List<int>().ConvertAll(x => x);", "ConvertAll")]
-    [InlineData("MW0030", "var sb = new System.Text.StringBuilder(\"a\"); sb.Replace(\"a\", \"b\");", "Replace")]
-    [InlineData("MW0030", "var d = new Dictionary<int, int>(); var v = d.GetValueOrDefault(1);", "GetValueOrDefault")]
-    [InlineData("MW0030", "var d = new Dictionary<int, int>(); d.Remove(1, out var v);", "Remove")]
-    [InlineData("MW0030", "var d = new Dictionary<int, int>(); var l = d.ToList();", "ToList")]
-    [InlineData("MW0030", "Dictionary<int, int>? d = new(); var l = d?.ToArray();", "ToArray")]
-    [InlineData("MW0030", "IReadOnlyDictionary<int, int> d = new Dictionary<int, int>(); var l = Enumerable.ToList(d);", "ToList")]
-    [InlineData("MW0030", "var q = new Queue<int>(); q.TryPeek(out var x);", "TryPeek")]
-    [InlineData("MW0030", "var s = new Stack<int>(); s.TryPop(out var x);", "TryPop")]
-    [InlineData("MW0030", "var h = new HashSet<int>(); var b = h.SetEquals(new[] { 1 });", "SetEquals")]
-    [InlineData("MW0030", "ISet<int> h = new HashSet<int>(); var b = h.SetEquals(new[] { 1 });", "SetEquals")]
-    [InlineData("MW0030", "IReadOnlySet<int> h = new HashSet<int>(); var b = h.SetEquals(new[] { 1 });", "SetEquals")]
-    [InlineData("MW0030", "var c = StringComparer.Ordinal;", "StringComparer")]
+    // MW0030: members the Lua core does not have (since CoreSystem 2.0.3-moonwell.9)
     [InlineData("MW0030", "var g = Guid.NewGuid();", "Guid")]
-    [InlineData("MW0030", "var n = Environment.NewLine;", "NewLine")]
-    [InlineData("MW0030", "var k = new[] { 2, 1 }; var v = new[] { \"b\", \"a\" }; Array.Sort(k, v);", "Sort")]
-    [InlineData("MW0030", "var q = Math.DivRem(7, 2, out var r);", "DivRem")]
-    [InlineData("MW0030", "var n = HashCode.Combine(1, 2);", "HashCode")]
+    [InlineData("MW0030", "var q = new[] { 1, 2 }.Shuffle();", "Shuffle")]
+    [InlineData("MW0030", "var n = \"a\".Normalize();", "Normalize")]
+    [InlineData("MW0030", "var ut = Enum.GetUnderlyingType(typeof(Color));", "GetUnderlyingType")]
+    [InlineData("MW0030", "var c = int.Clamp(5, 0, 3);", "Clamp")]
+    [InlineData("MW0030", "var m = int.Max(5, 3);", "Max")]
+    [InlineData("MW0030", "var l = float.Lerp(0f, 1f, 0.5f);", "Lerp")]
+    [InlineData("MW0030", "var a = float.Abs(-1f);", "Abs")]
     // MW0032: enum text
     [InlineData("MW0032", "var c = Enum.Parse(typeof(Color), \"Blue\");", "Enum.Parse(typeof(Color), \"Blue\")")]
     // MW0042: NaN and the infinities, which the game's own numbers do not have
@@ -70,7 +56,8 @@ public class SyntaxTests
     public void the_forms_the_fork_writes_right_since_moonwell_15_are_accepted()
     {
         // The forms MW0017, MW0018, MW0020, MW0022, MW0024, MW0026, MW0027, MW0029 and MW0031 rejected, and those MW0023,
-        // MW0025, MW0028, MW0030 and MW0032 no longer reject: each runs right in the game's Lua (the cases in FormCases).
+        // MW0025, MW0028, MW0030 and MW0032 no longer reject: each runs right in the game's Lua (the cases in FormCases and,
+        // for MW0030 since CoreSystem 2.0.3-moonwell.9, LibraryCases).
         Assert.Empty(MapCode.Check("""
             int x = 1;
             var s1 = x switch { 1 => "a", > 10 => "b", _ => "c" };
@@ -118,6 +105,17 @@ public class SyntaxTests
             var ck = checked(x + 1); checked { x++; }
             var ep = Enum.Parse<Color>("Blue"); var ev = Enum.GetValues<Color>(); var ed = Color.Green.ToString("D");
             var mode = Mode.A | Mode.B; var ms = "m=" + mode; var cs = (Color)5 + " x";
+            var gv = new Dictionary<int, int>().GetValueOrDefault(1); new Dictionary<int, int>().Remove(1, out var rv1);
+            var ca = new List<int>().ConvertAll(i => i);
+            new Queue<int>().TryPeek(out var qp); new Stack<int>().TryPop(out var sp); var se = new HashSet<int>().SetEquals(new[] { 1 });
+            var sk = new[] { 2, 1 }; var sv = new[] { "b", "a" }; Array.Sort(sk, sv); var dr = Math.DivRem(7, 2, out var rem);
+            var lq = new[] { 1 }.Append(2).Prepend(0).TakeLast(1).SkipLast(0).Zip(new[] { 2 }).Count() + new[] { 1 }.Chunk(1).Count();
+            var hs = new[] { 1 }.ToHashSet(); var de = new int[0].DefaultIfEmpty(1); var db = new[] { 1 }.DistinctBy(i => i);
+            var text = new System.Text.StringBuilder("a").Replace("a", "b").Insert(0, "c").AppendJoin(",", "d", "e").ToString();
+            var nl = Environment.NewLine; var ic = char.IsAscii('a') && char.ToUpperInvariant('a') == 'A'; var itn = string.Intern("a");
+            var hx = Convert.ToHexString(new byte[] { 1 }); var rl = int.RotateLeft(1, 3) + int.PopCount(7) + int.Log2(8);
+            var hc = HashCode.Combine(1, 2); var cmp = StringComparer.Ordinal; var ba = new System.Collections.BitArray(3);
+            var n0 = 1234.ToString("N0") + 0.5f.ToString("P0") + 3.5f.ToString("0.0") + int.Parse("1") + float.Parse("1");
             """, Types + "\n" + Two + "\n" + "record Rec(int X, int Y);" + "\n" + "class Holder { public (int, int) T; }" + "\n"
             + "static int Count(params List<int> xs) => xs.Count;"));
     }
