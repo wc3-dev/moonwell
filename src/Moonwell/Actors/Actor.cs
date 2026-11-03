@@ -128,11 +128,18 @@ namespace Moonwell
             return true;
         }
 
-        /// <summary>Adds a component to this actor, runs its OnAdded, and returns it; on an actor that has ended it ends at once. A component already on an actor, or one that has ended, is left as it is, and the error is reported, in every build.</summary>
-        protected TComponent AddComponent<TComponent>(TComponent component) where TComponent : Component
+        /// <summary>Adds a component to this actor, runs its OnAdded, and returns it; on an actor that has ended it ends at once. A component already on an actor, or one that has ended, is left as it is, and the error is reported, in every build. Held by a scope, it also ends when that scope ends (decision 164); with a holder that has ended it is not added and ends, which a development build reports.</summary>
+        protected TComponent AddComponent<TComponent>(TComponent component, Scope? heldBy = null) where TComponent : Component
         {
             if (Refuses(component, "Add"))
             {
+                return component;
+            }
+
+            if (heldBy != null && (heldBy.HasEnded || heldBy.childrenEnded))
+            {
+                Dev.Report(Names.NameOf(this) + ".Add", Names.NameOf(component) + " is held by " + Names.NameOf(heldBy) + ", which has ended, so it was not added");
+                component.End();
                 return component;
             }
 
@@ -147,6 +154,11 @@ namespace Moonwell
             component.Mask = Hooks.MaskOf(component, component.Table);
             Events.Need(component.Mask);
             component.added = true;
+            if (heldBy != null)
+            {
+                component.HoldBy(heldBy);
+            }
+
             try
             {
                 component.CallAdded();

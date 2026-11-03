@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Moonwell
 {
@@ -13,6 +14,12 @@ namespace Moonwell
 
         /// <summary>The bit mask of the reactions this class overrides, worked out when the component is added.</summary>
         internal int Mask;
+
+        /// <summary>The holds of the scopes that hold the component; null when nothing has held it.</summary>
+        internal List<Hold>? holds;
+
+        /// <summary>Whether it was also put on with no holder, so it stays when its holders let go.</summary>
+        internal bool unheld;
 
         /// <summary>The actor the component is on, from OnAdded on. Read before the component is added, in its constructor, a development build throws a MoonwellException that says so; a release build gives null, though the type does not say so (decision 78).</summary>
         [LocalSafe]
@@ -44,6 +51,26 @@ namespace Moonwell
             OnAdded();
         }
 
+        /// <summary>Puts a scope's hold on the component: the scope adopts the hold, so its end lets go.</summary>
+        internal void HoldBy(Scope holder)
+        {
+            var hold = new Hold(this);
+            holds ??= new List<Hold>();
+            holds.Add(hold);
+            holder.Adopt(hold);
+        }
+
+        /// <summary>Lets go of a hold: the component ends when that was its last and it was not also put on with no holder. While the component ends, its holds only go.</summary>
+        internal void Release(Hold hold)
+        {
+            if (holds == null || !holds.Remove(hold) || ending || HasEnded || unheld || holds.Count > 0)
+            {
+                return;
+            }
+
+            End();
+        }
+
         /// <summary>Runs OnRemoved, then takes the component off its actor; a component never added does nothing.</summary>
         protected sealed override void OnEnd()
         {
@@ -62,6 +89,14 @@ namespace Moonwell
             }
 
             actor!.Detach(this);
+            if (holds != null)
+            {
+                var left = new List<Hold>(holds);
+                for (var i = 0; i < left.Count; i++)
+                {
+                    left[i].End();
+                }
+            }
         }
     }
 }

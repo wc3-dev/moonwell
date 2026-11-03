@@ -80,7 +80,7 @@ namespace Moonwell
             set { Runtime.World.StopDay(value); }
         }
 
-        /// <summary>Adds a component to the game, and returns it.</summary>
-        public T Add<T>(T component) where T : GameComponent => AddComponent(component);
+        /// <summary>Adds a component to the game, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
+        public T Add<T>(T component, Scope? heldBy = null) where T : GameComponent => AddComponent(component, heldBy);
     }
 }

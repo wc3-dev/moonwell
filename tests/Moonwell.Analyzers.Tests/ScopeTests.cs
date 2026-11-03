@@ -27,6 +27,20 @@ public class ScopeTests
     }
 
     [Fact]
+    public void a_player_as_a_holder_is_rejected()
+    {
+        var found = MapCode.Check("""
+            var unit = Unit.Of(u)!;
+            unit.Add(new Kept(), heldBy: p);
+            unit.Add(new Kept(), Game.Instance);
+            """, """
+            public sealed class Kept : UnitComponent { }
+            """);
+
+        Assert.Equal(new[] { "MW0043: p" }, found);
+    }
+
+    [Fact]
     public void a_player_as_owner_and_a_player_held_as_a_scope_are_accepted()
     {
         var found = MapCode.Check("""

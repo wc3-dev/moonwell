@@ -9,7 +9,7 @@ namespace Moonwell.Analyzers;
 /// <summary>
 /// Rejects a player given where a scope goes (MW0043): a player lasts the whole game, so it is no scope to make things in,
 /// and a player there is most often meant as the owner, which <c>Gizmo.Create</c> and <c>Missile.Create</c> take after the
-/// scope. It checks the <c>scope</c> argument of Moonwell's methods (<c>Create</c>, <c>Fire</c>, <c>Interact</c>) and what a
+/// scope. It checks the <c>scope</c> and <c>heldBy</c> arguments of Moonwell's methods (<c>Create</c>, <c>Fire</c>, <c>Interact</c>, <c>Add</c>) and what a
 /// scope's <c>After</c> and <c>Every</c> are called on. A player held in a variable typed <c>Scope</c> is not seen.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -45,7 +45,7 @@ public sealed class ScopeAnalyzer : DiagnosticAnalyzer
 
         foreach (var argument in call.Arguments)
         {
-            if (argument.Parameter is { Name: "scope" } parameter && IsMoonwellType(parameter.Type, "Scope"))
+            if (argument.Parameter is { Name: "scope" or "heldBy" } parameter && IsMoonwellType(parameter.Type, "Scope"))
             {
                 var value = Unconverted(argument.Value);
                 if (IsMoonwellType(value.Type, "Player"))

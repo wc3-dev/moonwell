@@ -531,8 +531,8 @@ namespace Moonwell
             return Runtime.World.IsEnemyOf(Handle, other.Handle);
         }
 
-        /// <summary>Adds a component to the player, and returns it.</summary>
-        public T Add<T>(T component) where T : PlayerComponent => AddComponent(component);
+        /// <summary>Adds a component to the player, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
+        public T Add<T>(T component, Scope? heldBy = null) where T : PlayerComponent => AddComponent(component, heldBy);
 
         // What the two players give each other, unless they are one player.
         private void SetBothWays(Player other, Alliance alliance)

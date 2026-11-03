@@ -1005,19 +1005,28 @@ namespace Moonwell
         public bool HasAbility<T>()
             where T : Ability => HasAbility(ObjectTypes.IdOf<T>());
 
-        /// <summary>Adds a component to the unit, and returns it.</summary>
-        public T Add<T>(T component)
-            where T : UnitComponent => AddComponent(component);
+        /// <summary>Adds a component to the unit, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
+        public T Add<T>(T component, Scope? heldBy = null)
+            where T : UnitComponent => AddComponent(component, heldBy);
 
-        /// <summary>Applies a buff to the unit and returns the buff now on it: a buff of its class already there is refreshed, as its stacking says (it takes the given buff's duration and the source, and keeps its other values and what it has counted), and the given buff is dropped; otherwise the given buff is added and started. A buff that is on a unit already (one that applies itself again in OnExpire) or has ended is left as it is, and the error is reported, in every build.</summary>
-        public T Apply<T>(T buff, Unit? source = null)
+        /// <summary>Applies a buff to the unit and returns the buff now on it: a buff of its class already there is refreshed, as its stacking says (it takes the given buff's duration and the source, and keeps its other values and what it has counted), and the given buff is dropped; otherwise the given buff is added and started. A buff that is on a unit already (one that applies itself again in OnExpire) or has ended is left as it is, and the error is reported, in every build. Held by a scope, the buff also ends when its last holder has ended, and an apply from another holder joins it as its stacking says (decision 164); an apply with no holder keeps it on after its holders let go.</summary>
+        public T Apply<T>(T buff, Unit? source = null, Scope? heldBy = null)
             where T : Buff
         {
             Dev.Check(buff.Duration >= 0.0f && buff.Tick >= 0.0f, "Unit.Apply: Duration and Tick must be 0 or more");
             var existing = StackedWith(buff, source);
-            if (existing != null)
+            if (existing != null && (heldBy == null || !(heldBy.HasEnded || heldBy.childrenEnded)))
             {
                 existing.Refresh(buff, source);
+                if (heldBy == null)
+                {
+                    existing.unheld = true;
+                }
+                else
+                {
+                    existing.HoldBy(heldBy);
+                }
+
                 return (T)existing;
             }
 
@@ -1028,7 +1037,8 @@ namespace Moonwell
             }
 
             buff.Source = source;
-            Add(buff);
+            buff.unheld = heldBy == null;
+            Add(buff, heldBy);
             if (!buff.HasEnded)
             {
                 buff.Begin();

@@ -266,11 +266,11 @@ namespace Moonwell
             return KnownDestructables.TakeIn(handle, null);
         }
 
-        /// <summary>Adds a component to the destructable, and returns it.</summary>
-        public T Add<T>(T component)
+        /// <summary>Adds a component to the destructable, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
+        public T Add<T>(T component, Scope? heldBy = null)
             where T : DestructableComponent
         {
-            var added = AddComponent(component);
+            var added = AddComponent(component, heldBy);
             WatchIfWanted(Mask | added.Mask);
             return added;
         }

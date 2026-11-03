@@ -336,9 +336,9 @@ namespace Moonwell
             return (T)Create(ObjectTypes.IdOf<T>(), unit, slot, scope);
         }
 
-        /// <summary>Adds a component to the item, and returns it.</summary>
-        public T Add<T>(T component)
-            where T : ItemComponent => AddComponent(component);
+        /// <summary>Adds a component to the item, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
+        public T Add<T>(T component, Scope? heldBy = null)
+            where T : ItemComponent => AddComponent(component, heldBy);
 
         /// <summary>Removes the item from the game: it ends, which runs its OnLeave. Does nothing on a default object, which is not in the game.</summary>
         public void Remove()
