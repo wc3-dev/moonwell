@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered });
                 }
 
                 return componentHooks;
@@ -63,6 +63,11 @@ namespace Moonwell
 
         /// <summary>Runs when the unit begins a cast.</summary>
         public virtual void OnCast(Cast cast)
+        {
+        }
+
+        /// <summary>Runs when the unit is given an order, after its class has heard it; <c>order.Cancel()</c> refuses it, and an order given here replaces it.</summary>
+        public virtual void OnOrdered(Order order)
         {
         }
 

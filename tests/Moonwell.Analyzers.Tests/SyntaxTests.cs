@@ -1,8 +1,9 @@
 namespace Moonwell.Analyzers.Tests;
 
 /// <summary>
-/// MW0017 to MW0032: C# syntax and library calls that CSharp.lua stops on, writes wrong, or the game's Lua core does not have.
-/// Each was seen by running the code on .NET and in Lua and comparing what they printed.
+/// MW0023 to MW0032: C# syntax and library calls that CSharp.lua stops on, writes wrong, or the game's Lua core does not have.
+/// Each was seen by running the code on .NET and in Lua and comparing what they printed. The forms the fork's 2.0.4-moonwell.15
+/// writes right are accepted (the cases in FormCases).
 /// </summary>
 public class SyntaxTests
 {
@@ -17,65 +18,12 @@ public class SyntaxTests
     """;
 
     [Theory]
-    // MW0017: patterns the compiler stops on
-    [InlineData("MW0017", "int x = 1; var s = x switch { 1 => \"a\", > 10 => \"b\", _ => \"c\" };", "> 10")]
-    [InlineData("MW0017", "int x = 1; var s = x switch { var n when n > 3 => \"a\", _ => \"c\" };", "var n")]
-    [InlineData("MW0017", "int x = 1; var s = x switch { not 1 => \"a\", _ => \"c\" };", "not 1")]
-    [InlineData("MW0017", "var bx = new Box(); var b = bx is { X: var y };", "var y")]
-    [InlineData("MW0017", "var bx = new Box(); var b = bx is { X: int y };", "int y")]
-    [InlineData("MW0017", "int[] a = { 1, 2 }; var b = a is [var first, .. var rest];", ".. var rest")]
-    [InlineData("MW0017", "int x = 1; var s = x switch { (1 or 2) => \"a\", _ => \"c\" };", "(1 or 2)")]
-    [InlineData("MW0017", "var bx = new Box(); var b = bx is { Inner.X: var y };", "var y")]
-    // MW0018: patterns that give the wrong answer
-    [InlineData("MW0018", "var rc = new Rec(1, 2); var b = rc is (1, 2);", "(1, 2)", "record Rec(int X, int Y);")]
-    [InlineData("MW0018", "Two? n = null; var b = n is (1, 2);", "(1, 2)", Two)]
-    [InlineData("MW0018", "object o = 1; var b = o is Two(1, _);", "Two(1, _)", Two)]
-    [InlineData("MW0018", "var t = ((1, 2), 3); var b = t is ((1, _), 3);", "(1, _)")]
-    [InlineData("MW0018", "var hd = new Holder(); var b = hd is { T: (1, _) };", "(1, _)", "class Holder { public (int, int) T; }")]
-    [InlineData("MW0018", "var t = (A: 1, B: 2); var b = t is (A: 1, B: 2);", "(A: 1, B: 2)")]
-    // MW0020: a struct changed through a copy of an element
-    [InlineData("MW0020", "var arr = new Pt[1]; var c = arr[0]; c.X = 6;", "arr[0]")]
-    [InlineData("MW0020", "var l = new List<Pt> { new Pt() }; var c = l[0]; c.X++;", "l[0]")]
-    [InlineData("MW0020", "var d = new Dictionary<int, Pt>(); Pt c; c = d[1]; c.X += 2;", "d[1]")]
-    // MW0022: tuples
-    [InlineData("MW0022", "var (a, b) = (1, 2);", "var (a, b) = (1, 2)")]
-    [InlineData("MW0022", "var x = new[] { 1, 2 }; (x[0], x[1]) = (x[1], x[0]);", "(x[0], x[1]) = (x[1], x[0])")]
-    [InlineData("MW0022", "var t = (1, 2); var s = \"t=\" + t;", "t")]
-    [InlineData("MW0022", "var t = (1, 2); Console.WriteLine(t);", "t")]
-    [InlineData("MW0022", "var t = (1, 2); var s = $\"{t}\";", "{t}")]
-    // MW0023: declarations
-    [InlineData("MW0023", "var o = new { A = 1 }; var w = o with { A = 2 };", "o with { A = 2 }")]
-    // MW0024: ranges
-    [InlineData("MW0024", "var a = new[] { 1, 2, 3 }; var b = a[1..2];", "1..2")]
-    [InlineData("MW0024", "var l = new List<int> { 1 }; var x = l[^1];", "^1")]
-    [InlineData("MW0024", "var s = \"abc\"; var t = s[1..];", "1..")]
     // MW0025: ref
-    [InlineData("MW0025", "var a = new[] { 1, 2 }; ref int r = ref a[1];", "ref a[1]")]
     [InlineData("MW0025", "var a = new[] { 1, 2 }; ref int r = ref First(a);", "ref First(a)", "static ref int First(int[] a) => ref a[0];")]
-    // MW0026: params
-    [InlineData("MW0026", "Count(1, 2);", "params List<int> xs", "static int Count(params List<int> xs) => xs.Count;")]
-    [InlineData("MW0026", "var f = (params int[] xs) => xs.Length;", "params int[] xs")]
-    // MW0027: strings
-    [InlineData("MW0027", "var n = \"a--b\".Split(\"--\").Length;", "\"a--b\".Split(\"--\")")]
-    [InlineData("MW0027", "var n = \"a, b\".Split(new[] { \", \" }, StringSplitOptions.None).Length;", "\"a, b\".Split(new[] { \", \" }, StringSplitOptions.None)")]
-    [InlineData("MW0027", "var b = \"abc\".StartsWith('a');", "\"abc\".StartsWith('a')")]
-    [InlineData("MW0027", "var b = \"abc\".EndsWith('c');", "\"abc\".EndsWith('c')")]
-    [InlineData("MW0027", "var i = \"abc\".IndexOf(\"B\", StringComparison.OrdinalIgnoreCase);", "\"abc\".IndexOf(\"B\", StringComparison.OrdinalIgnoreCase)")]
-    [InlineData("MW0027", "var b = \"Abc\".StartsWith(\"ab\", StringComparison.OrdinalIgnoreCase);", "\"Abc\".StartsWith(\"ab\", StringComparison.OrdinalIgnoreCase)")]
-    [InlineData("MW0027", "var r = new string(\"abc\".Reverse().ToArray());", "\"abc\".Reverse()")]
-    // MW0028: char or enum given to an object parameter
-    [InlineData("MW0028", "char c = 'a'; var s = string.Format(\"{0}\", c);", "c")]
-    [InlineData("MW0028", "var c = Color.Green; Console.WriteLine(c);", "c")]
-    [InlineData("MW0028", "var sb = new System.Text.StringBuilder(); sb.Append((object)Color.Green);", "Color.Green")]
-    [InlineData("MW0028", "char c = 'a'; var e = Color.Green; var s = string.Join(\",\", c, e);", "c")]
-    [InlineData("MW0028", "char c = 'a'; var e = Color.Green; var s = string.Join(\",\", c, e);", "e")]
-    [InlineData("MW0028", "char c = 'a'; var s = string.Format(\"{0}{1}{2}{3}\", c, 1, 2, 3);", "c")]
-    // MW0029: catch
-    [InlineData("MW0029", "try { } catch (NullReferenceException) { }", "NullReferenceException")]
-    [InlineData("MW0029", "try { } catch (IndexOutOfRangeException) { }", "IndexOutOfRangeException")]
-    [InlineData("MW0029", "try { } catch (Exception e) when (e is InvalidOperationException ioe) { }", "InvalidOperationException ioe")]
-    [InlineData("MW0029", "int a = 5, b = 0; try { var r = a % b; } catch (DivideByZeroException) { }", "DivideByZeroException")]
-    [InlineData("MW0029", "int a = 5; try { a %= 0; } catch (DivideByZeroException) { }", "DivideByZeroException")]
+    [InlineData("MW0025", "int x = 1, y = 2; ref int r = ref x; r = ref y;", "r = ref y")]
+    // MW0028: char or enum given to an object parameter of a library method other than string's, Console's and StringBuilder's
+    [InlineData("MW0028", "var w = new System.IO.StringWriter(); w.Write(Color.Green);", "Color.Green")]
+    [InlineData("MW0028", "var s = string.Join(\",\", new[] { Color.Red, Color.Blue });", "new[] { Color.Red, Color.Blue }")]
     // MW0030: members the Lua core does not have
     [InlineData("MW0030", "var q = new[] { 1 }.Append(2);", "Append")]
     [InlineData("MW0030", "var q = new[] { 1 }.TakeLast(1);", "TakeLast")]
@@ -99,16 +47,8 @@ public class SyntaxTests
     [InlineData("MW0030", "var k = new[] { 2, 1 }; var v = new[] { \"b\", \"a\" }; Array.Sort(k, v);", "Sort")]
     [InlineData("MW0030", "var q = Math.DivRem(7, 2, out var r);", "DivRem")]
     [InlineData("MW0030", "var n = HashCode.Combine(1, 2);", "HashCode")]
-    [InlineData("MW0030", "Index i = 1;", "Index")]
-    // MW0031: checked arithmetic
-    [InlineData("MW0031", "int x = 1; var y = checked(x + 1);", "checked(x + 1)")]
-    [InlineData("MW0031", "int x = 1; checked { x++; }", "checked { x++; }")]
     // MW0032: enum text
-    [InlineData("MW0032", "var c = Enum.Parse<Color>(\"Blue\");", "Enum.Parse<Color>(\"Blue\")")]
-    [InlineData("MW0032", "var c = Enum.GetValues<Color>();", "Enum.GetValues<Color>()")]
-    [InlineData("MW0032", "var s = Color.Green.ToString(\"D\");", "Color.Green.ToString(\"D\")")]
-    [InlineData("MW0032", "var m = Mode.A | Mode.B; var s = \"m=\" + m;", "m")]
-    [InlineData("MW0032", "var s = (Color)5 + \" x\";", "(Color)5")]
+    [InlineData("MW0032", "var c = Enum.Parse(typeof(Color), \"Blue\");", "Enum.Parse(typeof(Color), \"Blue\")")]
     // MW0042: NaN and the infinities, which the game's own numbers do not have
     [InlineData("MW0042", "var x = float.NaN;", "NaN")]
     [InlineData("MW0042", "var x = double.NaN;", "NaN")]
@@ -124,6 +64,62 @@ public class SyntaxTests
     {
         var found = MapCode.Check(body, Types + "\n" + members);
         Assert.Contains(id + ": " + pointsAt, found.Where(f => f.StartsWith(id)).Select(f => f.Replace("\r", "")));
+    }
+
+    [Fact]
+    public void the_forms_the_fork_writes_right_since_moonwell_15_are_accepted()
+    {
+        // The forms MW0017, MW0018, MW0020, MW0022, MW0024, MW0026, MW0027, MW0029 and MW0031 rejected, and those MW0023,
+        // MW0025, MW0028, MW0030 and MW0032 no longer reject: each runs right in the game's Lua (the cases in FormCases).
+        Assert.Empty(MapCode.Check("""
+            int x = 1;
+            var s1 = x switch { 1 => "a", > 10 => "b", _ => "c" };
+            var s2 = x switch { var n when n > 3 => "a", _ => "c" };
+            var s3 = x switch { not 1 => "a", _ => "c" };
+            var s4 = x switch { (1 or 2) => "a", _ => "c" };
+            var bx = new Box();
+            var p1 = bx is { X: var y1 } && bx is { X: int y2 } && bx is { Inner.X: var y3 };
+            int[] a = { 1, 2 };
+            var p2 = a is [var first, .. var rest];
+            var rc = new Rec(1, 2);
+            var p3 = rc is (1, 2);
+            Two? n2 = null;
+            var p4 = n2 is (1, 2);
+            object o = 1;
+            var p5 = o is Two(1, _);
+            var t = ((1, 2), 3);
+            var p6 = t is ((1, _), 3);
+            var hd = new Holder();
+            var p7 = hd is { T: (1, _) };
+            var named = (A: 1, B: 2);
+            var p8 = named is (A: 1, B: 2);
+            var arr = new Pt[1]; var c1 = arr[0]; c1.X = 6;
+            var l = new List<Pt> { new Pt() }; var c2 = l[0]; c2.X++;
+            var (d1, d2) = (1, 2);
+            var xs = new[] { 1, 2 }; (xs[0], xs[1]) = (xs[1], xs[0]);
+            var tt = (1, 2); var t1 = "t=" + tt; var t2 = $"{tt}"; Console.WriteLine(tt);
+            var anon = new { A = 1 }; var w = anon with { A = 2 };
+            var r1 = a[1..2]; var li = new List<int> { 1 }; var r2 = li[^1]; var r3 = "abc"[1..]; Index ix = 1;
+            ref int re = ref a[1];
+            Count(1, 2);
+            var f = (params int[] ps) => ps.Length;
+            var n3 = "a--b".Split("--").Length;
+            var n4 = "a, b".Split(new[] { ", " }, StringSplitOptions.None).Length;
+            var b1 = "abc".StartsWith('a') && "abc".EndsWith('c');
+            var i1 = "abc".IndexOf("B", StringComparison.OrdinalIgnoreCase);
+            var b2 = "Abc".StartsWith("ab", StringComparison.OrdinalIgnoreCase);
+            var rv = new string("abc".Reverse().ToArray());
+            char ch = 'a'; var e1 = Color.Green;
+            var f1 = string.Format("{0}", ch); Console.WriteLine(e1); var j1 = string.Join(",", ch, e1);
+            var sb = new System.Text.StringBuilder(); sb.Append((object)Color.Green);
+            try { } catch (NullReferenceException) { } catch (IndexOutOfRangeException) { }
+            try { } catch (Exception e) when (e is InvalidOperationException ioe) { }
+            int m1 = 5, m2 = 0; try { var md = m1 % m2; } catch (DivideByZeroException) { }
+            var ck = checked(x + 1); checked { x++; }
+            var ep = Enum.Parse<Color>("Blue"); var ev = Enum.GetValues<Color>(); var ed = Color.Green.ToString("D");
+            var mode = Mode.A | Mode.B; var ms = "m=" + mode; var cs = (Color)5 + " x";
+            """, Types + "\n" + Two + "\n" + "record Rec(int X, int Y);" + "\n" + "class Holder { public (int, int) T; }" + "\n"
+            + "static int Count(params List<int> xs) => xs.Count;"));
     }
 
     [Fact]
@@ -256,7 +252,7 @@ public class SyntaxTests
     }
 
     [Fact]
-    public void user_defined_increment_and_truth_operators_are_rejected()
+    public void user_defined_increment_and_truth_operators_are_accepted()
     {
         var found = MapCode.CheckFile("""
             struct V
@@ -268,8 +264,7 @@ public class SyntaxTests
                 public static bool operator false(V a) => a.X == 0;
             }
             """);
-        Assert.Equal(3, found.Count);
-        Assert.All(found, f => Assert.StartsWith("MW0023: public static", f));
+        Assert.Empty(found);
     }
 
     [Fact]
@@ -284,7 +279,7 @@ public class SyntaxTests
     }
 
     [Fact]
-    public void a_derived_record_and_a_static_abstract_member_are_rejected()
+    public void a_static_abstract_member_is_rejected_and_a_derived_record_accepted()
     {
         var found = MapCode.CheckFile("""
             record R(int A);
@@ -292,20 +287,7 @@ public class SyntaxTests
             interface IMake<T> { static abstract T Make(); }
             interface IPlain { static int Z() => 1; int V(); }
             """);
-        Assert.Equal(new[] { "MW0023: record D(int A, int B) : R(A);", "MW0023: static abstract T Make();" }, found);
-    }
-
-    [Fact]
-    public void a_variable_that_is_not_changed_may_hold_a_copy_of_an_element()
-    {
-        Assert.Empty(MapCode.Check("""
-            var arr = new Pt[1];
-            var c = arr[0];
-            var x = c.X;
-            arr[0] = new Pt { X = 1 };
-            var local = new Pt();
-            var copy = local; copy.X = 2;
-            """, Types));
+        Assert.Equal(new[] { "MW0023: static abstract T Make();" }, found);
     }
 
     [Fact]
@@ -321,93 +303,7 @@ public class SyntaxTests
     public void the_message_says_what_to_write_instead()
     {
         Assert.Equal(
-            "Split(string) runs out of memory in the game's Lua; split on a char",
-            MapCode.Message("var n = \"a--b\".Split(\"--\").Length;").Replace("'\"a--b\".Split(\"--\")' ", string.Empty));
-    }
-
-    private const string Structs = """
-            struct In { public int X; }
-            struct Pt2
-            {
-                public int X;
-                public In Inner;
-                public void Move() { X++; }
-                public void Shift() { Move(); }
-                public int Read() => X;
-                public readonly int Twice() => X * 2;
-            }
-            class Holder { public int X; }
-            struct WithRef { public Holder H; }
-            static void Bump(ref Pt2 p) { p.X++; }
-    """;
-
-    [Fact]
-    public void a_struct_element_changed_through_a_method_a_nested_field_or_ref_is_mw0020()
-    {
-        var found = MapCode.Check("""
-            var arr = new Pt2[2];
-            var f = arr[1];
-            f.Move();
-            var g = arr[0];
-            g.Inner.X = 4;
-            var h = arr[0];
-            Bump(ref h);
-            var list = new List<Pt2> { new Pt2() };
-            var k = list[0];
-            k.Inner.X++;
-            var s = arr[1];
-            s.Shift();
-            """, Structs);
-
-        Assert.Equal(new[] { "MW0020: arr[1]", "MW0020: arr[0]", "MW0020: arr[0]", "MW0020: list[0]", "MW0020: arr[1]" }, found);
-    }
-
-    [Fact]
-    public void reading_a_struct_element_copy_or_changing_what_it_points_at_is_accepted()
-    {
-        Assert.Empty(MapCode.Check("""
-            var arr = new Pt2[2];
-            var a = arr[0];
-            var n = a.Read() + a.Twice() + a.X + a.Inner.X;
-            var refs = new WithRef[1];
-            var r = refs[0];
-            r.H.X = 3;
-            """, Structs));
-    }
-
-    [Fact]
-    public void a_struct_element_copy_written_back_is_accepted()
-    {
-        Assert.Empty(MapCode.Check("""
-            var arr = new Pt2[2];
-            var c = arr[0];
-            c.X = 6;
-            c.Move();
-            arr[0] = c;
-            var list = new List<Pt2> { new Pt2() };
-            var i = 0;
-            var d = list[i];
-            d.Inner.X = 1;
-            list[i] = d;
-            """, Structs));
-    }
-
-    [Fact]
-    public void a_struct_element_read_or_moved_before_the_write_back_is_mw0020()
-    {
-        var found = MapCode.Check("""
-            var arr = new Pt2[2];
-            var c = arr[0];
-            c.X = 6;
-            var seen = arr[0].X;
-            arr[0] = c;
-            var i = 0;
-            var d = arr[i];
-            d.X = 1;
-            i++;
-            arr[i] = d;
-            """, Structs);
-
-        Assert.Equal(new[] { "MW0020: arr[0]", "MW0020: arr[i]" }, found);
+            "A ref reassignment writes the value into what the ref local named before in the game's Lua; make a new ref local",
+            MapCode.Message("int x = 1, y = 2; ref int r = ref x; r = ref y;"));
     }
 }

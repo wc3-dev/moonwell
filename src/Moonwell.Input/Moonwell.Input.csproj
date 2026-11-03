@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Each player's mouse and camera for Moonwell maps.</Description>
+    <Description>Each player's mouse, keyboard and camera for Moonwell maps.</Description>
   </PropertyGroup>
 
   <ItemGroup>

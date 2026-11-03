@@ -107,7 +107,7 @@ namespace Moonwell.Build
             var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), MapObjectIds.Defined(project));
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
-            EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log));
+            EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log), Loading(targetPath));
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
             StageWith(project, () => Stage.Write(project, map, declarations.Objects, ids, declarations.StandardClassIds, standard, log));
@@ -137,9 +137,28 @@ namespace Moonwell.Build
             // Without the standard data the map's own constants still count, over the standard ones the runtime has.
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), HeroExperience.Standard);
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
-            EntryWriter.Write(project, settings, false, Installs(project, map, targetPath, new List<BridgeWriter.OwnType>(), null, experience, day, log));
+            EntryWriter.Write(project, settings, false, Installs(project, map, targetPath, new List<BridgeWriter.OwnType>(), null, experience, day, log), Loading(targetPath));
             LuaCompiler.Compile(project, map, targetPath, options.Release);
             StageWith(project, () => Stage.WriteWithoutObjects(project, map, log));
+        }
+
+        // What the map's Main runs before the runtime starts, while the map loads: the keyboard's registrations, about 6,000 for
+        // each person playing (0.1 s each), so the loading screen hides them. InstallKeyboard takes them over in the register step.
+        private static List<string> Loading(string targetPath)
+        {
+            var loading = new List<string>();
+            if (Declarations.References(targetPath, InputAssemblyName) && NamesKeyboard(targetPath))
+            {
+                loading.Add("global::Moonwell.InputSystem.RegisterKeys();");
+            }
+
+            return loading;
+        }
+
+        // Whether the map's code names the keyboard, which only then listens to the keys.
+        private static bool NamesKeyboard(string targetPath)
+        {
+            return Declarations.ReferencesType(targetPath, "Moonwell", "Keyboard") || Declarations.ReferencesType(targetPath, "Moonwell", "IKeyWatch");
         }
 
         // What the map's Main installs before anything registers: the hero experience table and the day's hours when the map's gameplay constants change them, then each package the map or a library of its own references, in this order. The terrain's grid, the
@@ -153,6 +172,11 @@ namespace Moonwell.Build
             if (!table.SequenceEqual(HeroExperience.Standard.Table()))
             {
                 installs.Add("global::Moonwell.Runtime.InstallHeroExperience(new int[] { " + string.Join(", ", table.Select(total => total.ToString(CultureInfo.InvariantCulture))) + " });");
+            }
+
+            if (ReadsLastOrders(targetPath))
+            {
+                installs.Add("global::Moonwell.Runtime.ListenForOrders();");
             }
 
             if (day != GameDay.Standard)
@@ -208,6 +232,12 @@ namespace Moonwell.Build
                 PlaceWriter.WriteInput(project, map.Cameras, mouse);
                 PlaceNames.Check(project, "CameraSetup.Named", map.Cameras?.Cameras.Select(camera => camera.Name).ToList() ?? new List<string>(), "camera");
                 installs.Add("global::Moonwell.InputSystem.Install(global::Moonwell.Generated.InputData.Mouse, " + (moves ? "true" : "false") + ", global::Moonwell.Generated.InputData.CameraNames(), global::Moonwell.Generated.InputData.Cameras());");
+                // The keyboard listens for every key with every modifier, about 6,000 registrations for each person, so only a map that
+                // names it pays for them.
+                if (NamesKeyboard(targetPath))
+                {
+                    installs.Add("global::Moonwell.InputSystem.InstallKeyboard();");
+                }
             }
             else
             {
@@ -272,6 +302,46 @@ namespace Moonwell.Build
             {
                 var name = metadata.GetString(metadata.GetMethodDefinition(handle).Name);
                 if (name == "OnMouseMoved" || name.EndsWith(".OnMouseMoved", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether a map's code reads a unit's last orders (a member reference to <c>Unit.LastOrder</c> or <c>Unit.Reissue</c>), which
+        /// only listening for every unit's orders from the start fills: order events come for every order of every unit, so a map
+        /// that reads none and writes no order reaction listens to none. A library of the map's own counts as its code.
+        /// </summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        internal static bool ReadsLastOrders(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsLastOrdersIn);
+        }
+
+        private static bool ReadsLastOrdersIn(string assemblyPath)
+        {
+            using var stream = File.OpenRead(assemblyPath);
+            using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
+            var metadata = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+            foreach (var handle in metadata.MemberReferences)
+            {
+                var member = metadata.GetMemberReference(handle);
+                if (member.Parent.Kind != System.Reflection.Metadata.HandleKind.TypeReference)
+                {
+                    continue;
+                }
+
+                var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
+                if (metadata.GetString(type.Name) != "Unit" || metadata.GetString(type.Namespace) != "Moonwell")
+                {
+                    continue;
+                }
+
+                var name = metadata.GetString(member.Name);
+                if (name == "get_LastOrder" || name == "Reissue")
                 {
                     return true;
                 }

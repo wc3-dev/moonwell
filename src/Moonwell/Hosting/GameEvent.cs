@@ -26,5 +26,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A hero learns a skill.</summary>
         HeroSkill,
+
+        /// <summary>A unit is given an order: none, to a place, or on a target.</summary>
+        Order,
     }
 }

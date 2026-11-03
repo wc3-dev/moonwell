@@ -338,13 +338,43 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
-| `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string (`"move"`, `"attack"`) |
+| `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
+| `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
 
 `unit.AddAbility<Smite>().Level = 3` gives an ability and sets its level. A level the ability doesn't have is kept
 between 1 and its last, as the game does, and a level set on an ability the unit lacks does nothing; a development
 build reports both. Removing an ability ends a cast of it that is running, and adding it back clears its cooldown.
+
+`OnOrdered(Order order)` on a unit's class and its components, and `OnUnitOrdered(Order order)` on game and player
+components, hear each order a player or code gives (code's inside the call), before the unit carries it out:
+
+```csharp
+public sealed class Border : GameComponent
+{
+    public override void OnUnitOrdered(Order order)
+    {
+        // No walking past x 2000: a right-click is Orders.Smart.
+        if (order.Kind == OrderKind.Place && order.X > 2000f && (order.Name == Orders.Move || order.Name == Orders.Smart))
+        {
+            order.Cancel();
+        }
+    }
+}
+```
+
+- `order.Cancel()` refuses it: the unit carries on with the order it was carrying out, which Moonwell gives back, or stops
+  when it had none (after a stop or a build), and the order's other reactions still run and read `IsCancelled`. An order
+  given in a reaction replaces the one heard; a stop given there holds too, as Moonwell repeats it a moment later. A
+  refused Shift-queued order ends the queue, as the game can't skip one.
+- `order.Kind` is `None`, `Place` or `Target`; a target order's `X` and `Y` are its target's place, and one with
+  neither the unit's. The game's own orders run nothing: the stunned order, undefend, and the order a stun's end gives
+  back.
+- `LastOrder` keeps the last three orders worth giving again (moves, attacks, right-clicks, patrols, holding position,
+  spells; not stops, toggles or items), each reaching the one before with `Previous`, and `Reissue()` gives the last
+  again, after a knockback say; a spell already cast is not cast again. A map listens for orders only when its code
+  writes an order reaction or reads `LastOrder` or `Reissue`.
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|
@@ -413,6 +443,7 @@ After(3f, mark.End);
 | `X`, `Y`, `Height`, `PlaceAt(x, y)` | read and set; `Height` is above the ground and stays so as it moves; on a unit's effect `X` and `Y` read the unit's place, `Height` 0, and setting does nothing |
 | `Facing`, `Pitch`, `Roll` | read and set, in degrees; `Facing` reads 0 to 360 as a unit's does, and a positive pitch noses it down |
 | `Scale`, `AnimationSpeed` | read and set, 1 unless set |
+| `Tint` | read and set, a `Color`; its alpha is the model's opacity; white unless set |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | by name: `Animation.Stand`, `Animation.Attack`, or any name the model has (`"attack slam"`) |
 | `PlaysDeath` | true unless set; false makes it vanish at once instead of playing its death |
 | `Model`, `Unit`, `AttachPoint`, `IsShownTo(player)` | read |
@@ -427,7 +458,7 @@ After(3f, mark.End);
   works too (`"chest mount"`); Moonwell does not check it, and at a point the model lacks the game draws nothing. Effects on items
   and destructables are not drawn, so only units have it.
 - `SpecialEffect.PlayOnce(model, x, y)` and `unit.PlayEffectOnce(model, point)` play one once: it is made and ended at
-  once, and the game shows its death. One that needs a scale first is made with `Create`, set, and `End()`ed.
+  once, and the game shows its death. One that needs a scale or a tint first is made with `Create`, set, and `End()`ed.
 - `shownTo: player` on any of them shows it to that player only: the other machines make it with an empty model, so the
   game's handles stay the same everywhere. Who sees it cannot change later. Seen in single player; with two players it
   is not checked yet.
@@ -784,9 +815,10 @@ public sealed class ShopFloor : Area // a game component: Components.Add(new Sho
   runs only while an area with a `Tick` has a unit inside. Adding an area lists every unit of every player once to find
   those already inside, so on a map of thousands of units an area made at each cast pays that at each cast.
 
-## Mouse and camera
+## Mouse, keyboard and camera
 
-Add the `Moonwell.Input` package (the template's `.csproj` has the line, commented) for each player's mouse and camera.
+Add the `Moonwell.Input` package (the template's `.csproj` has the line, commented) for each player's mouse, keyboard and
+camera.
 A map that never names `Mouse` or `IMouseWatch` listens to no mouse event. One that never reads a mouse's `X`, `Y`,
 `Position` or `HasPosition` and writes no `OnMouseMoved` listens to presses and releases only, not to the moves, which
 are synced events, 120 to 240 a second for each player moving the mouse.
@@ -808,8 +840,33 @@ player.Camera().Apply(CameraSetup.Named("Intro"), 2f); // World Editor's camera,
   not places: the mouse keeps its last position on them.
 - A camera is read inside `Local.For`, and a read is this machine's camera whichever player's it is read from; changing
   it (`PanTo`, `SetDistance`, `Follow`, `Apply`, `Reset`) is safe anywhere and moves only that player's camera.
-  `CameraSetup.Named` may sit in a field: named before the package starts, it is looked up when applied. Key presses are
-  not in Moonwell yet.
+  `CameraSetup.Named` may sit in a field: named before the package starts, it is looked up when applied.
+
+A map whose code names `Keyboard` or `IKeyWatch` hears every key of each person playing, with any modifiers, as synced
+events; the registrations (about 6,000 for each person) are made only for such a map, while it loads.
+
+```csharp
+public sealed class Dash : PlayerComponent, IKeyWatch // write only the reactions needed
+{
+    public void OnKeyPressed(Keyboard keyboard, Key key)
+    {
+        if (key == Key.Q && keyboard.Shift) { /* the press is synced: safe to change the game */ }
+    }
+}
+```
+
+- `OnKeyPressed` runs once per press: a held key's repeats run nothing, and `keyboard.IsDown(Key.W)` stays true until
+  its release, which is what movement reads. `Shift`, `Control` and `Alt` are what the player's last key event held, the
+  same on every machine, so a mouse reaction reads them too (`mouse.Player.Keyboard().Shift`). `IsHeldNow` is this
+  machine's own, inside `Local.For`.
+- The game sends no release for a key held when it loses the keyboard (Alt+Tab, a click outside its window, the Start
+  menu): each machine checks its own keyboard every quarter second and sends one, so that `OnKeyReleased` comes a
+  quarter second and the network delay late. Windows' switch of keyboard language (Alt+Shift) makes the game forget the
+  keys held, so they come up then too, though still held. A player who leaves holds no keys from then on, and no
+  reaction runs for them.
+- The game still does what it does with a key (a hotkey, the arrows moving the camera), and keys typed in the chat box
+  fire nothing. `Key` has .NET's names (`Key.Enter`, `Key.D0` for the 0 above the letters, `Key.LeftShift`); the
+  punctuation keys are numbered (`Key.Oem1`), as each keyboard layout puts other characters there.
 
 ## Colours and text
 
@@ -921,21 +978,12 @@ compared, and from later checks of the compiler Moonwell builds with.
 | Rule | Rejects | Write instead |
 |---|---|---|
 | MW0005 | `decimal` (`long`, `ulong`, `uint` and `double` are under Multiplayer) | `int` or `float` |
-| MW0017 | at the top of a `switch` expression arm: `> 10 =>`, `var n`, `not 1`, `(1 or 2) =>`; in any pattern: a name inside `{ X: int y }` or `{ X: var y }`, `.. var rest` | a `when` on a named variable (`int n when n > 10`), or an `if` |
-| MW0018 | outside a `switch` expression arm, a positional pattern on a class, a record, a nullable struct or `object` (`p is (1, 2)`), inside another pattern (`{ T: (1, _) }`) or with names (`(A: 1, B: 2)`) | `{ X: 1 }`; on a tuple or a struct, `t is (1, _)` works |
-| MW0020 | `var c = arr[0];` on a struct, then `c.X = 6`, `c.Inner.X = 6`, `c.Move()` or `Bump(ref c)` (it changes `arr[0]`) | make a new struct, or write `c` back with `arr[0] = c` |
-| MW0022 | `var (a, b) = (1, 2)`, `(x[0], x[1]) = (x[1], x[0])`, a tuple turned into text | `(int a, int b) = (1, 2)`, a temporary, its items |
-| MW0023 | a user-defined `++`, `--`, `operator true/false`; `static abstract`; a record deriving from a record; one class implementing `IG<int>` and `IG<string>`; `with` on an anonymous type | a method; an ordinary class |
-| MW0024 | `a[1..3]`, `s[1..]`, `list[^1]` (`array[^1]` is fine) | `Substring`, `Skip`/`Take`, `list[list.Count - 1]` |
-| MW0025 | a `ref` return, `ref int r = ref First(a)`, `ref int r = ref a[i]` | index the array each time |
-| MW0026 | `params List<int>`, `params` in a lambda | `params int[]` |
-| MW0027 | `s.Split("--")` (runs out of memory), `s.Split(new[] { ", " }, options)` (never ends), `StartsWith('a')`, `EndsWith('a')`, ignore-case `IndexOf`/`StartsWith`/`EndsWith`, `"abc".Reverse()` | split on a char, a string argument, lower-case both |
-| MW0028 | a `char` or an enum given to `string.Format`, `Console.WriteLine(object)`, `StringBuilder.Append(object)`, `string.Join`, `string.Concat` (shown as its number) | `.ToString()` |
-| MW0029 | `catch (NullReferenceException)`, `catch (IndexOutOfRangeException)`, `catch (DivideByZeroException)` around an integer `%` (an integer `/` by zero does throw it), a pattern variable in a `catch ... when` | `catch (Exception)`, test first |
-| MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, `Index`/`Range`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, `Random.Shared`, and more (the rule's description lists them); also `SetEquals` (of a `HashSet`, an `ISet` or an `IReadOnlySet`), `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary` (of an `OrderedMap` it works), which give wrong answers | `TryGetValue`, `"\n"`, a loop |
-| MW0031 | `checked(a + b)`, `checked { }` (an overflow is never detected) | test the range yourself |
-| MW0032 | `Enum.Parse`, `Enum.GetValues`/`GetNames`, `ToString("D")` on an enum, a `[Flags]` combination turned into text, `(Color)5 + "x"` | a `switch` on the value, `HasFlag` |
-| MW0035 | `(unit)data`, `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, `foreach (unit u in widgets)`, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a field or variable of the handle's type, or a class of your own that holds it |
+| MW0023 | `static abstract`; one class implementing `IG<int>` and `IG<string>` | a method; an ordinary class |
+| MW0025 | a `ref` return, `ref int r = ref First(a)`, a ref reassignment `r = ref other` | a ref local of the element itself (`ref int r = ref a[i]` works), or a new ref local |
+| MW0028 | a `char` or an enum given as an `object` to a text method other than `string`'s, `Console`'s and `StringBuilder`'s (a `TextWriter`'s `Write`), and a list of enums given to `string.Join` (shown as numbers) | `.ToString()` |
+| MW0030 | a library member the Lua core lacks: `StringComparer`, `Guid`, `Task`/`await`, LINQ `Append`/`Prepend`/`Zip`/`TakeLast`/`ToHashSet`/`Chunk`, `List.ConvertAll`, `StringBuilder.Replace`/`Insert`, `Dictionary.GetValueOrDefault`, `TryPeek`/`TryPop`, `Environment.NewLine`, `Random.Shared`, and more (the rule's description lists them); also `SetEquals` (of a `HashSet`, an `ISet` or an `IReadOnlySet`), `Math.DivRem`, `d.Remove(k, out v)` and `ToList()` of a `Dictionary` (of an `OrderedMap` it works), which give wrong answers | `TryGetValue`, `"\n"`, a loop |
+| MW0032 | `Enum.Parse(typeof(Color), text)` (gives the number) | `Enum.Parse<Color>(text)` |
+| MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
@@ -957,17 +1005,12 @@ The analyzer does not see these, so they build and then go wrong in the game:
 | a `where T : struct` or `unmanaged` method that copies its value (`var y = x;`, `foreach (var x in e) return x;`), given an `int`, a `float` or a `bool` | fails: "attempt to index a number value" | the method without the constraint |
 | a number format other than `F`, `D`, `X`, `E`, `G` and a width: `N0`, `P0`, `00`, `0.0`, `#,##0.00` | the number as it is (`{x:N0}` of 1234567 shows `1234567`, `{x:P0}` of 0.5 shows `0.5`); `D3` of a negative number has a digit too few | `F` and a width (`{x,6:F1}`), `$"{x * 100:F0}%"` |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
-| `break` or `continue` after a `using var` in a loop | the script does not load | `using (var d = ...) { }` around the loop's body |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
-| a positional pattern on a class or record (`case (1, 2):`, `(1, 2) =>`) given null | fails: `Deconstruct` is called before the null check | a property pattern (`{ X: 1, Y: 2 }`), or a test for null first |
-| a local function called from another `switch` section than the one it is declared in | fails: "attempt to call a nil value" | declare it before the `switch` |
-| a `const string` local longer than 27 characters that is not one literal (`const string L = Prefix + "...";`), read on its own | nil, which shows as empty | one literal, or a `const` field |
-| `byte` and `short` arithmetic | does not wrap | `int`, wrapped yourself |
 
 What works is most of the language: classes, structs, records, primary constructors, interfaces and default methods,
-generics with constraints, enums, delegates, events, `switch` statements, `is` patterns with constants, types,
-properties (`{ Inner.X: 9 }` too) and positions on a tuple or a struct, `??`, `?.`, collection expressions, `foreach`
-over every collection, `yield`, lambdas and closures, `ref`/`out`/`in` parameters, `lock`, string interpolation, `List`,
+generics with constraints, enums as text, delegates, events, `switch` statements and expressions, patterns of every
+kind, tuples, ranges and indexes, `??`, `?.`, collection expressions, `foreach` over every collection, `yield`, lambdas
+and closures, `ref`/`out`/`in` parameters and ref locals, `params`, `checked`, `lock`, string interpolation, `List`,
 `Dictionary`, `HashSet`, `Queue`, `Stack`, arrays and most of LINQ. `float` and `int` arithmetic is the game's, see
 MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF.Sqrt` is off by up to 2 parts in
 100,000 (Maths).

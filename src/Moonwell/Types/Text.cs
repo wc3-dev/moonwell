@@ -117,13 +117,13 @@ namespace Moonwell
 
             var result = new StringBuilder();
             var from = 0;
-            var at = Find(text, word, 0);
+            var at = text.IndexOf(word, StringComparison.Ordinal);
             while (at >= 0)
             {
                 result.Append(text.Substring(from, at - from));
                 result.Append(word.Colored(color));
                 from = at + word.Length;
-                at = Find(text, word, from);
+                at = text.IndexOf(word, from, StringComparison.Ordinal);
             }
 
             result.Append(text.Substring(from));
@@ -268,21 +268,6 @@ namespace Moonwell
             }
 
             return tokens;
-        }
-
-        // Where a word first appears from an index on, or -1, comparing character by character as .NET's ordinal search does.
-        // CoreSystem's IndexOf takes a StringComparison as a count of characters, so a search from an index stops short.
-        private static int Find(string text, string word, int from)
-        {
-            for (var i = from; i + word.Length <= text.Length; i++)
-            {
-                if (text.Substring(i, word.Length) == word)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
         }
 
         // How much of the sweep's colour a letter takes at its distance from the band's centre, in letters (behind it below 0).

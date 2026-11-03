@@ -439,6 +439,22 @@ namespace Moonwell.Testing
             Expect.Near(80.0f, orb.Y, "the item lies at the unit's y");
         }
 
+        /// <summary>Inside the drop reactions of a dying unit's item the game still counts the item as held (IsItemOwned, seen 11-02), so X and Y read the dead unit's place, where the item then lands.</summary>
+        public static void DyingUnitsItemReadsItsPlaceWhenDropped(FakeWorld world)
+        {
+            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new CarrierWatch());
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            var watch = (CarrierWatch)Item.Create(ObjectTypes.FourCC("I001"), 5.0f, 6.0f, Game.Instance);
+            unit.Give(watch);
+            unit.PlaceAt(300.0f, 400.0f);
+
+            unit.Kill();
+
+            Expect.True(watch.DropSeen, "OnDropped ran");
+            Expect.Near(300.0f, watch.XAtDrop, "x inside OnDropped");
+            Expect.Near(400.0f, watch.YAtDrop, "y inside OnDropped");
+        }
+
         /// <summary>A dying unit's items drop last slot first, as the game drops them (seen 11-02).</summary>
         public static void DyingUnitDropsLastSlotFirst(FakeWorld world)
         {

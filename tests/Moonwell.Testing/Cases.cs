@@ -27,6 +27,8 @@ namespace Moonwell.Testing
             AddAreas(list);
             AddAuditAreas(list);
             AddInput(list);
+            AddKeys(list);
+            AddOrders(list);
             AddLifecycle(list);
             AddScope(list);
             AddAuditDocs(list);
@@ -622,6 +624,68 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "audit.input.camera-named-before-start", Run = AuditInputCases.CameraNamedBeforeStart });
         }
 
+        /// <summary>Adds the order cases.</summary>
+        private static void AddOrders(List<Case> list)
+        {
+            list.Add(new Case { Name = "orders.constants", Run = OrderCases.Constants });
+            list.Add(new Case { Name = "orders.reactions-order", Run = OrderCases.ReactionsOrder });
+            list.Add(new Case { Name = "orders.place-and-target", Run = OrderCases.PlaceAndTarget });
+            list.Add(new Case { Name = "orders.inside-the-call", Run = OrderCases.InsideTheCall });
+            list.Add(new Case { Name = "orders.games-own", Run = OrderCases.GamesOwn });
+            list.Add(new Case { Name = "orders.only-when-wanted", Run = OrderCases.OnlyWhenWanted });
+            list.Add(new Case { Name = "orders.nested", Run = OrderCases.Nested });
+            list.Add(new Case { Name = "orders.last-three", Run = OrderCases.LastThree });
+            list.Add(new Case { Name = "orders.not-worth-it", Run = OrderCases.NotWorthIt });
+            list.Add(new Case { Name = "orders.reissue", Run = OrderCases.Reissue });
+            list.Add(new Case { Name = "orders.reissue-gone", Run = OrderCases.ReissueGone });
+            list.Add(new Case { Name = "orders.spell-done", Run = OrderCases.SpellDone });
+            list.Add(new Case { Name = "orders.after-stun", Run = OrderCases.AfterStun });
+            list.Add(new Case { Name = "orders.after-stun-other", Run = OrderCases.AfterStunOther });
+            list.Add(new Case { Name = "orders.current", Run = OrderCases.Current });
+            list.Add(new Case { Name = "orders.cancel-gives-back", Run = OrderCases.CancelGivesBack });
+            list.Add(new Case { Name = "orders.cancel-with-none", Run = OrderCases.CancelWithNone });
+            list.Add(new Case { Name = "orders.cancel-and-replace", Run = OrderCases.CancelAndReplace });
+            list.Add(new Case { Name = "orders.other-reactions-run", Run = OrderCases.OtherReactionsRun });
+            list.Add(new Case { Name = "orders.removed-in-reaction", Run = OrderCases.RemovedInReaction });
+            list.Add(new Case { Name = "orders.queued-cancel", Run = OrderCases.QueuedCancel });
+            list.Add(new Case { Name = "orders.stop-then-refuse", Run = OrderCases.StopThenRefuse });
+            list.Add(new Case { Name = "orders.build-then-refuse", Run = OrderCases.BuildThenRefuse });
+            list.Add(new Case { Name = "orders.instant-then-refuse", Run = OrderCases.InstantThenRefuse });
+            list.Add(new Case { Name = "orders.stop-in-reaction", Run = OrderCases.StopInReaction });
+            list.Add(new Case { Name = "orders.cancel-and-stop", Run = OrderCases.CancelAndStop });
+            list.Add(new Case { Name = "orders.target-given-back", Run = OrderCases.TargetGivenBack });
+            list.Add(new Case { Name = "orders.patrol-under-way", Run = OrderCases.PatrolUnderWay });
+        }
+
+        /// <summary>Adds the input package's keyboard cases.</summary>
+        private static void AddKeys(List<Case> list)
+        {
+            list.Add(new Case { Name = "input.keys.codes", Run = KeyCases.Codes });
+            list.Add(new Case { Name = "input.keys.down-and-up", Run = KeyCases.DownAndUp });
+            list.Add(new Case { Name = "input.keys.modifiers", Run = KeyCases.Modifiers });
+            list.Add(new Case { Name = "input.keys.held-now", Run = KeyCases.HeldNow });
+            list.Add(new Case { Name = "input.keys.unknown-code", Run = KeyCases.UnknownCode });
+            list.Add(new Case { Name = "input.keys.before-install", Run = KeyCases.BeforeInstall });
+            list.Add(new Case { Name = "input.keys.people-only", Run = KeyCases.PeopleOnly });
+            list.Add(new Case { Name = "input.keys.order", Run = KeyCases.Order });
+            list.Add(new Case { Name = "input.keys.once-per-press", Run = KeyCases.OncePerPress });
+            list.Add(new Case { Name = "input.keys.long-gap", Run = KeyCases.LongGap });
+            list.Add(new Case { Name = "input.keys.modifier-repeat", Run = KeyCases.ModifierRepeat });
+            list.Add(new Case { Name = "input.keys.changed-in-reaction", Run = KeyCases.ChangedInReaction });
+            list.Add(new Case { Name = "input.keys.throwing", Run = KeyCases.Throwing });
+            list.Add(new Case { Name = "input.keys.press-only", Run = KeyCases.PressOnly });
+            list.Add(new Case { Name = "input.keys.let-go-unseen", Run = KeyCases.LetGoUnseen });
+            list.Add(new Case { Name = "input.keys.still-held", Run = KeyCases.StillHeld });
+            list.Add(new Case { Name = "input.keys.down-again", Run = KeyCases.DownAgain });
+            list.Add(new Case { Name = "input.keys.repeat-after-send", Run = KeyCases.RepeatAfterSend });
+            list.Add(new Case { Name = "input.keys.press-after-release", Run = KeyCases.PressAfterRelease });
+            list.Add(new Case { Name = "input.keys.already-up", Run = KeyCases.AlreadyUp });
+            list.Add(new Case { Name = "input.keys.modifier-let-go", Run = KeyCases.ModifierLetGo });
+            list.Add(new Case { Name = "input.keys.left-player", Run = KeyCases.LeftPlayer });
+            list.Add(new Case { Name = "input.keys.only-sender", Run = KeyCases.OnlySender });
+            list.Add(new Case { Name = "input.keys.leaver-holds-nothing", Run = KeyCases.LeaverHoldsNothing });
+        }
+
         /// <summary>Adds the input package's cases.</summary>
         private static void AddInput(List<Case> list)
         {
@@ -1033,6 +1097,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "effects.scale", Run = EffectCases.Scale });
             list.Add(new Case { Name = "effects.animations", Run = EffectCases.Animations });
             list.Add(new Case { Name = "effects.animation-speed", Run = EffectCases.AnimationSpeed });
+            list.Add(new Case { Name = "effects.tint", Run = EffectCases.Tint });
             list.Add(new Case { Name = "effects.on-unit", Run = EffectCases.OnUnit });
             list.Add(new Case { Name = "effects.at-point-has-no-unit", Run = EffectCases.AtPointHasNoUnit });
             list.Add(new Case { Name = "effects.ends-with-unit", Run = EffectCases.EndsWithUnit });
@@ -1147,6 +1212,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.carrier-hero-dies", Run = ItemCases.CarrierHeroDies });
             list.Add(new Case { Name = "items.dying-unit-drops-before-its-death", Run = ItemCases.DyingUnitDropsBeforeItsDeath });
             list.Add(new Case { Name = "items.dying-unit-drops-last-slot-first", Run = ItemCases.DyingUnitDropsLastSlotFirst });
+            list.Add(new Case { Name = "items.dying-units-item-reads-its-place-when-dropped", Run = ItemCases.DyingUnitsItemReadsItsPlaceWhenDropped });
             list.Add(new Case { Name = "items.place-follows-the-carrier", Run = ItemCases.PlaceFollowsTheCarrier });
             list.Add(new Case { Name = "items.place-in-the-bag-follows-the-holder", Run = ItemCases.PlaceInTheBagFollowsTheHolder });
             list.Add(new Case { Name = "items.place-of-an-unseen-pick-up", Run = ItemCases.PlaceOfAnUnseenPickUpIsTheGames });
@@ -1335,6 +1401,20 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.switch-statement-patterns", Run = CompilerCases.SwitchStatementPatterns });
             list.Add(new Case { Name = "compiler.negated-negative-constant", Run = CompilerCases.NegatedNegativeConstant });
             list.Add(new Case { Name = "compiler.compound-conditional", Run = CompilerCases.CompoundConditional });
+            list.Add(new Case { Name = "compiler.forms.patterns", Run = FormCases.Patterns });
+            list.Add(new Case { Name = "compiler.forms.struct-copies", Run = FormCases.StructCopies });
+            list.Add(new Case { Name = "compiler.forms.tuples", Run = FormCases.Tuples });
+            list.Add(new Case { Name = "compiler.forms.declarations", Run = FormCases.Declarations });
+            list.Add(new Case { Name = "compiler.forms.ranges", Run = FormCases.Ranges });
+            list.Add(new Case { Name = "compiler.forms.ref-elements", Run = FormCases.RefElements });
+            list.Add(new Case { Name = "compiler.forms.params", Run = FormCases.Params });
+            list.Add(new Case { Name = "compiler.forms.strings", Run = FormCases.Strings });
+            list.Add(new Case { Name = "compiler.forms.boxed-text", Run = FormCases.BoxedText });
+            list.Add(new Case { Name = "compiler.forms.catches", Run = FormCases.Catches });
+            list.Add(new Case { Name = "compiler.forms.checked", Run = FormCases.Checked });
+            list.Add(new Case { Name = "compiler.forms.enum-text", Run = FormCases.EnumText });
+            list.Add(new Case { Name = "compiler.forms.handle-casts", Run = FormCases.HandleCasts });
+            list.Add(new Case { Name = "compiler.forms.silent", Run = FormCases.Silent });
             list.Add(new Case { Name = "flags.core-enum", Run = FlagCases.CoreEnum });
             list.Add(new Case { Name = "flags.ignored-enum", Run = FlagCases.IgnoredEnum });
             list.Add(new Case { Name = "flags.top-bits", Run = FlagCases.TopBits });

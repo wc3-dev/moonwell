@@ -37,6 +37,8 @@ namespace Moonwell
 
         private float speed = 1.0f;
 
+        private Color tint = Color.White;
+
         private bool playsDeath = true;
 
         private SpecialEffect(string model, float x, float y, Player? shownTo)
@@ -142,6 +144,23 @@ namespace Moonwell
 
                 scale = value;
                 Runtime.World.ScaleEffect(handle, value);
+            }
+        }
+
+        /// <summary>The colour the effect's model is tinted with, its alpha the model's opacity; white and opaque unless set.</summary>
+        [LocalSafe]
+        public Color Tint
+        {
+            get { return tint; }
+            set
+            {
+                if (handle == null || HasEnded)
+                {
+                    return;
+                }
+
+                tint = value;
+                Runtime.World.TintEffect(handle, value.R, value.G, value.B, value.A);
             }
         }
 

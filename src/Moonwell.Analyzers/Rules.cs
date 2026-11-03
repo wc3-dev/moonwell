@@ -130,11 +130,11 @@ public static class Rules
     public static readonly DiagnosticDescriptor HandleCheck = new(
         "MW0035",
         "Type check of a handle",
-        "'{0}' checks that a value is a {1}, which the game's Lua cannot: there a cast throws and is, as or a pattern gives false or null, even for a {1}; keep the handle in a field or variable of type {1}, or in a class of your own",
+        "'{0}' checks that a value is a {1}, which the game's Lua cannot: there is, as or a pattern gives false or null, even for a {1}; cast it, or keep the handle in a field or variable of type {1}",
         LuaCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "CSharp.lua checks a cast, is, as or a type pattern against the value's CSharp.lua class. A game handle is the game's own value (userdata), which has no such class, so a check for a handle type (unit, lightning, or a type parameter limited to one) never passes in the game: a cast throws an InvalidCastException, and is, as and patterns give false or null. A conversion to a handle type the value already is (unit to widget) checks nothing and works. The same checks hide in foreach (unit u in widgets), which casts each item, in OfType<unit>(), which tests each item with is, and in Cast<unit>() unless the items already are units. The Lua cases do not show it: there the fake world's handles are CSharp.lua objects.");
+        description: "CSharp.lua checks is, as or a type pattern against the value's CSharp.lua class. A game handle is the game's own value (userdata), which has no such class, so a check for a handle type (unit, lightning, or a type parameter limited to one) never passes in the game: is, as and patterns give false or null. A cast to a handle type checks nothing since the fork's 2.0.4-moonwell.15, also the one in foreach (unit u in widgets). The same checks hide in OfType<unit>(), which tests each item with is, and in Cast<unit>() unless the items already are units. The Lua cases do not show it: there the fake world's handles are CSharp.lua objects.");
 
     /// <summary>The rules of C# that CSharp.lua cannot compile.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck);
@@ -217,7 +217,7 @@ public static class Rules
         "Reactions",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The damage, input and physics packages' interfaces give every reaction an empty body, so the compiler accepts a class that only seems to write one. A package calls a reaction that is a public, non-static method of the interface's name and parameters: on a unit's class or its components (buffs too) for IDamageSource, IDamageTarget, IPushTarget and IMissileTarget, and on the game's and players' components for IDamageWatch and IMouseWatch. The rule rejects a method named like a reaction that is not one (not public, static, other parameters, an explicit implementation, or a reaction of an interface the class does not implement), a name renamed in Moonwell 0.3 (or IPushTarget's OnLanded, which is OnGrounded), a public method shaped like a reaction (a Hit, a Burst, an Impact or a Slam, or the parameter a physics reaction takes; a Mouse and a button) whose name is a letter off a reaction (one added, removed, changed, or two swapped) in a class with reactions, a reaction in a class that lacks its interface (an abstract class is left alone: its subclasses may list the interface), and an interface on a class the package never calls. For IMouseWatch an explicit implementation and a method with other parameters run in the game's Lua, which calls them by name, and not on .NET, so the two disagree. #pragma warning disable MW0036 keeps a helper's name.");
+        description: "The damage, input and physics packages' interfaces give every reaction an empty body, so the compiler accepts a class that only seems to write one. A package calls a reaction that is a public, non-static method of the interface's name and parameters: on a unit's class or its components (buffs too) for IDamageSource, IDamageTarget, IPushTarget and IMissileTarget, and on the game's and players' components for IDamageWatch, IMouseWatch and IKeyWatch. The rule rejects a method named like a reaction that is not one (not public, static, other parameters, an explicit implementation, or a reaction of an interface the class does not implement), a name renamed in Moonwell 0.3 (or IPushTarget's OnLanded, which is OnGrounded), a public method shaped like a reaction (a Hit, a Burst, an Impact or a Slam, or the parameter a physics reaction takes; a Mouse and a button, a Keyboard and a key) whose name is a letter off a reaction (one added, removed, changed, or two swapped) in a class with reactions, a reaction in a class that lacks its interface (an abstract class is left alone: its subclasses may list the interface), and an interface on a class the package never calls. For IMouseWatch and IKeyWatch an explicit implementation and a method with other parameters run in the game's Lua, which calls them by name, and not on .NET, so the two disagree. #pragma warning disable MW0036 keeps a helper's name.");
 
     public static readonly DiagnosticDescriptor HiddenReaction = new(
         "MW0041",
@@ -315,89 +315,35 @@ public static class Rules
     private static DiagnosticDescriptor Syntax(string id, string title, string message, string description) =>
         new(id, title, message, LuaCategory, DiagnosticSeverity.Error, isEnabledByDefault: true, description: description);
 
-    public static readonly DiagnosticDescriptor PatternStops = Syntax(
-        "MW0017",
-        "Pattern the compiler stops on",
-        "{0}: CSharp.lua stops on this pattern",
-        "CSharp.lua cannot compile these patterns: at the top of a switch expression arm a relational pattern (> 10), var, not and a pattern in parentheses; anywhere a var or a declaration pattern inside a property pattern ({ Y: int y }), and a list pattern's slice with a name ([var first, .. var rest]). Constants, or, a type's name (int =>, Box =>), a typed name (int i =>) with when, property patterns, not and parentheses inside them, and parentheses in an is test work. Write a when clause on a named variable, or an if.");
-
-    public static readonly DiagnosticDescriptor PatternWrong = Syntax(
-        "MW0018",
-        "Pattern that gives the wrong answer",
-        "{0}",
-        "A positional pattern outside a switch expression arm stops the compiler, or is false, on a value that can be null (a class, a record, a nullable struct, object: p is (1, 2)), inside another pattern ({ T: (1, _) }) and with names ((A: 1, B: 2)). On a tuple or a struct it works (t is (1, _), s is (var a, var b)). A positional pattern in a switch expression arm works, except on a class or record given null, whose Deconstruct runs before the null check (the analyzer does not see that). An extended property pattern ({ Inner.X: 9 }) works.");
-
-    public static readonly DiagnosticDescriptor StructCopy = Syntax(
-        "MW0020",
-        "Struct element changed through a copy",
-        "'{0}' is not a copy in the game's Lua: changing it changes the element of the array or collection; make a new struct, or write the copy back",
-        "CSharp.lua does not copy a struct read from an array, a List or a Dictionary element, so changing the copy changes the element: var c = arr[0]; then c.X = 6, c.Inner.X = 6, c.Move() (a method of the struct that sets a field) or Bump(ref c). A copy from a local, a field, a property or a parameter is right, and so is a copy stored back into the same element after its changes (arr[0] = c) with no other use of that element in between.");
-
-    public static readonly DiagnosticDescriptor TupleForm = Syntax(
-        "MW0022",
-        "Tuple form that fails in the game's Lua",
-        "{0}",
-        "var (a, b) = (1, 2) gives a the tuple; (a[0], a[1]) = (a[1], a[0]) is a Lua syntax error; and turning a tuple into text (Console.WriteLine(t), \"t=\" + t, $\"{t}\", t.ToString()) fails in ValueTuple.ToString. Write the types ((int a, int b) = (1, 2)), a method's result, or the items.");
-
     public static readonly DiagnosticDescriptor FormWrong = Syntax(
         "MW0023",
         "Declaration CSharp.lua writes wrong",
         "{0}",
-        "A user-defined ++, --, operator true or operator false; a static abstract or static virtual member of an interface; a record that derives from a record (its == fails and its ToString leaves out the base's members); a class that implements two constructions of one generic interface (IG<int> and IG<string>); and with on an anonymous type.");
-
-    public static readonly DiagnosticDescriptor RangeIndex = Syntax(
-        "MW0024",
-        "Range or index",
-        "'{0}' needs System.Range or System.Index, which the game's Lua does not have; use Substring, Skip/Take or an index like list[list.Count - 1]",
-        "a[1..3], s[1..3] and list[^1] are missing, as are the types Index and Range (MW0030). a[^1] on an array works.");
+        "A static abstract or static virtual member of an interface, and a class that implements two constructions of one generic interface (IG<int> and IG<string>). A user-defined ++, --, operator true and operator false, a record that derives from a record, and with on an anonymous type work since the fork's 2.0.4-moonwell.15.");
 
     public static readonly DiagnosticDescriptor RefForm = Syntax(
         "MW0025",
-        "ref return or ref local of an element",
+        "ref return, ref local of a call, or ref reassignment",
         "{0}",
-        "A ref return and ref int r = ref First(arr) give a copy, so writes through r are lost; ref int r = ref a[i] and ref to a Span element are Lua syntax errors. ref parameters, out, in and ref to a local or field work.");
-
-    public static readonly DiagnosticDescriptor ParamsForm = Syntax(
-        "MW0026",
-        "params that is not an array",
-        "{0}",
-        "params List<int> (C# 13) stops the compiler; params in a lambda is a Lua error. params int[] works.");
-
-    public static readonly DiagnosticDescriptor StringCall = Syntax(
-        "MW0027",
-        "String call the game's Lua gets wrong",
-        "'{0}' {1}",
-        "s.Split(\"--\") with a string separator runs out of memory, and s.Split(new[] { \", \" }, options) with string separators never ends; StartsWith(char) and EndsWith(char) fail; IndexOf, StartsWith and EndsWith with an ignore-case StringComparison give the wrong answer or an error; LINQ Reverse() on a string fails. Split(char), Contains(char), the Ordinal comparisons and Replace/Equals/Compare with a comparison work.");
+        "A ref return and ref int r = ref First(arr) give a copy, so writes through r are lost; a ref reassignment (r = ref other) writes other's value into what r named. ref parameters, out, in, and a ref local of a local, a field or an element of an array or Span work.");
 
     public static readonly DiagnosticDescriptor BoxedValue = Syntax(
         "MW0028",
         "char or enum given to an object parameter",
         "'{0}' {1}",
-        "A char or an enum given to a library method's object parameter (string.Format, string.Concat, string.Join, Console.WriteLine(object), StringBuilder.Append(object)), also through .NET 9's params ReadOnlySpan<object?> overloads, is shown as its number in the game's Lua. Joined with + or put in an interpolation hole it is right. Enums of Moonwell.Objects are MW0010.");
-
-    public static readonly DiagnosticDescriptor CatchForm = Syntax(
-        "MW0029",
-        "catch that does not catch",
-        "{0}",
-        "A null dereference, an index outside an array and % by zero are plain Lua errors there, not NullReferenceException, IndexOutOfRangeException or DivideByZeroException: catch (Exception) catches them. An integer / by zero does throw DivideByZeroException, so that catch is rejected only around an integer %. A pattern variable in a catch filter (when (e is X x)) is nil.");
+        "A char or an enum given to an object parameter of a library method that writes text, other than string's, Console's and StringBuilder's (which write it right since the fork's 2.0.4-moonwell.15), is shown as its number in the game's Lua; so is a list of enums given to string.Join. Joined with + or put in an interpolation hole it is right. Enums of Moonwell.Objects are MW0010.");
 
     public static readonly DiagnosticDescriptor LuaMember = Syntax(
         "MW0030",
         "Library member the game's Lua does not have",
         "'{0}' {1}",
-        "The Lua core behind CSharp.lua has no such type or member, or gives another answer than .NET; the call fails when it runs, not when the map is built. The list: System.Range/Index, StringComparer, Monitor, Lock, Thread, Task, BitArray, BitOperations, HashCode, Guid, FormattableString, async/await, pointers; LINQ Append, Prepend, SkipLast, TakeLast, ToLookup, Empty, Zip, Chunk, ToHashSet, DefaultIfEmpty; List.ConvertAll; Span.ToArray/Fill/Clear; StringBuilder.Replace/Insert/Equals/AppendJoin; Exception.Source; Delegate.Target/Method; char.IsAscii/ToUpperInvariant; Environment.NewLine; Enum/Nullable.GetUnderlyingType; string.Create/Normalize/Intern/EnumerateRunes; Queue.TryPeek; Stack.TryPop/TryPeek; Dictionary.GetValueOrDefault; Convert.ToHexString; int.RotateLeft; Array.Sort(keys, items); HashSet.SetEquals (also through ISet and IReadOnlySet); Math.DivRem; Dictionary.Remove(key, out v); ToList/ToArray of a Dictionary (of a collection of the map's or Moonwell's own, such as OrderedMap, they work); Random.Shared.");
-
-    public static readonly DiagnosticDescriptor CheckedForm = Syntax(
-        "MW0031",
-        "checked",
-        "checked never throws in the game's Lua; test the range yourself",
-        "checked(x + 1) and checked { } compile, but an overflow is never detected.");
+        "The Lua core behind CSharp.lua has no such type or member, or gives another answer than .NET; the call fails when it runs, not when the map is built. The list: StringComparer, Monitor, Lock, Thread, Task, BitArray, BitOperations, HashCode, Guid, FormattableString, async/await, pointers; LINQ Append, Prepend, SkipLast, TakeLast, ToLookup, Empty, Zip, Chunk, ToHashSet, DefaultIfEmpty; List.ConvertAll; Span.ToArray/Fill/Clear; StringBuilder.Replace/Insert/Equals/AppendJoin; Exception.Source; Delegate.Target/Method; char.IsAscii/ToUpperInvariant; Environment.NewLine; Enum/Nullable.GetUnderlyingType; string.Create/Normalize/Intern/EnumerateRunes; Queue.TryPeek; Stack.TryPop/TryPeek; Dictionary.GetValueOrDefault; Convert.ToHexString; int.RotateLeft; Array.Sort(keys, items); HashSet.SetEquals (also through ISet and IReadOnlySet); Math.DivRem; Dictionary.Remove(key, out v); ToList/ToArray of a Dictionary (of a collection of the map's or Moonwell's own, such as OrderedMap, they work); Random.Shared.");
 
     public static readonly DiagnosticDescriptor EnumText = Syntax(
         "MW0032",
         "Enum shown as text",
         "{0}",
-        "An enum that is a [Flags] combination prints its number; Enum.Parse gives the number; Enum.GetValues and GetNames come in no fixed order; ToString(\"D\") and ToString(\"X\") on an enum give the name; and (Color)5 + \" x\" with a constant stops the compiler. Comparing, |, &, switch, TryParse and the name of a single value work.");
+        "Enum.Parse(typeof(Color), text) gives an object, which in the game's Lua is the bare number. Enum.Parse<Color>, a [Flags] combination as text, the order of GetValues and GetNames, ToString(\"D\") and (\"X\"), and a constant cast joined to text work since the fork's 2.0.4-moonwell.15.");
 
     public static readonly DiagnosticDescriptor NotANumber = Syntax(
         "MW0042",
@@ -407,6 +353,5 @@ public static class Rules
 
     /// <summary>The rules for syntax and library CSharp.lua or its Lua core cannot do.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Syntaxes { get; } = ImmutableArray.Create(
-        PatternStops, PatternWrong, StructCopy, TupleForm, FormWrong, RangeIndex, RefForm,
-        ParamsForm, StringCall, BoxedValue, CatchForm, LuaMember, CheckedForm, EnumText, NotANumber);
+        FormWrong, RefForm, BoxedValue, LuaMember, EnumText, NotANumber);
 }

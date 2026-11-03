@@ -22,7 +22,7 @@
     <!-- <PackageReference Include="Moonwell.Physics" Version="MOONWELL_VERSION" /> -->
     <!-- For parts of the map that units enter and leave, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Areas" Version="MOONWELL_VERSION" /> -->
-    <!-- For each player's mouse and camera, take the comment off the next line. -->
+    <!-- For each player's mouse, keyboard and camera, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Input" Version="MOONWELL_VERSION" /> -->
   </ItemGroup>
 

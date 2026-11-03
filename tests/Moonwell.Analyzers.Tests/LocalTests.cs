@@ -357,6 +357,30 @@ public class LocalTests
     }
 
     [Fact]
+    public void keyboard_state_is_allowed_outside()
+    {
+        Assert.Empty(MapCode.Check("""
+            var down = p.Keyboard().IsDown(Key.W);
+            var shift = p.Keyboard().Shift && p.Keyboard().Control && p.Keyboard().Alt;
+            var who = p.Keyboard().Player;
+            """));
+    }
+
+    [Fact]
+    public void key_held_now_is_rejected_outside()
+    {
+        var found = MapCode.Check("""
+            var held = p.Keyboard().IsHeldNow(Key.W);
+            Local.For(p, () =>
+            {
+                var inside = p.Keyboard().IsHeldNow(Key.W);
+            });
+            """);
+
+        Assert.Equal(new[] { "MW0002: p.Keyboard().IsHeldNow(Key.W)" }, found);
+    }
+
+    [Fact]
     public void camera_read_is_rejected_outside()
     {
         var found = MapCode.Check("""
