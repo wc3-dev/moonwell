@@ -330,13 +330,43 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
-| `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string (`"move"`, `"attack"`) |
+| `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
+| `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
 
 `unit.AddAbility<Smite>().Level = 3` gives an ability and sets its level. A level the ability doesn't have is kept
 between 1 and its last, as the game does, and a level set on an ability the unit lacks does nothing; a development
 build reports both. Removing an ability ends a cast of it that is running, and adding it back clears its cooldown.
+
+`OnOrdered(Order order)` on a unit's class and its components, and `OnUnitOrdered(Order order)` on game and player
+components, hear each order a player or code gives (code's inside the call), before the unit carries it out:
+
+```csharp
+public sealed class Border : GameComponent
+{
+    public override void OnUnitOrdered(Order order)
+    {
+        // No walking past x 2000: a right-click is Orders.Smart.
+        if (order.Kind == OrderKind.Place && order.X > 2000f && (order.Name == Orders.Move || order.Name == Orders.Smart))
+        {
+            order.Cancel();
+        }
+    }
+}
+```
+
+- `order.Cancel()` refuses it: the unit carries on with the order it was carrying out, which Moonwell gives back, or stops
+  when it had none (after a stop or a build), and the order's other reactions still run and read `IsCancelled`. An order
+  given in a reaction replaces the one heard; a stop given there holds too, as Moonwell repeats it a moment later. A
+  refused Shift-queued order ends the queue, as the game can't skip one.
+- `order.Kind` is `None`, `Place` or `Target`; a target order's `X` and `Y` are its target's place, and one with
+  neither the unit's. The game's own orders run nothing: the stunned order, undefend, and the order a stun's end gives
+  back.
+- `LastOrder` keeps the last three orders worth giving again (moves, attacks, right-clicks, patrols, holding position,
+  spells; not stops, toggles or items), each reaching the one before with `Previous`, and `Reissue()` gives the last
+  again, after a knockback say; a spell already cast is not cast again. A map listens for orders only when its code
+  writes an order reaction or reads `LastOrder` or `Reissue`.
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|

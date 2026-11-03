@@ -28,6 +28,7 @@ namespace Moonwell.Testing
             AddAuditAreas(list);
             AddInput(list);
             AddKeys(list);
+            AddOrders(list);
             AddLifecycle(list);
             AddScope(list);
             AddAuditDocs(list);
@@ -582,6 +583,39 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "audit.input.watchers-kept", Run = AuditInputCases.WatchersKept });
             list.Add(new Case { Name = "audit.input.watchers-changed-in-dispatch", Run = AuditInputCases.WatchersChangedInDispatch });
             list.Add(new Case { Name = "audit.input.camera-named-before-start", Run = AuditInputCases.CameraNamedBeforeStart });
+        }
+
+        /// <summary>Adds the order cases.</summary>
+        private static void AddOrders(List<Case> list)
+        {
+            list.Add(new Case { Name = "orders.constants", Run = OrderCases.Constants });
+            list.Add(new Case { Name = "orders.reactions-order", Run = OrderCases.ReactionsOrder });
+            list.Add(new Case { Name = "orders.place-and-target", Run = OrderCases.PlaceAndTarget });
+            list.Add(new Case { Name = "orders.inside-the-call", Run = OrderCases.InsideTheCall });
+            list.Add(new Case { Name = "orders.games-own", Run = OrderCases.GamesOwn });
+            list.Add(new Case { Name = "orders.only-when-wanted", Run = OrderCases.OnlyWhenWanted });
+            list.Add(new Case { Name = "orders.nested", Run = OrderCases.Nested });
+            list.Add(new Case { Name = "orders.last-three", Run = OrderCases.LastThree });
+            list.Add(new Case { Name = "orders.not-worth-it", Run = OrderCases.NotWorthIt });
+            list.Add(new Case { Name = "orders.reissue", Run = OrderCases.Reissue });
+            list.Add(new Case { Name = "orders.reissue-gone", Run = OrderCases.ReissueGone });
+            list.Add(new Case { Name = "orders.spell-done", Run = OrderCases.SpellDone });
+            list.Add(new Case { Name = "orders.after-stun", Run = OrderCases.AfterStun });
+            list.Add(new Case { Name = "orders.after-stun-other", Run = OrderCases.AfterStunOther });
+            list.Add(new Case { Name = "orders.current", Run = OrderCases.Current });
+            list.Add(new Case { Name = "orders.cancel-gives-back", Run = OrderCases.CancelGivesBack });
+            list.Add(new Case { Name = "orders.cancel-with-none", Run = OrderCases.CancelWithNone });
+            list.Add(new Case { Name = "orders.cancel-and-replace", Run = OrderCases.CancelAndReplace });
+            list.Add(new Case { Name = "orders.other-reactions-run", Run = OrderCases.OtherReactionsRun });
+            list.Add(new Case { Name = "orders.removed-in-reaction", Run = OrderCases.RemovedInReaction });
+            list.Add(new Case { Name = "orders.queued-cancel", Run = OrderCases.QueuedCancel });
+            list.Add(new Case { Name = "orders.stop-then-refuse", Run = OrderCases.StopThenRefuse });
+            list.Add(new Case { Name = "orders.build-then-refuse", Run = OrderCases.BuildThenRefuse });
+            list.Add(new Case { Name = "orders.instant-then-refuse", Run = OrderCases.InstantThenRefuse });
+            list.Add(new Case { Name = "orders.stop-in-reaction", Run = OrderCases.StopInReaction });
+            list.Add(new Case { Name = "orders.cancel-and-stop", Run = OrderCases.CancelAndStop });
+            list.Add(new Case { Name = "orders.target-given-back", Run = OrderCases.TargetGivenBack });
+            list.Add(new Case { Name = "orders.patrol-under-way", Run = OrderCases.PatrolUnderWay });
         }
 
         /// <summary>Adds the input package's keyboard cases.</summary>

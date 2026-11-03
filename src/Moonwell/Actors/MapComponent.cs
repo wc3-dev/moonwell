@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered });
                 }
 
                 return mapHooks;
@@ -45,6 +45,11 @@ namespace Moonwell
         /// <param name="dyingUnit">The unit that died.</param>
         /// <param name="killerUnit">The unit whose damage killed it; null when no unit did: Kill() or Life set to 0 from code, timed life running out, or its own damage (seen 10-21).</param>
         public virtual void OnUnitDied(Unit dyingUnit, Unit? killerUnit)
+        {
+        }
+
+        /// <summary>Runs when a unit in the map is given an order, for the game's components, then the components of the unit's player, after the unit and its components heard it; <c>order.Cancel()</c> refuses it.</summary>
+        public virtual void OnUnitOrdered(Order order)
         {
         }
 

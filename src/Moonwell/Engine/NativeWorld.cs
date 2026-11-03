@@ -133,6 +133,11 @@ namespace Moonwell.Engine
                 case GameEvent.HeroSkill:
                     Register(Natives.EVENT_PLAYER_HERO_SKILL, HeroSkillAction);
                     break;
+                case GameEvent.Order:
+                    Register(Natives.EVENT_PLAYER_UNIT_ISSUED_ORDER, () => OrderAction(OrderKind.None));
+                    Register(Natives.EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, () => OrderAction(OrderKind.Place));
+                    Register(Natives.EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, () => OrderAction(OrderKind.Target));
+                    break;
             }
         }
 
@@ -1027,6 +1032,18 @@ namespace Moonwell.Engine
             return Natives.IssueTargetOrder(unit, order, target);
         }
 
+        /// <summary>The order a unit carries out now: GetUnitCurrentOrder.</summary>
+        public int CurrentOrderOf(unit unit)
+        {
+            return Natives.GetUnitCurrentOrder(unit);
+        }
+
+        /// <summary>The game's string of an order id: OrderId2String.</summary>
+        public string OrderName(int id)
+        {
+            return Natives.OrderId2String(id) ?? "";
+        }
+
         /// <summary>The number of inventory slots of a unit, from the game.</summary>
         public int InventorySizeOf(unit unit)
         {
@@ -1272,6 +1289,29 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Death", error);
+            }
+        }
+
+        /// <summary>Hands an order to Inbound, with its kind, as its event gave it: a target order's place is 0, 0, and the queue counts it and the orders queued after it.</summary>
+        private static void OrderAction(OrderKind kind)
+        {
+            try
+            {
+                var ordered = Natives.GetOrderedUnit();
+                Inbound.Ordered(
+                    ordered,
+                    Natives.GetIssuedOrderId(),
+                    kind,
+                    Natives.GetOrderPointX(),
+                    Natives.GetOrderPointY(),
+                    kind == OrderKind.Target ? Natives.GetOrderTargetUnit() : null,
+                    kind == OrderKind.Target ? Natives.GetOrderTargetItem() : null,
+                    kind == OrderKind.Target ? Natives.GetOrderTargetDestructable() : null,
+                    Natives.BlzGetUnitOrderCount(ordered));
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Ordered", error);
             }
         }
 

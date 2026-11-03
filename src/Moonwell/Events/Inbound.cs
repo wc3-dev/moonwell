@@ -3,7 +3,7 @@ using System;
 namespace Moonwell
 {
     /// <summary>The events the world delivers to the runtime, and what the runtime does with each.</summary>
-    internal static class Inbound
+    internal static partial class Inbound
     {
         /// <summary>The damage Unit.Damage is dealing, whose event keeps the damage it makes; null outside the call.</summary>
         private static Dealing? dealing;
@@ -297,6 +297,7 @@ namespace Moonwell
                 return;
             }
 
+            SpellOrderDone(by);
             var casterSlot = by.Owner.Slot;
             var running = by.ActiveCast;
             if (running != null)

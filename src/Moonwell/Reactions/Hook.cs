@@ -65,5 +65,11 @@ namespace Moonwell
 
         /// <summary>A hero's skill is taken away by RemoveAbility; no game event.</summary>
         internal const int OnLost = 1048576;
+
+        /// <summary>A unit is given an order.</summary>
+        internal const int OnOrdered = 2097152;
+
+        /// <summary>A unit in the map is given an order.</summary>
+        internal const int OnUnitOrdered = 4194304;
     }
 }

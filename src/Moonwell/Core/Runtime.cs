@@ -71,6 +71,13 @@ namespace Moonwell
             HeroTable.Install(experience);
         }
 
+        /// <summary>Listens for every unit's orders from the start, so that LastOrder and Reissue have them: the map's Main calls it, in the register step, when the map's code reads them.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void ListenForOrders()
+        {
+            Events.Need(Hook.OnUnitOrdered);
+        }
+
         /// <summary>Gives the day the map's dawn, dusk and hours; the map's Main calls it, before anything registers, when the map's gameplay constants change the standard ones.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void InstallDay(float dawn, float dusk, float hours)

@@ -174,6 +174,11 @@ namespace Moonwell.Build
                 installs.Add("global::Moonwell.Runtime.InstallHeroExperience(new int[] { " + string.Join(", ", table.Select(total => total.ToString(CultureInfo.InvariantCulture))) + " });");
             }
 
+            if (ReadsLastOrders(targetPath))
+            {
+                installs.Add("global::Moonwell.Runtime.ListenForOrders();");
+            }
+
             if (day != GameDay.Standard)
             {
                 installs.Add(day.Install());
@@ -297,6 +302,46 @@ namespace Moonwell.Build
             {
                 var name = metadata.GetString(metadata.GetMethodDefinition(handle).Name);
                 if (name == "OnMouseMoved" || name.EndsWith(".OnMouseMoved", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether a map's code reads a unit's last orders (a member reference to <c>Unit.LastOrder</c> or <c>Unit.Reissue</c>), which
+        /// only listening for every unit's orders from the start fills: order events come for every order of every unit, so a map
+        /// that reads none and writes no order reaction listens to none. A library of the map's own counts as its code.
+        /// </summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        internal static bool ReadsLastOrders(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsLastOrdersIn);
+        }
+
+        private static bool ReadsLastOrdersIn(string assemblyPath)
+        {
+            using var stream = File.OpenRead(assemblyPath);
+            using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
+            var metadata = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+            foreach (var handle in metadata.MemberReferences)
+            {
+                var member = metadata.GetMemberReference(handle);
+                if (member.Parent.Kind != System.Reflection.Metadata.HandleKind.TypeReference)
+                {
+                    continue;
+                }
+
+                var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
+                if (metadata.GetString(type.Name) != "Unit" || metadata.GetString(type.Namespace) != "Moonwell")
+                {
+                    continue;
+                }
+
+                var name = metadata.GetString(member.Name);
+                if (name == "get_LastOrder" || name == "Reissue")
                 {
                     return true;
                 }
