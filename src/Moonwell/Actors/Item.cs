@@ -247,7 +247,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The unit that carries the item: the last unit seen picking it up, as long as the game says it still has the item (UnitHasItem), so a drop the game fires when an item only moves between slots does not make it uncarried. Null for an item picked up before Moonwell saw it (Moonwell does not look through inventories), for an item in a bag or equipped (the 3.0 extended inventory: the unit does not count it as held), and once the item or the carrier is gone. Inside OnDropped it is still the unit, since the game takes the item out of the slot after the drop event, and it is null after the call. The exception is a drop after a unit was removed from the game (RemoveUnit): the game fires it after the call, when the unit no longer has the item, so Carrier is already null in OnDropped. After a hero dies it stays the hero, which keeps its items; a unit that is not a hero drops them when it dies, so it is no longer the carrier.</summary>
+        /// <summary>The unit that carries the item: the last unit seen picking it up, as long as the game says it still has the item (UnitHasItem), so a drop the game fires when an item only moves between slots does not make it uncarried. Null for an item picked up before Moonwell saw it (Moonwell does not look through inventories), for an item in a bag or equipped (the 3.0 extended inventory: the unit does not count it as held), and once the item or the carrier is gone. Inside OnDropped it is still the unit, since the game takes the item out of the slot after the drop event, and it is null after the call. The exception is a drop after a unit was removed from the game (RemoveUnit): the game fires it after the call, when the unit no longer has the item, so Carrier is already null in OnDropped. After a hero dies it stays the hero, which keeps its items; a footman drops them as it dies, so it is no longer the carrier, already in OnDropped.</summary>
         [LocalSafe]
         public Unit? Carrier
         {
@@ -341,7 +341,7 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Runs when the item is dropped by a unit, before the components see it. Inside the call that drops it (Drop, UnitRemoveItem) Carrier is still the unit; for the drops the game fires after RemoveUnit it is already null (see Unit.Drop). Not run when a unit that is not a hero dies and drops its items.</summary>
+        /// <summary>Runs when the item is dropped by a unit, before the components see it. Inside the call that drops it (Drop, UnitRemoveItem) Carrier is still the unit; for the drops the game fires after RemoveUnit it is already null (see Unit.Drop). Also run when a unit whose inventory drops its items at death dies (a footman's; a hero's keeps them), inside the kill and before the unit's OnDeath, with the unit already dead and Carrier already null.</summary>
         /// <param name="carrierUnit">The unit that dropped the item.</param>
         public virtual void OnDropped(Unit carrierUnit)
         {
