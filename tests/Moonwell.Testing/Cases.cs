@@ -1108,6 +1108,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.carrier-hero-dies", Run = ItemCases.CarrierHeroDies });
             list.Add(new Case { Name = "items.dying-unit-drops-before-its-death", Run = ItemCases.DyingUnitDropsBeforeItsDeath });
             list.Add(new Case { Name = "items.dying-unit-drops-last-slot-first", Run = ItemCases.DyingUnitDropsLastSlotFirst });
+            list.Add(new Case { Name = "items.dying-units-item-reads-its-place-when-dropped", Run = ItemCases.DyingUnitsItemReadsItsPlaceWhenDropped });
             list.Add(new Case { Name = "items.place-follows-the-carrier", Run = ItemCases.PlaceFollowsTheCarrier });
             list.Add(new Case { Name = "items.place-in-the-bag-follows-the-holder", Run = ItemCases.PlaceInTheBagFollowsTheHolder });
             list.Add(new Case { Name = "items.place-of-an-unseen-pick-up", Run = ItemCases.PlaceOfAnUnseenPickUpIsTheGames });
