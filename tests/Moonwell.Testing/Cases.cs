@@ -27,6 +27,7 @@ namespace Moonwell.Testing
             AddAreas(list);
             AddAuditAreas(list);
             AddInput(list);
+            AddFrames(list);
             AddKeys(list);
             AddOrders(list);
             AddLifecycle(list);
@@ -1108,6 +1109,39 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.inventory", Run = ItemCases.Inventory });
             list.Add(new Case { Name = "units.inventory-limits", Run = ItemCases.InventoryLimits });
             list.Add(new Case { Name = "units.inventory-gone", Run = ItemCases.InventoryGone });
+        }
+
+        /// <summary>Adds the frames package's cases.</summary>
+        private static void AddFrames(List<Case> list)
+        {
+            list.Add(new Case { Name = "frames.install", Run = FrameCases.Install });
+            list.Add(new Case { Name = "frames.add-makes", Run = FrameCases.AddMakes });
+            list.Add(new Case { Name = "frames.child-in-parent", Run = FrameCases.ChildInParent });
+            list.Add(new Case { Name = "frames.tree-before-add", Run = FrameCases.TreeBeforeAdd });
+            list.Add(new Case { Name = "frames.ended-parent", Run = FrameCases.EndedParent });
+            list.Add(new Case { Name = "frames.shown-to", Run = FrameCases.ShownTo });
+            list.Add(new Case { Name = "frames.child-shown-to", Run = FrameCases.ChildShownTo });
+            list.Add(new Case { Name = "frames.anchor-default", Run = FrameCases.AnchorDefault });
+            list.Add(new Case { Name = "frames.anchor-offset", Run = FrameCases.AnchorOffset });
+            list.Add(new Case { Name = "frames.attach", Run = FrameCases.Attach });
+            list.Add(new Case { Name = "frames.attach-later-sibling", Run = FrameCases.AttachLaterSibling });
+            list.Add(new Case { Name = "frames.fill", Run = FrameCases.Fill });
+            list.Add(new Case { Name = "frames.size-scale", Run = FrameCases.SizeScale });
+            list.Add(new Case { Name = "frames.visible-enabled-alpha-level", Run = FrameCases.VisibleEnabledAlphaLevel });
+            list.Add(new Case { Name = "frames.set-before-add", Run = FrameCases.SetBeforeAdd });
+            list.Add(new Case { Name = "frames.after-end", Run = FrameCases.AfterEnd });
+            list.Add(new Case { Name = "frames.label", Run = FrameCases.Label });
+            list.Add(new Case { Name = "frames.label-lets-clicks-through", Run = FrameCases.LabelLetsClicksThrough });
+            list.Add(new Case { Name = "frames.show-local", Run = FrameCases.ShowLocal });
+            list.Add(new Case { Name = "frames.image", Run = FrameCases.Image });
+            list.Add(new Case { Name = "frames.panel-look", Run = FrameCases.PanelLook });
+            list.Add(new Case { Name = "frames.panel-empty", Run = FrameCases.PanelEmpty });
+            list.Add(new Case { Name = "frames.end-hides", Run = FrameCases.EndHides });
+            list.Add(new Case { Name = "frames.pool-reuse", Run = FrameCases.PoolReuse });
+            list.Add(new Case { Name = "frames.pool-fits", Run = FrameCases.PoolFits });
+            list.Add(new Case { Name = "frames.made-keeps-no-children", Run = FrameCases.MadeKeepsNoChildren });
+            list.Add(new Case { Name = "frames.unknown-template", Run = FrameCases.UnknownTemplate });
+            list.Add(new Case { Name = "frames.screen-edges", Run = FrameCases.ScreenEdges });
         }
 
         /// <summary>Adds the special effect cases.</summary>

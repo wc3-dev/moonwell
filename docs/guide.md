@@ -879,6 +879,55 @@ public sealed class Dash : PlayerComponent, IKeyWatch // write only the reaction
   fire nothing. `Key` has .NET's names (`Key.Enter`, `Key.D0` for the 0 above the letters, `Key.LeftShift`); the
   punctuation keys are numbered (`Key.Oem1`), as each keyboard layout puts other characters there.
 
+## Frames
+
+Add the `Moonwell.Frames` package (the template's `.csproj` has the line, commented) for the map's own UI: panels, labels
+and images on each player's screen. A frame is made with `new`, set, and added: to the screen in a scope, which ends it
+when it ends, or to another frame, which ends it with itself.
+
+```csharp
+public sealed class Hud : GameComponent
+{
+    public override void OnGameStart()
+    {
+        var quest = Screen.Add(new Panel { Width = 0.24f, Height = 0.1f, Anchor = FramePoint.TopRight, Offset = new Vector2(-0.01f, -0.05f) }, this);
+        quest.Add(new Label { Text = "Find the sword", Anchor = FramePoint.Top, Offset = new Vector2(0f, -0.015f), Alignment = FramePoint.Top });
+        quest.Add(new Image { Texture = @"ReplaceableTextures\CommandButtons\BTNFootman.blp", Width = 0.03f, Height = 0.03f, Anchor = FramePoint.Left, Offset = new Vector2(0.015f, 0f) });
+        Screen.Add(new Label { Text = "Only you see this" }, this, shownTo: Player.One);
+    }
+}
+```
+
+- Two layers: `Screen.Add` puts a frame on the whole width of each player's window, beneath the game's HUD, whose art
+  draws over it; `Screen.AddOver` puts one over the HUD, within the screen's 4:3 middle, for what must cover it. No frame
+  a map makes can do both (seen). Places and sizes are in the game's units: the 4:3 middle is 0.8 wide and 0.6 high
+  from its bottom left, and the whole width runs from 0.4 - 0.3 * the window's width / height to 0.4 + 0.3 * it. Frames
+  placed by the screen's edges follow the window when it is resized, within half a second.
+- A frame sits by its `Anchor` on the same point of its parent, the screen or the frame it was added to, moved by
+  `Offset`; `Center` unless set. `Attach(point, other, otherPoint, x, y)` ties one of its points to another frame's in
+  place of the anchor, and a second `Attach` stretches it between the two; `Fill(other)` covers another frame. `Width`,
+  `Height`, `Scale`, `Visible`, `Alpha` (0 to 255) and `Level` (drawn above siblings of a lower one) do as named.
+- `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
+  `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
+  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
+  bigger, as the game takes no other font or height for it (seen). `Image` shows a `Texture`. A map's own panel
+  inherits `Panel` and keeps its frames in fields.
+- A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
+  Labels, images and empty panels let clicks through.
+- `shownTo: player` makes a frame for that player only: it is made on every machine, so the game's handles stay the same
+  everywhere, and shown on that player's. A frame added to it is shown to the same player. Seen in single player; with
+  two players it is not checked yet.
+- Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting, making and
+  adding are not. `label.ShowLocal(text)`, inside `Local.For`, shows a text on that machine only, as a number only one
+  player sees; `Text` keeps the shared text, and setting it shows that everywhere again.
+- `End()` hides a frame with the frames added to it. Nothing is destroyed, as destroying a frame can desync (a claim):
+  the next frame of its class and template is given the hidden one, with none of its old values. One sized on a
+  template goes only to a frame given a size.
+- A template the game does not have, as one from an `.fdf` whose TOC is not loaded, is reported in every build, and the
+  frame is made by its type instead.
+- `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: buttons, check boxes, sliders,
+  text boxes and their events, tooltips, rows and grids, the game's own HUD per player, and the map's `.fdf` templates.
+
 ## Colours and text
 
 `Color` is a colour as the game takes it, each part 0 to 255: `new Color(255, 204, 0)`, `Color.FromHtml("#ffcc00")`,
@@ -1017,6 +1066,7 @@ The analyzer does not see these, so they build and then go wrong in the game:
 | a number format other than `F`, `D`, `X`, `E`, `G` and a width: `N0`, `P0`, `00`, `0.0`, `#,##0.00` | the number as it is (`{x:N0}` of 1234567 shows `1234567`, `{x:P0}` of 0.5 shows `0.5`); `D3` of a negative number has a digit too few | `F` and a width (`{x,6:F1}`), `$"{x * 100:F0}%"` |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
+| an `abstract` property read by its bare name or through `this.` in the class that declares it (`abstract string Kind { get; }`, then `Kind` in that class) | nil: the class's own override is never asked | a `virtual` property with a body (`virtual string Kind => "";`) |
 
 What works is most of the language: classes, structs, records, primary constructors, interfaces and default methods,
 generics with constraints, enums as text, delegates, events, `switch` statements and expressions, patterns of every

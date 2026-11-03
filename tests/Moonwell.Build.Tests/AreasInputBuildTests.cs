@@ -68,6 +68,28 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void map_with_frames_installs_them()
+        {
+            var project = folders.TemporaryCopyOf("Frames");
+            Build(project);
+
+            var main = File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs"));
+            Assert.Contains("global::Moonwell.FramesSystem.Install();", main);
+            var script = File.ReadAllText(Path.Combine(project, "build", "Frames", "war3map.lua"));
+            Assert.Contains("FramesSystem.Install", script);
+        }
+
+        [Fact]
+        public void map_without_frames_carries_none()
+        {
+            var project = folders.TemporaryCopyOf("Input");
+            Build(project);
+
+            Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
+            Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "Input", "war3map.lua")));
+        }
+
+        [Fact]
         public void map_with_mouse_listens()
         {
             var project = folders.TemporaryCopyOf("Input");
