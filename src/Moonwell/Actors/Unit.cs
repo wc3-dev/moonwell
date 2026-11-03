@@ -1097,6 +1097,12 @@ namespace Moonwell
             where T : Buff
         {
             Dev.Check(buff.Duration >= 0.0f && buff.Tick >= 0.0f, "Unit.Apply: Duration and Tick must be 0 or more");
+            if (SpellBuffs.Watches(ObjectTypes.BuffIdOf(buff)))
+            {
+                Errors.Refuse("Unit.Apply", Names.NameOf(buff) + " is a buff a spell lists, which the game puts on and Moonwell watches for (decision 154), so it is not applied");
+                return buff;
+            }
+
             if (heldBy != null && (heldBy.HasEnded || heldBy.childrenEnded))
             {
                 // Add reports it and ends the given buff, adding nothing.

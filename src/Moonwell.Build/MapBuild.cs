@@ -108,7 +108,8 @@ namespace Moonwell.Build
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
             EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log), Loading(targetPath));
-            RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids);
+            var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects));
+            RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
             StageWith(project, () => Stage.Write(project, map, declarations.Objects, ids, declarations.StandardClassIds, standard, log));
         }

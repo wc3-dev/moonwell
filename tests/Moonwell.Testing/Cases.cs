@@ -36,8 +36,39 @@ namespace Moonwell.Testing
             AddDay(list);
             AddText(list);
             AddHolds(list);
+            AddSpellBuffs(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the buffs the game puts on: the fake world's game buffs, then the watch.</summary>
+        private static void AddSpellBuffs(List<Case> list)
+        {
+            list.Add(new Case { Name = "fake.game-buff-reads", Run = SpellBuffCases.FakeGameBuffReads });
+            list.Add(new Case { Name = "fake.spell-hit-order", Run = SpellBuffCases.FakeSpellHitOrder });
+            list.Add(new Case { Name = "fake.buff-off-at-death", Run = SpellBuffCases.FakeBuffOffAtDeath });
+            list.Add(new Case { Name = "fake.aura", Run = SpellBuffCases.FakeAura });
+            list.Add(new Case { Name = "spellbuff.after-hit", Run = SpellBuffCases.AfterHit });
+            list.Add(new Case { Name = "spellbuff.hit-sees-it", Run = SpellBuffCases.HitSeesIt });
+            list.Add(new Case { Name = "spellbuff.no-hit-cast", Run = SpellBuffCases.NoHitCast });
+            list.Add(new Case { Name = "spellbuff.area", Run = SpellBuffCases.Area });
+            list.Add(new Case { Name = "spellbuff.aura", Run = SpellBuffCases.Aura });
+            list.Add(new Case { Name = "spellbuff.given-again", Run = SpellBuffCases.GivenAgain });
+            list.Add(new Case { Name = "spellbuff.ends-with-game", Run = SpellBuffCases.EndsWithGame });
+            list.Add(new Case { Name = "spellbuff.sweep", Run = SpellBuffCases.Sweep });
+            list.Add(new Case { Name = "spellbuff.removed-from-code", Run = SpellBuffCases.RemovedFromCode });
+            list.Add(new Case { Name = "spellbuff.death", Run = SpellBuffCases.Death });
+            list.Add(new Case { Name = "spellbuff.unit-removed", Run = SpellBuffCases.UnitRemoved });
+            list.Add(new Case { Name = "spellbuff.apply-refused", Run = SpellBuffCases.ApplyRefused });
+            list.Add(new Case { Name = "spellbuff.plain-attack-gives-nothing", Run = SpellBuffCases.PlainAttackGivesNothing });
+            list.Add(new Case { Name = "spellbuff.onapply-damage-does-not-loop", Run = SpellBuffCases.OnApplyDamageDoesNotLoop });
+            list.Add(new Case { Name = "spellbuff.dead-holder-gives-nothing", Run = SpellBuffCases.DeadHolderGivesNothing });
+            list.Add(new Case { Name = "spellbuff.self-buff", Run = SpellBuffCases.SelfBuff });
+            list.Add(new Case { Name = "spellbuff.stray-target-area", Run = SpellBuffCases.StrayTargetArea });
+            list.Add(new Case { Name = "spellbuff.step-survives-ends", Run = SpellBuffCases.StepSurvivesEnds });
+            list.Add(new Case { Name = "spellbuff.equal-auras-keep-source", Run = SpellBuffCases.EqualAurasKeepSource });
+            list.Add(new Case { Name = "spellbuff.hit-and-cast-once", Run = SpellBuffCases.HitAndCastOnce });
+            list.Add(new Case { Name = "spellbuff.sweep-finds-holders-first", Run = SpellBuffCases.SweepFindsHoldersFirst });
         }
 
         /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>

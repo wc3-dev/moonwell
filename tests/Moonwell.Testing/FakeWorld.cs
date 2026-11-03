@@ -324,6 +324,7 @@ namespace Moonwell.Testing
         public static FakeWorld Install()
         {
             var world = new FakeWorld();
+            world.GameBuffs = new FakeGameBuffs(world);
             Runtime.Reset(world);
             Interactions.ResetSettings();
             Physics.ResetSettings();
@@ -493,10 +494,12 @@ namespace Moonwell.Testing
 
                 Time = next;
                 WakeAt = null;
+                GameBuffs.Step(Time);
                 Runtime.Wake();
             }
 
             Time = target;
+            GameBuffs.Step(Time);
         }
 
         /// <summary>
@@ -548,6 +551,34 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>The game buffs, spell hits and auras of this world (<see cref="FakeGameBuffs"/>); Install makes it.</summary>
+        public FakeGameBuffs GameBuffs = null!;
+
+        /// <summary>The area of each ability, for every level, by its id; 0 when not set.</summary>
+        public Dictionary<int, float> AbilityAreas = new Dictionary<int, float>();
+
+        /// <summary>The area of an ability at a unit's level of it, as set in <see cref="AbilityAreas"/>.</summary>
+        public float AbilityArea(unit u, int abilityId)
+        {
+            return AbilityAreas.TryGetValue(abilityId, out var area) ? area : 0.0f;
+        }
+
+        /// <summary>The units in the world within a radius of a place, centre to centre, alive or dead, in the order made.</summary>
+        public List<unit> UnitsInRange(float x, float y, float radius)
+        {
+            var found = new List<unit>();
+            foreach (var entry in unitTypes)
+            {
+                var dx = UnitX(entry.Key) - x;
+                var dy = UnitY(entry.Key) - y;
+                if (entry.Value != 0 && dx * dx + dy * dy <= radius * radius)
+                {
+                    found.Add(entry.Key);
+                }
+            }
+
+            return found;
+        }
         /// <summary>The game seconds since the world was made; in a development build, Moonwell's time on its clock (Runtime.Clock), as NativeWorld's.</summary>
         public float Now()
         {
@@ -1760,6 +1791,7 @@ namespace Moonwell.Testing
 
             lives[unit] = 0.0f;
             DropAll(unit);
+            GameBuffs.TakeAll(unit);
             if (Listening.Contains(GameEvent.Death))
             {
                 Inbound.Died(unit, killer);

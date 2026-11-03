@@ -28,6 +28,28 @@ namespace Moonwell
         /// <summary>For a strongest buff, the apply it runs at.</summary>
         internal Hold? current;
 
+        /// <summary>The game buff a spell, an aura or an attack put on, which this object stands for (decision 152); 0 for a buff put on by Apply.</summary>
+        internal int gameBuff;
+
+        /// <summary>Whether a game aura gave it last, so the watch follows the strongest holder in reach.</summary>
+        internal bool byAura;
+
+        /// <summary>The caster whose cast gave it again last, and when, so that cast's own hit does not give it a second time.</summary>
+        internal Unit? castBy;
+
+        /// <summary>When castBy gave it again.</summary>
+        internal float castAt;
+
+        /// <summary>The source that gave it last, and when, so one source gives it once in an instant (a spell's hit of 0 and its cast).</summary>
+        internal Unit? givenBy;
+
+        /// <summary>When givenBy gave it; -1 before.</summary>
+        internal float givenAt = -1.0f;
+
+        /// <summary>The level of the spell, attack or aura that put this buff on (decision 153): of the matched cast or hit's ability, or the strongest aura holder's; 0 when nothing matched, and for a buff put on by Apply.</summary>
+        [LocalSafe]
+        public int Level { get; internal set; }
+
         /// <summary>Whether the unit's death ends the buff, after the buff has seen it; true unless the class keeps it through death.</summary>
         [LocalSafe]
         public bool EndsOnDeath { get; protected set; } = true;
@@ -120,6 +142,30 @@ namespace Moonwell
                 StartExpiry();
             }
 
+            CallApply();
+        }
+
+        /// <summary>Starts a buff the watch made for a game buff (decision 152): its ticks, and listening for deaths when a death ends it, then OnApply. The game's buff shows its icon and decides when it ends, so it has no carrier and no expiry.</summary>
+        internal void BeginSpell()
+        {
+            if (EndsOnDeath)
+            {
+                Events.Need(Hook.OnDeath);
+            }
+
+            if (Tick > 0.0f)
+            {
+                OwnEvery(Tick, () => CallTick());
+            }
+
+            CallApply();
+        }
+
+        /// <summary>Gives a spell's buff again (decision 153): the new source and level, and OnApply again.</summary>
+        internal void GiveAgain(Unit? source, int level)
+        {
+            Source = source;
+            Level = level;
             CallApply();
         }
 

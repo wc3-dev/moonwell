@@ -19,8 +19,9 @@ namespace Moonwell.Build
         /// <param name="declared">The declared objects.</param>
         /// <param name="ids">The object id of each declared class, and of each buff's carrier as <c>&lt;class&gt;#carrier</c>.</param>
         /// <returns>The path of the written file.</returns>
+        /// <param name="watch">The registrations of the buffs the runtime watches for (<see cref="BuffWatch"/>), written after the rest; none when null.</param>
         /// <exception cref="BuildException">A declared class or a buff's carrier has no id.</exception>
-        public static string Write(MapProject project, IReadOnlyList<UsedClass> used, IReadOnlyList<DeclaredObject> declared, IReadOnlyDictionary<string, string> ids)
+        public static string Write(MapProject project, IReadOnlyList<UsedClass> used, IReadOnlyList<DeclaredObject> declared, IReadOnlyDictionary<string, string> ids, IReadOnlyList<string>? watch = null)
         {
             var objects = declared.ToDictionary(one => one.ClassName, StringComparer.Ordinal);
             var replaced = new HashSet<string>(StringComparer.Ordinal);
@@ -75,7 +76,7 @@ namespace Moonwell.Build
             text.Append("        /// <summary>Runs first when the runtime starts, before the map's components are added.</summary>\n");
             text.Append("        public static void Register()\n");
             text.Append("        {\n");
-            foreach (var line in idLines.Concat(makerLines))
+            foreach (var line in idLines.Concat(makerLines).Concat(watch ?? Array.Empty<string>()))
             {
                 text.Append("            ").Append(line).Append('\n');
             }

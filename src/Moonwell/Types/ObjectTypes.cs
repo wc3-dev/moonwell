@@ -172,6 +172,21 @@ namespace Moonwell
             carriers[key] = carrierId;
         }
 
+        /// <summary>Registers a buff class that an ability lists, by its game buff, so that a buff the game puts on runs its code (decision 152).</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void WatchedBuff<T>(int buffId, Func<Buff> make)
+            where T : Buff
+        {
+            SpellBuffs.Watch(buffId, make);
+        }
+
+        /// <summary>Registers an ability that lists a watched buff, and whether it is an aura.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void ListsBuff(int abilityId, int buffId, bool aura)
+        {
+            SpellBuffs.List(abilityId, buffId, aura);
+        }
+
         /// <summary>The object id a class is registered with; throws when the class is not registered.</summary>
         [LocalSafe]
         public static int IdOf<T>()
@@ -462,6 +477,7 @@ namespace Moonwell
             ids = new Dictionary<Type, int>();
             buffIds = new Dictionary<object, int>();
             carriers = new Dictionary<object, int>();
+            SpellBuffs.Reset();
             unitDefaults = null;
             itemDefaults = null;
             classDefaults = null;

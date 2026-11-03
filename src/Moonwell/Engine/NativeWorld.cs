@@ -1080,6 +1080,37 @@ namespace Moonwell.Engine
             return Natives.IsItemOwned(item);
         }
 
+        /// <summary>The group UnitsInRange enumerates into, made on first use and kept.</summary>
+        private group? rangeGroup;
+
+        /// <summary>The units within a radius of a place: GroupEnumUnitsInRange.</summary>
+        public List<unit> UnitsInRange(float x, float y, float radius)
+        {
+            rangeGroup ??= Natives.CreateGroup();
+            Natives.GroupEnumUnitsInRange(rangeGroup, x, y, radius, null);
+            var units = new List<unit>();
+            var count = Natives.BlzGroupGetSize(rangeGroup);
+            for (var i = 0; i < count; i++)
+            {
+                units.Add(Natives.BlzGroupUnitAt(rangeGroup, i));
+            }
+
+            Natives.GroupClear(rangeGroup);
+            return units;
+        }
+
+        /// <summary>The area of an ability a unit has, at its level: BlzGetAbilityRealLevelField of ABILITY_RLF_AREA_OF_EFFECT; 0 when it has none.</summary>
+        public float AbilityArea(unit unit, int abilityId)
+        {
+            var level = Natives.GetUnitAbilityLevel(unit, abilityId);
+            if (level <= 0)
+            {
+                return 0.0f;
+            }
+
+            return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_AREA_OF_EFFECT, level - 1);
+        }
+
         /// <summary>Whether an item is in a unit's 3.0 bag: IsItemInBag.</summary>
         public bool IsInBag(item item)
         {
