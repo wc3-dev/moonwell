@@ -66,6 +66,11 @@ namespace Moonwell.Engine
             deathTrigger = Natives.CreateTrigger();
             Natives.TriggerAddAction(deathTrigger, DestructableDeathAction);
 
+            // First of anything that hears a saved game load, so no code meets the string type the load left (game facts, 11-03).
+            var loaded = Natives.CreateTrigger();
+            Natives.TriggerRegisterGameEvent(loaded, Natives.EVENT_GAME_LOADED);
+            Natives.TriggerAddAction(loaded, () => LoadRepair.Strings());
+
             // Every machine runs the check, so a line logged inside Local.For starts no timer of one machine's.
             Natives.TimerStart(Natives.CreateTimer(), LogCheck, true, LogCheckAction);
         }

@@ -39,6 +39,7 @@ namespace Moonwell.Testing
             AddHolds(list);
             AddSpellBuffs(list);
             AddDummies(list);
+            AddLoad(list);
             AddDebug(list);
             return list;
         }
@@ -78,6 +79,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dummy.owner-change", Run = DummyCases.OwnerChange });
             list.Add(new Case { Name = "dummy.never-removed", Run = DummyCases.NeverRemoved });
             list.Add(new Case { Name = "dummy.package-unknown-target", Run = DummyCases.PackageUnknownTarget });
+        }
+
+        private static void AddLoad(List<Case> list)
+        {
+            list.Add(new Case { Name = "load.undone-links-break-strings", Run = LoadCases.UndoneLinksBreakStrings });
+            list.Add(new Case { Name = "load.relink-mends-strings", Run = LoadCases.RelinkMendsStrings });
+            list.Add(new Case { Name = "load.relink-twice", Run = LoadCases.RelinkTwice });
         }
 
         /// <summary>Adds the cases for the buffs the game puts on: the fake world's game buffs, then the watch.</summary>
