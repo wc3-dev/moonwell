@@ -189,6 +189,109 @@ namespace Moonwell.Testing
             Expect.Equal(0, second.ChildCount, "the second holder holds nothing");
         }
 
+        /// <summary>Checks that the log is exactly the expected lines, in order.</summary>
+        private static void ExpectLog(string[] expected, string what)
+        {
+            Expect.Equal(expected.Length, TestLog.Lines.Count, what + ": line count");
+            for (var i = 0; i < expected.Length && i < TestLog.Lines.Count; i++)
+            {
+                Expect.Equal(expected[i], TestLog.Lines[i], what + ": line " + i);
+            }
+        }
+
+        /// <summary>A strongest buff takes a stronger apply at once: one buff, OnApply run again, and the stronger one's strength and source.</summary>
+        public static void StrongestUp(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var weakSource = NewUnit(world);
+            var strongSource = NewUnit(world);
+            TestLog.Lines.Clear();
+            var buff = unit.Apply(new Strong(1f), weakSource, new TestScope("weak", new List<string>()));
+            var again = unit.Apply(new Strong(3f), strongSource, new TestScope("strong", new List<string>()));
+            Expect.Same(buff, again, "one buff");
+            ExpectLog(new string[] { "apply 1", "apply 3" }, "the log");
+            Expect.True(buff.Strength == 3f, "the strength reads 3");
+            Expect.Same(strongSource, buff.Source, "the source is the stronger one's");
+        }
+
+        /// <summary>When the stronger holder ends, the weaker one's strength takes over with no gap.</summary>
+        public static void StrongestDown(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var weakSource = NewUnit(world);
+            var strong = new TestScope("strong", new List<string>());
+            var buff = unit.Apply(new Strong(1f), weakSource, new TestScope("weak", new List<string>()));
+            unit.Apply(new Strong(3f), NewUnit(world), strong);
+            TestLog.Lines.Clear();
+            strong.End();
+            ExpectLog(new string[] { "apply 1" }, "the log after the stronger left");
+            Expect.True(buff.Strength == 1f, "the strength reads 1");
+            Expect.True(!buff.HasEnded, "no gap: the buff is still on");
+            Expect.Same(weakSource, buff.Source, "the source is the weaker one's");
+        }
+
+        /// <summary>An apply as strong as the one running changes nothing: no OnApply.</summary>
+        public static void StrongestTie(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var firstSource = NewUnit(world);
+            var buff = unit.Apply(new Strong(1f), firstSource, new TestScope("first", new List<string>()));
+            TestLog.Lines.Clear();
+            unit.Apply(new Strong(1f), NewUnit(world), new TestScope("second", new List<string>()));
+            Expect.Equal(0, TestLog.Lines.Count, "no OnApply for a tie");
+            Expect.Same(firstSource, buff.Source, "the running one's source stays");
+        }
+
+        /// <summary>A strongest buff ends when its last holder ends, with OnRemoved once.</summary>
+        public static void StrongestLast(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var first = new TestScope("first", new List<string>());
+            var second = new TestScope("second", new List<string>());
+            var buff = unit.Apply(new Strong(1f), heldBy: first);
+            unit.Apply(new Strong(3f), heldBy: second);
+            TestLog.Lines.Clear();
+            second.End();
+            first.End();
+            Expect.True(buff.HasEnded, "it ended with its last holder");
+            ExpectLog(new string[] { "apply 1", "strong removed" }, "the log");
+        }
+
+        /// <summary>Timed applies: the stronger runs until its own end, then the weaker until its end, which ends the buff; Remaining reads the last end.</summary>
+        public static void StrongestTimed(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            TestLog.Lines.Clear();
+            var buff = unit.Apply(new Strong(3f, 2f));
+            unit.Apply(new Strong(1f, 5f));
+            Expect.True(buff.Strength == 3f, "the strength reads 3 at first");
+            world.Advance(1.0f);
+            Expect.True(buff.Remaining > 3.9f && buff.Remaining < 4.1f, "Remaining reads the last end: " + buff.Remaining);
+            world.Advance(1.1f);
+            Expect.True(buff.Strength == 1f, "the strength reads 1 after the stronger ran out");
+            Expect.True(!buff.HasEnded, "no gap");
+            world.Advance(3.0f);
+            Expect.True(buff.HasEnded, "it ended at the last apply's end");
+            ExpectLog(new string[] { "apply 3", "apply 1", "strong expire", "strong removed" }, "the log");
+        }
+
+        /// <summary>A weaker apply that comes just before the strongest one's holder ends, in one instant, takes over with no gap and one OnApply.</summary>
+        public static void StrongestHandover(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var strong = new TestScope("strong", new List<string>());
+            var buff = unit.Apply(new Strong(3f), heldBy: strong);
+            TestLog.Lines.Clear();
+            Game.Instance.After(0.5f, () =>
+            {
+                unit.Apply(new Strong(2f), heldBy: new TestScope("next", new List<string>()));
+                strong.End();
+            });
+            world.Advance(0.6f);
+            Expect.True(!buff.HasEnded, "no gap");
+            ExpectLog(new string[] { "apply 2" }, "the log");
+        }
+
 #if DEBUG
         /// <summary>A component added with a holder that has ended is reported in a development build.</summary>
         public static void EndedHolderReported(FakeWorld world)

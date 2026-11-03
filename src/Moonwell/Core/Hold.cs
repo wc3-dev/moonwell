@@ -12,6 +12,15 @@ namespace Moonwell
         /// <summary>The component held.</summary>
         internal Component Held;
 
+        /// <summary>For an apply of a strongest buff, the strength it brings.</summary>
+        internal float Strength;
+
+        /// <summary>For an apply of a strongest buff, the unit that applied it.</summary>
+        internal Unit? Source;
+
+        /// <summary>For an apply of a strongest buff with a duration, the timer that ends this apply.</summary>
+        internal Timer? Expiry;
+
         /// <summary>Lets go of the component, which ends when this was its last hold.</summary>
         internal override void Finish()
         {

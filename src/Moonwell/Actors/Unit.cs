@@ -1014,8 +1014,20 @@ namespace Moonwell
             where T : Buff
         {
             Dev.Check(buff.Duration >= 0.0f && buff.Tick >= 0.0f, "Unit.Apply: Duration and Tick must be 0 or more");
+            if (heldBy != null && (heldBy.HasEnded || heldBy.childrenEnded))
+            {
+                // Add reports it and ends the given buff, adding nothing.
+                return Add(buff, heldBy);
+            }
+
             var existing = StackedWith(buff, source);
-            if (existing != null && (heldBy == null || !(heldBy.HasEnded || heldBy.childrenEnded)))
+            if (existing != null && existing.Stacking == Stacking.Strongest)
+            {
+                existing.Offer(buff, source, heldBy);
+                return (T)existing;
+            }
+
+            if (existing != null)
             {
                 existing.Refresh(buff, source);
                 if (heldBy == null)
@@ -1037,6 +1049,18 @@ namespace Moonwell
             }
 
             buff.Source = source;
+            if (buff.Stacking == Stacking.Strongest)
+            {
+                // A strongest buff keeps each apply's holder with its strength, which Begin takes.
+                Add(buff);
+                if (!buff.HasEnded)
+                {
+                    buff.Begin(heldBy);
+                }
+
+                return buff;
+            }
+
             buff.unheld = heldBy == null;
             Add(buff, heldBy);
             if (!buff.HasEnded)
@@ -1047,7 +1071,7 @@ namespace Moonwell
             return buff;
         }
 
-        /// <summary>The buff on the unit that a new apply stacks with, or null: the first of its class for Refresh, the first of its class from the same source for PerSource, none for Separate.</summary>
+        /// <summary>The buff on the unit that a new apply stacks with, or null: the first of its class for Refresh and Strongest, the first of its class from the same source for PerSource, none for Separate.</summary>
         private Buff? StackedWith(Buff buff, Unit? source)
         {
             if (buff.Stacking == Stacking.Separate)
@@ -1065,7 +1089,7 @@ namespace Moonwell
                     continue;
                 }
 
-                if (buff.Stacking == Stacking.Refresh || other.Source == source)
+                if (buff.Stacking == Stacking.Refresh || buff.Stacking == Stacking.Strongest || other.Source == source)
                 {
                     return other;
                 }

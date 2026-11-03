@@ -51,6 +51,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "buff.held-then-unheld", Run = HoldCases.HeldThenUnheld });
             list.Add(new Case { Name = "buff.held-separate", Run = HoldCases.HeldSeparate });
             list.Add(new Case { Name = "buff.held-removed", Run = HoldCases.HeldRemoved });
+            list.Add(new Case { Name = "buff.strongest-up", Run = HoldCases.StrongestUp });
+            list.Add(new Case { Name = "buff.strongest-down", Run = HoldCases.StrongestDown });
+            list.Add(new Case { Name = "buff.strongest-tie", Run = HoldCases.StrongestTie });
+            list.Add(new Case { Name = "buff.strongest-last", Run = HoldCases.StrongestLast });
+            list.Add(new Case { Name = "buff.strongest-timed", Run = HoldCases.StrongestTimed });
+            list.Add(new Case { Name = "buff.strongest-handover", Run = HoldCases.StrongestHandover });
         }
 
         /// <summary>Adds the cases for the log: a map's own lines, and the log file's lines and timing.</summary>

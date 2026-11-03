@@ -61,7 +61,7 @@ namespace Moonwell
         }
 
         /// <summary>Lets go of a hold: the component ends when that was its last and it was not also put on with no holder. While the component ends, its holds only go.</summary>
-        internal void Release(Hold hold)
+        internal virtual void Release(Hold hold)
         {
             if (holds == null || !holds.Remove(hold) || ending || HasEnded || unheld || holds.Count > 0)
             {
