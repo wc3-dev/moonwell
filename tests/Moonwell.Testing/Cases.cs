@@ -36,8 +36,18 @@ namespace Moonwell.Testing
             AddDay(list);
             AddText(list);
             AddHolds(list);
+            AddSpellBuffs(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the buffs the game puts on: the fake world's game buffs, then the watch.</summary>
+        private static void AddSpellBuffs(List<Case> list)
+        {
+            list.Add(new Case { Name = "fake.game-buff-reads", Run = SpellBuffCases.FakeGameBuffReads });
+            list.Add(new Case { Name = "fake.spell-hit-order", Run = SpellBuffCases.FakeSpellHitOrder });
+            list.Add(new Case { Name = "fake.buff-off-at-death", Run = SpellBuffCases.FakeBuffOffAtDeath });
+            list.Add(new Case { Name = "fake.aura", Run = SpellBuffCases.FakeAura });
         }
 
         /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>
