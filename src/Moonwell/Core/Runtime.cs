@@ -38,6 +38,7 @@ namespace Moonwell
             KnownDestructables.Reset();
             ObjectTypes.Reset();
             HeroTable.Reset();
+            DayConstants.Reset();
 #if DEBUG
             DebugSession.Reset();
             DebugViews.Reset();
@@ -68,6 +69,13 @@ namespace Moonwell
         public static void InstallHeroExperience(int[] experience)
         {
             HeroTable.Install(experience);
+        }
+
+        /// <summary>Gives the day the map's dawn, dusk and hours; the map's Main calls it, before anything registers, when the map's gameplay constants change the standard ones.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void InstallDay(float dawn, float dusk, float hours)
+        {
+            DayConstants.Install(dawn, dusk, hours);
         }
 
         /// <summary>Starts the runtime on the game with a map: the map's Main calls it once, and the map's components are added before the game's start.</summary>

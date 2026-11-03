@@ -304,6 +304,13 @@ static void Smoke(Scope scope, Unit unit) // a helper is told whose
   can trip it when the line was right: a buff whose `OnApply` makes a timer, applied by a hit that kills, or a channel
   stopped in the frame it began. A halt or a step of the debug mode in between does not.
 
+`Game.Time` is the seconds since the game started, on the timers' clock. `Game.TimeOfDay` is the hour of the game's
+day, read and set: `6.5f` is 6:30, and a time past the day's 24 hours wraps (`26f` is 2:00). `Game.IsDay` is true from
+dawn (6:00) up to dusk (18:00). `Game.DaySpeed` is 1 for an hour every 20 s, 2 for twice as fast, 0 to stop and below 0
+to run backward; `Game.DayStopped = true` stops the day and keeps its speed for when it goes on. A map whose gameplay
+constants change dawn, dusk or the day's hours gets its own, but the game reads no time past 24, and the build warns of a
+longer day. The debug mode halts `Game.Time` but not the day.
+
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last

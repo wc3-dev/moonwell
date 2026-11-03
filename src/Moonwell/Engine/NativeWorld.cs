@@ -31,6 +31,9 @@ namespace Moonwell.Engine
         /// <summary>The lines of the log file and when it is next written.</summary>
         private readonly LogFile log = new LogFile();
 
+        /// <summary>Whether the time of day was last stopped; the game has no reading for it.</summary>
+        private bool dayStopped;
+
         /// <summary>The items the last ItemsInWorld call has found.</summary>
         private List<item> foundItems = new List<item>();
 
@@ -265,6 +268,43 @@ namespace Moonwell.Engine
             }
 
             Natives.PreloadGenEnd("Moonwell\\log.txt");
+        }
+
+        /// <summary>The game's time of day, in hours.</summary>
+        public float HourOfDay()
+        {
+            return Natives.GetFloatGameState(Natives.GAME_STATE_TIME_OF_DAY);
+        }
+
+        /// <summary>Sets the game's time of day; the game reads a time of 24 or more, or below 0, as 0 (game facts).</summary>
+        public void SetHourOfDay(float hours)
+        {
+            Natives.SetFloatGameState(Natives.GAME_STATE_TIME_OF_DAY, hours);
+        }
+
+        /// <summary>How fast the time of day goes.</summary>
+        public float DayScale()
+        {
+            return Natives.GetTimeOfDayScale();
+        }
+
+        /// <summary>Sets how fast the time of day goes.</summary>
+        public void SetDayScale(float scale)
+        {
+            Natives.SetTimeOfDayScale(scale);
+        }
+
+        /// <summary>Whether the time of day stands still, as last set.</summary>
+        public bool IsDayStopped()
+        {
+            return dayStopped;
+        }
+
+        /// <summary>Stops the time of day or lets it go on; the game keeps the speed, and does not count stops (game facts).</summary>
+        public void StopDay(bool stopped)
+        {
+            dayStopped = stopped;
+            Natives.SuspendTimeOfDay(stopped);
         }
 
         /// <summary>The player in a slot.</summary>
