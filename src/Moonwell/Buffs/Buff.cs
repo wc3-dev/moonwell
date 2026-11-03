@@ -21,6 +21,13 @@ namespace Moonwell
         [LocalSafe]
         public Stacking Stacking { get; protected set; } = Stacking.Refresh;
 
+        /// <summary>How strong the buff is, which the class sets in its constructor for each apply; a strongest buff reads the strongest of its applies still on (decision 165).</summary>
+        [LocalSafe]
+        public float Strength { get; protected set; } = 0.0f;
+
+        /// <summary>For a strongest buff, the apply it runs at.</summary>
+        internal Hold? current;
+
         /// <summary>Whether the unit's death ends the buff, after the buff has seen it; true unless the class keeps it through death.</summary>
         [LocalSafe]
         public bool EndsOnDeath { get; protected set; } = true;
@@ -29,13 +36,28 @@ namespace Moonwell
         [LocalSafe]
         public Unit? Source { get; internal set; }
 
-        /// <summary>The seconds until the buff expires; 0 without an expiry.</summary>
+        /// <summary>The seconds until the buff expires; 0 without an expiry. For a strongest buff, until the last of its applies with a duration ends.</summary>
         [LocalSafe]
         public float Remaining
         {
             get
             {
-                return expiry != null && !expiry.HasEnded ? expiry.Remaining : 0.0f;
+                if (Stacking != Stacking.Strongest)
+                {
+                    return expiry != null && !expiry.HasEnded ? expiry.Remaining : 0.0f;
+                }
+
+                var most = 0.0f;
+                for (var i = 0; holds != null && i < holds.Count; i++)
+                {
+                    var timer = holds[i].Expiry;
+                    if (timer != null && !timer.HasEnded && timer.Remaining > most)
+                    {
+                        most = timer.Remaining;
+                    }
+                }
+
+                return most;
             }
         }
 
@@ -66,9 +88,18 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Starts a buff that was just added to its unit: it shows when it is the first of its class, starts its ticks and expiry, listens for deaths when a death ends it, and runs OnApply.</summary>
-        internal void Begin()
+        /// <summary>Starts a buff that was just added to its unit: it shows when it is the first of its class, starts its ticks and expiry, listens for deaths when a death ends it, and runs OnApply. A strongest buff takes its first apply, with its holder, instead of an expiry.</summary>
+        internal void Begin(Scope? heldBy = null)
         {
+            if (Stacking == Stacking.Strongest)
+            {
+                current = Join(Strength, Source, heldBy, Duration);
+                if (HasEnded)
+                {
+                    return;
+                }
+            }
+
             if (EndsOnDeath)
             {
                 Events.Need(Hook.OnDeath);
@@ -84,12 +115,133 @@ namespace Moonwell
                 OwnEvery(Tick, () => CallTick());
             }
 
-            if (Duration > 0.0f)
+            if (Duration > 0.0f && Stacking != Stacking.Strongest)
             {
                 StartExpiry();
             }
 
             CallApply();
+        }
+
+        /// <summary>Joins another apply to a strongest buff already on its unit, with its own strength, source, holder and duration, and runs at the strongest; the new buff is dropped.</summary>
+        internal void Offer(Buff from, Unit? source, Scope? heldBy)
+        {
+            Join(from.Strength, source, heldBy, from.Duration);
+            if (!HasEnded)
+            {
+                Choose();
+            }
+        }
+
+        /// <summary>Lets go of an apply of a strongest buff: the buff ends with its last, and otherwise runs at the strongest left. Other buffs let go as components do.</summary>
+        internal override void Release(Hold hold)
+        {
+            if (Stacking != Stacking.Strongest)
+            {
+                base.Release(hold);
+                return;
+            }
+
+            if (holds == null || !holds.Remove(hold) || ending || HasEnded)
+            {
+                return;
+            }
+
+            if (hold.Expiry != null)
+            {
+                hold.Expiry.End();
+            }
+
+            if (holds.Count == 0)
+            {
+                End();
+                return;
+            }
+
+            Choose();
+        }
+
+        /// <summary>Adds an apply to a strongest buff: a hold its holder adopts, or one of its own with no holder, and a timer that ends it after its seconds. A holder that holds it already has its own apply updated instead.</summary>
+        private Hold Join(float strength, Unit? source, Scope? heldBy, float seconds)
+        {
+            var held = heldBy == null ? null : HeldBy(heldBy);
+            if (held != null)
+            {
+                held.Strength = strength;
+                held.Source = source;
+                if (held.Expiry != null)
+                {
+                    held.Expiry.End();
+                    held.Expiry = null;
+                }
+
+                if (seconds > 0.0f)
+                {
+                    held.Expiry = OwnAfter(seconds, () => ExpireHold(held));
+                }
+
+                return held;
+            }
+
+            var hold = new Hold(this);
+            hold.Strength = strength;
+            hold.Source = source;
+            holds ??= new List<Hold>();
+            holds.Add(hold);
+            if (heldBy != null)
+            {
+                heldBy.Adopt(hold);
+            }
+
+            if (!hold.HasEnded && seconds > 0.0f)
+            {
+                hold.Expiry = OwnAfter(seconds, () => ExpireHold(hold));
+            }
+
+            return hold;
+        }
+
+        /// <summary>Runs the strongest apply: the one running stays on a tie; its source becomes the buff's, and OnApply runs when the strength changed.</summary>
+        private void Choose()
+        {
+            Hold? best = null;
+            for (var i = 0; i < holds!.Count; i++)
+            {
+                var hold = holds[i];
+                if (best == null || hold.Strength > best.Strength || (hold.Strength == best.Strength && hold == current))
+                {
+                    best = hold;
+                }
+            }
+
+            current = best;
+            Source = best!.Source;
+            if (best.Strength != Strength)
+            {
+                Strength = best.Strength;
+                CallApply();
+            }
+        }
+
+        /// <summary>Ends an apply of a strongest buff whose seconds ran out; the last one runs OnExpire first, which may apply the buff again.</summary>
+        private void ExpireHold(Hold hold)
+        {
+            if (HasEnded || hold.HasEnded)
+            {
+                return;
+            }
+
+            hold.Expiry = null;
+            if (holds != null && holds.Count == 1)
+            {
+                CallExpire();
+                if (HasEnded || hold.HasEnded)
+                {
+                    return;
+                }
+            }
+
+            hold.End();
         }
 
         /// <summary>Refreshes a buff already on its unit with a new apply of its class (decision 66): it takes the new buff's duration and the source, starts its expiry again for that duration (a duration of 0 lasts until it is removed), and runs OnApply again. Its other values, and what it has counted, stay its own; the new buff is dropped.</summary>

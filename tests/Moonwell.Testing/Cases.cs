@@ -35,8 +35,45 @@ namespace Moonwell.Testing
             AddLog(list);
             AddDay(list);
             AddText(list);
+            AddHolds(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>
+        private static void AddHolds(List<Case> list)
+        {
+            list.Add(new Case { Name = "hold.ends-with-holder", Run = HoldCases.EndsWithHolder });
+            list.Add(new Case { Name = "hold.two-components", Run = HoldCases.TwoComponents });
+            list.Add(new Case { Name = "hold.ended-holder", Run = HoldCases.EndedHolder });
+            list.Add(new Case { Name = "hold.removed-releases", Run = HoldCases.RemovedReleases });
+            list.Add(new Case { Name = "hold.end-inside-reaction", Run = HoldCases.EndInsideReaction });
+            list.Add(new Case { Name = "buff.held-shared", Run = HoldCases.HeldShared });
+            list.Add(new Case { Name = "buff.held-duration-first", Run = HoldCases.HeldDurationFirst });
+            list.Add(new Case { Name = "buff.held-then-unheld", Run = HoldCases.HeldThenUnheld });
+            list.Add(new Case { Name = "buff.held-separate", Run = HoldCases.HeldSeparate });
+            list.Add(new Case { Name = "buff.held-removed", Run = HoldCases.HeldRemoved });
+            list.Add(new Case { Name = "buff.strongest-up", Run = HoldCases.StrongestUp });
+            list.Add(new Case { Name = "buff.strongest-down", Run = HoldCases.StrongestDown });
+            list.Add(new Case { Name = "buff.strongest-tie", Run = HoldCases.StrongestTie });
+            list.Add(new Case { Name = "buff.strongest-last", Run = HoldCases.StrongestLast });
+            list.Add(new Case { Name = "buff.strongest-timed", Run = HoldCases.StrongestTimed });
+            list.Add(new Case { Name = "buff.strongest-handover", Run = HoldCases.StrongestHandover });
+            list.Add(new Case { Name = "buff.held-refresh-holds-first", Run = HoldCases.RefreshHoldsFirst });
+            list.Add(new Case { Name = "buff.held-refresh-ends-itself", Run = HoldCases.RefreshEndsItself });
+            list.Add(new Case { Name = "buff.held-same-holder-once", Run = HoldCases.SameHolderOnce });
+            list.Add(new Case { Name = "buff.strongest-same-holder-updates", Run = HoldCases.StrongestSameHolderUpdates });
+            list.Add(new Case { Name = "buff.unheld-then-held-ends", Run = HoldCases.UnheldThenHeldEnds });
+            list.Add(new Case { Name = "buff.unheld-lasting-stays", Run = HoldCases.UnheldLastingStays });
+            list.Add(new Case { Name = "buff.held-holder-ends-in-onapply", Run = HoldCases.HolderEndsInOnApply });
+            list.Add(new Case { Name = "buff.strongest-holder-ends-in-onapply", Run = HoldCases.StrongestHolderEndsInOnApply });
+            list.Add(new Case { Name = "item.carry-gift", Run = CarryCases.Gift });
+            list.Add(new Case { Name = "item.carry-two-boots", Run = CarryCases.TwoBoots });
+            list.Add(new Case { Name = "item.carry-bag-then-equip", Run = CarryCases.BagThenEquip });
+            list.Add(new Case { Name = "item.carry-death", Run = CarryCases.Death });
+            list.Add(new Case { Name = "item.carry-item-gone", Run = CarryCases.ItemGone });
+            list.Add(new Case { Name = "item.carry-carrier-gone", Run = CarryCases.CarrierGone });
+            list.Add(new Case { Name = "item.carry-bag-is-quiet", Run = CarryCases.BagIsQuiet });
         }
 
         /// <summary>Adds the cases for the log: a map's own lines, and the log file's lines and timing.</summary>
@@ -190,6 +227,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
             list.Add(new Case { Name = "debug.abilities.level-out-of-range-reported", Run = UnitAbilityCases.LevelOutOfRangeReported });
             list.Add(new Case { Name = "debug.abilities.level-of-missing-reported", Run = UnitAbilityCases.LevelOfMissingReported });
+            list.Add(new Case { Name = "debug.hold.ended-holder-reported", Run = HoldCases.EndedHolderReported });
+            list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });

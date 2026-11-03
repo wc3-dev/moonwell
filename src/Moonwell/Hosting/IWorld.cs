@@ -401,6 +401,9 @@ namespace Moonwell.Hosting
         /// <summary>Whether an item is in a unit's inventory, its 3.0 bag or its equipment slots.</summary>
         bool IsItemHeld(item item);
 
+        /// <summary>Whether an item is in a unit's 3.0 bag, not its inventory or equipment slots.</summary>
+        bool IsInBag(item item);
+
         /// <summary>Moves an item a unit holds into a slot of its inventory, swapping it with the item there, with no event; the game's answer.</summary>
         bool MoveItemToSlot(unit unit, item item, int slot);
 

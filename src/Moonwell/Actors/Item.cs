@@ -82,6 +82,29 @@ namespace Moonwell
         /// <summary>The unit that last picked the item up, as the pick-up events Moonwell has seen say; a candidate that Carrier checks with the game.</summary>
         internal Unit? CarrierUnit;
 
+        /// <summary>The live carry, from a pick-up Moonwell saw to the drop; null outside one.</summary>
+        internal Carrying? carry;
+
+        /// <summary>The scope of this carry: from a pick-up Moonwell saw, into the inventory or an equipment slot, to the drop, or to the item's or the carrier's end (decision 166); held by it (<c>carrierUnit.Add(new Haste(), heldBy: Item.Carry)</c> in OnPickedUp), a gift ends at the drop. In OnDropped it is still live, and it ends after the drop's reactions. The 3.0 bag starts none: there it gives a scope that has ended, so nothing is held by it, quietly. Read anywhere else outside a carry, it gives one too, and a development build reports it.</summary>
+        [LocalSafe]
+        public Scope Carry
+        {
+            get
+            {
+                if (carry != null && !carry.HasEnded)
+                {
+                    return carry;
+                }
+
+                if (Handle == null || !Runtime.World.IsInBag(Handle))
+                {
+                    Dev.Report(Names.NameOf(this) + ".Carry", "read while the item is not carried; read it from OnPickedUp to OnDropped");
+                }
+
+                return Carrying.None();
+            }
+        }
+
         /// <summary>The unit Moonwell last saw pick the item up, while the game says the item is still in an inventory, bag or equipment slots; null otherwise.</summary>
         internal Unit? HoldingUnit()
         {
@@ -336,9 +359,9 @@ namespace Moonwell
             return (T)Create(ObjectTypes.IdOf<T>(), unit, slot, scope);
         }
 
-        /// <summary>Adds a component to the item, and returns it.</summary>
-        public T Add<T>(T component)
-            where T : ItemComponent => AddComponent(component);
+        /// <summary>Adds a component to the item, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
+        public T Add<T>(T component, Scope? heldBy = null)
+            where T : ItemComponent => AddComponent(component, heldBy);
 
         /// <summary>Removes the item from the game: it ends, which runs its OnLeave. Does nothing on a default object, which is not in the game.</summary>
         public void Remove()
@@ -377,9 +400,14 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Tells the interactions package, if there is one; runs OnLeave; the components then end, and the item leaves the game. One that never came in, as one made in a scope that had ended, runs neither, as it ran no OnCreated.</summary>
+        /// <summary>Ends its carry, if it has one; tells the interactions package, if there is one; runs OnLeave; the components then end, and the item leaves the game. One that never came in, as one made in a scope that had ended, runs neither, as it ran no OnCreated.</summary>
         protected sealed override void OnEnd()
         {
+            if (carry != null)
+            {
+                carry.End();
+            }
+
             if (!entered)
             {
                 return;

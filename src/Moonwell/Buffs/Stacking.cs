@@ -11,5 +11,8 @@ namespace Moonwell
 
         /// <summary>One buff per source: an apply from a source that already has one refreshes that buff, as Refresh does.</summary>
         PerSource,
+
+        /// <summary>One buff whose Strength is the strongest of the applies still holding it or running their duration; OnApply runs again whenever that changes, and the buff ends with the last apply (decision 165). Its other values stay the first apply's.</summary>
+        Strongest,
     }
 }

@@ -1517,6 +1517,52 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>The items in a unit's 3.0 equipment slots, which are also in <see cref="bagged"/>, as both are held.</summary>
+        private readonly HashSet<item> equipped = new HashSet<item>();
+
+        /// <summary>Whether an item is in a unit's 3.0 bag, not its equipment slots.</summary>
+        public bool IsInBag(item item)
+        {
+            return bagged.Contains(item) && !equipped.Contains(item);
+        }
+
+        /// <summary>Moves an item from a unit's slots into its bag, as the game does: a drop while the unit still has it, then a pick-up (seen 10-21).</summary>
+        public void MoveToBag(unit unit, item item)
+        {
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, item);
+                    }
+
+                    slots[i] = null!;
+                    break;
+                }
+            }
+
+            PutInBag(unit, item);
+        }
+
+        /// <summary>Equips an item from a unit's bag, as the game does: a drop, then a pick-up into the equipment slots (seen 10-21).</summary>
+        public void Equip(unit unit, item item)
+        {
+            if (Listening.Contains(GameEvent.Drop))
+            {
+                Inbound.Dropped(unit, item);
+            }
+
+            bagged.Add(item);
+            equipped.Add(item);
+            if (Listening.Contains(GameEvent.PickUp))
+            {
+                Inbound.PickedUp(unit, item);
+            }
+        }
+
         /// <summary>Puts an item in a slot of a unit without the game telling anyone, as when the item was there before the runtime came.</summary>
         public void PutInSlot(unit unit, int slot, item item)
         {
