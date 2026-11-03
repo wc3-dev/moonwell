@@ -211,6 +211,51 @@ namespace Moonwell.Testing
             Expect.Equal("owner 3 False", world.ItemCalls[0], "the call keeps the colour");
         }
 
+        /// <summary>A pick-up gives the item the carrier's player before the reactions see it, colour left alone, and a drop leaves it; the game itself changes neither (seen 11-02).</summary>
+        public static void OwnerFollowsThePickUp(FakeWorld world)
+        {
+            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new OwnerWatch());
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo"), 4))!;
+            var watch = (OwnerWatch)Item.Of(world.NewItem(ObjectTypes.FourCC("I001")))!;
+            Expect.Equal(0, watch.Owner.Slot, "the player before");
+
+            unit.Give(watch);
+
+            Expect.Equal(4, watch.OwnerAtPickup, "the player seen in OnPickedUp");
+            Expect.Equal(4, watch.Owner.Slot, "the player after the pick-up");
+            Expect.Equal("owner 4 False", world.ItemCalls[0], "the call keeps the colour");
+
+            unit.Drop(watch);
+
+            Expect.Equal(4, watch.Owner.Slot, "the player after the drop");
+        }
+
+        /// <summary>The owner follows every pick-up, also of an item and a unit Moonwell has not taken in, so the item reads right once it is.</summary>
+        public static void OwnerFollowsAnUnseenPickUp(FakeWorld world)
+        {
+            var unit = world.NewUnit(ObjectTypes.FourCC("hfoo"), 5);
+            var item = world.NewItem(ObjectTypes.FourCC("ofoo"));
+
+            world.GiveItem(unit, item);
+
+            Expect.Equal(5, world.SlotOf(world.ItemOwnerOf(item)), "the game's player");
+            Expect.Equal(5, Item.Of(item)!.Owner.Slot, "the player once taken in");
+        }
+
+        /// <summary>An item given from one player's unit to another's becomes the new carrier's player's.</summary>
+        public static void OwnerFollowsANewCarrier(FakeWorld world)
+        {
+            var first = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo"), 1))!;
+            var second = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo"), 2))!;
+            var item = Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!;
+            first.Give(item);
+
+            second.Give(item);
+
+            Expect.Same(second, item.Carrier, "the new carrier");
+            Expect.Equal(2, item.Owner.Slot, "the new carrier's player");
+        }
+
         /// <summary>An item is created at its place; X and Y read it, and MoveTo moves it.</summary>
         public static void Position(FakeWorld world)
         {
@@ -558,7 +603,7 @@ namespace Moonwell.Testing
             Expect.Near(10.0f, swept.X, "read: x");
             Expect.Near(20.0f, swept.Y, "read: y");
             Expect.Equal(2, swept.Owner.Slot, "read: player");
-            var carrier = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            var carrier = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo"), 2))!;
             carrier.Give(swept);
             Expect.True(swept.IsCarried, "carried before the removal");
             var calls = world.ItemCalls.Count;

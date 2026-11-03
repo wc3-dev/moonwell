@@ -1000,6 +1000,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "damage.destructable-gone", Run = DamageCases.DealToDestructableGone });
             list.Add(new Case { Name = "items.charges", Run = ItemCases.Charges });
             list.Add(new Case { Name = "items.player", Run = ItemCases.PlayerOf });
+            list.Add(new Case { Name = "items.owner-follows-the-pick-up", Run = ItemCases.OwnerFollowsThePickUp });
+            list.Add(new Case { Name = "items.owner-follows-an-unseen-pick-up", Run = ItemCases.OwnerFollowsAnUnseenPickUp });
+            list.Add(new Case { Name = "items.owner-follows-a-new-carrier", Run = ItemCases.OwnerFollowsANewCarrier });
             list.Add(new Case { Name = "items.position", Run = ItemCases.Position });
             list.Add(new Case { Name = "items.move-keeps-the-place-the-game-gives", Run = ItemCases.MoveToKeepsThePlaceTheGameGives });
             list.Add(new Case { Name = "items.move-removed-keeps-the-last-place", Run = ItemCases.MoveToOnARemovedItemKeepsTheLastPlace });
