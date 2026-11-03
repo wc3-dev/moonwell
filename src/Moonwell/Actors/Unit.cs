@@ -682,6 +682,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Tints the unit's model in a colour, its alpha included; as Tint(red, green, blue, alpha).</summary>
+        public void Tint(Color color)
+        {
+            Tint(color.R, color.G, color.B, color.A);
+        }
+
         /// <summary>How high the unit flies above the ground, set at once (SetUnitFlyHeight with a rate of 0). A unit that does not fly only shows the height once Amrf has been added to it and removed (seen 10-21), so the first set on such a unit does that; reading gives the height set either way. Once the game has removed the unit, the last value read or set, and setting does nothing. In a declared class's constructor, the height every unit of the class flies at (umvh); on a default object, its type's.</summary>
         [LocalSafe]
         public float FlyHeight

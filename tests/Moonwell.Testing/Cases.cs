@@ -32,6 +32,7 @@ namespace Moonwell.Testing
             AddAuditDocs(list);
             AddLog(list);
             AddDay(list);
+            AddText(list);
             AddDebug(list);
             return list;
         }
@@ -57,6 +58,41 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "day.over-midnight", Run = DayCases.DayOverMidnight });
             list.Add(new Case { Name = "day.speed", Run = DayCases.DaySpeed });
             list.Add(new Case { Name = "day.stopped", Run = DayCases.DayStopped });
+        }
+
+        /// <summary>Adds the cases for colours, coloured text and time as text.</summary>
+        private static void AddText(List<Case> list)
+        {
+            list.Add(new Case { Name = "color.parts", Run = ColorCases.Parts });
+            list.Add(new Case { Name = "color.parts-kept-within", Run = ColorCases.PartsKeptWithin });
+            list.Add(new Case { Name = "color.equality", Run = ColorCases.Equality });
+            list.Add(new Case { Name = "color.html", Run = ColorCases.Html });
+            list.Add(new Case { Name = "color.lerp", Run = ColorCases.Lerp });
+            list.Add(new Case { Name = "color.from-hsv", Run = ColorCases.FromHsv });
+            list.Add(new Case { Name = "color.shades", Run = ColorCases.Shades });
+            list.Add(new Case { Name = "color.named", Run = ColorCases.Named });
+            list.Add(new Case { Name = "color.player-colors", Run = ColorCases.PlayerColors });
+            list.Add(new Case { Name = "color.colored-name", Run = ColorCases.ColoredName });
+            list.Add(new Case { Name = "color.unit-tint", Run = ColorCases.UnitTint });
+            list.Add(new Case { Name = "text.colored", Run = TextEffectCases.Colored });
+            list.Add(new Case { Name = "text.rainbow", Run = TextEffectCases.Rainbow });
+            list.Add(new Case { Name = "text.rainbow-shift", Run = TextEffectCases.RainbowShift });
+            list.Add(new Case { Name = "text.gradient", Run = TextEffectCases.Gradient });
+            list.Add(new Case { Name = "text.spaces-and-shared-codes", Run = TextEffectCases.SpacesAndSharedCodes });
+            list.Add(new Case { Name = "text.breaks-and-codes", Run = TextEffectCases.BreaksAndCodes });
+            list.Add(new Case { Name = "text.whole-letters", Run = TextEffectCases.WholeLetters });
+            list.Add(new Case { Name = "text.long-text-shares-codes", Run = TextEffectCases.LongTextSharesCodes });
+            list.Add(new Case { Name = "text.long-text-letter-by-letter", Run = TextEffectCases.LongTextLetterByLetter });
+            list.Add(new Case { Name = "text.sweep", Run = TextEffectCases.Sweep });
+            list.Add(new Case { Name = "text.sweep-enters", Run = TextEffectCases.SweepEnters });
+            list.Add(new Case { Name = "text.sweep-shapes", Run = TextEffectCases.SweepShapes });
+            list.Add(new Case { Name = "text.sweep-repeating", Run = TextEffectCases.SweepRepeating });
+            list.Add(new Case { Name = "text.sweep-long-text", Run = TextEffectCases.SweepLongText });
+            list.Add(new Case { Name = "text.alternate", Run = TextEffectCases.Alternate });
+            list.Add(new Case { Name = "text.confetti", Run = TextEffectCases.Confetti });
+            list.Add(new Case { Name = "text.highlight", Run = TextEffectCases.Highlight });
+            list.Add(new Case { Name = "text.clock", Run = TextEffectCases.Clock });
+            list.Add(new Case { Name = "text.time-of-day", Run = TextEffectCases.TimeOfDay });
         }
 
         /// <summary>Adds the cases for explicit scopes: what code makes belongs to the scope named where it is made.</summary>
