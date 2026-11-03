@@ -262,9 +262,18 @@ public sealed class KillCounter : UnitComponent
   `Strength` (set in the constructor) is the strongest of its applies still on: `OnApply` runs again whenever that
   changes, up or down, so a stronger aura takes over at once and a weaker one takes over again with no gap when it
   leaves. A buff class's own member named `Strength` hides it.
-- The game's dispels (Dispel Magic, Abolish Magic, Purge) and spell immunity do not reach a buff: it goes on and its
-  icon stays, on a spell-immune unit too. A dispel of the map's own removes it, with `unit.Remove<Burn>()`, which takes
+- The game's dispels (Dispel Magic, Abolish Magic, Purge) and spell immunity do not reach a buff put on by `Apply`: it
+  goes on and its icon stays, on a spell-immune unit too. A dispel of the map's own removes it, with `unit.Remove<Burn>()`, which takes
   the first of a class, whoever added it.
+- A buff class a spell lists (`Buffs.Set<Frozen>()` in an ability class, or a `[Replaces]` class of a standard buff)
+  runs its code when the game puts its buff on, from a spell, an aura or an attack. Moonwell sees it in the same instant
+  after a hit, a cast or an aura, and within a second otherwise; its `Source` is the caster, the attacker or the
+  strongest aura holder in reach, and its `Level` that ability's level (null and 0 when nothing matched). A second cast,
+  a hit or a stronger aura gives it again: the new `Source` and `Level`, and `OnApply` again. The game decides when it
+  ends (the spell's duration, a dispel, death), and `Remove<Frozen>()` takes the game's buff off too, which ends its slow
+  or stun. Such a class is not applied with `Apply`, does not set `Duration`, `Stacking` or `EndsOnDeath`, and has a
+  constructor with no parameters (error MW0051); for the same effect from code, write a second class that shares the
+  code through a base class.
 - A component or buff belongs to the actor it is added to, whoever added it: it ends when it is removed or that actor
   ends. Held by a scope, it also ends when that scope ends: `unit.Add(new Haste(), heldBy: Item.Carry)`,
   `pair.Other.Apply(new Chilled(), Holder, heldBy: pair)`. A buff given again from another holder joins the one there,
