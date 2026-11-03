@@ -750,7 +750,7 @@ variable: the first in slot order, or null when nobody in the game has it, so ch
 `StartX` and `StartY` a player's start location.
 
 `player.Print("Kills: 3")` shows a line to one player and `Game.Print("Wave 2")` to everyone; both take a time on
-screen, `seconds: 10f`. `Package.Version` is the version of Moonwell the map is built with. `Gold`, `Lumber`, `FoodUsed`, `FoodCap`, `FoodCapCeiling`, `GoldGathered`, `LumberGathered`,
+screen, `seconds: 10f`. `Game.Log("wave 2 started")` writes a line to the log file instead (under The build). `Package.Version` is the version of Moonwell the map is built with. `Gold`, `Lumber`, `FoodUsed`, `FoodCap`, `FoodCapCeiling`, `GoldGathered`, `LumberGathered`,
 `GoldUpkeepRate` and `LumberUpkeepRate` are the player's own: `player.Gold += 25`.
 
 `Player.Playing` is every player in the game, people and computers, and `Player.Users` the people:
@@ -903,6 +903,10 @@ An error in a reaction shows on the screen with its C# file and line, and is wri
 the file and line. An error that repeats shows and goes to the log at its 1st, 10th, 100th time and so on, with its
 count ("failed 10 times"); past a hundred different errors, the new ones share one count. The log keeps its last 200
 lines.
+
+`Game.Log("text")` writes a map's own line to the same file, in order with the errors, inside `Local.For` too. A write
+costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
+game closes first. A line longer than 253 characters is split.
 
 To place objects declared in code in World Editor, save `build\MyMap.w3x` from World Editor as the `map/` folder. The
 next build keeps the placed units; code wins over any object it also declares. World Editor's own changes to an object

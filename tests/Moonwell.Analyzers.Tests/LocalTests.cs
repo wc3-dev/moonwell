@@ -453,6 +453,17 @@ public class LocalTests
     }
 
     [Fact]
+    public void logging_is_allowed_inside()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Game.Log("seen by " + p.Name);
+            });
+            """));
+    }
+
+    [Fact]
     public void reading_gold_inside_is_fine()
     {
         Assert.Empty(MapCode.Check("""

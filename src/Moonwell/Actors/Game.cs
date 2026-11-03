@@ -19,6 +19,13 @@ namespace Moonwell
             Runtime.World.PrintToAll(text, seconds);
         }
 
+        /// <summary>Writes a line to the log, Documents\Warcraft III\CustomMapData\Moonwell\log.txt, with Moonwell's errors; it changes nothing in the game.</summary>
+        [LocalSafe]
+        public static void Log(string text)
+        {
+            Runtime.World.Log(text);
+        }
+
         /// <summary>Adds a component to the game, and returns it.</summary>
         public T Add<T>(T component) where T : GameComponent => AddComponent(component);
     }

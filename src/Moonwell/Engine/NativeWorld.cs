@@ -7,8 +7,8 @@ namespace Moonwell.Engine
     /// <summary>The game as the runtime sees it, through the game's natives; the only class that calls them.</summary>
     internal sealed class NativeWorld : IWorld
     {
-        /// <summary>How many lines the log keeps; the file holds the last ones.</summary>
-        private const int LogLines = 200;
+        /// <summary>How often the log file is checked for lines that wait to be written.</summary>
+        private const float LogCheck = 0.25f;
 
         /// <summary>The seconds the clock runs before it starts again: its elapsed time reads exact at 10 s, and steps by 0.0625 s at 604800 s.</summary>
         private const float Lap = 10.0f;
@@ -28,8 +28,8 @@ namespace Moonwell.Engine
         /// <summary>The trigger that sees each destructable die, shared by every destructable watched.</summary>
         private readonly trigger deathTrigger;
 
-        /// <summary>The last lines of the log, written to the log file each time a line is added.</summary>
-        private readonly List<string> lines = new List<string>();
+        /// <summary>The lines of the log file and when it is next written.</summary>
+        private readonly LogFile log = new LogFile();
 
         /// <summary>The items the last ItemsInWorld call has found.</summary>
         private List<item> foundItems = new List<item>();
@@ -53,6 +53,9 @@ namespace Moonwell.Engine
 
             deathTrigger = Natives.CreateTrigger();
             Natives.TriggerAddAction(deathTrigger, DestructableDeathAction);
+
+            // Every machine runs the check, so a line logged inside Local.For starts no timer of one machine's.
+            Natives.TimerStart(Natives.CreateTimer(), LogCheck, true, LogCheckAction);
         }
 
         /// <summary>Game seconds since the runtime started; in a development build, Moonwell's time on its clock (Runtime.Clock).</summary>
@@ -61,17 +64,15 @@ namespace Moonwell.Engine
 #if DEBUG
             return Runtime.Clock.Now(GameNow());
 #else
-            return lapStart + Natives.TimerGetElapsed(clock);
+            return GameNow();
 #endif
         }
-#if DEBUG
 
-        /// <summary>Game seconds since the runtime started, under Moonwell's clock: what the clock and the debug world take.</summary>
+        /// <summary>Game seconds since the runtime started, under Moonwell's clock: what the clock, the debug world and the log file take.</summary>
         internal float GameNow()
         {
             return lapStart + Natives.TimerGetElapsed(clock);
         }
-#endif
 
         /// <summary>Calls Runtime.Wake once after the seconds; a later request replaces it. In a development build the seconds are Moonwell's, and a request while its clock is halted stops the wake until the clock re-arms it.</summary>
         public void WakeIn(float seconds)
@@ -236,20 +237,31 @@ namespace Moonwell.Engine
             PrintTo(Natives.GetLocalPlayer(), text, seconds);
         }
 
-        /// <summary>Appends a line to the log, and rewrites the log file with its last lines.</summary>
+        /// <summary>Adds a line to the log, and rewrites the log file now or once the second since its last write is up.</summary>
         public void Log(string text)
         {
-            lines.Add(text);
-            if (lines.Count > LogLines)
+            if (log.Add(text, GameNow()))
             {
-                lines.RemoveAt(0);
+                WriteLog();
             }
+        }
 
+        private void LogCheckAction()
+        {
+            if (log.Due(GameNow()))
+            {
+                WriteLog();
+            }
+        }
+
+        private void WriteLog()
+        {
+            log.Written(GameNow());
             Natives.PreloadGenClear();
             Natives.PreloadGenStart();
-            foreach (var line in lines)
+            foreach (var line in log.Lines)
             {
-                Natives.Preload("\")\n" + line.Replace("\"", "'") + "\n//");
+                Natives.Preload("\")\n" + line + "\n//");
             }
 
             Natives.PreloadGenEnd("Moonwell\\log.txt");

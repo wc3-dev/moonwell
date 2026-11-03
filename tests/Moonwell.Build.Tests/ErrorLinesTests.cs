@@ -121,25 +121,26 @@ namespace Moonwell.Build.Tests
             }
 
             /// <summary>
-            /// Runs a built script's main and then every timer the game was asked for, until none is left; the chunk is named as
+            /// Runs a built script's main and then every timer the game was asked for, for ten rounds; the chunk is named as
             /// the game names it, and the Lua in before runs after the script loads.
             /// </summary>
             public static Run Start(string script, string before)
             {
                 using var lua = new NLua.Lua();
-                lua.DoString("screen = {}; log = {}; pending = {}");
+                lua.DoString("screen = {}; log = {}; pending = {}; repeating = {}");
                 lua.DoString("print = function(...) end");
                 lua.DoString("setmetatable(_G, { __index = function(_, name) return function() return nil end end })");
                 lua.DoString("bj_MAX_PLAYER_SLOTS = 0");
                 lua.DoString("TimerGetElapsed = function() return 0 end");
-                lua.DoString("TimerStart = function(timer, timeout, periodic, callback) pending[#pending + 1] = callback end");
+                lua.DoString("TimerStart = function(timer, timeout, periodic, callback) pending[#pending + 1] = callback; if periodic then repeating[#repeating + 1] = callback end end");
                 lua.DoString("DisplayTimedTextToPlayer = function(p, x, y, duration, text) screen[#screen + 1] = text end");
                 lua.DoString("PreloadGenClear = function() log = {} end");
                 lua.DoString("Preload = function(text) log[#log + 1] = string.match(text, '^\"%)\\n(.*)\\n//$') end");
                 lua.DoString(script, "war3map.lua");
                 lua.DoString(before);
                 lua.DoString("main()");
-                lua.DoString("for round = 1, 10 do local due = pending; pending = {}; for i = 1, #due do due[i]() end end");
+                // A periodic timer runs again each round, as in the game; the log file waits for its check timer.
+                lua.DoString("for round = 1, 10 do local due = pending; pending = {}; for i = 1, #due do due[i]() end; for i = 1, #repeating do pending[#pending + 1] = repeating[i] end end");
                 return new Run(Strings(lua, "screen"), Strings(lua, "log"));
             }
 
