@@ -2052,6 +2052,30 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>Moves an item the unit holds into a slot, swapping it with the item there, and records "slot" with the slot; as the game (seen 11-02), it fires no event, answers true onto the item's own slot, and false for an item the unit does not hold or a slot it does not have.</summary>
+        public bool MoveItemToSlot(unit unit, item item, int slot)
+        {
+            NoteGone(unit);
+            var slots = SlotsOf(unit);
+            if (slot < 0 || slot >= slots.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    InventoryCalls.Add("slot " + slot);
+                    slots[i] = slots[slot];
+                    slots[slot] = item;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>Takes an item out of its slot and puts it at the unit's place; the game's drop event, when it is listened for, comes while the unit still has the item in the slot (seen 10-21).</summary>
         public void DropItem(unit unit, item item)
         {

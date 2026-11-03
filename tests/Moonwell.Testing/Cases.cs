@@ -1018,6 +1018,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.place-in-the-bag-follows-the-holder", Run = ItemCases.PlaceInTheBagFollowsTheHolder });
             list.Add(new Case { Name = "items.place-of-an-unseen-pick-up", Run = ItemCases.PlaceOfAnUnseenPickUpIsTheGames });
             list.Add(new Case { Name = "items.removed-unit-drops-after", Run = ItemCases.RemovedUnitDropsAfterTheCall });
+            list.Add(new Case { Name = "items.give-into-a-slot", Run = ItemCases.GiveIntoASlot });
+            list.Add(new Case { Name = "items.give-into-a-taken-slot-swaps", Run = ItemCases.GiveIntoATakenSlotSwaps });
+            list.Add(new Case { Name = "items.give-a-held-item-into-a-slot", Run = ItemCases.GiveAHeldItemIntoASlot });
+            list.Add(new Case { Name = "items.give-into-a-slot-refused", Run = ItemCases.GiveIntoASlotRefused });
+            list.Add(new Case { Name = "items.create-for-a-unit", Run = ItemCases.CreateForAUnit });
+            list.Add(new Case { Name = "items.create-for-a-full-unit", Run = ItemCases.CreateForAFullUnit });
+            list.Add(new Case { Name = "items.create-into-a-slot", Run = ItemCases.CreateIntoASlot });
             list.Add(new Case { Name = "items.give-full-inventory", Run = ItemCases.GiveFullInventory });
             list.Add(new Case { Name = "items.give-held-again", Run = ItemCases.GiveHeldItemAgain });
             list.Add(new Case { Name = "items.freed-slot-first", Run = ItemCases.FreedSlotFirst });

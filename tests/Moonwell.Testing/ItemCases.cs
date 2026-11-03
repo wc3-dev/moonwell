@@ -532,6 +532,115 @@ namespace Moonwell.Testing
             Expect.True(watch.IsGone, "the sweep finds the item gone");
         }
 
+        /// <summary>Give into a slot picks the item up, with its reactions run once, and moves it into that slot, which the game does with no event (seen 11-02).</summary>
+        public static void GiveIntoASlot(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H001"), () => new TestHero());
+            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new TestOrb());
+            var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("H001"), hero: true))!;
+            var orb = Item.Of(world.NewItem(ObjectTypes.FourCC("I001")))!;
+            TestLog.Lines.Clear();
+
+            Expect.True(hero.Give(orb, 3), "the answer");
+
+            ExpectLog(new string[] { "orb picked", "glow picked", "hero got orb", "tally got orb" }, "the log");
+            Expect.Same(orb, hero.ItemIn(3), "slot 3");
+            Expect.True(hero.ItemIn(0) == null, "slot 0");
+        }
+
+        /// <summary>Give into a taken slot swaps the two, as the game's slot native does (seen 11-02).</summary>
+        public static void GiveIntoATakenSlotSwaps(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            var first = Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!;
+            var second = Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!;
+            unit.Give(first);
+
+            Expect.True(unit.Give(second, 0), "the answer");
+
+            Expect.Same(second, unit.ItemIn(0), "slot 0");
+            Expect.Same(first, unit.ItemIn(1), "slot 1");
+        }
+
+        /// <summary>Give into a slot of an item the unit holds only moves it: the game fires no event for that (seen 11-02).</summary>
+        public static void GiveAHeldItemIntoASlot(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H001"), () => new TestHero());
+            ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new TestOrb());
+            var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("H001"), hero: true))!;
+            var orb = Item.Of(world.NewItem(ObjectTypes.FourCC("I001")))!;
+            hero.Give(orb);
+            TestLog.Lines.Clear();
+
+            Expect.True(hero.Give(orb, 4), "the answer");
+
+            Expect.Equal(0, TestLog.Lines.Count, "no reactions");
+            Expect.Same(orb, hero.ItemIn(4), "slot 4");
+            Expect.True(hero.ItemIn(0) == null, "slot 0");
+        }
+
+        /// <summary>Give into a slot the inventory does not have, or of a full inventory, answers false and asks the game nothing, so the item stays where it is.</summary>
+        public static void GiveIntoASlotRefused(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.SetInventorySize(handle, 2);
+            var unit = Unit.Of(handle)!;
+            var item = Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!;
+
+            Expect.True(!unit.Give(item, 2), "slot 2 of two");
+            Expect.True(!unit.Give(item, -1), "slot -1");
+            unit.Give(Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!);
+            unit.Give(Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!);
+            world.InventoryCalls.Clear();
+
+            Expect.True(!unit.Give(item, 0), "a slot of a full inventory");
+            Expect.Equal(0, world.InventoryCalls.Count, "the calls to the game");
+            Expect.True(!item.IsCarried, "the item is not carried");
+        }
+
+        /// <summary>Item.Create for a unit makes the item at the unit's place, in the scope, and gives it: OnCreated runs, then the pick-up reactions.</summary>
+        public static void CreateForAUnit(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H001"), () => new TestHero());
+            ObjectTypes.Item(ObjectTypes.FourCC("I002"), () => new TestOrb());
+            var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("H001"), hero: true))!;
+            TestLog.Lines.Clear();
+
+            var orb = Item.Create<TestOrb>(hero, Game.Instance);
+
+            ExpectLog(new string[] { "orb picked", "glow picked", "hero got orb", "tally got orb" }, "the log");
+            Expect.Same(orb, hero.ItemIn(0), "slot 0");
+            Expect.Same(Game.Instance, orb.Parent, "the scope");
+        }
+
+        /// <summary>Item.Create for a unit with a full inventory leaves the item at the unit's place, not carried; the game's own native would make one and give back no handle (seen 11-02).</summary>
+        public static void CreateForAFullUnit(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.SetInventorySize(handle, 0);
+            var unit = Unit.Of(handle)!;
+            unit.PlaceAt(70.0f, 80.0f);
+
+            var made = Item.Create(ObjectTypes.FourCC("ofoo"), unit, Game.Instance);
+
+            Expect.True(!made.IsCarried, "not carried");
+            Expect.Near(70.0f, made.X, "the unit's x");
+            Expect.Near(80.0f, made.Y, "the unit's y");
+        }
+
+        /// <summary>Item.Create into a slot puts the item in that slot; into a taken one it swaps, as Give into a slot does.</summary>
+        public static void CreateIntoASlot(FakeWorld world)
+        {
+            ObjectTypes.Item(ObjectTypes.FourCC("I002"), () => new TestOrb());
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+
+            var orb = Item.Create<TestOrb>(unit, 2, Game.Instance);
+            var other = Item.Create(ObjectTypes.FourCC("ofoo"), unit, 2, Game.Instance);
+
+            Expect.Same(other, unit.ItemIn(2), "slot 2");
+            Expect.Same(orb, unit.ItemIn(0), "slot 0");
+        }
+
         /// <summary>Giving an item to a full inventory, or to a unit without one, answers false and fires no event; the item stays where it is (seen 10-21).</summary>
         public static void GiveFullInventory(FakeWorld world)
         {
