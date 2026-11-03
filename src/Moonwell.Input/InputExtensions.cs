@@ -10,6 +10,13 @@ namespace Moonwell
             return InputSystem.MouseOf(player.Slot);
         }
 
+        /// <summary>The player's keyboard: one for each slot, from 0 to 27, made when the keyboard is installed, which the build does in a map whose code names Keyboard or IKeyWatch. Throws InvalidOperationException before that.</summary>
+        [LocalSafe]
+        public static Keyboard Keyboard(this Player player)
+        {
+            return InputSystem.KeyboardOf(player.Slot);
+        }
+
         /// <summary>The player's camera: one for each slot, from 0 to 27, made when the package starts. Throws InvalidOperationException before that.</summary>
         [LocalSafe]
         public static Camera Camera(this Player player)

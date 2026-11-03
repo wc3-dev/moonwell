@@ -95,6 +95,58 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void map_with_keys_listens()
+        {
+            var project = folders.TemporaryCopyOf("Input");
+            File.WriteAllText(
+                Path.Combine(project, "Dash.cs"),
+                "using Moonwell;\n\nnamespace InputFixture\n{\n    public sealed class Dash : PlayerComponent, IKeyWatch\n    {\n        public void OnKeyPressed(Keyboard keyboard, Key key)\n        {\n            if (key == Key.Q && keyboard.Shift)\n            {\n                Game.Print(\"dash\");\n            }\n        }\n    }\n}\n");
+
+            Build(project);
+
+            var main = File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs"));
+            var install = main.IndexOf("global::Moonwell.InputSystem.Install(", StringComparison.Ordinal);
+            var keyboard = main.IndexOf("global::Moonwell.InputSystem.InstallKeyboard();", StringComparison.Ordinal);
+            var loading = main.IndexOf("global::Moonwell.InputSystem.RegisterKeys();", StringComparison.Ordinal);
+            var start = main.IndexOf("global::Moonwell.Runtime.Start(", StringComparison.Ordinal);
+            Assert.True(install >= 0, main);
+            Assert.True(keyboard > install, main);
+            Assert.True(loading >= 0 && loading < start, "the keys are registered while the map loads: " + main);
+
+            var script = File.ReadAllText(Path.Combine(project, "build", "Input", "war3map.lua"));
+            using var lua = new NLua.Lua();
+            lua.DoString("print = function() end");
+            lua.DoString("setmetatable(_G, { __index = function(_, name) return function() return nil end end })");
+            lua.DoString(script);
+            lua.DoString("main()");
+            Assert.Contains("InstallKeyboard", script);
+        }
+
+        [Fact]
+        public void map_reading_a_keyboard_listens()
+        {
+            var project = folders.TemporaryCopyOf("Input");
+            File.WriteAllText(
+                Path.Combine(project, "Walk.cs"),
+                "using Moonwell;\n\nnamespace InputFixture\n{\n    public sealed class Walk : GameComponent\n    {\n        public override void OnGameStart()\n        {\n            Every(0.1f, () =>\n            {\n                if (Player.One.Keyboard().IsDown(Key.W))\n                {\n                    Game.Print(\"walk\");\n                }\n            });\n        }\n    }\n}\n");
+
+            Build(project);
+
+            Assert.Contains("global::Moonwell.InputSystem.InstallKeyboard();", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
+        }
+
+        [Fact]
+        public void map_without_keys_does_not_listen_to_them()
+        {
+            var project = folders.TemporaryCopyOf("Input");
+            Build(project);
+
+            var main = File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs"));
+            Assert.DoesNotContain("InstallKeyboard", main);
+            Assert.DoesNotContain("RegisterKeys", main);
+        }
+
+        [Fact]
         public void press_only_map_listens_to_no_moves()
         {
             // Aim reads the mouse's Position in its press reaction, which takes the moves (the build cannot tell where it is read).
