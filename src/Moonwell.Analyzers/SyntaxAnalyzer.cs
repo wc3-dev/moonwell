@@ -194,57 +194,28 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
     }.ToImmutableDictionary();
 
     private static readonly ImmutableHashSet<string> MissingTypes = ImmutableHashSet.Create(
-        "System.StringComparer", "System.Threading.Monitor", "System.Threading.Lock",
-        "System.Threading.Thread", "System.Threading.Tasks.Task", "System.Threading.Tasks.Task`1", "System.Collections.BitArray",
-        "System.Numerics.BitOperations", "System.HashCode", "System.Guid", "System.FormattableString");
+        "System.Threading.Monitor", "System.Threading.Lock", "System.Threading.Thread", "System.Threading.Tasks.Task",
+        "System.Threading.Tasks.Task`1", "System.Guid", "System.FormattableString");
 
     private static readonly ImmutableDictionary<string, string> Members = new Dictionary<string, string>
     {
-        ["System.Linq.Enumerable.Append"] = Missing,
-        ["System.Linq.Enumerable.Prepend"] = Missing,
-        ["System.Linq.Enumerable.SkipLast"] = Missing,
-        ["System.Linq.Enumerable.TakeLast"] = Missing,
-        ["System.Linq.Enumerable.ToLookup"] = Missing,
-        ["System.Linq.Enumerable.Empty"] = Missing,
-        ["System.Linq.Enumerable.Zip"] = Missing,
-        ["System.Linq.Enumerable.Chunk"] = Missing,
-        ["System.Linq.Enumerable.ToHashSet"] = Missing,
-        ["System.Linq.Enumerable.DefaultIfEmpty"] = "gives 0 or stops where .NET gives the default item",
-        ["System.Collections.Generic.List`1.ConvertAll"] = Missing,
-        ["System.Span`1.ToArray"] = Missing,
-        ["System.Span`1.Fill"] = Missing,
-        ["System.Span`1.Clear"] = Missing,
-        ["System.Text.StringBuilder.Replace"] = Missing,
-        ["System.Text.StringBuilder.Insert"] = Missing,
-        ["System.Text.StringBuilder.Equals"] = Missing,
-        ["System.Text.StringBuilder.AppendJoin"] = Missing,
         ["System.Exception.Source"] = Missing,
         ["System.Delegate.Target"] = Missing,
         ["System.Delegate.Method"] = Missing,
-        ["System.Char.IsAscii"] = Missing,
-        ["System.Char.ToUpperInvariant"] = Missing,
-        ["System.Environment.NewLine"] = Missing + "; write \"\\n\"",
         ["System.Enum.GetUnderlyingType"] = Missing,
         ["System.Nullable.GetUnderlyingType"] = Missing,
         ["System.String.Create"] = Missing,
         ["System.String.Normalize"] = Missing,
-        ["System.String.Intern"] = Missing,
-        ["System.String.EnumerateRunes"] = Missing,
-        ["System.Collections.Generic.Queue`1.TryPeek"] = Missing,
-        ["System.Collections.Generic.Stack`1.TryPop"] = Missing,
-        ["System.Collections.Generic.Stack`1.TryPeek"] = Missing,
-        ["System.Collections.Generic.CollectionExtensions.GetValueOrDefault"] = Missing + "; use TryGetValue",
-        ["System.Convert.ToHexString"] = Missing,
-        ["System.Int32.RotateLeft"] = Missing,
-        ["System.Int32.RotateRight"] = Missing,
-        ["System.UInt32.RotateLeft"] = Missing,
-        ["System.UInt32.RotateRight"] = Missing,
-        ["System.Collections.Generic.HashSet`1.SetEquals"] = "says False for equal sets in the game's Lua; compare Count and Contains",
-        ["System.Collections.Generic.ISet`1.SetEquals"] = "says False for equal sets in the game's Lua; compare Count and Contains",
-        ["System.Collections.Generic.IReadOnlySet`1.SetEquals"] = "says False for equal sets in the game's Lua; compare Count and Contains",
-        ["System.Math.DivRem"] = "gives its quotient as a float (3.0) in the game's Lua; use / and %",
         ["System.Random.Shared"] = Missing + "; use Natives.GetRandomInt",
+        ["System.Linq.Enumerable.Shuffle"] = Missing + ", and would order each machine's list another way; shuffle with Natives.GetRandomInt",
     }.ToImmutableDictionary();
+
+    // The static methods of int and float the Lua core has; .NET's others (int.Clamp, float.Lerp and about 80 more) it lacks.
+    private static readonly ImmutableHashSet<string> NumberStatics = ImmutableHashSet.Create(
+        "System.Int32.Parse", "System.Int32.TryParse", "System.Int32.RotateLeft", "System.Int32.RotateRight", "System.Int32.PopCount",
+        "System.Int32.LeadingZeroCount", "System.Int32.TrailingZeroCount", "System.Int32.Log2", "System.Int32.IsPow2",
+        "System.Single.Parse", "System.Single.TryParse", "System.Single.IsNaN", "System.Single.IsFinite", "System.Single.IsInfinity",
+        "System.Single.IsNegativeInfinity", "System.Single.IsPositiveInfinity");
 
     private static void Name(SyntaxNodeAnalysisContext context)
     {
@@ -291,48 +262,14 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (method == null || name.Parent is not (MemberAccessExpressionSyntax or InvocationExpressionSyntax or MemberBindingExpressionSyntax))
+        if (method is { IsStatic: true, MethodKind: MethodKind.Ordinary, ContainingType.SpecialType: SpecialType.System_Int32 or SpecialType.System_Single }
+            && !NumberStatics.Contains(key))
         {
-            return;
-        }
-
-        var reduced = method.ReducedFrom ?? method;
-        if (key == "System.Array.Sort" && reduced.Parameters.Length == 2 && reduced.Parameters[1].Type is IArrayTypeSymbol or { Name: "Array" })
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, name.GetLocation(), name.Identifier.Text, "with a keys array and an items array fails in the game's Lua"));
-        }
-        else if (key == "System.Collections.Generic.Dictionary`2.Remove" && reduced.Parameters.Length == 2)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, name.GetLocation(), name.Identifier.Text, "leaves the out value nil in the game's Lua; read it with TryGetValue first"));
-        }
-        else if (key is "System.Linq.Enumerable.ToList" or "System.Linq.Enumerable.ToArray"
-            && method.TypeArguments.FirstOrDefault() is INamedTypeSymbol { Name: "KeyValuePair", ContainingNamespace.Name: "Generic" }
-            && !IsCompiledCollection(ReceiverType(name, method, context)))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, name.GetLocation(), name.Identifier.Text, "of a Dictionary gives pairs without their Key in the game's Lua; copy with new Dictionary<,>(d), or Select the key and value"));
+            var math = context.SemanticModel.Compilation.GetTypeByMetadataName("System.Math");
+            var instead = math != null && math.GetMembers(original.Name).Length > 0 ? Missing + "; use Math." + original.Name : Missing;
+            context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, name.GetLocation(), name.Identifier.Text, instead));
         }
     }
-
-    // The collection a LINQ call reads: d in d.ToList(), d?.ToList() and Enumerable.ToList(d).
-    private static ITypeSymbol? ReceiverType(SimpleNameSyntax name, IMethodSymbol method, SyntaxNodeAnalysisContext context)
-    {
-        ExpressionSyntax? receiver = method.ReducedFrom != null
-            ? name.Parent switch
-            {
-                MemberAccessExpressionSyntax access => access.Expression,
-                MemberBindingExpressionSyntax => name.FirstAncestorOrSelf<ConditionalAccessExpressionSyntax>()?.Expression,
-                _ => null,
-            }
-            : (name.Parent?.Parent as InvocationExpressionSyntax ?? name.Parent as InvocationExpressionSyntax)?.ArgumentList.Arguments.FirstOrDefault()?.Expression;
-        return receiver == null ? null : context.SemanticModel.GetTypeInfo(receiver, context.CancellationToken).Type;
-    }
-
-    // A class or struct of the map or of Moonwell (OrderedMap) is compiled from C#, so its pairs keep their Key; only the
-    // Lua core's own collections, such as Dictionary, and an interface that may be one give pairs without it.
-    private static bool IsCompiledCollection(ITypeSymbol? type) =>
-        type is { TypeKind: TypeKind.Class or TypeKind.Struct }
-        && type.ContainingNamespace?.ToDisplayString() is { } space
-        && space != "System" && !space.StartsWith("System.", System.StringComparison.Ordinal);
 
     private static string Full(INamedTypeSymbol type) =>
         (type.ContainingType != null ? Full(type.ContainingType) + "+" : type.ContainingNamespace.ToDisplayString() + ".") + type.MetadataName;
