@@ -162,6 +162,8 @@ public sealed class Champion : Human.Units.Paladin
   characters, none of them a comma (the game splits a list field that names the object at a comma), and only a hero's
   starts with an upper-case letter (MW0014).
 - `[Replaces]` makes the class the game's object itself: every unit of that type is made as the class.
+- A library project of the map's own can name, make and inherit the standard classes, as an abstract base the map's
+  classes inherit. An object class itself is declared in the map's own project: one in a library fails the build.
 - `Unit.Create<Champion>(player, x, y, scope)` makes one in the game, in the scope named (scopes, below), facing 270
   degrees unless a facing follows; `Item.Create<EmberBlade>(x, y, scope)` makes an item, `(hero, scope)` in a unit's
   inventory and `(hero, slot, scope)` into a slot of it, or at the unit's feet when it has no room, and
