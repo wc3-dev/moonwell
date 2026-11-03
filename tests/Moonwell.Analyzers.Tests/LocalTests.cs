@@ -491,6 +491,20 @@ public class LocalTests
     }
 
     [Fact]
+    public void colours_and_text_are_allowed_inside()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                var gold = Color.FromHtml("#ffcc00").Lerp(Color.Of(p.Color), 0.5f);
+                p.Print(p.ColoredName + " " + "Win".Rainbow() + "x".Gradient(gold, Color.Red) + "y".Colored(gold));
+                p.Print("z".Alternate(Color.Red) + "v".Confetti() + "w".Sweep(gold, Color.White, 1f, SweepShape.Comet));
+                p.Print(Text.Clock(125f) + Text.TimeOfDay(6.5f) + "a".Highlight("a", Color.White.Darkened(0.5f)));
+            });
+            """));
+    }
+
+    [Fact]
     public void reading_gold_inside_is_fine()
     {
         Assert.Empty(MapCode.Check("""

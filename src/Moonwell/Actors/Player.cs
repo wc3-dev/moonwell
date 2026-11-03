@@ -443,6 +443,10 @@ namespace Moonwell
             set { Runtime.World.Rename(Handle, value); }
         }
 
+        /// <summary>The player's name in the player's colour, for a line such as "Thrall has fallen".</summary>
+        [LocalSafe]
+        public string ColoredName => Name.Colored(Moonwell.Color.Of(Color));
+
         /// <summary>The player's colour; setting it also recolours the units the player has.</summary>
         [LocalSafe]
         public PlayerColor Color

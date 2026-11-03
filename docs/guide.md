@@ -797,6 +797,23 @@ player.Camera().Apply(CameraSetup.Named("Intro"), 2f); // World Editor's camera,
   `CameraSetup.Named` may sit in a field: named before the package starts, it is looked up when applied. Key presses are
   not in Moonwell yet.
 
+## Colours and text
+
+`Color` is a colour as the game takes it, each part 0 to 255: `new Color(255, 204, 0)`, `Color.FromHtml("#ffcc00")`,
+the named ones (`Color.Red`, and `Color.TooltipGold` for the game's own gold) and `Color.Of(PlayerColor.Blue)`. `Lerp`,
+`Darkened`, `Lightened`, `Inverted` and `Color.FromHsv` make one from another, as in Godot. `unit.Tint(color)` takes
+one too.
+
+`"Gold".Colored(Color.TooltipGold)` colours text, and `player.ColoredName` is a player's name in their colour. Letter by
+letter: `Rainbow()` (a shift turns it round, for text that is redrawn), `Gradient(a, b)` through two colours or more,
+`Alternate(a, b)` and `Confetti()`; `Highlight("Stun", Color.Red)` colours a word wherever it appears.
+`"Victory".Sweep(Color.Gold, Color.White, Game.Time)` moves a band of white through gold, 20 letters a second, in text
+that is redrawn, such as floating text set every 0.05 s; `SweepShape.Wide`, `Sharp`, `Comet` and `Repeating` (a new
+band every second) change its shape. A screen line shows 1,023 characters, and a colour code takes 10: `Rainbow` and
+`Gradient` share codes on a long text to keep within them, while `Alternate` and `Confetti` fit about 90 letters. The
+game shows no alpha in text, and `|r` goes back to white, not to an outer colour. `Text.Clock(125f)` writes "2:05", and
+`Text.TimeOfDay(6.5f)` "06:30".
+
 ## Players
 
 `Player.One` to `Player.TwentyFour` are the player slots, as the lobby numbers them; `Player.Get(slot)` takes the
