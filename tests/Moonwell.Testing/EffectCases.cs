@@ -228,6 +228,23 @@ namespace Moonwell.Testing
             Expect.Near(0.25f, fx.AnimationSpeed, "speed as set");
         }
 
+        /// <summary>Tint is white unless set, gives the game its red, green, blue and alpha, and reads back what was set; after the end it asks nothing.</summary>
+        public static void Tint(FakeWorld world)
+        {
+            var fx = SpecialEffect.Create(Glow, 0f, 0f, Game.Instance);
+            Expect.True(fx.Tint == Color.White, "white unless set");
+            fx.Tint = new Color(255, 0, 0, 128);
+            var given = world.Effects[0].Tint!;
+            Expect.Equal(255, given[0], "the game's red");
+            Expect.Equal(0, given[1], "the game's green");
+            Expect.Equal(0, given[2], "the game's blue");
+            Expect.Equal(128, given[3], "the game's alpha");
+            Expect.True(fx.Tint == new Color(255, 0, 0, 128), "reads what was set");
+            fx.End();
+            fx.Tint = Color.White;
+            Expect.True(fx.Tint == new Color(255, 0, 0, 128), "the last tint after the end");
+        }
+
         /// <summary>Makes a footman at a place, with no class registered for its type.</summary>
         private static Unit NewFootman(FakeWorld world, out unit handle)
         {
