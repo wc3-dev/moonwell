@@ -1158,6 +1158,13 @@ namespace Moonwell.Engine
             Natives.BlzSetSpecialEffectScale(fx, scale);
         }
 
+        /// <summary>Tints an effect: BlzSetSpecialEffectColor and BlzSetSpecialEffectAlpha.</summary>
+        public void TintEffect(effect fx, int red, int green, int blue, int alpha)
+        {
+            Natives.BlzSetSpecialEffectColor(fx, red, green, blue);
+            Natives.BlzSetSpecialEffectAlpha(fx, alpha);
+        }
+
         /// <summary>Plays an animation of an effect by name, BlzSetSpecialEffectAnimation, or queues it, BlzQueueSpecialEffectAnimation.</summary>
         public void AnimateEffect(effect fx, string name, bool queued)
         {

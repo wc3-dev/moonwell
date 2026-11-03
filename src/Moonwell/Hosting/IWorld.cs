@@ -440,6 +440,9 @@ namespace Moonwell.Hosting
         /// <summary>Scales an effect on all three axes.</summary>
         void ScaleEffect(effect fx, float scale);
 
+        /// <summary>Tints an effect: red, green and blue, and its alpha, each 0 to 255.</summary>
+        void TintEffect(effect fx, int red, int green, int blue, int alpha);
+
         /// <summary>Plays an animation of an effect by name, or queues it after the one playing.</summary>
         void AnimateEffect(effect fx, string name, bool queued);
 

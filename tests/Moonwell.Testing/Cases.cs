@@ -1058,6 +1058,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "effects.scale", Run = EffectCases.Scale });
             list.Add(new Case { Name = "effects.animations", Run = EffectCases.Animations });
             list.Add(new Case { Name = "effects.animation-speed", Run = EffectCases.AnimationSpeed });
+            list.Add(new Case { Name = "effects.tint", Run = EffectCases.Tint });
             list.Add(new Case { Name = "effects.on-unit", Run = EffectCases.OnUnit });
             list.Add(new Case { Name = "effects.at-point-has-no-unit", Run = EffectCases.AtPointHasNoUnit });
             list.Add(new Case { Name = "effects.ends-with-unit", Run = EffectCases.EndsWithUnit });

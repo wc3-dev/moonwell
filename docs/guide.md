@@ -434,6 +434,7 @@ After(3f, mark.End);
 | `X`, `Y`, `Height`, `PlaceAt(x, y)` | read and set; `Height` is above the ground and stays so as it moves; on a unit's effect `X` and `Y` read the unit's place, `Height` 0, and setting does nothing |
 | `Facing`, `Pitch`, `Roll` | read and set, in degrees; `Facing` reads 0 to 360 as a unit's does, and a positive pitch noses it down |
 | `Scale`, `AnimationSpeed` | read and set, 1 unless set |
+| `Tint` | read and set, a `Color`; its alpha is the model's opacity; white unless set |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | by name: `Animation.Stand`, `Animation.Attack`, or any name the model has (`"attack slam"`) |
 | `PlaysDeath` | true unless set; false makes it vanish at once instead of playing its death |
 | `Model`, `Unit`, `AttachPoint`, `IsShownTo(player)` | read |
@@ -448,7 +449,7 @@ After(3f, mark.End);
   works too (`"chest mount"`); Moonwell does not check it, and at a point the model lacks the game draws nothing. Effects on items
   and destructables are not drawn, so only units have it.
 - `SpecialEffect.PlayOnce(model, x, y)` and `unit.PlayEffectOnce(model, point)` play one once: it is made and ended at
-  once, and the game shows its death. One that needs a scale first is made with `Create`, set, and `End()`ed.
+  once, and the game shows its death. One that needs a scale or a tint first is made with `Create`, set, and `End()`ed.
 - `shownTo: player` on any of them shows it to that player only: the other machines make it with an empty model, so the
   game's handles stay the same everywhere. Who sees it cannot change later. Seen in single player; with two players it
   is not checked yet.

@@ -2451,6 +2451,12 @@ namespace Moonwell.Testing
             Live(fx).Scale = scale;
         }
 
+        /// <summary>Tints an effect: its red, green, blue and alpha.</summary>
+        public void TintEffect(effect fx, int red, int green, int blue, int alpha)
+        {
+            Live(fx).Tint = new int[] { red, green, blue, alpha };
+        }
+
         /// <summary>Plays an animation of an effect by name, or queues it.</summary>
         public void AnimateEffect(effect fx, string name, bool queued)
         {
