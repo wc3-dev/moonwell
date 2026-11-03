@@ -349,7 +349,7 @@ public static class Rules
         "MW0030",
         "Library member the game's Lua does not have",
         "'{0}' {1}",
-        "The Lua core behind CSharp.lua has no such type or member; the call fails when it runs, not when the map is built. The list, since the fork's CoreSystem 2.0.3-moonwell.8: Monitor, Lock, Thread, Task, async/await and pointers (the game has no threads); Guid, Random.Shared and LINQ Shuffle (random on each machine, so a desync); Exception.Source, Delegate.Target/Method and Enum/Nullable.GetUnderlyingType (reflection); FormattableString, string.Create and string.Normalize; and .NET's static methods of int and float but Parse, TryParse and int's bit counts and rotations (int.Clamp, float.Lerp: use Math).");
+        "The Lua core behind CSharp.lua has no such type or member; the call fails when it runs, not when the map is built. The list, since the fork's CoreSystem 2.0.3-moonwell.9: Monitor, Lock, Thread, Task, async/await and pointers (the game has no threads); Guid, Random.Shared and LINQ Shuffle (random on each machine, so a desync); Exception.Source, Delegate.Target/Method and Enum/Nullable.GetUnderlyingType (reflection); FormattableString, string.Create and string.Normalize; and .NET's static methods of int and float but Parse, TryParse and int's bit counts and rotations (int.Clamp, float.Lerp: use Math).");
 
     public static readonly DiagnosticDescriptor EnumText = Syntax(
         "MW0032",

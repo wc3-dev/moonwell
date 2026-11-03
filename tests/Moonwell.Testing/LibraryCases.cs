@@ -7,7 +7,7 @@ using System.Text;
 namespace Moonwell.Testing
 {
     /// <summary>
-    /// Cases for the library members the fork's Lua core lacked or answered wrongly until CoreSystem 2.0.3-moonwell.8
+    /// Cases for the library members the fork's Lua core lacked or answered wrongly until CoreSystem 2.0.3-moonwell.9
     /// (backlog F2), which MW0030 rejected, and for the forms the compiler 2.0.4-moonwell.16 writes right (F12, F14).
     /// </summary>
     public static class LibraryCases

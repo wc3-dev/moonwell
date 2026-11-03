@@ -24,7 +24,7 @@ public class SyntaxTests
     // MW0028: char or enum given to an object parameter of a library method other than string's, Console's and StringBuilder's
     [InlineData("MW0028", "var w = new System.IO.StringWriter(); w.Write(Color.Green);", "Color.Green")]
     [InlineData("MW0028", "var s = string.Join(\",\", new[] { Color.Red, Color.Blue });", "new[] { Color.Red, Color.Blue }")]
-    // MW0030: members the Lua core does not have (since CoreSystem 2.0.3-moonwell.8)
+    // MW0030: members the Lua core does not have (since CoreSystem 2.0.3-moonwell.9)
     [InlineData("MW0030", "var g = Guid.NewGuid();", "Guid")]
     [InlineData("MW0030", "var q = new[] { 1, 2 }.Shuffle();", "Shuffle")]
     [InlineData("MW0030", "var n = \"a\".Normalize();", "Normalize")]
@@ -57,7 +57,7 @@ public class SyntaxTests
     {
         // The forms MW0017, MW0018, MW0020, MW0022, MW0024, MW0026, MW0027, MW0029 and MW0031 rejected, and those MW0023,
         // MW0025, MW0028, MW0030 and MW0032 no longer reject: each runs right in the game's Lua (the cases in FormCases and,
-        // for MW0030 since CoreSystem 2.0.3-moonwell.8, LibraryCases).
+        // for MW0030 since CoreSystem 2.0.3-moonwell.9, LibraryCases).
         Assert.Empty(MapCode.Check("""
             int x = 1;
             var s1 = x switch { 1 => "a", > 10 => "b", _ => "c" };
