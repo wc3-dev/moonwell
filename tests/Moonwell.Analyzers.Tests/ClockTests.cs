@@ -61,15 +61,29 @@ public class ClockTests
             "MW0002: Environment.TickCount64",
             "MW0002: watch.Elapsed",
             "MW0002: System.Diagnostics.Stopwatch.GetTimestamp()",
-        }, found);
+        }, found.Where(f => f.StartsWith("MW0002")));
+        // DateTime itself fails in the game, inside Local.For too (MW0030).
+        Assert.Equal(4, found.Count(f => f == "MW0030: DateTime"));
     }
 
     [Fact]
     public void the_clock_says_what_to_write()
     {
         Assert.Equal(
-            "'DateTime.Now' gives a different answer on each machine; use it only inside Local.For or a [MachineLocal] method; it is this machine's clock: time game logic with After or Every on a scope",
-            MapCode.Message("var now = DateTime.Now.Second;"));
+            "'Environment.TickCount' gives a different answer on each machine; use it only inside Local.For or a [MachineLocal] method; it is this machine's clock: time game logic with After or Every on a scope",
+            MapCode.Message("var tick = Environment.TickCount;"));
+    }
+
+    [Fact]
+    public void sync_unchecked_leaves_a_DateTime_rejected()
+    {
+        Assert.Equal(new[] { "MW0030: DateTime" }, MapCode.Check("Clock();", """
+                [SyncUnchecked]
+                private static void Clock()
+                {
+                    var year = DateTime.Now.Year;
+                }
+            """));
     }
 
     [Fact]
@@ -135,7 +149,7 @@ public class ClockTests
                 private static void Clock(unit u)
                 {
                     var r = new Random().Next();
-                    var now = DateTime.Now.Second + u.GetHashCode();
+                    var now = Environment.TickCount + u.GetHashCode();
                 }
             """));
     }

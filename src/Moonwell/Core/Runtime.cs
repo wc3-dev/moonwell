@@ -33,6 +33,8 @@ namespace Moonwell
             Events.Reset();
             Game.Instance = new Game();
             Player.Reset();
+            Sharing.Reset();
+            RealClock.Reset();
             KnownUnits.Reset();
             KnownItems.Reset();
             KnownDestructables.Reset();
@@ -62,7 +64,19 @@ namespace Moonwell
 #if DEBUG
             DebugSession.Install(new NativeDebugWorld((NativeWorld)World));
 #endif
+            if (RealClock.Wanted)
+            {
+                RealClock.Share();
+            }
+
             NativeWorld.Later(() => Begin(setup));
+        }
+
+        /// <summary>Shares the first person's date with every machine before the game's start: the map's Main calls it while the map loads, when the map's code names RealTime, so the loading screen hides the wait.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void ShareStartDate()
+        {
+            RealClock.Wanted = true;
         }
 
         /// <summary>Gives heroes the map's experience table, from level 1's total (0) to the top level's; the map's Main calls it, before anything registers, when the map's gameplay constants change the standard table.</summary>
@@ -198,6 +212,11 @@ namespace Moonwell
             }
 
             SpellBuffs.Begin();
+            RealClock.WhenReady(StartGame);
+        }
+
+        private static void StartGame()
+        {
             try
             {
                 Inbound.GameStarted();

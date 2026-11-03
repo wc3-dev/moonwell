@@ -327,6 +327,7 @@ namespace Moonwell.Testing
             world.GameBuffs = new FakeGameBuffs(world);
             world.Dummies = new FakeDummies(world);
             Runtime.Reset(world);
+            RealClock.Wanted = false;
             Interactions.ResetSettings();
             Physics.ResetSettings();
             Runtime.ListenForCarriers();
@@ -478,6 +479,7 @@ namespace Moonwell.Testing
             var target = Time + seconds;
             DeliverPendingDrops();
             EndPendingRemovals();
+            DeliverPendingSync();
             var standing = 0;
             while (WakeAt.HasValue && WakeAt.Value + WakeLate <= target + 0.001f)
             {
@@ -771,6 +773,71 @@ namespace Moonwell.Testing
         public void Log(string text)
         {
             Logged.Add(text);
+        }
+
+        /// <summary>This machine's clock, in seconds since 1970; 0 until a case sets it.</summary>
+        public int RealSeconds;
+
+        /// <summary>This machine's zone's offset from UTC, in seconds.</summary>
+        public int RealOffset;
+
+        /// <summary>This machine's clock, as set.</summary>
+        public int ClockSeconds()
+        {
+            return RealSeconds;
+        }
+
+        /// <summary>This machine's zone's offset, as set.</summary>
+        public int ZoneOffset()
+        {
+            return RealOffset;
+        }
+
+        /// <summary>The sharing messages this machine sent, in order.</summary>
+        public List<string> SentSync = new List<string>();
+
+        /// <summary>The slots whose sharing messages are listened for.</summary>
+        public List<int> ListenedSync = new List<int>();
+
+        /// <summary>This machine's messages, delivered at the next Advance, as the game delivers them a moment later.</summary>
+        private readonly List<string> pendingSync = new List<string>();
+
+        /// <summary>Records a sharing message this machine sends; the next Advance delivers it as the local player's.</summary>
+        public void SendSync(string text)
+        {
+            SentSync.Add(text);
+            pendingSync.Add(text);
+        }
+
+        /// <summary>Records that a player's sharing messages are listened for.</summary>
+        public void ListenSync(player player)
+        {
+            ListenedSync.Add(SlotOf(player));
+        }
+
+        /// <summary>Delivers a sharing message as if sent by another machine's player, at once, when that player is listened for.</summary>
+        public void DeliverSync(Player from, string text)
+        {
+            if (ListenedSync.Contains(from.Slot))
+            {
+                Inbound.SyncArrived(from.Handle, text);
+            }
+        }
+
+        private void DeliverPendingSync()
+        {
+            if (pendingSync.Count == 0)
+            {
+                return;
+            }
+
+            var waiting = new List<string>(pendingSync);
+            pendingSync.Clear();
+            var local = Player.Get(LocalSlot);
+            foreach (var text in waiting)
+            {
+                DeliverSync(local, text);
+            }
         }
 
         /// <summary>The time of day as last set; 0 until then, as the template map starts at midnight.</summary>

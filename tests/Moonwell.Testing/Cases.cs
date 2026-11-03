@@ -40,6 +40,7 @@ namespace Moonwell.Testing
             AddSpellBuffs(list);
             AddDummies(list);
             AddLoad(list);
+            AddShare(list);
             AddDebug(list);
             return list;
         }
@@ -86,6 +87,33 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "load.undone-links-break-strings", Run = LoadCases.UndoneLinksBreakStrings });
             list.Add(new Case { Name = "load.relink-mends-strings", Run = LoadCases.RelinkMendsStrings });
             list.Add(new Case { Name = "load.relink-twice", Run = LoadCases.RelinkTwice });
+        }
+
+        private static void AddShare(List<Case> list)
+        {
+            list.Add(new Case { Name = "share.short-answer", Run = ShareCases.ShortAnswer });
+            list.Add(new Case { Name = "share.long-answer", Run = ShareCases.LongAnswer });
+            list.Add(new Case { Name = "share.zero-byte", Run = ShareCases.ZeroByte });
+            list.Add(new Case { Name = "share.null-and-empty", Run = ShareCases.NullAndEmpty });
+            list.Add(new Case { Name = "share.other-machine", Run = ShareCases.OtherMachine });
+            list.Add(new Case { Name = "share.two-in-flight", Run = ShareCases.TwoInFlight });
+            list.Add(new Case { Name = "share.wrong-sender", Run = ShareCases.WrongSender });
+            list.Add(new Case { Name = "share.scope-ended", Run = ShareCases.ScopeEnded });
+            list.Add(new Case { Name = "share.leave-halfway", Run = ShareCases.LeaveHalfway });
+            list.Add(new Case { Name = "share.computer", Run = ShareCases.Computer });
+            list.Add(new Case { Name = "realtime.epoch", Run = RealTimeCases.Epoch });
+            list.Add(new Case { Name = "realtime.known-day", Run = RealTimeCases.KnownDay });
+            list.Add(new Case { Name = "realtime.leap-day", Run = RealTimeCases.LeapDay });
+            list.Add(new Case { Name = "realtime.last", Run = RealTimeCases.Last });
+            list.Add(new Case { Name = "realtime.before-epoch", Run = RealTimeCases.BeforeEpoch });
+            list.Add(new Case { Name = "realtime.add-across", Run = RealTimeCases.AddAcross });
+            list.Add(new Case { Name = "realtime.compare", Run = RealTimeCases.Compare });
+            list.Add(new Case { Name = "realtime.now-moves", Run = RealTimeCases.NowMoves });
+            list.Add(new Case { Name = "realtime.local-now", Run = RealTimeCases.LocalNow });
+            list.Add(new Case { Name = "realtime.start-waits", Run = RealTimeCases.StartWaits });
+            list.Add(new Case { Name = "realtime.start-without-date", Run = RealTimeCases.StartWithoutDate });
+            list.Add(new Case { Name = "realtime.first-person-leaves", Run = RealTimeCases.FirstPersonLeaves });
+            list.Add(new Case { Name = "realtime.after-load", Run = RealTimeCases.AfterLoad });
         }
 
         /// <summary>Adds the cases for the buffs the game puts on: the fake world's game buffs, then the watch.</summary>

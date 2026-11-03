@@ -29,6 +29,18 @@ namespace Moonwell.Hosting
         /// <summary>Appends a line to CustomMapData\Moonwell\log.txt.</summary>
         void Log(string text);
 
+        /// <summary>Sends a sharing message from this machine to every machine; at most 255 bytes arrive.</summary>
+        void SendSync(string text);
+
+        /// <summary>Starts delivering a player's sharing messages to Inbound; called once per player.</summary>
+        void ListenSync(player player);
+
+        /// <summary>This machine's clock: its seconds since 1970, in UTC.</summary>
+        int ClockSeconds();
+
+        /// <summary>How many seconds this machine's time zone is ahead of UTC now, summer time included.</summary>
+        int ZoneOffset();
+
         /// <summary>The game's time of day, in hours.</summary>
         float HourOfDay();
 

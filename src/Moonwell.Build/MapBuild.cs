@@ -171,6 +171,12 @@ namespace Moonwell.Build
                 loading.Add("global::Moonwell.InputSystem.RegisterKeys();");
             }
 
+            // The first person's date goes out while the map loads, and the game's start waits for it (decision 174).
+            if (Declarations.ReferencesType(targetPath, "Moonwell", "RealTime"))
+            {
+                loading.Add("global::Moonwell.Runtime.ShareStartDate();");
+            }
+
             return loading;
         }
 

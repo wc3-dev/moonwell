@@ -1034,6 +1034,23 @@ namespace Moonwell
 
             MapLeft(Game.Instance, leaving);
             MapLeft(leaving, leaving);
+            Sharing.Left(leaving);
+        }
+
+        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old.</summary>
+        internal static void GameLoaded()
+        {
+            RealClock.Loaded();
+        }
+
+        /// <summary>A sharing message arrived from a player.</summary>
+        internal static void SyncArrived(player p, string data)
+        {
+            var from = Player.Of(p);
+            if (from != null)
+            {
+                Sharing.Arrived(from, data);
+            }
         }
 
         /// <summary>Runs OnLeave on the map components of an actor, in add order.</summary>
