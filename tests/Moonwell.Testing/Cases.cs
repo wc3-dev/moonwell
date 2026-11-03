@@ -60,6 +60,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "spellbuff.death", Run = SpellBuffCases.Death });
             list.Add(new Case { Name = "spellbuff.unit-removed", Run = SpellBuffCases.UnitRemoved });
             list.Add(new Case { Name = "spellbuff.apply-refused", Run = SpellBuffCases.ApplyRefused });
+            list.Add(new Case { Name = "spellbuff.plain-attack-gives-nothing", Run = SpellBuffCases.PlainAttackGivesNothing });
+            list.Add(new Case { Name = "spellbuff.onapply-damage-does-not-loop", Run = SpellBuffCases.OnApplyDamageDoesNotLoop });
+            list.Add(new Case { Name = "spellbuff.dead-holder-gives-nothing", Run = SpellBuffCases.DeadHolderGivesNothing });
+            list.Add(new Case { Name = "spellbuff.self-buff", Run = SpellBuffCases.SelfBuff });
+            list.Add(new Case { Name = "spellbuff.stray-target-area", Run = SpellBuffCases.StrayTargetArea });
+            list.Add(new Case { Name = "spellbuff.step-survives-ends", Run = SpellBuffCases.StepSurvivesEnds });
+            list.Add(new Case { Name = "spellbuff.equal-auras-keep-source", Run = SpellBuffCases.EqualAurasKeepSource });
         }
 
         /// <summary>Adds the cases for holders: a component or buff held by a scope ends with its last holder.</summary>

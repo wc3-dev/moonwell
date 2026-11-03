@@ -232,7 +232,9 @@ namespace Moonwell
         {
             var hit = damage.Target;
             var from = damage.Source;
-            SpellBuffs.Hit(hit, from);
+
+            // Only a hit of 0 the game starts gives a spell's buff (seen 11-03); any hit checks for one put on just before.
+            SpellBuffs.Hit(hit, from, damage.Amount == 0.0f && dealing == null);
             var hitSlot = hit.Owner.Slot;
             var fromSlot = from == null ? -1 : from.Owner.Slot;
             if (from != null)

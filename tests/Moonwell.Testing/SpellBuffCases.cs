@@ -37,16 +37,26 @@ namespace Moonwell.Testing
         /// <summary>How many ticks have run.</summary>
         public int Ticks;
 
+        /// <summary>Whether OnApply deals 5 from the source to the unit, as a buff of damage does; a case sets it.</summary>
+        public static bool HitsOnApply;
+
+        /// <summary>What OnRemoved runs after it logs; a case sets it.</summary>
+        public static System.Action<FrozenBuff>? WhenRemoved;
+
         /// <summary>Ticks every half second.</summary>
         public FrozenBuff()
         {
             Tick = 0.5f;
         }
 
-        /// <summary>Counts the apply.</summary>
+        /// <summary>Counts the apply, and deals 5 from the source when a case asks.</summary>
         public override void OnApply()
         {
             Applied++;
+            if (HitsOnApply && Source != null)
+            {
+                Source.Damage(Unit, 5.0f);
+            }
         }
 
         /// <summary>Counts the tick.</summary>
@@ -65,6 +75,7 @@ namespace Moonwell.Testing
         protected override void OnRemoved()
         {
             TestLog.Lines.Add("frozen removed");
+            WhenRemoved?.Invoke(this);
         }
     }
 
@@ -93,6 +104,8 @@ namespace Moonwell.Testing
         /// <summary>Registers FrozenBuff as the build does for a class a spell (A010, a Storm Bolt) and an aura (A020) list, and begins the watch as the runtime does.</summary>
         private static void Watch()
         {
+            FrozenBuff.HitsOnApply = false;
+            FrozenBuff.WhenRemoved = null;
             ObjectTypes.BuffDisplay<FrozenBuff>(Frozen, ObjectTypes.FourCC("A011"));
             ObjectTypes.WatchedBuff<FrozenBuff>(Frozen, () => new FrozenBuff());
             ObjectTypes.ListsBuff(Bolt, Frozen, false);
@@ -298,6 +311,138 @@ namespace Moonwell.Testing
             Expect.Equal(1, CountOf("frozen removed"), "removed once");
         }
 
+        /// <summary>A plain attack from a unit that has the spell gives the buff nothing: only a spell's or an attack's hit of 0 gives it again.</summary>
+        public static void PlainAttackGivesNothing(FakeWorld world)
+        {
+            Watch();
+            var target = NewUnit(world);
+            var caster = Caster(world, 1);
+            var other = Caster(world, 2);
+            world.GameBuffs.Hit(caster.Handle, target.Handle, Frozen);
+            world.Advance(0.01f);
+            var buff = target.Get<FrozenBuff>()!;
+            world.DealDamage(caster.Handle, target.Handle, 10.0f, true, false, 0, 0, 0);
+            world.DealDamage(other.Handle, target.Handle, 10.0f, true, false, 0, 0, 0);
+            world.Advance(0.01f);
+            Expect.Equal(1, buff.Applied, "OnApply ran once");
+            Expect.Same(caster, buff.Source, "the source stays");
+        }
+
+        /// <summary>A buff whose OnApply deals damage from its source does not give itself again.</summary>
+        public static void OnApplyDamageDoesNotLoop(FakeWorld world)
+        {
+            Watch();
+            FrozenBuff.HitsOnApply = true;
+            var target = NewUnit(world);
+            world.GameBuffs.Hit(Caster(world, 1).Handle, target.Handle, Frozen);
+            world.Advance(0.01f);
+            FrozenBuff.HitsOnApply = false;
+            Expect.Equal(1, target.Get<FrozenBuff>()!.Applied, "OnApply ran once");
+        }
+
+        /// <summary>A dead aura holder gives nothing: the buff follows the living one in reach.</summary>
+        public static void DeadHolderGivesNothing(FakeWorld world)
+        {
+            Watch();
+            world.AbilityAreas[Frost] = 300.0f;
+            var weak = NewUnit(world);
+            var strong = NewUnit(world);
+            var other = NewUnit(world);
+            world.PlaceUnit(weak.Handle, 0.0f, 0.0f);
+            world.PlaceUnit(strong.Handle, 0.0f, 100.0f);
+            world.PlaceUnit(other.Handle, 100.0f, 0.0f);
+            world.SetAbilityLevel(weak.Handle, Frost, 1);
+            world.SetAbilityLevel(strong.Handle, Frost, 3);
+            world.GameBuffs.Aura(weak.Handle, Frost, Frozen, 300.0f);
+            world.GameBuffs.Aura(strong.Handle, Frost, Frozen, 300.0f);
+            world.Advance(1.1f);
+            var buff = other.Get<FrozenBuff>()!;
+            Expect.Same(strong, buff.Source, "the stronger first");
+            strong.Kill();
+            world.Advance(0.11f);
+            Expect.Same(weak, buff.Source, "the living one once the stronger is dead");
+            Expect.Equal(1, buff.Level, "at its level");
+        }
+
+        /// <summary>A spell with no target and no area (a self-buff) puts its buff on its caster, matched to the cast.</summary>
+        public static void SelfBuff(FakeWorld world)
+        {
+            Watch();
+            var caster = Caster(world, 2);
+            Inbound.SpellEffect(caster.Handle, Bolt, null, 0.0f, 0.0f);
+            world.GameBuffs.Give(caster.Handle, Frozen);
+            world.Advance(0.01f);
+            var buff = caster.Get<FrozenBuff>();
+            Expect.True(buff != null, "on at once");
+            Expect.Same(caster, buff!.Source, "the caster's own");
+            Expect.Equal(2, buff.Level, "at the cast's level");
+        }
+
+        /// <summary>A spell with no point whose effect gives a stray target (Thunder Clap, seen 11-03) still checks its area around the caster.</summary>
+        public static void StrayTargetArea(FakeWorld world)
+        {
+            Watch();
+            world.AbilityAreas[Bolt] = 300.0f;
+            var caster = Caster(world, 1);
+            var stray = NewUnit(world);
+            var near = NewUnit(world);
+            world.PlaceUnit(caster.Handle, 0.0f, 0.0f);
+            world.PlaceUnit(stray.Handle, 3000.0f, 0.0f);
+            world.PlaceUnit(near.Handle, 100.0f, 0.0f);
+            Inbound.SpellEffect(caster.Handle, Bolt, stray.Handle, 0.0f, 0.0f);
+            world.GameBuffs.Give(near.Handle, Frozen);
+            world.Advance(0.01f);
+            Expect.Same(caster, near.Get<FrozenBuff>()?.Source, "the near unit's buff is the caster's, at once");
+        }
+
+        /// <summary>Map code ending another watched buff while the step ends one does not break the step.</summary>
+        public static void StepSurvivesEnds(FakeWorld world)
+        {
+            Watch();
+            var caster = Caster(world, 1);
+            var first = NewUnit(world);
+            var second = NewUnit(world);
+            world.GameBuffs.Hit(caster.Handle, first.Handle, Frozen);
+            world.GameBuffs.Hit(caster.Handle, second.Handle, Frozen);
+            world.Advance(0.01f);
+            FrozenBuff.WhenRemoved = buff =>
+            {
+                if (buff.Unit == second)
+                {
+                    world.DealDamage(caster.Handle, first.Handle, 1.0f, false, false, 0, 0, 0);
+                }
+            };
+            world.GameBuffs.Take(first.Handle, Frozen);
+            world.GameBuffs.Take(second.Handle, Frozen);
+            world.Advance(0.11f);
+            FrozenBuff.WhenRemoved = null;
+            Expect.True(!first.Has<FrozenBuff>() && !second.Has<FrozenBuff>(), "both ended");
+        }
+
+        /// <summary>Two auras of one level: the buff keeps its holder while that one is still in reach, as units move.</summary>
+        public static void EqualAurasKeepSource(FakeWorld world)
+        {
+            Watch();
+            world.AbilityAreas[Frost] = 300.0f;
+            var left = NewUnit(world);
+            var right = NewUnit(world);
+            var other = NewUnit(world);
+            world.PlaceUnit(left.Handle, 0.0f, 0.0f);
+            world.PlaceUnit(right.Handle, 200.0f, 0.0f);
+            world.PlaceUnit(other.Handle, 50.0f, 0.0f);
+            world.SetAbilityLevel(left.Handle, Frost, 1);
+            world.SetAbilityLevel(right.Handle, Frost, 1);
+            world.GameBuffs.Aura(left.Handle, Frost, Frozen, 300.0f);
+            world.GameBuffs.Aura(right.Handle, Frost, Frozen, 300.0f);
+            world.Advance(1.1f);
+            var buff = other.Get<FrozenBuff>()!;
+            var first = buff.Source;
+            var applied = buff.Applied;
+            world.PlaceUnit(other.Handle, first == left ? 180.0f : 20.0f, 0.0f);
+            world.Advance(0.11f);
+            Expect.Same(first, buff.Source, "the holder stays");
+            Expect.Equal(applied, buff.Applied, "no OnApply for the move");
+        }
         /// <summary>Apply of a class a spell lists is refused, and reported, in every build (decision 154).</summary>
         public static void ApplyRefused(FakeWorld world)
         {
@@ -306,7 +451,7 @@ namespace Moonwell.Testing
             var before = world.Printed.Count;
             var buff = unit.Apply(new FrozenBuff());
             Expect.True(!unit.Has<FrozenBuff>(), "not applied");
-            Expect.True(world.Printed.Count > before && world.Printed[before].Contains("a spell lists"), "reported");
+            Expect.True(world.Printed.Count > before && world.Printed[before].Contains("Unit.Apply"), "reported, by its label, which a release build shows too");
             Expect.True(!buff.HasEnded, "the given buff is left as it is");
         }
         /// <summary>A unit that dies and is removed in one frame ends its buff once.</summary>

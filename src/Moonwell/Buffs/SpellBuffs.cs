@@ -36,8 +36,17 @@ namespace Moonwell
         /// <summary>The units that hold a listing aura, found by the sweep.</summary>
         private static List<Unit> holders = new List<Unit>();
 
+        /// <summary>The living holders' listing auras of the instant heldAt, so a step reads each once.</summary>
+        private static List<HeldAura> held = new List<HeldAura>();
+
+        /// <summary>The instant held was read at; -1 before the first.</summary>
+        private static float heldAt = -1.0f;
+
         /// <summary>The casts of listing abilities in the last MatchWindow seconds, oldest first.</summary>
         private static List<Recent> recent = new List<Recent>();
+
+        /// <summary>How many of the watch's own OnApply calls are running; a hit inside one gives nothing again.</summary>
+        private static int giving;
 
         /// <summary>Whether the runtime has begun, so a registration from then on starts the watch at once.</summary>
         private static bool begun;
@@ -61,6 +70,17 @@ namespace Moonwell
             internal int Level;
             internal bool ByCast;
             internal bool ByAura;
+        }
+
+        /// <summary>A living holder's listing aura, as read in one instant.</summary>
+        private sealed class HeldAura
+        {
+            internal Unit Holder = null!;
+            internal int Ability;
+            internal int Level;
+            internal float Area;
+            internal float X;
+            internal float Y;
         }
 
         /// <summary>A cast of a listing ability, kept for matching.</summary>
@@ -137,16 +157,24 @@ namespace Moonwell
             Game.Instance.OwnEvery(1.0f, Sweep);
         }
 
-        /// <summary>A hit, before its reactions run: its target is checked now, so a reaction sees a buff that came on just before, and again just after, when a buff the hit puts on is on.</summary>
-        internal static void Hit(Unit target, Unit? source)
+        /// <summary>
+        /// A hit, before its reactions run: its target is checked now, so a reaction sees a buff that came on just before, made
+        /// as its source's when the source has a listing ability. Only a hit that gives (a hit of 0 the game starts, as a spell's
+        /// and an attack's buff comes, seen 11-03) gives a buff that is on again, and is checked once more just after, when the
+        /// buff it puts on is on. Nothing gives again while a buff's own OnApply runs.
+        /// </summary>
+        internal static void Hit(Unit target, Unit? source, bool gives)
         {
             if (!started || target.IsGone)
             {
                 return;
             }
 
-            Check(target, buffId => HitGiver(source, buffId), true);
-            Game.Instance.OwnAfter(0.0f, () => Check(target, buffId => HitGiver(source, buffId), false));
+            Check(target, buffId => HitGiver(source, buffId), gives && giving == 0);
+            if (gives)
+            {
+                Game.Instance.OwnAfter(0.0f, () => Check(target, buffId => HitGiver(source, buffId), false));
+            }
         }
 
         /// <summary>A spell takes effect: a cast of a listing ability is kept for matching, and just after, its target, or the units in its area around its point (around the caster for a spell with no target), are checked.</summary>
@@ -157,15 +185,17 @@ namespace Moonwell
                 return;
             }
 
+            // A spell with no target gives the point (0, 0), and Thunder Clap a stray target too (seen 11-03).
             var caster = cast.Caster;
-            var noPoint = cast.Target == null && cast.X == 0.0f && cast.Y == 0.0f;
+            var noPoint = cast.X == 0.0f && cast.Y == 0.0f
+                && (cast.Target == null || Runtime.World.UnitX(cast.Target.Handle) != 0.0f || Runtime.World.UnitY(cast.Target.Handle) != 0.0f);
             var kept = new Recent
             {
                 Time = Runtime.World.Now(),
                 Caster = caster,
                 Ability = cast.Ability.Id,
                 Level = cast.Level,
-                Target = cast.Target,
+                Target = noPoint ? null : cast.Target,
                 X = noPoint ? Runtime.World.UnitX(caster.Handle) : cast.X,
                 Y = noPoint ? Runtime.World.UnitY(caster.Handle) : cast.Y,
                 Area = Runtime.World.AbilityArea(caster.Handle, cast.Ability.Id),
@@ -174,7 +204,7 @@ namespace Moonwell
             Game.Instance.OwnAfter(0.0f, () => AfterCast(kept));
         }
 
-        /// <summary>Checks a cast's target, or the units in its area, as given by that cast.</summary>
+        /// <summary>Checks a cast's target, or for a spell with no target its caster and the units in its area around it, as given by that cast.</summary>
         private static void AfterCast(Recent cast)
         {
             Func<int, Giver?> giver = buffId => Listed(cast.Ability, buffId) ? new Giver { Source = cast.Caster, Level = cast.Level, ByCast = true } : null;
@@ -184,6 +214,7 @@ namespace Moonwell
                 return;
             }
 
+            Check(cast.Caster, giver, true);
             if (cast.Area <= 0.0f)
             {
                 return;
@@ -205,6 +236,12 @@ namespace Moonwell
         {
             for (var i = live.Count - 1; i >= 0; i--)
             {
+                // A buff's own code may end others while this runs, so the list can be shorter than the index.
+                if (i >= live.Count)
+                {
+                    continue;
+                }
+
                 var buff = live[i];
                 if (buff.HasEnded)
                 {
@@ -222,7 +259,7 @@ namespace Moonwell
 
                 if (buff.byAura)
                 {
-                    var giver = AuraGiver(unit, buff.gameBuff);
+                    var giver = AuraGiver(unit, buff.gameBuff, buff.Source);
                     if (giver != null && (giver.Source != buff.Source || giver.Level != buff.Level))
                     {
                         buff.GiveAgain(giver.Source, giver.Level);
@@ -230,36 +267,21 @@ namespace Moonwell
                 }
             }
 
-            for (var h = holders.Count - 1; h >= 0; h--)
+            var all = Held();
+            for (var a = 0; a < all.Count; a++)
             {
-                var holder = holders[h];
-                if (holder.HasEnded || holder.IsGone)
+                var aura = all[a];
+                var found = Runtime.World.UnitsInRange(aura.X, aura.Y, aura.Area + Slack);
+                for (var i = 0; i < found.Count; i++)
                 {
-                    holders.RemoveAt(h);
-                    continue;
-                }
-
-                for (var a = 0; a < auras.Count; a++)
-                {
-                    var area = Runtime.World.AbilityArea(holder.Handle, auras[a]);
-                    if (area <= 0.0f)
+                    var unit = KnownUnits.Find(found[i]);
+                    if (unit != null)
                     {
-                        continue;
-                    }
-
-                    var found = Runtime.World.UnitsInRange(Runtime.World.UnitX(holder.Handle), Runtime.World.UnitY(holder.Handle), area + Slack);
-                    for (var i = 0; i < found.Count; i++)
-                    {
-                        var unit = KnownUnits.Find(found[i]);
-                        if (unit != null)
-                        {
-                            Check(unit, buffId => AuraGiver(unit, buffId), false);
-                        }
+                        Check(unit, buffId => AuraGiver(unit, buffId, null), false);
                     }
                 }
             }
         }
-
         /// <summary>Every second: casts too old to match are dropped, every unit is checked, and the holders of listing auras are found.</summary>
         private static void Sweep()
         {
@@ -279,9 +301,15 @@ namespace Moonwell
                 }
 
                 Check(unit, null, false);
-                if (!holders.Contains(unit) && HoldsAura(unit))
+                var holds = HoldsAura(unit);
+                if (holds && !holders.Contains(unit))
                 {
                     holders.Add(unit);
+                    heldAt = -1.0f;
+                }
+                else if (!holds && holders.Remove(unit))
+                {
+                    heldAt = -1.0f;
                 }
             }
         }
@@ -298,11 +326,13 @@ namespace Moonwell
                 return;
             }
 
+            List<Buff>? objects = null;
             for (var i = 0; i < watched.Count; i++)
             {
                 var buffId = watched[i];
                 var on = Runtime.World.AbilityLevel(unit.Handle, buffId) > 0;
-                var existing = ObjectOf(unit, buffId);
+                objects ??= unit.GetAll<Buff>();
+                var existing = ObjectOf(objects, buffId);
                 if (on && existing == null)
                 {
                     Make(unit, buffId, (given == null ? null : given(buffId)) ?? Match(unit, buffId));
@@ -344,7 +374,15 @@ namespace Moonwell
             }
 
             live.Add(buff);
-            buff.BeginSpell();
+            giving++;
+            try
+            {
+                buff.BeginSpell();
+            }
+            finally
+            {
+                giving--;
+            }
         }
 
         /// <summary>Gives a live object again, from a giver.</summary>
@@ -357,13 +395,20 @@ namespace Moonwell
                 buff.castAt = Runtime.World.Now();
             }
 
-            buff.GiveAgain(giver.Source, giver.Level);
+            giving++;
+            try
+            {
+                buff.GiveAgain(giver.Source, giver.Level);
+            }
+            finally
+            {
+                giving--;
+            }
         }
 
-        /// <summary>The live object a unit has for a game buff, or null.</summary>
-        private static Buff? ObjectOf(Unit unit, int buffId)
+        /// <summary>The live object for a game buff among a unit's buffs, or null.</summary>
+        private static Buff? ObjectOf(List<Buff> found, int buffId)
         {
-            var found = unit.GetAll<Buff>();
             for (var i = 0; i < found.Count; i++)
             {
                 if (found[i].gameBuff == buffId && !found[i].HasEnded)
@@ -408,58 +453,99 @@ namespace Moonwell
                     continue;
                 }
 
-                if (cast.Target == unit || (cast.Target == null && Within(unit, cast.X, cast.Y, cast.Area)))
+                if (cast.Target == unit || (cast.Target == null && (cast.Caster == unit || Within(unit, cast.X, cast.Y, cast.Area))))
                 {
                     return new Giver { Source = cast.Caster, Level = cast.Level, ByCast = true };
                 }
             }
 
-            return AuraGiver(unit, buffId);
+            return AuraGiver(unit, buffId, null);
         }
 
-        /// <summary>The strongest holder in reach of an aura that lists the buff, the nearest of equals; null when none is.</summary>
-        private static Giver? AuraGiver(Unit unit, int buffId)
+        /// <summary>The living holders' listing auras, read once per instant: each holder's level, area and place.</summary>
+        private static List<HeldAura> Held()
         {
-            Giver? best = null;
-            var bestDistance = 0.0f;
-            var x = Runtime.World.UnitX(unit.Handle);
-            var y = Runtime.World.UnitY(unit.Handle);
-            for (var h = 0; h < holders.Count; h++)
+            var now = Runtime.World.Now();
+            if (now == heldAt)
+            {
+                return held;
+            }
+
+            heldAt = now;
+            held = new List<HeldAura>();
+            for (var h = holders.Count - 1; h >= 0; h--)
             {
                 var holder = holders[h];
                 if (holder.HasEnded || holder.IsGone)
+                {
+                    holders.RemoveAt(h);
+                }
+            }
+
+            for (var h = 0; h < holders.Count; h++)
+            {
+                var holder = holders[h];
+                if (!holder.IsAlive)
                 {
                     continue;
                 }
 
                 for (var a = 0; a < auras.Count; a++)
                 {
-                    if (!Listed(auras[a], buffId))
-                    {
-                        continue;
-                    }
-
                     var level = Runtime.World.AbilityLevel(holder.Handle, auras[a]);
-                    var area = Runtime.World.AbilityArea(holder.Handle, auras[a]);
-                    var dx = Runtime.World.UnitX(holder.Handle) - x;
-                    var dy = Runtime.World.UnitY(holder.Handle) - y;
-                    var distance = dx * dx + dy * dy;
-                    if (level <= 0 || distance > (area + Slack) * (area + Slack))
+                    if (level > 0)
                     {
-                        continue;
+                        held.Add(new HeldAura
+                        {
+                            Holder = holder,
+                            Ability = auras[a],
+                            Level = level,
+                            Area = Runtime.World.AbilityArea(holder.Handle, auras[a]),
+                            X = Runtime.World.UnitX(holder.Handle),
+                            Y = Runtime.World.UnitY(holder.Handle),
+                        });
                     }
+                }
+            }
 
-                    if (best == null || level > best.Level || (level == best.Level && distance < bestDistance))
-                    {
-                        best = new Giver { Source = holder, Level = level, ByAura = true };
-                        bestDistance = distance;
-                    }
+            return held;
+        }
+
+        /// <summary>The strongest living holder in reach of an aura that lists the buff; of equals, the one to keep if it is one of them, else the nearest. Null when none is.</summary>
+        private static Giver? AuraGiver(Unit unit, int buffId, Unit? keep)
+        {
+            Giver? best = null;
+            var bestDistance = 0.0f;
+            var x = Runtime.World.UnitX(unit.Handle);
+            var y = Runtime.World.UnitY(unit.Handle);
+            var all = Held();
+            for (var i = 0; i < all.Count; i++)
+            {
+                var aura = all[i];
+                if (!Listed(aura.Ability, buffId))
+                {
+                    continue;
+                }
+
+                var dx = aura.X - x;
+                var dy = aura.Y - y;
+                var distance = dx * dx + dy * dy;
+                if (distance > (aura.Area + Slack) * (aura.Area + Slack))
+                {
+                    continue;
+                }
+
+                var better = best == null || aura.Level > best.Level
+                    || (aura.Level == best.Level && best.Source != keep && (aura.Holder == keep || distance < bestDistance));
+                if (better)
+                {
+                    best = new Giver { Source = aura.Holder, Level = aura.Level, ByAura = true };
+                    bestDistance = distance;
                 }
             }
 
             return best;
         }
-
         /// <summary>Whether a unit holds a listing aura.</summary>
         private static bool HoldsAura(Unit unit)
         {
@@ -512,6 +598,9 @@ namespace Moonwell
             live = new List<Buff>();
             holders = new List<Unit>();
             recent = new List<Recent>();
+            held = new List<HeldAura>();
+            heldAt = -1.0f;
+            giving = 0;
             begun = false;
             started = false;
         }
