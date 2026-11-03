@@ -8,7 +8,8 @@ namespace Moonwell.Testing
 {
     /// <summary>
     /// Cases for the library members the fork's Lua core lacked or answered wrongly until CoreSystem 2.0.3-moonwell.9
-    /// (backlog F2), which MW0030 rejected, and for the forms the compiler 2.0.4-moonwell.16 writes right (F12, F14).
+    /// (backlog F2), which MW0030 rejected, and for the forms the compiler writes right since 2.0.4-moonwell.16 (F12, F14)
+    /// and 2.0.4-moonwell.18 (F16, F17).
     /// </summary>
     public static class LibraryCases
     {
@@ -92,7 +93,10 @@ namespace Moonwell.Testing
             Expect.Equal("1,9,9", string.Join(",", items), "Span.Fill");
         }
 
-        /// <summary>A local of one switch section used in another, an out struct from a Dictionary, and an out call in a conditional's branch (F12, F14).</summary>
+        /// <summary>
+        /// A local of one switch section used in another, an out struct from a Dictionary, an out call in a conditional's
+        /// branch, an int's >> (F12, F14, F16), and a struct set field by field in an if or another switch section (F17).
+        /// </summary>
         public static void Forms(FakeWorld world)
         {
             Expect.Equal(14, SectionLocal(1), "a local of another switch section");
@@ -103,6 +107,36 @@ namespace Moonwell.Testing
             string? key = null;
             var found = new Dictionary<string, int> { ["a"] = 1 };
             Expect.Equal(5, key == null ? 5 : found.TryGetValue(key, out var value) ? value : 7, "an out call runs only in its branch");
+            Expect.Equal(-4, ShiftRight(-8, 1), "an int's >> keeps its sign");
+            Expect.Equal(-3, ShiftRight(-5, 33), "an int's >> takes its count mod 32");
+            Expect.Equal(3, FieldsInAnIf(true), "a struct set field by field in an if");
+            Expect.Equal(5, FieldsInAnotherSection(1), "a struct set field by field in another switch section");
+        }
+
+        private static int ShiftRight(int value, int count) => value >> count;
+
+        private static int FieldsInAnIf(bool set)
+        {
+            if (set)
+            {
+                Spot spot;
+                spot.X = 3;
+                return spot.X;
+            }
+            return 0;
+        }
+
+        private static int FieldsInAnotherSection(int k)
+        {
+            switch (k)
+            {
+                case 0:
+                    Spot spot;
+                    return 0;
+                default:
+                    spot.X = 5;
+                    return spot.X;
+            }
         }
 
         private static int SectionLocal(int k)
