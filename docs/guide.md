@@ -330,6 +330,15 @@ to run backward; `Game.DayStopped = true` stops the day and keeps its speed for 
 constants change dawn, dusk or the day's hours gets its own, but the game reads no time past 24, and the build warns of a
 longer day. The debug mode halts `Game.Time` but not the day.
 
+`RealTime.Now` is the real-world date and time, in UTC and the same on every machine, so any code can use it:
+`if (RealTime.Now.Month == 12)`. It is the first person's clock, shared while the map loads (the game's start waits for
+it), and the game time since, so a long pause makes it run behind the wall clock; after a game saved with the game's
+own Save Game is loaded, it is shared again. `RealTime.LocalNow` is this machine's clock in its own time zone, read
+inside `Local.For`, to show a player their own time. A `RealTime` has `Year`, `Month`, `Day`, `Hour`, `Minute`,
+`Second`, `DayOfWeek` and `Seconds` (since 1970), `AddDays` and the like, compares with `<` and `==`, and writes itself
+as "2026-11-03 14:05". It lasts to January 2038, as the game's own clock does. .NET's `DateTime` and `TimeSpan` fail in
+the game, whose integers are 32 bits, and are MW0030.
+
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last
@@ -1040,7 +1049,7 @@ which is in each player's language. The build rejects, as compile errors:
   that parameter outside `Local.For` too is MW0040. A delegate it cannot follow (a list's element, a library's
   result) is MW0039: write the lambda in place.
 - A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
-  localised names, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
+  localised names, `RealTime.LocalNow`, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
   reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
 - A change inside it to something every machine shares (MW0048), in the block or in what it calls: a field or
   auto-property of your map, a local or parameter from outside the block, an event of your map, or a collection held in
@@ -1093,7 +1102,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0023 | `static abstract`; one class implementing `IG<int>` and `IG<string>` | a method; an ordinary class |
 | MW0025 | a `ref` return, `ref int r = ref First(a)`, a ref reassignment `r = ref other` | a ref local of the element itself (`ref int r = ref a[i]` works), or a new ref local |
 | MW0028 | a `char` or an enum given as an `object` to a text method other than `string`'s, `Console`'s and `StringBuilder`'s (a `TextWriter`'s `Write`), and a list of enums given to `string.Join` (shown as numbers) | `.ToString()` |
-| MW0030 | a library member the Lua core lacks: threads (`Task`/`await`, `Thread`, `Monitor`, `Lock`), what is random on each machine (`Guid`, `Random.Shared`, LINQ `Shuffle`), reflection (`Exception.Source`, `Delegate.Target`, `GetUnderlyingType`), `FormattableString`, `string.Create` and `string.Normalize`, and the static methods of `int` and `float` but `Parse`, `TryParse` and `int`'s bit counts and rotations (`int.Clamp`, `float.Lerp`) | a `Timer`, `Natives.GetRandomInt`, `Math` (`Math.Clamp`) |
+| MW0030 | a library member the Lua core lacks: threads (`Task`/`await`, `Thread`, `Monitor`, `Lock`), what is random on each machine (`Guid`, `Random.Shared`, LINQ `Shuffle`), reflection (`Exception.Source`, `Delegate.Target`, `GetUnderlyingType`), `FormattableString`, `string.Create` and `string.Normalize`, and the static methods of `int` and `float` but `Parse`, `TryParse` and `int`'s bit counts and rotations (`int.Clamp`, `float.Lerp`), and `DateTime`, `DateTimeOffset` and `TimeSpan`, whose 64-bit ticks the game's integers cannot hold | a `Timer`, `Natives.GetRandomInt`, `Math` (`Math.Clamp`), `RealTime` |
 | MW0032 | `Enum.Parse(typeof(Color), text)` (gives the number) | `Enum.Parse<Color>(text)` |
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |

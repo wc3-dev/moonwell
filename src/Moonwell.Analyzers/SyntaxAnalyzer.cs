@@ -197,6 +197,11 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         "System.Threading.Monitor", "System.Threading.Lock", "System.Threading.Thread", "System.Threading.Tasks.Task",
         "System.Threading.Tasks.Task`1", "System.Guid", "System.FormattableString");
 
+    private const string Ticks = "counts its time in 64-bit ticks, which the game's 32-bit integers cannot hold, so it fails when it runs; use Moonwell's RealTime";
+
+    // In the Lua core, but each use stopped in the game with "number has no integer representation" (game facts, 11-03).
+    private static readonly ImmutableHashSet<string> TickTypes = ImmutableHashSet.Create("System.DateTime", "System.DateTimeOffset", "System.TimeSpan");
+
     private static readonly ImmutableDictionary<string, string> Members = new Dictionary<string, string>
     {
         ["System.Exception.Source"] = Missing,
@@ -233,9 +238,14 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
 
         if (symbol is INamedTypeSymbol type)
         {
-            if (MissingTypes.Contains(Full(type.OriginalDefinition)))
+            var full = Full(type.OriginalDefinition);
+            if (MissingTypes.Contains(full))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, name.GetLocation(), name.Identifier.Text, Missing));
+            }
+            else if (TickTypes.Contains(full))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, name.GetLocation(), name.Identifier.Text, Ticks));
             }
 
             return;

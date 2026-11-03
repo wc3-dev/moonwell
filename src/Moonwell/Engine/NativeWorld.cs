@@ -138,6 +138,11 @@ namespace Moonwell.Engine
 
                     Natives.TriggerAddAction(trigger, LeaveAction);
                     break;
+                case GameEvent.Loaded:
+                    var loaded = Natives.CreateTrigger();
+                    Natives.TriggerRegisterGameEvent(loaded, Natives.EVENT_GAME_LOADED);
+                    Natives.TriggerAddAction(loaded, LoadedAction);
+                    break;
                 case GameEvent.HeroLevel:
                     Register(Natives.EVENT_PLAYER_HERO_LEVEL, HeroLevelAction);
                     break;
@@ -303,6 +308,68 @@ namespace Moonwell.Engine
             }
 
             Natives.PreloadGenEnd("Moonwell\\log.txt");
+        }
+
+        /// <summary>Sends a sharing message from this machine.</summary>
+        public void SendSync(string text)
+        {
+            Natives.BlzSendSyncData(Sharing.Prefix, text);
+        }
+
+        /// <summary>One trigger for a player's sharing messages.</summary>
+        public void ListenSync(player player)
+        {
+            var trigger = Natives.CreateTrigger();
+            Natives.BlzTriggerRegisterPlayerSyncEvent(trigger, player, Sharing.Prefix, false);
+            Natives.TriggerAddAction(trigger, SyncAction);
+        }
+
+        /// <summary>This machine's seconds since 1970, from Lua's os.time.</summary>
+        public int ClockSeconds()
+        {
+            return OsTime();
+        }
+
+        /// <summary>The zone's offset, from os.date's local and UTC fields; os.time reads the UTC fields as winter time, so summer time adds its hour.</summary>
+        public int ZoneOffset()
+        {
+            return OsOffset();
+        }
+
+        /// @CSharpLua.Template = "os.time()"
+        private static int OsTime()
+        {
+            return 0;
+        }
+
+        /// @CSharpLua.Template = "(os.time(os.date('*t')) - os.time(os.date('!*t')) + (os.date('*t').isdst and 3600 or 0))"
+        private static int OsOffset()
+        {
+            return 0;
+        }
+
+        private static void LoadedAction()
+        {
+            try
+            {
+                Inbound.GameLoaded();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Loaded", error);
+            }
+        }
+
+        private static void SyncAction()
+        {
+            try
+            {
+                Inbound.SyncArrived(Natives.GetTriggerPlayer(), Natives.BlzGetTriggerSyncData());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Share", error);
+            }
         }
 
         /// <summary>The game's time of day, in hours.</summary>

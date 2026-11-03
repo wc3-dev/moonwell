@@ -33,6 +33,11 @@ public class SyntaxTests
     [InlineData("MW0030", "var m = int.Max(5, 3);", "Max")]
     [InlineData("MW0030", "var l = float.Lerp(0f, 1f, 0.5f);", "Lerp")]
     [InlineData("MW0030", "var a = float.Abs(-1f);", "Abs")]
+    // MW0030: .NET's dates, whose 64-bit ticks the game's integers cannot hold (game facts, 11-03)
+    [InlineData("MW0030", "var y = DateTime.UtcNow.Year;", "DateTime")]
+    [InlineData("MW0030", "var t = new TimeSpan(1, 2, 3);", "TimeSpan")]
+    [InlineData("MW0030", "var o = DateTimeOffset.UtcNow;", "DateTimeOffset")]
+    [InlineData("MW0030", "Box? b = null; var later = b == null ? default(DateTime) : default;", "DateTime")]
     // MW0032: enum text
     [InlineData("MW0032", "var c = Enum.Parse(typeof(Color), \"Blue\");", "Enum.Parse(typeof(Color), \"Blue\")")]
     // MW0042: NaN and the infinities, which the game's own numbers do not have
@@ -50,6 +55,19 @@ public class SyntaxTests
     {
         var found = MapCode.Check(body, Types + "\n" + members);
         Assert.Contains(id + ": " + pointsAt, found.Where(f => f.StartsWith(id)).Select(f => f.Replace("\r", "")));
+    }
+
+    [Fact]
+    public void a_DateTime_points_to_RealTime()
+    {
+        var messages = MapCode.MessagesOfFile("using System;\n\nclass Dates\n{\n    int M() { return new DateTime(2026, 11, 3).Year; }\n}\n");
+        Assert.Contains(messages, message => message.Contains("RealTime"));
+    }
+
+    [Fact]
+    public void RealTime_is_accepted()
+    {
+        Assert.Empty(MapCode.Check("var now = RealTime.Now; var later = now.AddDays(1); var y = later.Year + now.Month;"));
     }
 
     [Fact]

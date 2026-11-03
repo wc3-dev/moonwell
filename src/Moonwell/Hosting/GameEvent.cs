@@ -32,5 +32,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A unit changes hands: given away by code, charmed or possessed.</summary>
         OwnerChange,
+
+        /// <summary>A game saved with the game's own Save Game is loaded.</summary>
+        Loaded,
     }
 }
