@@ -26,6 +26,8 @@
     <!-- <PackageReference Include="Moonwell.Input" Version="MOONWELL_VERSION" /> -->
     <!-- For panels, text, images and the rest of a map's own UI, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Frames" Version="MOONWELL_VERSION" /> -->
+    <!-- For reading and writing JSON, take the comment off the next line. -->
+    <!-- <PackageReference Include="Moonwell.Json" Version="MOONWELL_VERSION" /> -->
   </ItemGroup>
 
 </Project>

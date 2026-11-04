@@ -32,31 +32,53 @@ namespace Moonwell
                     i++;
                 }
 
-                if (c < 0x80)
-                {
-                    bytes.Add(c);
-                }
-                else if (c < 0x800)
-                {
-                    bytes.Add(0xC0 | (c >> 6));
-                    bytes.Add(0x80 | (c & 63));
-                }
-                else if (c < 0x10000)
-                {
-                    bytes.Add(0xE0 | (c >> 12));
-                    bytes.Add(0x80 | ((c >> 6) & 63));
-                    bytes.Add(0x80 | (c & 63));
-                }
-                else
-                {
-                    bytes.Add(0xF0 | (c >> 18));
-                    bytes.Add(0x80 | ((c >> 12) & 63));
-                    bytes.Add(0x80 | ((c >> 6) & 63));
-                    bytes.Add(0x80 | (c & 63));
-                }
+                AddBytes(bytes, c);
             }
 
             return bytes;
+        }
+
+        /// <summary>Appends a letter by its code point: as .NET's chars, or as its UTF-8 bytes in the game.</summary>
+        internal static void Append(StringBuilder text, int letter)
+        {
+            if (!BytesAlready)
+            {
+                text.Append(char.ConvertFromUtf32(letter));
+                return;
+            }
+
+            var bytes = new List<int>();
+            AddBytes(bytes, letter);
+            for (var i = 0; i < bytes.Count; i++)
+            {
+                text.Append((char)bytes[i]);
+            }
+        }
+
+        private static void AddBytes(List<int> bytes, int c)
+        {
+            if (c < 0x80)
+            {
+                bytes.Add(c);
+            }
+            else if (c < 0x800)
+            {
+                bytes.Add(0xC0 | (c >> 6));
+                bytes.Add(0x80 | (c & 63));
+            }
+            else if (c < 0x10000)
+            {
+                bytes.Add(0xE0 | (c >> 12));
+                bytes.Add(0x80 | ((c >> 6) & 63));
+                bytes.Add(0x80 | (c & 63));
+            }
+            else
+            {
+                bytes.Add(0xF0 | (c >> 18));
+                bytes.Add(0x80 | ((c >> 12) & 63));
+                bytes.Add(0x80 | ((c >> 6) & 63));
+                bytes.Add(0x80 | (c & 63));
+            }
         }
 
         /// <summary>The text of some UTF-8 bytes; a sequence that is no letter reads as U+FFFD on .NET.</summary>

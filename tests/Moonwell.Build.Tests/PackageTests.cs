@@ -66,6 +66,7 @@ namespace Moonwell.Build.Tests
         [InlineData("Moonwell.Areas")]
         [InlineData("Moonwell.Input")]
         [InlineData("Moonwell.Frames")]
+        [InlineData("Moonwell.Json")]
         public void package_ships_xml_docs_beside_its_library(string id)
         {
             using var archive = ZipFile.OpenRead(Path.Combine(packed.Feed, id + "." + packed.Version + ".nupkg"));
@@ -281,6 +282,16 @@ namespace Moonwell.Build.Tests
             var names = archive.Entries.Select(entry => entry.FullName).ToList();
             Assert.Contains("contentFiles/cs/net10.0/Moonwell.Frames/FramesSystem.cs", names);
             Assert.Contains(names, name => name.StartsWith("lib/", StringComparison.Ordinal) && name.EndsWith("/Moonwell.Frames.dll", StringComparison.Ordinal));
+            Assert.DoesNotContain(names, name => name.Contains("/obj/") || name.Contains("/bin/"));
+        }
+
+        [Fact]
+        public void json_package_carries_its_source()
+        {
+            using var archive = ZipFile.OpenRead(packed.JsonPackage);
+            var names = archive.Entries.Select(entry => entry.FullName).ToList();
+            Assert.Contains("contentFiles/cs/net10.0/Moonwell.Json/JsonNode.cs", names);
+            Assert.Contains(names, name => name.StartsWith("lib/", StringComparison.Ordinal) && name.EndsWith("/Moonwell.Json.dll", StringComparison.Ordinal));
             Assert.DoesNotContain(names, name => name.Contains("/obj/") || name.Contains("/bin/"));
         }
 

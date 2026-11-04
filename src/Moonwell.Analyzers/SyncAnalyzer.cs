@@ -134,6 +134,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 compilation.GetTypeByMetadataName("System.Random"),
                 compilation.GetTypeByMetadataName("Moonwell.OrderedMap`2"),
                 compilation.GetTypeByMetadataName("Moonwell.OrderedSet`1"),
+                compilation.GetTypeByMetadataName("Moonwell.Json.JsonObject"),
+                compilation.GetTypeByMetadataName("Moonwell.Json.JsonArray"),
             };
             handle = compilation.GetTypeByMetadataName("Moonwell.handle");
             overriders = new(FindOverriders, LazyThreadSafetyMode.ExecutionAndPublication);
