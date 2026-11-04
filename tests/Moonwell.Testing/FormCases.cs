@@ -223,6 +223,25 @@ namespace Moonwell.Testing
             Expect.Equal(int.MaxValue - 1, checked(big - 1), "checked, no overflow");
         }
 
+        /// <summary>
+        /// -2^31 written by the compiler stays an integer: the game's Lua, with 32-bit integers, reads the literal -2147483648 as a
+        /// float, and a bitwise operator on one stops the script (F20). Desktop Lua reads it as an integer either way, so only the
+        /// game shows a failure here.
+        /// </summary>
+        public static void IntMinimum(FakeWorld world)
+        {
+            const int Lowest = int.MinValue;
+            var low = int.MinValue;
+            var written = -2147483648;
+            Expect.Equal(-2147483647, low | 1, "int.MinValue | 1");
+            Expect.Equal(int.MaxValue, Lowest ^ -1, "a const's ^");
+            Expect.Equal(-2147483647, written | 1, "-2^31 written as a literal, | 1");
+            Expect.Equal(-1, (1 << 31) >> 31, "1 << 31, shifted back");
+            var sign = Bit.Sign;
+            Expect.Equal(-2147483647, (int)(sign | Bit.Low), "an enum member of -2^31 | 1");
+            Expect.Equal("Sign", sign.ToString(), "that member's name");
+        }
+
         /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
         public static void EnumText(FakeWorld world)
         {
@@ -420,6 +439,12 @@ namespace Moonwell.Testing
             Red,
             Green,
             Blue,
+        }
+
+        private enum Bit
+        {
+            Low = 1,
+            Sign = 1 << 31,
         }
 
         [Flags]
