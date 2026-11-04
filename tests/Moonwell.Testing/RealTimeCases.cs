@@ -70,6 +70,17 @@ namespace Moonwell.Testing
             ExpectDate(RealTime.Now, 2026, 11, 3, 0, 1, 30);
         }
 
+#if DEBUG
+        /// <summary>The shared clock read before the date arrived is reported in a development build, and gives 1970.</summary>
+        public static void NowEarlyReported(FakeWorld world)
+        {
+            var before = world.Printed.Count;
+            Expect.Equal(0, RealTime.Now.Seconds, "1970 before the date");
+            Expect.Equal(before + 1, world.Printed.Count, "the lines printed");
+            Expect.True(world.Printed[before].Contains("not arrived"), "the report says why: " + world.Printed[before]);
+        }
+#endif
+
         /// <summary>This machine's clock adds its zone's offset.</summary>
         public static void LocalNow(FakeWorld world)
         {
