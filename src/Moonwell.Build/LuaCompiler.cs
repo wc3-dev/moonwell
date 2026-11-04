@@ -16,10 +16,11 @@ namespace Moonwell.Build
         /// <param name="targetPath">The map's built assembly; the Moonwell libraries are next to it.</param>
         /// <param name="release">True compiles with <c>RELEASE</c> in place of <c>DEBUG</c>, and drops comments.</param>
         /// <returns>The script, also set on <paramref name="map"/>.</returns>
-        /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, or the C# does not compile to Lua.</exception>
+        /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, the C# does not compile to Lua, or Lua does not load the script.</exception>
         public static string Compile(MapProject project, War3Net.Build.Map map, string targetPath, bool release)
         {
             var script = Compile(project, map, targetPath, release, null, out var files);
+            LuaLoad.Check(script, files);
             script = LineTable.Apply(script, files);
             map.Script = script;
             return script;
@@ -39,7 +40,7 @@ namespace Moonwell.Build
         /// <param name="set">The tables values are read from (<see cref="GameData.ValueSet"/>): null for the base tables.</param>
         /// <param name="trees">Whether the map references the interactions package, so that the script gets the table of its tree types.</param>
         /// <returns>The script, also set on <paramref name="map"/>.</returns>
-        /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, the C# does not compile to Lua, a declared list names a class with no id, or an object file cannot be read.</exception>
+        /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, the C# does not compile to Lua, a declared list names a class with no id, an object file cannot be read, or Lua does not load the script.</exception>
         public static string Compile(
             MapProject project,
             War3Net.Build.Map map,
@@ -63,6 +64,7 @@ namespace Moonwell.Build
             // A standard class reads its type as World Editor changed it, and a type's default object any type World Editor makes.
             var mapTypes = MapTypes.Read(project.MapFolder, map.TriggerStrings, standard);
             script = ObjectLua.Values(script, declarations, named, standard, set, mapTypes, trees);
+            LuaLoad.Check(script, files);
             script = LineTable.Apply(script, files);
             map.Script = script;
             return script;

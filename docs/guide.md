@@ -1224,6 +1224,11 @@ build does not catch a
 nothing on the screen. Key by the handle, or set the field on first use. Moonwell's classes, `Unit` and the rest, are
 safe keys.
 
+The build loads the script in Lua without running it, as the game does first, and stops with the C# file and line when
+Lua refuses it. Lua allows 200 locals in a function: each parameter, local variable and object or collection
+initializer is one, and so are some values the compiler keeps (`?.`, a switch expression), so a method that adds 200
+`new Wave { ... }` to a list is too long. Split it into several methods.
+
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
 the file and line. An error that repeats shows and goes to the log at its 1st, 10th, 100th time and so on, with its
