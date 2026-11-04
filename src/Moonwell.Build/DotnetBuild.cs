@@ -24,9 +24,9 @@ namespace Moonwell.Build
             var configuration = release ? "Release" : "Debug";
             var written = new List<string>();
 
-            // One MSBuild process (-m:1): a map is one project, or a few that build in turn, and each worker process MSBuild would
-            // start costs more than the build it helps with.
-            var build = Dotnet(project, new[] { "build", project.ProjectFile, "-c", configuration, "-nologo", "-m:1", "--disable-build-servers" }, log, written.Add);
+            // One MSBuild process (-m:1), compiling on dotnet's compiler server: a map is one project, or a few that build in turn,
+            // and each worker process MSBuild would start, or a compiler started cold, costs more than the build it helps with.
+            var build = Dotnet(project, new[] { "build", project.ProjectFile, "-c", configuration, "-nologo", "-m:1" }, log, written.Add);
             if (build != 0)
             {
                 var hints = MovedHints(written);
