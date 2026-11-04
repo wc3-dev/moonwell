@@ -297,6 +297,23 @@ namespace Moonwell.Testing
             Expect.Equal("patrol", unit.Heard!.Previous!.Previous!.Name, "a reaction reads the order's Previous");
         }
 
+        /// <summary>An order that repeats the last one takes its place, so the two before it are still kept.</summary>
+        public static void RepeatTakesPlace(FakeWorld world)
+        {
+            var unit = Arena(world, out _);
+            var other = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 1);
+            world.PlayerOrders(unit.Handle, Orders.Move, 1f, 1f);
+            world.PlayerOrders(unit.Handle, Orders.Patrol, 2f, 2f);
+            world.PlayerOrdersOn(unit.Handle, Orders.Attack, other);
+            var attack = unit.LastOrder;
+            world.PlayerOrdersOn(unit.Handle, Orders.Attack, other);
+            var last = unit.LastOrder!;
+            Expect.True(last != attack, "the repeat is the last");
+            Expect.Equal("patrol", last.Previous!.Name, "the one before the first attack");
+            Expect.Equal("move", last.Previous!.Previous!.Name, "and the oldest still kept");
+            Expect.Equal("patrol", unit.Heard!.Previous!.Name, "a reaction reads the same Previous");
+        }
+
         /// <summary>Stop, toggles and item slots are not kept: they are not worth giving again.</summary>
         public static void NotWorthIt(FakeWorld world)
         {
@@ -357,6 +374,19 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.Orders.Count, "no order given");
         }
 
+        /// <summary>A potion drunk on the way to a cast does not make the cast done: its effect comes while the unit carries out the item's order.</summary>
+        public static void PotionOnTheWay(FakeWorld world)
+        {
+            var unit = Arena(world, out _);
+            var other = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 0);
+            world.PlayerOrdersOn(unit.Handle, "holybolt", other);
+            world.PlayerOrdersId(unit.Handle, 852008, OrderKind.None);
+            Inbound.SpellEffect(unit.Handle, ObjectTypes.FourCC("AIh1"), null, 0f, 0f);
+            world.Orders.Clear();
+            Expect.True(unit.Reissue(), "cast again");
+            Expect.Equal("target holybolt", string.Join(", ", world.Orders.ToArray()), "the spell given again");
+        }
+
         /// <summary>The order the game gives back when a stun ends, the same as the one before it, is not heard and not kept again.</summary>
         public static void AfterStun(FakeWorld world)
         {
@@ -364,12 +394,24 @@ namespace Moonwell.Testing
             world.PlayerOrders(unit.Handle, Orders.Move, 100f, 200f);
             var move = unit.LastOrder;
             TestLog.Lines.Clear();
+            world.SetQueued(unit.Handle, 1);
             world.PlayerOrdersId(unit.Handle, 851973, OrderKind.Target);
             world.PlayerOrders(unit.Handle, Orders.Move, 100f, 200f);
             ExpectLog(new string[0], "the move given back is not heard");
             Expect.Same(move, unit.LastOrder, "and not kept again");
             world.PlayerOrders(unit.Handle, Orders.Move, 100f, 200f);
             Expect.Equal(4, TestLog.Lines.Count, "the same move given after that is heard");
+        }
+
+        /// <summary>An idle unit's stun gives no order back at its end (its stunned order counts 1, seen 11-05), so the same order after it is heard.</summary>
+        public static void AfterIdleStun(FakeWorld world)
+        {
+            var unit = Arena(world, out _);
+            world.PlayerOrders(unit.Handle, Orders.Move, 100f, 200f);
+            world.PlayerOrdersId(unit.Handle, 851973, OrderKind.Target);
+            TestLog.Lines.Clear();
+            world.PlayerOrders(unit.Handle, Orders.Move, 100f, 200f);
+            Expect.Equal(4, TestLog.Lines.Count, "heard");
         }
 
         /// <summary>A different order after a stun is heard.</summary>

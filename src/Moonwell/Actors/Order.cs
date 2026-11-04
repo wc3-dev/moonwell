@@ -56,7 +56,7 @@ namespace Moonwell
         [LocalSafe]
         public bool IsCancelled { get; private set; }
 
-        /// <summary>The unit's last order before this one, as <c>unit.LastOrder</c> kept it; null when none was kept.</summary>
+        /// <summary>The unit's last order before this one, as <c>unit.LastOrder</c> kept it; null when none was kept. An order that repeats the last one takes its place, so its Previous is the one before that.</summary>
         [LocalSafe]
         public Order? Previous { get; internal set; }
 

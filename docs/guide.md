@@ -394,9 +394,9 @@ public sealed class Border : GameComponent
   neither the unit's. The game's own orders run nothing: the stunned order, undefend, and the order a stun's end gives
   back.
 - `LastOrder` keeps the last three orders worth giving again (moves, attacks, right-clicks, patrols, holding position,
-  spells; not stops, toggles or items), each reaching the one before with `Previous`, and `Reissue()` gives the last
-  again, after a knockback say; a spell already cast is not cast again. A map listens for orders only when its code
-  writes an order reaction or reads `LastOrder` or `Reissue`.
+  spells; not stops, toggles or items), each reaching the one before with `Previous`; an order that repeats the last
+  takes its place. `Reissue()` gives the last again, after a knockback say; a spell already cast is not cast again. A
+  map listens for orders only when its code writes an order reaction or reads `LastOrder` or `Reissue`.
 
 | Hero (a unit the game makes as a hero) | |
 |---|---|
