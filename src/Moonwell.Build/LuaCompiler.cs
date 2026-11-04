@@ -16,7 +16,7 @@ namespace Moonwell.Build
         /// <param name="targetPath">The map's built assembly; the Moonwell libraries are next to it.</param>
         /// <param name="release">True compiles with <c>RELEASE</c> in place of <c>DEBUG</c>, and drops comments.</param>
         /// <returns>The script, also set on <paramref name="map"/>.</returns>
-        /// <exception cref="BuildException">Common.j and Blizzard.j are missing or the C# does not compile to Lua.</exception>
+        /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, or the C# does not compile to Lua.</exception>
         public static string Compile(MapProject project, War3Net.Build.Map map, string targetPath, bool release)
         {
             var script = Compile(project, map, targetPath, release, null, out var files);
@@ -39,7 +39,7 @@ namespace Moonwell.Build
         /// <param name="set">The tables values are read from (<see cref="GameData.ValueSet"/>): null for the base tables.</param>
         /// <param name="trees">Whether the map references the interactions package, so that the script gets the table of its tree types.</param>
         /// <returns>The script, also set on <paramref name="map"/>.</returns>
-        /// <exception cref="BuildException">Common.j and Blizzard.j are missing, the C# does not compile to Lua, a declared list names a class with no id, or an object file cannot be read.</exception>
+        /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, the C# does not compile to Lua, a declared list names a class with no id, or an object file cannot be read.</exception>
         public static string Compile(
             MapProject project,
             War3Net.Build.Map map,
@@ -72,13 +72,7 @@ namespace Moonwell.Build
         // marked copy of the project; files gives its marked files for the line table, which the callers add last.
         private static string Compile(MapProject project, War3Net.Build.Map map, string targetPath, bool release, string? objects, out IReadOnlyList<string> files)
         {
-            var jassHelper = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Warcraft III", "JassHelper");
-            var commonJ = Path.Combine(jassHelper, "common.j");
-            var blizzardJ = Path.Combine(jassHelper, "Blizzard.j");
-            if (!File.Exists(commonJ) || !File.Exists(blizzardJ))
-            {
-                throw new BuildException($"common.j and Blizzard.j are not in {jassHelper}");
-            }
+            var (commonJ, blizzardJ) = GameScripts.Find(null, GameScripts.CacheRoot);
 
             var luaFolder = Path.Combine(project.GeneratedFolder, "lua");
             var libraries = ScriptLibraries.Extract(targetPath, luaFolder);

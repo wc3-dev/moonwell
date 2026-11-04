@@ -5,8 +5,9 @@ This guide describes Moonwell 0.4.1; the guide for 0.4.0 is at the
 
 ## Start a map
 
-Moonwell needs the .NET 10 SDK, Warcraft III 3.0, and `common.j` and `Blizzard.j` in
-`Documents\Warcraft III\JassHelper`. Install the template and the `moonwell` command once:
+Moonwell needs the .NET 10 SDK and Warcraft III 3.0, whose `common.j` and `Blizzard.j` the build reads from the
+install. Name an install outside `C:\Program Files (x86)\Warcraft III` with the `MOONWELL_WAR3` environment variable.
+Install the template and the `moonwell` command once:
 
 ```
 dotnet new install Moonwell.Templates
