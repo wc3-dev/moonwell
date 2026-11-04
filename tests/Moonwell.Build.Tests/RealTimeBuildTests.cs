@@ -7,10 +7,12 @@ namespace Moonwell.Build.Tests
     [Collection("Sample")]
     public sealed class RealTimeBuildTests : IDisposable
     {
+        private readonly SampleBuilds builds;
         private readonly TestFolders folders;
 
-        public RealTimeBuildTests(ITestOutputHelper output)
+        public RealTimeBuildTests(SampleBuilds builds, ITestOutputHelper output)
         {
+            this.builds = builds;
             folders = new TestFolders(output);
         }
 
@@ -46,11 +48,8 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_without_RealTime_shares_no_date()
         {
-            var project = folders.TemporaryCopyOf("Sample");
-
-            Build(project);
-
-            Assert.DoesNotContain("ShareStartDate", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
+            Assert.Equal(0, builds.Development.ExitCode);
+            Assert.DoesNotContain("ShareStartDate", File.ReadAllText(Path.Combine(builds.Development.BuildFolder, "generated", "MapMain.g.cs")));
         }
 
         private static void Build(string project)

@@ -89,7 +89,8 @@ namespace Moonwell.Build.Tests
             }
         }
 
-        private static void CopyFolder(string from, string to)
+        /// <summary>Copies a folder and what is in it, without its bin, obj and build folders.</summary>
+        internal static void CopyFolder(string from, string to)
         {
             Directory.CreateDirectory(to);
             foreach (var file in Directory.GetFiles(from))

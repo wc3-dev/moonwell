@@ -375,11 +375,8 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void template_map_builds()
         {
-            var hive = folders.TemporaryFolderOutsideRepository();
             var parent = folders.TemporaryFolderOutsideRepository();
-            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
-            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
-            var map = Path.Combine(parent, "Keep");
+            var map = packed.TemplateMap(parent);
             WriteFeedConfig(map);
 
             // The map's own code is the template's, so a failure shows the build's output.
@@ -411,11 +408,8 @@ namespace Moonwell.Build.Tests
         public void type_values_are_written_only_when_the_map_reads_default()
         {
             // The template's code never reads Default: its release script has no table by type id (the runtime's own Lua names it).
-            var hive = folders.TemporaryFolderOutsideRepository();
             var parent = folders.TemporaryFolderOutsideRepository();
-            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
-            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
-            var map = Path.Combine(parent, "Keep");
+            var map = packed.TemplateMap(parent);
             WriteFeedConfig(map);
 
             MapBuild.Run(map, Packed(release: true), new StringWriter());
@@ -441,11 +435,8 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void template_map_shows_adding_the_damage_package_and_builds_with_it()
         {
-            var hive = folders.TemporaryFolderOutsideRepository();
             var parent = folders.TemporaryFolderOutsideRepository();
-            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
-            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
-            var map = Path.Combine(parent, "Keep");
+            var map = packed.TemplateMap(parent);
             WriteFeedConfig(map);
 
             // The guide's one line: take the comment off the project's Moonwell.Damage line.
@@ -481,11 +472,8 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void template_map_builds_with_every_package()
         {
-            var hive = folders.TemporaryFolderOutsideRepository();
             var parent = folders.TemporaryFolderOutsideRepository();
-            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
-            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
-            var map = Path.Combine(parent, "Keep");
+            var map = packed.TemplateMap(parent);
             WriteFeedConfig(map);
 
             var csproj = Path.Combine(map, "Keep.csproj");
@@ -550,12 +538,9 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_package_only_a_library_project_references_is_installed()
         {
-            var hive = folders.TemporaryFolderOutsideRepository();
             var parent = folders.TemporaryFolderOutsideRepository();
-            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
-            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
+            var map = packed.TemplateMap(parent);
             WriteFeedConfig(parent);
-            var map = Path.Combine(parent, "Keep");
 
             var library = Path.Combine(parent, "KeepCode");
             Directory.CreateDirectory(library);
@@ -592,11 +577,8 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void template_map_release_carries_no_damage_package()
         {
-            var hive = folders.TemporaryFolderOutsideRepository();
             var parent = folders.TemporaryFolderOutsideRepository();
-            PackedMoonwell.Dotnet(parent, "new", "install", packed.TemplatesPackage, "--debug:custom-hive", hive);
-            PackedMoonwell.Dotnet(parent, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
-            var map = Path.Combine(parent, "Keep");
+            var map = packed.TemplateMap(parent);
             WriteFeedConfig(map);
 
             var log = new StringWriter();
