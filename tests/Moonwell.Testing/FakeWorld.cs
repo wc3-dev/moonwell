@@ -793,6 +793,27 @@ namespace Moonwell.Testing
             return RealOffset;
         }
 
+        /// <summary>This machine's player files, by their path in CustomMapData: the pieces written.</summary>
+        public Dictionary<string, List<string>> Files = new Dictionary<string, List<string>>();
+
+        /// <summary>Keeps a player file's pieces, replacing the file.</summary>
+        public void WritePreload(string path, IReadOnlyList<string> pieces)
+        {
+            Files[path] = new List<string>(pieces);
+        }
+
+        /// <summary>A copy of a player file's pieces; null when there is none.</summary>
+        public List<string>? ReadPreload(string path)
+        {
+            return Files.TryGetValue(path, out var pieces) ? new List<string>(pieces) : null;
+        }
+
+        /// <summary>Drops this machine's messages not yet delivered, as a replay does: there the recorded ones arrive instead.</summary>
+        public void DropPendingSync()
+        {
+            pendingSync.Clear();
+        }
+
         /// <summary>The sharing messages this machine sent, in order.</summary>
         public List<string> SentSync = new List<string>();
 

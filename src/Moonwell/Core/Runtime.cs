@@ -35,6 +35,8 @@ namespace Moonwell
             Player.Reset();
             Sharing.Reset();
             RealClock.Reset();
+            ReplayGuard.Reset();
+            PlayerFile.Folder = "Map";
             KnownUnits.Reset();
             KnownItems.Reset();
             KnownDestructables.Reset();
@@ -69,7 +71,16 @@ namespace Moonwell
                 RealClock.Share();
             }
 
+            ReplayGuard.Start();
+
             NativeWorld.Later(() => Begin(setup));
+        }
+
+        /// <summary>Puts the map's player files in a folder of CustomMapData named for the map: the map's Main calls it, in the register step, from the map's SaveFolder or name.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void InstallSaveFolder(string folder)
+        {
+            PlayerFile.Folder = folder;
         }
 
         /// <summary>Shares the first person's date with every machine before the game's start: the map's Main calls it while the map loads, when the map's code names RealTime, so the loading screen hides the wait.</summary>

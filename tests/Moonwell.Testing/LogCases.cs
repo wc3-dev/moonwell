@@ -74,6 +74,35 @@ namespace Moonwell.Testing
             Expect.Equal(true, file.Add("fourth", 7.5f), "a line 1.5 s after the write is written at once");
         }
 
+        /// <summary>With the replay guard started, the file waits for this machine's value to come back; in a replay it is never written.</summary>
+        public static void WaitsForTheReplayGuard(FakeWorld world)
+        {
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            ReplayGuard.Start();
+            var file = new LogFile();
+            Expect.Equal(false, file.Add("first", 5.0f), "waits for the guard");
+            Expect.Equal(false, file.Due(6.0f), "not due before the guard knows");
+            world.Advance(0.1f);
+            Expect.Equal(true, file.Due(6.0f), "due once the value came back the same");
+        }
+
+        /// <summary>In a replay the log file is never written: watching the replay would put its lines over the game's.</summary>
+        public static void NotWrittenInAReplay(FakeWorld world)
+        {
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            world.RealSeconds = 2000;
+            ReplayGuard.Start();
+            world.DropPendingSync();
+            foreach (var message in Sharing.Messages(1, "1000"))
+            {
+                world.DeliverSync(Player.One, message);
+            }
+
+            var file = new LogFile();
+            Expect.Equal(false, file.Add("first", 5.0f), "not written at once");
+            Expect.Equal(false, file.Due(9.0f), "never due");
+        }
+
         private static string Repeat(string text, int count)
         {
             var result = "";

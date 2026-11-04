@@ -324,6 +324,46 @@ namespace Moonwell.Engine
             Natives.TriggerAddAction(trigger, SyncAction);
         }
 
+        /// <summary>Writes a player file: each piece a Preload line that puts it in the store ability's tooltips (FileText).</summary>
+        public void WritePreload(string path, IReadOnlyList<string> pieces)
+        {
+            Natives.PreloadGenClear();
+            Natives.PreloadGenStart();
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                Natives.Preload(FileText.Line(i, pieces[i]));
+            }
+
+            Natives.PreloadGenEnd(path);
+        }
+
+        /// <summary>Reads a player file: every tooltip of the store ability is set to a mark no piece holds, Preloader runs the file's lines, and the pieces are read until a mark.</summary>
+        public List<string>? ReadPreload(string path)
+        {
+            const string Mark = "\u0001";
+            var store = ObjectTypes.FourCC(FileText.StoreId);
+            for (var level = 0; level < 100; level++)
+            {
+                Natives.BlzSetAbilityTooltip(store, Mark, level);
+                Natives.BlzSetAbilityExtendedTooltip(store, Mark, level);
+            }
+
+            Natives.Preloader(path);
+            var pieces = new List<string>();
+            for (var i = 0; i < FileText.MostPieces; i++)
+            {
+                var piece = i < 100 ? Natives.BlzGetAbilityTooltip(store, i) : Natives.BlzGetAbilityExtendedTooltip(store, i - 100);
+                if (piece == Mark)
+                {
+                    break;
+                }
+
+                pieces.Add(piece);
+            }
+
+            return pieces.Count == 0 ? null : pieces;
+        }
+
         /// <summary>This machine's seconds since 1970, from Lua's os.time.</summary>
         public int ClockSeconds()
         {

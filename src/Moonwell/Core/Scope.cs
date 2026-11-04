@@ -56,6 +56,53 @@ namespace Moonwell
             return Timer.Start(new Timer(Runtime.World.Now(), seconds, true, action), this);
         }
 
+        /// <summary>
+        /// Reads a file on a player's computer, on their machine, and hands its text to every machine once it has arrived, as a
+        /// child of this scope: nothing runs if the scope ends first. Null when there is no file, when the player leaves first,
+        /// or when they are not a person playing.
+        /// </summary>
+        public void ReadFile(Player player, string path, Action<string?> arrived)
+        {
+            Sharing.Request(this, player, () => PlayerFile.Read(path), arrived);
+        }
+
+        /// <summary>
+        /// Runs <paramref name="read"/> on the player's machine only, where it may read what only that machine knows, and hands
+        /// its answer to every machine once it has arrived, as a child of this scope. Null when the player leaves first or is
+        /// not a person playing.
+        /// </summary>
+        public void Share(Player player, Func<string?> read, Action<string?> arrived)
+        {
+            Sharing.Request(this, player, read, arrived);
+        }
+
+        /// <summary>Shares a whole number one machine knows with every machine, as the text Share does; 0 when none arrives.</summary>
+        public void Share(Player player, Func<int> read, Action<int> arrived)
+        {
+            Sharing.Request(this, player, () => read().ToString(), text => arrived(text != null && int.TryParse(text, out var value) ? value : 0));
+        }
+
+        /// <summary>Shares a float one machine knows with every machine, exactly, as the text Share does; 0 when none arrives.</summary>
+        public void Share(Player player, Func<float> read, Action<float> arrived)
+        {
+            Sharing.Request(this, player, () =>
+            {
+                var bytes = new ByteWriter();
+                bytes.WriteFloat(read());
+                return bytes.ToCode();
+            }, text =>
+            {
+                var bytes = text == null ? null : ByteReader.FromCode(text);
+                arrived(bytes != null && bytes.Remaining == 4 ? bytes.ReadFloat() : 0.0f);
+            });
+        }
+
+        /// <summary>Shares a bool one machine knows with every machine, as the text Share does; false when none arrives.</summary>
+        public void Share(Player player, Func<bool> read, Action<bool> arrived)
+        {
+            Sharing.Request(this, player, () => read() ? "1" : "0", text => arrived(text == "1"));
+        }
+
         /// <summary>Runs an action once after the seconds, as a timer of Moonwell's own work in this scope, which the never-ran report skips.</summary>
         internal Timer OwnAfter(float seconds, Action action)
         {

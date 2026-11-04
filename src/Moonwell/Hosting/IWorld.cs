@@ -35,6 +35,12 @@ namespace Moonwell.Hosting
         /// <summary>Starts delivering a player's sharing messages to Inbound; called once per player.</summary>
         void ListenSync(player player);
 
+        /// <summary>Writes a player file's pieces with Preload, replacing the file at the path in CustomMapData.</summary>
+        void WritePreload(string path, IReadOnlyList<string> pieces);
+
+        /// <summary>The pieces of the file at the path in CustomMapData, read with Preloader; null when there is none.</summary>
+        List<string>? ReadPreload(string path);
+
         /// <summary>This machine's clock: its seconds since 1970, in UTC.</summary>
         int ClockSeconds();
 

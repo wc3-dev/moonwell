@@ -172,6 +172,36 @@ namespace Moonwell.Testing
             Expect.True(!read, "no read");
         }
 
+        /// <summary>A scope's Share hands each kind of value over as it was: a whole number, a float exactly, a bool and a text.</summary>
+        public static void ShareEachType(FakeWorld world)
+        {
+            People(world, 1);
+            var number = 0;
+            var fraction = 0.0f;
+            var flag = false;
+            string? text = null;
+            Game.Instance.Share(Player.One, () => -42, value => number = value);
+            Game.Instance.Share(Player.One, () => -0.25f, value => fraction = value);
+            Game.Instance.Share(Player.One, () => true, value => flag = value);
+            Game.Instance.Share(Player.One, () => "Åsa \"q\" ~", value => text = value);
+            world.Advance(0.1f);
+            Expect.Equal(-42, number, "the whole number");
+            Expect.True(fraction == -0.25f, "the float");
+            Expect.True(flag, "the bool");
+            Expect.Equal("Åsa \"q\" ~", text, "the text");
+        }
+
+        /// <summary>A share of a computer's value gives the type's default in the next instant.</summary>
+        public static void ShareComputer(FakeWorld world)
+        {
+            People(world, 1);
+            world.SetSlot(1, SlotState.Playing, Controller.Computer);
+            var number = -1;
+            Game.Instance.Share(Player.Two, () => 7, value => number = value);
+            world.Advance(0.01f);
+            Expect.Equal(0, number, "0");
+        }
+
         private static void People(FakeWorld world, int count)
         {
             for (var slot = 0; slot < count; slot++)

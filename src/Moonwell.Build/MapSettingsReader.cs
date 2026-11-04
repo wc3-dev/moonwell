@@ -83,7 +83,8 @@ namespace Moonwell.Build
                 ReadSetting(map, "Description"),
                 ReadSetting(map, "RecommendedPlayers"),
                 ReadNumber(map, "DataSet"),
-                ReadNumber(map, "DataVersion"));
+                ReadNumber(map, "DataVersion"),
+                ReadSetting(map, "SaveFolder"));
         }
 
         private static bool IsMapClass(Type type)

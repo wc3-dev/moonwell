@@ -41,6 +41,7 @@ namespace Moonwell.Testing
             AddDummies(list);
             AddLoad(list);
             AddShare(list);
+            AddPlayerFiles(list);
             AddDebug(list);
             return list;
         }
@@ -87,6 +88,39 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "load.undone-links-break-strings", Run = LoadCases.UndoneLinksBreakStrings });
             list.Add(new Case { Name = "load.relink-mends-strings", Run = LoadCases.RelinkMendsStrings });
             list.Add(new Case { Name = "load.relink-twice", Run = LoadCases.RelinkTwice });
+        }
+
+        private static void AddPlayerFiles(List<Case> list)
+        {
+            list.Add(new Case { Name = "code.encode", Run = CodeLetterCases.Encode });
+            list.Add(new Case { Name = "code.decode-tolerant", Run = CodeLetterCases.DecodeTolerant });
+            list.Add(new Case { Name = "code.decode-bad", Run = CodeLetterCases.DecodeBad });
+            list.Add(new Case { Name = "code.round-trip", Run = CodeLetterCases.RoundTrip });
+            list.Add(new Case { Name = "bytes.int-sizes", Run = ByteCases.IntSizes });
+            list.Add(new Case { Name = "bytes.round-trip", Run = ByteCases.RoundTrip });
+            list.Add(new Case { Name = "bytes.layout", Run = ByteCases.Layout });
+            list.Add(new Case { Name = "bytes.code", Run = ByteCases.Code });
+            list.Add(new Case { Name = "bytes.past-the-end", Run = ByteCases.PastTheEnd });
+            list.Add(new Case { Name = "file.escape-round-trip", Run = FileCases.EscapeRoundTrip });
+            list.Add(new Case { Name = "file.escaped-is-safe", Run = FileCases.EscapedIsSafe });
+            list.Add(new Case { Name = "file.pieces", Run = FileCases.Pieces });
+            list.Add(new Case { Name = "file.empty-pieces", Run = FileCases.EmptyPieces });
+            list.Add(new Case { Name = "file.longest-line-fits", Run = FileCases.LongestLineFits });
+            list.Add(new Case { Name = "file.write-then-read", Run = FileCases.WriteThenRead });
+            list.Add(new Case { Name = "file.installed-folder", Run = FileCases.InstalledFolder });
+            list.Add(new Case { Name = "file.other-players-file", Run = FileCases.OtherPlayersFile });
+            list.Add(new Case { Name = "file.missing-file", Run = FileCases.MissingFile });
+            list.Add(new Case { Name = "file.bad-path", Run = FileCases.BadPath });
+            list.Add(new Case { Name = "file.too-long", Run = FileCases.TooLong });
+            list.Add(new Case { Name = "file.write-waits-for-echo", Run = FileCases.WriteWaitsForEcho });
+            list.Add(new Case { Name = "file.replay-writes-nothing", Run = FileCases.ReplayWritesNothing });
+            list.Add(new Case { Name = "file.read-file-here", Run = FileCases.ReadFileHere });
+            list.Add(new Case { Name = "file.read-file-from-another-machine", Run = FileCases.ReadFileFromAnotherMachine });
+            list.Add(new Case { Name = "file.read-file-missing", Run = FileCases.ReadFileMissing });
+            list.Add(new Case { Name = "share.each-type", Run = ShareCases.ShareEachType });
+            list.Add(new Case { Name = "share.computer-default", Run = ShareCases.ShareComputer });
+            list.Add(new Case { Name = "log.waits-for-the-replay-guard", Run = LogCases.WaitsForTheReplayGuard });
+            list.Add(new Case { Name = "log.not-written-in-a-replay", Run = LogCases.NotWrittenInAReplay });
         }
 
         private static void AddShare(List<Case> list)

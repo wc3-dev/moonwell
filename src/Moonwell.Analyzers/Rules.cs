@@ -21,7 +21,7 @@ public static class Rules
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "Code inside Local.For runs on one player's machine. It may change only what that player sees or hears; creating handles or changing the game there desyncs the other machines." + Silence);
+        description: "Code inside Local.For, and the first lambda given to a scope's Share, runs on one player's machine. It may change only what that player sees or hears; creating handles or changing the game there desyncs the other machines." + Silence);
 
     public static readonly DiagnosticDescriptor LocalOutside = new(
         "MW0002",
