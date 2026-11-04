@@ -44,6 +44,17 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
             new KeyValuePair<string, ImmutableDictionary<string, string>>("IMissileTarget", ImmutableDictionary<string, string>.Empty),
         });
 
+    /// <summary>The names other engines give the input package's reactions, each with the reaction it means; taken as a slip.</summary>
+    private static readonly ImmutableDictionary<string, string> CommonNames = ImmutableDictionary.CreateRange(new[]
+    {
+        new KeyValuePair<string, string>("OnKeyDown", "OnKeyPressed"),
+        new KeyValuePair<string, string>("OnKeyPress", "OnKeyPressed"),
+        new KeyValuePair<string, string>("OnKeyUp", "OnKeyReleased"),
+        new KeyValuePair<string, string>("OnMouseDown", "OnMousePressed"),
+        new KeyValuePair<string, string>("OnMousePress", "OnMousePressed"),
+        new KeyValuePair<string, string>("OnMouseUp", "OnMouseReleased"),
+    });
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Rules.Reactions;
 
     public override void Initialize(AnalysisContext context)
@@ -329,7 +340,8 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
 
             var near = implemented
                 .Where(f => f.Shaped(method))
-                .SelectMany(f => f.Reactions.Where(r => f.Fits(method, r)).Select(r => (Family: f, Name: r.Name, Distance: Distance(name, r.Name))))
+                .SelectMany(f => f.Reactions.Where(r => f.Fits(method, r)).Select(r => (Family: f, Name: r.Name,
+                    Distance: CommonNames.TryGetValue(name, out var meant) && meant == r.Name ? 1 : Distance(name, r.Name))))
                 .OrderBy(candidate => candidate.Distance)
                 .FirstOrDefault();
             if (near.Family != null && near.Distance <= 1)

@@ -38,6 +38,9 @@ namespace Moonwell.Engine
         /// <summary>The count of downs each key's last release message from this machine was sent with.</summary>
         private readonly int[] sentDowns = new int[256];
 
+        /// <summary>The count of downs each key had at the last check that found this machine not holding it; 0 once a check finds it held.</summary>
+        private readonly int[] unheldDowns = new int[256];
+
         /// <summary>The key of the release message being delivered.</summary>
         private int releasedKey;
 
@@ -144,36 +147,54 @@ namespace Moonwell.Engine
             Natives.BlzTriggerRegisterPlayerSyncEvent(trigger, p, Prefix, false);
             Natives.TriggerAddAction(trigger, () =>
             {
-                var data = Natives.BlzGetTriggerSyncData();
-                var colon = data.IndexOf(':');
-                if (colon < 1)
+                if (Read(Natives.BlzGetTriggerSyncData(), out releasedKey, out releasedDowns))
                 {
-                    return;
+                    arrived();
                 }
-
-                releasedKey = Natives.S2I(data.Substring(0, colon));
-                releasedDowns = Natives.S2I(data.Substring(colon + 1));
-                arrived();
             });
         }
 
-        /// <summary>On that player's machine only, when it does not hold the key now: sends "key:downs", once a second at most for the same count.</summary>
+        /// <summary>Reads a release message's "key:downs"; false for anything else.</summary>
+        internal static bool Read(string data, out int key, out int downs)
+        {
+            key = 0;
+            downs = 0;
+            var colon = data.IndexOf(':');
+            return colon > 0 && int.TryParse(data.Substring(0, colon), out key) && int.TryParse(data.Substring(colon + 1), out downs);
+        }
+
+        /// <summary>On that player's machine only, when it does not hold the key now: sends "key:downs", as Due says.</summary>
         public void SendIfLetGo(player p, int key, int downs)
         {
-            if (Natives.GetLocalPlayer() != p || IsKeyHeld(key))
+            if (Natives.GetLocalPlayer() != p || !Due(key, downs, IsKeyHeld(key), Runtime.World.Now()))
             {
                 return;
             }
 
-            var now = Runtime.World.Now();
+            Natives.BlzSendSyncData(Prefix, Natives.I2S(key) + ":" + Natives.I2S(downs));
+        }
+
+        /// <summary>
+        /// Whether a check sends a release message, noting it: when this check and the one before found the key not held at
+        /// the same count of downs (one alone is often a release whose event is still on its way), and none was sent for that
+        /// count in the last second.
+        /// </summary>
+        internal bool Due(int key, int downs, bool held, float now)
+        {
+            if (held || unheldDowns[key] != downs)
+            {
+                unheldDowns[key] = held ? 0 : downs;
+                return false;
+            }
+
             if (sentDowns[key] == downs && now - sentAt[key] < Resend)
             {
-                return;
+                return false;
             }
 
             sentAt[key] = now;
             sentDowns[key] = downs;
-            Natives.BlzSendSyncData(Prefix, Natives.I2S(key) + ":" + Natives.I2S(downs));
+            return true;
         }
 
         /// <summary>The key of the release message being delivered.</summary>
