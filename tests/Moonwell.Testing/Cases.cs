@@ -390,6 +390,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.dummy.nested-reported", Run = DummyCases.NestedReported });
             list.Add(new Case { Name = "debug.dummy.no-order-reported", Run = DummyCases.NoOrderReported });
             list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
+            list.Add(new Case { Name = "debug.realtime.now-early-reported", Run = RealTimeCases.NowEarlyReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });
