@@ -95,7 +95,8 @@ namespace Moonwell.Testing
 
         /// <summary>
         /// A local of one switch section used in another, an out struct from a Dictionary, an out call in a conditional's
-        /// branch, an int's >> (F12, F14, F16), and a struct set field by field in an if or another switch section (F17).
+        /// branch, an int's >> (F12, F14, F16), a struct set field by field in an if or another switch section (F17), and
+        /// an initializer's values converted, foreach over a span with them (F19).
         /// </summary>
         public static void Forms(FakeWorld world)
         {
@@ -111,6 +112,16 @@ namespace Moonwell.Testing
             Expect.Equal(-3, ShiftRight(-5, 33), "an int's >> takes its count mod 32");
             Expect.Equal(3, FieldsInAnIf(true), "a struct set field by field in an if");
             Expect.Equal(5, FieldsInAnotherSection(1), "a struct set field by field in another switch section");
+            Expect.Equal("int 3", new Holder { Value = 3 }.Value!.Text, "a member's user-defined conversion in an initializer");
+            Expect.Equal("int 4", new List<Named> { 4 }[0].Text, "Add's user-defined conversion in an initializer");
+            Expect.True(new List<float> { 16777217 }[0] == 16777216.0f, "an int given to a float in an initializer");
+            var sum = 0;
+            foreach (var item in new[] { 1, 2, 3 }.AsSpan(1))
+            {
+                sum += item;
+            }
+
+            Expect.Equal(5, sum, "foreach over a span");
         }
 
         private static int ShiftRight(int value, int count) => value >> count;
@@ -155,6 +166,23 @@ namespace Moonwell.Testing
         private struct Spot
         {
             public int X;
+        }
+
+        private sealed class Named
+        {
+            public Named(string text)
+            {
+                Text = text;
+            }
+
+            public string Text { get; }
+
+            public static implicit operator Named(int value) => new Named("int " + value);
+        }
+
+        private sealed class Holder
+        {
+            public Named? Value { get; set; }
         }
     }
 }
