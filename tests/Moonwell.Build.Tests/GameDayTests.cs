@@ -1,7 +1,14 @@
 namespace Moonwell.Build.Tests
 {
-    public sealed class GameDayTests
+    public sealed class GameDayTests : IDisposable
     {
+        private readonly TestFolders folders = new TestFolders();
+
+        public void Dispose()
+        {
+            folders.Dispose();
+        }
+
         [Fact]
         public void the_standard_day_is_the_games_own_constants()
         {
@@ -12,7 +19,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_maps_misc_file_sets_its_own_dawn_dusk_and_hours()
         {
-            var folder = Directory.CreateTempSubdirectory("moonwell-day-").FullName;
+            var folder = folders.TemporaryFolderOutsideRepository();
             File.WriteAllText(Path.Combine(folder, "war3mapMisc.txt"), "[Misc]\nDawn=5.5\nDayHours=30\n");
 
             Assert.Equal(new GameDay(5.5f, 18f, 30f), MapMisc.ReadDay(folder, GameDay.Standard));
@@ -21,7 +28,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_map_without_a_misc_file_keeps_the_standard_day()
         {
-            var folder = Directory.CreateTempSubdirectory("moonwell-day-").FullName;
+            var folder = folders.TemporaryFolderOutsideRepository();
 
             Assert.Equal(GameDay.Standard, MapMisc.ReadDay(folder, GameDay.Standard));
         }
@@ -40,7 +47,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_day_of_no_hours_stops_the_build()
         {
-            var folder = Directory.CreateTempSubdirectory("moonwell-day-").FullName;
+            var folder = folders.TemporaryFolderOutsideRepository();
             File.WriteAllText(Path.Combine(folder, "war3mapMisc.txt"), "[Misc]\nDayHours=0\n");
 
             var error = Assert.Throws<BuildException>(() => MapMisc.ReadDay(folder, GameDay.Standard));
