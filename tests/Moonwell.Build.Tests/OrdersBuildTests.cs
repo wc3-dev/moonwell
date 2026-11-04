@@ -7,10 +7,12 @@ namespace Moonwell.Build.Tests
     [Collection("Sample")]
     public sealed class OrdersBuildTests : IDisposable
     {
+        private readonly SampleBuilds builds;
         private readonly TestFolders folders;
 
-        public OrdersBuildTests(ITestOutputHelper output)
+        public OrdersBuildTests(SampleBuilds builds, ITestOutputHelper output)
         {
+            this.builds = builds;
             folders = new TestFolders(output);
         }
 
@@ -48,11 +50,8 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_without_orders_does_not_listen()
         {
-            var project = folders.TemporaryCopyOfSample();
-
-            Build(project);
-
-            Assert.DoesNotContain("ListenForOrders", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
+            Assert.Equal(0, builds.Development.ExitCode);
+            Assert.DoesNotContain("ListenForOrders", File.ReadAllText(Path.Combine(builds.Development.BuildFolder, "generated", "MapMain.g.cs")));
         }
 
         private static void Build(string project)

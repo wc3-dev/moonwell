@@ -14,11 +14,13 @@ namespace Moonwell.Build.Tests
     public sealed class PhysicsBuildTests : IDisposable
     {
         private readonly SampleBuilds builds;
+        private readonly FixtureBuilds fixtures;
         private readonly TestFolders folders = new TestFolders();
 
-        public PhysicsBuildTests(SampleBuilds builds)
+        public PhysicsBuildTests(SampleBuilds builds, FixtureBuilds fixtures)
         {
             this.builds = builds;
+            this.fixtures = fixtures;
         }
 
         public void Dispose()
@@ -29,11 +31,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_with_the_package_builds()
         {
-            var project = folders.TemporaryCopyOf("Physics");
-            var output = new StringWriter();
-            var error = new StringWriter();
-            var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
-            Assert.True(exitCode == 0, error.ToString() + output);
+            var project = fixtures.Of("Physics").Folder;
 
             var script = File.ReadAllText(Path.Combine(project, "build", "Physics", "war3map.lua"));
             using var lua = new NLua.Lua();
@@ -53,12 +51,9 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void bridges_are_written_with_the_package()
         {
-            var project = folders.TemporaryCopyOf("Physics");
-            var output = new StringWriter();
-            var error = new StringWriter();
-            var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
-            Assert.True(exitCode == 0, error.ToString() + output);
-            Assert.DoesNotContain("deck shape", output.ToString());
+            var built = fixtures.Of("Physics");
+            var project = built.Folder;
+            Assert.DoesNotContain("deck shape", built.Output);
 
             var generated = Path.Combine(project, "build", "generated");
             var data = File.ReadAllText(Path.Combine(generated, "PhysicsData.g.cs"));

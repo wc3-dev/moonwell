@@ -86,11 +86,10 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_build_writes_no_ids_json()
         {
-            var copy = folders.TemporaryCopyOfSample();
-
-            MapBuild.Run(copy, new BuildOptions(), TextWriter.Null);
-
-            Assert.False(File.Exists(Path.Combine(copy, "ids.json")));
+            // The Sample's copy, built both ways.
+            Assert.Equal(0, builds.Development.ExitCode);
+            Assert.Equal(0, builds.Release.ExitCode);
+            Assert.False(File.Exists(Path.Combine(builds.Folder, "ids.json")));
         }
 
         // DataSet: 0 Default, 1 Custom, 2 Melee. DataVersion: 0 ReignOfChaos, 1 FrozenThrone, 2 ForsakenKingdom.

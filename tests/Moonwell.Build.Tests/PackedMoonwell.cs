@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Moonwell.Build.Tests
 {
@@ -7,7 +8,12 @@ namespace Moonwell.Build.Tests
     {
         private readonly string root = Path.Combine(Path.GetTempPath(), "moonwell-feed-" + Guid.NewGuid().ToString("N"));
 
-        /// <summary>Packs the ten runtime projects and the template.</summary>
+        private readonly Lazy<string> templateMap;
+
+        /// <summary>
+        /// Packs the eleven runtime projects and the template in one dotnet pack of a solution filter naming them, so MSBuild starts
+        /// once and evaluates each project once, where a pack of each would start it twelve times.
+        /// </summary>
         public PackedMoonwell()
         {
             Version = "0.1.0-test." + DateTime.UtcNow.Ticks;
@@ -15,18 +21,13 @@ namespace Moonwell.Build.Tests
             Directory.CreateDirectory(Feed);
 
             var repository = Path.GetFullPath(Path.Combine(TestFolders.Fixture("."), "..", "..", ".."));
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Natives", "Moonwell.Natives.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell", "Moonwell.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Objects", "Moonwell.Objects.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Damage", "Moonwell.Damage.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Maths", "Moonwell.Maths.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Interactions", "Moonwell.Interactions.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Terrain", "Moonwell.Terrain.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Physics", "Moonwell.Physics.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Areas", "Moonwell.Areas.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Input", "Moonwell.Input.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("src", "Moonwell.Frames", "Moonwell.Frames.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
-            Dotnet(repository, "pack", Path.Combine("template", "Moonwell.Templates.csproj"), "-c", "Release", "-o", Feed, "-p:Version=" + Version, "--disable-build-servers");
+            var projects = new[] { "Moonwell.Natives", "Moonwell", "Moonwell.Objects", "Moonwell.Damage", "Moonwell.Maths", "Moonwell.Interactions", "Moonwell.Terrain", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input", "Moonwell.Frames" }
+                .Select(name => Path.Combine("src", name, name + ".csproj"))
+                .Append(Path.Combine("template", "Moonwell.Templates.csproj"));
+            var filter = Path.Combine(root, "packed.slnf");
+            File.WriteAllText(filter, JsonSerializer.Serialize(new { solution = new { path = Path.Combine(repository, "Moonwell.slnx"), projects } }));
+            Dotnet(repository, "pack", filter, "-c", "Release", "-p:PackageOutputPath=" + Feed, "-p:Version=" + Version, "--disable-build-servers");
+            templateMap = new Lazy<string>(MakeTemplateMap);
         }
 
         /// <summary>The version all eleven packages were packed with, <c>0.1.0-test.</c> and a number nothing else uses.</summary>
@@ -68,6 +69,17 @@ namespace Moonwell.Build.Tests
         /// <summary>The path of the Moonwell.Templates package.</summary>
         public string TemplatesPackage => Path.Combine(Feed, "Moonwell.Templates." + Version + ".nupkg");
 
+        /// <summary>
+        /// A map made with dotnet new from the packed template and named Keep, in its own folder under a parent folder of the test's.
+        /// The template is installed and the map made once; each call copies it, as the template makes the same files each time.
+        /// </summary>
+        public string TemplateMap(string parent)
+        {
+            var map = Path.Combine(parent, "Keep");
+            TestFolders.CopyFolder(templateMap.Value, map);
+            return map;
+        }
+
         /// <summary>Deletes the feed and the packages the restore copied into the NuGet folder (see TestFolders.Delete for a folder still in use).</summary>
         public void Dispose()
         {
@@ -84,6 +96,16 @@ namespace Moonwell.Build.Tests
             }
 
             TestFolders.Delete(root);
+        }
+
+        private string MakeTemplateMap()
+        {
+            var hive = Path.Combine(root, "hive");
+            var made = Path.Combine(root, "template");
+            Directory.CreateDirectory(made);
+            Dotnet(made, "new", "install", TemplatesPackage, "--debug:custom-hive", hive);
+            Dotnet(made, "new", "moonwell", "-n", "Keep", "--debug:custom-hive", hive);
+            return Path.Combine(made, "Keep");
         }
 
         /// <summary>Runs dotnet in a folder, and fails with its output when it fails.</summary>

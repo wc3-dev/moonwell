@@ -8,10 +8,12 @@ namespace Moonwell.Build.Tests
     [Collection("Sample")]
     public sealed class DummyBuildTests : IDisposable
     {
+        private readonly SampleBuilds builds;
         private readonly TestFolders folders;
 
-        public DummyBuildTests(ITestOutputHelper output)
+        public DummyBuildTests(SampleBuilds builds, ITestOutputHelper output)
         {
+            this.builds = builds;
             folders = new TestFolders(output);
         }
 
@@ -33,24 +35,21 @@ namespace Moonwell.Build.Tests
             var registry = File.ReadAllText(Path.Combine(project, "build", "generated", "ObjectRegistry.g.cs"));
             Assert.Contains("global::Moonwell.ObjectTypes.DummyType(global::Moonwell.ObjectTypes.FourCC(\"hMWd\"));", registry);
             Assert.Contains("global::Moonwell.ObjectTypes.CastOrder(global::Moonwell.ObjectTypes.FourCC(\"AHtb\"), \"thunderbolt\", false);", registry);
-            Assert.Contains(IdOf(DummyType.Id), NewUnitIds(project));
+            Assert.Contains(IdOf(DummyType.Id), NewUnitIds(Path.Combine(project, "build")));
         }
 
         [Fact]
         public void map_that_does_not_cast_gets_no_dummy()
         {
-            var project = folders.TemporaryCopyOfSample();
-
-            Build(project);
-
-            Assert.DoesNotContain("DummyType(", File.ReadAllText(Path.Combine(project, "build", "generated", "ObjectRegistry.g.cs")));
-            Assert.DoesNotContain(IdOf(DummyType.Id), NewUnitIds(project));
+            Assert.Equal(0, builds.Development.ExitCode);
+            Assert.DoesNotContain("DummyType(", File.ReadAllText(Path.Combine(builds.Development.BuildFolder, "generated", "ObjectRegistry.g.cs")));
+            Assert.DoesNotContain(IdOf(DummyType.Id), NewUnitIds(builds.Development.BuildFolder));
         }
 
-        // The ids of the new units in the staged map's unit file; none when it has no such file.
-        private static List<int> NewUnitIds(string project)
+        // The ids of the new units in the staged map's unit file, in a build folder; none when it has no such file.
+        private static List<int> NewUnitIds(string buildFolder)
         {
-            var path = Path.Combine(project, "build", "Sample", "war3map.w3u");
+            var path = Path.Combine(buildFolder, "Sample", "war3map.w3u");
             if (!File.Exists(path))
             {
                 return new List<int>();

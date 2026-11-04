@@ -12,10 +12,12 @@ namespace Moonwell.Build.Tests
     {
         private const string UsesFiles = "using Moonwell;\n\nnamespace Sample\n{\n    public sealed class Settings : GameComponent\n    {\n        public override void OnGameStart()\n        {\n            PlayerFile.Write(Player.One, \"settings.txt\", \"x\");\n        }\n    }\n}\n";
 
+        private readonly SampleBuilds builds;
         private readonly TestFolders folders;
 
-        public FileStoreBuildTests(ITestOutputHelper output)
+        public FileStoreBuildTests(SampleBuilds builds, ITestOutputHelper output)
         {
+            this.builds = builds;
             folders = new TestFolders(output);
         }
 
@@ -32,11 +34,11 @@ namespace Moonwell.Build.Tests
 
             Build(project);
 
-            var store = StoreIn(project, "war3mapSkin.w3a");
+            var store = StoreIn(Path.Combine(project, "build"), "war3mapSkin.w3a");
             Assert.NotNull(store);
             Assert.Equal(100, store!.Modifications.Count(one => one.Id == Rawcodes.IdOf("atp1") && (string)one.Value == "-"));
             Assert.Equal(100, store.Modifications.Count(one => one.Id == Rawcodes.IdOf("aub1") && (string)one.Value == "-"));
-            var levels = StoreIn(project, "war3map.w3a");
+            var levels = StoreIn(Path.Combine(project, "build"), "war3map.w3a");
             Assert.Equal(100, Assert.Single(levels!.Modifications, one => one.Id == Rawcodes.IdOf("alev")).Value);
 
             var main = File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs"));
@@ -53,7 +55,7 @@ namespace Moonwell.Build.Tests
 
             Build(project);
 
-            Assert.NotNull(StoreIn(project, "war3mapSkin.w3a"));
+            Assert.NotNull(StoreIn(Path.Combine(project, "build"), "war3mapSkin.w3a"));
         }
 
         [Fact]
@@ -72,12 +74,9 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_without_files_gets_neither()
         {
-            var project = folders.TemporaryCopyOf("Sample");
-
-            Build(project);
-
-            Assert.Null(StoreIn(project, "war3mapSkin.w3a"));
-            Assert.DoesNotContain("InstallSaveFolder", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
+            Assert.Equal(0, builds.Development.ExitCode);
+            Assert.Null(StoreIn(builds.Development.BuildFolder, "war3mapSkin.w3a"));
+            Assert.DoesNotContain("InstallSaveFolder", File.ReadAllText(Path.Combine(builds.Development.BuildFolder, "generated", "MapMain.g.cs")));
         }
 
         [Fact]
@@ -89,7 +88,7 @@ namespace Moonwell.Build.Tests
 
             Build(project);
 
-            Assert.NotNull(StoreIn(project, "war3mapSkin.w3a"));
+            Assert.NotNull(StoreIn(Path.Combine(project, "build"), "war3mapSkin.w3a"));
         }
 
         [Fact]
@@ -109,9 +108,9 @@ namespace Moonwell.Build.Tests
             Assert.Contains("PlayerFile reads files back through an ability Moonwell declares, which needs the Moonwell.Objects package", error.ToString());
         }
 
-        private static War3Net.Build.Object.LevelObjectModification? StoreIn(string project, string file)
+        private static War3Net.Build.Object.LevelObjectModification? StoreIn(string buildFolder, string file)
         {
-            var path = Path.Combine(project, "build", "Sample", file);
+            var path = Path.Combine(buildFolder, "Sample", file);
             if (!File.Exists(path))
             {
                 return null;

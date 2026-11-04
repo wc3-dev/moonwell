@@ -8,11 +8,13 @@ namespace Moonwell.Build.Tests
     public sealed class AreasInputBuildTests : IDisposable
     {
         private readonly SampleBuilds builds;
+        private readonly FixtureBuilds fixtures;
         private readonly TestFolders folders;
 
-        public AreasInputBuildTests(SampleBuilds builds, ITestOutputHelper output)
+        public AreasInputBuildTests(SampleBuilds builds, FixtureBuilds fixtures, ITestOutputHelper output)
         {
             this.builds = builds;
+            this.fixtures = fixtures;
             folders = new TestFolders(output);
         }
 
@@ -70,8 +72,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_with_frames_installs_them()
         {
-            var project = folders.TemporaryCopyOf("Frames");
-            Build(project);
+            var project = fixtures.Of("Frames").Folder;
 
             var main = File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs"));
             Assert.Contains("global::Moonwell.FramesSystem.Install();", main);
@@ -82,8 +83,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_without_frames_carries_none()
         {
-            var project = folders.TemporaryCopyOf("Input");
-            Build(project);
+            var project = fixtures.Of("Input").Folder;
 
             Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
             Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "Input", "war3map.lua")));
@@ -93,8 +93,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_with_frames_carries_the_toc()
         {
-            var project = folders.TemporaryCopyOf("Frames");
-            Build(project);
+            var project = fixtures.Of("Frames").Folder;
 
             var toc = File.ReadAllBytes(Path.Combine(project, "build", "Frames", "MoonwellFrames.toc"));
             var expected = "UI\\FrameDef\\UI\\EscMenuTemplates.fdf\r\nUI\\FrameDef\\Glue\\StandardTemplates.fdf\r\nUI\\FrameDef\\Glue\\BattleNetTemplates.fdf\r\nUI\\FrameDef\\UI\\QuestDialog.fdf\r\n\r\n";
@@ -104,8 +103,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_with_mouse_listens()
         {
-            var project = folders.TemporaryCopyOf("Input");
-            Build(project);
+            var project = fixtures.Of("Input").Folder;
 
             var generated = Path.Combine(project, "build", "generated");
             var data = File.ReadAllText(Path.Combine(generated, "InputData.g.cs"));
@@ -172,8 +170,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void map_without_keys_does_not_listen_to_them()
         {
-            var project = folders.TemporaryCopyOf("Input");
-            Build(project);
+            var project = fixtures.Of("Input").Folder;
 
             var main = File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs"));
             Assert.DoesNotContain("InstallKeyboard", main);
