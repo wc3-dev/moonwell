@@ -187,6 +187,18 @@ namespace Moonwell.Testing
             ExpectLog(log, new[] { "added released Q", "adder pressed", "added pressed Q" }, "the added one from the next event");
         }
 
+        /// <summary>A player's watcher added by a game watcher's reaction runs from the next event too.</summary>
+        public static void AddedToPlayerInReaction(FakeWorld world)
+        {
+            var fake = Fresh(world);
+            var log = new List<string>();
+            Game.Instance.Add(new AddingPlayerKeys(new LogKeyPlayer(log, "added")));
+            fake.Press(Player.One, Key.Q);
+            ExpectLog(log, new string[0], "the added one waits");
+            fake.Release(Player.One, Key.Q);
+            ExpectLog(log, new[] { "added released Q of 1" }, "the added one from the next event");
+        }
+
         /// <summary>A reaction that throws is reported as Class.Method, and the next component still runs, with the keyboard already up to date.</summary>
         public static void Throwing(FakeWorld world)
         {

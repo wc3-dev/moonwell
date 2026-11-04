@@ -135,4 +135,28 @@ namespace Moonwell.Testing
             }
         }
     }
+
+    /// <summary>A game component that, at its first press, adds a player component to the player who pressed.</summary>
+    public sealed class AddingPlayerKeys : GameComponent, IKeyWatch
+    {
+        private readonly PlayerComponent toAdd;
+
+        private bool done;
+
+        /// <summary>Makes it with the player component it adds.</summary>
+        public AddingPlayerKeys(PlayerComponent added)
+        {
+            toAdd = added;
+        }
+
+        /// <summary>The first time, adds the player component.</summary>
+        public void OnKeyPressed(Keyboard keyboard, Key key)
+        {
+            if (!done)
+            {
+                done = true;
+                keyboard.Player.Add(toAdd);
+            }
+        }
+    }
 }

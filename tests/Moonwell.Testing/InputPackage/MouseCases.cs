@@ -149,6 +149,18 @@ namespace Moonwell.Testing
             ExpectLog(log, new[] { "game a released Right", "game b released Right", "player 2 released Right" }, "a release of Player 2");
         }
 
+        /// <summary>A player's watcher added by a game watcher's reaction runs from the next event.</summary>
+        public static void AddedToPlayerInReaction(FakeWorld world)
+        {
+            var fake = Fresh(world);
+            var log = new List<string>();
+            Game.Instance.Add(new AddingPlayerMouse(new LogMousePlayer(log, "added")));
+            fake.Press(Player.One, MouseButton.Left, 10f, 20f);
+            ExpectLog(log, new string[0], "the added one waits");
+            fake.Release(Player.One, MouseButton.Left, 10f, 20f);
+            ExpectLog(log, new[] { "added released Left" }, "the added one from the next event");
+        }
+
         /// <summary>A component that writes only OnMousePressed is called on a press and on nothing else.</summary>
         public static void OnlyWritten(FakeWorld world)
         {

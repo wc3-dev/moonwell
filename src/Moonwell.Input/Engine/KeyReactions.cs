@@ -146,30 +146,36 @@ namespace Moonwell.Engine
             Run(keyboard, Released, (Key)code);
         }
 
-        /// <summary>Runs a reaction on the game's components, then on the keyboard's player's.</summary>
+        /// <summary>Runs a reaction on the game's components, then on the keyboard's player's: both lists as they were when the event came, so one a reaction adds, to either, runs from the next event.</summary>
         private static void Run(Keyboard keyboard, int bit, Key key)
         {
-            RunMap(Game.Instance, gameWatchers, keyboard, bit, key);
+            gameWatchers.Refresh(Game.Instance, MaskOf);
+            var gameFound = gameWatchers.Found;
+            var gameMasks = gameWatchers.Masks;
             var player = Player.Existing(keyboard.Slot);
-            if (player != null)
+            if (player == null)
             {
-                var watchers = playerWatchers[keyboard.Slot];
-                if (watchers == null)
-                {
-                    watchers = new WatcherList();
-                    playerWatchers[keyboard.Slot] = watchers;
-                }
-
-                RunMap(player, watchers, keyboard, bit, key);
+                RunMap(gameFound, gameMasks, keyboard, bit, key);
+                return;
             }
+
+            var watchers = playerWatchers[keyboard.Slot];
+            if (watchers == null)
+            {
+                watchers = new WatcherList();
+                playerWatchers[keyboard.Slot] = watchers;
+            }
+
+            watchers.Refresh(player, MaskOf);
+            var found = watchers.Found;
+            var masks = watchers.Masks;
+            RunMap(gameFound, gameMasks, keyboard, bit, key);
+            RunMap(found, masks, keyboard, bit, key);
         }
 
-        /// <summary>Runs the reaction on an actor's watchers, in add order: those there when the event came (one added by a reaction runs from the next event), skipping one that has ended.</summary>
-        private static void RunMap(Actor actor, WatcherList watchers, Keyboard keyboard, int bit, Key key)
+        /// <summary>Runs the reaction on one actor's watchers, in add order, skipping one that has ended.</summary>
+        private static void RunMap(List<MapComponent> found, List<int> masksFound, Keyboard keyboard, int bit, Key key)
         {
-            watchers.Refresh(actor, MaskOf);
-            var found = watchers.Found;
-            var masksFound = watchers.Masks;
             for (var i = 0; i < found.Count; i++)
             {
                 var component = found[i];

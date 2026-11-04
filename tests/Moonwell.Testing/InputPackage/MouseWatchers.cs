@@ -107,4 +107,28 @@ namespace Moonwell.Testing
             throw new InvalidOperationException("boom");
         }
     }
+
+    /// <summary>A game component that, at its first press, adds a player component to the player who pressed.</summary>
+    public sealed class AddingPlayerMouse : GameComponent, IMouseWatch
+    {
+        private readonly PlayerComponent toAdd;
+
+        private bool done;
+
+        /// <summary>Makes it with the player component it adds.</summary>
+        public AddingPlayerMouse(PlayerComponent added)
+        {
+            toAdd = added;
+        }
+
+        /// <summary>The first time, adds the player component.</summary>
+        public void OnMousePressed(Mouse mouse, MouseButton button)
+        {
+            if (!done)
+            {
+                done = true;
+                mouse.Player.Add(toAdd);
+            }
+        }
+    }
 }
