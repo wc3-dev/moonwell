@@ -42,6 +42,7 @@ namespace Moonwell.Testing
             AddLoad(list);
             AddShare(list);
             AddPlayerFiles(list);
+            AddJson(list);
             AddDebug(list);
             return list;
         }
@@ -121,6 +122,20 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "share.computer-default", Run = ShareCases.ShareComputer });
             list.Add(new Case { Name = "log.waits-for-the-replay-guard", Run = LogCases.WaitsForTheReplayGuard });
             list.Add(new Case { Name = "log.not-written-in-a-replay", Run = LogCases.NotWrittenInAReplay });
+        }
+
+        private static void AddJson(List<Case> list)
+        {
+            list.Add(new Case { Name = "json.write", Run = JsonCases.Write });
+            list.Add(new Case { Name = "json.parse-back", Run = JsonCases.ParseBack });
+            list.Add(new Case { Name = "json.numbers", Run = JsonCases.Numbers });
+            list.Add(new Case { Name = "json.escapes", Run = JsonCases.Escapes });
+            list.Add(new Case { Name = "json.order", Run = JsonCases.Order });
+            list.Add(new Case { Name = "json.bad", Run = JsonCases.Bad });
+            list.Add(new Case { Name = "json.depth", Run = JsonCases.Depth });
+            list.Add(new Case { Name = "json.parents", Run = JsonCases.Parents });
+            list.Add(new Case { Name = "json.kinds", Run = JsonCases.Kinds });
+            list.Add(new Case { Name = "json.through-a-file", Run = JsonCases.ThroughAFile });
         }
 
         private static void AddShare(List<Case> list)

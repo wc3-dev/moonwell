@@ -62,7 +62,7 @@ public class ClassMethodsShadowingNativesTests
 {
     private static readonly string[] Packages =
     {
-        "Moonwell", "Moonwell.Damage", "Moonwell.Terrain", "Moonwell.Interactions", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input", "Moonwell.Frames",
+        "Moonwell", "Moonwell.Damage", "Moonwell.Terrain", "Moonwell.Interactions", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input", "Moonwell.Frames", "Moonwell.Json",
     };
 
     // The same hazard as above, for every class of the seven packages: CSharp.lua declares a class's methods as chunk-level

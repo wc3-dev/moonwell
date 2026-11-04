@@ -1095,9 +1095,9 @@ which is in each player's language. The build rejects, as compile errors:
   reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
 - A change inside it to something every machine shares (MW0048), in the block or in what it calls: a field or
   auto-property of your map, a local or parameter from outside the block, an event of your map, or a collection held in
-  one of those (`Scores.Add(x)`, `Scores[i] = x`, on .NET's collections, arrays, `StringBuilder`, `Random`, `OrderedMap`
-  and `OrderedSet`). What the block makes is free: a constructor writing its own object, `new Panel { Count = 3 }`, a
-  local that only holds a `new` of the block, and a struct in a local. A method called on a new object is still checked.
+  one of those (`Scores.Add(x)`, `Scores[i] = x`, on .NET's collections, arrays, `StringBuilder`, `Random`, `OrderedMap`,
+  `OrderedSet`, `JsonObject` and `JsonArray`). What the block makes is free: a constructor writing its own object,
+  `new Panel { Count = 3 }`, a local that only holds a `new` of the block, and a struct in a local. A method called on a new object is still checked.
   A list assigned to a local later, given as a parameter, or returned by a method or a property with a body, is not seen.
 - `new Random()` without a seed, anywhere (MW0038): it reseeds the game's own random generator with each machine's
   clock. Use `Natives.GetRandomInt`, or `new Random(seed)` with a seed every machine shares.
@@ -1159,6 +1159,33 @@ the bytes for .NET's `Convert.ToBase64String`.
 
 The game gives a file back through an ability Moonwell adds to the map, with the id `AMWf`, so reading files needs the
 `Moonwell.Objects` package, and no object of the map may have that id.
+
+## JSON
+
+Add the `Moonwell.Json` package (the template's `.csproj` has the line, commented) to read and write JSON, as a tree with
+the names of .NET's `System.Text.Json.Nodes`. A map that does not reference it carries none of its code.
+
+```csharp
+using Moonwell.Json;
+
+var settings = new JsonObject { ["volume"] = 80, ["name"] = "Åsa", ["shown"] = new JsonArray { "gold", "kills" } };
+PlayerFile.Write(player, "settings.txt", settings.ToJsonString()); // {"volume":80,"name":"Åsa","shown":["gold","kills"]}
+
+ReadFile(player, "settings.txt", text =>
+{
+    var read = text == null ? null : JsonNode.Parse(text);
+    var volume = read?["volume"] is { } found ? (int)found : 100;
+});
+```
+
+A number is an `int` when it is whole and within `int`, else a `float`, as the game has no `double`: `(int)node`,
+`(float)node`, `(bool)node`, `(string?)node` and `GetValue<T>()` read a value, and `node.AsValue().TryGetValue(out int
+gold)` says whether it is one. A missing key reads as null. An object's keys keep the order they were added or read in,
+so a loop over one goes the same way on every machine. `ToJsonString()` writes compact JSON with letters outside ASCII as
+they are. A node is in one object or array at most, as in .NET.
+
+`JsonNode.Parse` throws a `JsonException`, whose `Position` says where, for text that is no JSON or nests deeper than 64,
+and a file a player edited can be either: catch it where you read one.
 
 ## C# the game's Lua cannot run
 
