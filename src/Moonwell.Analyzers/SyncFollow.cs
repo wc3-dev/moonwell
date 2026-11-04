@@ -1179,7 +1179,7 @@ public sealed partial class SyncAnalyzer
                 return false;
             }
 
-            if (localFor != null && SymbolEqualityComparer.Default.Equals(method.OriginalDefinition, localFor))
+            if (RunsItsActionLocally(method))
             {
                 return parameter.Ordinal == 1;
             }
@@ -1391,6 +1391,14 @@ public sealed partial class SyncAnalyzer
         }
 
         private bool IsLocalForAction(IParameterSymbol parameter) =>
-            localFor != null && parameter.Ordinal == 1 && SymbolEqualityComparer.Default.Equals(parameter.ContainingSymbol.OriginalDefinition, localFor);
+            parameter.Ordinal == 1 && parameter.ContainingSymbol is IMethodSymbol method && RunsItsActionLocally(method);
+
+        /// <summary>Whether a method runs its second argument on one machine: Local.For, and a scope's Share.</summary>
+        private bool RunsItsActionLocally(IMethodSymbol method)
+        {
+            var definition = method.OriginalDefinition;
+            return (localFor != null && SymbolEqualityComparer.Default.Equals(definition, localFor))
+                || shares.Any(share => SymbolEqualityComparer.Default.Equals(definition, share));
+        }
     }
 }

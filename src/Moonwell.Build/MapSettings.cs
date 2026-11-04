@@ -8,5 +8,6 @@ namespace Moonwell.Build
     /// <param name="RecommendedPlayers">The recommended players; empty keeps World Editor's value.</param>
     /// <param name="DataSet">The map's <c>Moonwell.DataSet</c> as its number: 0 Default, 1 Custom, 2 Melee.</param>
     /// <param name="DataVersion">The map's <c>Moonwell.DataVersion</c> as its number: 0 ReignOfChaos, 1 FrozenThrone, 2 ForsakenKingdom.</param>
-    public sealed record MapSettings(string TypeName, string Name, string Author, string Description, string RecommendedPlayers, int DataSet = 0, int DataVersion = 2);
+    /// <param name="SaveFolder">The folder of CustomMapData for the map's player files; empty takes the map's name.</param>
+    public sealed record MapSettings(string TypeName, string Name, string Author, string Description, string RecommendedPlayers, int DataSet = 0, int DataVersion = 2, string SaveFolder = "");
 }

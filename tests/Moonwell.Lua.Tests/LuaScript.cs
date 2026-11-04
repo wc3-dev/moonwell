@@ -111,6 +111,8 @@ internal static class LuaScript
     {
         output = new List<string>();
         using var lua = new NLua.Lua();
+        // The game's Lua strings are UTF-8 bytes; NLua's own default, ASCII, turned every other letter of the script into '?'.
+        lua.State.Encoding = System.Text.Encoding.UTF8;
         lua.RegisterFunction("print", null, typeof(LuaScript).GetMethod(nameof(Print)));
         lua.DoString("""
             LuaHostCollectGarbage = collectgarbage

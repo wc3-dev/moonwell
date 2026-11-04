@@ -21,6 +21,9 @@ namespace Moonwell
         /// <summary>The game data set the map plays with; Default when the map sets none.</summary>
         public DataSet DataSet { get; protected set; } = DataSet.Default;
 
+        /// <summary>The folder of CustomMapData the map's player files go in, letters and digits; empty takes the map's name, so set it to keep players' files when the name changes.</summary>
+        public string SaveFolder { get; protected set; } = "";
+
         /// <summary>The game data version the map plays with; ForsakenKingdom, World Editor's default, when the map sets none.</summary>
         public DataVersion DataVersion { get; protected set; } = DataVersion.ForsakenKingdom;
 

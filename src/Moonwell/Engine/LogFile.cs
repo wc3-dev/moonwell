@@ -40,7 +40,7 @@ namespace Moonwell.Engine
             }
 
             Keep(text.Substring(start));
-            if (now - writtenAt < Interval)
+            if (now - writtenAt < Interval || !ReplayGuard.MayWrite)
             {
                 waiting = true;
                 return false;
@@ -49,10 +49,10 @@ namespace Moonwell.Engine
             return true;
         }
 
-        /// <summary>Whether lines wait and the second since the last write is up.</summary>
+        /// <summary>Whether lines wait, the second since the last write is up, and the replay guard lets the file be written: watching a replay never writes it.</summary>
         internal bool Due(float now)
         {
-            return waiting && now - writtenAt >= Interval;
+            return waiting && now - writtenAt >= Interval && ReplayGuard.MayWrite;
         }
 
         /// <summary>Notes that the file was written.</summary>

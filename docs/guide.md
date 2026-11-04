@@ -1090,7 +1090,7 @@ which is in each player's language. The build rejects, as compile errors:
   that parameter outside `Local.For` too is MW0040. A delegate it cannot follow (a list's element, a library's
   result) is MW0039: write the lambda in place.
 - A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
-  localised names, `RealTime.LocalNow`, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
+  localised names, `RealTime.LocalNow`, `PlayerFile.Read`, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
   reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
 - A change inside it to something every machine shares (MW0048), in the block or in what it calls: a field or
   auto-property of your map, a local or parameter from outside the block, an event of your map, or a collection held in
@@ -1127,6 +1127,37 @@ way for MW0048's false alarms: a lazy `instance ??= new Hud()`, or a cache fille
 
 A `#pragma warning disable`, `NoWarn` or `.editorconfig` on one of these rules removes its protection, and nothing says
 so. To turn the checks off where you mean it, use `[SyncUnchecked]`.
+
+## Files and sharing
+
+`PlayerFile.Write(player, "settings.txt", text)` writes a file on that player's computer, in
+`Documents\Warcraft III\CustomMapData\` and the map's save folder, replacing what it held; no other machine writes
+anything. The folder is the map's `SaveFolder` (`SaveFolder = "MyRpg";` in `Map.cs`), else its name, in letters and
+digits only. A file name has letters, digits, `-`, `_` and `.`, and ends in `.txt` or `.pld`, the files the game reads
+back. A file holds about 40,000 characters, fewer with quotes, tildes, backslashes and line breaks; a name the game cannot use, or a
+longer text, writes nothing, and a development build reports it.
+
+`ReadFile(player, "settings.txt", text => ...)` on a scope reads the file on that player's machine and hands its text to
+every machine once it has arrived, a moment later. The text is null when there is no file, when the player leaves first,
+or when they are not a person playing. Like a timer, it belongs to its scope: nothing runs if the scope ends first.
+Inside `Local.For`, `PlayerFile.Read(path)` reads this machine's file at once.
+
+`Share(player, () => value, value => ...)` on a scope hands every machine what one machine knows, the same way: a text, a
+whole number, a float or a bool. The first lambda runs on the player's machine only and is checked as a `Local.For`
+block; the second runs on every machine. `Share(p, () => RealTime.LocalNow.Hour, hour => ...)` gives everyone that
+player's hour.
+
+A replay runs the map again, but writes no files, so watching one leaves the players' files as they were. A file written
+in a game's first moments waits until Moonwell knows it is no replay.
+
+The player can open and change their files, so check what you read. `ByteWriter` writes whole numbers, floats, bools and
+texts as compact bytes, and `ByteReader` reads them back in the same order; a read past the end throws a
+`FormatException`. `ToCode()` gives the bytes as letters easy to type, `X7KQ-M3PA`, and `ByteReader.FromCode(text)` reads
+them back, null for a text that is no code; it reads lower case too, and O for 0 and I or L for 1. `ToArray()` gives
+the bytes for .NET's `Convert.ToBase64String`.
+
+The game gives a file back through an ability Moonwell adds to the map, with the id `AMWf`, so reading files needs the
+`Moonwell.Objects` package, and no object of the map may have that id.
 
 ## C# the game's Lua cannot run
 

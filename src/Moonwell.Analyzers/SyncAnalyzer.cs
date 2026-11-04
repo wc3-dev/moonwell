@@ -54,6 +54,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         private readonly Compilation compilation;
         private readonly INamedTypeSymbol? natives;
         private readonly IMethodSymbol? localFor;
+        /// <summary>A scope's Share methods, whose first lambda runs on one machine as Local.For's does (decision 179).</summary>
+        private readonly IMethodSymbol[] shares;
         private readonly IAssemblySymbol? runtime;
         /// <summary>Moonwell's packages that the map references, checked as the runtime is.</summary>
         private readonly IAssemblySymbol[] packages;
@@ -90,6 +92,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             natives = compilation.GetTypeByMetadataName("Moonwell.Natives");
             var local = compilation.GetTypeByMetadataName("Moonwell.Local");
             localFor = local?.GetMembers("For").OfType<IMethodSymbol>().FirstOrDefault();
+            shares = compilation.GetTypeByMetadataName("Moonwell.Scope")?.GetMembers("Share").OfType<IMethodSymbol>().ToArray() ?? Array.Empty<IMethodSymbol>();
             runtime = local?.ContainingAssembly;
             // Each package is found by one of its types.
             packages = new[] { "Moonwell.DamageSystem", "Moonwell.Vector2", "Moonwell.Find", "Moonwell.Terrain", "Moonwell.Area", "Moonwell.Mouse", "Moonwell.Missile" }

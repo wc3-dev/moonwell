@@ -69,7 +69,7 @@ namespace Moonwell.Build
             var map = SourceMap.Open(project, settings, log);
 
             // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly.
-            if (Declarations.UsesObjects(targetPath))
+            if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath))
             {
                 var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
                 BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
@@ -116,17 +116,27 @@ namespace Moonwell.Build
             var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), sourceMapIds);
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
-            EntryWriter.Write(project, settings, true, Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log), Loading(targetPath));
+            var installs = Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log);
+            installs.AddRange(FileStore.Installs(targetPath, settings, project));
+            EntryWriter.Write(project, settings, true, installs, Loading(targetPath));
 
-            // A map whose code casts with a dummy gets the dummy's type in its object files, kept free of its own ids.
+            // A map whose code casts with a dummy gets the dummy's type in its object files, kept free of its own ids; one whose
+            // code uses player files gets the store ability that reads them back.
             var casts = DummyType.UsedBy(targetPath);
             var written = declarations.Objects;
             var writtenIds = ids;
             if (casts)
             {
                 DummyType.Check(ids, sourceMapIds);
-                written = declarations.Objects.Append(DummyType.Object).ToList();
-                writtenIds = new Dictionary<string, string>(ids) { [DummyType.ClassName] = DummyType.Id };
+                written = written.Append(DummyType.Object).ToList();
+                writtenIds = new Dictionary<string, string>(writtenIds) { [DummyType.ClassName] = DummyType.Id };
+            }
+
+            if (FileStore.UsedBy(targetPath))
+            {
+                FileStore.Check(ids, sourceMapIds);
+                written = written.Append(FileStore.Object).ToList();
+                writtenIds = new Dictionary<string, string>(writtenIds) { [FileStore.ClassName] = FileStore.Id };
             }
 
             var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
@@ -157,6 +167,9 @@ namespace Moonwell.Build
 
             // The build reads no declarations, but a unit's Level is still set only in a declared class's constructor.
             Declarations.CheckSetters(targetPath);
+
+            // Player files are read back through the store ability, which only the object files Moonwell.Objects writes can hold.
+            FileStore.CheckWithoutObjects(targetPath);
 
             // Without the standard data the map's own constants still count, over the standard ones the runtime has.
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), HeroExperience.Standard);
