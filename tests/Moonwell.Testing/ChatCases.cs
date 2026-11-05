@@ -65,6 +65,7 @@ namespace Moonwell.Testing
             Expect.Equal("first 2000", heard[0], "the older first");
             Expect.Equal("third 2000", heard[1], "then the newer, past the one that threw");
             Expect.Equal(1, world.Printed.Count, "the error is reported");
+            Expect.True(world.Logged[0].Contains("-zoom") && world.Logged[0].Contains("broken"), "the report: " + world.Logged[0]);
         }
 
         /// <summary>An ended command is let go at once, and not only at the next line with a dash, so what its handler holds is not kept.</summary>
@@ -117,6 +118,10 @@ namespace Moonwell.Testing
             Expect.Equal(0, heard.Count, "nothing heard");
             Expect.True(empty.HasEnded && dashed.HasEnded && spaced.HasEnded, "each given back ended");
             Expect.Equal(3, world.Printed.Count, "each reported");
+            foreach (var line in world.Logged)
+            {
+                Expect.True(line.Contains("is no command name"), "the report: " + line);
+            }
         }
 
         /// <summary>Chat is listened for only from the first command on, once for each person.</summary>
