@@ -51,17 +51,15 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Makes the catcher, or turns an ended image's back on.</summary>
+        /// <summary>Makes the catcher, or turns an ended image's back on, as Enabled says.</summary>
         internal override void PrepareMouse()
         {
-            if (catcher != null)
-            {
-                FramesSystem.World.EnableFrame(catcher, enabled);
-            }
-            else if (handle != null)
+            if (catcher == null && handle != null)
             {
                 MakeCatcher();
             }
+
+            TakeMouse(enabled);
         }
 
         /// <summary>Turns the catcher on or off, once there is one; an image not listened to never takes the mouse.</summary>
