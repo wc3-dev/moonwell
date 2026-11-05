@@ -202,7 +202,7 @@ namespace Moonwell.Testing
         {
             var handle = world.NewItem(ObjectTypes.FourCC("ofoo"));
             var item = Item.Of(handle)!;
-            Expect.Equal(0, item.Owner.Slot, "the player before");
+            Expect.Equal(world.NeutralPassive, item.Owner.Slot, "the player before: neutral passive's");
 
             item.Owner = Player.Get(3);
 
@@ -217,7 +217,7 @@ namespace Moonwell.Testing
             ObjectTypes.Item(ObjectTypes.FourCC("I001"), () => new OwnerWatch());
             var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo"), 4))!;
             var watch = (OwnerWatch)Item.Of(world.NewItem(ObjectTypes.FourCC("I001")))!;
-            Expect.Equal(0, watch.Owner.Slot, "the player before");
+            Expect.Equal(world.NeutralPassive, watch.Owner.Slot, "the player before: neutral passive's");
 
             unit.Give(watch);
 

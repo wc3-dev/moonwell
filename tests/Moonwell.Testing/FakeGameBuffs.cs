@@ -5,8 +5,9 @@ namespace Moonwell.Testing
     /// <summary>
     /// The game buffs of a fake world, as seen 11-03: a spell's, an aura's or an attack's buff reads level 1 while it is on,
     /// a spell's hit fires its damage event before the buff goes on, an aura gives its buff at once in reach and takes it
-    /// 3 s after leaving, and a death takes every buff off before the death event. Kept apart from FakeWorld, whose class is
-    /// at the Lua local limit (CSharp.lua moves the members past 200 to a table).
+    /// 3 s after leaving, unless another aura still gives it, an aura of a dead or removed holder gives nothing, and a death
+    /// takes every buff off before the death event. Kept apart from FakeWorld, whose class is at the Lua local limit
+    /// (CSharp.lua moves the members past 200 to a table).
     /// </summary>
     public sealed class FakeGameBuffs
     {
@@ -84,7 +85,8 @@ namespace Moonwell.Testing
 
             foreach (var aura in auras)
             {
-                var near = world.IsAlive(aura.Holder) ? world.UnitsInRange(world.UnitX(aura.Holder), world.UnitY(aura.Holder), aura.Reach) : new List<unit>();
+                var holds = world.UnitTypeId(aura.Holder) != 0 && !world.RemovedUnits.Contains(aura.Holder) && world.IsAlive(aura.Holder);
+                var near = holds ? world.UnitsInRange(world.UnitX(aura.Holder), world.UnitY(aura.Holder), aura.Reach) : new List<unit>();
                 foreach (var u in near)
                 {
                     if (!world.IsAlive(u))
@@ -120,10 +122,27 @@ namespace Moonwell.Testing
                     {
                         aura.LeftAt.Remove(u);
                         aura.Given.RemoveAt(i);
-                        world.SetAbilityLevel(u, aura.Buff, 0);
+                        if (!GivenByAnother(aura, u))
+                        {
+                            world.SetAbilityLevel(u, aura.Buff, 0);
+                        }
                     }
                 }
             }
+        }
+
+        /// <summary>Whether another aura of the same buff still gives it to the unit.</summary>
+        private bool GivenByAnother(FakeAura aura, unit u)
+        {
+            foreach (var other in auras)
+            {
+                if (other != aura && other.Buff == aura.Buff && other.Given.Contains(u))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Takes a dying unit's game buffs off, as the game does before the death event; FakeWorld's death calls it.</summary>

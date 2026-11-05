@@ -21,6 +21,9 @@ namespace Moonwell.Testing
 
             /// <summary>What runs when the player leaves; null until ListenLeave.</summary>
             public Action? Left;
+
+            /// <summary>When the player's machine sends a release message, by the game side's own rule.</summary>
+            public Moonwell.Engine.NativeKeyWorld Sends = new Moonwell.Engine.NativeKeyWorld();
         }
 
         /// <summary>A release message sent and not yet delivered.</summary>
@@ -232,10 +235,10 @@ namespace Moonwell.Testing
             Of(p).Arrived = arrived;
         }
 
-        /// <summary>Queues a release message when the case does not hold the key, as that player's machine would.</summary>
+        /// <summary>Queues a release message as that player's machine would: by NativeKeyWorld.Due, from whether the case holds the key.</summary>
         public void SendIfLetGo(player p, int key, int downs)
         {
-            if (IsKeyHeld(key))
+            if (!Of(p).Sends.Due(key, downs, IsKeyHeld(key), Runtime.World.Now()))
             {
                 return;
             }

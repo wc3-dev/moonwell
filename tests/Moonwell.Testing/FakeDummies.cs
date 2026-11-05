@@ -217,13 +217,18 @@ namespace Moonwell.Testing
             return held.Contains(spell.Ability) || target == null || Sees(world.OwnerOf(caster), target);
         }
 
-        /// <summary>A spell's order taken: its effect inside the call, then an instant spell's end-cast; a channel goes on. A held spell's order takes no effect.</summary>
+        /// <summary>A spell's order taken: its effect inside the call, then an instant spell's end-cast; a channel goes on from before its effect, so a stop inside the effect ends it. A held spell's order, or one whose spell the order's reactions took away, takes no effect.</summary>
         internal void TakeEffect(unit caster, string order, unit? target, float x, float y)
         {
-            var spell = Find(caster, order)!;
-            if (held.Contains(spell.Ability))
+            var spell = Find(caster, order);
+            if (spell == null || held.Contains(spell.Ability))
             {
                 return;
+            }
+
+            if (spell.Channel)
+            {
+                channels[caster] = spell.Ability;
             }
 
             var listening = world.Listening.Contains(GameEvent.Spell);
@@ -233,11 +238,7 @@ namespace Moonwell.Testing
             }
 
             spell.Effect(caster, target, x, y);
-            if (spell.Channel)
-            {
-                channels[caster] = spell.Ability;
-            }
-            else if (listening)
+            if (!spell.Channel && listening)
             {
                 Inbound.SpellEnded(caster, spell.Ability);
             }

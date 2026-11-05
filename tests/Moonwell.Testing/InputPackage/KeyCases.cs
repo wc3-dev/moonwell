@@ -224,18 +224,39 @@ namespace Moonwell.Testing
             ExpectLog(log, new[] { "press only pressed A" }, "the press only");
         }
 
-        /// <summary>A key the events say is down and this machine no longer holds is sent at the next check, a quarter second; when the message arrives, the key comes up and OnKeyReleased runs.</summary>
+        /// <summary>A key the events say is down and this machine no longer holds is sent at the second check that finds it up, half a second; when the message arrives, the key comes up and OnKeyReleased runs.</summary>
         public static void LetGoUnseen(FakeWorld world)
         {
             var fake = Fresh(world);
             var log = new List<string>();
             Game.Instance.Add(new LogKeyGame(log, "game"));
             fake.Press(Player.One, Key.W);
-            world.Advance(0.25f);
+            world.Advance(0.5f);
             Expect.Equal("0 87 1", string.Join(", ", fake.Sent.ToArray()), "the message sent");
             fake.Deliver();
             ExpectLog(log, new[] { "game pressed W", "game released W" }, "released by the message");
             Expect.True(!Player.One.Keyboard().IsDown(Key.W), "up");
+        }
+
+        /// <summary>A key let go unseen is sent as the game side's own rule sends it (NativeKeyWorld.Due): at the second check that finds it up, and again only a second later.</summary>
+        public static void SentAsTheGameSends(FakeWorld world)
+        {
+            var fake = Fresh(world);
+            fake.Press(Player.One, Key.W);
+            var sentAt = new List<float>();
+            for (var i = 0; i < 6; i++)
+            {
+                var before = fake.Sent.Count;
+                world.Advance(0.25f);
+                if (fake.Sent.Count > before)
+                {
+                    sentAt.Add(world.Time);
+                }
+            }
+
+            Expect.Equal(2, sentAt.Count, "two sends");
+            Expect.Near(0.5f, sentAt[0], "the first");
+            Expect.Near(1.5f, sentAt[1], "the second");
         }
 
         /// <summary>A key this machine still holds sends nothing.</summary>
@@ -256,7 +277,8 @@ namespace Moonwell.Testing
             var log = new List<string>();
             Game.Instance.Add(new LogKeyGame(log, "game"));
             fake.Press(Player.One, Key.W);
-            world.Advance(0.25f);
+            world.Advance(0.5f);
+            Expect.Equal("0 87 1", string.Join(", ", fake.Sent.ToArray()), "the message sent");
             fake.Release(Player.One, Key.W);
             fake.Press(Player.One, Key.W);
             fake.Deliver();
@@ -271,7 +293,7 @@ namespace Moonwell.Testing
             var log = new List<string>();
             Game.Instance.Add(new LogKeyGame(log, "game"));
             fake.Press(Player.One, Key.W);
-            world.Advance(0.25f);
+            world.Advance(0.5f);
             Expect.Equal("0 87 1", string.Join(", ", fake.Sent.ToArray()), "the message sent");
             fake.Held[87] = true;
             fake.Press(Player.One, Key.W);
@@ -287,7 +309,7 @@ namespace Moonwell.Testing
             var log = new List<string>();
             Game.Instance.Add(new LogKeyGame(log, "game"));
             fake.Press(Player.One, Key.W);
-            world.Advance(0.25f);
+            world.Advance(0.5f);
             fake.Deliver();
             world.Advance(0.05f);
             fake.Press(Player.One, Key.W);
