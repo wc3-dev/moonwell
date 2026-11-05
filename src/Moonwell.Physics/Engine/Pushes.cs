@@ -512,7 +512,7 @@ namespace Moonwell.Engine
         /// Whether a pushed unit at (fromX, fromY) may move to (centreX, centreY), looking ahead to a point (x, y), its
         /// collision size ahead along the move: the point inside the world's bounds, with no wall it is not lifted over
         /// across the way there, and flyable for a flyer; for a unit that does not fly, walkable and where an item lands, or
-        /// on a bridge's deck. Off a deck the look-ahead point's whole way is checked, not only its end (FreeAlong). A deck is ground inside its area, whatever the terrain's pathing reads under it, and its edge
+        /// on a bridge's deck. The look-ahead point's whole way is checked, not only its end (FreeAlong), on a deck and off it. A deck is ground inside its area, whatever the terrain's pathing reads under it, and its edge
         /// is a rail, except where the ground beyond is within DeckStep of it (its ends, on the banks). The rail stops the
         /// unit's body, not its middle: on a deck, its collision size around the place it moves to stays on the deck.
         /// </summary>
@@ -528,53 +528,37 @@ namespace Moonwell.Engine
                 return false;
             }
 
-            if (push.flyer)
+            var onDeck = false;
+            var height = 0.0f;
+            if (!push.flyer && Decks.count > 0)
             {
-                return FreeAlong(true, fromX + x - centreX, fromY + y - centreY, x, y);
-            }
-
-            if (Decks.count > 0)
-            {
-                float to;
-                float from;
-                var onTo = OnDeck(x, y, out to);
-                var onFrom = OnDeck(fromX, fromY, out from);
-                if (onFrom)
+                onDeck = OnDeck(fromX, fromY, out height);
+                if (onDeck)
                 {
                     // The deck's height where the middle moves to, for its edge there; off the deck, the height where it stands.
                     float there;
                     if (!OnDeck(centreX, centreY, out there))
                     {
-                        there = from;
+                        there = height;
                     }
 
-                    if (!Inside(push.size, fromX, fromY, centreX, centreY, from, there))
+                    if (!Inside(push.size, fromX, fromY, centreX, centreY, height, there))
                     {
                         // Its body would go over the rail.
                         return false;
                     }
-
-                    if (onTo)
-                    {
-                        return true;
-                    }
-
-                    // Off the deck's edge: onto the ground only near the deck's height, else it is the rail.
-                    return Near(Terrain.Height(x, y), from) && Terrain.IsWalkable(x, y) && Terrain.ItemLands(x, y);
                 }
-
-                if (onTo)
+                else
                 {
-                    // Onto a deck from the ground: only where the deck is near the ground's height.
-                    return Near(to, Terrain.Height(fromX, fromY));
+                    height = Terrain.Height(fromX, fromY);
                 }
             }
 
-            return FreeAlong(false, fromX + x - centreX, fromY + y - centreY, x, y);
+            return FreeAlong(push.flyer, onDeck, height, fromX + x - centreX, fromY + y - centreY, x, y);
         }
 
-        /// <summary>Whether the ground is walkable and where an item lands (flyable, for a flyer) at points at most Spacing apart along the way from (fromX, fromY) to (x, y), that end included.</summary>
-        private static bool FreeAlong(bool flyer, float fromX, float fromY, float x, float y)
+        /// <summary>Whether each point at most Spacing apart along the way from (fromX, fromY) to (x, y), that end included, is free (FreeAt) for a unit that stands on a deck or on the ground, at a height.</summary>
+        private static bool FreeAlong(bool flyer, bool onDeck, float height, float fromX, float fromY, float x, float y)
         {
             var dx = x - fromX;
             var dy = y - fromY;
@@ -582,15 +566,30 @@ namespace Moonwell.Engine
             for (var i = 1; i <= parts; i++)
             {
                 var t = (float)i / parts;
-                var px = fromX + dx * t;
-                var py = fromY + dy * t;
-                if (flyer ? !Terrain.IsFlyable(px, py) : !Terrain.IsWalkable(px, py) || !Terrain.ItemLands(px, py))
+                if (!FreeAt(flyer, onDeck, height, fromX + dx * t, fromY + dy * t))
                 {
                     return false;
                 }
             }
 
             return true;
+        }
+
+        /// <summary>Whether a point is free for a pushed unit: flyable for a flyer; on a deck, for a unit on a deck, or one on the ground where the deck is near its height; off every deck, walkable and where an item lands, and for a unit on a deck where the ground is near its height, else it is the deck's rail.</summary>
+        private static bool FreeAt(bool flyer, bool onDeck, float height, float x, float y)
+        {
+            if (flyer)
+            {
+                return Terrain.IsFlyable(x, y);
+            }
+
+            float deck;
+            if (Decks.count > 0 && OnDeck(x, y, out deck))
+            {
+                return onDeck || Near(deck, height);
+            }
+
+            return (!onDeck || Near(Terrain.Height(x, y), height)) && Terrain.IsWalkable(x, y) && Terrain.ItemLands(x, y);
         }
 
         /// <summary>
