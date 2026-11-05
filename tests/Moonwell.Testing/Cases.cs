@@ -273,6 +273,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "day.over-midnight", Run = DayCases.DayOverMidnight });
             list.Add(new Case { Name = "day.speed", Run = DayCases.DaySpeed });
             list.Add(new Case { Name = "day.stopped", Run = DayCases.DayStopped });
+            list.Add(new Case { Name = "day.dawn-and-dusk", Run = DayCases.DawnAndDusk });
+            list.Add(new Case { Name = "day.jumps", Run = DayCases.DayJumps });
+            list.Add(new Case { Name = "day.backward", Run = DayCases.DayBackward });
+            list.Add(new Case { Name = "day.maps-own-dawn", Run = DayCases.MapsOwnDawn });
         }
 
         /// <summary>Adds the cases for colours, coloured text and time as text.</summary>

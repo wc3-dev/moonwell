@@ -71,5 +71,11 @@ namespace Moonwell
 
         /// <summary>A unit in the map is given an order.</summary>
         internal const int OnUnitOrdered = 4194304;
+
+        /// <summary>Night turns to day.</summary>
+        internal const int OnDawn = 8388608;
+
+        /// <summary>Day turns to night.</summary>
+        internal const int OnDusk = 16777216;
     }
 }
