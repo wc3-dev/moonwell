@@ -129,7 +129,8 @@ namespace Moonwell
                 return;
             }
 
-            Decks.Load(World, bridges, decks);
+            // After the register step has registered every class, so a bridge of a type the map declares is that class.
+            ObjectTypes.AfterRegistering(() => Decks.Load(World, bridges, decks));
         }
 
         /// <summary>Forgets the settings and the world, so the next use starts from the defaults; the tests call it between cases.</summary>

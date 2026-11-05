@@ -98,7 +98,7 @@ namespace Moonwell.Testing
                 seen.Add(widget);
                 TestLog.Lines.Add("in " + Kind(widget));
             };
-            Hooks.AddEnding(widget => TestLog.Lines.Add("ending " + Kind(widget)));
+            Hooks.AddEnding(widget => TestLog.Lines.Add("ending " + Kind(widget)), 0);
             ObjectTypes.Unit(ObjectTypes.FourCC("h004"), () => new LeaveLogger());
             var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("h004")))!;
             var item = Item.Of(world.NewItem(ObjectTypes.FourCC("ratc")))!;
@@ -117,7 +117,7 @@ namespace Moonwell.Testing
             destructable.Remove();
             ExpectLog(new string[] { "ending unit", "leave", "ending item", "ending destructable" }, "the endings");
 
-            Hooks.AddEnding(widget => { throw new System.InvalidOperationException("boom"); });
+            Hooks.AddEnding(widget => { throw new System.InvalidOperationException("boom"); }, 0);
             TestLog.Lines.Clear();
             var second = Unit.Of(world.NewUnit(ObjectTypes.FourCC("h004")))!;
             second.Remove();
@@ -143,8 +143,8 @@ namespace Moonwell.Testing
         public static void EndingTwo(FakeWorld world)
         {
             TestLog.Lines.Clear();
-            Hooks.AddEnding(widget => TestLog.Lines.Add("first " + Kind(widget)));
-            Hooks.AddEnding(widget => TestLog.Lines.Add("second " + Kind(widget)));
+            Hooks.AddEnding(widget => TestLog.Lines.Add("first " + Kind(widget)), 0);
+            Hooks.AddEnding(widget => TestLog.Lines.Add("second " + Kind(widget)), 0);
             ObjectTypes.Unit(ObjectTypes.FourCC("h004"), () => new LeaveLogger());
             var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("h004")))!;
             unit.Remove();
@@ -155,8 +155,8 @@ namespace Moonwell.Testing
         public static void EndingThrowing(FakeWorld world)
         {
             TestLog.Lines.Clear();
-            Hooks.AddEnding(widget => { throw new System.InvalidOperationException("boom"); });
-            Hooks.AddEnding(widget => TestLog.Lines.Add("second " + Kind(widget)));
+            Hooks.AddEnding(widget => { throw new System.InvalidOperationException("boom"); }, 0);
+            Hooks.AddEnding(widget => TestLog.Lines.Add("second " + Kind(widget)), 0);
             ObjectTypes.Unit(ObjectTypes.FourCC("h004"), () => new LeaveLogger());
             var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("h004")))!;
             unit.Remove();
@@ -180,7 +180,7 @@ namespace Moonwell.Testing
         public static void EndingReset(FakeWorld world)
         {
             TestLog.Lines.Clear();
-            Hooks.AddEnding(widget => TestLog.Lines.Add("ending " + Kind(widget)));
+            Hooks.AddEnding(widget => TestLog.Lines.Add("ending " + Kind(widget)), 0);
             var fresh = FakeWorld.Install();
             ObjectTypes.Unit(ObjectTypes.FourCC("h004"), () => new LeaveLogger());
             var unit = Unit.Of(fresh.NewUnit(ObjectTypes.FourCC("h004")))!;

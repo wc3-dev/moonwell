@@ -10,7 +10,7 @@ namespace Moonwell
         private static Dictionary<destructable, Destructable> known = new Dictionary<destructable, Destructable>();
 
         /// <summary>The destructables the runtime holds, in the order they were taken in.</summary>
-        internal static OrderedSet<Destructable> Live = new OrderedSet<Destructable>();
+        internal static LiveSet<Destructable> Live = new LiveSet<Destructable>();
 
         /// <summary>The index in Live of the destructable the sweep checks next.</summary>
         internal static int NextToCheck;

@@ -800,7 +800,7 @@ namespace Moonwell.Engine
         /// <summary>Tracks a unit that is not tracked: its entry is in the grid at its place, and in the cell checks.</summary>
         private static void AddUnit(Unit unit)
         {
-            if (unit.IsGone || unit.HasEnded || unit.Handle == null || unitEntries.ContainsKey(unit.Handle))
+            if (unit.IsGone || unit.HasEnded || unit.ending || unit.Handle == null || unitEntries.ContainsKey(unit.Handle))
             {
                 return;
             }
@@ -818,7 +818,7 @@ namespace Moonwell.Engine
         /// <summary>Tracks an item that is not tracked.</summary>
         private static void AddItem(Item item)
         {
-            if (item.IsGone || item.HasEnded || item.Handle == null || itemEntries.ContainsKey(item.Handle))
+            if (item.IsGone || item.HasEnded || item.ending || item.Handle == null || itemEntries.ContainsKey(item.Handle))
             {
                 return;
             }
@@ -833,7 +833,7 @@ namespace Moonwell.Engine
         /// <summary>Tracks a destructable that is not tracked, at the place it was taken in at; it is not in the cell checks.</summary>
         private static void AddDestructable(Destructable destructable)
         {
-            if (destructable.IsGone || destructable.HasEnded || destructableEntries.ContainsKey(destructable.Handle))
+            if (destructable.IsGone || destructable.HasEnded || destructable.ending || destructableEntries.ContainsKey(destructable.Handle))
             {
                 return;
             }

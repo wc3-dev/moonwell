@@ -3,6 +3,11 @@ using Moonwell.Engine;
 
 namespace Moonwell.Testing
 {
+    /// <summary>A bridge type the map declares a class for.</summary>
+    public sealed class Drawbridge : Destructable
+    {
+    }
+
     /// <summary>
     /// Cases for placed bridges: a deck's heights from its shape, turned and scaled; a deck over water, on the ground
     /// beneath; a missile under a deck and onto it, with the deck's normal; a unit standing on one; a push along its rail;
@@ -88,6 +93,19 @@ namespace Moonwell.Testing
             var handle = Bridge(world, fake, FixedId, 512.0f, 512.0f);
             Physics.Install(FixedId + " 0 500 500 270 1 0 " + ground, Shape);
             return handle;
+        }
+
+        /// <summary>A placed bridge of a type the map declares a class for is that class, though the map's register step installs the package, with its bridges, before the classes register.</summary>
+        public static void DeclaredBridgeClass(FakeWorld world)
+        {
+            var fake = Fresh(0.0f, false, out _);
+            var handle = Bridge(world, fake, FixedId, 512.0f, 512.0f);
+            ObjectTypes.Registering(() =>
+            {
+                Physics.Install(FixedId + " 0 500 500 270 1 0 0", Shape);
+                ObjectTypes.Destructable(ObjectTypes.FourCC(FixedId), () => new Drawbridge());
+            });
+            Expect.True(Destructable.Of(handle) is Drawbridge, "the placed bridge is its class");
         }
 
         /// <summary>Makes a footman of the game at a place, and takes it in.</summary>

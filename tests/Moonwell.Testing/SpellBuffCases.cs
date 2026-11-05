@@ -43,6 +43,9 @@ namespace Moonwell.Testing
         /// <summary>What OnRemoved runs after it logs; a case sets it.</summary>
         public static System.Action<FrozenBuff>? WhenRemoved;
 
+        /// <summary>Runs after each OnApply, when set.</summary>
+        public static System.Action<FrozenBuff>? WhenApplied;
+
         /// <summary>Ticks every half second.</summary>
         public FrozenBuff()
         {
@@ -53,6 +56,7 @@ namespace Moonwell.Testing
         public override void OnApply()
         {
             Applied++;
+            WhenApplied?.Invoke(this);
             if (HitsOnApply && Source != null)
             {
                 Source.Damage(Unit, 5.0f);
@@ -92,7 +96,7 @@ namespace Moonwell.Testing
     /// <summary>Cases for the buffs the game puts on: the fake world's game buffs (as seen 11-03), then the watch that runs a buff class's code for them (decisions 152, 153, 163).</summary>
     public static class SpellBuffCases
     {
-        private static readonly int Frozen = ObjectTypes.FourCC("B010");
+        internal static readonly int Frozen = ObjectTypes.FourCC("B010");
         private static readonly int Bolt = ObjectTypes.FourCC("A010");
         private static readonly int Frost = ObjectTypes.FourCC("A020");
 
@@ -102,7 +106,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>Registers FrozenBuff as the build does for a class a spell (A010, a Storm Bolt) and an aura (A020) list, and begins the watch as the runtime does.</summary>
-        private static void Watch()
+        internal static void Watch()
         {
             FrozenBuff.HitsOnApply = false;
             FrozenBuff.WhenRemoved = null;

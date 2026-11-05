@@ -10,7 +10,7 @@ namespace Moonwell
         private static Dictionary<item, Item> known = new Dictionary<item, Item>();
 
         /// <summary>The items the runtime holds, in the order they were taken in.</summary>
-        internal static OrderedSet<Item> Live = new OrderedSet<Item>();
+        internal static LiveSet<Item> Live = new LiveSet<Item>();
 
         /// <summary>The object of a game item when the runtime holds it; null otherwise.</summary>
         internal static Item? Find(item handle)

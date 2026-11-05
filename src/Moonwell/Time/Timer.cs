@@ -20,6 +20,9 @@ namespace Moonwell
         /// <summary>Whether Moonwell made it for its own work (a buff's tick and expiry, an area's first sweep), which the never-ran report skips: no line of the map named its scope.</summary>
         internal bool own;
 
+        /// <summary>Whether it waits in the scheduler's heap.</summary>
+        internal bool queued;
+
         /// <summary>
         /// How many intervals after its start a repeating timer is next due; 1 until it first runs. Its due time is worked out
         /// from the start and this count, not added up run by run, so the rounding of a float late in a game does not add up.
@@ -81,15 +84,23 @@ namespace Moonwell
 #if DEBUG
         /// <summary>The game time the timer was made at, as Moonwell's clock last read it; start is Moonwell's time, which a halt holds still.</summary>
         internal readonly float madeAt;
+#endif
 
         /// <summary>
-        /// Reports, in a development build, a timer its scope ended in the instant it was made, before it ran: the line that
-        /// made it named a scope already on its way out, so it does nothing, and nothing else says so. The instant is the
-        /// same on both clocks, the game's and Moonwell's, so a halt or a step of the debug mode in between is not one. A
-        /// timer ended by its own End, or one Moonwell made for its own work, is not reported.
+        /// Tells the scheduler of a timer that ended while it waited, so its entry leaves soon. In a development build, also
+        /// reports a timer its scope ended in the instant it was made, before it ran: the line that made it named a scope
+        /// already on its way out, so it does nothing, and nothing else says so. The instant is the same on both clocks, the
+        /// game's and Moonwell's, so a halt or a step of the debug mode in between is not one. A timer ended by its own End,
+        /// or one Moonwell made for its own work, is not reported.
         /// </summary>
         internal override void Finish()
         {
+            if (queued)
+            {
+                queued = false;
+                Runtime.Scheduler.Ended();
+            }
+#if DEBUG
             if (!ran && !own && Parent != null && Parent.ending)
             {
                 var now = Runtime.World.Now();
@@ -98,8 +109,8 @@ namespace Moonwell
                     Errors.Report(Names.NameOf(Parent) + ".Timer", new MoonwellException("ended with its scope in the instant it was made, before it ran; name a scope that lasts"));
                 }
             }
-        }
 #endif
+        }
 
         /// <summary>Adopts a new timer into its scope, and schedules it unless the scope has already ended.</summary>
         internal static Timer Start(Timer timer, Scope scope)

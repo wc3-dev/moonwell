@@ -373,6 +373,15 @@ namespace Moonwell.Testing
         private static void AddLifecycle(List<Case> list)
         {
             list.Add(new Case { Name = "lifecycle.units-the-game-makes-are-met", Run = LifecycleCases.UnitsTheGameMakesAreMet });
+            list.Add(new Case { Name = "whole-game.game-end-refused", Run = WholeGameCases.GameEndRefused });
+            list.Add(new Case { Name = "whole-game.player-end-refused", Run = WholeGameCases.PlayerEndRefused });
+            list.Add(new Case { Name = "whole-game.sweep-after-removal", Run = WholeGameCases.SweepAfterRemoval });
+            list.Add(new Case { Name = "whole-game.destructable-sweep-after-removal", Run = WholeGameCases.DestructableSweepAfterRemoval });
+            list.Add(new Case { Name = "whole-game.ended-timers-leave", Run = WholeGameCases.EndedTimersLeave });
+            list.Add(new Case { Name = "whole-game.ending-unit-not-tracked", Run = WholeGameCases.EndingUnitNotTracked });
+            list.Add(new Case { Name = "whole-game.ending-listeners-ordered", Run = WholeGameCases.EndingListenersOrdered });
+            list.Add(new Case { Name = "whole-game.death-watch-ends", Run = WholeGameCases.DeathWatchEnds });
+            list.Add(new Case { Name = "whole-game.set-order-after-removals", Run = WholeGameCases.SetOrderAfterRemovals });
             list.Add(new Case { Name = "lifecycle.local-throw-keeps-sync", Run = LifecycleCases.LocalThrowKeepsSync });
             list.Add(new Case { Name = "lifecycle.death-respawn-outlives-corpse", Run = LifecycleCases.DeathRespawnOutlivesCorpse });
             list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });
@@ -722,6 +731,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "wall.push-on-wall", Run = WallCases.PushOnWall });
             list.Add(new Case { Name = "wall.push-glancing", Run = WallCases.PushGlancing });
             list.Add(new Case { Name = "deck.height", Run = DeckCases.Height });
+            list.Add(new Case { Name = "deck.declared-bridge-class", Run = DeckCases.DeclaredBridgeClass });
             list.Add(new Case { Name = "deck.turned-scaled", Run = DeckCases.TurnedScaled });
             list.Add(new Case { Name = "deck.over-water", Run = DeckCases.OverWater });
             list.Add(new Case { Name = "deck.water-edge", Run = DeckCases.WaterEdge });
