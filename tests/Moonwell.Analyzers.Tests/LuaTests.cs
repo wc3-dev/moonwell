@@ -339,4 +339,21 @@ public class LuaTests
             }
             """));
     }
+
+    [Fact]
+    public void a_native_as_a_method_group_is_mw0053()
+    {
+        var found = MapCode.Check("""
+            var angles = new List<float> { 0f };
+            var cosines = angles.Select(Natives.Cos).ToList();
+            Func<float, float> cos = Natives.Cos;
+            var called = angles.Select(a => Natives.Cos(a)).ToList();
+            var one = Natives.Cos(0f);
+            """);
+
+        Assert.Equal(new[] { "MW0053: Natives.Cos", "MW0053: Natives.Cos" }, found);
+        Assert.Equal(
+            "Natives.Cos as a method group is nil in the game's Lua: call it in a lambda, (radians) => Natives.Cos(radians)",
+            MapCode.Message("Func<float, float> cos = Natives.Cos;"));
+    }
 }
