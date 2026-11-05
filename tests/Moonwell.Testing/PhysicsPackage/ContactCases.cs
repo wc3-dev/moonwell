@@ -481,6 +481,34 @@ namespace Moonwell.Testing
             Expect.Equal(0, wide.Met.Count, "33 off the middle: none");
         }
 
+        /// <summary>
+        /// A unit knocked across a missile at 2,400 a second, while their pair waits as long as a walking unit could not
+        /// reach it, is met: a shot drifting at 1 a second, a pushee 70 to its side, knocked through it after 1 to 6 steps.
+        /// The wait allowed for a unit closing at 522 a second at most, and nothing ended it, so the pushee went through.
+        /// </summary>
+        public static void PushedAcross(FakeWorld world)
+        {
+            Fresh();
+            for (var wait = 1; wait <= 6; wait++)
+            {
+                var x = 200.0f + wait * 250.0f;
+                var handle = world.NewUnit(ObjectTypes.FourCC(PusheeId), 1);
+                world.MoveUnit(handle, x, 570.0f);
+                var unit = Unit.Of(handle)!;
+                var shot = new Shot();
+                shot.UnitContact = Contact.Pass;
+                ShotAt(shot, x, 500.0f, 32.0f, 1.0f, 0.0f, 0.0f);
+                Steps(world, wait);
+                unit.Knockback(270.0f, 300.0f, 0.25f);
+                Steps(world, 8);
+                Expect.True(unit.Y < 440.0f, "after " + wait + " steps, it was knocked across; at y " + unit.Y);
+                Expect.Equal(1, shot.Met.Count, "after " + wait + " steps, the shot met it");
+                shot.End();
+                unit.Kill();
+                Steps(world, 1);
+            }
+        }
+
         /// <summary>A missile that starts at a unit's middle (24 up) meets it at its first step, once; one there with no velocity, whose normal would be zero, gets a normal of length 1 and no NaN.</summary>
         public static void Inside(FakeWorld world)
         {

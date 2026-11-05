@@ -720,6 +720,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "contact.bounce", Run = ContactCases.Bounce });
             list.Add(new Case { Name = "contact.pass", Run = ContactCases.Pass });
             list.Add(new Case { Name = "contact.fast", Run = ContactCases.Fast });
+            list.Add(new Case { Name = "contact.pushed-across", Run = ContactCases.PushedAcross });
             list.Add(new Case { Name = "contact.inside", Run = ContactCases.Inside });
             list.Add(new Case { Name = "contact.top", Run = ContactCases.Top });
             list.Add(new Case { Name = "contact.resting", Run = ContactCases.Resting });

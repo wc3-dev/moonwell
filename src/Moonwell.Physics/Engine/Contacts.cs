@@ -50,7 +50,7 @@ namespace Moonwell.Engine
         /// <summary>The largest radius of a unit taken before a larger one is met.</summary>
         private const float FirstUnit = 64.0f;
 
-        /// <summary>The fastest a unit walks, in game units a second: what a unit may add to the speed a missile closes on it at.</summary>
+        /// <summary>The fastest a unit walks, in game units a second: what a unit may add to the speed a missile closes on it at, with the fastest push (Pushes.fastest).</summary>
         private const float Walk = 522.0f;
 
         /// <summary>The bit of OnStruck in a class's mask.</summary>
@@ -355,7 +355,7 @@ namespace Moonwell.Engine
             touch.step = now;
             touch.x = x;
             touch.y = y;
-            return Check(missile, touch, ImpactKind.Unit, unit, unit, x, y, vx, vy, Walk, missile.unitContact, out wait);
+            return Check(missile, touch, ImpactKind.Unit, unit, unit, x, y, vx, vy, Walk + Pushes.fastest, missile.unitContact, out wait);
         }
 
         /// <summary>A check of a missile and a destructable at its place. What the pair does next; the seconds to wait for Later.</summary>
@@ -1296,7 +1296,7 @@ namespace Moonwell.Engine
         }
 
         /// <summary>Ends the waits of the pairs of a missile's checks of a kind; nothing when they have not started.</summary>
-        private static void Unwait<TOther>(Interaction? checks)
+        internal static void Unwait<TOther>(Interaction? checks)
             where TOther : Actor
         {
             if (checks == null)

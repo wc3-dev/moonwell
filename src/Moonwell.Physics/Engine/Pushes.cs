@@ -64,6 +64,9 @@ namespace Moonwell.Engine
         /// <summary>The reactions each class writes, keyed by the class (never by an actor); made on first use.</summary>
         private static Dictionary<object, int>? masks;
 
+        /// <summary>The fastest any push moves along the ground: raised at once when a push gets faster, and set to the pushes' own after each step. A missile's unit checks add it to the speed a unit closes at.</summary>
+        internal static float fastest;
+
         /// <summary>Forgets every push. When the interactions package was not installed afresh since, its Awake count is lowered for the pushes that held it; an install of it has cleared the count already.</summary>
         internal static void Reset(bool trackingKept)
         {
@@ -78,6 +81,7 @@ namespace Moonwell.Engine
             dropped = false;
             stepping = false;
             masks = null;
+            fastest = 0.0f;
         }
 
 #if DEBUG
@@ -126,6 +130,7 @@ namespace Moonwell.Engine
 
             push.vx += vx;
             push.vy += vy;
+            Faster(push);
             if (vz != 0.0f)
             {
                 Lift(push);
@@ -161,6 +166,7 @@ namespace Moonwell.Engine
             push.vy += speed * Trig.Sin(radians);
             push.knockSlowing = (speed < 0.0f ? -speed : speed) / seconds;
             push.knockLeft = seconds;
+            Faster(push);
             React(push, PushedBit, null, null, 0.0f);
         }
 
@@ -225,10 +231,33 @@ namespace Moonwell.Engine
             }
 
             stepping = false;
+            var top = 0.0f;
+            count = list.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var push = Raw.At(list, i);
+                var square = push.vx * push.vx + push.vy * push.vy;
+                if (!push.ended && square > top)
+                {
+                    top = square;
+                }
+            }
 
+            fastest = Trig.Sqrt(top);
             if (dropped)
             {
                 Pack(list);
+            }
+        }
+
+        /// <summary>A push's velocity was added to: faster than any push was, it raises the fastest, and the missiles' unit checks check again, as their waits allowed only for the slower pushes.</summary>
+        private static void Faster(Pushed push)
+        {
+            var speed = Trig.Sqrt(push.vx * push.vx + push.vy * push.vy);
+            if (speed > fastest)
+            {
+                fastest = speed;
+                Pass.UnitsQuicker();
             }
         }
 

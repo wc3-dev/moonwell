@@ -116,6 +116,26 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>A push got faster than any was: the unit checks of each missile that has not begun to end check again from their next tick.</summary>
+        internal static void UnitsQuicker()
+        {
+            var list = missiles;
+            if (list == null)
+            {
+                return;
+            }
+
+            var count = list.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var missile = Raw.At(list, i);
+                if (!missile.ending)
+                {
+                    Contacts.Unwait<Unit>(missile.unitChecks);
+                }
+            }
+        }
+
 #if DEBUG
         /// <summary>How many missiles have not begun to end, and how many of those rest; the debug mode's statistics read it.</summary>
         internal static int Flying(out int resting)
