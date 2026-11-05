@@ -34,7 +34,8 @@ public sealed class ScopeAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (call.Instance != null && (method.Name == "After" || method.Name == "Every") && IsMoonwellType(method.ContainingType, "Scope"))
+        // A scope's own methods take it as their receiver: After, Every, ReadFile, Share, Command and Load.
+        if (call.Instance != null && method.MethodKind == MethodKind.Ordinary && IsMoonwellType(method.ContainingType, "Scope"))
         {
             var receiver = Unconverted(call.Instance);
             if (IsMoonwellType(receiver.Type, "Player"))

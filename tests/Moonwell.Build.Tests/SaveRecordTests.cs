@@ -92,6 +92,52 @@ namespace Moonwell.Build.Tests
             Assert.Contains("- 2 int", Lines());
         }
 
+        [Fact]
+        public void A_part_or_an_enum_swapped_for_another_stops_the_build()
+        {
+            SaveRecord.Keep(project, Holding(new SavedType("part", false, false, "Sample.Gear"), new SavedType("int", false, false, "Sample.Kind")), Key, Folder);
+            Assert.Contains("- 3 part:Sample.Gear", Lines());
+
+            var part = Assert.Throws<BuildException>(() => SaveRecord.Keep(project, Holding(new SavedType("part", false, false, "Sample.Armor"), new SavedType("int", false, false, "Sample.Kind")), Key, Folder));
+            Assert.Contains("saved as part:Sample.Armor", part.Message);
+            var choice = Assert.Throws<BuildException>(() => SaveRecord.Keep(project, Holding(new SavedType("part", false, false, "Sample.Gear"), new SavedType("int", false, false, "Sample.Rank")), Key, Folder));
+            Assert.Contains("saved as int:Sample.Rank", choice.Message);
+        }
+
+        [Fact]
+        public void A_record_from_before_names_and_an_int_made_an_enum_are_kept()
+        {
+            File.WriteAllLines(RecordPath, new[] { "key " + SaveRecord.Fingerprint(Key), "folder Rpg", "- 3 part", "- 4 int" });
+
+            SaveRecord.Keep(project, Holding(new SavedType("part", false, false, "Sample.Gear"), new SavedType("int", false, false, "Sample.Kind")), Key, Folder);
+
+            Assert.Contains("- 3 part:Sample.Gear", Lines());
+            Assert.Contains("- 4 int:Sample.Kind", Lines());
+        }
+
+        [Fact]
+        public void A_changed_save_id_stops_the_build_until_its_line_is_deleted()
+        {
+            SaveRecord.Keep(project, Classes(("Level", 1, "int")), Key, Folder);
+            Assert.Contains("id Sample.RpgSave -", Lines());
+
+            var renamed = new[] { new SaveClass("Sample.RpgSave", false, "rpg", new[] { new SavedMember("Level", 1, Type("int")) }) };
+            var stop = Assert.Throws<BuildException>(() => SaveRecord.Keep(project, renamed, Key, Folder));
+            var line = Lines().IndexOf("id Sample.RpgSave -") + 1;
+            Assert.Contains("Sample.RpgSave's [SaveId] has changed from none to \"rpg\"", stop.Message);
+            Assert.Contains($"delete line {line}", stop.Message);
+
+            DeleteLine(line);
+            SaveRecord.Keep(project, renamed, Key, Folder);
+            Assert.Contains("id Sample.RpgSave rpg", Lines());
+        }
+
+        // A save that holds a part as number 3 and an enum as number 4.
+        private static IReadOnlyList<SaveClass> Holding(SavedType part, SavedType choice)
+        {
+            return new[] { new SaveClass("Sample.RpgSave", false, string.Empty, new[] { new SavedMember("Weapon", 3, part), new SavedMember("Kind", 4, choice) }) };
+        }
+
         private static IReadOnlyList<SaveClass> Classes(params (string Name, int Number, string Stored)[] members)
         {
             var saved = members.Select(one => new SavedMember(one.Name, one.Number, Type(one.Stored))).ToList();
