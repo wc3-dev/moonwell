@@ -438,6 +438,49 @@ public class LocalWriteTests
     }
 
     [Fact]
+    public void reading_backwards_and_a_loop_over_a_library_collection_change_nothing()
+    {
+        // The map's own enumerator runs only when a GetEnumerator of the map's may: a List's never does.
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                foreach (var n in Sorted.Reverse()) { }
+                foreach (var n in Numbers) { }
+                Scores.Reverse<int>();
+            });
+            """, Shared + """
+            public static SortedSet<int> Sorted = new SortedSet<int>();
+            public static IEnumerable<int> Numbers = new List<int>();
+
+            public sealed class Counter : IEnumerator<int>
+            {
+                private int index;
+                public int Current => index;
+                object System.Collections.IEnumerator.Current => index;
+                public bool MoveNext() { index++; return index < 3; }
+                public void Reset() { index = 0; }
+                public void Dispose() { }
+            }
+            """));
+    }
+
+    [Fact]
+    public void the_answer_does_not_depend_on_what_was_followed_first()
+    {
+        // A local function's or lambda's write to a local around it is shared or not by where it runs (round 1's D6).
+        for (var i = 0; i < 20; i++)
+        {
+            Assert.Equal(new[] { "MW0048: Bump", "MW0048: add" }, MapCode.Check("""
+                Local.For(p, () => Helper(p));
+                Local.For(p, () => Other(p));
+                """, """
+                static void Helper(Player q) { int shown = 0; void Bump() => shown++; Local.For(q, Bump); q.Print(shown.ToString()); }
+                static void Other(Player q) { int count = 0; Action add = () => count++; Local.For(q, add); add(); }
+                """));
+        }
+    }
+
+    [Fact]
     public void a_collection_made_in_the_block_is_free()
     {
         Assert.Empty(MapCode.Check("""
