@@ -413,6 +413,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.actors.actor-before-added", Run = ActorCases.ActorBeforeAdded });
             list.Add(new Case { Name = "debug.session.toggle", Run = SessionCases.Toggle });
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
+            list.Add(new Case { Name = "debug.session.halt-holds-unknown-units", Run = InputReviewCases.HaltHoldsUnknownUnits });
+            list.Add(new Case { Name = "debug.session.map-pause-during-halt", Run = InputReviewCases.MapPauseDuringHalt });
+            list.Add(new Case { Name = "debug.session.repeat-at-debug-speed", Run = InputReviewCases.RepeatAtDebugSpeed });
+            list.Add(new Case { Name = "debug.session.debug-input-is-its-own", Run = InputReviewCases.DebugInputIsItsOwn });
             list.Add(new Case { Name = "debug.abilities.level-out-of-range-reported", Run = UnitAbilityCases.LevelOutOfRangeReported });
             list.Add(new Case { Name = "debug.abilities.level-of-missing-reported", Run = UnitAbilityCases.LevelOfMissingReported });
             list.Add(new Case { Name = "debug.hold.ended-holder-reported", Run = HoldCases.EndedHolderReported });
@@ -872,6 +876,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.keys.order", Run = KeyCases.Order });
             list.Add(new Case { Name = "input.keys.once-per-press", Run = KeyCases.OncePerPress });
             list.Add(new Case { Name = "input.keys.long-gap", Run = KeyCases.LongGap });
+            list.Add(new Case { Name = "input.keys.slow-first-repeat", Run = InputReviewCases.SlowFirstRepeat });
+            list.Add(new Case { Name = "input.mouse.leaver-lets-go-of-buttons", Run = InputReviewCases.LeaverLetsGoOfButtons });
             list.Add(new Case { Name = "input.keys.modifier-repeat", Run = KeyCases.ModifierRepeat });
             list.Add(new Case { Name = "input.keys.changed-in-reaction", Run = KeyCases.ChangedInReaction });
             list.Add(new Case { Name = "input.keys.added-to-player-in-reaction", Run = KeyCases.AddedToPlayerInReaction });

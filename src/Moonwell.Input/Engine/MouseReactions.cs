@@ -66,6 +66,14 @@ namespace Moonwell.Engine
             }
 
             var button = (MouseButton)number;
+#if DEBUG
+            // A Ctrl + click is the debug mode's selection, its release too.
+            if (button == MouseButton.Left && DebugSession.TakesClick(mouse.Player.Slot))
+            {
+                mouse.Taken = true;
+                return;
+            }
+#endif
             mouse.SetDown(button, true);
             Run(mouse, Pressed, button);
         }
@@ -88,8 +96,24 @@ namespace Moonwell.Engine
             }
 
             var button = (MouseButton)number;
+            if (button == MouseButton.Left && mouse.Taken)
+            {
+                mouse.Taken = false;
+                return;
+            }
+
             mouse.SetDown(button, false);
             Run(mouse, Released, button);
+        }
+
+        /// <summary>A player left: their mouse holds no button from then on, and no reaction runs, as none runs for them afterwards.</summary>
+        internal static void OnLeft()
+        {
+            var mouse = Event();
+            if (mouse != null)
+            {
+                mouse.LetGoAll();
+            }
         }
 
         /// <summary>The mouse of the player the event being delivered belongs to.</summary>

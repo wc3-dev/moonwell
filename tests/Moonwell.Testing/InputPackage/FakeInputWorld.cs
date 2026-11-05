@@ -205,6 +205,26 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>Remembers what to run when a player leaves.</summary>
+        public void ListenLeave(player p, Action left)
+        {
+            leaves[p] = left;
+        }
+
+        /// <summary>Delivers a player's leave, as the game's leave event does.</summary>
+        public void Leave(Player player)
+        {
+            if (!leaves.TryGetValue(player.Handle, out var left))
+            {
+                throw new ExpectationFailed("The mouse did not listen for slot " + player.Slot + "'s leave.");
+            }
+
+            eventPlayer = player.Handle;
+            left();
+        }
+
+        private readonly Dictionary<player, Action> leaves = new Dictionary<player, Action>();
+
         /// <summary>Remembers what to run for a player's mouse; a null moved is no move event.</summary>
         public void ListenMouse(player p, Action? moved, Action pressed, Action released)
         {

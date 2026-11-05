@@ -590,6 +590,13 @@ namespace Moonwell
                     return lastPaused;
                 }
 
+#if DEBUG
+                // A halt's hold is the debug mode's, not the map's: the map reads the pause it set itself.
+                if (DebugSession.HoldsPause(Handle, out var wanted))
+                {
+                    return wanted;
+                }
+#endif
                 var now = Runtime.World.IsPausedUnit(Handle);
                 if (!now && RemovedByGame())
                 {
@@ -609,6 +616,12 @@ namespace Moonwell
                 if (!IsGone)
                 {
                     lastPaused = value;
+#if DEBUG
+                    if (DebugSession.WantPause(Handle, value))
+                    {
+                        return;
+                    }
+#endif
                     Runtime.World.SetPaused(Handle, value);
                 }
             }

@@ -148,7 +148,7 @@ namespace Moonwell.Testing
             var log = new List<string>();
             Game.Instance.Add(new LogKeyGame(log, "game"));
             fake.Press(Player.One, Key.W);
-            world.Advance(1.0f);
+            world.Advance(3.0f);
             fake.Press(Player.One, Key.W);
             ExpectLog(log, new[] { "game pressed W", "game released W", "game pressed W" }, "released, then pressed again");
             Expect.True(Player.One.Keyboard().IsDown(Key.W), "down");

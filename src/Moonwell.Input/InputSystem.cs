@@ -101,6 +101,7 @@ namespace Moonwell
             for (var i = 0; i < users.Count; i++)
             {
                 host.ListenMouse(users[i].Handle, moved, MouseReactions.OnPressed, MouseReactions.OnReleased);
+                host.ListenLeave(users[i].Handle, MouseReactions.OnLeft);
             }
         }
 
