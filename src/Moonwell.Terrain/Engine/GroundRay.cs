@@ -97,7 +97,7 @@ namespace Moonwell.Engine
 
                 Samples++;
                 var gap = Gap(fromX, fromY, fromZ, dx, dy, dz, t);
-                if (gap <= floor)
+                if (floor < 0f ? gap < floor : gap <= floor)
                 {
                     hit = HitBetween(fromX, fromY, fromZ, dx, dy, dz, before, gapBefore, t, gap, floor);
                     return true;
@@ -171,7 +171,7 @@ namespace Moonwell.Engine
             {
                 var middle = (above + under) / 2f;
                 var gap = Gap(fromX, fromY, fromZ, dx, dy, dz, middle);
-                if (gap > floor)
+                if (floor < 0f ? gap >= floor : gap > floor)
                 {
                     above = middle;
                     gapAbove = gap;

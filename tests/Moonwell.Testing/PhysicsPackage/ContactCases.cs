@@ -481,6 +481,88 @@ namespace Moonwell.Testing
             Expect.Equal(0, wide.Met.Count, "33 off the middle: none");
         }
 
+        /// <summary>
+        /// A unit knocked across a missile at 2,400 a second, while their pair waits as long as a walking unit could not
+        /// reach it, is met: a shot drifting at 1 a second, a pushee 70 to its side, knocked through it after 1 to 6 steps.
+        /// The wait allowed for a unit closing at 522 a second at most, and nothing ended it, so the pushee went through.
+        /// </summary>
+        public static void PushedAcross(FakeWorld world)
+        {
+            Fresh();
+            for (var wait = 1; wait <= 6; wait++)
+            {
+                var x = 200.0f + wait * 250.0f;
+                var handle = world.NewUnit(ObjectTypes.FourCC(PusheeId), 1);
+                world.MoveUnit(handle, x, 570.0f);
+                var unit = Unit.Of(handle)!;
+                var shot = new Shot();
+                shot.UnitContact = Contact.Pass;
+                ShotAt(shot, x, 500.0f, 32.0f, 1.0f, 0.0f, 0.0f);
+                Steps(world, wait);
+                unit.Knockback(270.0f, 300.0f, 0.25f);
+                Steps(world, 8);
+                Expect.True(unit.Y < 440.0f, "after " + wait + " steps, it was knocked across; at y " + unit.Y);
+                Expect.Equal(1, shot.Met.Count, "after " + wait + " steps, the shot met it");
+                shot.End();
+                unit.Kill();
+                Steps(world, 1);
+            }
+        }
+
+        /// <summary>
+        /// A ball of 16 at 900 a second passing 110 from the middle of a unit of collision size 96 grazes it, 2 inside its
+        /// side, and meets it once, though no unit wider than 64 was met before: the checks' range covered a unit's middle
+        /// only 108 away until such a unit was met, so the unit was never paired.
+        /// </summary>
+        public static void BigUnitGrazed(FakeWorld world)
+        {
+            var fake = Fresh();
+            var big = FootmanAt(world, 600.0f, 610.0f, 1);
+            fake.Sizes[big.Handle] = 96.0f;
+            var shot = new Shot();
+            shot.UnitContact = Contact.Pass;
+            ShotAt(shot, 100.0f, 500.0f, 32.0f, 900.0f, 0.0f, 0.0f);
+            Steps(world, 40);
+            Expect.True(shot.X > 1000.0f, "it flew past; at " + shot.X);
+            Expect.Equal(1, shot.Met.Count, "it met the wide unit once");
+        }
+
+        /// <summary>
+        /// A thing before a wall or the ground along a missile's move is met first, in the step that reaches both: bolts at
+        /// 3,000 a second (93.75 a step) at footmen 40 in front of a wall, from starts 7 apart, with Stop at both, end at the
+        /// footman; with Pass at the footman they meet it, then the wall. A shell coming down at 45 degrees, 50 a step, that
+        /// enters a footman's side 0.36 into a step and would meet the ground 0.48 into it, ends at the footman. The walls
+        /// and the ground were met first, ending the missile before the footman's check.
+        /// </summary>
+        public static void BeforeWallAndGround(FakeWorld world)
+        {
+            Fresh();
+            Wall.Create(600.0f, 100.0f, 600.0f, 1200.0f, Game.Instance);
+            for (var i = 0; i < 5; i++)
+            {
+                var y = 200.0f + i * 100.0f;
+                var footman = FootmanAt(world, 560.0f, y, 1);
+                var bolt = new Shot();
+                bolt.WallContact = Contact.Stop;
+                ShotAt(bolt, 105.0f + i * 7.0f, y, 32.0f, 3000.0f, 0.0f, 0.0f);
+                var passing = new Shot();
+                passing.WallContact = Contact.Stop;
+                passing.UnitContact = Contact.Pass;
+                var other = FootmanAt(world, 560.0f, y + 500.0f, 1);
+                ShotAt(passing, 105.0f + i * 7.0f, y + 500.0f, 32.0f, 3000.0f, 0.0f, 0.0f);
+                Steps(world, 10);
+                Expect.True(bolt.HasEnded && bolt.Met.Count == 1 && bolt.Met[0] == footman, "from " + (105.0f + i * 7.0f) + ", the bolt ended at the footman, before the wall; it met " + bolt.Met.Count);
+                Expect.True(passing.Met.Count == 2 && passing.Met[0] == other && passing.Met[1] is Wall, "from " + (105.0f + i * 7.0f) + ", passing, it met the footman, then the wall; it met " + passing.Met.Count);
+            }
+
+            var shell = new Shot();
+            shell.GroundContact = Contact.Stop;
+            var below = FootmanAt(world, 960.0f, 1500.0f, 1);
+            ShotAt(shell, 810.0f, 1500.0f, 140.0f, 1600.0f, 0.0f, -1600.0f);
+            Steps(world, 10);
+            Expect.True(shell.HasEnded && shell.Met.Count == 1 && shell.Met[0] == below, "the shell ended at the footman, before the ground; it met " + shell.Met.Count);
+        }
+
         /// <summary>A missile that starts at a unit's middle (24 up) meets it at its first step, once; one there with no velocity, whose normal would be zero, gets a normal of length 1 and no NaN.</summary>
         public static void Inside(FakeWorld world)
         {

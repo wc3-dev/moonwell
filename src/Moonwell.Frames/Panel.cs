@@ -62,10 +62,8 @@ namespace Moonwell
             {
                 MakeCatcher();
             }
-            else
-            {
-                FramesSystem.World.EnableFrame(catcher, enabled);
-            }
+
+            TakeMouse(enabled);
         }
 
         /// <summary>Takes an ended panel's catcher with its frame: on as Enabled says, and for an empty panel only when it is listened to.</summary>

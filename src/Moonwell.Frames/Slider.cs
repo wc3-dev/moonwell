@@ -98,7 +98,8 @@ namespace Moonwell
                 }
 
                 var kept = value < min ? min : value > max ? max : value;
-                if (handle != null)
+                // A set to the value it reads is not given to the game, where it would undo a drag on its way and come back as the player's (review G4).
+                if (handle != null && kept != this.value)
                 {
                     Expect(kept);
                     this.value = kept;
@@ -139,6 +140,13 @@ namespace Moonwell
         internal override string GameType => "SLIDER";
 
         internal override bool ForOnePlayerOnly() => true;
+
+        /// <summary>An ended slider goes only to one whose range holds its value, as the game would send back its own clamp of that value as a player's drag (review E08).</summary>
+        internal override bool Fits(Frame old)
+        {
+            var was = ((Slider)old).value;
+            return base.Fits(old) && was >= min && was <= max;
+        }
 
         /// <summary>Gives the game the range, step and value, then the points and looks.</summary>
         internal override void Place()

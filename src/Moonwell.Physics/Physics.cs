@@ -109,6 +109,8 @@ namespace Moonwell
             Pass.Reset(kept);
             hook = Pass.Run;
             Tracking.BeforeGizmos = hook;
+            Tracking.UnitTracked = Contacts.UnitTracked;
+            Tracking.EachUnit(Contacts.UnitTracked);
 #if DEBUG
             DebugViews.Add(PhysicsView.Instance);
 #endif
