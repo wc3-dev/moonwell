@@ -46,6 +46,7 @@ namespace Moonwell
             Dummies.Reset();
             HeroTable.Reset();
             DayConstants.Reset();
+            DayChange.Reset();
 #if DEBUG
             DebugSession.Reset();
             DebugViews.Reset();

@@ -30,7 +30,7 @@ namespace Moonwell
         [LocalSafe]
         public static float Time => Runtime.World.Now();
 
-        /// <summary>The time of day in hours, from 0 up to the day's 24 (or the map's own number): 6.5 is 6:30. A time set outside them wraps into them.</summary>
+        /// <summary>The time of day in hours, from 0 up to the day's 24 (or the map's own number): 6.5 is 6:30. A time set outside them wraps into them. A time set across dawn or dusk runs the game components' OnDawn or OnDusk.</summary>
         [LocalSafe]
         public static float TimeOfDay
         {
@@ -48,6 +48,7 @@ namespace Moonwell
                 }
 
                 Runtime.World.SetHourOfDay(hours);
+                DayChange.Check();
             }
         }
 

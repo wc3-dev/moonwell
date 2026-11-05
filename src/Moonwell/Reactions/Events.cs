@@ -79,6 +79,11 @@ namespace Moonwell
                 Listen(GameEvent.Order);
                 Listen(GameEvent.Spell);
             }
+
+            if ((mask & (Hook.OnDawn | Hook.OnDusk)) != 0)
+            {
+                DayChange.Start();
+            }
         }
 
         /// <summary>Whether a reaction bit has been needed.</summary>
