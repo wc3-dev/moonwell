@@ -136,6 +136,22 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "json.parents", Run = JsonCases.Parents });
             list.Add(new Case { Name = "json.kinds", Run = JsonCases.Kinds });
             list.Add(new Case { Name = "json.through-a-file", Run = JsonCases.ThroughAFile });
+            list.Add(new Case { Name = "save.round-trip", Run = SaveCases.RoundTrip });
+            list.Add(new Case { Name = "save.typing-tolerated", Run = SaveCases.TypingTolerated });
+            list.Add(new Case { Name = "save.bad-codes", Run = SaveCases.BadCodes });
+            list.Add(new Case { Name = "save.other-name", Run = SaveCases.OtherName });
+            list.Add(new Case { Name = "save.other-class", Run = SaveCases.OtherClass });
+            list.Add(new Case { Name = "save.other-key", Run = SaveCases.OtherKey });
+            list.Add(new Case { Name = "save.type-changed", Run = SaveCases.TypeChanged });
+            list.Add(new Case { Name = "save.no-plain-numbers", Run = SaveCases.NoPlainNumbers });
+            list.Add(new Case { Name = "save.ids-take-four", Run = SaveCases.IdsTakeFour });
+            list.Add(new Case { Name = "save.dashes", Run = SaveCases.Dashes });
+            list.Add(new Case { Name = "save.load-from-file", Run = SaveCases.LoadFromFile });
+            list.Add(new Case { Name = "save.load-missing", Run = SaveCases.LoadMissing });
+            list.Add(new Case { Name = "save.load-edited", Run = SaveCases.LoadEdited });
+            list.Add(new Case { Name = "save.slots", Run = SaveCases.Slots });
+            list.Add(new Case { Name = "save.bad-slot", Run = SaveCases.BadSlot });
+            list.Add(new Case { Name = "save.load-scope-ended", Run = SaveCases.LoadScopeEnded });
         }
 
         private static void AddShare(List<Case> list)
@@ -391,6 +407,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.dummy.no-order-reported", Run = DummyCases.NoOrderReported });
             list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
             list.Add(new Case { Name = "debug.realtime.now-early-reported", Run = RealTimeCases.NowEarlyReported });
+            list.Add(new Case { Name = "debug.save.too-long-reported", Run = SaveCases.TooLongReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });

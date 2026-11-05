@@ -23,7 +23,11 @@ namespace Moonwell
         {
             Slot = slot;
             Handle = handle;
+            StartName = Runtime.World.NameOf(handle);
         }
+
+        /// <summary>The player's name when the player object was made, at the start, which a save is tied to, as the map may rename the player.</summary>
+        internal string StartName { get; }
 
         /// <summary>The slot of the player.</summary>
         [LocalSafe]

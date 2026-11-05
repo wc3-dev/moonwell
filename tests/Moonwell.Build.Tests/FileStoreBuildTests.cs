@@ -105,7 +105,7 @@ namespace Moonwell.Build.Tests
             var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
 
             Assert.True(exitCode == 1, "the build should fail: " + output);
-            Assert.Contains("PlayerFile reads files back through an ability Moonwell declares, which needs the Moonwell.Objects package", error.ToString());
+            Assert.Contains("PlayerFile and saves read files back through an ability Moonwell declares, which needs the Moonwell.Objects package", error.ToString());
         }
 
         private static War3Net.Build.Object.LevelObjectModification? StoreIn(string buildFolder, string file)

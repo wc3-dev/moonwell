@@ -28,10 +28,12 @@ namespace Moonwell.Build
             Changes(),
             Array.Empty<string>());
 
-        /// <summary>Whether a map's code uses player files, PlayerFile or a scope's ReadFile, read from its built assemblies' metadata without loading them.</summary>
+        /// <summary>Whether a map's code uses player files, PlayerFile, a scope's ReadFile or saves, read from its built assemblies' metadata without loading them.</summary>
         public static bool UsedBy(string assemblyPath)
         {
-            return Declarations.ReferencesType(assemblyPath, "Moonwell", "PlayerFile") || CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsFiles);
+            return Declarations.ReferencesType(assemblyPath, "Moonwell", "PlayerFile")
+                || Declarations.ReferencesType(assemblyPath, "Moonwell", "SaveGame")
+                || CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsFiles);
         }
 
         // A call of ReadFile is a member reference whose parent is Moonwell's Scope, where it is declared.
@@ -132,7 +134,7 @@ namespace Moonwell.Build
         {
             if (UsedBy(assemblyPath))
             {
-                throw new BuildException("PlayerFile reads files back through an ability Moonwell declares, which needs the Moonwell.Objects package: add a reference to it");
+                throw new BuildException("PlayerFile and saves read files back through an ability Moonwell declares, which needs the Moonwell.Objects package: add a reference to it");
             }
         }
 

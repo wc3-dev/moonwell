@@ -36,6 +36,7 @@ namespace Moonwell
             Sharing.Reset();
             RealClock.Reset();
             ReplayGuard.Reset();
+            SaveGame.Reset();
             PlayerFile.Folder = "Map";
             KnownUnits.Reset();
             KnownItems.Reset();
@@ -128,6 +129,7 @@ namespace Moonwell
         /// <summary>Runs the register step, with every maker registered before any class's constructor runs (ObjectTypes.Registering), then adds the map's starting components to the game, in list order, and its player components to each player in the game; Start runs it as the setup.</summary>
         internal static void Install(Map map, Action register)
         {
+            SaveGame.Key = map.SaveKey;
             ObjectTypes.Registering(register);
             var components = map.StartComponents;
             for (var i = 0; i < components.Count; i++)

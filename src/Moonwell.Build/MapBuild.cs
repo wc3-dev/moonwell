@@ -118,6 +118,7 @@ namespace Moonwell.Build
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
             var installs = Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log);
             installs.AddRange(FileStore.Installs(targetPath, settings, project));
+            installs.AddRange(SaveCodecWriter.Write(targetPath, project, settings));
             EntryWriter.Write(project, settings, true, installs, Loading(targetPath));
 
             // A map whose code casts with a dummy gets the dummy's type in its object files, kept free of its own ids; one whose
@@ -158,6 +159,7 @@ namespace Moonwell.Build
             }
 
             ObjectStubs.Delete(project);
+            SaveCodecWriter.Delete(project);
 
             // The table of tree types is made from the standard destructable data, which only Moonwell.Objects carries.
             if (Declarations.References(targetPath, InteractionsAssemblyName))

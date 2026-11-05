@@ -1160,6 +1160,80 @@ the bytes for .NET's `Convert.ToBase64String`.
 The game gives a file back through an ability Moonwell adds to the map, with the id `AMWf`, so reading files needs the
 `Moonwell.Objects` package, and no object of the map may have that id.
 
+## Saves
+
+A save keeps a player's progress for a later game: a class deriving from `SaveGame`, with `[Saved(n)]` on each field to
+keep. Each field has a number of its own, so renaming and reordering fields is safe. A field an old save lacks keeps the
+value the class gives it, and a field the class no longer has is skipped. Never give a removed field's number to another.
+
+```csharp
+public sealed class RpgSave : SaveGame
+{
+    [Saved(1)] public int HeroType;
+    [Saved(2)] public int Level;
+    [Saved(3)] public List<int> Items = new();
+    [Saved(4)] public RealTime LastClaim;
+}
+
+public sealed class MyMap : Map
+{
+    public MyMap() { Name = "My RPG"; SaveKey = "a long private text, never changed"; }
+}
+```
+
+A saved field is an `int`, `float`, `bool`, `string`, an enum, a `RealTime`, a `List` or array of those, or a part: a
+class of the map's own with `[Saved]` fields of its own, such as a hero's gear. It is public, and a property has a public
+`get` and `set`. A save class and a part have a public constructor without parameters. Error MW0052 says when one
+doesn't, or when a number is used twice.
+
+`SaveGame.Save(player, save)` runs on every machine: it sets `save.Code`, a code the player can type, such as
+`X7KQ-M3PA-...`, and writes it to a file on the player's computer, in the map's save folder. `Load<RpgSave>(player, save
+=> ...)` on a scope reads the file back and hands the save to every machine a moment later, null when there is none.
+`SaveGame.FromCode<RpgSave>(player, text)` reads a code at once, null when it is no code. It reads lower case, spaces and
+missing dashes, O as 0 and I or L as 1.
+
+```csharp
+public sealed class Saving : PlayerComponent
+{
+    public void SaveHero(Hero hero)
+    {
+        var save = new RpgSave { HeroType = hero.TypeId, Level = hero.Level };
+        SaveGame.Save(Player, save, "paladin");
+        Player.Print("Your code: " + save.Code);
+    }
+
+    public void LoadHero()
+    {
+        Load<RpgSave>(Player, "paladin", save =>
+        {
+            if (save == null) return;
+            // make the hero
+        });
+    }
+}
+```
+
+Slots keep several saves apart, one file each: `"paladin"` and `"mage"` are letters, digits, `-` and `_`, and with no
+slot named a save goes in one default slot. A code holds one save and can be loaded into any slot.
+
+The map listens for `-load` itself. A chat line holds 127 characters, so after `-load ` a code has 121: about 60 bytes of
+save, which a typical RPG save fits. A code longer than that drops its dashes. A development build reports a save
+too long for a chat line; it still loads from its file.
+
+A save is tied to the player's name and to the map's `SaveKey`. The check fails for anyone else, so a code is no use to
+another player, and a changed key fails every save made before. Single player names player 1 "Local Player", so a save
+made offline does not load online. A determined cheater can read the key from the map; the check stops casual edits,
+not them. A file that fails its check loads as null and writes a line to the log, so "no file" and "changed" can be told
+apart.
+
+One save class may go without an id. Every other one has `[SaveId("settings")]`, never changed, so a code of one class
+fails for another.
+
+The build keeps a record of the saves in `moonwell-saves.txt` beside the project file: each class's numbers and types, a
+fingerprint of the key and the save folder. Commit it with the map. The build stops on a change old saves would not
+survive (a number used again after its field was removed, a field whose type changed, a new key or folder), and names
+the line to delete when the change is meant. A lost record loses only these checks.
+
 ## JSON
 
 Add the `Moonwell.Json` package (the template's `.csproj` has the line, commented) to read and write JSON, as a tree with
