@@ -1225,8 +1225,10 @@ public sealed class MyMap : Map
 
 A saved field is an `int`, `float`, `bool`, `string`, an enum, a `RealTime`, a `List` or array of those, or a part: a
 class of the map's own with `[Saved]` fields of its own, such as a hero's gear. It is public, and a property has a public
-`get` and `set`. A save class and a part have a public constructor without parameters. Error MW0052 says when one
-doesn't, or when a number is used twice.
+`get` and `set`. A save class and a part have a public constructor without parameters and no `required` member, and are
+not private, protected, file-local or generic, as the build's code names them. An override of a saved property is saved
+under its base's number. Error MW0052 says when one doesn't hold, or when a number is used twice. A library of the map's
+own may hold save classes too; they are public.
 
 `SaveGame.Save(player, save)` runs on every machine: it sets `save.Code`, a code the player can type, such as
 `X7KQ-M3PA-...`, and writes it to a file on the player's computer, in the map's save folder. `Load<RpgSave>(player, save
@@ -1272,10 +1274,11 @@ apart.
 One save class may go without an id. Every other one has `[SaveId("settings")]`, never changed, so a code of one class
 fails for another.
 
-The build keeps a record of the saves in `moonwell-saves.txt` beside the project file: each class's numbers and types, a
-fingerprint of the key and the save folder. Commit it with the map. The build stops on a change old saves would not
-survive (a number used again after its field was removed, a field whose type changed, a new key or folder), and names
-the line to delete when the change is meant. A lost record loses only these checks.
+The build keeps a record of the saves in `moonwell-saves.txt` beside the project file: each class's numbers and types (a
+part's or an enum's with its class), each save class's id, a fingerprint of the key and the save folder. Commit it with
+the map. The build stops on a change old saves would not survive (a number used again after its field was removed, a
+field whose type changed, a part or enum swapped for another, a changed id, a new key or folder), and names the line to
+delete when the change is meant. A lost record loses only these checks.
 
 ## JSON
 
