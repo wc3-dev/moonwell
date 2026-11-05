@@ -27,6 +27,15 @@ namespace Moonwell
             {
                 world.PaintFrame(handle!, Image.Blank);
             }
+            else
+            {
+                // A template's own parts are made before the catcher, which would lie over them and take their clicks.
+                var count = world.ChildCount(handle!);
+                for (var i = 0; i < count; i++)
+                {
+                    world.LevelFrame(world.ChildAt(handle!, i), 1);
+                }
+            }
 
             MakeCatcher();
             if (!Catches(enabled))

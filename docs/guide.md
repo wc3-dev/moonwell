@@ -1056,7 +1056,15 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`, with the label added by
   `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The info panel, the chat and the game's
   messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong (seen).
-- `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: the map's `.fdf` templates.
+- A window from the map's own `.fdf` comes whole: put the `.fdf` files in `assets/`, and the build lists them in a TOC
+  the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
+  of the map's, as a label with the font and size its `.fdf` gives. `window.Child<Label>("ShopTitle")` finds a part of
+  the window by its name in the `.fdf`, at any depth, as the kind asked for: the same object each time, shown to the
+  window's player, and ending with the window. It is null, and reported, before the window is added, for a name the
+  window lacks, and for a `CheckBox`, `IconButton` or `ProgressBar`, which Moonwell draws from parts of its own. A
+  window whose parts were found is not given out again when it ends, as the game cannot give back what was set on
+  them. A `SIMPLEFRAME` template is not made, as no kind is one (seen).
+- `Handle` is the game's frame, for anything Moonwell does not do yet.
 
 ## Colours and text
 

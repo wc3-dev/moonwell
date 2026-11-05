@@ -463,8 +463,9 @@ namespace Moonwell.Testing
         public static void InstallLoadsToc(FakeWorld world)
         {
             var frames = Installed();
-            Expect.Equal(1, frames.LoadedTocs.Count, "one TOC loaded");
-            Expect.Equal("MoonwellFrames.toc", frames.LoadedTocs[0], "the build's");
+            Expect.Equal(2, frames.LoadedTocs.Count, "two TOCs loaded");
+            Expect.Equal("MoonwellFrames.toc", frames.LoadedTocs[0], "the build's, with the game's templates");
+            Expect.Equal("MoonwellMap.toc", frames.LoadedTocs[1], "then the map's own .fdf files");
         }
 
         /// <summary>Checks a frame has one point: its point tied to another frame's, moved by an offset.</summary>

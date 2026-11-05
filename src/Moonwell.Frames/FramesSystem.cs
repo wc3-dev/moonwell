@@ -36,6 +36,9 @@ namespace Moonwell
         /// <summary>The TOC the build writes into the map, listing the game's template files the kinds are made from.</summary>
         internal const string TocFile = "MoonwellFrames.toc";
 
+        /// <summary>The TOC the build writes for the map's own .fdf files in its assets, loaded after the game's; a map with none has none, and loading it does nothing.</summary>
+        internal const string MapTocFile = "MoonwellMap.toc";
+
         /// <summary>Installs the package on the game, loads its TOC, which the script load allows (seen 10-15), and looks up the game's HUD on every machine. It makes no frame: a frame made while the script loads can desync (a claim in the game facts), so the roots are made at their first use, in a reaction.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install()
@@ -54,6 +57,7 @@ namespace Moonwell
             events = new FrameEvents();
             gameUis = new Dictionary<int, GameUi>();
             host.LoadToc(TocFile);
+            host.LoadToc(MapTocFile);
             hud = new HudFrames(host);
         }
 

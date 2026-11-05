@@ -26,6 +26,12 @@ namespace Moonwell.Testing
         /// <summary>The fake behind each frame handle.</summary>
         private readonly Dictionary<framehandle, FakeFrame> frames = new Dictionary<framehandle, FakeFrame>();
 
+        /// <summary>The frames a template makes under the one made from it, by name, as an .fdf gives them: a name that is a template itself makes its own.</summary>
+        public Dictionary<string, string[]> TemplateParts = new Dictionary<string, string[]>();
+
+        /// <summary>The handle of each fake, for a child asked for by index.</summary>
+        private readonly Dictionary<FakeFrame, framehandle> handles = new Dictionary<FakeFrame, framehandle>();
+
         /// <summary>The templates the game does not have, as one from an .fdf whose TOC is not loaded: making a frame from one gives null.</summary>
         public List<string> MissingTemplates = new List<string>();
 
@@ -178,8 +184,48 @@ namespace Moonwell.Testing
             var made = new framehandle();
             var fake = new FakeFrame { Type = type, Template = template, Parent = frames[parent] };
             frames[made] = fake;
+            handles[fake] = made;
             Frames.Add(fake);
+            frames[parent].Children.Add(fake);
+            MakeParts(fake, template);
             return made;
+        }
+
+        /// <summary>Makes the frames a template makes under one made from it.</summary>
+        private void MakeParts(FakeFrame under, string template)
+        {
+            if (!TemplateParts.TryGetValue(template, out var names))
+            {
+                return;
+            }
+
+            foreach (var name in names)
+            {
+                var part = new FakeFrame { Name = name, Parent = under };
+                var handle = new framehandle();
+                frames[handle] = part;
+                handles[part] = handle;
+                under.Children.Add(part);
+                MakeParts(part, name);
+            }
+        }
+
+        /// <summary>How many children a frame has.</summary>
+        public int ChildCount(framehandle frame)
+        {
+            return frames[frame].Children.Count;
+        }
+
+        /// <summary>A frame's child by index.</summary>
+        public framehandle ChildAt(framehandle frame, int index)
+        {
+            return handles[frames[frame].Children[index]];
+        }
+
+        /// <summary>A frame's name.</summary>
+        public string NameOf(framehandle frame)
+        {
+            return frames[frame].Name;
         }
 
         /// <summary>Shows or hides a frame on this machine.</summary>

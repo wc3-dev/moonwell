@@ -53,6 +53,11 @@ namespace Moonwell
         /// <summary>A GLUEBUTTON, which takes clicks and draws nothing of its own.</summary>
         internal override string GameType => "GLUEBUTTON";
 
+        internal override bool DrawnFromParts()
+        {
+            return true;
+        }
+
         /// <summary>Makes the image that draws the icon, over the whole button.</summary>
         internal override void MakeParts()
         {
