@@ -289,6 +289,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "day.jumps", Run = DayCases.DayJumps });
             list.Add(new Case { Name = "day.backward", Run = DayCases.DayBackward });
             list.Add(new Case { Name = "day.maps-own-dawn", Run = DayCases.MapsOwnDawn });
+            list.Add(new Case { Name = "day.set-in-dawn", Run = DayCases.SetInDawn });
         }
 
         /// <summary>Adds the cases for colours, coloured text and time as text.</summary>
@@ -1185,6 +1186,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "actors.remove-of-class", Run = ActorCases.RemoveOf });
             list.Add(new Case { Name = "actors.end-removes-last-first", Run = ActorCases.EndRemovesLastFirst });
             list.Add(new Case { Name = "actors.add-to-ended", Run = ActorCases.AddToEnded });
+            list.Add(new Case { Name = "actors.add-to-ending", Run = ActorCases.AddToEnding });
             list.Add(new Case { Name = "actors.component-owns-timer", Run = ActorCases.ComponentOwnsTimer });
             list.Add(new Case { Name = "actors.error-in-onadded", Run = ActorCases.ErrorInOnAdded });
             list.Add(new Case { Name = "game.start-order", Run = ActorCases.GameStartOrder });
