@@ -2,8 +2,8 @@ namespace Moonwell
 {
     /// <summary>
     /// A bar that fills from the left: its Texture drawn over the share of its width that Value is of the range from Min to
-    /// Max. The bar itself draws nothing, and its size is the map's. It is two images, not the game's status bar, which follows
-    /// no parent (seen 10-14).
+    /// Max. The bar itself draws nothing, and its size is the map's: its Width and Height, or those of the frame it covers with
+    /// Fill. It is two images, not the game's status bar, which follows no parent (seen 10-14).
     /// </summary>
     public class ProgressBar : Frame
     {
@@ -143,8 +143,10 @@ namespace Moonwell
                 return;
             }
 
+            // The game reads a frame's size only some time after it is placed (seen 11-05), so the size is the map's: the bar's own, or that of the frame it covers.
+            var size = sized || filled == null ? this : filled;
             var share = max == min ? 0.0f : (value - min) / (max - min);
-            FramesSystem.World.SizeFrame(fill, width * share, height);
+            FramesSystem.World.SizeFrame(fill, size.width * share, size.height);
         }
     }
 }

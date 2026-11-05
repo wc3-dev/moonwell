@@ -36,6 +36,9 @@ namespace Moonwell
         /// <summary>The frame it covers, all points; null when none.</summary>
         internal Frame? filled;
 
+        /// <summary>The frames tied to this one or covering it, placed again when it is made; ended ones are dropped as they are met.</summary>
+        internal List<Frame>? tiedHere;
+
         internal float width;
 
         internal float height;
@@ -345,6 +348,7 @@ namespace Moonwell
 
             var tie = new Tie(point, other, otherPoint, x, y);
             ties!.Add(tie);
+            other.TiedBy(this);
             if (handle == null)
             {
                 return;
@@ -368,11 +372,80 @@ namespace Moonwell
 
             filled = other;
             ties = null;
-            if (handle != null && other.handle != null)
+            other.TiedBy(this);
+            if (handle != null)
             {
-                FramesSystem.World.ClearFramePoints(handle);
-                FramesSystem.World.FillFrame(handle, other.handle);
+                PlacePoints();
             }
+
+            Resized();
+        }
+
+        /// <summary>Keeps a frame that ties itself to this one or covers it.</summary>
+        private void TiedBy(Frame frame)
+        {
+            tiedHere ??= new List<Frame>();
+            if (!tiedHere.Contains(frame))
+            {
+                tiedHere.Add(frame);
+            }
+        }
+
+        /// <summary>Whether the frame is tied to another or covers it.</summary>
+        private bool TiedTo(Frame other)
+        {
+            if (filled == other)
+            {
+                return true;
+            }
+
+            if (ties != null)
+            {
+                for (var i = 0; i < ties.Count; i++)
+                {
+                    if (ties[i].Other == other)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether a frame that is made and not ending, nor in an ending tree, is still tied to this one (review G6).</summary>
+        private bool HeldByLive()
+        {
+            if (tiedHere == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < tiedHere.Count; i++)
+            {
+                var frame = tiedHere[i];
+                if (frame.handle == null || !frame.TiedTo(this))
+                {
+                    continue;
+                }
+
+                var ending = false;
+                for (Scoped? scope = frame; scope != null; scope = scope.Parent)
+                {
+                    if (scope.ending || scope.HasEnded)
+                    {
+                        ending = true;
+                        break;
+                    }
+                }
+
+                if (!ending)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Adds a frame to this one and returns it: it is made under this frame, shown to this frame's player, and ends with it. Added to a frame that has ended, it ends at once and nothing is made.</summary>
@@ -692,6 +765,21 @@ namespace Moonwell
             }
 
             children.Clear();
+            if (tiedHere != null)
+            {
+                for (var i = tiedHere.Count - 1; i >= 0; i--)
+                {
+                    var frame = tiedHere[i];
+                    if (frame.HasEnded)
+                    {
+                        tiedHere.RemoveAt(i);
+                    }
+                    else if (frame.handle != null && frame.TiedTo(this))
+                    {
+                        frame.PlacePoints();
+                    }
+                }
+            }
         }
 
         /// <summary>Gives the game the frame's points: what it covers, its ties, or its Anchor.</summary>
@@ -772,19 +860,24 @@ namespace Moonwell
             return player == null || Runtime.World.IsLocal(player.Handle);
         }
 
-        /// <summary>Hides the game's frame and keeps it for the next of its kind: a frame is never destroyed, as destroying one can desync (a claim in the game facts).</summary>
+        /// <summary>Hides the game's frame and keeps it for the next of its kind: a frame is never destroyed, as destroying one can desync (a claim in the game facts). One a live frame is still tied to, once its parent has closed up, is not given out again, so the tied frame stays where it was rather than follow the next frame of the kind (review G6).</summary>
         internal override void Finish()
         {
             if (handle != null)
             {
                 FramesSystem.World.ShowFrame(handle, false);
                 FramesSystem.Events.Disown(this);
-                FramesSystem.Pool.Keep(this);
             }
 
             if (Parent is Frame holder && !holder.ending && !holder.HasEnded)
             {
                 holder.ChildEnded(this);
+            }
+
+            // shortcut: a frame kept out of the pool stays out even when the frame tied to it later moves or ends; recheck then if hidden frames pile up.
+            if (handle != null && !HeldByLive())
+            {
+                FramesSystem.Pool.Keep(this);
             }
         }
     }
