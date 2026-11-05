@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Moonwell.War3Net.Build.Core" Version="6.1.2-moonwell.4" />
+    <PackageReference Include="Moonwell.War3Net.Build.Core" Version="6.1.2-moonwell.6" />
   </ItemGroup>
 
   <ItemGroup>
