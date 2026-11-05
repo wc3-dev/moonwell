@@ -27,7 +27,7 @@ namespace Moonwell.Build
             var choices = new HashSet<string>(StringComparer.Ordinal);
             var classes = new HashSet<string>(StringComparer.Ordinal);
             var members = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
-            var sources = CompiledFiles.Sources(project.Folder, project.BuildFolder).ToList();
+            var sources = CompiledFiles.Sources(project, project.BuildFolder).ToList();
             if (sources.Count == 0)
             {
                 return new NamedInSource(choices, classes, new Dictionary<string, IReadOnlySet<string>>());
@@ -36,12 +36,11 @@ namespace Moonwell.Build
             var assembly = Path.GetFullPath(assemblyPath);
             var libraries = CompiledFiles.LibrariesBeside(assemblyPath).ToList();
 
-            // CSharp.lua compiles with MOONWELL_LUA, and a debug build with DEBUG too; the stubs serve both kinds of build, so code
-            // that only one of them has is looked at with its own symbols.
-            var symbolSets = new List<string[]> { new[] { "MOONWELL_LUA", "DEBUG" } };
-            if (sources.Any(path => File.ReadAllText(path).Contains("DEBUG", StringComparison.Ordinal)))
+            // The stubs serve both kinds of build, so code that only the other kind has is looked at with its symbols too.
+            var symbolSets = new List<string[]> { CompiledFiles.LuaSymbols(project) };
+            if (sources.Select(CompiledFiles.ReadSource).Any(text => text.Contains("DEBUG", StringComparison.Ordinal) || text.Contains("RELEASE", StringComparison.Ordinal)))
             {
-                symbolSets.Add(new[] { "MOONWELL_LUA" });
+                symbolSets.Add(CompiledFiles.OtherKind(symbolSets[0]));
             }
 
             foreach (var symbols in symbolSets)
