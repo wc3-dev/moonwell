@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Moonwell.Build
@@ -13,7 +14,10 @@ namespace Moonwell.Build
         // CS0246 names a type that binds to nothing, such as AttackType in a file with only using Moonwell.Objects.
         private static readonly Regex UnboundName = new Regex(@"error CS0246:[^\[]*\W(AttackType|DefenseType)\W", RegexOptions.CultureInvariant);
 
-        /// <summary>Builds the project, streaming dotnet's output to the log, and returns the path of the built assembly.</summary>
+        /// <summary>
+        /// Builds the project, streaming dotnet's output to the log, and returns the path of the built assembly; the project's
+        /// <see cref="MapProject.Symbols"/> and sources become the ones the compiler had.
+        /// </summary>
         /// <param name="project">The map project.</param>
         /// <param name="release">True for the Release configuration, false for Debug.</param>
         /// <param name="log">Where the output of <c>dotnet build</c> goes.</param>
@@ -33,21 +37,26 @@ namespace Moonwell.Build
                 throw new BuildException(hints.Count == 0 ? "dotnet build failed" : "dotnet build failed" + Environment.NewLine + string.Join(Environment.NewLine, hints));
             }
 
+            // AddImplicitDefineConstants adds the SDK's symbols (NET, NET10_0_OR_GREATER) to DefineConstants, as the compile does.
             var captured = new StringWriter();
-            var query = Dotnet(project, new[] { "msbuild", project.ProjectFile, "-getProperty:TargetPath", "-p:Configuration=" + configuration, "--disable-build-servers" }, captured);
-            if (query != 0)
+            var query = Dotnet(project, new[] { "msbuild", project.ProjectFile, "-t:AddImplicitDefineConstants", "-getProperty:TargetPath", "-getProperty:DefineConstants", "-getItem:Compile", "-p:Configuration=" + configuration, "--disable-build-servers" }, captured);
+            var text = captured.ToString();
+            var start = text.IndexOf('{');
+            if (query != 0 || start < 0)
             {
-                log.Write(captured.ToString());
+                log.Write(text);
                 throw new BuildException("dotnet msbuild could not find the built assembly");
             }
 
-            var lines = captured.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (lines.Length == 0)
-            {
-                throw new BuildException("dotnet msbuild could not find the built assembly");
-            }
-
-            return lines[^1];
+            using var answer = JsonDocument.Parse(text.Substring(start, text.LastIndexOf('}') - start + 1));
+            var properties = answer.RootElement.GetProperty("Properties");
+            project.Symbols = (properties.GetProperty("DefineConstants").GetString() ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            project.Sources = answer.RootElement.TryGetProperty("Items", out var items) && items.TryGetProperty("Compile", out var compile)
+                ? compile.EnumerateArray().Select(item => item.GetProperty("FullPath").GetString()!).ToList()
+                : new List<string>();
+            return properties.GetProperty("TargetPath").GetString() is { Length: > 0 } targetPath
+                ? targetPath
+                : throw new BuildException("dotnet msbuild could not find the built assembly");
         }
 
         /// <summary>

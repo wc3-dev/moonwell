@@ -16,7 +16,7 @@ namespace Moonwell.Build
         {
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols(symbols);
             var trees = sources
-                .Select(path => CSharpSyntaxTree.ParseText(File.ReadAllText(path), options, Path.GetFullPath(path)))
+                .Select(path => CSharpSyntaxTree.ParseText(CompiledFiles.ReadSource(path), options, Path.GetFullPath(path)))
                 .ToList();
             var libraries = references.Concat(FrameworkLibraries())
                 .Distinct(StringComparer.OrdinalIgnoreCase)

@@ -1,13 +1,12 @@
 using System.Reflection;
 using Moonwell.Build;
+using Moonwell.GameData;
 
 namespace Moonwell.Tool
 {
     /// <summary>The <c>moonwell</c> command: parses its arguments and runs the build.</summary>
     internal static class Cli
     {
-        private const string DefaultGame = @"C:\Program Files (x86)\Warcraft III\_retail_\x86_64\Warcraft III.exe";
-
         private const string Usage =
             "usage: moonwell build [folder] [--release]\n" +
             "       moonwell run [folder] [--release] [--game <exe>]";
@@ -76,7 +75,7 @@ namespace Moonwell.Tool
             run = false;
             folder = ".";
             release = false;
-            game = DefaultGame;
+            game = Path.Combine(GameInstall.Places()[0], "_retail_", "x86_64", "Warcraft III.exe");
             if (args.Length == 0 || (args[0] != "build" && args[0] != "run"))
             {
                 return false;
