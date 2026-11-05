@@ -26,20 +26,12 @@ namespace Moonwell.Engine
         /// <summary>Adds a line, in pieces when it is long; whether the file is to be written now.</summary>
         internal bool Add(string text, float now)
         {
-            var start = 0;
-            while (text.Length - start > PieceLength)
+            var pieces = Utf8.Pieces(text, PieceLength);
+            for (var i = 0; i < pieces.Count; i++)
             {
-                var end = start + PieceLength;
-                while (end > start && IsInsideLetter(text[end]))
-                {
-                    end--;
-                }
-
-                Keep(text.Substring(start, end - start));
-                start = end;
+                Keep(pieces[i]);
             }
 
-            Keep(text.Substring(start));
             if (now - writtenAt < Interval || !ReplayGuard.MayWrite)
             {
                 waiting = true;
@@ -69,12 +61,6 @@ namespace Moonwell.Engine
             {
                 Lines.RemoveAt(0);
             }
-        }
-
-        // In the game a string is its UTF-8 bytes, and a byte 10xxxxxx continues a letter.
-        private static bool IsInsideLetter(char c)
-        {
-            return (c & 0xC0) == 0x80;
         }
     }
 }

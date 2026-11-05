@@ -59,6 +59,27 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>A long line of letters .NET keeps in one character and the game in two bytes (°) is cut, between letters in the game.</summary>
+        public static void SplitsLettersOfTwoBytes(FakeWorld world)
+        {
+            var file = new LogFile();
+            var line = Repeat("°", 300);
+            file.Add(line, 0.0f);
+            Expect.Equal(line, Joined(file), "the pieces joined");
+        }
+
+        /// <summary>Text where no letter starts in a whole piece's length is still cut, at the piece's length.</summary>
+        public static void SplitsWithNoLetterStart(FakeWorld world)
+        {
+            var file = new LogFile();
+            var inside = "å".Length == 2 ? (char)0x80 : (char)0xDC00;
+            var line = Repeat(inside.ToString(), 600);
+            file.Add(line, 0.0f);
+            Expect.Equal(3, file.Lines.Count, "the pieces");
+            Expect.Equal(LogFile.PieceLength, file.Lines[0].Length, "the first piece, a whole piece long");
+            Expect.Equal(line, Joined(file), "the pieces joined");
+        }
+
         /// <summary>A line is written at once when the file was last written a second ago or more; within the second it waits, and is due once the second is up.</summary>
         public static void WritesAtMostOnceASecond(FakeWorld world)
         {
@@ -101,6 +122,18 @@ namespace Moonwell.Testing
             var file = new LogFile();
             Expect.Equal(false, file.Add("first", 5.0f), "not written at once");
             Expect.Equal(false, file.Due(9.0f), "never due");
+        }
+
+        private static string Joined(LogFile file)
+        {
+            var joined = "";
+            for (var i = 0; i < file.Lines.Count; i++)
+            {
+                Expect.True(file.Lines[i].Length <= LogFile.PieceLength, "piece " + i + " within a Preload call");
+                joined += file.Lines[i];
+            }
+
+            return joined;
         }
 
         private static string Repeat(string text, int count)
