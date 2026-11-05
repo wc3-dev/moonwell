@@ -213,6 +213,30 @@ namespace Moonwell.Build.Tests
             Assert.Equal("7 3", SaveBuildTests.RoundTrip(Path.Combine(project, "build", "Map", "war3map.lua"), "ObjectsLibraryCode"));
         }
 
+        [Fact]
+        public void a_default_object_a_library_reads_gets_the_types_values()
+        {
+            var copy = folders.TemporaryCopyOf("ObjectsLibraryMap");
+            File.AppendAllText(Path.Combine(copy, "Code", "Spawner.cs"), """
+
+                namespace ObjectsLibraryCode
+                {
+                    public static class Reader
+                    {
+                        public static string Life(Moonwell.Unit unit)
+                        {
+                            return unit.Default.MaxLife + " " + unit.Default.Name;
+                        }
+                    }
+                }
+                """);
+            var project = Path.Combine(copy, "Map");
+
+            Build(project);
+
+            Assert.Contains("MoonwellTypeValues = {", File.ReadAllText(Path.Combine(project, "build", "Map", "war3map.lua")));
+        }
+
         private static void Build(string project)
         {
             var output = new StringWriter();

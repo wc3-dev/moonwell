@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Microsoft.CodeAnalysis.CSharp;
 using Moonwell.GameData;
 using Moonwell.MapFiles;
 using War3Net.Build.Environment;
@@ -203,8 +204,8 @@ namespace Moonwell.Build
                 "{",
                 "    public static class PhysicsData",
                 "    {",
-                "        public static string Bridges() => \"" + Escaped(bridges) + "\";",
-                "        public static string Decks() => \"" + Escaped(decks) + "\";",
+                "        public static string Bridges() => " + SymbolDisplay.FormatLiteral(bridges, true) + ";",
+                "        public static string Decks() => " + SymbolDisplay.FormatLiteral(decks, true) + ";",
                 "    }",
                 "}",
                 string.Empty);
@@ -348,12 +349,6 @@ namespace Moonwell.Build
         private static string Number(double value)
         {
             return value.ToString("0.###", CultureInfo.InvariantCulture);
-        }
-
-        // The text as the inside of a C# string literal: its line ends escaped. The text holds no quote or backslash.
-        private static string Escaped(string text)
-        {
-            return text.Replace("\n", "\\n", StringComparison.Ordinal);
         }
 
         /// <summary>A destructable type of the map's own, declared in code or in its object files, as the bridges see it.</summary>
