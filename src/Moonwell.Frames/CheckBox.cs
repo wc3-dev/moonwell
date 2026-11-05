@@ -63,6 +63,11 @@ namespace Moonwell
 
         internal override bool ForOnePlayerOnly() => true;
 
+        internal override bool DrawnFromParts()
+        {
+            return true;
+        }
+
         /// <summary>Makes the box and its check, each filled over the button.</summary>
         internal override void MakeParts()
         {

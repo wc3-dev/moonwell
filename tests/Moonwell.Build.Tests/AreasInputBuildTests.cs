@@ -88,6 +88,7 @@ namespace Moonwell.Build.Tests
             Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
             Assert.DoesNotContain("FramesSystem", File.ReadAllText(Path.Combine(project, "build", "Input", "war3map.lua")));
             Assert.False(File.Exists(Path.Combine(project, "build", "Input", "MoonwellFrames.toc")));
+            Assert.False(File.Exists(Path.Combine(project, "build", "Input", "MoonwellMap.toc")));
         }
 
         [Fact]
@@ -98,6 +99,16 @@ namespace Moonwell.Build.Tests
             var toc = File.ReadAllBytes(Path.Combine(project, "build", "Frames", "MoonwellFrames.toc"));
             var expected = "UI\\FrameDef\\UI\\EscMenuTemplates.fdf\r\nUI\\FrameDef\\Glue\\StandardTemplates.fdf\r\nUI\\FrameDef\\Glue\\BattleNetTemplates.fdf\r\nUI\\FrameDef\\UI\\QuestDialog.fdf\r\n\r\n";
             Assert.Equal(System.Text.Encoding.ASCII.GetBytes(expected), toc);
+        }
+
+        [Fact]
+        public void map_with_fdf_files_carries_their_toc()
+        {
+            var project = fixtures.Of("Frames").Folder;
+
+            var toc = File.ReadAllBytes(Path.Combine(project, "build", "Frames", "MoonwellMap.toc"));
+            Assert.Equal(System.Text.Encoding.ASCII.GetBytes("UI\\Shop.fdf\r\n\r\n"), toc);
+            Assert.True(File.Exists(Path.Combine(project, "build", "Frames", "UI", "Shop.fdf")));
         }
 
         [Fact]

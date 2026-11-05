@@ -81,7 +81,7 @@ namespace Moonwell.Build
 
             if (Declarations.References(targetPath, FramesAssemblyName))
             {
-                StageWith(project, () => FramesToc.Write(project.StagedFolder));
+                StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder));
             }
 
             try

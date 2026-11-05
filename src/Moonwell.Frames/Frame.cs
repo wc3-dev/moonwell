@@ -71,6 +71,12 @@ namespace Moonwell
         /// <summary>The template the game's frame was made from, which the pool matches; empty until made.</summary>
         internal string madeTemplate = "";
 
+        /// <summary>The frames found in this one's template by name, each one object; null until one is found. A frame with found ones is not given out again.</summary>
+        internal Dictionary<string, Frame>? found;
+
+        /// <summary>Whether the frame was found in its window's template, not made: it is never given out on its own.</summary>
+        internal bool foundInTemplate;
+
         /// <summary>Internal, as a map's own frame inherits Panel.</summary>
         internal Frame()
         {
@@ -487,6 +493,88 @@ namespace Moonwell
             return child;
         }
 
+        /// <summary>
+        /// A frame inside this one's template, found by its name in the .fdf at any depth, as a T: a window from the map's own
+        /// .fdf comes whole, and its parts are reached this way, window.Child&lt;Label&gt;("ShopTitle"). It is the same object at
+        /// each call, is shown to this frame's player, and ends with this frame. Null, and reported, when this frame is not
+        /// added yet or has ended, has no frame of that name, or T is drawn from parts of Moonwell's own (CheckBox, IconButton,
+        /// ProgressBar). This frame is then not given out again when it ends, as the game cannot give back what was set on
+        /// its parts.
+        /// </summary>
+        public T? Child<T>(string name)
+            where T : Frame, new()
+        {
+            if (found != null && found.TryGetValue(name, out var known))
+            {
+                return known as T;
+            }
+
+            var what = Names.NameOf(this) + ".Child(\"" + name + "\")";
+            if (handle == null || HasEnded)
+            {
+                Errors.Refuse(what, "the frame is not added yet, or has ended");
+                return null;
+            }
+
+            var child = new T();
+            if (child.DrawnFromParts())
+            {
+                Errors.Refuse(what, Names.NameOf(child) + " is drawn from parts of Moonwell's own; find the template's frame as another kind");
+                return null;
+            }
+
+            var match = Find(handle, name);
+            if (match == null)
+            {
+                Errors.Refuse(what, "no frame named " + name + " in its template");
+                return null;
+            }
+
+            child.handle = match;
+            child.parentHandle = handle;
+            child.player = player;
+            child.over = over;
+            child.foundInTemplate = true;
+            Adopt(child);
+            found ??= new Dictionary<string, Frame>();
+            found[name] = child;
+            if (child.listened != 0)
+            {
+                FramesSystem.Events.Own(child);
+            }
+
+            return child;
+        }
+
+        /// <summary>The first frame of a name under a game frame, depth first, as the template made them.</summary>
+        private static framehandle? Find(framehandle frame, string name)
+        {
+            var world = FramesSystem.World;
+            var count = world.ChildCount(frame);
+            for (var i = 0; i < count; i++)
+            {
+                var child = world.ChildAt(frame, i);
+                if (world.NameOf(child) == name)
+                {
+                    return child;
+                }
+
+                var deeper = Find(child, name);
+                if (deeper != null)
+                {
+                    return deeper;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Whether the kind draws itself from parts it makes, so it cannot be found in a template.</summary>
+        internal virtual bool DrawnFromParts()
+        {
+            return false;
+        }
+
         /// <summary>Adds a handler, and listens for its kinds of event; nothing once the frame has ended.</summary>
         internal void Subscribe<T>(ref List<T>? handlers, T? handler, int kind, int other)
             where T : class
@@ -890,7 +978,7 @@ namespace Moonwell
             }
 
             // shortcut: a frame kept out of the pool stays out even when the frame tied to it later moves or ends; recheck then if hidden frames pile up.
-            if (handle != null && !HeldByLive())
+            if (handle != null && !foundInTemplate && found == null && !HeldByLive())
             {
                 FramesSystem.Pool.Keep(this);
             }

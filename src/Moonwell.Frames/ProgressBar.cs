@@ -97,6 +97,11 @@ namespace Moonwell
         /// <summary>A BACKDROP painted blank, which draws nothing and lets the mouse through.</summary>
         internal override string GameType => "BACKDROP";
 
+        internal override bool DrawnFromParts()
+        {
+            return true;
+        }
+
         /// <summary>Paints the bar blank and makes the fill, tied by its top left to the bar's.</summary>
         internal override void MakeParts()
         {

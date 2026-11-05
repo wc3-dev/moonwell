@@ -112,5 +112,14 @@ namespace Moonwell.Hosting
 
         /// <summary>Gives a frame another parent.</summary>
         void ParentFrame(framehandle frame, framehandle parent);
+
+        /// <summary>How many children a frame has: those its template gave it, and those made under it.</summary>
+        int ChildCount(framehandle frame);
+
+        /// <summary>A frame's child by its index, from 0; the first time gives it a handle id, so it is asked on every machine.</summary>
+        framehandle ChildAt(framehandle frame, int index);
+
+        /// <summary>A frame's name, as its .fdf gives it; the same on every machine.</summary>
+        string NameOf(framehandle frame);
     }
 }

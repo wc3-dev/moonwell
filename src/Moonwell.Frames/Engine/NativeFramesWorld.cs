@@ -226,6 +226,24 @@ namespace Moonwell.Engine
             Natives.BlzFrameSetParent(frame, parent);
         }
 
+        /// <summary>How many children a frame has: BlzFrameGetChildrenCount.</summary>
+        public int ChildCount(framehandle frame)
+        {
+            return Natives.BlzFrameGetChildrenCount(frame);
+        }
+
+        /// <summary>A frame's child: BlzFrameGetChild.</summary>
+        public framehandle ChildAt(framehandle frame, int index)
+        {
+            return Natives.BlzFrameGetChild(frame, index);
+        }
+
+        /// <summary>A frame's name: BlzFrameGetName.</summary>
+        public string NameOf(framehandle frame)
+        {
+            return Natives.BlzFrameGetName(frame);
+        }
+
         /// <summary>Makes a BACKDROP painted blank under the game UI over the 4:3 middle, 0.8 by 0.6, which lets clicks through, as the screen root does.</summary>
         public framehandle OverRoot()
         {

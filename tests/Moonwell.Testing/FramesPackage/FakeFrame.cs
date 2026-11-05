@@ -17,6 +17,12 @@ namespace Moonwell.Testing
         /// <summary>The frame it was made under; null for the two roots.</summary>
         public FakeFrame? Parent;
 
+        /// <summary>Its name, as a template's .fdf gives it; empty for one made by the package.</summary>
+        public string Name = "";
+
+        /// <summary>The frames made under it, its template's first, in the order made.</summary>
+        public List<FakeFrame> Children = new List<FakeFrame>();
+
         /// <summary>Whether it is shown on this machine; true until hidden.</summary>
         public bool Shown = true;
 
