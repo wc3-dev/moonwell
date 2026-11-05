@@ -52,9 +52,18 @@ namespace Moonwell.Testing
             return body;
         }
 
-        /// <summary>Plays a hit as the game does: damaging, the hits inside it, armor, damaged unless spell immunity stops it, then the life drops.</summary>
+        /// <summary>
+        /// Plays a hit as the game does: damaging, the hits inside it, armor, damaged unless spell immunity stops it, then the
+        /// life drops, and a hit that kills tells core's fake, whose death comes inside the call with the source as the killer
+        /// (seen 10-20). A dead unit gets no hit: neither event, and no life lost (seen 10-31).
+        /// </summary>
         public void Hit(unit? source, unit target, float amount, int attackType = 0, int damageType = 14, int weapon = 0, bool isAttack = false, Action? inside = null)
         {
+            if (IsDead(target))
+            {
+                return;
+            }
+
             var current = new FakeEvent { Source = source, Target = target, Amount = amount, Attack = attackType, Damage = damageType, Weapon = weapon, IsAttack = isAttack };
             events.Add(current);
             if (Listening)
@@ -79,9 +88,16 @@ namespace Moonwell.Testing
             if (!(body.Immune && stops))
             {
                 var armor = body.Armor + body.ArmorBonus;
-                if (armor > 0f)
+                // Magic (10 took 10 off a footman, seen 10-16) and sonic (Storm Bolt's 100, seen 10-01) are not cut by armor.
+                var cut = current.Damage != 14 && current.Damage != 15;
+                if (cut && armor > 0f)
                 {
                     current.Amount = current.Amount * (1f - 0.06f * armor / (1f + 0.06f * armor));
+                }
+                else if (cut && armor < 0f)
+                {
+                    // 100 at armor -20 took 171 (seen 10-20).
+                    current.Amount = current.Amount * (2f - (float)Math.Pow(0.94, -armor));
                 }
 
                 if (Listening && !withheld)
@@ -94,6 +110,7 @@ namespace Moonwell.Testing
                 {
                     body.Life = 0f;
                     body.Dead = true;
+                    world?.KillBy(target, source);
                 }
             }
 

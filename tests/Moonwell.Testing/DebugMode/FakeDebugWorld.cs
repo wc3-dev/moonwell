@@ -322,7 +322,7 @@ namespace Moonwell.Testing
             Key(slot, DebugKey.Control, 0, false);
         }
 
-        /// <summary>Moves game time forward by the seconds: the fake world's wakes, and each After callback at its time between them, in due order, those asked for on the way too.</summary>
+        /// <summary>Moves game time forward by the seconds: the fake world's wakes, and each After callback at its time between them, in due order, those asked for on the way too, from a wake as well.</summary>
         public void Advance(float seconds)
         {
             var target = world.Time + seconds;
@@ -335,6 +335,14 @@ namespace Moonwell.Testing
                     {
                         next = i;
                     }
+                }
+
+                // A wake before the next After may ask for an earlier one: run the world to that wake, then look again.
+                var until = next < 0 ? target : afterDues[next];
+                if (world.WakeAt.HasValue && world.WakeAt.Value + world.WakeLate > world.Time && world.WakeAt.Value + world.WakeLate < until)
+                {
+                    world.Advance(world.WakeAt.Value + world.WakeLate - world.Time);
+                    continue;
                 }
 
                 if (next < 0)

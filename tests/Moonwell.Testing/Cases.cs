@@ -471,6 +471,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });
             list.Add(new Case { Name = "debug.session.step-free", Run = SessionCases.StepFree });
+            list.Add(new Case { Name = "debug.fake.after-from-a-wake", Run = FakeGameCases.DebugAfterFromAWake });
             list.Add(new Case { Name = "debug.session.step-held", Run = SessionCases.StepHeld });
             list.Add(new Case { Name = "debug.session.step-dropped", Run = SessionCases.StepDropped });
             list.Add(new Case { Name = "debug.session.resume-mid-step", Run = SessionCases.ResumeMidStep });
@@ -928,6 +929,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.keys.throwing", Run = KeyCases.Throwing });
             list.Add(new Case { Name = "input.keys.press-only", Run = KeyCases.PressOnly });
             list.Add(new Case { Name = "input.keys.let-go-unseen", Run = KeyCases.LetGoUnseen });
+            list.Add(new Case { Name = "input.keys.sent-as-the-game-sends", Run = KeyCases.SentAsTheGameSends });
             list.Add(new Case { Name = "input.keys.still-held", Run = KeyCases.StillHeld });
             list.Add(new Case { Name = "input.keys.down-again", Run = KeyCases.DownAgain });
             list.Add(new Case { Name = "input.keys.repeat-after-send", Run = KeyCases.RepeatAfterSend });
@@ -1134,6 +1136,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fake.removed-unit-reads-nothing", Run = FakeGameCases.RemovedUnitReadsNothing });
             list.Add(new Case { Name = "fake.revive-gives-full-life", Run = FakeGameCases.ReviveGivesFullLife });
             list.Add(new Case { Name = "fake.given-item-leaves-its-holder", Run = FakeGameCases.GivenItemLeavesItsHolder });
+            list.Add(new Case { Name = "fake.item-given-away-in-its-drop", Run = FakeGameCases.ItemGivenAwayInItsDrop });
+            list.Add(new Case { Name = "fake.time-never-goes-back", Run = FakeGameCases.TimeNeverGoesBack });
+            list.Add(new Case { Name = "fake.removal-ends-between-wakes", Run = FakeGameCases.RemovalEndsBetweenWakes });
+            list.Add(new Case { Name = "fake.removed-unit-calls-counted", Run = FakeGameCases.RemovedUnitCallsCounted });
+            list.Add(new Case { Name = "fake.units-in-range-in-the-order-made", Run = FakeGameCases.UnitsInRangeInTheOrderMade });
+            list.Add(new Case { Name = "fake.aura-of-a-removed-holder-stops", Run = FakeGameCases.AuraOfARemovedHolderStops });
+            list.Add(new Case { Name = "fake.buff-kept-while-an-aura-reaches", Run = FakeGameCases.BuffKeptWhileAnAuraReaches });
+            list.Add(new Case { Name = "fake.new-item-is-neutral-passives", Run = FakeGameCases.NewItemIsNeutralPassives });
+            list.Add(new Case { Name = "fake.removed-item-reads-nothing", Run = FakeGameCases.RemovedItemReadsNothing });
+            list.Add(new Case { Name = "fake.spawned-unit-faces-and-is-a-hero", Run = FakeGameCases.SpawnedUnitFacesAndIsAHero });
+            list.Add(new Case { Name = "fake.mouse-buttons-past-three", Run = FakeGameCases.MouseButtonsPastThree });
+            list.Add(new Case { Name = "fake.dummy-stop-inside-effect", Run = FakeGameCases.DummyStopInsideEffect });
+            list.Add(new Case { Name = "fake.dummy-spell-taken-in-its-order", Run = FakeGameCases.DummySpellTakenInItsOrder });
+            list.Add(new Case { Name = "fake.damage-world-armor", Run = FakeGameCases.DamageWorldArmor });
+            list.Add(new Case { Name = "fake.damage-world-deaths", Run = FakeGameCases.DamageWorldDeaths });
             list.Add(new Case { Name = "collections.set-keeps-order", Run = CollectionCases.SetKeepsOrder });
             list.Add(new Case { Name = "collections.set-remove-keeps-order", Run = CollectionCases.SetRemoveKeepsOrder });
             list.Add(new Case { Name = "collections.set-snapshot", Run = CollectionCases.SetSnapshot });
