@@ -4,7 +4,7 @@ namespace Moonwell.Build.Tests
 {
     /// <summary>
     /// The game's common.j and Blizzard.j, read from the install on this computer (MOONWELL_WAR3, else the usual folder);
-    /// without one the test that needs it passes without checking anything, and says so.
+    /// without one the test that needs it is skipped.
     /// </summary>
     public sealed class GameScriptsTests : IDisposable
     {
@@ -14,11 +14,8 @@ namespace Moonwell.Build.Tests
 
         private readonly string root = Path.Combine(Path.GetTempPath(), "moonwell-game-scripts-" + Guid.NewGuid().ToString("N"));
 
-        private readonly ITestOutputHelper output;
-
-        public GameScriptsTests(ITestOutputHelper output)
+        public GameScriptsTests()
         {
-            this.output = output;
             Directory.CreateDirectory(root);
         }
 
@@ -27,15 +24,10 @@ namespace Moonwell.Build.Tests
             Directory.Delete(root, true);
         }
 
-        [Fact]
+        [InstallFact]
         public void reads_both_from_the_install_into_a_folder_named_for_its_build()
         {
-            var install = GameInstall.Find();
-            if (install == null)
-            {
-                output.WriteLine("No Warcraft III install here: nothing checked.");
-                return;
-            }
+            var install = GameInstall.Find()!;
 
             var scripts = GameScripts.Find(null, root);
 
