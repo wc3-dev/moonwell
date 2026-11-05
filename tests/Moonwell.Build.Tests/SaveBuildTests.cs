@@ -187,7 +187,7 @@ namespace Moonwell.Build.Tests
             Assert.Equal(0, builds.Development.ExitCode);
             Assert.False(File.Exists(Path.Combine(builds.Development.BuildFolder, "generated", SaveCodecWriter.FileName)));
             Assert.DoesNotContain("SaveData", File.ReadAllText(Path.Combine(builds.Development.BuildFolder, "generated", "MapMain.g.cs")));
-            Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName(builds.Development.BuildFolder)!, SaveRecord.FileName)));
+            Assert.False(File.Exists(Path.Combine(builds.Folder, SaveRecord.FileName)));
         }
 
         private string WithSaves(string key, string saves = Saves)

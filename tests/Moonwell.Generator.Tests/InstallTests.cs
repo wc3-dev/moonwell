@@ -1,23 +1,18 @@
 using Moonwell.GameData;
-using Xunit.Abstractions;
 
 namespace Moonwell.Generator.Tests;
 
 /// <summary>
 /// Reads the Warcraft III install on this computer (MOONWELL_WAR3, else the usual folder); without one the tests that
-/// need it pass without checking anything, and say so.
+/// need it are skipped.
 /// </summary>
 public sealed class InstallTests : IClassFixture<InstallTests.Install>
 {
     private readonly Install _install;
 
-    public InstallTests(Install install, ITestOutputHelper output)
+    public InstallTests(Install install)
     {
         _install = install;
-        if (install.Files == null)
-        {
-            output.WriteLine(install.Reason);
-        }
     }
 
     [Theory]
@@ -47,13 +42,10 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
         Assert.Equal("enUS", tables.Locale);
     }
 
-    [Fact]
+    [InstallFact]
     public void the_install_has_the_tables_an_export_has()
     {
-        if (_install.Files is not { } files)
-        {
-            return;
-        }
+        var files = _install.Files!;
 
         using var tables = GameTables.OpenInstall(files);
 
@@ -69,38 +61,30 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
         Assert.Equal(files.Build.Locale, tables.Locale);
     }
 
-    [Fact]
+    [InstallFact]
     public void a_locale_whose_files_are_not_installed_is_an_error_that_names_it()
     {
-        if (_install.Files is not { } files || files.Build.Locale == "deDE")
-        {
-            return;
-        }
+        var files = _install.Files!;
+        var other = files.Build.Locale == "deDE" ? "frFR" : "deDE";
 
-        var error = Assert.Throws<FileNotFoundException>(() => GameTables.OpenInstall(files, "deDE"));
+        var error = Assert.Throws<FileNotFoundException>(() => GameTables.OpenInstall(files, other));
 
-        Assert.Contains("deDE", error.Message);
+        Assert.Contains(other, error.Message);
     }
 
-    [Fact]
+    [InstallFact]
     public void the_install_names_its_build()
     {
-        if (_install.Files is not { } files)
-        {
-            return;
-        }
+        var files = _install.Files!;
 
         Assert.Equal(GameInstall.Build(_install.Folder!), files.Build);
         Assert.Matches(@"^\d+\.\d+\.\d+\.\d+$", files.Build.Version);
     }
 
-    [Fact]
+    [InstallFact]
     public void a_unit_icon_and_model_are_found_as_the_game_stores_them()
     {
-        if (_install.Files is not { } files)
-        {
-            return;
-        }
+        var files = _install.Files!;
 
         Assert.EndsWith(".dds", files.Find(@"ReplaceableTextures\CommandButtons\BTNPeasant.blp"), StringComparison.OrdinalIgnoreCase);
         Assert.EndsWith(".mdx", files.Find(@"units\human\Peasant\Peasant"), StringComparison.OrdinalIgnoreCase);
@@ -139,13 +123,10 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
         Assert.Equal("MDLX"u8.ToArray(), model[..4]);
     }
 
-    [Fact]
+    [InstallFact]
     public void the_icons_and_models_can_be_listed()
     {
-        if (_install.Files is not { } files)
-        {
-            return;
-        }
+        var files = _install.Files!;
 
         var icons = files.List("ReplaceableTextures/CommandButtons/", "sd", ".dds", ".blp");
         Assert.True(icons.Count > 1000, $"{icons.Count} icons");
@@ -161,20 +142,15 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
         public Install()
         {
             Folder = GameInstall.Find();
-            if (Folder == null)
+            if (Folder != null)
             {
-                Reason = $"No Warcraft III install in {string.Join(", ", GameInstall.Places())}; set {GameInstall.Variable} to run these tests";
-                return;
+                Files = GameFiles.Open(Folder);
             }
-
-            Files = GameFiles.Open(Folder);
         }
 
         public string? Folder { get; }
 
         public GameFiles? Files { get; }
-
-        public string? Reason { get; }
 
         public void Dispose()
         {

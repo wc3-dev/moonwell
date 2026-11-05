@@ -84,12 +84,14 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void a_build_writes_no_ids_json()
+        public void a_build_writes_no_file_beside_the_project()
         {
-            // The Sample's copy, built both ways.
+            // The Sample's copy, built both ways, holds only the Sample's own files.
             Assert.Equal(0, builds.Development.ExitCode);
             Assert.Equal(0, builds.Release.ExitCode);
-            Assert.False(File.Exists(Path.Combine(builds.Folder, "ids.json")));
+            Assert.Equal(
+                Directory.GetFiles(TestFolders.Fixture("Sample")).Select(file => Path.GetFileName(file)).Order(),
+                Directory.GetFiles(builds.Folder).Select(file => Path.GetFileName(file)).Order());
         }
 
         // DataSet: 0 Default, 1 Custom, 2 Melee. DataVersion: 0 ReignOfChaos, 1 FrozenThrone, 2 ForsakenKingdom.
@@ -309,7 +311,6 @@ namespace Moonwell.Build.Tests
         {
             var copy = folders.TemporaryCopyOfSample();
             File.Delete(Path.Combine(copy, "Objects.cs"));
-            File.Delete(Path.Combine(copy, "ids.json"));
             var project = Path.Combine(copy, "Sample.csproj");
             var text = File.ReadAllText(project);
             var without = Regex.Replace(text, @"[ \t]*<ProjectReference [^>]*Moonwell\.Objects\.csproj"" />\r?\n", string.Empty);
@@ -331,7 +332,6 @@ namespace Moonwell.Build.Tests
 
             Assert.True(File.Exists(archive), log.ToString());
             Assert.DoesNotContain("warning", log.ToString());
-            Assert.False(File.Exists(Path.Combine(copy, "ids.json")));
             Assert.False(File.Exists(Path.Combine(copy, "build", "generated", "ObjectRegistry.g.cs")));
             Assert.False(File.Exists(Path.Combine(copy, "build", "generated", "ObjectStubs.g.cs")));
             foreach (var name in new[] { "war3map.w3u", "war3mapSkin.w3u" })
@@ -348,7 +348,6 @@ namespace Moonwell.Build.Tests
             // The build reads no declarations of a map without Moonwell.Objects, but the game has no setter of a unit's level.
             var copy = folders.TemporaryCopyOfSample();
             File.Delete(Path.Combine(copy, "Objects.cs"));
-            File.Delete(Path.Combine(copy, "ids.json"));
             var project = Path.Combine(copy, "Sample.csproj");
             File.WriteAllText(project, Regex.Replace(File.ReadAllText(project), @"[ \t]*<ProjectReference [^>]*Moonwell\.Objects\.csproj"" />\r?\n", string.Empty));
             // MW0015 reports the same set while compiling; the pragma leaves it to the build's own check.
@@ -901,7 +900,6 @@ namespace Moonwell.Build.Tests
         {
             var copy = folders.TemporaryCopyOfSample();
             File.Delete(Path.Combine(copy, "Objects.cs"));
-            File.Delete(Path.Combine(copy, "ids.json"));
             var project = Path.Combine(copy, "Sample.csproj");
             var text = File.ReadAllText(project);
             File.WriteAllText(project, Regex.Replace(text, @"[ 	]*<ProjectReference [^>]*Moonwell\.Objects\.csproj"" />
@@ -918,7 +916,6 @@ namespace Moonwell.Build.Tests
 
             Assert.True(File.Exists(archive), log.ToString());
             Assert.True(File.Exists(Path.Combine(output, "Moonwell.Objects.dll")));
-            Assert.False(File.Exists(Path.Combine(copy, "ids.json")));
             Assert.DoesNotContain("MoonwellObjectValues = {", File.ReadAllText(Path.Combine(copy, "build", "Sample", "war3map.lua")));
         }
 

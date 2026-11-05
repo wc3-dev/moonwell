@@ -49,6 +49,7 @@ namespace Moonwell.Testing
             fake.Hit(other.Handle, target.Handle, 1f, damageType: 4);
             Expect.Equal(8, taken, "eight hits in the chain");
             Expect.Equal(1, world.Logged.Count, "one error is reported");
+            Expect.True(world.Logged[0].Contains("a chain of 8"), "the report: " + world.Logged[0]);
             Expect.Near(192f, fake.Body(target.Handle).Life + fake.Body(other.Handle).Life, "the eight hits took 1 each and the ninth nothing");
         }
 
@@ -143,6 +144,7 @@ namespace Moonwell.Testing
             fake.Hit(other.Handle, target.Handle, 1f, damageType: 4);
             Expect.Equal(8, taken, "eight hits in the chain");
             Expect.Equal(1, world.Logged.Count, "one error is reported");
+            Expect.True(world.Logged[0].Contains("a chain of 8"), "the report: " + world.Logged[0]);
         }
 
         /// <summary>Hitting back from core's OnDamaged counts too: with the package, the chain stops at 8.</summary>
@@ -157,6 +159,7 @@ namespace Moonwell.Testing
             fake.Hit(first.Handle, second.Handle, 1f, damageType: 4);
             Expect.Equal(8, CoreHitback.Count, "eight hits in the chain");
             Expect.Equal(1, world.Logged.Count, "one error is reported");
+            Expect.True(world.Logged[0].Contains("a chain of 8"), "the report: " + world.Logged[0]);
         }
 
         /// <summary>The same with OnHurt, across 0 s timers: the chain still stops at 8.</summary>
@@ -185,6 +188,7 @@ namespace Moonwell.Testing
 
             Expect.Equal(8, hurt, "eight hits landed");
             Expect.Equal(1, world.Logged.Count, "one error is reported");
+            Expect.True(world.Logged[0].Contains("a chain of 8"), "the report: " + world.Logged[0]);
         }
     }
 

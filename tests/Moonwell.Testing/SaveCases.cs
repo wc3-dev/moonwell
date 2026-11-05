@@ -237,6 +237,7 @@ namespace Moonwell.Testing
             Expect.True(ran, "null");
 #if DEBUG
             Expect.Equal(2, world.Logged.Count, "both reported");
+            Expect.True(world.Logged[0].Contains("\"a.b\" is no slot") && world.Logged[1].Contains("\"a/b\" is no slot"), "the reports: " + world.Logged[0] + " | " + world.Logged[1]);
 #endif
         }
 
@@ -286,6 +287,7 @@ namespace Moonwell.Testing
                 }
 
                 writer.IntList(19, kinds);
+                writer.String(20, save.Nothing);
             }, (save, reader) =>
             {
                 while (reader.Next())
@@ -324,6 +326,7 @@ namespace Moonwell.Testing
                             }
 
                             break;
+                        case 20: save.Nothing = reader.String(save.Nothing); break;
                         default: reader.Skip(); break;
                     }
                 }
@@ -440,7 +443,8 @@ namespace Moonwell.Testing
             Expect.Equal(want.Floats.Count, got.Floats.Count, "Floats");
             for (var i = 0; i < want.Floats.Count; i++)
             {
-                Expect.True(want.Floats[i] == got.Floats[i], "Floats " + i);
+                // 1 / x tells -0 from 0.
+                Expect.True(want.Floats[i] == got.Floats[i] && 1f / want.Floats[i] == 1f / got.Floats[i], "Floats " + i + ": " + got.Floats[i]);
             }
 
             Expect.True(want.Flags.Count == got.Flags.Count && want.Flags[0] == got.Flags[0] && want.Flags[1] == got.Flags[1], "Flags");
