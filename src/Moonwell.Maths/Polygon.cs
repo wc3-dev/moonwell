@@ -107,7 +107,7 @@ namespace Moonwell
         [LocalSafe]
         public bool Contains(float x, float y)
         {
-            if (x < Bounds.Min.X || x > Bounds.Max.X || y < Bounds.Min.Y || y > Bounds.Max.Y)
+            if (x < Bounds.Min.X - OnEdge || x > Bounds.Max.X + OnEdge || y < Bounds.Min.Y - OnEdge || y > Bounds.Max.Y + OnEdge)
             {
                 return false;
             }

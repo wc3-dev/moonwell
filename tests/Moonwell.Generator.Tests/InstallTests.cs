@@ -100,6 +100,12 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
             "War3.w3mod:ReplaceableTextures",
             files.Find(@"ReplaceableTextures\CommandButtons\BTNPeasant.blp", "sd"),
             StringComparison.OrdinalIgnoreCase);
+
+        // A tier's file under the fallback extension comes before a later tier's under the one written: Classic stores
+        // this icon as .blp, the Definitive Edition as .dds.
+        Assert.Equal(
+            "War3.w3mod:_DE.w3mod:ReplaceableTextures/CommandButtons/BTNWitheringFire.dds",
+            files.Find(@"ReplaceableTextures\CommandButtons\BTNWitheringFire.blp", "de"));
         Assert.Contains(
             files.List("ReplaceableTextures/CommandButtons/", "de", ".dds", ".blp"),
             icon => icon.Contains("BTNPriestV1", StringComparison.OrdinalIgnoreCase));

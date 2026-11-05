@@ -52,6 +52,17 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>A float of -0 is written -0.0, so it reads back as the float -0, and is written so again; written -0, it read back as the int 0, its sign lost. The text -0 is still the int 0, as a whole number.</summary>
+        public static void NegativeZero(FakeWorld world)
+        {
+            var written = JsonValue.Create(-0.0f).ToJsonString();
+            Expect.Equal("-0.0", written, "written");
+            Expect.True(!IsInt(written), "read back as a float");
+            Expect.Equal("-0.0", JsonNode.Parse(written)!.ToJsonString(), "with its sign");
+            Expect.Equal("0", JsonValue.Create(0.0f).ToJsonString(), "0 is written 0");
+            Expect.True(IsInt("-0"), "the text -0 is the int 0");
+        }
+
         /// <summary>A string's escapes and its letters outside ASCII read back as the letters they stand for.</summary>
         public static void Escapes(FakeWorld world)
         {

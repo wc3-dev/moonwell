@@ -554,6 +554,70 @@ namespace Moonwell.Testing
         }
 
         /// <summary>
+        /// Fast knockbacks, from starts a little apart, do not step over what lies between two checks of the ground on a
+        /// deck's way: across a deck east at 75 a step, toward a second deck 32 past its rail over low ground, each stops at
+        /// the rail (it jumped the gap onto the second deck); north off a ramp's end at 37.5 and 75 a step, toward an
+        /// unwalkable row of cells just past it, and north from the bank onto a ramp over such a row just before it, each
+        /// stops short of the row with OnSlammed (it went through, its middle on the row). Only the end of the look-ahead
+        /// point's move was checked on a deck, leaving it, and coming onto it.
+        /// </summary>
+        public static void PushNoTunnel(FakeWorld world)
+        {
+            FakeTerrainWorld terrain;
+            var fake = Fresh(0.0f, false, out terrain);
+            Bridge(world, fake, FixedId, 512.0f, 512.0f);
+            Bridge(world, fake, TurningId, 640.0f, 512.0f);
+            Physics.Install(FixedId + " 0 500 500 270 1 0 0\n" + TurningId + " 0 628 500 270 1 1 0", Shape);
+            float height;
+            Expect.True(Decks.Under(620.0f, 512.0f, out height) && !Decks.Under(576.0f, 512.0f, out height), "the second deck is east of the first, 32 past its rail");
+            for (var i = 0; i < 15; i++)
+            {
+                var unit = PusheeAt(world, 500.0f + i * 3.0f, 420.0f + i * 12.0f);
+                unit.Knockback(0.0f, 600.0f, 0.5f);
+                Steps(world, 24);
+                Expect.True(unit.X + 16.0f <= 560.01f, "across the deck, it stopped at its rail; at x " + unit.X + " from " + (500.0f + i * 3.0f));
+                Expect.True(unit.Slams.Count >= 1, "OnSlammed ran, from " + (500.0f + i * 3.0f));
+                unit.Kill();
+                Steps(world, 1);
+            }
+        }
+
+        /// <summary>The ramps' case of PushNoTunnel: off the north end of a ramp (y 688) toward a row of cells at y 704 to 736, and from the bank onto the south end (y 336) over a row of cells at y 320 to 352, the deck over its north half.</summary>
+        public static void PushNoTunnelRamp(FakeWorld world)
+        {
+            FakeTerrainWorld terrain;
+            var fake = Fresh(0.0f, false, out terrain);
+            Bridge(world, fake, FixedId, 512.0f, 512.0f);
+            Physics.Install(FixedId + " 0 500 500 270 1 0 0", Ramps);
+            for (var x = 16.0f; x < 2048.0f; x += 32.0f)
+            {
+                terrain.Block(x, 720.0f, FakeTerrainWorld.NoWalk);
+                terrain.Block(x, 320.0f, FakeTerrainWorld.NoWalk);
+            }
+
+            var speeds = new float[] { 300.0f, 600.0f };
+            for (var k = 0; k < speeds.Length; k++)
+            {
+                for (var i = 0; i < 15; i++)
+                {
+                    var off = PusheeAt(world, 512.0f, 600.0f + i * 2.5f);
+                    off.Knockback(90.0f, speeds[k], 0.5f);
+                    Steps(world, 24);
+                    Expect.True(off.Y + 16.0f < 704.0f, "off the ramp at " + speeds[k] + ", it stopped short of the row; at y " + off.Y + " from " + (600.0f + i * 2.5f));
+                    Expect.True(off.Slams.Count >= 1, "OnSlammed ran off the ramp, from " + (600.0f + i * 2.5f));
+                    off.Kill();
+                    var onto = PusheeAt(world, 512.0f, 200.0f + i * 2.5f);
+                    onto.Knockback(90.0f, speeds[k], 0.5f);
+                    Steps(world, 24);
+                    Expect.True(onto.Y + 16.0f < 320.0f, "onto the ramp at " + speeds[k] + ", it stopped short of the row; at y " + onto.Y + " from " + (200.0f + i * 2.5f));
+                    Expect.True(onto.Slams.Count >= 1, "OnSlammed ran onto the ramp, from " + (200.0f + i * 2.5f));
+                    onto.Kill();
+                    Steps(world, 1);
+                }
+            }
+        }
+
+        /// <summary>
         /// A ball falling at a slant onto a deck over sloped terrain bounces off the deck's slope, not the terrain's beneath
         /// it: the terrain rises north 20 a tile (its normal leans 0.154 south), the deck's south half rises 10 a cell (its
         /// normal leans 0.298 south) and its north half falls so (0.298 north). The first ball meets the deck where it was

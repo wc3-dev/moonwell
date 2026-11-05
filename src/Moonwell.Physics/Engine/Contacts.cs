@@ -47,10 +47,10 @@ namespace Moonwell.Engine
         /// <summary>How far beyond its radius from a wall a ball is still taken to be at it, so one sliding along it, which float rounding may carry just out and back in, does not meet it again.</summary>
         private const float Skin = 1.0f;
 
-        /// <summary>The largest radius of a unit taken before a larger one is met.</summary>
+        /// <summary>The least radius of a unit the unit checks' range covers.</summary>
         private const float FirstUnit = 64.0f;
 
-        /// <summary>The fastest a unit walks, in game units a second: what a unit may add to the speed a missile closes on it at.</summary>
+        /// <summary>The fastest a unit walks, in game units a second: what a unit may add to the speed a missile closes on it at, with the fastest push (Pushes.fastest).</summary>
         private const float Walk = 522.0f;
 
         /// <summary>The bit of OnStruck in a class's mask.</summary>
@@ -80,7 +80,7 @@ namespace Moonwell.Engine
         /// <summary>How many steps after a pair last touched a ball coming back onto the thing's top counts as settling on it.</summary>
         private const int Recent = 4;
 
-        /// <summary>The largest radius of a unit met so far, at least FirstUnit; the unit checks' range covers it.</summary>
+        /// <summary>The largest radius of a unit tracked or met since the install, at least FirstUnit; the unit checks' range covers it, so a unit wider than the range would be without it is met by a ball that grazes it.</summary>
         private static float largestUnit;
 
         /// <summary>The largest radius of a destructable met so far, at least the default's.</summary>
@@ -299,6 +299,16 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>A unit is tracked: its radius raises the largest unit's if larger.</summary>
+        internal static void UnitTracked(Unit unit)
+        {
+            var radius = Shapes.UnitRadius(unit);
+            if (radius > largestUnit)
+            {
+                largestUnit = radius;
+            }
+        }
+
         /// <summary>A unit has met a missile's checks: its radius, kept for the pair, raises the largest unit's if larger.</summary>
         internal static Touch MetUnit(Unit unit)
         {
@@ -355,7 +365,7 @@ namespace Moonwell.Engine
             touch.step = now;
             touch.x = x;
             touch.y = y;
-            return Check(missile, touch, ImpactKind.Unit, unit, unit, x, y, vx, vy, Walk, missile.unitContact, out wait);
+            return Check(missile, touch, ImpactKind.Unit, unit, unit, x, y, vx, vy, Walk + Pushes.fastest, missile.unitContact, out wait);
         }
 
         /// <summary>A check of a missile and a destructable at its place. What the pair does next; the seconds to wait for Later.</summary>
@@ -1296,7 +1306,7 @@ namespace Moonwell.Engine
         }
 
         /// <summary>Ends the waits of the pairs of a missile's checks of a kind; nothing when they have not started.</summary>
-        private static void Unwait<TOther>(Interaction? checks)
+        internal static void Unwait<TOther>(Interaction? checks)
             where TOther : Actor
         {
             if (checks == null)
@@ -1752,6 +1762,21 @@ namespace Moonwell.Engine
                     break;
                 }
 
+                var entry = missile.entry!;
+                var cut = FirstThing(missile, missile.lastX, missile.lastY, missile.lastZ, entry.X, entry.Y, missile.z, bestInside ? 0.0f : bestT);
+                if (cut < Always)
+                {
+                    // A thing before the wall along the move: the ball stops inside it, for its checks to meet it first.
+                    var cx = missile.lastX + cut * (entry.X - missile.lastX);
+                    var cy = missile.lastY + cut * (entry.Y - missile.lastY);
+                    var cz = missile.lastZ + cut * (missile.z - missile.lastZ);
+                    Interactions.Grid.Move(entry, cx, cy);
+                    missile.z = cz;
+                    Placed(missile, cx, cy, cz);
+                    Flight.Place(missile, Physics.World, cx, cy, cz);
+                    break;
+                }
+
                 var met = Raw.At(list, best);
                 var kept = TouchOf(missile, met);
                 if (kept == null)
@@ -1788,6 +1813,99 @@ namespace Moonwell.Engine
             if (footed && !Ended(missile))
             {
                 Held(missile);
+            }
+        }
+
+        /// <summary>
+        /// Where along a move from (ax, ay, az) to (bx, by, bz), as a share of it, a missile's ball is inside the thing it
+        /// enters first before a share of the move, of those its unit, destructable and item checks hold a pair with that
+        /// ticks and has not passed or been refused: halfway from where it enters to where it leaves, or to that share.
+        /// Always when it enters none before it. The ground or a wall met at that share is met after the thing, as the
+        /// ball stops there and the thing's checks meet it.
+        /// </summary>
+        internal static float FirstThing(Missile missile, float ax, float ay, float az, float bx, float by, float bz, float before)
+        {
+            var first = before;
+            var cut = Always;
+            if (missile.unitContact != Contact.None)
+            {
+                FirstOf<Unit>(missile, missile.unitChecks, ax, ay, az, bx, by, bz, before, ref first, ref cut);
+            }
+
+            if (missile.destructableContact != Contact.None)
+            {
+                FirstOf<Destructable>(missile, missile.destructableChecks, ax, ay, az, bx, by, bz, before, ref first, ref cut);
+            }
+
+            if (missile.itemContact != Contact.None)
+            {
+                FirstOf<Item>(missile, missile.itemChecks, ax, ay, az, bx, by, bz, before, ref first, ref cut);
+            }
+
+            return cut;
+        }
+
+        /// <summary>FirstThing for the pairs of one kind's checks: a thing entered before first lowers it, and sets cut, short of before.</summary>
+        private static void FirstOf<TOther>(Missile missile, Interaction? checks, float ax, float ay, float az, float bx, float by, float bz, float before, ref float first, ref float cut)
+            where TOther : Actor
+        {
+            if (checks == null)
+            {
+                return;
+            }
+
+            var radius = missile.radius;
+            var dx = bx - ax;
+            var dy = by - ay;
+            var dz = bz - az;
+            var flat = dx * dx + dy * dy;
+            var pairs = checks.pairs;
+            var count = pairs.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var pair = Pairing.As<Missile, TOther>(Raw.At(pairs, i));
+                var touch = (Touch?)pair.Data;
+                if (touch == null || touch.passed || touch.held || !pair.Ready || flat <= 0.0f)
+                {
+                    continue;
+                }
+
+                // The round part, as Check sweeps it, then the heights.
+                var cx = pair.OtherX;
+                var cy = pair.OtherY;
+                var px = ax - cx;
+                var py = ay - cy;
+                var reach = radius + touch.radius;
+                var half = px * dx + py * dy;
+                var square = half * half - flat * (px * px + py * py - reach * reach);
+                if (square < 0.0f)
+                {
+                    continue;
+                }
+
+                var root = Trig.Sqrt(square);
+                var enter = (-half - root) / flat;
+                var exit = (-half + root) / flat;
+                var unit = pair.Other as Unit;
+                var bottom = Ground.Height(cx, cy) + (unit != null ? unit.FlyHeight : 0.0f) - radius;
+                var top = bottom + (unit != null ? Shapes.UnitHeight(unit) : touch.height) + radius * 2.0f;
+                if (dz != 0.0f)
+                {
+                    var z0 = (bottom - az) / dz;
+                    var z1 = (top - az) / dz;
+                    enter = z0 < z1 ? (enter > z0 ? enter : z0) : (enter > z1 ? enter : z1);
+                    exit = z0 < z1 ? (exit < z1 ? exit : z1) : (exit < z0 ? exit : z0);
+                }
+                else if (az < bottom || az > top)
+                {
+                    continue;
+                }
+
+                if (enter >= 0.0f && enter < first && enter <= exit)
+                {
+                    first = enter;
+                    cut = (enter + (exit < before ? exit : before)) * 0.5f;
+                }
             }
         }
 

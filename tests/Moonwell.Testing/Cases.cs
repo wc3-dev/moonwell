@@ -131,6 +131,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "json.write", Run = JsonCases.Write });
             list.Add(new Case { Name = "json.parse-back", Run = JsonCases.ParseBack });
             list.Add(new Case { Name = "json.numbers", Run = JsonCases.Numbers });
+            list.Add(new Case { Name = "json.negative-zero", Run = JsonCases.NegativeZero });
             list.Add(new Case { Name = "json.escapes", Run = JsonCases.Escapes });
             list.Add(new Case { Name = "json.order", Run = JsonCases.Order });
             list.Add(new Case { Name = "json.bad", Run = JsonCases.Bad });
@@ -288,6 +289,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "day.jumps", Run = DayCases.DayJumps });
             list.Add(new Case { Name = "day.backward", Run = DayCases.DayBackward });
             list.Add(new Case { Name = "day.maps-own-dawn", Run = DayCases.MapsOwnDawn });
+            list.Add(new Case { Name = "day.set-in-dawn", Run = DayCases.SetInDawn });
         }
 
         /// <summary>Adds the cases for colours, coloured text and time as text.</summary>
@@ -712,6 +714,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "push.slide-along-x", Run = PushCases.SlideAlongX });
             list.Add(new Case { Name = "push.reentrant", Run = PushCases.Reentrant });
             list.Add(new Case { Name = "push.hover", Run = PushCases.Hover });
+            list.Add(new Case { Name = "push.missile-made-in-slam", Run = PushCases.MissileMadeInSlam });
             list.Add(new Case { Name = "push.grounded-names", Run = PushCases.GroundedNames });
             list.Add(new Case { Name = "push.thrown-step", Run = PushCases.ThrownStep });
             list.Add(new Case { Name = "contact.stop", Run = ContactCases.Stop });
@@ -720,6 +723,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "contact.bounce", Run = ContactCases.Bounce });
             list.Add(new Case { Name = "contact.pass", Run = ContactCases.Pass });
             list.Add(new Case { Name = "contact.fast", Run = ContactCases.Fast });
+            list.Add(new Case { Name = "contact.pushed-across", Run = ContactCases.PushedAcross });
+            list.Add(new Case { Name = "contact.big-unit-grazed", Run = ContactCases.BigUnitGrazed });
+            list.Add(new Case { Name = "contact.before-wall-and-ground", Run = ContactCases.BeforeWallAndGround });
             list.Add(new Case { Name = "contact.inside", Run = ContactCases.Inside });
             list.Add(new Case { Name = "contact.top", Run = ContactCases.Top });
             list.Add(new Case { Name = "contact.resting", Run = ContactCases.Resting });
@@ -770,6 +776,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "deck.push-rail", Run = DeckCases.PushRail });
             list.Add(new Case { Name = "deck.push-rail-body", Run = DeckCases.PushRailBody });
             list.Add(new Case { Name = "deck.push-ramp", Run = DeckCases.PushRamp });
+            list.Add(new Case { Name = "deck.push-no-tunnel", Run = DeckCases.PushNoTunnel });
+            list.Add(new Case { Name = "deck.push-no-tunnel-ramp", Run = DeckCases.PushNoTunnelRamp });
             list.Add(new Case { Name = "deck.dies", Run = DeckCases.Dies });
             list.Add(new Case { Name = "deck.restored", Run = DeckCases.Restored });
             list.Add(new Case { Name = "deck.not-a-cylinder", Run = DeckCases.NotACylinder });
@@ -1029,6 +1037,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.shapes.polygon-far", Run = FarPolygonCases.AreaAndCenter });
             list.Add(new Case { Name = "terrain.raycast.past-the-edge", Run = GroundClipCases.PastTheEdge });
             list.Add(new Case { Name = "terrain.raycast.long-ray-clipped", Run = GroundClipCases.LongRayClipped });
+            list.Add(new Case { Name = "terrain.raycast.flat-under-start", Run = GroundClipCases.FlatUnderStart });
             list.Add(new Case { Name = "terrain.pathing.every-cell", Run = PackedPathingCases.EveryCell });
             list.Add(new Case { Name = "terrain.pathing.full-grid-memory", Run = PackedPathingCases.FullGridMemory });
             list.Add(new Case { Name = "maths.actors.face-own-place", Run = FaceOwnPlaceCases.KeepsFacing });
@@ -1105,6 +1114,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.actors.effect-position", Run = ActorMathsCases.EffectPosition });
             list.Add(new Case { Name = "maths.actors.destructable", Run = ActorMathsCases.DestructableDistances });
             list.Add(new Case { Name = "maths.polygon.contains-floats", Run = ShapeCases.PolygonContainsFloats });
+            list.Add(new Case { Name = "maths.polygon.outer-edge", Run = ShapeCases.PolygonOuterEdge });
             list.Add(new Case { Name = "maths.lua.shared-not-copied", Run = LuaShapeCases.SharedNotCopied });
             list.Add(new Case { Name = "maths.lua.out-pair", Run = LuaShapeCases.OutPair });
             list.Add(new Case { Name = "maths.lua.number-types", Run = LuaShapeCases.NumberTypes });
@@ -1176,6 +1186,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "actors.remove-of-class", Run = ActorCases.RemoveOf });
             list.Add(new Case { Name = "actors.end-removes-last-first", Run = ActorCases.EndRemovesLastFirst });
             list.Add(new Case { Name = "actors.add-to-ended", Run = ActorCases.AddToEnded });
+            list.Add(new Case { Name = "actors.add-to-ending", Run = ActorCases.AddToEnding });
             list.Add(new Case { Name = "actors.component-owns-timer", Run = ActorCases.ComponentOwnsTimer });
             list.Add(new Case { Name = "actors.error-in-onadded", Run = ActorCases.ErrorInOnAdded });
             list.Add(new Case { Name = "game.start-order", Run = ActorCases.GameStartOrder });
@@ -1407,6 +1418,19 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.fill-unmade", Run = FrameCases.FillUnmade });
             list.Add(new Case { Name = "frames.tied-to-ended", Run = FrameCases.TiedToEnded });
             list.Add(new Case { Name = "frames.tied-still-pooled", Run = FrameCases.TiedStillPooled });
+            list.Add(new Case { Name = "frames.added-again-refused", Run = FrameCases.AddedAgainRefused });
+            list.Add(new Case { Name = "frames.tooltip-gone-lets-clicks-through", Run = FrameCases.TooltipGoneLetsClicksThrough });
+            list.Add(new Case { Name = "frames.turned-off-then-listened", Run = FrameCases.TurnedOffThenListened });
+            list.Add(new Case { Name = "frames.one-side-keeps-template", Run = FrameCases.OneSideKeepsTemplate });
+            list.Add(new Case { Name = "frames.progress-bar-follows-resize", Run = FrameCases.ProgressBarFollowsResize });
+            list.Add(new Case { Name = "frames.fill-loop-refused", Run = FrameCases.FillLoopRefused });
+            list.Add(new Case { Name = "frames.tied-inside-ended", Run = FrameCases.TiedInsideEnded });
+            list.Add(new Case { Name = "frames.tie-to-ended-refused", Run = FrameCases.TieToEndedRefused });
+            list.Add(new Case { Name = "frames.unmade-tied-holds", Run = FrameCases.UnmadeTiedHolds });
+            list.Add(new Case { Name = "frames.slider-same-value-after-drag", Run = FrameCases.SliderSameValueAfterDrag });
+            list.Add(new Case { Name = "frames.text-box-same-text-after-typing", Run = FrameCases.TextBoxSameTextAfterTyping });
+            list.Add(new Case { Name = "frames.slider-pool-keeps-range", Run = FrameCases.SliderPoolKeepsRange });
+            list.Add(new Case { Name = "frames.text-box-limit-kept", Run = FrameCases.TextBoxLimitKept });
             list.Add(new Case { Name = "hud.looked-up-at-install", Run = HudCases.LookedUpAtInstall });
             list.Add(new Case { Name = "hud.piece-for-one-player", Run = HudCases.PieceForOnePlayer });
             list.Add(new Case { Name = "hud.command-button-by-scale", Run = HudCases.CommandButtonByScale });
@@ -1416,6 +1440,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });
+            list.Add(new Case { Name = "fdf.child-makes-its-own", Run = FdfCases.ChildMakesItsOwn });
+            list.Add(new Case { Name = "fdf.found-label-lets-clicks-through", Run = FdfCases.FoundLabelLetsClicksThrough });
+            list.Add(new Case { Name = "fdf.ended-part-refused", Run = FdfCases.EndedPartRefused });
         }
 
         /// <summary>Adds the special effect cases.</summary>

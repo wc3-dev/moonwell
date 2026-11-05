@@ -58,6 +58,28 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>A component that adds a new one of its class to its actor when it is removed, at most 100 times in all.</summary>
+        private sealed class Readder : GameComponent
+        {
+            /// <summary>How many times OnAdded ran, in all.</summary>
+            public static int Adds;
+
+            /// <summary>Counts the add.</summary>
+            protected override void OnAdded()
+            {
+                Adds++;
+            }
+
+            /// <summary>Adds another to the actor, if fewer than 100 were added.</summary>
+            protected override void OnRemoved()
+            {
+                if (Adds < 100)
+                {
+                    ((TestActor)Actor).Add(new Readder());
+                }
+            }
+        }
+
         /// <summary>A component that starts a repeating timer when it is added.</summary>
         private sealed class Ticker : GameComponent
         {
@@ -225,6 +247,17 @@ namespace Moonwell.Testing
             var probe = actor.Add(new Probe());
             Expect.True(probe.HasEnded, "the component has ended");
             Expect.Equal(0, probe.Adds, "OnAdded runs for it");
+            Expect.Equal(0, actor.ComponentCount, "components on the ended actor");
+        }
+
+        /// <summary>A component added to an actor whose components are ending, from one's OnRemoved, ends at once, and its OnAdded does not run (one added in the actor's own end, as a unit's OnLeave, is added and ends with it): one that adds a new one of its class when removed ends with the actor, once. Added as the newest child, each one was ended next and added another, without end.</summary>
+        public static void AddToEnding(FakeWorld world)
+        {
+            Readder.Adds = 0;
+            var actor = new TestActor();
+            actor.Add(new Readder());
+            actor.End();
+            Expect.Equal(1, Readder.Adds, "OnAdded ran once, for the first");
             Expect.Equal(0, actor.ComponentCount, "components on the ended actor");
         }
 
