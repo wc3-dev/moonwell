@@ -136,6 +136,57 @@ public class FollowTests
     }
 
     [Fact]
+    public void a_delegate_parameter_given_to_local_for_and_passed_on_outside_is_mw0040()
+    {
+        var found = MapCode.Check("Show(p, () => { }); Back(p, () => { });", """
+                private static Action? Kept;
+
+                public static void Show(Player who, Action draw)
+                {
+                    Local.For(who, draw);
+                    Game.Instance.After(1f, draw);
+                    Kept = draw;
+                    var same = draw;
+                    if (draw != null) { }
+                }
+
+                public static Action Back(Player who, Action draw)
+                {
+                    Local.For(who, draw);
+                    return draw;
+                }
+            """);
+
+        Assert.Equal(new[] { "MW0040: draw", "MW0040: draw", "MW0040: draw" }, found);
+    }
+
+    [Fact]
+    public void an_implicit_deconstruct_is_followed()
+    {
+        var found = MapCode.Check("""
+            var slot = new Slot();
+            var slots = new List<Slot>();
+            Local.For(p, () => { var (owner, uses) = slot; });
+            Local.For(p, () => { foreach (var (o, n) in slots) { } });
+            Local.For(p, () => { if (slot is (var o, var n)) { } });
+            var pair = new Pair();
+            Local.For(p, () => { var (a, b) = pair; });
+            """, """
+                public sealed class Slot
+                {
+                    public void Deconstruct(out unit owner, out int uses) { owner = Natives.CreateUnit(Natives.Player(0), 0, 0f, 0f, 0f); uses = 1; }
+                }
+
+                public sealed class Pair
+                {
+                    public void Deconstruct(out int a, out int b) { a = 1; b = 2; }
+                }
+            """);
+
+        Assert.Equal(new[] { "MW0001: var (owner, uses) = slot", "MW0001: slots", "MW0001: (var o, var n)" }, found);
+    }
+
+    [Fact]
     public void a_delegate_parameter_given_to_local_for_and_called_outside_is_mw0040()
     {
         var found = MapCode.Check("Both(p, () => { });", """
