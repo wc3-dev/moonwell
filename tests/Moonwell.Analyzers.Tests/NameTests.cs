@@ -149,6 +149,13 @@ public class NameTests
     }
 
     [Fact]
+    public void a_local_made_from_the_call_passes()
+    {
+        // CSharp.lua writes local Cos = Cos(a) and local Sin, Tan = Sin(a), Tan(a): Lua reads the right side before the locals are made.
+        Assert.Empty(MapCode.Check("var Cos = Natives.Cos(1f); var (Sin, Tan) = (Natives.Sin(1f), Natives.Tan(1f)); (var Asin, var Acos) = (Natives.Asin(1f), Natives.Acos(1f));"));
+    }
+
+    [Fact]
     public void a_method_of_a_base_class_shadows_nothing()
     {
         Assert.Empty(MapCode.CheckFile("""
