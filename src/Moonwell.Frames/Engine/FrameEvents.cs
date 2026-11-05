@@ -71,10 +71,30 @@ namespace Moonwell.Engine
         }
 
         /// <summary>Sends the event being delivered to the frame that owns its game frame, unless the frame is for another player.</summary>
+        /// <summary>The frame that owns an event's game frame. The game can give one frame as two Lua objects, equal by == but not the same table key (as a unit given as a widget, seen 10-16), and the event's frame missed the one found by walking a template (seen 11-05): a miss looks again by ==.</summary>
+        private Frame? OwnerOf(framehandle eventFrame)
+        {
+            if (owners.TryGetValue(eventFrame, out var frame))
+            {
+                return frame;
+            }
+
+            foreach (var pair in owners)
+            {
+                if (pair.Key == eventFrame)
+                {
+                    return pair.Value;
+                }
+            }
+
+            return null;
+        }
+
         private void Fire(int kind)
         {
             var world = FramesSystem.World;
-            if (!owners.TryGetValue(world.EventFrame(), out var frame) || frame.HasEnded)
+            var frame = OwnerOf(world.EventFrame());
+            if (frame == null || frame.HasEnded)
             {
                 return;
             }
