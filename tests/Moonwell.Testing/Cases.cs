@@ -373,6 +373,22 @@ namespace Moonwell.Testing
         private static void AddLifecycle(List<Case> list)
         {
             list.Add(new Case { Name = "lifecycle.units-the-game-makes-are-met", Run = LifecycleCases.UnitsTheGameMakesAreMet });
+            list.Add(new Case { Name = "reentry.drop-inside-pick-up", Run = ReentryCases.DropInsidePickUp });
+            list.Add(new Case { Name = "reentry.removed-inside-pick-up", Run = ReentryCases.RemovedInsidePickUp });
+            list.Add(new Case { Name = "reentry.drop-while-removed", Run = ReentryCases.DropWhileRemoved });
+            list.Add(new Case { Name = "reentry.removed-inside-drop", Run = ReentryCases.RemovedInsideDrop });
+            list.Add(new Case { Name = "reentry.killed-while-removed", Run = ReentryCases.KilledWhileRemoved });
+            list.Add(new Case { Name = "reentry.hurt-while-removed", Run = ReentryCases.HurtWhileRemoved });
+            list.Add(new Case { Name = "reentry.removed-before-player-hears", Run = ReentryCases.RemovedBeforePlayerHears });
+            list.Add(new Case { Name = "reentry.throwing-unit-constructor", Run = ReentryCases.ThrowingUnitConstructor });
+            list.Add(new Case { Name = "reentry.throwing-item-constructor", Run = ReentryCases.ThrowingItemConstructor });
+            list.Add(new Case { Name = "reentry.throwing-class-in-register-step", Run = ReentryCases.ThrowingClassInRegisterStep });
+            list.Add(new Case { Name = "reentry.item-setters-after-game-removal", Run = ReentryCases.ItemSettersAfterGameRemoval });
+            list.Add(new Case { Name = "reentry.unit-setters-after-game-removal", Run = ReentryCases.UnitSettersAfterGameRemoval });
+            list.Add(new Case { Name = "reentry.killed-then-removed-reads-no-life", Run = ReentryCases.KilledThenRemovedReadsNoLife });
+            list.Add(new Case { Name = "reentry.tint-clamps", Run = ReentryCases.TintClamps });
+            list.Add(new Case { Name = "reentry.of-game-removed-unit", Run = ReentryCases.OfGameRemovedUnit });
+            list.Add(new Case { Name = "reentry.progress-of-removed-hero", Run = ReentryCases.ProgressOfRemovedHero });
             list.Add(new Case { Name = "lifecycle.local-throw-keeps-sync", Run = LifecycleCases.LocalThrowKeepsSync });
             list.Add(new Case { Name = "lifecycle.death-respawn-outlives-corpse", Run = LifecycleCases.DeathRespawnOutlivesCorpse });
             list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });
@@ -1456,6 +1472,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.shared-without-handle", Run = HeroCases.SharedWithoutHandle });
             list.Add(new Case { Name = "heroes.level-up-order", Run = HeroReactionCases.LevelUpOrder });
             list.Add(new Case { Name = "heroes.level-jump", Run = HeroReactionCases.LevelJump });
+            list.Add(new Case { Name = "heroes.lowered-in-jump", Run = HeroReactionCases.LoweredInJump });
             list.Add(new Case { Name = "heroes.level-up-from-experience", Run = HeroReactionCases.LevelUpFromExperience });
             list.Add(new Case { Name = "heroes.level-up-through-set-level", Run = HeroReactionCases.LevelUpThroughSetLevel });
             list.Add(new Case { Name = "heroes.level-up-from-taken-in", Run = HeroReactionCases.LevelUpFromTakenIn });

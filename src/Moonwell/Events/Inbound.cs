@@ -36,7 +36,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; a new carry starts, unless the item went into the 3.0 bag (decision 166); then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components.</summary>
+        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; a new carry starts, unless the item went into the 3.0 bag (decision 166); then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components. A reaction that drops or removes the item ends the pick-up: the reactions after it run nothing. An item or unit that is ending reacts to none.</summary>
         internal static void PickedUp(unit u, item i)
         {
             var carrierPlayer = Runtime.World.OwnerOf(u);
@@ -57,7 +57,7 @@ namespace Moonwell
 
             var by = Unit.Of(u);
             var picked = Item.Of(i);
-            if (by == null || picked == null)
+            if (by == null || picked == null || by.ending || picked.ending)
             {
                 return;
             }
@@ -76,8 +76,9 @@ namespace Moonwell
                 picked.carry = carry;
             }
 
-            ItemPickedUp(picked, by);
-            UnitItemPickedUp(by, picked);
+            var turn = ++picked.moves;
+            ItemPickedUp(picked, by, turn);
+            UnitItemPickedUp(by, picked, turn);
         }
 
         /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the carry the drop is about ends. The game fires a drop for a move between slots too, and takes a dropped item out of its slot only after the event, so a carry whose unit still has the item in a slot is looked at again a moment later, and ends only if the unit has let go of it by then; Unit.Drop ends it inside its call.</summary>
@@ -88,17 +89,23 @@ namespace Moonwell
                 return;
             }
 
+            // One that is ending reacts to none: the game fires the drop of a carried item inside RemoveItem.
             var by = Unit.Of(u);
             var dropped = Item.Of(i);
-            if (by == null || dropped == null)
+            if (by == null || dropped == null || dropped.ending)
             {
                 return;
             }
 
             // Read before the reactions: one may give the item to another unit, whose carry starts inside them.
             var carry = dropped.carry;
+            dropped.moves++;
             ItemDropped(dropped, by);
-            UnitItemDropped(by, dropped);
+            if (!by.ending)
+            {
+                UnitItemDropped(by, dropped);
+            }
+
             if (carry == null || carry.HasEnded)
             {
                 return;
@@ -173,8 +180,9 @@ namespace Moonwell
                 return amount;
             }
 
+            // One that is ending reacts to none: it is leaving, and its OnLeave has run.
             var hit = Unit.Of(target);
-            if (hit == null)
+            if (hit == null || hit.ending)
             {
                 return amount;
             }
@@ -293,8 +301,9 @@ namespace Moonwell
                 return;
             }
 
+            // One that is ending reacts to none: it is leaving, not dying, and its OnLeave has run.
             var dead = Unit.Of(dying);
-            if (dead == null)
+            if (dead == null || dead.ending)
             {
                 return;
             }
@@ -304,6 +313,12 @@ namespace Moonwell
             if (!byDummy)
             {
                 slayer = slain == null ? null : Unit.Of(slain);
+            }
+
+            // A dummy's cast for the dying unit itself is its own damage, which kills with no killer.
+            if (slayer == dead)
+            {
+                slayer = null;
             }
 
             var deadSlot = dead.Owner.Slot;
@@ -399,8 +414,14 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Runs OnPickedUp on an item, then on its components, in add order.</summary>
-        private static void ItemPickedUp(Item item, Unit by)
+        /// <summary>Whether a pick-up is over: the item was dropped or picked up again since (its turn moved on), or it is ending.</summary>
+        private static bool PickUpOver(Item item, int turn)
+        {
+            return item.moves != turn || item.ending || item.HasEnded;
+        }
+
+        /// <summary>Runs OnPickedUp on an item, then on its components, in add order, until a reaction drops or removes the item.</summary>
+        private static void ItemPickedUp(Item item, Unit by, int turn)
         {
             if (!item.HasEnded && (item.Mask & Hook.OnPickedUp) != 0)
             {
@@ -415,7 +436,7 @@ namespace Moonwell
             }
 
             var count = item.BeginDispatch();
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count && !PickUpOver(item, turn); i++)
             {
                 var component = item.ComponentAt(i) as ItemComponent;
                 if (component == null || component.HasEnded || (component.Mask & Hook.OnPickedUp) == 0)
@@ -436,10 +457,15 @@ namespace Moonwell
             item.EndDispatch();
         }
 
-        /// <summary>Runs OnItemPickedUp on a unit, then on its components, in add order.</summary>
-        private static void UnitItemPickedUp(Unit unit, Item item)
+        /// <summary>Runs OnItemPickedUp on a unit, then on its components, in add order, until a reaction drops or removes the item, or ends the unit.</summary>
+        private static void UnitItemPickedUp(Unit unit, Item item, int turn)
         {
-            if (!unit.HasEnded && (unit.Mask & Hook.OnItemPickedUp) != 0)
+            if (PickUpOver(item, turn) || unit.ending || unit.HasEnded)
+            {
+                return;
+            }
+
+            if ((unit.Mask & Hook.OnItemPickedUp) != 0)
             {
                 try
                 {
@@ -452,7 +478,7 @@ namespace Moonwell
             }
 
             var count = unit.BeginDispatch();
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count && !PickUpOver(item, turn) && !unit.ending; i++)
             {
                 var component = unit.ComponentAt(i) as UnitComponent;
                 if (component == null || component.HasEnded || (component.Mask & Hook.OnItemPickedUp) == 0)
@@ -837,6 +863,9 @@ namespace Moonwell
                 {
                     break;
                 }
+
+                // A reaction that lowered the hero took the levels above away: they run nothing.
+                reached = Runtime.World.LevelOf(handle);
             }
         }
 
