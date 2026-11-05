@@ -201,4 +201,22 @@ public class ClockTests
 
         Assert.Equal(new[] { "MW0038: Dice", "MW0038: Dice2", "MW0038: Dice3" }, found);
     }
+
+    [Fact]
+    public void real_times_own_members_run_inside_local_for_and_its_local_now_stays_one_machines()
+    {
+        // RealTime is [LocalSafe] as a whole: its arithmetic, text and comparisons change nothing (lead 9 of the fourth review).
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                var t = RealTime.LocalNow.AddDays(1).AddHours(1).AddMinutes(1).AddSeconds(1);
+                p.Print(t.ToString());
+                var later = t > RealTime.LocalNow && t != RealTime.LocalNow && t.Equals(RealTime.LocalNow) && t.CompareTo(RealTime.LocalNow) > 0;
+                var hash = t.GetHashCode();
+            });
+            var outside = RealTime.LocalNow;
+            """);
+
+        Assert.Equal(new[] { "MW0002: RealTime.LocalNow" }, found);
+    }
 }
