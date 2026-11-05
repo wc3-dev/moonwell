@@ -1352,8 +1352,8 @@ public sealed partial class SyncAnalyzer
 
         /// <summary>
         /// Whether a local or parameter is declared in the code being read; a setter's value is declared by no code. The
-        /// walk keeps the depth of the innermost code that holds it, or -1 when none does, as the answer for a node below
-        /// that depends on the code around it.
+        /// walk keeps the depth of the innermost code that holds it, or -1 when none does: a node followed below that depth
+        /// would get another answer where other code is around it, so its result is not kept.
         /// </summary>
         private static bool IsInside(ISymbol variable, Walk walk)
         {
