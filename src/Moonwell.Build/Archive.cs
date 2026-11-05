@@ -25,17 +25,25 @@ namespace Moonwell.Build
                 }
 
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(archivePath))!);
-                if (File.Exists(archivePath))
+
+                // Written beside it first, so a save that fails keeps the old archive.
+                var written = archivePath + ".tmp";
+                try
                 {
-                    File.Delete(archivePath);
+                    builder.SaveTo(written, new MpqArchiveCreateOptions
+                    {
+                        ListFileCreateMode = MpqFileCreateMode.Overwrite,
+                        AttributesCreateMode = MpqFileCreateMode.Prune,
+                        BlockSize = 3,
+                    });
+                }
+                catch
+                {
+                    File.Delete(written);
+                    throw;
                 }
 
-                builder.SaveTo(archivePath, new MpqArchiveCreateOptions
-                {
-                    ListFileCreateMode = MpqFileCreateMode.Overwrite,
-                    AttributesCreateMode = MpqFileCreateMode.Prune,
-                    BlockSize = 3,
-                });
+                File.Move(written, archivePath, true);
             }
             finally
             {

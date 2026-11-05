@@ -45,7 +45,8 @@ namespace Moonwell.Testing
         public static void Near(float expected, float actual, string what)
         {
             var tolerance = GameNumbers.HasNaN ? 0.001f : 0.001f + Math.Abs(expected) * 0.0002f;
-            if (Math.Abs(expected - actual) > tolerance)
+            // Written so that NaN, which compares false with everything, fails.
+            if (!(Math.Abs(expected - actual) <= tolerance))
             {
                 throw Mismatch(what, expected, actual);
             }
