@@ -319,6 +319,7 @@ namespace Moonwell
 
             // The buffs the death ends are those on the unit now, which see it; one its reactions apply stays.
             var buffs = dead.GetAll<Buff>();
+            var applied = Buff.AppliesOf(buffs);
             if (!byDummy)
             {
                 slayer = slain == null ? null : Unit.Of(slain);
@@ -354,7 +355,7 @@ namespace Moonwell
                 }
             }
 
-            Buff.EndOnDeath(buffs);
+            Buff.EndOnDeath(buffs, applied);
         }
 
         /// <summary>A unit's spell takes effect: its previous cast ends, the ability and the caster see the new cast, then the map's and the caster's player's reactions run. A dummy's cast runs none (decision 171); only the spell-buff watch sees it, as the cast of the unit it casts for.</summary>
