@@ -966,7 +966,8 @@ public sealed class Dash : PlayerComponent, IKeyWatch // write only the reaction
 
 Add the `Moonwell.Frames` package (the template's `.csproj` has the line, commented) for the map's own UI: panels, labels,
 images, buttons and the other controls on each player's screen. A frame is made with `new`, set, and added: to the screen in a scope, which ends it
-when it ends, or to another frame, which ends it with itself.
+when it ends, or to another frame, which ends it with itself. It is added once: adding it again, to the screen or to a
+frame, is refused and reported.
 
 ```csharp
 public sealed class Hud : GameComponent
@@ -1003,8 +1004,12 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 - A frame sits by its `Anchor` on the same point of its parent, the screen or the frame it was added to, moved by
   `Offset`; `Center` unless set. `Attach(point, other, otherPoint, x, y)` ties one of its points to another frame's in
   place of the anchor, and a second `Attach` stretches it between the two; `Fill(other)` covers another frame. A frame
-  tied to one not added yet is placed when that one is added. `Width`, `Height`, `Scale`, `Visible`, `Alpha` (0 to 255)
-  and `Level` (drawn above siblings of a lower one) do as named.
+  tied to one not added yet is placed when that one is added. `Attach` or `Fill` to a frame that has ended is refused
+  and reported, as its game frame may go to the next frame of its kind, and so is a `Fill` of the frame itself or of
+  one that covers it. `Width`, `Height`, `Scale`, `Visible`, `Alpha` (0 to 255) and `Level` (drawn above siblings of a
+  lower one) do as named. A side left at 0 keeps the size the frame's template gives, read once, when the frame is made
+  (a template's size reads at once, seen), so a button given only a `Width` keeps its height; one made by its type, as
+  a label is, has 0 there, and a label given only a `Width` is as tall as its lines.
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
   `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
@@ -1027,12 +1032,14 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   only: add them to a frame made for that player, as the shop above; a development build reports one that is not, so
   the screens never disagree. They read what their last event brought or what the map last set, the same on every
   machine, and an event that brings the value they already read runs nothing, so a value the map sets never runs its
-  own handler. Moonwell draws the check box from the game's textures, as the game's own cannot be set from code (seen).
+  own handler. Once a text box has a `MaxLength` of the map's, setting 0 is refused and reported, as the game's own
+  limit cannot be given back. Moonwell draws the check box from the game's textures, as the game's own cannot be set
+  from code (seen).
   A slider being dragged sends about 85 events a second, each synced; what that costs online is not measured yet.
 - `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
-  the share of its width that `Value` is of `Min` to `Max`, its size being its `Width` and `Height`, or those of the frame
-  it covers with `Fill` (the game gives a frame's size too late to read); a label's `Color` colours its text, white
-  unless set.
+  the share of its width that `Value` is of `Min` to `Max`: the fill is as high as the bar, and its width is the share of
+  the bar's `Width`, or of the frame it covers with `Fill` (or that frame covers), whose new size it follows (the game
+  gives a size from points too late to read); a label's `Color` colours its text, white unless set.
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
@@ -1067,10 +1074,11 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
   of the map's, as a label with the font and size its `.fdf` gives. `window.Child<Label>("ShopTitle")` finds a part of
   the window by its name in the `.fdf`, at any depth, as the kind asked for: the same object each time, shown to the
-  window's player, and ending with the window. It is null, and reported, before the window is added, for a name the
-  window lacks, and for a `CheckBox`, `IconButton` or `ProgressBar`, which Moonwell draws from parts of its own. A
-  window whose parts were found is not given out again when it ends, as the game cannot give back what was set on
-  them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
+  window's player, and ending with the window; the frames its kind's constructor adds are made in it. It is null, and
+  reported, before the window is added or once it has ended, for a name the window lacks, for a part that has ended or
+  was found as another kind, and for a `CheckBox`, `IconButton` or `ProgressBar`, which Moonwell draws from parts of
+  its own. A window whose parts were found is not given out again when it ends, as the game cannot give back what was
+  set on them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
   gives its look in full; a `SIMPLEFRAME` template is not made, as no kind is one (seen).
 - `Handle` is the game's frame, for anything Moonwell does not do yet.
 
