@@ -97,7 +97,9 @@ namespace Moonwell.Build
                 var root = mine?.StandardRoot ?? one.StandardId;
                 if (root != null)
                 {
-                    spells.Add(mine == null ? root : ids.TryGetValue(mine.ClassName, out var own) ? own : throw new BuildException($"{mine.ClassName} has no object id"), mine, root);
+                    // A standard ability no class declares keeps World Editor's changes, as ObjectFiles keeps them.
+                    var changes = mine ?? mapAbilities?.FirstOrDefault(ability => ability.PinnedId == root);
+                    spells.Add(mine == null ? root : ids.TryGetValue(mine.ClassName, out var own) ? own : throw new BuildException($"{mine.ClassName} has no object id"), changes, root);
                 }
             }
 

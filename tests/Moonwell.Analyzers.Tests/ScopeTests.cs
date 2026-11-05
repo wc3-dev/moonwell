@@ -27,6 +27,22 @@ public class ScopeTests
     }
 
     [Fact]
+    public void a_player_given_a_scopes_own_methods_is_rejected()
+    {
+        var found = MapCode.Check("""
+            p.ReadFile(p, "a.txt", text => { });
+            p.Share(p, () => 1, n => { });
+            p.Command("zoom", (who, rest) => { });
+            p.Load<Progress>(p, saved => { });
+            Game.Instance.Command("zoom", (who, rest) => { });
+            """, """
+            public sealed class Progress : SaveGame { }
+            """);
+
+        Assert.Equal(new[] { "MW0043: p", "MW0043: p", "MW0043: p", "MW0043: p" }, found);
+    }
+
+    [Fact]
     public void a_player_as_a_holder_is_rejected()
     {
         var found = MapCode.Check("""

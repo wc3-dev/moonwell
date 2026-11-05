@@ -151,7 +151,7 @@ public sealed class NameAnalyzer : DiagnosticAnalyzer
             {
                 switch (symbol)
                 {
-                    case ILocalSymbol when symbol.Locations[0].SourceSpan.Start < start:
+                    case ILocalSymbol local when local.Locations[0].SourceSpan.Start < start && !MadeFrom(local, call.Syntax):
                         return "local";
                     case IParameterSymbol:
                         return "parameter";
@@ -161,6 +161,20 @@ public sealed class NameAnalyzer : DiagnosticAnalyzer
             }
 
             return null;
+        }
+
+        // Whether a local is made from the call's value: local Cos = Cos(a), and local Sin, Cos = Sin(a), Cos(a), read the call before the local is made.
+        private static bool MadeFrom(ILocalSymbol local, SyntaxNode call)
+        {
+            var declared = local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+            var value = declared switch
+            {
+                VariableDeclaratorSyntax declarator => declarator.Initializer?.Value,
+                SingleVariableDesignationSyntax => declared.Ancestors().OfType<AssignmentExpressionSyntax>().FirstOrDefault() is { } assignment
+                    && assignment.Left.Span.Contains(declared.Span) ? assignment.Right : null,
+                _ => null,
+            };
+            return value != null && value.Span.Contains(call.Span);
         }
 
         // Whether the class at the call, or a class around it, writes a method of the name; one of a base class is no local in the Lua.

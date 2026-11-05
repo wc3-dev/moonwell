@@ -107,8 +107,8 @@ public sealed class Champion : Human.Units.Paladin
   In the game an enum of `Moonwell.Objects` has its numbers only, no names: `ToString` (also `choice?.ToString()`), a
   string made with one (`+`, `+=`, interpolation, or a call that takes an `object`: `string.Format`,
   `StringBuilder.Append`, a method of your own), a list of them given to `string.Join`, and `Enum.GetValues` and the
-  other `Enum` methods are rejected as error MW0010, a nullable choice too; compare with its members, `|`, `&` and
-  `HasFlag`.
+  other `Enum` methods are rejected as error MW0010, a nullable choice too; compare with its members, `|`, `&`,
+  `HasFlag` and `CompareTo`, and show the number with `(int)`, `Convert.ToInt32` or `ToString("D")`.
 - `AttackType`, `DefenseType` and `WeaponSound` are core Moonwell's (`Moonwell.AttackType`), shared with hits and the
   damage package, and keep their names in the game. A file writes them with `using Moonwell;`; a name of the old
   `Moonwell.Objects.AttackType` is error MW0011. `Attack1WeaponSound` takes the 13 sounds World Editor lists: `None` and
@@ -1225,8 +1225,10 @@ public sealed class MyMap : Map
 
 A saved field is an `int`, `float`, `bool`, `string`, an enum, a `RealTime`, a `List` or array of those, or a part: a
 class of the map's own with `[Saved]` fields of its own, such as a hero's gear. It is public, and a property has a public
-`get` and `set`. A save class and a part have a public constructor without parameters. Error MW0052 says when one
-doesn't, or when a number is used twice.
+`get` and `set`. A save class and a part have a public constructor without parameters and no `required` member, and are
+not private, protected, file-local or generic, as the build's code names them. An override of a saved property is saved
+under its base's number. Error MW0052 says when one doesn't hold, or when a number is used twice. A library of the map's
+own may hold save classes too; they are public.
 
 `SaveGame.Save(player, save)` runs on every machine: it sets `save.Code`, a code the player can type, such as
 `X7KQ-M3PA-...`, and writes it to a file on the player's computer, in the map's save folder. `Load<RpgSave>(player, save
@@ -1272,10 +1274,11 @@ apart.
 One save class may go without an id. Every other one has `[SaveId("settings")]`, never changed, so a code of one class
 fails for another.
 
-The build keeps a record of the saves in `moonwell-saves.txt` beside the project file: each class's numbers and types, a
-fingerprint of the key and the save folder. Commit it with the map. The build stops on a change old saves would not
-survive (a number used again after its field was removed, a field whose type changed, a new key or folder), and names
-the line to delete when the change is meant. A lost record loses only these checks.
+The build keeps a record of the saves in `moonwell-saves.txt` beside the project file: each class's numbers and types (a
+part's or an enum's with its class), each save class's id, a fingerprint of the key and the save folder. Commit it with
+the map. The build stops on a change old saves would not survive (a number used again after its field was removed, a
+field whose type changed, a part or enum swapped for another, a changed id, a new key or folder), and names the line to
+delete when the change is meant. A lost record loses only these checks.
 
 ## JSON
 
@@ -1331,7 +1334,7 @@ MW0044 is about names, and the Lua is why: there a native is a global, and `Nati
 | `namespace Rect`: a first name that is a native or a function of Lua | the script stops while it loads | another name; `MyMap.Rect` is fine |
 | a type in no namespace named like a native, or like `math`, `string` or another global | the same | a namespace |
 | a type with the full name of one of Moonwell's, such as `Moonwell.Hero` | the build's Lua step or the script stops | another name or namespace |
-| `Natives.Cos(x)` where the class, or a class around it, writes a method `Cos`, or a local, parameter or local function is called `Cos` | that runs in the native's place; `float Cos(float x) => Natives.Cos(x)` never returns, and the game freezes | another name |
+| `Natives.Cos(x)` where the class, or a class around it, writes a method `Cos`, or a local, parameter or local function is called `Cos` | that runs in the native's place; `float Cos(float x) => Natives.Cos(x)` never returns, and the game freezes | another name; a local made from the call itself, `var Cos = Natives.Cos(a)`, is fine, as the Lua reads the call first |
 
 A method of a base class, a field, a property and a type in a namespace pass.
 

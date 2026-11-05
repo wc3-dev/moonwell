@@ -61,6 +61,9 @@ namespace Moonwell.Testing
         /// <summary>Whether the game deals no damage the runtime asks for, as for a target that cannot take it.</summary>
         public bool RefuseDamage;
 
+        /// <summary>The spell-immune units: a hit of a magic damage type, or of attack type magic, fires no damage event and takes no life, though the game answers true (seen 10-31).</summary>
+        public HashSet<unit> SpellImmune = new HashSet<unit>();
+
         /// <summary>The events the runtime asked to hear, once each.</summary>
         internal List<GameEvent> Listening = new List<GameEvent>();
 
@@ -672,7 +675,7 @@ namespace Moonwell.Testing
                 return false;
             }
 
-            if (dead.Contains(target))
+            if (dead.Contains(target) || (SpellImmune.Contains(target) && (attackType == 4 || IsMagicDamage(damageType))))
             {
                 return true;
             }
@@ -696,6 +699,30 @@ namespace Moonwell.Testing
             }
 
             return true;
+        }
+
+        /// <summary>Whether spell immunity stops a damage type with any attack type: fire, cold, lightning, divine, magic, sonic, force, death, mind, plant, defensive, spirit link and shadow strike (seen 10-31).</summary>
+        private static bool IsMagicDamage(int damageType)
+        {
+            switch (damageType)
+            {
+                case 8:
+                case 9:
+                case 10:
+                case 13:
+                case 14:
+                case 15:
+                case 17:
+                case 18:
+                case 19:
+                case 20:
+                case 21:
+                case 24:
+                case 25:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         /// <summary>Records the damage to a destructable: the game's numbers, and the handles it was dealt between.</summary>

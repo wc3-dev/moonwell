@@ -27,13 +27,16 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(InterfaceMember, SyntaxKind.MethodDeclaration, SyntaxKind.PropertyDeclaration, SyntaxKind.OperatorDeclaration);
+        context.RegisterSyntaxNodeAction(InterfaceMember,
+            SyntaxKind.MethodDeclaration, SyntaxKind.PropertyDeclaration, SyntaxKind.OperatorDeclaration, SyntaxKind.ConversionOperatorDeclaration,
+            SyntaxKind.EventDeclaration, SyntaxKind.EventFieldDeclaration);
         context.RegisterSyntaxNodeAction(TwoConstructions, SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration);
         context.RegisterSyntaxNodeAction(RefType, SyntaxKind.RefType);
         context.RegisterSyntaxNodeAction(RefLocal, SyntaxKind.RefExpression);
         context.RegisterOperationAction(Boxed, OperationKind.Conversion);
         context.RegisterSyntaxNodeAction(Name, SyntaxKind.IdentifierName, SyntaxKind.GenericName);
         context.RegisterSyntaxNodeAction(Await, SyntaxKind.AwaitExpression);
+        context.RegisterSyntaxNodeAction(AwaitStatement, SyntaxKind.ForEachStatement, SyntaxKind.ForEachVariableStatement, SyntaxKind.UsingStatement, SyntaxKind.LocalDeclarationStatement);
         context.RegisterSyntaxNodeAction(Pointer, SyntaxKind.PointerType);
         context.RegisterSyntaxNodeAction(EnumInvocation, SyntaxKind.InvocationExpression);
     }
@@ -42,16 +45,11 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
 
     private static void InterfaceMember(SyntaxNodeAnalysisContext context)
     {
+        // A method, property, operator, conversion operator or event.
         var member = (MemberDeclarationSyntax)context.Node;
-        if (member.Parent is InterfaceDeclarationSyntax && member is BaseMethodDeclarationSyntax or PropertyDeclarationSyntax)
+        if (member.Parent is InterfaceDeclarationSyntax)
         {
-            var modifiers = member switch
-            {
-                BaseMethodDeclarationSyntax method => method.Modifiers,
-                PropertyDeclarationSyntax property => property.Modifiers,
-                _ => default,
-            };
-
+            var modifiers = member.Modifiers;
             if (modifiers.Any(SyntaxKind.StaticKeyword) && (modifiers.Any(SyntaxKind.AbstractKeyword) || modifiers.Any(SyntaxKind.VirtualKeyword)))
             {
                 Wrong(context, member, "A static abstract or static virtual interface member called through a type parameter (T.Zero, a + b) fails in the game's Lua");
@@ -90,6 +88,8 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
             LocalFunctionStatementSyntax local => local.ReturnType == type,
             PropertyDeclarationSyntax property => property.Type == type,
             IndexerDeclarationSyntax indexer => indexer.Type == type,
+            DelegateDeclarationSyntax declared => declared.ReturnType == type,
+            ParenthesizedLambdaExpressionSyntax lambda => lambda.ReturnType == type,
             _ => false,
         };
 
@@ -103,7 +103,14 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
     private static void RefLocal(SyntaxNodeAnalysisContext context)
     {
         var reference = (RefExpressionSyntax)context.Node;
-        if (reference.Parent is EqualsValueClauseSyntax && reference.Expression is InvocationExpressionSyntax)
+        // () => ref a[0] returns a ref with no return type written, which RefType does not see.
+        if (reference.FirstAncestorOrSelf<SyntaxNode>(node => node is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax or MemberDeclarationSyntax)
+                is AnonymousFunctionExpressionSyntax lambda and not ParenthesizedLambdaExpressionSyntax { ReturnType: not null }
+            && (lambda.ExpressionBody == reference || reference.Parent is ReturnStatementSyntax))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rules.RefForm, reference.GetLocation(), "A ref return is a copy in the game's Lua: writes through it are lost"));
+        }
+        else if (reference.Parent is EqualsValueClauseSyntax && reference.Expression is InvocationExpressionSyntax)
         {
             context.ReportDiagnostic(Diagnostic.Create(Rules.RefForm, reference.GetLocation(), "A ref local of a call's result is a copy in the game's Lua: writes through it are lost"));
         }
@@ -195,7 +202,9 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
 
     private static readonly ImmutableHashSet<string> MissingTypes = ImmutableHashSet.Create(
         "System.Threading.Monitor", "System.Threading.Lock", "System.Threading.Thread", "System.Threading.Tasks.Task",
-        "System.Threading.Tasks.Task`1", "System.Guid", "System.FormattableString");
+        "System.Threading.Tasks.Task`1", "System.Guid", "System.FormattableString",
+        // Task's file, which the build trims with the rest of Threading, holds these too.
+        "System.Collections.Generic.IAsyncEnumerable`1", "System.Collections.Generic.IAsyncEnumerator`1", "System.IAsyncDisposable");
 
     private const string Ticks = "counts its time in 64-bit ticks, which the game's 32-bit integers cannot hold, so it fails when it runs; use Moonwell's RealTime";
 
@@ -289,6 +298,22 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, context.Node.GetLocation(), "await", "needs Task, which the game's Lua does not have; there are no threads. Use a Timer"));
     }
 
+    // await foreach and await using: an await with no await expression.
+    private static void AwaitStatement(SyntaxNodeAnalysisContext context)
+    {
+        var awaited = context.Node switch
+        {
+            CommonForEachStatementSyntax loop => loop.AwaitKeyword,
+            UsingStatementSyntax block => block.AwaitKeyword,
+            LocalDeclarationStatementSyntax declaration => declaration.AwaitKeyword,
+            _ => default,
+        };
+        if (awaited.IsKind(SyntaxKind.AwaitKeyword))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, awaited.GetLocation(), "await", "needs Task, which the game's Lua does not have; there are no threads. Use a Timer"));
+        }
+    }
+
     private static void Pointer(SyntaxNodeAnalysisContext context)
     {
         context.ReportDiagnostic(Diagnostic.Create(Rules.LuaMember, context.Node.GetLocation(), context.Node.ToString(), "is a pointer, which CSharp.lua cannot compile"));
@@ -322,10 +347,12 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
             foreach (var argument in invocation.ArgumentList.Arguments)
             {
                 var argumentType = context.SemanticModel.GetTypeInfo(argument.Expression, context.CancellationToken).Type;
+                // The T of the IEnumerable<T> it is or implements: a HashSet, a Queue or an OrderedSet as well as a list.
                 var element = argumentType switch
                 {
                     IArrayTypeSymbol array => array.ElementType,
-                    INamedTypeSymbol { IsGenericType: true, TypeArguments.Length: 1 } generic when generic.Name is "IEnumerable" or "List" or "IList" or "ICollection" or "IReadOnlyList" => generic.TypeArguments[0],
+                    INamedTypeSymbol named => new[] { named }.Concat(named.AllInterfaces)
+                        .FirstOrDefault(face => face is { Name: "IEnumerable", IsGenericType: true, ContainingNamespace.Name: "Generic" })?.TypeArguments[0],
                     _ => null,
                 };
 

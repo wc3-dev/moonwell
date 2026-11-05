@@ -30,8 +30,8 @@ namespace Moonwell.Build
         public IReadOnlyList<string> Files { get; }
 
         /// <summary>
-        /// Empties <c>build\marked</c> and copies into it the project file and every <c>*.cs</c> CSharp.lua compiles (all under the
-        /// project folder but the top-level <c>bin</c> and <c>obj</c>), marking the files outside <c>build</c>.
+        /// Empties <c>build\marked</c> and copies into it the project file and every <c>*.cs</c> CSharp.lua compiles
+        /// (<see cref="CompiledFiles.Sources(MapProject, string[])"/>), marking the files outside <c>build</c>.
         /// </summary>
         /// <param name="project">The map project.</param>
         /// <param name="symbols">The preprocessor symbols CSharp.lua compiles with.</param>
@@ -46,7 +46,7 @@ namespace Moonwell.Build
 
             Directory.CreateDirectory(folder);
             var symbolList = symbols.ToList();
-            var sources = CompiledFiles.Sources(project.Folder, folder)
+            var sources = CompiledFiles.Sources(project, folder)
                 .Select(path => Path.GetRelativePath(project.Folder, path).Replace('\\', '/'))
                 .OrderBy(path => path, StringComparer.Ordinal)
                 .ToList();
@@ -54,7 +54,7 @@ namespace Moonwell.Build
             var columns = new Dictionary<string, MarkedColumns>(StringComparer.OrdinalIgnoreCase);
             foreach (var relative in sources)
             {
-                var text = File.ReadAllText(Path.Combine(project.Folder, relative));
+                var text = CompiledFiles.ReadSource(Path.Combine(project.Folder, relative));
                 if (!relative.StartsWith("build/", StringComparison.OrdinalIgnoreCase))
                 {
                     marked.Add(relative);

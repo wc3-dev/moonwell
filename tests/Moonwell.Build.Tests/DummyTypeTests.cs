@@ -136,6 +136,23 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_standard_ability_the_code_names_keeps_world_editors_changes()
+        {
+            var lines = DummyType.Lines(
+                true,
+                new[] { Used("Moonwell.Objects.Human.Abilities.StormBolt", "AHtb"), Used("Moonwell.Objects.Creeps.Abilities.Channel", "ANcl") },
+                Array.Empty<DeclaredObject>(),
+                new Dictionary<string, string>(),
+                new Dictionary<string, string>(),
+                built.Standard,
+                null,
+                new[] { MapAbility("AHtb", "AHtb", new Dictionary<string, object?> { ["areq"] = "Rhme", ["arqa"] = "2" }), MapAbility("ANcl", "ANcl", new Dictionary<string, object?> { ["Ncl6:1"] = "frostnova" }) });
+
+            Assert.Contains(Requires("AHtb", "Rhme", 2), lines);
+            Assert.Contains(Order("ANcl", "frostnova", false), lines);
+        }
+
+        [Fact]
         public void the_source_maps_abilities_are_read_from_its_object_files()
         {
             var ability = Assert.Single(DummyType.MapAbilities(TestFolders.Fixture("WorldEditorObjects")));

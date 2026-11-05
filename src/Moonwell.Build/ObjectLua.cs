@@ -404,8 +404,8 @@ namespace Moonwell.Build
 
         /// <summary>
         /// The shared fields the map's code may read of a type's default object, by kind (<c>unit</c>, <c>hero</c>, <c>item</c>): the
-        /// fields whose live members' getters the map's assembly names. Empty when the assembly names no <c>Default</c> nor
-        /// <c>Default&lt;T&gt;()</c>, so that a map that never reads one gets no table of the types' values.
+        /// fields whose live members' getters the map's assembly, or a library of its own, names. Empty when they name no
+        /// <c>Default</c> nor <c>Default&lt;T&gt;()</c>, so that a map that never reads one gets no table of the types' values.
         /// </summary>
         /// <param name="objects">The map's copy of <c>Moonwell.Objects</c>, whose kind bases carry the shared fields.</param>
         /// <param name="assemblyPath">The map assembly's file, whose metadata holds the member references.</param>
@@ -414,8 +414,9 @@ namespace Moonwell.Build
         {
             var getters = new HashSet<string>(StringComparer.Ordinal);
             var readsDefault = false;
-            using (var pe = new PEReader(new MemoryStream(File.ReadAllBytes(assemblyPath))))
+            foreach (var path in CompiledFiles.MapAssemblies(assemblyPath))
             {
+                using var pe = new PEReader(new MemoryStream(File.ReadAllBytes(path)));
                 var reader = pe.GetMetadataReader();
                 foreach (var handle in reader.MemberReferences)
                 {

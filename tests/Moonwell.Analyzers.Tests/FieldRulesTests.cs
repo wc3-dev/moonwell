@@ -97,6 +97,15 @@ public class FieldRulesTests
     }
 
     [Fact]
+    public void a_set_with_named_arguments_in_another_order_reads_them_by_name()
+    {
+        Assert.Empty(Messages(Bolt("""Set("acdn", value: 3f, level: 2);""")));
+        Assert.Equal(
+            new[] { "Bolt.Cooldown at level 2 is 3900; Cooldown (acdn) allows 0 to 3600; [BeyondLimits] goes past it" },
+            Messages(Bolt("""Set(value: 3900f, level: 2, field: "acdn");""")));
+    }
+
+    [Fact]
     public void set_with_levels_checks_each_level()
     {
         Assert.Equal(new[] { "MW0009: 3900f" }, Found(Bolt("""Set("acdn", Levels(1f, 3900f));""")));
