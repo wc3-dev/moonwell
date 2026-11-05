@@ -1053,9 +1053,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   `CommandButtons` and `ItemButtons`, each have `Visible`; with the whole HUD hidden, a piece set `Visible` shows again,
   but the item buttons do not come back (seen). The minimap, the command buttons and the item buttons also move,
   `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`. A map's frame ties itself to a piece with
-  `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`. The info panel, the chat
-  and the game's messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws
-  them wrong (seen).
+  `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`, with the label added by
+  `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The info panel, the chat and the game's
+  messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong (seen).
 - `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: the map's `.fdf` templates.
 
 ## Colours and text
