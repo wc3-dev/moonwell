@@ -137,7 +137,7 @@ public sealed partial class SyncAnalyzer
 
         /// <summary>
         /// The members an operation calls or touches: the one it names, and those it calls without naming them (an
-        /// operator, a user-defined conversion, a using's Dispose, a foreach's enumerator). A compound assignment or an
+        /// operator, a user-defined conversion, a using's Dispose, a foreach's enumerator, a Deconstruct). A compound assignment or an
         /// increment of a property reads it and writes it.
         /// </summary>
         private IEnumerable<Reach> Targets(IOperation operation)
@@ -194,7 +194,25 @@ public sealed partial class SyncAnalyzer
                     }
 
                     break;
+                case IDeconstructionAssignmentOperation { Syntax: AssignmentExpressionSyntax assignment } deconstruction:
+                    foreach (var deconstruct in Deconstructs(deconstruction.SemanticModel!.GetDeconstructionInfo(assignment)))
+                    {
+                        yield return deconstruct;
+                    }
+
+                    break;
+                case IRecursivePatternOperation { DeconstructSymbol: IMethodSymbol deconstructs } pattern:
+                    yield return new Reach(deconstructs, false, pattern.MatchedType, true);
+                    break;
                 case IForEachLoopOperation { Syntax: CommonForEachStatementSyntax syntax } loop:
+                    if (syntax is ForEachVariableStatementSyntax variables)
+                    {
+                        foreach (var deconstruct in Deconstructs(loop.SemanticModel!.GetDeconstructionInfo(variables)))
+                        {
+                            yield return deconstruct;
+                        }
+                    }
+
                     var info = loop.SemanticModel!.GetForEachStatementInfo(syntax);
                     var collection = Unwrap(loop.Collection).Type;
                     foreach (var method in new[] { info.GetEnumeratorMethod, info.MoveNextMethod, info.CurrentProperty?.GetMethod, info.DisposeMethod })
@@ -228,6 +246,23 @@ public sealed partial class SyncAnalyzer
             }
 
             return up.Parent is IDeconstructionAssignmentOperation assignment && assignment.Target == up;
+        }
+
+        /// <summary>The Deconstruct methods a deconstruction calls, at any depth of tuples.</summary>
+        private static IEnumerable<Reach> Deconstructs(DeconstructionInfo info)
+        {
+            if (info.Method != null)
+            {
+                yield return new Reach(info.Method, false, null, true);
+            }
+
+            foreach (var nested in info.Nested)
+            {
+                foreach (var reach in Deconstructs(nested))
+                {
+                    yield return reach;
+                }
+            }
         }
 
         /// <summary>The Dispose a using calls for each of its resources.</summary>
@@ -275,6 +310,11 @@ public sealed partial class SyncAnalyzer
             if (operation is IInvocationOperation { TargetMethod.MethodKind: MethodKind.DelegateInvoke, Instance: { } receiver } && !Followable(receiver))
             {
                 return new Finding(Unwrap(receiver).Syntax.ToString(), Unfollowed, true);
+            }
+
+            if (operation is IArgumentOperation { Parameter: { } parameter } argument && MayRun(parameter) && !Followable(argument.Value))
+            {
+                return new Finding(Unwrap(argument.Value).Syntax.ToString(), Unfollowed, true);
             }
 
             return null;
@@ -625,7 +665,7 @@ public sealed partial class SyncAnalyzer
                 walk.Code.Add(syntax);
                 foreach (var inner in body.DescendantsAndSelf())
                 {
-                    if ((found = Written(inner, walk) ?? Reaches(inner, walk)) != null)
+                    if ((found = Written(inner, walk) ?? Reaches(inner, walk) ?? (node is Values ? Given(inner, walk) : null)) != null)
                     {
                         break;
                     }
@@ -716,6 +756,16 @@ public sealed partial class SyncAnalyzer
         /// <summary>The delegates given to a variable (in its body), or to a field, property or event (anywhere in the map): initializers and assignments.</summary>
         private IEnumerable<SyntaxNode> ValuesOf(ISymbol slot)
         {
+            if (slot is IParameterSymbol parameter)
+            {
+                return given.GetOrAdd(parameter, Arguments) ?? Enumerable.Empty<SyntaxNode>();
+            }
+
+            return ValuesKept(slot);
+        }
+
+        private IEnumerable<SyntaxNode> ValuesKept(ISymbol slot)
+        {
             if (slot is ILocalSymbol local)
             {
                 foreach (var reference in local.DeclaringSyntaxReferences)
@@ -757,6 +807,111 @@ public sealed partial class SyncAnalyzer
         // The body a local is declared in.
         private static SyntaxNode? BodyOf(SyntaxNode declarator) =>
             declarator.Ancestors().FirstOrDefault(a => a is BaseMethodDeclarationSyntax or AccessorDeclarationSyntax or LocalFunctionStatementSyntax or AnonymousFunctionExpressionSyntax or GlobalStatementSyntax);
+
+        /// <summary>
+        /// What a delegate parameter that a kept delegate reads may run: the arguments every call of its method gives it, since
+        /// the delegate kept may be any of them. A parameter that ends in Local.For, whose arguments are checked as blocks, is
+        /// left out.
+        /// </summary>
+        private Finding? Given(IOperation operation, Walk walk)
+        {
+            if (operation is not IParameterReferenceOperation { Parameter: { Type.TypeKind: TypeKind.Delegate } parameter }
+                || parameter.ContainingSymbol is not IMethodSymbol { MethodKind: not MethodKind.AnonymousFunction } method || !IsMap(method)
+                || localParameters.Value.Contains(parameter.OriginalDefinition))
+            {
+                return null;
+            }
+
+            parameter = parameter.OriginalDefinition;
+            if (given.GetOrAdd(parameter, Arguments) == null)
+            {
+                return new Finding(parameter.Name, Unfollowed, true);
+            }
+
+            return FollowValues(parameter, walk)?.Through(Name(parameter));
+        }
+
+        /// <summary>
+        /// The arguments the map's calls give a parameter, a default value left out; null when they cannot all be seen: its
+        /// method overrides or implements another, whose callers run it too, or is named without being called.
+        /// </summary>
+        private List<SyntaxNode>? Arguments(IParameterSymbol parameter)
+        {
+            var method = (IMethodSymbol)parameter.ContainingSymbol;
+            if (method.IsOverride || Implemented(method).Any())
+            {
+                return null;
+            }
+
+            var constructor = method.MethodKind == MethodKind.Constructor;
+            var name = constructor ? method.ContainingType.Name : method.Name;
+            var found = new List<SyntaxNode>();
+            foreach (var tree in compilation.SyntaxTrees)
+            {
+                SemanticModel? model = null;
+                foreach (var node in tree.GetRoot().DescendantNodes())
+                {
+                    var named = node switch
+                    {
+                        SimpleNameSyntax simple => simple.Identifier.ValueText == name,
+                        ImplicitObjectCreationExpressionSyntax or ConstructorInitializerSyntax or PrimaryConstructorBaseTypeSyntax => constructor,
+                        _ => false,
+                    };
+                    if (!named)
+                    {
+                        continue;
+                    }
+
+                    model ??= compilation.GetSemanticModel(tree);
+                    var whole = node is SimpleNameSyntax ? Qualified(node) : node;
+                    var call = node is SimpleNameSyntax ? whole.Parent switch
+                    {
+                        InvocationExpressionSyntax invocation when invocation.Expression == whole => invocation,
+                        ObjectCreationExpressionSyntax creation when creation.Type == whole => creation,
+                        _ => null,
+                    } : node;
+                    if (call == null)
+                    {
+                        if (model.GetOperation(whole) is IMethodReferenceOperation reference && SymbolEqualityComparer.Default.Equals(reference.Method.OriginalDefinition, method))
+                        {
+                            return null;
+                        }
+
+                        continue;
+                    }
+
+                    var arguments = model.GetOperation(call) switch
+                    {
+                        IInvocationOperation invocation when SymbolEqualityComparer.Default.Equals(invocation.TargetMethod.OriginalDefinition, method) => invocation.Arguments,
+                        IObjectCreationOperation creation when SymbolEqualityComparer.Default.Equals(creation.Constructor?.OriginalDefinition, method) => creation.Arguments,
+                        _ => System.Collections.Immutable.ImmutableArray<IArgumentOperation>.Empty,
+                    };
+                    foreach (var argument in arguments)
+                    {
+                        if (argument.ArgumentKind != ArgumentKind.DefaultValue && SymbolEqualityComparer.Default.Equals(argument.Parameter?.OriginalDefinition, parameter))
+                        {
+                            found.Add(argument.Value.Syntax);
+                        }
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        // A name with what it is a member of: a.Name or A.B.Name.
+        private static SyntaxNode Qualified(SyntaxNode name) =>
+            name.Parent is MemberAccessExpressionSyntax access && access.Name == name ? access
+            : name.Parent is QualifiedNameSyntax qualified && qualified.Right == name ? qualified
+            : name;
+
+        /// <summary>
+        /// Whether a method may run the delegate given for a parameter: one of the map's, or of a library outside Moonwell,
+        /// whose parameter is a delegate in its own declaration (not a T that is one here, as a list's Add).
+        /// </summary>
+        private bool MayRun(IParameterSymbol parameter) =>
+            parameter.OriginalDefinition.Type.TypeKind == TypeKind.Delegate && parameter.ContainingSymbol is IMethodSymbol method
+            && (IsMap(method) || !IsMoonwell(method)) && !RunsItsActionLocally(method);
 
         private static bool IsGiven(AssignmentExpressionSyntax assignment) =>
             assignment.IsKind(SyntaxKind.SimpleAssignmentExpression) || assignment.IsKind(SyntaxKind.AddAssignmentExpression) || assignment.IsKind(SyntaxKind.CoalesceAssignmentExpression);
@@ -849,8 +1004,10 @@ public sealed partial class SyncAnalyzer
 
                         value = accessed;
                         continue;
-                    case IAnonymousFunctionOperation or IMethodReferenceOperation or ILocalReferenceOperation or IDefaultValueOperation:
+                    case IAnonymousFunctionOperation or IMethodReferenceOperation or IDefaultValueOperation:
                         return true;
+                    case ILocalReferenceOperation local:
+                        return SeesEveryValue(local.Local);
                     case ILiteralOperation literal:
                         return literal.ConstantValue.HasValue && literal.ConstantValue.Value == null;
                     case IParameterReferenceOperation parameter:
@@ -871,6 +1028,48 @@ public sealed partial class SyncAnalyzer
                         return false;
                 }
             }
+        }
+
+        /// <summary>
+        /// Whether every value a local gets is one ValuesOf reads: it is declared with a declarator (not by a foreach, an out
+        /// var, a pattern or a deconstruction), and nothing gives it a value as an out or ref argument or in a deconstruction.
+        /// </summary>
+        private bool SeesEveryValue(ILocalSymbol local)
+        {
+            if (local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not VariableDeclaratorSyntax declarator)
+            {
+                return false;
+            }
+
+            if (BodyOf(declarator) is not { } body)
+            {
+                return true;
+            }
+
+            var model = compilation.GetSemanticModel(declarator.SyntaxTree);
+            foreach (var name in body.DescendantNodes().OfType<IdentifierNameSyntax>())
+            {
+                if (name.Identifier.ValueText == local.Name && name.Parent is ArgumentSyntax argument
+                    && (argument.RefKindKeyword.RawKind != 0 || argument.Parent is TupleExpressionSyntax tuple && IsDeconstructed(tuple))
+                    && SymbolEqualityComparer.Default.Equals(model.GetSymbolInfo(name).Symbol, local))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Whether a tuple's syntax is what a deconstruction assigns to.
+        private static bool IsDeconstructed(TupleExpressionSyntax tuple)
+        {
+            SyntaxNode up = tuple;
+            while (up.Parent is ArgumentSyntax { Parent: TupleExpressionSyntax outer })
+            {
+                up = outer;
+            }
+
+            return up.Parent is AssignmentExpressionSyntax assignment && assignment.Left == up;
         }
 
         // The value a ?. reads.
@@ -968,6 +1167,7 @@ public sealed partial class SyncAnalyzer
         {
             ISymbol? named = null;
             var inStruct = false;
+            var passed = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
             for (var at = target; at != null;)
             {
                 switch (at)
@@ -995,7 +1195,8 @@ public sealed partial class SyncAnalyzer
                             return Shared(isStruct || named == null ? variable : named);
                         }
 
-                        if (isStruct)
+                        // A local that is its own value (only error CS0165) ends the way.
+                        if (isStruct || !passed.Add(variable))
                         {
                             return null;
                         }
@@ -1217,7 +1418,7 @@ public sealed partial class SyncAnalyzer
                 SemanticModel? model = null;
                 foreach (var syntax in tree.GetRoot().DescendantNodes().OfType<ParameterSyntax>())
                 {
-                    if (syntax.Parent?.Parent is not (BaseMethodDeclarationSyntax or LocalFunctionStatementSyntax) || syntax.Type == null)
+                    if (syntax.Parent?.Parent is not (BaseMethodDeclarationSyntax or LocalFunctionStatementSyntax or TypeDeclarationSyntax) || syntax.Type == null)
                     {
                         continue;
                     }
@@ -1289,18 +1490,44 @@ public sealed partial class SyncAnalyzer
             }
 
             if (operation is IArgumentOperation { Parameter: { } parameter } argument && parameter.Type.TypeKind == TypeKind.Delegate
-                && (IsLocalForAction(parameter) || localParameters.Value.Contains(parameter.OriginalDefinition)) && !Followable(argument.Value))
+                && (IsLocalForAction(parameter) || localParameters.Value.Contains(parameter.OriginalDefinition) || (MayRun(parameter) && IsLocal(operation, context.ContainingSymbol)))
+                && !Followable(argument.Value))
             {
                 var value = Unwrap(argument.Value).Syntax;
                 context.ReportDiagnostic(Diagnostic.Create(Rules.Unfollowed, value.GetLocation(), new Finding(value.ToString(), Unfollowed, true).Message(value.ToString())));
             }
 
             if (operation is IParameterReferenceOperation reference && localParameters.Value.Contains(reference.Parameter.OriginalDefinition)
-                && reference.Syntax is ExpressionSyntax name && IsCalled(name) && !IsLocal(operation, context.ContainingSymbol))
+                && reference.Syntax is ExpressionSyntax name && !IsLocal(operation, context.ContainingSymbol))
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rules.OneMachineCode, reference.Syntax.GetLocation(), reference.Parameter.Name,
-                    "is given to Local.For, so the code given for it is checked as code of one machine, and here it runs on every machine; call it only inside Local.For"));
+                var where = IsCalled(name) ? "here it runs on every machine; call it only inside Local.For"
+                    : IsPassedOn(reference) ? "here it is passed on to code that may run it on every machine; pass it only to Local.For"
+                    : null;
+                if (where != null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Rules.OneMachineCode, reference.Syntax.GetLocation(), reference.Parameter.Name,
+                        "is given to Local.For, so the code given for it is checked as code of one machine, and " + where));
+                }
             }
+        }
+
+        /// <summary>Whether a delegate leaves for other code: given as an argument, kept in a field, property or event, or returned. A local it is kept in is left alone.</summary>
+        private static bool IsPassedOn(IOperation value)
+        {
+            var up = value.Parent;
+            while (up is IConversionOperation or IDelegateCreationOperation)
+            {
+                value = up;
+                up = up.Parent;
+            }
+
+            return up switch
+            {
+                IArgumentOperation or IReturnOperation or IFieldInitializerOperation or IPropertyInitializerOperation => true,
+                IAssignmentOperation assignment => assignment.Value == value && assignment.Target is not ILocalReferenceOperation,
+                IEventAssignmentOperation handler => handler.HandlerValue == value,
+                _ => false,
+            };
         }
 
         /// <summary>MW0040 for [MachineLocal] on an override or an interface implementation, which is called on every machine.</summary>
