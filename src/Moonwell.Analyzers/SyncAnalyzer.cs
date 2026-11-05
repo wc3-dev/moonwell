@@ -78,10 +78,10 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         private readonly ConcurrentDictionary<object, Finding?> followed = new(new NodeComparer());
 
         /// <summary>The map's overrides and implementations of each method, found once.</summary>
-        private readonly Lazy<Dictionary<IMethodSymbol, List<IMethodSymbol>>> overriders;
+        private readonly Lazy<Dictionary<IMethodSymbol, List<(IMethodSymbol Runs, INamedTypeSymbol In)>>> overriders;
 
         /// <summary>The delegates given to each delegate field, property and event of the map, found once.</summary>
-        private readonly Lazy<Dictionary<ISymbol, List<SyntaxNode>>> memberValues;
+        private readonly Lazy<(Dictionary<ISymbol, List<SyntaxNode>> Values, HashSet<ISymbol> Unseen)> memberValues;
 
         /// <summary>The delegate parameters whose delegate runs on one machine, found once.</summary>
         private readonly Lazy<HashSet<IParameterSymbol>> localParameters;
@@ -149,9 +149,11 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         public void Call(OperationAnalysisContext context)
         {
             var operation = context.Operation;
-            var reach = Targets(operation).FirstOrDefault();
+            var reaches = Targets(operation).ToList();
+            var reach = reaches.FirstOrDefault();
             var member = reach.Member;
-            var write = reach.Write;
+            // A compound or ??= assignment and an increment read the property too.
+            var write = reaches.All(r => r.Write);
             if (member == null || Silenced(operation, context.ContainingSymbol))
             {
                 return;

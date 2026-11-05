@@ -745,4 +745,45 @@ public class LocalWriteTests
                 public static void Bump() { Score++; }
             """));
     }
+
+    [Fact]
+    public void a_call_through_two_conditional_accesses_ends_and_lands_in_the_first_shared_field()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => Holder?.Items?.Add(1));
+            """, """
+                public static Panel? Holder;
+                public sealed class Panel { public List<int>? Items; }
+            """);
+
+        Assert.Equal(new[] { "MW0048: .Items" }, found);
+    }
+
+    [Fact]
+    public void a_write_through_a_ref_local_lands_in_what_it_refers_to()
+    {
+        var found = MapCode.Check("""
+            var outside = 0;
+            Local.For(p, () =>
+            {
+                ref int r = ref Score;
+                r++;
+                r = 5;
+                ref Pt v = ref At;
+                v.X = 1;
+                ref List<int> l = ref Scores;
+                l = new List<int>();
+                ref int c = ref Cells[0];
+                c = 1;
+                ref int o = ref outside;
+                o = 1;
+                var mine = 0;
+                ref int m = ref mine;
+                m++;
+            });
+            """, Shared);
+
+        Assert.Equal(new[] { "MW0048: r", "MW0048: r", "MW0048: v.X", "MW0048: l", "MW0048: c", "MW0048: o" }, found);
+        Assert.StartsWith("'Code.Score' is changed", MapCode.Message("Local.For(p, () => { ref int r = ref Score; r++; });", "public static int Score;"));
+    }
 }

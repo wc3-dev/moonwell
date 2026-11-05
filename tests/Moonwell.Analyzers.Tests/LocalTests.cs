@@ -956,4 +956,19 @@ public class LocalTests
             });
             """));
     }
+
+    [Fact]
+    public void a_compound_or_coalescing_write_of_a_name_outside_local_for_is_mw0002()
+    {
+        var found = MapCode.Check("""
+            var unit = Unit.Of(u)!;
+            var hero = (Hero)Unit.Of(u)!;
+            unit.Name += " the Brave";
+            hero.ProperName += "!";
+            unit.Name ??= "x";
+            unit.Name = "x";
+            """);
+
+        Assert.Equal(new[] { "MW0002: unit.Name", "MW0002: hero.ProperName", "MW0002: unit.Name" }, found);
+    }
 }

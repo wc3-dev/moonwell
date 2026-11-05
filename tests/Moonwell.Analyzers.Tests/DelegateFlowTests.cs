@@ -160,4 +160,40 @@ public class DelegateFlowTests
 
         Assert.Empty(found);
     }
+
+    [Fact]
+    public void a_delegate_given_by_deconstruction_or_an_out_argument_is_followed()
+    {
+        var found = MapCode.Check(
+            """
+            (Cb, _) = ((Action)(() => Natives.KillUnit(u)), 0);
+            Local.For(p, () => Cb());
+            Make(out Given);
+            Local.For(p, () => Given());
+            """,
+            """
+                private static Action Cb = () => { };
+                private static Action Given = () => { };
+                private static void Make(out Action a) { a = () => Natives.KillUnit(Natives.GetTriggerUnit()); }
+            """);
+
+        Assert.Equal(new[] { "MW0039: Cb()", "MW0039: Given()" }, found);
+    }
+
+    [Fact]
+    public void a_returned_delegate_the_analyzer_cannot_follow_is_mw0039()
+    {
+        var found = MapCode.Check(
+            """
+            Local.For(p, Pick());
+            Local.For(p, Kill());
+            """,
+            """
+                private static List<Action> Handlers = new List<Action>();
+                private static Action Pick() => Handlers[0];
+                private static Action Kill() => () => Natives.KillUnit(Natives.GetTriggerUnit());
+            """);
+
+        Assert.Equal(new[] { "MW0039: Pick()", "MW0001: Kill()" }, found);
+    }
 }
