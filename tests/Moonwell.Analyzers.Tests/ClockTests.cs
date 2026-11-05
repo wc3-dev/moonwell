@@ -153,4 +153,52 @@ public class ClockTests
                 }
             """));
     }
+
+    [Fact]
+    public void a_handle_joined_with_plus_equals_or_filled_into_a_handlers_hole_is_mw0002()
+    {
+        var found = MapCode.Check("""
+            string log = "hit ";
+            log += u;
+            log += 1;
+            var text = new System.Text.StringBuilder();
+            text.Append($"{u} and {1}");
+            Local.For(p, () => { var mine = "a"; mine += u; new System.Text.StringBuilder().Append($"{u}"); });
+            """);
+
+        Assert.Equal(new[] { "MW0002: u", "MW0002: u" }, found);
+    }
+
+    [Fact]
+    public void a_class_of_random_that_gives_no_seed_is_mw0038()
+    {
+        var found = MapCode.CheckFile("""
+            namespace Map
+            {
+                public sealed class Dice : System.Random
+                {
+                }
+
+                public sealed class Dice2 : System.Random
+                {
+                    public Dice2() { }
+
+                    public Dice2(int seed) : base(seed) { }
+
+                    public Dice2(string name) : this(name.Length) { }
+                }
+
+                public sealed class Dice3 : System.Random
+                {
+                    public Dice3() : base() { }
+                }
+
+                public sealed class Seeded(int seed) : System.Random(seed)
+                {
+                }
+            }
+            """);
+
+        Assert.Equal(new[] { "MW0038: Dice", "MW0038: Dice2", "MW0038: Dice3" }, found);
+    }
 }

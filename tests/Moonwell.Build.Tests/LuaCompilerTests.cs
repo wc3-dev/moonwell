@@ -105,6 +105,71 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void the_lua_compiles_what_dotnet_build_compiled()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            var csproj = Path.Combine(folder, "Sample.csproj");
+            File.WriteAllText(csproj, File.ReadAllText(csproj)
+                .Replace("</ImplicitUsings>", "</ImplicitUsings>\n    <DefineConstants>$(DefineConstants);CHEATS</DefineConstants>", StringComparison.Ordinal)
+                .Replace("<Compile Remove=\"build/**\" />", "<Compile Remove=\"build/**\" />\n    <Compile Remove=\"Tools/**\" />", StringComparison.Ordinal));
+            const string Cheats = """
+                namespace Sample
+                {
+                    public static class Cheats
+                    {
+                        public static void Show()
+                        {
+                #if CHEATS
+                            Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, "symbols: cheats");
+                #endif
+                #if NET10_0_OR_GREATER
+                            Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, "symbols: net");
+                #endif
+                #if RELEASE
+                            Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, "air " + (int)Moonwell.Objects.Targets.Air);
+                #endif
+                #if __CSharpLua__
+                            Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, nameof(Moonwell.Objects.Human.Units.Paladin.GoldCost));
+                #endif
+                        }
+                    }
+                }
+                """;
+            File.WriteAllText(Path.Combine(folder, "Cheats.cs"), Cheats);
+
+            // Copies dotnet build leaves out: a hidden folder's and one the project removes.
+            foreach (var copy in new[] { ".history/Cheats_20261105.cs", "Tools/Cheats.cs" })
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(folder, copy))!);
+                File.WriteAllText(Path.Combine(folder, copy), Cheats);
+            }
+
+            // Not UTF-8: the compiler reads it in the ANSI code page.
+            File.WriteAllBytes(Path.Combine(folder, "Names.cs"), System.Text.CodePagesEncodingProvider.Instance.GetEncoding(1252)!.GetBytes(
+                "namespace Sample { public static class Names { public static void Show() { Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, \"symbols: \u00C5sa\"); } } }"));
+
+            foreach (var release in new[] { false, true })
+            {
+                var log = new StringWriter();
+                try
+                {
+                    MapBuild.Run(folder, new BuildOptions { Release = release }, log);
+                }
+                catch (BuildException failure)
+                {
+                    throw new Xunit.Sdk.XunitException(failure.Message + "\n" + log);
+                }
+
+                var script = File.ReadAllText(Path.Combine(folder, "build", "Sample", "war3map.lua"));
+                Assert.Contains("\"symbols: cheats\"", script);
+                Assert.Contains("\"symbols: net\"", script);
+                Assert.Contains("\"symbols: \u00C5sa\"", script);
+                Assert.Equal(release, script.Contains("\"air \"", StringComparison.Ordinal));
+                Assert.Matches(@"/\*\[\[--@mw \d+:\d+\]\]\*/ Moonwell\.Natives\.DisplayTextToPlayer\([^\n]*""symbols: cheats""", File.ReadAllText(Path.Combine(folder, "build", "marked", "Cheats.cs")));
+            }
+        }
+
+        [Fact]
         public void development_script_has_line_table()
         {
             AssertLineTable(builds.Development.Script);

@@ -72,6 +72,44 @@ namespace Moonwell.Build.Tests
             }
             """;
 
+        // A part in a project whose name starts with Moonwell, an override that keeps its base's number, and a keyword's name.
+        private const string Shapes = """
+            using Moonwell;
+
+            namespace Sample
+            {
+                public sealed class Gear
+                {
+                    [Saved(1)] public int Id;
+                }
+
+                public abstract class Base : SaveGame
+                {
+                    [Saved(1)] public abstract int Level { get; set; }
+                    [Saved(2)] public virtual int Gold { get; set; }
+                }
+
+                public sealed class RpgSave : Base
+                {
+                    public override int Level { get; set; }
+                    public override int Gold { get; set; }
+                    [Saved(3)] public Gear? Weapon;
+                    [Saved(4)] public int @class;
+                }
+
+                public static class SaveRoundTrip
+                {
+                    public static string Run()
+                    {
+                        var save = new RpgSave { Level = 7, Gold = 50, Weapon = new Gear { Id = 3 }, @class = 2 };
+                        SaveGame.Save(Player.One, save);
+                        var back = SaveGame.FromCode<RpgSave>(Player.One, save.Code);
+                        return back == null ? "null" : back.Level + " " + back.Gold + " " + back.Weapon!.Id + " " + back.@class;
+                    }
+                }
+            }
+            """;
+
         private readonly SampleBuilds builds;
         private readonly TestFolders folders;
 
@@ -100,16 +138,33 @@ namespace Moonwell.Build.Tests
             Assert.Contains(SaveCodecWriter.Install, File.ReadAllText(Path.Combine(project, "build", "generated", "MapMain.g.cs")));
             Assert.Contains("- 7 part", File.ReadAllText(Path.Combine(project, SaveRecord.FileName)));
 
-            var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
+            Assert.Equal("7 Åsa 1 True b 1793664000 axe 4 10 True", RoundTrip(Path.Combine(project, "build", "Sample", "war3map.lua"), "Sample"));
+        }
+
+        [Fact]
+        public void a_part_an_override_and_a_keyword_save_in_a_project_named_moonwell()
+        {
+            var project = WithSaves("SaveKey = \"the tests' key\";", Shapes);
+            var csproj = Path.Combine(project, "Sample.csproj");
+            File.WriteAllText(csproj, File.ReadAllText(csproj).Replace("</ImplicitUsings>", "</ImplicitUsings>\n    <AssemblyName>MoonwellSample</AssemblyName>", StringComparison.Ordinal));
+
+            Build(project);
+
+            Assert.Equal("7 50 3 2", RoundTrip(Path.Combine(project, "build", "Sample", "war3map.lua"), "Sample"));
+        }
+
+        /// <summary>Runs the built map's main, registers its saves and gives what <c>SaveRoundTrip.Run</c> in the namespace returns.</summary>
+        internal static string RoundTrip(string scriptPath, string ns)
+        {
             using var lua = new NLua.Lua();
             lua.State.Encoding = System.Text.Encoding.UTF8;
             lua.DoString("print = function() end");
             lua.DoString("GetPlayerName = function() return 'Local Player' end");
             lua.DoString("setmetatable(_G, { __index = function(_, name) return function() return nil end end })");
-            lua.DoString(script);
+            lua.DoString(File.ReadAllText(scriptPath));
             lua.DoString("main()");
             lua.DoString("Moonwell.Generated.SaveData.Register()");
-            Assert.Equal("7 Åsa 1 True b 1793664000 axe 4 10 True", (string)lua.DoString("return Sample.SaveRoundTrip.Run()")[0]);
+            return (string)lua.DoString($"return {ns}.SaveRoundTrip.Run()")[0];
         }
 
         [Fact]
@@ -135,10 +190,10 @@ namespace Moonwell.Build.Tests
             Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName(builds.Development.BuildFolder)!, SaveRecord.FileName)));
         }
 
-        private string WithSaves(string key)
+        private string WithSaves(string key, string saves = Saves)
         {
             var project = folders.TemporaryCopyOf("Sample");
-            File.WriteAllText(Path.Combine(project, "Saves.cs"), Saves);
+            File.WriteAllText(Path.Combine(project, "Saves.cs"), saves);
             var map = Path.Combine(project, "Map.cs");
             File.WriteAllText(map, File.ReadAllText(map).Replace("Name = \"Sample map\";", "Name = \"Sample map\";\n            " + key));
             return project;

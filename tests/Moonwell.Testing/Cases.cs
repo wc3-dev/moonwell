@@ -268,6 +268,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "log.file-keeps-last-lines", Run = LogCases.KeepsLastLines });
             list.Add(new Case { Name = "log.file-splits-long-lines", Run = LogCases.SplitsLongLines });
             list.Add(new Case { Name = "log.file-splits-between-letters", Run = LogCases.SplitsBetweenLetters });
+            list.Add(new Case { Name = "log.file-splits-letters-of-two-bytes", Run = LogCases.SplitsLettersOfTwoBytes });
+            list.Add(new Case { Name = "log.file-splits-with-no-letter-start", Run = LogCases.SplitsWithNoLetterStart });
             list.Add(new Case { Name = "log.file-writes-at-most-once-a-second", Run = LogCases.WritesAtMostOnceASecond });
         }
 

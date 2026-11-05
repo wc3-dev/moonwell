@@ -27,16 +27,16 @@ namespace Moonwell.Build
             var member = method.Substring(dot + 1);
             var known = new HashSet<string>(names, StringComparer.Ordinal);
 
-            var files = CompiledFiles.Sources(project.Folder, project.BuildFolder)
+            var files = CompiledFiles.Sources(project, project.BuildFolder)
                 .Select(path => (Path: path, Relative: Path.GetRelativePath(project.Folder, path).Replace('\\', '/')))
                 .OrderBy(file => file.Relative, StringComparer.Ordinal);
             foreach (var file in files)
             {
-                var source = File.ReadAllText(file.Path);
+                var source = CompiledFiles.ReadSource(file.Path);
                 var wrong = new SortedSet<(int Line, string Name)>();
 
-                // The code CSharp.lua compiles has MOONWELL_LUA, and a debug build DEBUG too; each set is looked at.
-                foreach (var symbols in new[] { new[] { "MOONWELL_LUA", "DEBUG" }, new[] { "MOONWELL_LUA" } })
+                // The code CSharp.lua compiles in this kind of build and in the other is looked at.
+                foreach (var symbols in new[] { CompiledFiles.LuaSymbols(project), CompiledFiles.OtherKind(CompiledFiles.LuaSymbols(project)) })
                 {
                     var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols(symbols);
                     var tree = CSharpSyntaxTree.ParseText(source, options);

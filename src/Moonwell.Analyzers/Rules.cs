@@ -48,7 +48,7 @@ public static class Rules
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "In the game's Lua a Dictionary or HashSet gives its items in no fixed order. Lookups are fine; loops are not: foreach, LINQ, CopyTo, a copy into a list, and a Dictionary or HashSet held as an IEnumerable, ICollection or IReadOnlyCollection. A foreach or LINQ through IDictionary, IReadOnlyDictionary, ISet or IReadOnlySet (or their Keys and Values) is one too, since in a map only a Dictionary or a HashSet implements them." + Silence);
+        description: "In the game's Lua a Dictionary or HashSet gives its items in no fixed order. Lookups are fine; loops are not: foreach, LINQ, CopyTo, a copy into a list, a spread into a collection expression ([.. set]), and a Dictionary or HashSet held as an IEnumerable, ICollection or IReadOnlyCollection. A foreach or LINQ through IDictionary, IReadOnlyDictionary, ISet or IReadOnlySet (or their Keys and Values) is one too, since in a map only a Dictionary or a HashSet implements them." + Silence);
 
     public static readonly DiagnosticDescriptor NumberType = new(
         "MW0005",
@@ -75,7 +75,7 @@ public static class Rules
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "CSharp.lua's Random without a seed calls math.randomseed(os.time()) and then math.random. In the game math.random is the game's own synced generator (seen 2026-10-26), so each machine reseeds it with its own clock, and every GetRandomInt after it differs between machines, wherever the Random was made. new Random(seed) is computed in Lua alone, so it gives the same numbers on every machine when the seed is the same (one from Natives.GetRandomInt is)." + Silence);
+        description: "CSharp.lua's Random without a seed calls math.randomseed(os.time()) and then math.random. In the game math.random is the game's own synced generator (seen 2026-10-26), so each machine reseeds it with its own clock, and every GetRandomInt after it differs between machines, wherever the Random was made. new Random(seed) is computed in Lua alone, so it gives the same numbers on every machine when the seed is the same (one from Natives.GetRandomInt is). A class of Random's whose constructor calls base() or leaves the base call out has no seed either." + Silence);
 
     public static readonly DiagnosticDescriptor Unfollowed = new(
         "MW0039",
@@ -102,7 +102,7 @@ public static class Rules
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "Code inside Local.For or a [MachineLocal] method, and the map's methods it calls, runs on one player's machine, so what it changes that lasts after it differs from the other machines. The rule rejects a write (=, +=, ??=, ++, ref, out, a tuple's assignment) to a field or auto-property of the map or to a local or parameter from outside the block, adding to an event of the map, and a call that changes one's value: an element set, and Add, Remove, Clear and the like on .NET's collections, an array, a StringBuilder, a Random, an OrderedMap or an OrderedSet. [MachineLocal] on a field or auto-property makes it one machine's: code of one machine writes it, and any read elsewhere is MW0002, though a plain = is allowed there. A local or an event cannot be marked. What is made in the block is free: a constructor writing its own object, a static constructor its own class, an object initializer, a local holding only a new from the block, and a struct in a local of the block. A method called on a new object is still checked, since a method is checked once and not for each object. A collection assigned to a local later, given as a parameter, or returned by a method or a property with a body is not seen." + Silence);
+        description: "Code inside Local.For or a [MachineLocal] method, and the map's methods it calls, runs on one player's machine, so what it changes that lasts after it differs from the other machines. The rule rejects a write (=, +=, ??=, ++, ref, out, a tuple's assignment) to a field or auto-property of the map or to a local or parameter from outside the block, adding to an event of the map, subscribing to one of Moonwell's (a frame's Wheel), and a call that changes one's value: an element set, and Add, Remove, Clear and the like on .NET's collections, an array, a StringBuilder, a Random, an OrderedMap or an OrderedSet, and an array a library call fills (Array.Sort, CopyTo, a Random's Shuffle). [MachineLocal] on a field or auto-property makes it one machine's: code of one machine writes it, and any read elsewhere is MW0002, though a plain = is allowed there. A local or an event cannot be marked. What is made in the block is free: a constructor writing its own object (and an object it makes for one of its fields), a static constructor its own class, an object initializer, a local holding only a new from the block, and a struct in a local of the block. A method called on a new object is still checked, since a method is checked once and not for each object. A collection assigned to a local later, given as a parameter, or returned by a method or a property with a body is not seen." + Silence);
 
     public static ImmutableArray<DiagnosticDescriptor> All { get; } =
         ImmutableArray.Create(StateInLocal, LocalOutside, HandleId, HashLoop, NumberType, Desyncs, UnseededRandom, Unfollowed, OneMachineCode, SharedWrite);
@@ -218,7 +218,7 @@ public static class Rules
         "Scopes",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "What code makes belongs to the scope named where it is made (decision 81). A player is a scope, as every actor is, but it never ends during a game, so Game.Instance does the same, and a player there is most often meant as the owner: Gizmo.Create(gizmo, x, y, scope, owner) and Missile.Create(missile, x, y, z, scope, owner) take the owning player after the scope, and the compiler cannot tell the two apart. The rule checks the scope and heldBy arguments of Moonwell's methods (Create, Fire, Interact, Add, Apply) and what a scope's After and Every are called on; a player held in a variable typed Scope is not seen.");
+        description: "What code makes belongs to the scope named where it is made (decision 81). A player is a scope, as every actor is, but it never ends during a game, so Game.Instance does the same, and a player there is most often meant as the owner: Gizmo.Create(gizmo, x, y, scope, owner) and Missile.Create(missile, x, y, z, scope, owner) take the owning player after the scope, and the compiler cannot tell the two apart. The rule checks the scope and heldBy arguments of Moonwell's methods (Create, Fire, Interact, Add, Apply) and what a scope's own methods (After, Every, ReadFile, Share, Command and Load) are called on; a player held in a variable typed Scope is not seen.");
 
     /// <summary>The rules for the scopes code makes things in.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Scopes { get; } = ImmutableArray.Create(PlayerScope);

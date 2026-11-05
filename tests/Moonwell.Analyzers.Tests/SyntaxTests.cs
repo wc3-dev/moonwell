@@ -21,11 +21,22 @@ public class SyntaxTests
     // MW0025: ref
     [InlineData("MW0025", "var a = new[] { 1, 2 }; ref int r = ref First(a);", "ref First(a)", "static ref int First(int[] a) => ref a[0];")]
     [InlineData("MW0025", "int x = 1, y = 2; ref int r = ref x; r = ref y;", "r = ref y")]
+    [InlineData("MW0023", "", "static abstract implicit operator T(int v);", "interface IMade<T> where T : IMade<T> { static abstract implicit operator T(int v); }")]
+    [InlineData("MW0023", "", "static abstract event Action Changed;", "interface IHeard { static abstract event Action Changed; }")]
+    [InlineData("MW0025", "", "ref int", "delegate ref int Slot();")]
+    [InlineData("MW0025", "var a = new[] { 1 }; Slot2 first = () => ref a[0];", "ref a[0]", "delegate ref int Slot2();")]
+    [InlineData("MW0025", "var a = new[] { 1 }; var first = ref int () => ref a[0];", "ref int")]
     // MW0028: char or enum given to an object parameter of a library method other than string's, Console's and StringBuilder's
     [InlineData("MW0028", "var w = new System.IO.StringWriter(); w.Write(Color.Green);", "Color.Green")]
     [InlineData("MW0028", "var s = string.Join(\",\", new[] { Color.Red, Color.Blue });", "new[] { Color.Red, Color.Blue }")]
+    [InlineData("MW0028", "var shown = new Queue<Color>(); var s = string.Join(\",\", shown);", "shown")]
+    [InlineData("MW0028", "var shown = new OrderedSet<Color>(); var s = string.Join(\",\", shown);", "shown")]
     // MW0030: members the Lua core does not have (since CoreSystem 2.0.3-moonwell.9)
     [InlineData("MW0030", "var g = Guid.NewGuid();", "Guid")]
+    [InlineData("MW0030", "async void Go(IAsyncEnumerable<int> xs) { await foreach (var n in xs) { } }", "await")]
+    [InlineData("MW0030", "async void Go(IAsyncDisposable d) { await using (d) { } }", "await")]
+    [InlineData("MW0030", "async void Go(IAsyncDisposable d) { await using var e = d; }", "await")]
+    [InlineData("MW0030", "", "IAsyncEnumerable<int>", "static async IAsyncEnumerable<int> Numbers() { yield return 1; }")]
     [InlineData("MW0030", "var q = new[] { 1, 2 }.Shuffle();", "Shuffle")]
     [InlineData("MW0030", "var n = \"a\".Normalize();", "Normalize")]
     [InlineData("MW0030", "var ut = Enum.GetUnderlyingType(typeof(Color));", "GetUnderlyingType")]

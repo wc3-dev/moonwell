@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -31,8 +32,10 @@ public sealed class SpellBuffAnalyzer : DiagnosticAnalyzer
             // reported at the end for the classes listed.
             var listed = new ConcurrentDictionary<INamedTypeSymbol, bool>(SymbolEqualityComparer.Default);
             var found = new ConcurrentBag<(INamedTypeSymbol Type, Location Location, string Message)>();
+            var set = new ConcurrentBag<(INamedTypeSymbol Holder, Location Location, string Property)>();
             start.RegisterOperationAction(operation => Called(operation, listed, found), OperationKind.Invocation);
-            start.RegisterOperationAction(operation => Assigned(operation, found), OperationKind.SimpleAssignment);
+            start.RegisterOperationAction(operation => Assigned(operation, set),
+                OperationKind.SimpleAssignment, OperationKind.CompoundAssignment, OperationKind.CoalesceAssignment, OperationKind.DeconstructionAssignment);
             start.RegisterSymbolAction(symbol => Declared(symbol, listed, found), SymbolKind.NamedType);
             start.RegisterCompilationEndAction(end =>
             {
@@ -41,6 +44,18 @@ public sealed class SpellBuffAnalyzer : DiagnosticAnalyzer
                     if (listed.ContainsKey(one.Type))
                     {
                         end.ReportDiagnostic(Diagnostic.Create(Rules.SpellBuff, one.Location, one.Message));
+                    }
+                }
+
+                // A base class's constructor sets it on each listed class below it too: the first of them by name is named.
+                foreach (var one in set)
+                {
+                    var below = listed.Keys.Where(type => Below(type, one.Holder)).OrderBy(type => type.Name, StringComparer.Ordinal).FirstOrDefault();
+                    if (below != null)
+                    {
+                        var where = SymbolEqualityComparer.Default.Equals(below, one.Holder) ? string.Empty : ", which " + one.Holder.Name + " sets for it";
+                        end.ReportDiagnostic(Diagnostic.Create(Rules.SpellBuff, one.Location,
+                            "'" + below.Name + "' is a buff a spell lists, so the game decides its " + one.Property + where + ": the spell's duration, a second cast and death end it; a Tick of its own still works"));
                     }
                 }
             });
@@ -81,17 +96,42 @@ public sealed class SpellBuffAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    /// <summary>A buff class setting what the game decides for a listed one is gathered.</summary>
-    private static void Assigned(OperationAnalysisContext context, ConcurrentBag<(INamedTypeSymbol, Location, string)> found)
+    /// <summary>A buff class setting what the game decides, with =, +=, ??= or in a deconstruction, is gathered with the class whose code sets it.</summary>
+    private static void Assigned(OperationAnalysisContext context, ConcurrentBag<(INamedTypeSymbol, Location, string)> set)
     {
-        var assignment = (ISimpleAssignmentOperation)context.Operation;
-        if (assignment.Target is IPropertyReferenceOperation { Property: var property }
-            && GameDecides.Contains(property.Name) && property.ContainingType is { Name: "Buff" } owner && IsMoonwell(owner.ContainingAssembly)
-            && context.ContainingSymbol.ContainingType is INamedTypeSymbol type)
+        var assignment = (IAssignmentOperation)context.Operation;
+        if (context.ContainingSymbol.ContainingType is not INamedTypeSymbol type)
         {
-            found.Add((type, assignment.Syntax.GetLocation(),
-                "'" + type.Name + "' is a buff a spell lists, so the game decides its " + property.Name + ": the spell's duration, a second cast and death end it; a Tick of its own still works"));
+            return;
         }
+
+        var deconstructed = assignment is IDeconstructionAssignmentOperation;
+        foreach (var target in deconstructed ? Elements(assignment.Target) : new[] { assignment.Target })
+        {
+            if (target is IPropertyReferenceOperation { Property: var property }
+                && GameDecides.Contains(property.Name) && property.ContainingType is { Name: "Buff" } owner && IsMoonwell(owner.ContainingAssembly))
+            {
+                set.Add((type, (deconstructed ? target : assignment).Syntax.GetLocation(), property.Name));
+            }
+        }
+    }
+
+    // The items a deconstruction assigns to, in any depth of tuples.
+    private static IEnumerable<IOperation> Elements(IOperation target) =>
+        target is ITupleOperation tuple ? tuple.Elements.SelectMany(Elements) : new[] { target };
+
+    // Whether a class is another or derives from it.
+    private static bool Below(INamedTypeSymbol type, INamedTypeSymbol above)
+    {
+        for (var at = type; at != null; at = at.BaseType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(at.OriginalDefinition, above.OriginalDefinition))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>A [Replaces] buff class is listed by the standard spells; a buff class with no public constructor without parameters is gathered.</summary>

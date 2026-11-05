@@ -52,4 +52,20 @@ public class FrameTests
         Assert.Single(found);
         Assert.StartsWith("MW0002: ", found[0]);
     }
+
+    [Fact]
+    public void subscribing_inside_local_for_to_a_frame_from_a_property_or_a_method_is_refused()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => Shown.Wheel += (who, notches) => { });
+            Local.For(p, () => Find().Wheel += (who, notches) => { });
+            Local.For(p, () => { var mine = new Label(); mine.Wheel += (who, notches) => { }; });
+            """, """
+            private static Label kept = new Label();
+            private static Label Shown => kept;
+            private static Label Find() => kept;
+            """);
+
+        Assert.Equal(new[] { "MW0048: Shown.Wheel", "MW0048: Find().Wheel" }, found);
+    }
 }

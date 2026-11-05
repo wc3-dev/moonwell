@@ -28,23 +28,28 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             var checker = new Checker(start.Compilation);
             start.RegisterOperationAction(checker.Call,
                 OperationKind.Invocation, OperationKind.PropertyReference, OperationKind.MethodReference, OperationKind.ObjectCreation, OperationKind.FieldReference);
-            start.RegisterOperationAction(checker.Loop, OperationKind.Loop);
+            start.RegisterOperationAction(checker.Loop, OperationKind.Loop, OperationKind.Spread);
             start.RegisterOperationAction(checker.Conversion, OperationKind.Conversion);
             start.RegisterOperationAction(checker.Literal, OperationKind.Literal);
             start.RegisterOperationAction(checker.Declarator, OperationKind.VariableDeclarator);
-            start.RegisterOperationAction(checker.Text, OperationKind.Binary, OperationKind.Interpolation, OperationKind.Conversion);
+            start.RegisterOperationAction(checker.DeclaredLocal, OperationKind.LocalReference, OperationKind.DeclarationPattern, OperationKind.RecursivePattern);
+            start.RegisterOperationAction(checker.LocalFunction, OperationKind.LocalFunction);
+            start.RegisterOperationAction(checker.Text,
+                OperationKind.Binary, OperationKind.Interpolation, OperationKind.Conversion, OperationKind.CompoundAssignment, OperationKind.InterpolatedStringAppendFormatted);
             start.RegisterOperationAction(checker.Implicit,
                 OperationKind.Binary, OperationKind.Unary, OperationKind.CompoundAssignment, OperationKind.Increment, OperationKind.Decrement,
                 OperationKind.Conversion, OperationKind.Using, OperationKind.UsingDeclaration, OperationKind.Loop, OperationKind.LocalReference,
-                OperationKind.EventReference, OperationKind.DeconstructionAssignment, OperationKind.RecursivePattern);
-            start.RegisterOperationAction(checker.Delegates, OperationKind.Argument, OperationKind.ParameterReference);
+                OperationKind.EventReference, OperationKind.DeconstructionAssignment, OperationKind.RecursivePattern, OperationKind.CollectionExpression,
+                OperationKind.ImplicitIndexerReference);
+            start.RegisterOperationAction(checker.Delegates,
+                OperationKind.Argument, OperationKind.ParameterReference, OperationKind.SimpleAssignment, OperationKind.EventAssignment);
             start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument);
             start.RegisterOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
             start.RegisterOperationAction(checker.Write,
                 OperationKind.SimpleAssignment, OperationKind.CompoundAssignment, OperationKind.CoalesceAssignment, OperationKind.DeconstructionAssignment,
                 OperationKind.Increment, OperationKind.Decrement, OperationKind.EventAssignment, OperationKind.Argument, OperationKind.Invocation);
             start.RegisterSymbolAction(checker.Placement, SymbolKind.Method, SymbolKind.Property);
-            start.RegisterSymbolAction(checker.Declaration, SymbolKind.Field, SymbolKind.Property, SymbolKind.Method, SymbolKind.NamedType);
+            start.RegisterSymbolAction(checker.Declaration, SymbolKind.Field, SymbolKind.Property, SymbolKind.Method, SymbolKind.NamedType, SymbolKind.Event);
         });
     }
 
@@ -154,7 +159,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             var member = reach.Member;
             // A compound or ??= assignment and an increment read the property too.
             var write = reaches.All(r => r.Write);
-            if (member == null || Silenced(operation, context.ContainingSymbol))
+            if (member == null || Silenced(operation, context.ContainingSymbol) || InNameOf(operation))
             {
                 return;
             }
@@ -185,7 +190,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             {
                 ReportLocal(context, operation);
             }
-            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write) && !InNameOf(operation))
+            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write))
             {
                 // 0.2.2's Name read the declared name outside the constructor too; the message says where it is now.
                 var declared = member is IPropertySymbol { Name: "Name" } && IsRuntime(member) && member.ContainingType.Name == "Unit" ? "; the declared name is Default.Name" : string.Empty;
@@ -197,7 +202,11 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        /// <summary>MW0001 (or MW0039) for what Local.For reaches without a name: an operator, a conversion, a using's Dispose, a foreach's enumerator, a Deconstruct, and a delegate variable or event it runs.</summary>
+        /// <summary>
+        /// MW0001 (or MW0039) for what Local.For reaches without a name: an operator, a conversion, a using's Dispose, a
+        /// foreach's enumerator, a Deconstruct, a collection expression's constructor and Add, an indexer from the end, and a
+        /// delegate variable or event it runs.
+        /// </summary>
         public void Implicit(OperationAnalysisContext context)
         {
             var operation = context.Operation;
@@ -212,6 +221,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 IEventReferenceOperation => true,
                 IUsingOperation or IUsingDeclarationOperation or IForEachLoopOperation or IDeconstructionAssignmentOperation => true,
                 IRecursivePatternOperation pattern => pattern.DeconstructSymbol is IMethodSymbol,
+                ICollectionExpressionOperation or IImplicitIndexerReferenceOperation => true,
                 _ => false,
             };
             if (named && !Silenced(operation, context.ContainingSymbol) && IsLocal(operation, context.ContainingSymbol))
@@ -314,14 +324,20 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             return true;
         }
 
-        /// <summary>MW0002 for a handle turned into text outside Local.For: joined to a string, in an interpolation hole, or given as an object to a library method that writes text.</summary>
+        /// <summary>
+        /// MW0002 for a handle turned into text outside Local.For: joined to a string (with + or +=), in an interpolation
+        /// hole (also one an interpolated string handler fills, as StringBuilder.Append's), or given as an object to a library
+        /// method that writes text.
+        /// </summary>
         public void Text(OperationAnalysisContext context)
         {
             var operation = context.Operation;
             var values = operation switch
             {
                 IBinaryOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String } add => new[] { add.LeftOperand, add.RightOperand },
+                ICompoundAssignmentOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String } joined => new[] { joined.Value },
                 IInterpolationOperation hole => new[] { hole.Expression },
+                IInterpolatedStringAppendOperation { AppendCall: IInvocationOperation { Arguments.Length: > 0 } append } => new[] { append.Arguments[0].Value },
                 IConversionOperation { Type.SpecialType: SpecialType.System_Object } conversion when WritesText(conversion) => new[] { conversion.Operand },
                 _ => new IOperation[0],
             };
@@ -429,13 +445,12 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             return value == null ? null : Unwrap(value);
         }
 
-        // nameof(Name) names the member without reading it.
+        // nameof(Name) names the member without reading it, or running what reading it would.
         private static bool InNameOf(IOperation operation)
         {
-            for (var node = operation.Syntax.Parent; node != null && node is not StatementSyntax and not MemberDeclarationSyntax; node = node.Parent)
+            for (var up = operation.Parent; up != null; up = up.Parent)
             {
-                if (node is InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } invocation
-                    && operation.SemanticModel!.GetSymbolInfo(invocation).Symbol == null)
+                if (up is INameOfOperation)
                 {
                     return true;
                 }
@@ -486,12 +501,18 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             return null;
         }
 
+        /// <summary>MW0004 for a loop over a collection with no fixed order, and for one spread into a collection expression ([.. set]).</summary>
         public void Loop(OperationAnalysisContext context)
         {
-            if (context.Operation is IForEachLoopOperation loop && !Silenced(loop, context.ContainingSymbol)
-                && HashName(loop.Collection) is { } hash)
+            var collection = context.Operation switch
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rules.HashLoop, loop.Collection.Syntax.GetLocation(), Article(hash)));
+                IForEachLoopOperation loop => loop.Collection,
+                ISpreadOperation spread => spread.Operand,
+                _ => null,
+            };
+            if (collection != null && !Silenced(context.Operation, context.ContainingSymbol) && HashName(collection) is { } hash)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Rules.HashLoop, collection.Syntax.GetLocation(), Article(hash)));
             }
         }
 
@@ -546,6 +567,29 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             }
         }
 
+        /// <summary>MW0005 for a local declared by an out var, a pattern or a deconstruction, which has no declarator.</summary>
+        public void DeclaredLocal(OperationAnalysisContext context)
+        {
+            var local = context.Operation switch
+            {
+                ILocalReferenceOperation { IsDeclaration: true } declared => declared.Local,
+                IDeclarationPatternOperation pattern => pattern.DeclaredSymbol as ILocalSymbol,
+                IRecursivePatternOperation pattern => pattern.DeclaredSymbol as ILocalSymbol,
+                _ => null,
+            };
+            if (local != null && Banned(local.Type) is { } banned && (banned == "decimal" || !Silenced(context.Operation, context.ContainingSymbol)))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Rules.NumberType, local.Locations.FirstOrDefault() ?? context.Operation.Syntax.GetLocation(), banned, Why(banned)));
+            }
+        }
+
+        /// <summary>MW0005 for a local function's return and parameter types, which no member declares.</summary>
+        public void LocalFunction(OperationAnalysisContext context)
+        {
+            var function = ((ILocalFunctionOperation)context.Operation).Symbol;
+            Report(context.ReportDiagnostic, function, Signature(function), Silenced(context.Operation, context.ContainingSymbol) || Has(function, syncUnchecked));
+        }
+
         public void Declaration(SymbolAnalysisContext context)
         {
             var symbol = context.Symbol;
@@ -564,20 +608,68 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                     types.Add(property.Type);
                     types.AddRange(property.Parameters.Select(p => p.Type));
                     break;
+                case IEventSymbol handler:
+                    types.Add(handler.Type);
+                    break;
                 case IMethodSymbol method when method.AssociatedSymbol == null:
-                    types.Add(method.ReturnType);
-                    types.AddRange(method.Parameters.Select(p => p.Type));
+                    types.AddRange(Signature(method));
                     break;
                 case INamedTypeSymbol { EnumUnderlyingType: { } underlying }:
                     types.Add(underlying);
                     break;
+                case INamedTypeSymbol { DelegateInvokeMethod: { } invoke }:
+                    types.AddRange(Signature(invoke));
+                    break;
+                case INamedTypeSymbol type:
+                    // class Scores : List<long> holds longs as surely as a field of one.
+                    types.AddRange(type.Interfaces);
+                    if (type.BaseType != null)
+                    {
+                        types.Add(type.BaseType);
+                    }
+
+                    UnseededBase(context, type);
+                    break;
             }
 
             // [SyncUnchecked] does not silence decimal: it is a number the game's Lua gets wrong on every machine.
-            var banned = types.Select(Banned).FirstOrDefault(b => b != null);
-            if (banned != null && (banned == "decimal" || !Has(symbol, syncUnchecked)) && symbol.Locations.FirstOrDefault() is { } location && location.IsInSource)
+            Report(context.ReportDiagnostic, symbol, types, Has(symbol, syncUnchecked));
+        }
+
+        /// <summary>MW0038 for a class of Random's whose constructor gives Random no seed: base() written, or left out.</summary>
+        private static void UnseededBase(SymbolAnalysisContext context, INamedTypeSymbol type)
+        {
+            if (!IsNamed(type.BaseType, "System.Random"))
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rules.NumberType, location, banned, Why(banned)));
+                return;
+            }
+
+            foreach (var constructor in type.InstanceConstructors)
+            {
+                var unseeded = constructor.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(context.CancellationToken) switch
+                {
+                    ConstructorDeclarationSyntax written => written.Initializer == null
+                        || (written.Initializer.IsKind(SyntaxKind.BaseConstructorInitializer) && written.Initializer.ArgumentList.Arguments.Count == 0),
+                    TypeDeclarationSyntax primary => primary.BaseList?.Types.FirstOrDefault() is not PrimaryConstructorBaseTypeSyntax { ArgumentList.Arguments.Count: > 0 },
+                    _ => constructor.IsImplicitlyDeclared,
+                };
+                var location = (constructor.IsImplicitlyDeclared ? type.Locations : constructor.Locations).FirstOrDefault(place => place.IsInSource);
+                if (unseeded && location != null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Rules.UnseededRandom, location, type.Name));
+                }
+            }
+        }
+
+        private static IEnumerable<ITypeSymbol> Signature(IMethodSymbol method) => new[] { method.ReturnType }.Concat(method.Parameters.Select(p => p.Type));
+
+        // MW0005 at a declaration for the first number type the game cannot carry among its types; decimal even where silenced.
+        private static void Report(Action<Diagnostic> report, ISymbol symbol, IEnumerable<ITypeSymbol> types, bool silenced)
+        {
+            var banned = types.Select(Banned).FirstOrDefault(b => b != null);
+            if (banned != null && (banned == "decimal" || !silenced) && symbol.Locations.FirstOrDefault() is { } location && location.IsInSource)
+            {
+                report(Diagnostic.Create(Rules.NumberType, location, banned, Why(banned)));
             }
         }
 

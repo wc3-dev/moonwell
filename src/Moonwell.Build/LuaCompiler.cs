@@ -85,11 +85,9 @@ namespace Moonwell.Build
                 libraries.Add(path);
             }
 
-            // The symbols dotnet build defines (TRACE, and DEBUG or RELEASE), so the Lua runs the code the map's assembly has. MOONWELL_LUA
-            // leaves out the generated classes of Moonwell.Objects; CSharp.lua compiles the build's stubs of them instead. CSharp.lua defines
-            // __CSharpLua__ itself, and the line marks parse with it too, so that they see the code CSharp.lua compiles.
-            var symbols = release ? new[] { "TRACE", "RELEASE", "MOONWELL_LUA" } : new[] { "TRACE", "DEBUG", "MOONWELL_LUA" };
-            var marked = MarkedProject.Stage(project, symbols.Append("__CSharpLua__"));
+            // The symbols dotnet build compiled with, so the Lua runs the code the map's assembly has, and the line marks see it too.
+            var symbols = CompiledFiles.LuaSymbols(project, release);
+            var marked = MarkedProject.Stage(project, symbols);
             files = marked.Files;
             var compiler = new Compiler(marked.ProjectFile, project.GeneratedFolder, string.Empty, null!, null!, "*", "-define:" + string.Join(";", symbols), false, null!, string.Empty)
             {

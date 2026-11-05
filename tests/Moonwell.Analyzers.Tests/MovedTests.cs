@@ -92,4 +92,22 @@ public class MovedTests
             }
             """));
     }
+
+    [Fact]
+    public void a_parameters_or_tuple_elements_name_is_accepted()
+    {
+        Assert.Empty(MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public static class Code
+                {
+                    public static (string? Name, AttackType AttackType) Best() => (Name: null, AttackType: AttackType.Magic);
+
+                    public static void Hit(dynamic target) => target.Hit(AttackType: 1, DefenseType: 2);
+                }
+            }
+            """));
+    }
 }

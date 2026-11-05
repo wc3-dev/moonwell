@@ -246,4 +246,53 @@ public class IdTests
             }
             """));
     }
+
+    [Fact]
+    public void an_id_in_another_part_given_by_name_or_as_a_constant_counts()
+    {
+        // The build reads the attribute's values, from whichever part of the class has it.
+        Assert.Equal(new[] { "MW0014: Ids.Hero" }, MapCode.CheckIds("""
+            using Moonwell.Objects;
+
+            namespace Map
+            {
+                public static class Ids
+                {
+                    public const string Guard = "h001";
+                    public const string Frost = "A002";
+                    public const string Hero = "h003";
+                }
+
+                [ObjectId("h002")]
+                public partial class Watch : Human.Units.Footman
+                {
+                }
+
+                public partial class Watch
+                {
+                    private void Helper() { }
+                }
+
+                [ObjectId(Ids.Guard)]
+                public sealed class Guard : Human.Units.Footman
+                {
+                }
+
+                [ObjectId(id: "h004")]
+                public sealed class Grunt : Orc.Units.Grunt
+                {
+                }
+
+                [ObjectId("B001", Carrier = Ids.Frost)]
+                public sealed class Burn : Human.Buffs.FlameStrike
+                {
+                }
+
+                [ObjectId(Ids.Hero)]
+                public sealed class Champion : Human.Units.Paladin
+                {
+                }
+            }
+            """));
+    }
 }
