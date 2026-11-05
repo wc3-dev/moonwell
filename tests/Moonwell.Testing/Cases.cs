@@ -106,6 +106,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "file.escaped-is-safe", Run = FileCases.EscapedIsSafe });
             list.Add(new Case { Name = "file.pieces", Run = FileCases.Pieces });
             list.Add(new Case { Name = "file.empty-pieces", Run = FileCases.EmptyPieces });
+            list.Add(new Case { Name = "file.no-letter-start", Run = FileCases.NoLetterStart });
             list.Add(new Case { Name = "file.longest-line-fits", Run = FileCases.LongestLineFits });
             list.Add(new Case { Name = "file.write-then-read", Run = FileCases.WriteThenRead });
             list.Add(new Case { Name = "file.installed-folder", Run = FileCases.InstalledFolder });
@@ -171,6 +172,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "share.scope-ended", Run = ShareCases.ScopeEnded });
             list.Add(new Case { Name = "share.leave-halfway", Run = ShareCases.LeaveHalfway });
             list.Add(new Case { Name = "share.computer", Run = ShareCases.Computer });
+            list.Add(new Case { Name = "share.read-is-local", Run = ShareCases.ReadIsLocal });
             list.Add(new Case { Name = "realtime.epoch", Run = RealTimeCases.Epoch });
             list.Add(new Case { Name = "realtime.known-day", Run = RealTimeCases.KnownDay });
             list.Add(new Case { Name = "realtime.leap-day", Run = RealTimeCases.LeapDay });
@@ -548,6 +550,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.find.local-cached", Run = FindCases.LocalCached });
             list.Add(new Case { Name = "interactions.find.local-untracked", Run = FindCases.LocalUntracked });
             list.Add(new Case { Name = "interactions.find.local-mixed", Run = FindCases.LocalMixed });
+            list.Add(new Case { Name = "interactions.find.in-share-read", Run = FindCases.InShareRead });
             list.Add(new Case { Name = "interactions.interaction.meet-tick-part", Run = InteractionCases.MeetTickPart });
             list.Add(new Case { Name = "interactions.interaction.exact-range", Run = InteractionCases.ExactRange });
             list.Add(new Case { Name = "interactions.interaction.accepts", Run = InteractionCases.Accepts });

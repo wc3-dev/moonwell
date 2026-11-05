@@ -202,6 +202,20 @@ namespace Moonwell.Testing
             Expect.Equal(0, number, "0");
         }
 
+        /// <summary>The read runs as a Local.For block does, so a getter read in it keeps no last value on one machine only.</summary>
+        public static void ReadIsLocal(FakeWorld world)
+        {
+            People(world, 1);
+            var depth = -1;
+            Sharing.Request(Game.Instance, Player.One, () =>
+            {
+                depth = Local.Depth;
+                return "";
+            }, text => { });
+            Expect.Equal(1, depth, "inside the read");
+            Expect.Equal(0, Local.Depth, "after it");
+        }
+
         private static void People(FakeWorld world, int count)
         {
             for (var slot = 0; slot < count; slot++)
