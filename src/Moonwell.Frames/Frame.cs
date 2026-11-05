@@ -39,11 +39,17 @@ namespace Moonwell
         /// <summary>The frames tied to this one or covering it, placed again when it is made; ended ones are dropped as they are met.</summary>
         internal List<Frame>? tiedHere;
 
+        /// <summary>Whether a frame inside this one was kept out of the pool for a live frame tied to it, so this one is too: given out, its game frame would move the one inside (review G6).</summary>
+        internal bool holdsTie;
+
         internal float width;
 
         internal float height;
 
         internal bool sized;
+
+        /// <summary>The size the game gave the frame from its template, read as it was made: this machine's own reading, given to the game for a side the map leaves at 0 and never read back; 0 by 0 for a frame made by type.</summary>
+        internal float madeWidth, madeHeight;
 
         internal float scale = 1.0f;
 
@@ -283,6 +289,11 @@ namespace Moonwell
                 before?.End();
                 if (value == null)
                 {
+                    if (wanted)
+                    {
+                        LetMouseGo();
+                    }
+
                     return;
                 }
 
@@ -310,6 +321,15 @@ namespace Moonwell
         internal bool WantsMouse()
         {
             return listened != 0 || tooltip != null;
+        }
+
+        /// <summary>Gives the game again whether the frame takes the mouse once nothing the map set wants it, so a catcher over an empty panel or an image lets clicks through again.</summary>
+        private void LetMouseGo()
+        {
+            if (handle != null && !WantsMouse())
+            {
+                TakeMouse(enabled);
+            }
         }
 
         /// <summary>Makes the tooltip in the slot of the frame's mouse on the frame's layer (Sven, 11-03: the screen's whole width beneath the HUD, or over the HUD), above the frame unless the map placed it; a tooltip taken away, ended or left by an ended frame leaves the slot showing nothing.</summary>
@@ -340,7 +360,7 @@ namespace Moonwell
         /// <summary>Ties a point of the frame to a point of another, moved by an offset, in place of its Anchor; another Attach adds a point, so a frame tied by two points stretches between them. Does nothing once it has ended.</summary>
         public void Attach(FramePoint point, Frame other, FramePoint otherPoint, float x = 0.0f, float y = 0.0f)
         {
-            if (AddTie(new Tie(point, other, null, otherPoint, x, y)))
+            if (!Ended(other, "Attach") && AddTie(new Tie(point, other, null, otherPoint, x, y)))
             {
                 other.TiedBy(this);
             }
@@ -382,12 +402,33 @@ namespace Moonwell
             return true;
         }
 
-        /// <summary>Sets the frame to cover another, all points, in place of its Anchor and its ties. Does nothing once it has ended.</summary>
+        /// <summary>Whether a frame to tie to or cover has ended, reported when it has: its game frame may be given to the next frame of its kind, which the tie would follow (review G6).</summary>
+        private bool Ended(Frame other, string what)
+        {
+            if (HasEnded || !other.HasEnded)
+            {
+                return false;
+            }
+
+            Errors.Refuse(Names.NameOf(this) + "." + what, Names.NameOf(other) + " has ended: its game frame may be given to the next frame of its kind");
+            return true;
+        }
+
+        /// <summary>Sets the frame to cover another, all points, in place of its Anchor and its ties. Does nothing once it has ended; refused for a frame that has ended, or that covers this one.</summary>
         public void Fill(Frame other)
         {
-            if (HasEnded)
+            if (HasEnded || Ended(other, "Fill"))
             {
                 return;
+            }
+
+            for (Frame? covered = other; covered != null; covered = covered.filled)
+            {
+                if (covered == this)
+                {
+                    Errors.Refuse(Names.NameOf(this) + ".Fill", Names.NameOf(other) + " is this frame, or covers it");
+                    return;
+                }
             }
 
             filled = other;
@@ -433,9 +474,14 @@ namespace Moonwell
             return false;
         }
 
-        /// <summary>Whether a frame that is made and not ending, nor in an ending tree, is still tied to this one (review G6).</summary>
+        /// <summary>Whether a frame not ending, nor in an ending tree, is still tied to this one or to a frame inside it (review G6); one not made yet too, as it ties to this one's game frame when it is made.</summary>
         private bool HeldByLive()
         {
+            if (holdsTie)
+            {
+                return true;
+            }
+
             if (tiedHere == null)
             {
                 return false;
@@ -444,7 +490,7 @@ namespace Moonwell
             for (var i = 0; i < tiedHere.Count; i++)
             {
                 var frame = tiedHere[i];
-                if (frame.handle == null || !frame.TiedTo(this))
+                if (!frame.TiedTo(this))
                 {
                     continue;
                 }
@@ -472,8 +518,9 @@ namespace Moonwell
         public T Add<T>(T child)
             where T : Frame
         {
+            var added = child.Parent != null;
             Adopt(child);
-            if (child.Parent != this || child.HasEnded)
+            if (added || child.Parent != this || child.HasEnded)
             {
                 return child;
             }
@@ -496,23 +543,31 @@ namespace Moonwell
         /// <summary>
         /// A frame inside this one's template, found by its name in the .fdf at any depth, as a T: a window from the map's own
         /// .fdf comes whole, and its parts are reached this way, window.Child&lt;Label&gt;("ShopTitle"). It is the same object at
-        /// each call, is shown to this frame's player, and ends with this frame. Null, and reported, when this frame is not
-        /// added yet or has ended, has no frame of that name, or T is drawn from parts of Moonwell's own (CheckBox, IconButton,
+        /// each call, is shown to this frame's player, and ends with this frame; the frames T's constructor adds are made in
+        /// it. Null, and reported, when this frame is not added yet or has ended, has no frame of that name, the one of that
+        /// name has ended or was found as another kind, or T is drawn from parts of Moonwell's own (CheckBox, IconButton,
         /// ProgressBar). This frame is then not given out again when it ends, as the game cannot give back what was set on
         /// its parts.
         /// </summary>
         public T? Child<T>(string name)
             where T : Frame, new()
         {
-            if (found != null && found.TryGetValue(name, out var known))
+            Frame? known = null;
+            if (found != null && found.TryGetValue(name, out known) && !known.HasEnded && known is T kept)
             {
-                return known as T;
+                return kept;
             }
 
             var what = Names.NameOf(this) + ".Child(\"" + name + "\")";
             if (handle == null || HasEnded)
             {
                 Errors.Refuse(what, "the frame is not added yet, or has ended");
+                return null;
+            }
+
+            if (known != null)
+            {
+                Errors.Refuse(what, known.HasEnded ? "the frame of that name has ended" : "it was found as " + Names.NameOf(known) + " before");
                 return null;
             }
 
@@ -543,6 +598,13 @@ namespace Moonwell
                 FramesSystem.Events.Own(child);
             }
 
+            if (!child.enabled)
+            {
+                child.TakeMouse(false);
+            }
+
+            child.MakeChildren();
+            child.PlaceChildren();
             return child;
         }
 
@@ -695,6 +757,7 @@ namespace Moonwell
             if (child == tooltip)
             {
                 tooltip = null;
+                LetMouseGo();
             }
         }
 
@@ -731,12 +794,21 @@ namespace Moonwell
                 }
 
                 handle = made;
+                if (madeTemplate.Length > 0)
+                {
+                    // A template's size reads at once; a size the game works out from points reads only later (seen 11-05).
+                    madeWidth = FramesSystem.World.FrameWidth(made);
+                    madeHeight = FramesSystem.World.FrameHeight(made);
+                }
+
                 MakeParts();
             }
             else
             {
                 handle = old.handle!;
                 madeTemplate = old.madeTemplate;
+                madeWidth = old.madeWidth;
+                madeHeight = old.madeHeight;
                 TakeOver(old);
             }
 
@@ -755,14 +827,34 @@ namespace Moonwell
                 Dev.Report(Names.NameOf(this), "a check box, slider or text box is one player's only (decision 156): add it to a frame made for one player, shownTo, so the screens never disagree");
             }
 
+            MakeChildren();
+        }
+
+        /// <summary>Makes the frames added to this one before it was made, under its game frame.</summary>
+        private void MakeChildren()
+        {
             for (var i = 0; i < children.Count; i++)
             {
                 if (!children[i].HasEnded)
                 {
                     children[i].over = over;
-                    children[i].Make(handle, player);
+                    children[i].Make(handle!, player);
                 }
             }
+        }
+
+        /// <summary>Places the frames added to this one before it was made, then lets them go.</summary>
+        private void PlaceChildren()
+        {
+            for (var i = 0; i < children.Count; i++)
+            {
+                if (!children[i].HasEnded)
+                {
+                    children[i].Place();
+                }
+            }
+
+            children.Clear();
         }
 
         /// <summary>Whether the kind is one player's only, as a control with a value is (decision 156).</summary>
@@ -830,7 +922,7 @@ namespace Moonwell
             PlacePoints();
             if (sized)
             {
-                world.SizeFrame(handle!, width, height);
+                GiveSize();
             }
 
             if (scale != 1.0f)
@@ -858,15 +950,7 @@ namespace Moonwell
                 world.LevelFrame(handle!, level);
             }
 
-            for (var i = 0; i < children.Count; i++)
-            {
-                if (!children[i].HasEnded)
-                {
-                    children[i].Place();
-                }
-            }
-
-            children.Clear();
+            PlaceChildren();
             if (tiedHere != null)
             {
                 for (var i = tiedHere.Count - 1; i >= 0; i--)
@@ -946,15 +1030,34 @@ namespace Moonwell
             sized = true;
             if (handle != null)
             {
-                FramesSystem.World.SizeFrame(handle, width, height);
+                GiveSize();
             }
 
             Resized();
         }
 
-        /// <summary>Runs when the map gives the frame a new size: a progress bar refills here.</summary>
+        /// <summary>Gives the game the frame's size, a side left at 0 as its template made it.</summary>
+        private void GiveSize()
+        {
+            FramesSystem.World.SizeFrame(handle!, width != 0.0f ? width : madeWidth, height != 0.0f ? height : madeHeight);
+        }
+
+        /// <summary>Runs when the map gives the frame a new size, or the frame it covers one: a progress bar refills here, and the frames covering this one that set no size of their own follow.</summary>
         internal virtual void Resized()
         {
+            if (tiedHere == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < tiedHere.Count; i++)
+            {
+                var frame = tiedHere[i];
+                if (frame.filled == this && !frame.sized && !frame.HasEnded)
+                {
+                    frame.Resized();
+                }
+            }
         }
 
         /// <summary>Whether the frame is to be shown on this machine: it is everyone's, or this machine's player's.</summary>
@@ -977,8 +1080,20 @@ namespace Moonwell
                 holder.ChildEnded(this);
             }
 
-            // shortcut: a frame kept out of the pool stays out even when the frame tied to it later moves or ends; recheck then if hidden frames pile up.
-            if (handle != null && !foundInTemplate && found == null && !HeldByLive())
+            if (handle == null)
+            {
+                return;
+            }
+
+            // shortcut: a frame kept out of the pool stays out, with the frames it is inside, even when the frame tied to it later moves or ends; recheck then if hidden frames pile up.
+            if (HeldByLive())
+            {
+                for (var outer = Parent as Frame; outer != null; outer = outer.Parent as Frame)
+                {
+                    outer.holdsTie = true;
+                }
+            }
+            else if (!foundInTemplate && found == null)
             {
                 FramesSystem.Pool.Keep(this);
             }
