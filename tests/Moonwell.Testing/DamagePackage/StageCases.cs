@@ -104,6 +104,7 @@ namespace Moonwell.Testing
             fake.Hit(source.Handle, target.Handle, 10f, damageType: 4);
 #if DEBUG
             Expect.Equal(1, world.Logged.Count, "one error is logged in a development build");
+            Expect.True(world.Logged[0].Contains("Hit.DamageKind can be changed only before armor"), "the report: " + world.Logged[0]);
 #else
             Expect.Equal(0, world.Logged.Count, "a release build leaves the check out");
 #endif
@@ -133,6 +134,7 @@ namespace Moonwell.Testing
             Expect.Near(2f, fake.Armor(target.Handle), "the armor is back");
 #if DEBUG
             Expect.Equal(2, world.Logged.Count, "each is reported in a development build");
+            Expect.True(world.Logged[0].Contains("Hit.DamageKind cannot be 99") && world.Logged[1].Contains("Hit.WeaponSound cannot be 99"), "the reports: " + world.Logged[0] + " | " + world.Logged[1]);
 #else
             Expect.Equal(0, world.Logged.Count, "a release build leaves the check out");
 #endif
@@ -183,6 +185,7 @@ namespace Moonwell.Testing
             Expect.Equal((int)DefenseType.Normal, (int)defense, "the defense type the hit came with");
 #if DEBUG
             Expect.Equal(1, world.Logged.Count, "one error is logged in a development build");
+            Expect.True(world.Logged[0].Contains("Hit.AttackType can be changed only before armor"), "the report: " + world.Logged[0]);
 #else
             Expect.Equal(0, world.Logged.Count, "a release build leaves the check out");
 #endif
