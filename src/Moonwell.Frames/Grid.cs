@@ -33,7 +33,16 @@ namespace Moonwell
         public int Columns
         {
             get { return columns; }
-            set { Set(ref columns, value < 1 ? 1 : value); }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                columns = value < 1 ? 1 : value;
+                LayFrom(0);
+            }
         }
 
         /// <summary>A cell's width, in the game's units; 0 unless set.</summary>
@@ -41,7 +50,16 @@ namespace Moonwell
         public float CellWidth
         {
             get { return cellWidth; }
-            set { Set(ref cellWidth, value); }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                cellWidth = value;
+                LayFrom(0);
+            }
         }
 
         /// <summary>A cell's height, in the game's units; 0 unless set.</summary>
@@ -49,7 +67,16 @@ namespace Moonwell
         public float CellHeight
         {
             get { return cellHeight; }
-            set { Set(ref cellHeight, value); }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                cellHeight = value;
+                LayFrom(0);
+            }
         }
 
         /// <summary>The space between two cells, in the game's units; 0 unless set.</summary>
@@ -57,7 +84,16 @@ namespace Moonwell
         public float Gap
         {
             get { return gap; }
-            set { Set(ref gap, value); }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                gap = value;
+                LayFrom(0);
+            }
         }
 
         /// <summary>The space around the cells, in the game's units; 0 unless set.</summary>
@@ -65,7 +101,16 @@ namespace Moonwell
         public float Padding
         {
             get { return padding; }
-            set { Set(ref padding, value); }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                padding = value;
+                LayFrom(0);
+            }
         }
 
         internal override void Adopted(Frame child)
@@ -83,17 +128,6 @@ namespace Moonwell
                 items.RemoveAt(index);
                 LayFrom(index);
             }
-        }
-
-        private void Set<T>(ref T field, T value)
-        {
-            if (HasEnded)
-            {
-                return;
-            }
-
-            field = value;
-            LayFrom(0);
         }
 
         private void LayFrom(int index)

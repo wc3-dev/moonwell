@@ -1343,6 +1343,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.made-keeps-no-children", Run = FrameCases.MadeKeepsNoChildren });
             list.Add(new Case { Name = "frames.unknown-template", Run = FrameCases.UnknownTemplate });
             list.Add(new Case { Name = "frames.screen-edges", Run = FrameCases.ScreenEdges });
+            list.Add(new Case { Name = "frames.grid-set-after-add", Run = FrameCases.GridSetAfterAdd });
+            list.Add(new Case { Name = "frames.progress-bar-filled-over", Run = FrameCases.ProgressBarFilledOver });
+            list.Add(new Case { Name = "frames.slider-echo-after-drag", Run = FrameCases.SliderEchoAfterDrag });
+            list.Add(new Case { Name = "frames.text-box-echo-after-typing", Run = FrameCases.TextBoxEchoAfterTyping });
+            list.Add(new Case { Name = "frames.attach-to-unmade", Run = FrameCases.AttachToUnmade });
+            list.Add(new Case { Name = "frames.fill-unmade", Run = FrameCases.FillUnmade });
+            list.Add(new Case { Name = "frames.tied-to-ended", Run = FrameCases.TiedToEnded });
+            list.Add(new Case { Name = "frames.tied-still-pooled", Run = FrameCases.TiedStillPooled });
         }
 
         /// <summary>Adds the special effect cases.</summary>
