@@ -34,6 +34,7 @@ namespace Moonwell
             Game.Instance = new Game();
             Player.Reset();
             Sharing.Reset();
+            ChatCommand.Reset();
             RealClock.Reset();
             ReplayGuard.Reset();
             SaveGame.Reset();

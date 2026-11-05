@@ -104,6 +104,16 @@ namespace Moonwell
         }
 
         /// <summary>
+        /// Hears a chat command, a line that starts with a dash and the name, in any case: <c>Command("load", (player, rest) =>
+        /// ...)</c> hears "-load X7KQ-M3PA" from any person, with the rest of the line trimmed, on every machine, as a child of
+        /// this scope: it ends when the scope ends, or when the command given back ends.
+        /// </summary>
+        public ChatCommand Command(string name, Action<Player, string> heard)
+        {
+            return ChatCommand.Make(this, name, heard);
+        }
+
+        /// <summary>
         /// Reads a player's save from the default slot's file on their computer, and hands it to every machine once it has
         /// arrived, as a child of this scope: nothing runs if the scope ends first. Null when there is no file, when it fails
         /// its check (it is then written to the log), when the player leaves first, or when they are not a person playing.

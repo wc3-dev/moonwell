@@ -836,6 +836,24 @@ namespace Moonwell.Testing
             ListenedSync.Add(SlotOf(player));
         }
 
+        /// <summary>The slots whose chat lines are listened for.</summary>
+        public List<int> ListenedChat = new List<int>();
+
+        /// <summary>Records that a person's chat lines are listened for.</summary>
+        public void ListenChat(player player)
+        {
+            ListenedChat.Add(SlotOf(player));
+        }
+
+        /// <summary>A person types a chat line; it reaches Moonwell when their chat is listened for and the line starts with a dash, as the game's chat event gives it.</summary>
+        public void Chat(Player from, string text)
+        {
+            if (ListenedChat.Contains(from.Slot) && text.StartsWith("-"))
+            {
+                Inbound.ChatArrived(from.Handle, text);
+            }
+        }
+
         /// <summary>Delivers a sharing message as if sent by another machine's player, at once, when that player is listened for.</summary>
         public void DeliverSync(Player from, string text)
         {

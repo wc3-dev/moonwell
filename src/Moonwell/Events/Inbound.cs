@@ -1043,6 +1043,16 @@ namespace Moonwell
             RealClock.Loaded();
         }
 
+        /// <summary>A person typed a chat line that starts with a dash.</summary>
+        internal static void ChatArrived(player p, string text)
+        {
+            var from = Player.Of(p);
+            if (from != null)
+            {
+                ChatCommand.Heard(from, text);
+            }
+        }
+
         /// <summary>A sharing message arrived from a player.</summary>
         internal static void SyncArrived(player p, string data)
         {

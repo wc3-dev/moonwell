@@ -1067,6 +1067,10 @@ says who plays it. `OnLeave(Player leavingPlayer)` runs on the game's components
 
 `Name`, `Color` and `Team` are read and set, and `Race` read; setting `Color` also recolours the player's units.
 
+`Command("zoom", (player, rest) => ...)` on a scope hears a chat command: a line a person types that starts with `-zoom`,
+in any case. `rest` is what follows, trimmed, so `-zoom 2000` gives `"2000"`. It runs on every machine, as chat reaches
+them all, and ends with its scope, or when the `ChatCommand` it gives back ends. A chat line holds 127 characters.
+
 `a.MakeAllies(b)` and `a.MakeEnemies(b)` go both ways and replace what the two gave each other: `MakeEnemies` leaves
 nothing between them, and `a.MakeAllies(b, sharedVision: true)` lets each see what the other sees. `a.ShowVisionTo(b)`
 lets `b` see what `a` sees, `a.HideVisionFrom(b)` stops it and `a.ShowsVisionTo(b)` reads it: these go one way and leave
@@ -1216,7 +1220,8 @@ public sealed class Saving : PlayerComponent
 Slots keep several saves apart, one file each: `"paladin"` and `"mage"` are letters, digits, `-` and `_`, and with no
 slot named a save goes in one default slot. A code holds one save and can be loaded into any slot.
 
-The map listens for `-load` itself. A chat line holds 127 characters, so after `-load ` a code has 121: about 60 bytes of
+The map hears `-load` with a chat command (under Players): `Command("load", (player, rest) => ...)` gives the code as
+`rest` for `FromCode`. A chat line holds 127 characters, so after `-load ` a code has 121: about 60 bytes of
 save, which a typical RPG save fits. A code longer than that drops its dashes. A development build reports a save
 too long for a chat line; it still loads from its file.
 
