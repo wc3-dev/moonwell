@@ -107,8 +107,8 @@ public sealed class Champion : Human.Units.Paladin
   In the game an enum of `Moonwell.Objects` has its numbers only, no names: `ToString` (also `choice?.ToString()`), a
   string made with one (`+`, `+=`, interpolation, or a call that takes an `object`: `string.Format`,
   `StringBuilder.Append`, a method of your own), a list of them given to `string.Join`, and `Enum.GetValues` and the
-  other `Enum` methods are rejected as error MW0010, a nullable choice too; compare with its members, `|`, `&` and
-  `HasFlag`.
+  other `Enum` methods are rejected as error MW0010, a nullable choice too; compare with its members, `|`, `&`,
+  `HasFlag` and `CompareTo`, and show the number with `(int)`, `Convert.ToInt32` or `ToString("D")`.
 - `AttackType`, `DefenseType` and `WeaponSound` are core Moonwell's (`Moonwell.AttackType`), shared with hits and the
   damage package, and keep their names in the game. A file writes them with `using Moonwell;`; a name of the old
   `Moonwell.Objects.AttackType` is error MW0011. `Attack1WeaponSound` takes the 13 sounds World Editor lists: `None` and
@@ -1331,7 +1331,7 @@ MW0044 is about names, and the Lua is why: there a native is a global, and `Nati
 | `namespace Rect`: a first name that is a native or a function of Lua | the script stops while it loads | another name; `MyMap.Rect` is fine |
 | a type in no namespace named like a native, or like `math`, `string` or another global | the same | a namespace |
 | a type with the full name of one of Moonwell's, such as `Moonwell.Hero` | the build's Lua step or the script stops | another name or namespace |
-| `Natives.Cos(x)` where the class, or a class around it, writes a method `Cos`, or a local, parameter or local function is called `Cos` | that runs in the native's place; `float Cos(float x) => Natives.Cos(x)` never returns, and the game freezes | another name |
+| `Natives.Cos(x)` where the class, or a class around it, writes a method `Cos`, or a local, parameter or local function is called `Cos` | that runs in the native's place; `float Cos(float x) => Natives.Cos(x)` never returns, and the game freezes | another name; a local made from the call itself, `var Cos = Natives.Cos(a)`, is fine, as the Lua reads the call first |
 
 A method of a base class, a field, a property and a type in a namespace pass.
 

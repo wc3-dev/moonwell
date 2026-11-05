@@ -168,6 +168,21 @@ public class LuaTests
     }
 
     [Fact]
+    public void comparing_a_choice_enum_its_number_and_its_number_as_text_are_accepted()
+    {
+        // In the game's Lua, CompareTo compares the numbers, Convert.ToInt32 gives the number, and ToString("D") shows it.
+        var found = MapCode.Check("""
+            var armor = Moonwell.Objects.ArmorType.Metal;
+            var a = armor.CompareTo(Moonwell.Objects.ArmorType.Wood);
+            var b = Convert.ToInt32(armor) + Convert.ToSingle(armor);
+            var c = armor.ToString("D") + armor.ToString("d");
+            var d = armor.ToString("X") + Convert.ToString(armor);
+            """);
+
+        Assert.Equal(new[] { "MW0010: armor.ToString(\"X\")", "MW0010: armor" }, found);
+    }
+
+    [Fact]
     public void a_choice_enum_message_says_why_and_what_to_write()
     {
         Assert.Equal(
@@ -277,6 +292,17 @@ public class LuaTests
             "MW0035: units.OfType<unit>()",
             "MW0035: units.Cast<widget>()",
         }, found);
+    }
+
+    [Fact]
+    public void a_cast_of_handles_to_their_own_type_is_accepted_however_it_is_called()
+    {
+        Assert.Empty(MapCode.Check("""
+            var units = new List<unit>();
+            var a = Enumerable.Cast<unit>(units).Count();
+            var b = System.Linq.Enumerable.Cast<unit>(units).Count();
+            var c = units?.Cast<unit>().Count();
+            """));
     }
 
     [Fact]

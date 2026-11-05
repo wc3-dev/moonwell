@@ -154,7 +154,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             var member = reach.Member;
             // A compound or ??= assignment and an increment read the property too.
             var write = reaches.All(r => r.Write);
-            if (member == null || Silenced(operation, context.ContainingSymbol))
+            if (member == null || Silenced(operation, context.ContainingSymbol) || InNameOf(operation))
             {
                 return;
             }
@@ -185,7 +185,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             {
                 ReportLocal(context, operation);
             }
-            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write) && !InNameOf(operation))
+            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write))
             {
                 // 0.2.2's Name read the declared name outside the constructor too; the message says where it is now.
                 var declared = member is IPropertySymbol { Name: "Name" } && IsRuntime(member) && member.ContainingType.Name == "Unit" ? "; the declared name is Default.Name" : string.Empty;
@@ -429,13 +429,12 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             return value == null ? null : Unwrap(value);
         }
 
-        // nameof(Name) names the member without reading it.
+        // nameof(Name) names the member without reading it, or running what reading it would.
         private static bool InNameOf(IOperation operation)
         {
-            for (var node = operation.Syntax.Parent; node != null && node is not StatementSyntax and not MemberDeclarationSyntax; node = node.Parent)
+            for (var up = operation.Parent; up != null; up = up.Parent)
             {
-                if (node is InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } invocation
-                    && operation.SemanticModel!.GetSymbolInfo(invocation).Symbol == null)
+                if (up is INameOfOperation)
                 {
                     return true;
                 }

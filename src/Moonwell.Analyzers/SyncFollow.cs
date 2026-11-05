@@ -73,14 +73,17 @@ public sealed partial class SyncAnalyzer
         public bool IsVirtual { get; }
     }
 
-    /// <summary>The nodes being followed now, each with its depth, and the lowest depth a cycle was cut back to.</summary>
+    /// <summary>
+    /// The nodes being followed now, each with its depth, the lowest depth a cycle was cut back to, and the lowest depth
+    /// whose code told whether a variable is declared in the code being read.
+    /// </summary>
     private sealed class Walk
     {
         public Walk(SyntaxNode? block)
         {
             if (block != null)
             {
-                Code.Add(block);
+                Code.Add((block, -1));
             }
         }
 
@@ -88,8 +91,10 @@ public sealed partial class SyncAnalyzer
 
         public int Low { get; set; } = int.MaxValue;
 
-        /// <summary>The code of one machine being read: the block the walk began in, then the code of each node followed.</summary>
-        public List<SyntaxNode> Code { get; } = new();
+        public int Read { get; set; } = int.MaxValue;
+
+        /// <summary>The code of one machine being read, with the depth of the node it is the code of: the block the walk began in (-1), then the code of each node followed.</summary>
+        public List<(SyntaxNode Syntax, int Depth)> Code { get; } = new();
     }
 
     /// <summary>A part of a class that is followed as one: its static initializers and constructor.</summary>
@@ -215,11 +220,15 @@ public sealed partial class SyncAnalyzer
 
                     var info = loop.SemanticModel!.GetForEachStatementInfo(syntax);
                     var collection = Unwrap(loop.Collection).Type;
-                    foreach (var method in new[] { info.GetEnumeratorMethod, info.MoveNextMethod, info.CurrentProperty?.GetMethod, info.DisposeMethod })
+                    var getEnumerator = info.GetEnumeratorMethod;
+                    // The enumerator is the map's only when a GetEnumerator of the map's may run: a List's never runs the map's MoveNext.
+                    var mapEnumerator = getEnumerator == null || IsMap(getEnumerator) || Overriders(getEnumerator, new Reach(getEnumerator, false, collection, true)).Any();
+                    foreach (var method in new[] { getEnumerator, info.MoveNextMethod, info.CurrentProperty?.GetMethod, info.DisposeMethod })
                     {
                         if (method != null)
                         {
-                            yield return new Reach(method, false, SymbolEqualityComparer.Default.Equals(method, info.GetEnumeratorMethod) ? collection : null, true);
+                            var isGetEnumerator = SymbolEqualityComparer.Default.Equals(method, getEnumerator);
+                            yield return new Reach(method, false, isGetEnumerator ? collection : null, isGetEnumerator || mapEnumerator);
                         }
                     }
 
@@ -637,7 +646,8 @@ public sealed partial class SyncAnalyzer
         /// What the code of a node (a method, a part of a class, the values of a delegate) reaches that may not run on
         /// one machine. A node met again while it is still being followed is a cycle, cut there with nothing found; a
         /// result is kept for later only when no cycle was cut back to a node that is still being followed above it,
-        /// since that node's own code may still find something, so the answer never depends on what was followed first.
+        /// since that node's own code may still find something, and when no variable it writes is declared in code
+        /// around it (a local function's captured local), so the answer never depends on what was followed first.
         /// Each value of a delegate must be code the analyzer can follow.
         /// </summary>
         private Finding? Follow(object node, IEnumerable<SyntaxNode> code, Walk walk)
@@ -656,7 +666,9 @@ public sealed partial class SyncAnalyzer
             var depth = walk.Depths.Count;
             walk.Depths[node] = depth;
             var outerLow = walk.Low;
+            var outerRead = walk.Read;
             walk.Low = int.MaxValue;
+            walk.Read = int.MaxValue;
             Finding? found = null;
             foreach (var syntax in code)
             {
@@ -672,9 +684,14 @@ public sealed partial class SyncAnalyzer
                     break;
                 }
 
-                walk.Code.Add(syntax);
+                walk.Code.Add((syntax, depth));
                 foreach (var inner in body.DescendantsAndSelf())
                 {
+                    if (InNameOf(inner))
+                    {
+                        continue;
+                    }
+
                     if ((found = Written(inner, walk) ?? Reaches(inner, walk) ?? (node is Values ? Given(inner, walk) : null)) != null)
                     {
                         break;
@@ -690,8 +707,10 @@ public sealed partial class SyncAnalyzer
 
             walk.Depths.Remove(node);
             var low = walk.Low;
+            var read = walk.Read;
             walk.Low = System.Math.Min(outerLow, low);
-            if (found != null || low >= depth)
+            walk.Read = System.Math.Min(outerRead, read);
+            if (read >= depth && (found != null || low >= depth))
             {
                 followed[node] = found;
             }
@@ -1204,7 +1223,8 @@ public sealed partial class SyncAnalyzer
         private IOperation? ChangedBy(IInvocationOperation invocation)
         {
             var method = invocation.TargetMethod;
-            if (!Changing.Contains(method.Name))
+            // A SortedSet's Reverse() hands its items out backwards; a List's changes the list.
+            if (!Changing.Contains(method.Name) || (method.Name == "Reverse" && !method.ReturnsVoid))
             {
                 return null;
             }
@@ -1330,10 +1350,31 @@ public sealed partial class SyncAnalyzer
             ConstructorAround(reference) is { } constructor && constructor.Modifiers.Any(SyntaxKind.StaticKeyword)
             && SymbolEqualityComparer.Default.Equals(reference.SemanticModel!.GetDeclaredSymbol(constructor)?.ContainingType, reference.Member.ContainingType);
 
-        // Whether a local or parameter is declared in the code being read; a setter's value is declared by no code.
-        private static bool IsInside(ISymbol variable, Walk walk) =>
-            variable.IsImplicitlyDeclared
-            || variable.DeclaringSyntaxReferences.Any(declared => walk.Code.Any(code => code.SyntaxTree == declared.SyntaxTree && code.Span.Contains(declared.Span)));
+        /// <summary>
+        /// Whether a local or parameter is declared in the code being read; a setter's value is declared by no code. The
+        /// walk keeps the depth of the innermost code that holds it, or -1 when none does: a node followed below that depth
+        /// would get another answer where other code is around it, so its result is not kept.
+        /// </summary>
+        private static bool IsInside(ISymbol variable, Walk walk)
+        {
+            if (variable.IsImplicitlyDeclared)
+            {
+                return true;
+            }
+
+            for (var i = walk.Code.Count - 1; i >= 0; i--)
+            {
+                var (code, depth) = walk.Code[i];
+                if (variable.DeclaringSyntaxReferences.Any(declared => code.SyntaxTree == declared.SyntaxTree && code.Span.Contains(declared.Span)))
+                {
+                    walk.Read = System.Math.Min(walk.Read, depth);
+                    return true;
+                }
+            }
+
+            walk.Read = -1;
+            return false;
+        }
 
         /// <summary>What a ref local was made from: its initializer's target (ref int r = ref Score gives Score); null for one made otherwise, as by a ref foreach.</summary>
         private IOperation? RefMadeFrom(ILocalSymbol local) =>
