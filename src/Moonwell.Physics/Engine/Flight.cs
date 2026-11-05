@@ -338,6 +338,19 @@ namespace Moonwell.Engine
                 }
             }
 
+            var cut = Contacts.FirstThing(missile, fromX, fromY, fromZ, x, y, z, fraction);
+            if (cut < fraction)
+            {
+                // A thing before the ground along the move: the ball stops inside it, for its checks to meet it first.
+                x = fromX + cut * (x - fromX);
+                y = fromY + cut * (y - fromY);
+                z = fromZ + cut * (z - fromZ);
+                grid.Move(entry, x, y);
+                missile.z = z;
+                Place(missile, world, x, y, z);
+                return true;
+            }
+
             // The velocity where it met the ground: gravity has acted only for the part of the step before.
             var vx = missile.vx;
             var vy = missile.vy;

@@ -57,8 +57,8 @@ replaces the list.
 `PlayerComponents` lists what every player in the game starts with, people and computers:
 `PlayerComponents.Add(() => new Aim(), () => new Score());`. A component is on one actor only, so each `() =>` makes a
 new one for each player. They are added when the game starts, before the units already in the map come in, so their
-`OnUnitCreated` hears of those units. One added later, such as `player.Add(new Aim())` for a single player or a
-neutral one, does not.
+`OnUnitCreated` hears of their own player's units among those. One added later, such as `player.Add(new Aim())` for a
+single player or a neutral one, does not.
 
 ## Objects
 
@@ -198,7 +198,10 @@ no default object, is error MW0037. On a declared class `Default` is typed as it
 `StandardHero` or `StandardItem`), so it holds every field of it (`Default.Model`, `Default.GoldCost`); the class's own
 members come through `Unit.Default<T>()`. Its live actions do nothing. In the class's own constructor the default
 object is what the constructor is making, so `Default` and `Unit.Default<T>()` of the class there are error MW0012:
-read the field itself (`MaxLife`, not `Default.MaxLife`).
+read the field itself (`MaxLife`, not `Default.MaxLife`). Setting a member through a default object anywhere else
+(`unit.Default.MaxLife = 500`) is error MW0054: in the game it does nothing, and in the build, which runs on .NET, it
+changes the one object every read of that default gives, so the build and the game would differ. Declare the value in
+the class's constructor, or set it on the unit or item.
 
 An ability class has no default object either. `unit.AbilityOf<Smite>()` is the object a unit has of it, made if the
 unit has none yet, and its fields read what the class declares. A destructable's read on one in the game.
@@ -240,9 +243,12 @@ public sealed class KillCounter : UnitComponent
   it is not on is reported and refused, in a release build too. A component's `Actor` is set from `OnAdded` on: read in
   its constructor, a development build reports it.
 - Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnHeroLevelUp`,
-  `OnHeroSkillLearned`, `OnLeave`) go on a game or player component. `OnUnitCreated` runs once for each unit, when it
-  comes into the game (one that came in before anything wanted it runs none); a unit's own is `OnCreated`. `OnDawn`
-  and `OnDusk` go on a game component only (see the time of day below).
+  `OnHeroSkillLearned`, `OnLeave`) go on a game or player component. A game component hears them for every unit; a
+  player's components only for its own player's units: the unit's owner (the caster's for `OnUnitCast`), and for
+  `OnUnitDied` the dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
+  `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before anything wanted it
+  runs none); a unit's own is `OnCreated`. `OnDawn` and `OnDusk` go on a game component only (see the time of day
+  below).
 - A hero's own reactions, `OnLevelUp(int reachedLevel)` and `OnSkillLearned(Ability learnedAbility)`, go on a hero
   class or a `UnitComponent`, where they run only for a hero. The game fires one event for a jump of several levels,
   and `OnLevelUp` runs once for each level gained, in order, while `Level` already reads the last; levels taken away
@@ -257,8 +263,8 @@ public sealed class KillCounter : UnitComponent
 - A reaction's parameters say the role: `OnPickedUp(Unit carrierUnit)`, `OnUnitDied(Unit dyingUnit, Unit? killerUnit)`,
   `OnKill(Unit killedUnit)`. The killer is null when no unit's damage killed: `Kill()` or `Life = 0` from code, timed
   life running out, or a unit's own damage.
-- An event runs the type's reaction first, then its components' in the order added, then the game's and the
-  players'. A reaction that fails is reported, and the others still run.
+- An event runs the type's reaction first, then its components' in the order added, then the game's, then those of
+  the players whose units it involves (above). A reaction that fails is reported, and the others still run.
 - A buff is a class that inherits `Buff`, or a standard buff to show its icon. `Duration` and `Tick` set its time,
   `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
   apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
@@ -587,9 +593,10 @@ after armor, the target's armor has cut it and only the amount can change. The l
 | Landed | 0 s later, the life has dropped | `OnLanded` | `OnHurt` | `OnUnitHurt` |
 | Burst | 0 s later, once per source | `OnBurst` | | `OnUnitBurst` |
 
-- Each stage runs the source and its components, then the target and its components, then the game's and the
-  players' components that implement `IDamageWatch`. `OnDamaged` and `OnDealtDamage` still run, first in the
-  after-armor stage.
+- Each stage runs the source and its components, then the target and its components, then the game's components that
+  implement `IDamageWatch`, then the target's player's and the source's player's (once when one player owns both; the
+  burst, the source's player's only). A damage meter of every hit goes on a game component. `OnDamaged` and
+  `OnDealtDamage` still run, first in the after-armor stage.
 - A `Hit` has the amount, `Original`, `IsAttack`, `IsSpell`, `IsMelee`, `IsRanged`, `IsCode` and `Tag`. Before armor
   a reaction may also change `DamageKind`, `WeaponSound`, `AttackType`, the target's `DefenseType` and its `Armor` for
   this hit; the target has its own defense type and armor back afterwards. A `DamageKind` or `WeaponSound` the game
@@ -959,7 +966,8 @@ public sealed class Dash : PlayerComponent, IKeyWatch // write only the reaction
 
 Add the `Moonwell.Frames` package (the template's `.csproj` has the line, commented) for the map's own UI: panels, labels,
 images, buttons and the other controls on each player's screen. A frame is made with `new`, set, and added: to the screen in a scope, which ends it
-when it ends, or to another frame, which ends it with itself.
+when it ends, or to another frame, which ends it with itself. It is added once: adding it again, to the screen or to a
+frame, is refused and reported.
 
 ```csharp
 public sealed class Hud : GameComponent
@@ -996,8 +1004,12 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 - A frame sits by its `Anchor` on the same point of its parent, the screen or the frame it was added to, moved by
   `Offset`; `Center` unless set. `Attach(point, other, otherPoint, x, y)` ties one of its points to another frame's in
   place of the anchor, and a second `Attach` stretches it between the two; `Fill(other)` covers another frame. A frame
-  tied to one not added yet is placed when that one is added. `Width`, `Height`, `Scale`, `Visible`, `Alpha` (0 to 255)
-  and `Level` (drawn above siblings of a lower one) do as named.
+  tied to one not added yet is placed when that one is added. `Attach` or `Fill` to a frame that has ended is refused
+  and reported, as its game frame may go to the next frame of its kind, and so is a `Fill` of the frame itself or of
+  one that covers it. `Width`, `Height`, `Scale`, `Visible`, `Alpha` (0 to 255) and `Level` (drawn above siblings of a
+  lower one) do as named. A side left at 0 keeps the size the frame's template gives, read once, when the frame is made
+  (a template's size reads at once, seen), so a button given only a `Width` keeps its height; one made by its type, as
+  a label is, has 0 there, and a label given only a `Width` is as tall as its lines.
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
   `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
@@ -1020,12 +1032,14 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   only: add them to a frame made for that player, as the shop above; a development build reports one that is not, so
   the screens never disagree. They read what their last event brought or what the map last set, the same on every
   machine, and an event that brings the value they already read runs nothing, so a value the map sets never runs its
-  own handler. Moonwell draws the check box from the game's textures, as the game's own cannot be set from code (seen).
+  own handler. Once a text box has a `MaxLength` of the map's, setting 0 is refused and reported, as the game's own
+  limit cannot be given back. Moonwell draws the check box from the game's textures, as the game's own cannot be set
+  from code (seen).
   A slider being dragged sends about 85 events a second, each synced; what that costs online is not measured yet.
 - `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
-  the share of its width that `Value` is of `Min` to `Max`, its size being its `Width` and `Height`, or those of the frame
-  it covers with `Fill` (the game gives a frame's size too late to read); a label's `Color` colours its text, white
-  unless set.
+  the share of its width that `Value` is of `Min` to `Max`: the fill is as high as the bar, and its width is the share of
+  the bar's `Width`, or of the frame it covers with `Fill` (or that frame covers), whose new size it follows (the game
+  gives a size from points too late to read); a label's `Color` colours its text, white unless set.
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
@@ -1060,10 +1074,11 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
   of the map's, as a label with the font and size its `.fdf` gives. `window.Child<Label>("ShopTitle")` finds a part of
   the window by its name in the `.fdf`, at any depth, as the kind asked for: the same object each time, shown to the
-  window's player, and ending with the window. It is null, and reported, before the window is added, for a name the
-  window lacks, and for a `CheckBox`, `IconButton` or `ProgressBar`, which Moonwell draws from parts of its own. A
-  window whose parts were found is not given out again when it ends, as the game cannot give back what was set on
-  them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
+  window's player, and ending with the window; the frames its kind's constructor adds are made in it. It is null, and
+  reported, before the window is added or once it has ended, for a name the window lacks, for a part that has ended or
+  was found as another kind, and for a `CheckBox`, `IconButton` or `ProgressBar`, which Moonwell draws from parts of
+  its own. A window whose parts were found is not given out again when it ends, as the game cannot give back what was
+  set on them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
   gives its look in full; a `SIMPLEFRAME` template is not made, as no kind is one (seen).
 - `Handle` is the game's frame, for anything Moonwell does not do yet.
 
@@ -1326,6 +1341,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0032 | `Enum.Parse(typeof(Color), text)` (gives the number) | `Enum.Parse<Color>(text)` |
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
+| MW0053 | a native as a method group, `xs.Select(Natives.Cos)` or `Func<float, float> f = Natives.Cos`: it is written `Moonwell.Natives.Cos`, which the game's Lua does not have, so the script stops there | a lambda that calls it, `x => Natives.Cos(x)` |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
 

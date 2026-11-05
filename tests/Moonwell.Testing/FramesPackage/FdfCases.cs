@@ -65,5 +65,57 @@ namespace Moonwell.Testing
             Expect.True(world.Logged.Exists(line => line.Contains("Missing")), "reported: " + string.Join(" | ", world.Logged));
             Expect.True(world.Logged.Exists(line => line.Contains("parts of Moonwell's own")), "reported: " + string.Join(" | ", world.Logged));
         }
+
+        /// <summary>A map's panel with a label of its own, added in its constructor.</summary>
+        public sealed class NotedPanel : Panel
+        {
+            /// <summary>The label the constructor adds.</summary>
+            public readonly Label Note;
+
+            /// <summary>Adds the label.</summary>
+            public NotedPanel()
+            {
+                Note = Add(new Label { Text = "note" });
+            }
+        }
+
+        /// <summary>The frames a found kind's constructor adds are made in the part found, as a Tooltip's words are (review lead 5).</summary>
+        public static void ChildMakesItsOwn(FakeWorld world)
+        {
+            var frames = WithShop();
+            var window = Screen.Add(new Panel { Template = "ShopWindow" }, Game.Instance, shownTo: Player.One);
+            var body = window.Child<NotedPanel>("ShopBody");
+            Expect.True(body!.Note.Handle != null, "the constructor's label made");
+            var note = frames.FrameOf(body.Note.Handle!);
+            Expect.Same(frames.FrameOf(body.Handle!), note.Parent, "under the part found");
+            Expect.Equal("note", note.Text, "with its text");
+            Expect.Same(Player.One, body.Note.Player, "shown to the window's player");
+        }
+
+        /// <summary>A label found in a template lets clicks through, as a label made does (review lead 5).</summary>
+        public static void FoundLabelLetsClicksThrough(FakeWorld world)
+        {
+            var frames = WithShop();
+            var window = Screen.Add(new Panel { Template = "ShopWindow" }, Game.Instance);
+            var title = window.Child<Label>("ShopTitle");
+            Expect.Equal(false, frames.FrameOf(title!.Handle!).Enabled, "turned off");
+        }
+
+        /// <summary>A part that has ended, or asked for as another kind than it was found as, gives null and is reported, not the ended part or nothing silently (review lead 5).</summary>
+        public static void EndedPartRefused(FakeWorld world)
+        {
+            WithShop();
+            var window = Screen.Add(new Panel { Template = "ShopWindow" }, Game.Instance);
+            var title = window.Child<Label>("ShopTitle");
+            Expect.True(window.Child<Button>("ShopTitle") == null, "another kind");
+            Expect.True(world.Logged.Exists(line => line.Contains("found as")), "reported: " + string.Join(" | ", world.Logged));
+            title!.End();
+            Expect.True(window.Child<Label>("ShopTitle") == null, "an ended part");
+            Expect.True(world.Logged.Exists(line => line.Contains("has ended")), "reported: " + string.Join(" | ", world.Logged));
+            var buy = window.Child<Button>("ShopBuy");
+            window.End();
+            Expect.True(window.Child<Button>("ShopBuy") == null, "a part of an ended window");
+            Expect.True(buy!.HasEnded, "ended with it");
+        }
     }
 }

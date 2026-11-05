@@ -43,7 +43,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 OperationKind.ImplicitIndexerReference);
             start.RegisterOperationAction(checker.Delegates,
                 OperationKind.Argument, OperationKind.ParameterReference, OperationKind.SimpleAssignment, OperationKind.EventAssignment);
-            start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument);
+            start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument, OperationKind.VariableInitializer, OperationKind.SimpleAssignment);
+            start.RegisterOperationAction(checker.TextOfItems, OperationKind.Argument);
             start.RegisterOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
             start.RegisterOperationAction(checker.Write,
                 OperationKind.SimpleAssignment, OperationKind.CompoundAssignment, OperationKind.CoalesceAssignment, OperationKind.DeconstructionAssignment,
@@ -537,16 +538,50 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        /// <summary>MW0004 for the keys or values of a dictionary interface given as they are to an IEnumerable parameter (LINQ on them), where no conversion shows.</summary>
+        /// <summary>MW0004 for the keys or values of a dictionary interface given as they are to an IEnumerable parameter (LINQ on them), or kept in a variable of such a type to loop over later, where no conversion shows.</summary>
         public void HashArgument(OperationAnalysisContext context)
         {
-            var argument = (IArgumentOperation)context.Operation;
-            if (argument.Value is IPropertyReferenceOperation { Property.Name: "Keys" or "Values" } keys && HashName(keys) is { } hash
-                && argument.Parameter != null && IsCollection(argument.Parameter.Type) && !Silenced(argument, context.ContainingSymbol))
+            var (value, type) = context.Operation switch
+            {
+                IArgumentOperation argument => (argument.Value, argument.Parameter?.Type),
+                IVariableInitializerOperation { Parent: IVariableDeclaratorOperation declarator } initializer => (initializer.Value, declarator.Symbol.Type),
+                ISimpleAssignmentOperation assignment => (assignment.Value, assignment.Target.Type),
+                _ => (null, null),
+            };
+            if (value is IPropertyReferenceOperation { Property.Name: "Keys" or "Values" } keys && HashName(keys) is { } hash
+                && type != null && IsCollection(type) && !Silenced(context.Operation, context.ContainingSymbol))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Rules.HashLoop, keys.Syntax.GetLocation(), Article(hash)));
             }
         }
+
+        /// <summary>MW0002 for handles a library method joins into text, given as an array or a collection of them, outside Local.For: string.Join, string.Concat, StringBuilder.AppendJoin.</summary>
+        public void TextOfItems(OperationAnalysisContext context)
+        {
+            var argument = (IArgumentOperation)context.Operation;
+            var value = argument.Value;
+            while (value is IConversionOperation conversion)
+            {
+                value = conversion.Operand;
+            }
+
+            if (argument.Parent is IInvocationOperation { TargetMethod: { Name: "Join" or "Concat" or "AppendJoin" } method }
+                && (method.ContainingType.SpecialType == SpecialType.System_String || IsNamed(method.ContainingType, "System.Text.StringBuilder"))
+                && ItemType(value.Type) is { } item && IsHandle(item) && !IsLocal(argument, context.ContainingSymbol) && !Silenced(argument, context.ContainingSymbol))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Rules.LocalOutside, value.Syntax.GetLocation(), value.Syntax.ToString(), HandleText));
+            }
+        }
+
+        // The items' type of an array or an IEnumerable<T>; null for any other type.
+        private static ITypeSymbol? ItemType(ITypeSymbol? type) => type switch
+        {
+            IArrayTypeSymbol array => array.ElementType,
+            INamedTypeSymbol named => (named.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T
+                ? named
+                : named.AllInterfaces.FirstOrDefault(i => i.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T))?.TypeArguments[0],
+            _ => null,
+        };
 
         public void Literal(OperationAnalysisContext context)
         {

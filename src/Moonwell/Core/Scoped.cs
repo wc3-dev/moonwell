@@ -56,14 +56,14 @@ namespace Moonwell
 
             if (this is Scope scope)
             {
+                // Set first: a child adopted while they end, from a child's OnRemoved, ends at once, and is not run.
+                scope.childrenEnded = true;
                 while (scope.newest != null)
                 {
                     var child = scope.newest;
                     scope.Unlink(child);
                     child.End();
                 }
-
-                scope.childrenEnded = true;
             }
 
             try

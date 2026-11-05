@@ -860,8 +860,10 @@ namespace Moonwell.Testing
             var fb = frames.FrameOf(bar.Handle!);
             var fill = frames.Frames.Find(f => f.Parent == fb && f.Texture == "x.blp");
             Expect.True(fill != null, "the fill");
-            ExpectPoint(fill!, 0, fb, 0, 0.0f, 0.0f, "at the bar's left");
-            Expect.Near(0.05f, fill!.Width, "a quarter of the width");
+            Expect.Equal(2, fill!.Points.Count, "tied by its left corners, so it is as high as the bar");
+            Expect.True(fill.Points[0].Other == fb && fill.Points[0].Point == 0 && fill.Points[0].OtherPoint == 0, "its top left at the bar's");
+            Expect.True(fill.Points[1].Other == fb && fill.Points[1].Point == 6 && fill.Points[1].OtherPoint == 6, "its bottom left at the bar's");
+            Expect.Near(0.05f, fill.Width, "a quarter of the width");
             Expect.Near(0.02f, fill.Height, "the bar's height");
             bar.Value = 2.0f;
             Expect.Near(1.0f, bar.Value, "kept within the range");
@@ -1279,6 +1281,230 @@ namespace Moonwell.Testing
             var one = refilled.Add(new Label { Text = "one" });
             var two = refilled.Add(new Label { Text = "two" });
             Expect.True((one.Handle == first.Handle || one.Handle == second.Handle) && (two.Handle == first.Handle || two.Handle == second.Handle), "both labels of the ended panel given out again");
+        }
+
+        /// <summary>A frame put on the screen again in the same scope, or added again to the same frame, is refused and reported: it is made once, and a container lists it once (review lead 6, E10).</summary>
+        public static void AddedAgainRefused(FakeWorld world)
+        {
+            var frames = Installed();
+            var panel = Screen.Add(new Panel(), Game.Instance);
+            var handle = panel.Handle;
+            var made = frames.Frames.Count;
+            Screen.Add(panel, Game.Instance);
+            Expect.Same(handle, panel.Handle, "the screen's frame made once");
+            Expect.Equal(made, frames.Frames.Count, "nothing new made");
+            var row = Screen.Add(new Row(), Game.Instance);
+            var label = row.Add(new Label { Text = "x" });
+            var second = row.Add(new Label { Text = "y" });
+            handle = label.Handle;
+            made = frames.Frames.Count;
+            row.Add(label);
+            Expect.Same(handle, label.Handle, "the child made once");
+            Expect.Equal(made, frames.Frames.Count, "nothing new made for it");
+            Expect.Same(frames.FrameOf(row.Handle!), frames.FrameOf(label.Handle!).Points[0].Other, "still first in the row");
+            Expect.True(world.Logged.Exists(line => line.Contains("already has a parent")), "reported: " + string.Join(" | ", world.Logged));
+        }
+
+        /// <summary>An empty panel and an image whose tooltip is taken away, or ended by the map, let clicks through again; a panel with a look still catches them (review lead 6).</summary>
+        public static void TooltipGoneLetsClicksThrough(FakeWorld world)
+        {
+            var frames = Installed();
+            var empty = Screen.Add(new Panel { Template = "" }, Game.Instance);
+            var catcher = frames.Frames.Find(f => f.Filled == frames.FrameOf(empty.Handle!))!;
+            empty.Tooltip = new Tooltip { Text = "tip" };
+            Expect.Equal(true, catcher.Enabled, "on for the tooltip");
+            empty.Tooltip = null;
+            Expect.Equal(false, catcher.Enabled, "off once it is taken away");
+            var image = Screen.Add(new Image { Texture = "x.blp" }, Game.Instance);
+            var tip = new Tooltip { Text = "tip" };
+            image.Tooltip = tip;
+            var imageCatcher = frames.Frames.Find(f => f.Filled == frames.FrameOf(image.Handle!))!;
+            Expect.Equal(true, imageCatcher.Enabled, "the image's on for the tooltip");
+            tip.End();
+            Expect.Equal(false, imageCatcher.Enabled, "off once the map ends it");
+            var look = Screen.Add(new Panel(), Game.Instance);
+            look.Tooltip = new Tooltip { Text = "tip" };
+            look.Tooltip = null;
+            Expect.Equal(true, frames.Frames.Find(f => f.Filled == frames.FrameOf(look.Handle!))!.Enabled, "a panel with a look still catches");
+        }
+
+        /// <summary>An image or an empty panel turned off and then listened to gets a catcher that stays off until it is turned on (review lead 6).</summary>
+        public static void TurnedOffThenListened(FakeWorld world)
+        {
+            var frames = Installed();
+            var image = Screen.Add(new Image { Texture = "x.blp" }, Game.Instance);
+            image.Enabled = false;
+            image.Wheel += (who, n) => { };
+            var catcher = frames.Frames.Find(f => f.Filled == frames.FrameOf(image.Handle!))!;
+            Expect.Equal(false, catcher.Enabled, "the image's catcher off");
+            image.Enabled = true;
+            Expect.Equal(true, catcher.Enabled, "on once turned on");
+            var empty = Screen.Add(new Panel { Template = "" }, Game.Instance);
+            empty.Enabled = false;
+            empty.Tooltip = new Tooltip { Text = "tip" };
+            Expect.Equal(false, frames.Frames.Find(f => f.Filled == frames.FrameOf(empty.Handle!))!.Enabled, "the empty panel's catcher off");
+        }
+
+        /// <summary>A frame given only a width keeps its template's height, and one given only a height its template's width; a label made by type is given 0, so it is as tall as its lines (review lead 6).</summary>
+        public static void OneSideKeepsTemplate(FakeWorld world)
+        {
+            var frames = Installed();
+            frames.TemplateSizes["ScriptDialogButton"] = new Vector2(0.228f, 0.035f);
+            var button = Screen.Add(new Button { Text = "a", Width = 0.1f }, Game.Instance);
+            var fake = frames.FrameOf(button.Handle!);
+            Expect.Near(0.1f, fake.Width, "the width given");
+            Expect.Near(0.035f, fake.Height, "the template's height kept");
+            Expect.Near(0.0f, button.Height, "Height reads 0, as it was not set");
+            button.Height = 0.05f;
+            button.Width = 0.0f;
+            Expect.Near(0.228f, fake.Width, "the template's width back");
+            Expect.Near(0.05f, fake.Height, "the height given");
+            button.End();
+            var next = Screen.Add(new Button { Text = "b", Width = 0.2f }, Game.Instance);
+            Expect.Same(fake, frames.FrameOf(next.Handle!), "the ended one given out again");
+            Expect.Near(0.035f, fake.Height, "with the template's height, not the ended one's");
+            var label = Screen.Add(new Label { Text = "x", Width = 0.1f }, Game.Instance);
+            Expect.Near(0.0f, frames.FrameOf(label.Handle!).Height, "a label's height left to its lines");
+        }
+
+        /// <summary>A progress bar covering a frame follows that frame's new size, and one covering a frame that covers a sized one fills by that size; (review G3, lead 6).</summary>
+        public static void ProgressBarFollowsResize(FakeWorld world)
+        {
+            var frames = Installed();
+            var slot = Screen.Add(new Panel { Width = 0.2f, Height = 0.02f }, Game.Instance);
+            var bar = Screen.Add(new ProgressBar { Texture = "x.blp", Value = 0.5f }, Game.Instance);
+            bar.Fill(slot);
+            var fb = frames.FrameOf(bar.Handle!);
+            var fill = frames.Frames.Find(f => f.Parent == fb && f.Texture == "x.blp")!;
+            slot.Width = 0.4f;
+            Expect.Near(0.2f, fill.Width, "half the new width");
+            var inner = Screen.Add(new Panel { Template = "" }, Game.Instance);
+            inner.Fill(slot);
+            var deep = Screen.Add(new ProgressBar { Texture = "y.blp", Value = 0.25f }, Game.Instance);
+            deep.Fill(inner);
+            var deepFill = frames.Frames.Find(f => f.Parent == frames.FrameOf(deep.Handle!) && f.Texture == "y.blp")!;
+            Expect.Near(0.1f, deepFill.Width, "a quarter of the sized frame's width, through the one between");
+            slot.Width = 0.8f;
+            Expect.Near(0.2f, deepFill.Width, "following it");
+        }
+
+        /// <summary>A frame set to cover itself, or a frame that covers it, is refused and reported, and keeps what it covered.</summary>
+        public static void FillLoopRefused(FakeWorld world)
+        {
+            var frames = Installed();
+            var a = Screen.Add(new Panel(), Game.Instance);
+            var b = Screen.Add(new Panel(), Game.Instance);
+            b.Fill(a);
+            a.Fill(b);
+            a.Fill(a);
+            Expect.True(frames.FrameOf(a.Handle!).Filled == null, "the first covers nothing");
+            Expect.Same(frames.FrameOf(a.Handle!), frames.FrameOf(b.Handle!).Filled, "the second still covers the first");
+            Expect.True(world.Logged.Exists(line => line.Contains("covers it")), "reported: " + string.Join(" | ", world.Logged));
+        }
+
+        /// <summary>A panel with a frame inside it that a frame outside is tied to is not given out again when it ends, so the tied frame does not follow the next panel (review G6).</summary>
+        public static void TiedInsideEnded(FakeWorld world)
+        {
+            var frames = Installed();
+            var panel = Screen.Add(new Panel(), Game.Instance);
+            var notice = panel.Add(new Label { Text = "notice" });
+            var icon = Screen.Add(new Image(), Game.Instance);
+            icon.Attach(FramePoint.Left, notice, FramePoint.Right);
+            panel.End();
+            var next = Screen.Add(new Panel { Anchor = FramePoint.TopLeft }, Game.Instance);
+            Expect.True(next.Handle != panel.Handle, "the ended panel kept from the next");
+            Expect.Same(frames.FrameOf(notice.Handle!), frames.FrameOf(icon.Handle!).Points[0].Other, "the icon still tied where it was");
+        }
+
+        /// <summary>Attach or Fill to a frame that has ended is refused and reported, and the frame keeps its points (review G6).</summary>
+        public static void TieToEndedRefused(FakeWorld world)
+        {
+            var frames = Installed();
+            var gone = Screen.Add(new Label { Text = "gone" }, Game.Instance);
+            gone.End();
+            var icon = Screen.Add(new Image(), Game.Instance);
+            var fake = frames.FrameOf(icon.Handle!);
+            icon.Attach(FramePoint.Left, gone, FramePoint.Right);
+            icon.Fill(gone);
+            Expect.Equal(1, fake.Points.Count, "its anchor kept");
+            Expect.True(fake.Filled == null, "covering nothing");
+            Expect.True(world.Logged.Exists(line => line.Contains("has ended")), "reported: " + string.Join(" | ", world.Logged));
+        }
+
+        /// <summary>A frame not made yet that is tied to one that ends keeps that one out of the pool, and is tied to its game frame when it is made (review G6).</summary>
+        public static void UnmadeTiedHolds(FakeWorld world)
+        {
+            var frames = Installed();
+            var notice = Screen.Add(new Label { Text = "notice" }, Game.Instance);
+            var icon = new Image();
+            icon.Attach(FramePoint.Left, notice, FramePoint.Right);
+            notice.End();
+            var next = Screen.Add(new Label { Text = "next", Anchor = FramePoint.TopLeft }, Game.Instance);
+            Expect.True(next.Handle != notice.Handle, "the ended one kept from the next label");
+            Screen.Add(icon, Game.Instance);
+            Expect.Same(frames.FrameOf(notice.Handle!), frames.FrameOf(icon.Handle!).Points[0].Other, "the icon tied where the notice was");
+        }
+
+        /// <summary>A slider set to the value it reads while a drag is on its way gives the game nothing, so the drag lands and runs once, and no echo comes back as the player's (review G4).</summary>
+        public static void SliderSameValueAfterDrag(FakeWorld world)
+        {
+            var frames = Installed();
+            var slider = Screen.Add(new Slider { Max = 10.0f, Value = 5.0f }, Game.Instance, shownTo: Player.One);
+            var fake = frames.FrameOf(slider.Handle!);
+            var seen = new List<float>();
+            slider.ValueChanged += (who, value) => seen.Add(value);
+            fake.Value = 6.0f;
+            var calls = fake.Calls;
+            slider.Value = 5.0f;
+            Expect.Equal(calls, fake.Calls, "nothing given to the game");
+            frames.Fire(fake, SliderChanged, 0, 6.0f);
+            Expect.Equal("6", string.Join(", ", seen), "the drag runs once");
+            Expect.Near(6.0f, slider.Value, "Value reads the drag");
+        }
+
+        /// <summary>A text box set to the text it reads while typing is on its way gives the game nothing (review G4).</summary>
+        public static void TextBoxSameTextAfterTyping(FakeWorld world)
+        {
+            var frames = Installed();
+            var box = Screen.Add(new TextBox { Text = "a" }, Game.Instance, shownTo: Player.One);
+            var fake = frames.FrameOf(box.Handle!);
+            var seen = new List<string>();
+            box.TextChanged += (who, text) => seen.Add(text);
+            fake.Text = "ab";
+            box.Text = "a";
+            Expect.Equal("ab", fake.Text, "nothing given to the game");
+            frames.Fire(fake, TextChanged, 0, 0.0f, "ab");
+            Expect.Equal("ab", string.Join(", ", seen), "the typing runs once");
+        }
+
+        /// <summary>An ended slider goes only to one whose range holds its value, so the game sends back no clamp of it as a drag (review E08).</summary>
+        public static void SliderPoolKeepsRange(FakeWorld world)
+        {
+            Installed();
+            var high = Screen.Add(new Slider { Value = 90.0f }, Game.Instance, shownTo: Player.One);
+            high.End();
+            var low = Screen.Add(new Slider { Max = 50.0f, Value = 10.0f }, Game.Instance, shownTo: Player.One);
+            Expect.True(low.Handle != high.Handle, "not to a range without its value");
+            var wide = Screen.Add(new Slider { Value = 20.0f }, Game.Instance, shownTo: Player.One);
+            Expect.Same(high.Handle, wide.Handle, "to one whose range holds it");
+        }
+
+        /// <summary>A text box given a limit refuses 0, reported, as the game's own limit cannot be given back, so an ended one never caps a box that sets none (review E09).</summary>
+        public static void TextBoxLimitKept(FakeWorld world)
+        {
+            var frames = Installed();
+            var box = Screen.Add(new TextBox(), Game.Instance, shownTo: Player.One);
+            box.MaxLength = 5;
+            box.MaxLength = 0;
+            Expect.Equal(5, box.MaxLength, "the limit kept");
+            Expect.Equal(5, frames.FrameOf(box.Handle!).TextLimit, "as the game has it");
+            Expect.True(world.Logged.Exists(line => line.Contains("MaxLength")), "reported: " + string.Join(" | ", world.Logged));
+            box.End();
+            var free = Screen.Add(new TextBox(), Game.Instance, shownTo: Player.One);
+            Expect.True(free.Handle != box.Handle, "not given to a box with no limit");
+            var unmade = new TextBox { MaxLength = 5 };
+            unmade.MaxLength = 0;
+            Expect.Equal(0, unmade.MaxLength, "0 taken before the game has a limit");
         }
     }
 }
