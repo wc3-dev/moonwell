@@ -1063,7 +1063,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   window's player, and ending with the window. It is null, and reported, before the window is added, for a name the
   window lacks, and for a `CheckBox`, `IconButton` or `ProgressBar`, which Moonwell draws from parts of its own. A
   window whose parts were found is not given out again when it ends, as the game cannot give back what was set on
-  them. A `SIMPLEFRAME` template is not made, as no kind is one (seen).
+  them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
+  gives its look in full; a `SIMPLEFRAME` template is not made, as no kind is one (seen).
 - `Handle` is the game's frame, for anything Moonwell does not do yet.
 
 ## Colours and text
