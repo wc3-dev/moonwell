@@ -1679,6 +1679,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.forms.catches", Run = FormCases.Catches });
             list.Add(new Case { Name = "compiler.forms.checked", Run = FormCases.Checked });
             list.Add(new Case { Name = "compiler.forms.int-minimum", Run = FormCases.IntMinimum });
+            list.Add(new Case { Name = "compiler.forms.core-int-minimum", Run = FormCases.CoreIntMinimum });
+            list.Add(new Case { Name = "compiler.forms.generic-method-groups", Run = FormCases.GenericMethodGroups });
+            list.Add(new Case { Name = "compiler.forms.logic-grouping", Run = FormCases.LogicGrouping });
             list.Add(new Case { Name = "compiler.forms.enum-text", Run = FormCases.EnumText });
             list.Add(new Case { Name = "compiler.forms.handle-casts", Run = FormCases.HandleCasts });
             list.Add(new Case { Name = "compiler.forms.silent", Run = FormCases.Silent });

@@ -242,6 +242,50 @@ namespace Moonwell.Testing
             Expect.Equal("Sign", sign.ToString(), "that member's name");
         }
 
+        /// <summary>
+        /// -2^31 from CoreSystem's own Lua stays an integer (F21). The game's floats are single, so a float of -2^31 loses its last
+        /// bit in -(v + 1) and the &amp; stopped the script. Desktop Lua reads the literal as an integer, so only the game shows a
+        /// failure here.
+        /// </summary>
+        public static void CoreIntMinimum(FakeWorld world)
+        {
+            var below = -3e9f;
+            Expect.Equal(63, -((int)below + 1) & 63, "a float below int's range cast to int");
+            Expect.Equal(63, -(Math.ILogB(0) + 1) & 63, "Math.ILogB(0)");
+            Expect.Equal(63, -(int.Parse("-2147483648") + 1) & 63, "int.Parse of -2^31");
+        }
+
+        /// <summary>A generic method group given its type argument (F15): in a conditional, of no or two parameters, and handed to LINQ.</summary>
+        public static void GenericMethodGroups(FakeWorld world)
+        {
+            var yes = true;
+            Func<int, int>? zero = yes ? Zero<int> : null;
+            Expect.Equal(0, zero!(5), "in a conditional");
+            Func<int, int, string> both = Both<int>;
+            Expect.Equal("1,2,0", both(1, 2), "two parameters");
+            Func<int> make = Make<int>;
+            Expect.Equal(0, make(), "no parameter");
+            Expect.Equal(0, new[] { 1, 2 }.Select(Zero<int>).Last(), "handed to LINQ");
+        }
+
+        private static T Zero<T>(T value) => default!;
+
+        private static string Both<T>(T a, T b) => a + "," + b + "," + default(T);
+
+        private static T Make<T>() => default!;
+
+        /// <summary>A nullable's arithmetic compared with null, and a nullable's comparison in &amp;&amp; (F18): Lua's and/or bind looser than its other operators.</summary>
+        public static void LogicGrouping(FakeWorld world)
+        {
+            int? none = null;
+            int? some = 1;
+            var no = false;
+            Expect.True(none + 2 == null, "none + 2 == null");
+            Expect.True(some + 2 != null, "some + 2 != null");
+            Expect.True(null == none * 3, "null == none * 3");
+            Expect.True(!(some + 1 > 0 && no), "some + 1 > 0 && false");
+        }
+
         /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
         public static void EnumText(FakeWorld world)
         {
