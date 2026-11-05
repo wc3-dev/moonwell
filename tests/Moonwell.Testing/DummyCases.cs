@@ -355,6 +355,22 @@ namespace Moonwell.Testing
             Expect.Same(caster, ears.Killer, "OnUnitDied gets it");
         }
 
+        /// <summary>A dummy's kill of the unit it casts for is that unit's own: no killer, as for its own damage (seen 10-21).</summary>
+        public static void KillOfItself(FakeWorld world)
+        {
+            Spells(world);
+            Hits(world, 50.0f);
+            var caster = At(world, 0, 0.0f, 0.0f);
+            world.SetLife(caster.Handle, 30.0f);
+            var dying = caster.Add(new CreditEars());
+            var ears = new DummyEars();
+            Game.Instance.Add(ears);
+            caster.CastOn<TestBolt>(caster, Game.Instance);
+            Expect.True(ears.Died, "it died");
+            Expect.True(ears.Killer == null && dying.Killer == null, "with no killer");
+            Expect.True(dying.Killed == null, "and no OnKill of itself");
+        }
+
         /// <summary>A player's cast names no unit (decision 172): the hit's source and the killer are null.</summary>
         public static void PlayerCredit(FakeWorld world)
         {

@@ -71,6 +71,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dummy.no-cast-reactions", Run = DummyCases.NoCastReactions });
             list.Add(new Case { Name = "dummy.hit-credit", Run = DummyCases.HitCredit });
             list.Add(new Case { Name = "dummy.kill-credit", Run = DummyCases.KillCredit });
+            list.Add(new Case { Name = "dummy.kill-of-itself", Run = DummyCases.KillOfItself });
             list.Add(new Case { Name = "dummy.player-credit", Run = DummyCases.PlayerCredit });
             list.Add(new Case { Name = "dummy.spell-buff", Run = DummyCases.SpellBuff });
             list.Add(new Case { Name = "dummy.caster-gone-between-hits", Run = DummyCases.CasterGoneBetweenHits });
