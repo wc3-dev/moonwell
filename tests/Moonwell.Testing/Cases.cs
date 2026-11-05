@@ -1177,6 +1177,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "actors.remove-of-class", Run = ActorCases.RemoveOf });
             list.Add(new Case { Name = "actors.end-removes-last-first", Run = ActorCases.EndRemovesLastFirst });
             list.Add(new Case { Name = "actors.add-to-ended", Run = ActorCases.AddToEnded });
+            list.Add(new Case { Name = "actors.add-to-ending", Run = ActorCases.AddToEnding });
             list.Add(new Case { Name = "actors.component-owns-timer", Run = ActorCases.ComponentOwnsTimer });
             list.Add(new Case { Name = "actors.error-in-onadded", Run = ActorCases.ErrorInOnAdded });
             list.Add(new Case { Name = "game.start-order", Run = ActorCases.GameStartOrder });
