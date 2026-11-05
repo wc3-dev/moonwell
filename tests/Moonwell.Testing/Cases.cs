@@ -255,6 +255,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "item.carry-item-gone", Run = CarryCases.ItemGone });
             list.Add(new Case { Name = "item.carry-carrier-gone", Run = CarryCases.CarrierGone });
             list.Add(new Case { Name = "item.carry-bag-is-quiet", Run = CarryCases.BagIsQuiet });
+            list.Add(new Case { Name = "item.carry-slot-move", Run = CarryCases.SlotMove });
+            list.Add(new Case { Name = "item.carry-game-drop", Run = CarryCases.GameDrop });
+            list.Add(new Case { Name = "item.carry-given-on-in-drop", Run = CarryCases.GivenOnInDrop });
         }
 
         /// <summary>Adds the cases for the log: a map's own lines, and the log file's lines and timing.</summary>

@@ -985,7 +985,13 @@ namespace Moonwell
         {
             if (!IsGone && !item.IsGone)
             {
+                var carry = Runtime.World.CarriesItem(Handle, item.Handle) ? item.carry : null;
                 Runtime.World.DropItem(Handle, item.Handle);
+                if (carry != null && !carry.HasEnded && !Runtime.World.CarriesItem(Handle, item.Handle))
+                {
+                    // The drop event came while the unit still had the item, so its carry ends here, inside the call.
+                    item.EndCarry(carry);
+                }
             }
         }
 

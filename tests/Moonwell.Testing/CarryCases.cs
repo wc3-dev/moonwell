@@ -38,6 +38,21 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>An item component that gives its item to another unit inside the drop's reactions, once.</summary>
+    public sealed class PassOn : ItemComponent
+    {
+        /// <summary>The unit to give the item to at the next drop; null once given.</summary>
+        public Unit? To;
+
+        /// <summary>Gives the item to To, once.</summary>
+        public override void OnDropped(Unit carrierUnit)
+        {
+            var to = To;
+            To = null;
+            to?.Give(Item);
+        }
+    }
+
     /// <summary>Cases for an item's carry: what an item gives its carrier with heldBy: Item.Carry ends at the drop (decision 166).</summary>
     public static class CarryCases
     {
@@ -137,6 +152,54 @@ namespace Moonwell.Testing
             var swift = boots.Get<Swift>()!;
             unit.Remove();
             Expect.True(swift.Seen!.HasEnded, "the carry ended with its carrier");
+        }
+
+        /// <summary>The game fires a drop when the player moves an item between slots (seen 10-15): the item is still carried, so what its carry holds stays, after the moment too, and goes at the real drop.</summary>
+        public static void SlotMove(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var boots = NewBoots();
+            unit.Give(boots);
+            var swift = boots.Get<Swift>()!;
+            TestLog.Lines.Clear();
+            world.MoveItemSlot(unit.Handle, boots.Handle, 3);
+            Expect.True(IndexOf("swift dropped, carry live") >= 0, "the game fired a drop for the move");
+            world.Advance(0.1f);
+            Expect.True(unit.Has<Haste>(), "the Haste stays after a slot move");
+            Expect.True(!swift.Seen!.HasEnded, "the carry stays");
+            unit.Drop(boots);
+            Expect.True(!unit.Has<Haste>(), "the Haste is gone at the real drop");
+        }
+
+        /// <summary>A drop the game makes itself, as a player's, comes while the unit still has the item; its carry ends a moment later, once the game has taken the item out.</summary>
+        public static void GameDrop(FakeWorld world)
+        {
+            var unit = NewUnit(world);
+            var boots = NewBoots();
+            unit.Give(boots);
+            TestLog.Lines.Clear();
+            world.DropItem(unit.Handle, boots.Handle);
+            Expect.True(IndexOf("swift dropped, carry live") >= 0, "OnDropped saw the carry live");
+            world.Advance(0.1f);
+            Expect.True(!unit.Has<Haste>(), "the Haste is gone a moment after the drop");
+        }
+
+        /// <summary>Boots given to another unit inside the drop's reactions: the first unit's Haste ends, and the new holder's stays.</summary>
+        public static void GivenOnInDrop(FakeWorld world)
+        {
+            var first = NewUnit(world);
+            var second = NewUnit(world);
+            var boots = NewBoots();
+            var pass = new PassOn();
+            boots.Add(pass);
+            first.Give(boots);
+            pass.To = second;
+            first.Drop(boots);
+            world.Advance(0.1f);
+            Expect.Same(second, boots.Carrier, "the second unit carries the boots");
+            Expect.True(!first.Has<Haste>(), "the first unit's Haste ended");
+            Expect.True(second.Has<Haste>(), "the second unit keeps its Haste");
+            Expect.True(!boots.Get<Swift>()!.Seen!.HasEnded, "the second unit's carry is live");
         }
 
         /// <summary>A carry read in the bag gives a scope that has ended, and what it would hold is not added, with no report.</summary>
