@@ -336,6 +336,12 @@ namespace Moonwell
         /// <summary>Removes the destructable from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
+            if (watched)
+            {
+                Runtime.World.UnwatchDeath(Handle);
+                watched = false;
+            }
+
             if (!IsGone)
             {
                 Runtime.World.DeleteDestructable(Handle);

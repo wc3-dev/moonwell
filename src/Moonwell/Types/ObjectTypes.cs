@@ -123,6 +123,7 @@ namespace Moonwell
         /// Runs a register step, then the constructors its registrations run to find the events their classes need: every maker is
         /// registered before any constructor runs, so that a constructor that reads the default object of a class registered after
         /// its own (<c>Unit.Default&lt;Lancer&gt;()</c>) gets that class's, made by its maker. Runtime.Install runs the map's registry with it.
+        /// A register step or a constructor that throws is reported, and the rest still run.
         /// </summary>
         internal static void Registering(Action register)
         {
@@ -132,6 +133,10 @@ namespace Moonwell
             {
                 register();
             }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Setup", error);
+            }
             finally
             {
                 waiting = null;
@@ -139,8 +144,14 @@ namespace Moonwell
 
             for (var i = 0; i < listens.Count; i++)
             {
-                listens[i]();
+                RunListen(listens[i]);
             }
+        }
+
+        /// <summary>Runs an action once every maker is registered: at once outside the register step, and in it once its registrations have run.</summary>
+        internal static void AfterRegistering(Action action)
+        {
+            Listen(action);
         }
 
         /// <summary>Runs a registration's listen, which makes an object of its class: at once, or once the register step Registering runs has registered every maker.</summary>
@@ -152,7 +163,20 @@ namespace Moonwell
             }
             else
             {
+                RunListen(listen);
+            }
+        }
+
+        /// <summary>Runs a listen; a constructor that throws is reported, and its class listens for nothing.</summary>
+        private static void RunListen(Action listen)
+        {
+            try
+            {
                 listen();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Setup", error);
             }
         }
 

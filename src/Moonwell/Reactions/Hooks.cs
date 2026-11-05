@@ -19,6 +19,9 @@ namespace Moonwell
         /// <summary>Added by the packages that need it (interactions, areas): each is given every unit, item and destructable as it ends, before its OnLeave runs and while its place can still be read, so the interactions package has it out of its grid by its OnLeave (a gizmo, the package's own, leaves after). In the order added; empty without one.</summary>
         private static readonly List<Action<Widget>> endings = new List<Action<Widget>>();
 
+        /// <summary>The rank of each ending listener, in the order of endings.</summary>
+        private static readonly List<int> endingRanks = new List<int>();
+
         /// <summary>
         /// Whether obj's class, below declaringBase, defines name itself: for a base class, a method that overrides the
         /// base's reaction of that name, so a helper of the same name with other parameters, or a method that hides the
@@ -93,10 +96,23 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Adds a listener to the ending of every unit, item and destructable; it is called after those added before it. Runtime.Reset removes them all.</summary>
-        internal static void AddEnding(Action<Widget> listener)
+        /// <summary>The rank of the interactions package's ending listener.</summary>
+        internal const int InteractionsEnding = 0;
+
+        /// <summary>The rank of the areas package's ending listener.</summary>
+        internal const int AreasEnding = 1;
+
+        /// <summary>Adds a listener to the ending of every unit, item and destructable, at a rank: it is called after those of a lower rank and those of its rank added before it, so the packages hear an ending in the same order however they were installed. Runtime.Reset removes them all.</summary>
+        internal static void AddEnding(Action<Widget> listener, int rank)
         {
-            endings.Add(listener);
+            var at = endings.Count;
+            while (at > 0 && endingRanks[at - 1] > rank)
+            {
+                at--;
+            }
+
+            endings.Insert(at, listener);
+            endingRanks.Insert(at, rank);
         }
 
         /// <summary>Tells each ending listener, in the order added, that a widget is ending; an error in one is reported and the next still runs.</summary>
@@ -122,6 +138,7 @@ namespace Moonwell
             Seen = null;
             TakenIn = null;
             endings.Clear();
+            endingRanks.Clear();
         }
     }
 }

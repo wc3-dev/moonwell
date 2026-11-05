@@ -47,8 +47,9 @@ namespace Moonwell
                 return;
             }
 
+            // One that is ending reacts to none: it is leaving, and its OnLeave has run.
             var ordered = Unit.Of(handle);
-            if (ordered == null || ordered.HasEnded)
+            if (ordered == null || ordered.HasEnded || ordered.ending)
             {
                 return;
             }

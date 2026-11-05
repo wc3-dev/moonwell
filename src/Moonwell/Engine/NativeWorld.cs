@@ -31,8 +31,8 @@ namespace Moonwell.Engine
         /// <summary>The rect of the whole map, made once; every call to GetWorldBounds makes a new one.</summary>
         private readonly rect bounds;
 
-        /// <summary>The trigger that sees each destructable die, shared by every destructable watched.</summary>
-        private readonly trigger deathTrigger;
+        /// <summary>The trigger that sees each watched destructable die, one each, destroyed as the destructable leaves, since a trigger's events cannot be taken off it.</summary>
+        private readonly Dictionary<destructable, trigger> deathTriggers = new Dictionary<destructable, trigger>();
 
         /// <summary>The lines of the log file and when it is next written.</summary>
         private readonly LogFile log = new LogFile();
@@ -63,8 +63,6 @@ namespace Moonwell.Engine
             Natives.TriggerRegisterEnterRegion(enter, region, null);
             Natives.TriggerAddAction(enter, EnterAction);
 
-            deathTrigger = Natives.CreateTrigger();
-            Natives.TriggerAddAction(deathTrigger, DestructableDeathAction);
 
             // First of anything that hears a saved game load, so no code meets the string type the load left (game facts, 11-03).
             var loaded = Natives.CreateTrigger();
@@ -176,7 +174,25 @@ namespace Moonwell.Engine
         /// <summary>Delivers a destructable's death to Inbound.</summary>
         public void WatchDeath(destructable destructable)
         {
-            Natives.TriggerRegisterDeathEvent(deathTrigger, destructable);
+            if (deathTriggers.ContainsKey(destructable))
+            {
+                return;
+            }
+
+            var watch = Natives.CreateTrigger();
+            Natives.TriggerRegisterDeathEvent(watch, destructable);
+            Natives.TriggerAddAction(watch, DestructableDeathAction);
+            deathTriggers[destructable] = watch;
+        }
+
+        /// <summary>Stops delivering a destructable's death: its trigger is destroyed.</summary>
+        public void UnwatchDeath(destructable destructable)
+        {
+            if (deathTriggers.TryGetValue(destructable, out var watch))
+            {
+                deathTriggers.Remove(destructable);
+                Natives.DestroyTrigger(watch);
+            }
         }
 
         /// <summary>Shows a line on the screen of the local player.</summary>

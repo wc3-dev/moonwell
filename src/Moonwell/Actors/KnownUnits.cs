@@ -10,10 +10,13 @@ namespace Moonwell
         private static Dictionary<unit, Unit> known = new Dictionary<unit, Unit>();
 
         /// <summary>The units the runtime holds, in the order they were taken in.</summary>
-        internal static OrderedSet<Unit> Live = new OrderedSet<Unit>();
+        internal static LiveSet<Unit> Live = new LiveSet<Unit>();
 
         /// <summary>The units the runtime removed whose type id still read when they ended, as the game's does in the frame of RemoveUnit, keyed by the handle, in the order removed: each handle stays mapped to its ended object, which TakeIn does not take in again, so an event the game fires after the removal (an item's drop, the enter of a unit made in the same instant) makes no second object. The sweep forgets each once its type id reads 0.</summary>
         private static OrderedMap<unit, Unit> removed = new OrderedMap<unit, Unit>();
+
+        /// <summary>The units whose class's constructor threw, which are not taken in again, so it does not run at each of their events; the sweep forgets each once its type id reads 0.</summary>
+        private static HashSet<unit> failed = new HashSet<unit>();
 
         /// <summary>Whether every unit that enters the map is taken in, as the interactions package asks once units are tracked; otherwise only a unit of a registered type, or every unit while something wants OnUnitCreated.</summary>
         internal static bool EveryUnit;
@@ -39,7 +42,7 @@ namespace Moonwell
             }
 
             // A unit the runtime removed is not taken in again, though its type id still reads in that frame.
-            if (removed.ContainsKey(handle))
+            if (removed.ContainsKey(handle) || failed.Contains(handle))
             {
                 return null;
             }
@@ -53,7 +56,17 @@ namespace Moonwell
 
             var illusion = Runtime.World.IsIllusion(handle);
             var maker = illusion ? null : ObjectTypes.UnitMaker(typeId);
-            var made = maker != null ? maker() : Plain(Runtime.World.IsHero(handle));
+            Unit made;
+            try
+            {
+                made = maker != null ? maker() : Plain(Runtime.World.IsHero(handle));
+            }
+            catch
+            {
+                failed.Add(handle);
+                throw;
+            }
+
             made.Handle = handle;
             made.TypeId = typeId;
             made.IsIllusion = illusion;
@@ -66,6 +79,7 @@ namespace Moonwell
             if (made is Hero hero)
             {
                 hero.leveledTo = Runtime.World.LevelOf(handle);
+                hero.lastLevel = hero.leveledTo;
             }
 
             for (var i = 0; i < made.StartComponents.Count; i++)
@@ -96,7 +110,7 @@ namespace Moonwell
             {
                 EnterComponents(Game.Instance, made);
                 var player = Player.Existing(made.Owner.Slot);
-                if (player != null)
+                if (player != null && !made.HasEnded && !made.ending)
                 {
                     EnterComponents(player, made);
                 }
@@ -161,6 +175,11 @@ namespace Moonwell
                     removed.Remove(handle);
                 }
             }
+
+            if (failed.Count > 0)
+            {
+                failed.RemoveWhere(handle => Runtime.World.UnitTypeId(handle) == 0);
+            }
         }
 
         /// <summary>From now on takes in every unit that enters the map, and takes in now each unit in the world the runtime does not hold: units the game makes with no Moonwell code (trained, summoned, made by a native) are known from then on. The interactions package calls it when units are first asked for, which is synced code, so every machine takes in the same units.</summary>
@@ -192,6 +211,7 @@ namespace Moonwell
             known.Clear();
             Live.Clear();
             removed.Clear();
+            failed.Clear();
             EveryUnit = false;
         }
 
@@ -199,7 +219,7 @@ namespace Moonwell
         private static void EnterComponents(Actor actor, Unit unit)
         {
             var count = actor.BeginDispatch();
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count && !unit.HasEnded && !unit.ending; i++)
             {
                 var component = actor.ComponentAt(i) as MapComponent;
                 if (component == null || component.HasEnded || (component.Mask & Hook.OnUnitCreated) == 0)

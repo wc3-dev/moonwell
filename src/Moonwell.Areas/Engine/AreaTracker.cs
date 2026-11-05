@@ -73,7 +73,7 @@ namespace Moonwell.Engine
             {
                 var made = new AreaTracker(world, Game.Instance);
                 world.ListenDeaths(made.Died, made.Revived);
-                Hooks.AddEnding(made.Ending);
+                Hooks.AddEnding(made.Ending, Hooks.AreasEnding);
                 current = made;
 #if DEBUG
                 // The package's view in the debug mode, added once: Runtime.Reset clears the views, and with them the tracker.

@@ -321,10 +321,12 @@ namespace Moonwell
                 }
             }
 
-            for (var i = 0; i < units.Count; i++)
+            // A copy, as a buff's OnApply may end units, which would move the rest along the list.
+            var checking = units.Snapshot();
+            for (var i = 0; i < checking.Count; i++)
             {
-                var unit = units[i];
-                if (!unit.HasEnded && !unit.IsGone)
+                var unit = checking[i];
+                if (!unit.HasEnded && !unit.ending && !unit.IsGone)
                 {
                     Check(unit, null, false);
                 }

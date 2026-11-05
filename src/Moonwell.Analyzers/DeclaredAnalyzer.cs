@@ -213,8 +213,21 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
     {
         IAssignmentOperation assignment => assignment.Target == operation,
         IIncrementOrDecrementOperation => true,
+        ITupleOperation tuple => IsDeconstructed(tuple),
         _ => false,
     };
+
+    // Whether a tuple is what a deconstruction assigns to, (unit.Level, n) = (5, 0), and not a value.
+    private static bool IsDeconstructed(ITupleOperation tuple)
+    {
+        IOperation up = tuple;
+        while (up.Parent is ITupleOperation)
+        {
+            up = up.Parent;
+        }
+
+        return up.Parent is IDeconstructionAssignmentOperation assignment && assignment.Target == up;
+    }
 
     private static bool IsObjects(INamedTypeSymbol type) =>
         type.ContainingNamespace is { Name: "Objects", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } };

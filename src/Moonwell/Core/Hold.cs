@@ -21,6 +21,9 @@ namespace Moonwell
         /// <summary>For an apply of a strongest buff with a duration, the timer that ends this apply.</summary>
         internal Timer? Expiry;
 
+        /// <summary>For an apply of a strongest buff, how many times its holder applied it again, which an expiry's OnExpire may do.</summary>
+        internal int Renewed;
+
         /// <summary>Lets go of the component, which ends when this was its last hold.</summary>
         internal override void Finish()
         {

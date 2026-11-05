@@ -10,7 +10,10 @@ namespace Moonwell
         private static Dictionary<item, Item> known = new Dictionary<item, Item>();
 
         /// <summary>The items the runtime holds, in the order they were taken in.</summary>
-        internal static OrderedSet<Item> Live = new OrderedSet<Item>();
+        internal static LiveSet<Item> Live = new LiveSet<Item>();
+
+        /// <summary>The items whose class's constructor threw, which are not taken in again, so it does not run at each of their events.</summary>
+        private static HashSet<item> failed = new HashSet<item>();
 
         /// <summary>The object of a game item when the runtime holds it; null otherwise.</summary>
         internal static Item? Find(item handle)
@@ -33,20 +36,22 @@ namespace Moonwell
             }
 
             var typeId = Runtime.World.ItemTypeId(handle);
-            if (typeId == 0)
+            if (typeId == 0 || failed.Contains(handle))
             {
                 return null;
             }
 
             var maker = ObjectTypes.ItemMaker(typeId);
             Item made;
-            if (maker != null)
+            try
             {
-                made = maker();
+                made = maker != null ? maker() : new Item();
             }
-            else
+            catch
             {
-                made = new Item();
+                // shortcut: a failed handle stays in the set after the game removes the item; forget it then if maps fail many.
+                failed.Add(handle);
+                throw;
             }
 
             made.Handle = handle;
@@ -97,6 +102,7 @@ namespace Moonwell
         {
             known.Clear();
             Live.Clear();
+            failed.Clear();
         }
     }
 }

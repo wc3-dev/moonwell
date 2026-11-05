@@ -78,7 +78,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     lastProperName = value;
                     Runtime.World.SetProperName(Handle, value);
@@ -113,7 +113,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     // SetHeroXP only raises (seen 10-21); a negative AddHeroXP lowers the experience and keeps the level.
                     var now = Runtime.World.ExperienceOf(Handle);
@@ -135,7 +135,7 @@ namespace Moonwell
         /// <summary>Adds experience to the hero, or takes it away with a negative amount (AddHeroXP). Adding gives the levels that come with it, with the level-up effect unless showEffect is false, and stops at the top level's experience; taking lowers the experience but keeps the level (SetLevel lowers the level). The player's XP handicap does not apply (seen 11-02). Does nothing once the hero is gone.</summary>
         public void AddExperience(int amount, bool showEffect = true)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 Runtime.World.AddExperience(Handle, amount, showEffect);
 
@@ -171,6 +171,11 @@ namespace Moonwell
             {
                 var table = HeroTable.Experience;
                 var level = Handle == null ? 1 : Level;
+                if (level < 1)
+                {
+                    return 0.0f;
+                }
+
                 if (level >= table.Length)
                 {
                     return 100.0f;
@@ -191,7 +196,7 @@ namespace Moonwell
         /// <summary>Gives the hero one level, as SetLevel(Level + 1) does, with the level-up effect unless showEffect is false. Does nothing at the top level of the map's experience table, and once the hero is gone.</summary>
         public void LevelUp(bool showEffect = true)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 var level = Level;
                 if (level < HeroTable.Experience.Length)
@@ -204,7 +209,7 @@ namespace Moonwell
         /// <summary>Gives the hero a level, as blizzard.j's SetHeroLevelBJ does: a higher one with the level-up effect unless showEffect is false (SetHeroLevel, which only raises, and gives the hero that level's experience; it stops at the last level), a lower one by taking the levels away (UnitStripHeroLevel). Level and Experience read what the game took. Does nothing once the hero is gone.</summary>
         public void SetLevel(int level, bool showEffect = true)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 var now = Runtime.World.LevelOf(Handle);
                 if (level > now)
@@ -264,7 +269,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastStrength = value;
                     Runtime.World.SetStrength(Handle, value);
@@ -310,7 +315,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastAgility = value;
                     Runtime.World.SetAgility(Handle, value);
@@ -356,7 +361,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastIntelligence = value;
                     Runtime.World.SetIntelligence(Handle, value);
@@ -481,7 +486,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     var delta = value - Runtime.World.SkillPointsOf(Handle);
                     if (delta != 0 && Runtime.World.AddSkillPoints(Handle, delta))

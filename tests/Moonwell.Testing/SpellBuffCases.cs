@@ -43,6 +43,9 @@ namespace Moonwell.Testing
         /// <summary>What OnRemoved runs after it logs; a case sets it.</summary>
         public static System.Action<FrozenBuff>? WhenRemoved;
 
+        /// <summary>Runs after each OnApply, when set.</summary>
+        public static System.Action<FrozenBuff>? WhenApplied;
+
         /// <summary>Ticks every half second.</summary>
         public FrozenBuff()
         {
@@ -53,6 +56,7 @@ namespace Moonwell.Testing
         public override void OnApply()
         {
             Applied++;
+            WhenApplied?.Invoke(this);
             if (HitsOnApply && Source != null)
             {
                 Source.Damage(Unit, 5.0f);
@@ -92,7 +96,7 @@ namespace Moonwell.Testing
     /// <summary>Cases for the buffs the game puts on: the fake world's game buffs (as seen 11-03), then the watch that runs a buff class's code for them (decisions 152, 153, 163).</summary>
     public static class SpellBuffCases
     {
-        private static readonly int Frozen = ObjectTypes.FourCC("B010");
+        internal static readonly int Frozen = ObjectTypes.FourCC("B010");
         private static readonly int Bolt = ObjectTypes.FourCC("A010");
         private static readonly int Frost = ObjectTypes.FourCC("A020");
 
@@ -102,7 +106,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>Registers FrozenBuff as the build does for a class a spell (A010, a Storm Bolt) and an aura (A020) list, and begins the watch as the runtime does.</summary>
-        private static void Watch()
+        internal static void Watch()
         {
             FrozenBuff.HitsOnApply = false;
             FrozenBuff.WhenRemoved = null;
@@ -326,6 +330,21 @@ namespace Moonwell.Testing
             world.Advance(0.01f);
             Expect.Equal(1, buff.Applied, "OnApply ran once");
             Expect.Same(caster, buff.Source, "the source stays");
+        }
+
+        /// <summary>With the damage package, a hit of 0 from code, or one a reaction set to 0, gives the buff nothing: only a hit of 0 the game starts does.</summary>
+        public static void PackageCodeHitOfZeroGivesNothing(FakeWorld world)
+        {
+            Watch();
+            DamageSystem.Install(new FakeDamageWorld(world));
+            var target = NewUnit(world);
+            var caster = Caster(world, 1);
+            world.GameBuffs.Hit(caster.Handle, target.Handle, Frozen);
+            world.Advance(0.01f);
+            var buff = target.Get<FrozenBuff>()!;
+            caster.Damage(target, 0.0f);
+            world.Advance(0.01f);
+            Expect.Equal(1, buff.Applied, "OnApply ran once");
         }
 
         /// <summary>A buff whose OnApply deals damage from its source does not give itself again.</summary>
