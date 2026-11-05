@@ -845,10 +845,10 @@ namespace Moonwell.Testing
             ListenedChat.Add(SlotOf(player));
         }
 
-        /// <summary>A person types a chat line; it reaches Moonwell when their chat is listened for and the line starts with a dash, as the game's chat event gives it.</summary>
+        /// <summary>A person types a chat line; it reaches Moonwell when their chat is listened for and the line has a dash in it, anywhere, as the game's chat event gives it.</summary>
         public void Chat(Player from, string text)
         {
-            if (ListenedChat.Contains(from.Slot) && text.StartsWith("-"))
+            if (ListenedChat.Contains(from.Slot) && text.IndexOf('-') >= 0)
             {
                 Inbound.ChatArrived(from.Handle, text);
             }
