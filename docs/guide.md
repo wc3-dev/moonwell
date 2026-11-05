@@ -995,8 +995,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   placed by the screen's edges follow the window when it is resized, within half a second.
 - A frame sits by its `Anchor` on the same point of its parent, the screen or the frame it was added to, moved by
   `Offset`; `Center` unless set. `Attach(point, other, otherPoint, x, y)` ties one of its points to another frame's in
-  place of the anchor, and a second `Attach` stretches it between the two; `Fill(other)` covers another frame. `Width`,
-  `Height`, `Scale`, `Visible`, `Alpha` (0 to 255) and `Level` (drawn above siblings of a lower one) do as named.
+  place of the anchor, and a second `Attach` stretches it between the two; `Fill(other)` covers another frame. A frame
+  tied to one not added yet is placed when that one is added. `Width`, `Height`, `Scale`, `Visible`, `Alpha` (0 to 255)
+  and `Level` (drawn above siblings of a lower one) do as named.
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
   `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
@@ -1022,7 +1023,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   own handler. Moonwell draws the check box from the game's textures, as the game's own cannot be set from code (seen).
   A slider being dragged sends about 85 events a second, each synced; what that costs online is not measured yet.
 - `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
-  the share of its width that `Value` is of `Min` to `Max`; a label's `Color` colours its text, white unless set.
+  the share of its width that `Value` is of `Min` to `Max`, its size being its `Width` and `Height`, or those of the frame
+  it covers with `Fill` (the game gives a frame's size too late to read); a label's `Color` colours its text, white
+  unless set.
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
@@ -1039,7 +1042,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   player sees; `Text` keeps the shared text, and setting it shows that everywhere again.
 - `End()` hides a frame with the frames added to it. Nothing is destroyed, as destroying a frame can desync (a claim):
   the next frame of its class and template is given the hidden one, with none of its old values. One sized on a
-  template goes only to a frame given a size.
+  template goes only to a frame given a size. One that a frame still showing is tied to is not given out again, so the
+  tied frame stays where it was.
 - A template the game does not have, as one from an `.fdf` whose TOC is not loaded, is reported in every build, and the
   frame is made by its type instead.
 - `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: the game's own HUD per player,

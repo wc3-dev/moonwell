@@ -19,6 +19,9 @@ namespace Moonwell
 
         internal float value;
 
+        /// <summary>Values the map set that the game has not sent back yet; their events run nothing, whatever came between.</summary>
+        internal List<float>? sent;
+
         internal List<Action<Player, float>>? valueChanged;
 
         /// <summary>Makes a slider from 0 to 100 in steps of 1, at 0, to be added to a frame for one player.</summary>
@@ -94,10 +97,16 @@ namespace Moonwell
                     return;
                 }
 
-                this.value = value < min ? min : value > max ? max : value;
+                var kept = value < min ? min : value > max ? max : value;
                 if (handle != null)
                 {
-                    FramesSystem.World.SetFrameValue(handle, this.value);
+                    Expect(kept);
+                    this.value = kept;
+                    FramesSystem.World.SetFrameValue(handle, kept);
+                }
+                else
+                {
+                    this.value = kept;
                 }
             }
         }
@@ -112,7 +121,13 @@ namespace Moonwell
         /// <summary>Keeps the value within a new range and gives both to the game, so the value the game sends back for its own clamp is the one Value reads, and runs nothing.</summary>
         private void KeepValue()
         {
-            value = value < min ? min : value > max ? max : value;
+            var kept = value < min ? min : value > max ? max : value;
+            if (handle != null)
+            {
+                Expect(kept);
+            }
+
+            value = kept;
             if (handle != null)
             {
                 FramesSystem.World.SetFrameRange(handle, min, max);
@@ -146,11 +161,34 @@ namespace Moonwell
 
             if (eventValue == value)
             {
+                sent?.Remove(eventValue);
+                return;
+            }
+
+            if (sent != null && sent.Remove(eventValue))
+            {
+                value = eventValue;
                 return;
             }
 
             value = eventValue;
             Raise(valueChanged, who, eventValue, "ValueChanged");
+        }
+
+        /// <summary>Keeps a value the map sets, when it changes the one Value reads, to know its event when the game sends it back. A set whose event never comes, as when the slider's player has left, is forgotten after eight more.</summary>
+        private void Expect(float kept)
+        {
+            if (kept == value)
+            {
+                return;
+            }
+
+            sent ??= new List<float>();
+            sent.Add(kept);
+            if (sent.Count > 8)
+            {
+                sent.RemoveAt(0);
+            }
         }
     }
 }

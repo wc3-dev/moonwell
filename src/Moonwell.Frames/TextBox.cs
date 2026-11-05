@@ -13,6 +13,9 @@ namespace Moonwell
     {
         internal string text = "";
 
+        /// <summary>Texts the map set that the game has not sent back yet; their events run nothing, whatever came between.</summary>
+        internal List<string>? sent;
+
         internal int maxLength;
 
         internal List<Action<Player, string>>? textChanged;
@@ -39,6 +42,16 @@ namespace Moonwell
                 if (HasEnded)
                 {
                     return;
+                }
+
+                if (handle != null && value != text)
+                {
+                    sent ??= new List<string>();
+                    sent.Add(value);
+                    if (sent.Count > 8)
+                    {
+                        sent.RemoveAt(0);
+                    }
                 }
 
                 text = value;
@@ -127,6 +140,13 @@ namespace Moonwell
             {
                 if (eventText == text)
                 {
+                    sent?.Remove(eventText);
+                    return;
+                }
+
+                if (sent != null && sent.Remove(eventText))
+                {
+                    text = eventText;
                     return;
                 }
 

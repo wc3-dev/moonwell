@@ -1156,5 +1156,128 @@ namespace Moonwell.Testing
             var second = refilled.Add(new Label { Text = "in again" });
             Expect.Same(inner.Handle, second.Handle, "and its label inside it");
         }
+
+        /// <summary>A grid given a new value after its frames were added lays them out with that value, not the one before (review G1: in Lua, a setter writing its field through ref laid out first).</summary>
+        public static void GridSetAfterAdd(FakeWorld world)
+        {
+            var frames = Installed();
+            var grid = Screen.Add(new Grid { CellWidth = 0.1f, CellHeight = 0.05f }, Game.Instance);
+            grid.Add(new Image());
+            var b = grid.Add(new Image());
+            var fg = frames.FrameOf(grid.Handle!);
+            grid.Columns = 2;
+            ExpectPoint(frames.FrameOf(b.Handle!), 0, fg, 0, 0.1f, 0.0f, "the second cell, by the new columns");
+            grid.Gap = 0.01f;
+            ExpectPoint(frames.FrameOf(b.Handle!), 0, fg, 0, 0.11f, 0.0f, "moved by the new gap");
+        }
+
+        /// <summary>A progress bar sized by Fill fills its share of the width it covers, at the bar's height (review G3).</summary>
+        public static void ProgressBarFilledOver(FakeWorld world)
+        {
+            var frames = Installed();
+            var slot = Screen.Add(new Panel { Width = 0.2f, Height = 0.02f }, Game.Instance);
+            var bar = Screen.Add(new ProgressBar { Texture = "x.blp", Value = 0.5f }, Game.Instance);
+            bar.Fill(slot);
+            var fb = frames.FrameOf(bar.Handle!);
+            var fill = frames.Frames.Find(f => f.Parent == fb && f.Texture == "x.blp");
+            Expect.True(fill != null, "the fill");
+            Expect.Near(0.1f, fill!.Width, "half the width it covers");
+            Expect.Near(0.02f, fill.Height, "its height");
+            bar.Value = 0.25f;
+            Expect.Near(0.05f, fill.Width, "a quarter of it");
+        }
+
+        /// <summary>The game's event for a value the map set runs nothing, even when a drag sent before the set arrives between them (review G4); Value then reads what the slider shows.</summary>
+        public static void SliderEchoAfterDrag(FakeWorld world)
+        {
+            var frames = Installed();
+            var slider = Screen.Add(new Slider { Max = 10.0f }, Game.Instance, shownTo: Player.One);
+            var fake = frames.FrameOf(slider.Handle!);
+            var seen = new List<float>();
+            slider.ValueChanged += (who, value) => seen.Add(value);
+            slider.Value = 5.0f;
+            frames.Fire(fake, SliderChanged, 0, 6.0f);
+            frames.Fire(fake, SliderChanged, 0, 5.0f);
+            Expect.Equal("6", string.Join(", ", seen), "the drag runs, the set's own event does not");
+            Expect.Near(5.0f, slider.Value, "Value reads what the slider shows");
+            frames.Fire(fake, SliderChanged, 0, 7.0f);
+            Expect.Equal("6, 7", string.Join(", ", seen), "the next drag runs");
+        }
+
+        /// <summary>The game's event for a text the map set runs nothing, even when typing sent before the set arrives between them (review G4).</summary>
+        public static void TextBoxEchoAfterTyping(FakeWorld world)
+        {
+            var frames = Installed();
+            var box = Screen.Add(new TextBox(), Game.Instance, shownTo: Player.One);
+            var fake = frames.FrameOf(box.Handle!);
+            var seen = new List<string>();
+            box.TextChanged += (who, text) => seen.Add(text);
+            box.Text = "AB";
+            frames.Fire(fake, TextChanged, 0, 0.0f, "abc");
+            frames.Fire(fake, TextChanged, 0, 0.0f, "AB");
+            Expect.Equal("abc", string.Join(", ", seen), "the typing runs, the set's own event does not");
+            Expect.Equal("AB", box.Text, "Text reads what the box shows");
+        }
+
+        /// <summary>A frame tied to a frame not made yet is placed when that frame is made (review G5).</summary>
+        public static void AttachToUnmade(FakeWorld world)
+        {
+            var frames = Installed();
+            var label = Screen.Add(new Label { Text = "x" }, Game.Instance);
+            var box = new Panel();
+            label.Attach(FramePoint.Left, box, FramePoint.Right);
+            Screen.Add(box, Game.Instance);
+            ExpectPoint(frames.FrameOf(label.Handle!), 3, frames.FrameOf(box.Handle!), 5, 0.0f, 0.0f, "tied once the other is made");
+        }
+
+        /// <summary>A frame set to cover a frame not made yet covers it when it is made, and keeps none of its old points meanwhile (review G5).</summary>
+        public static void FillUnmade(FakeWorld world)
+        {
+            var frames = Installed();
+            var cover = Screen.Add(new Panel(), Game.Instance);
+            var box = new Panel();
+            cover.Fill(box);
+            var fake = frames.FrameOf(cover.Handle!);
+            Expect.Equal(0, fake.Points.Count, "the old points cleared");
+            Screen.Add(box, Game.Instance);
+            Expect.Same(frames.FrameOf(box.Handle!), fake.Filled, "covers it once it is made");
+        }
+
+        /// <summary>An ended frame another frame is tied to is not given out again, so the tied frame does not follow the next frame of its kind (review G6).</summary>
+        public static void TiedToEnded(FakeWorld world)
+        {
+            var frames = Installed();
+            var panel = Screen.Add(new Panel(), Game.Instance);
+            var notice = panel.Add(new Label { Text = "notice" });
+            var icon = panel.Add(new Image());
+            icon.Attach(FramePoint.Left, notice, FramePoint.Right);
+            notice.End();
+            var next = panel.Add(new Label { Text = "next", Anchor = FramePoint.TopLeft });
+            Expect.True(next.Handle != notice.Handle, "the ended one kept from the next label");
+            Expect.Same(frames.FrameOf(notice.Handle!), frames.FrameOf(icon.Handle!).Points[0].Other, "the icon still tied where it was");
+        }
+
+        /// <summary>A row's ended frame, and a tree ended whole with a frame tied to a later sibling, are still given out again.</summary>
+        public static void TiedStillPooled(FakeWorld world)
+        {
+            Installed();
+            var row = Screen.Add(new Row(), Game.Instance);
+            row.Add(new Label { Text = "a" });
+            var b = row.Add(new Label { Text = "b" });
+            row.Add(new Label { Text = "c" });
+            b.End();
+            var again = row.Add(new Label { Text = "d" });
+            Expect.Same(b.Handle, again.Handle, "the row's ended label given out again");
+            var panel = new Panel();
+            var first = panel.Add(new Label { Text = "first" });
+            var second = panel.Add(new Label { Text = "second" });
+            first.Attach(FramePoint.Top, second, FramePoint.Bottom);
+            Screen.Add(panel, Game.Instance);
+            panel.End();
+            var refilled = Screen.Add(new Panel(), Game.Instance);
+            var one = refilled.Add(new Label { Text = "one" });
+            var two = refilled.Add(new Label { Text = "two" });
+            Expect.True((one.Handle == first.Handle || one.Handle == second.Handle) && (two.Handle == first.Handle || two.Handle == second.Handle), "both labels of the ended panel given out again");
+        }
     }
 }
