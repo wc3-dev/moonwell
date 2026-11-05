@@ -81,4 +81,50 @@ public class DefaultTests
                         var b = Widget.Default<Crate>();
             """ + End));
     }
+
+    [Fact]
+    public void a_set_on_a_default_object_is_mw0054()
+    {
+        var found = MapCode.CheckFile(Classes + """
+                        Unit.Default<Guard>().MaxLife = 500;
+                        Item.Default<Sentry>().Charges += 1;
+                        var champion = Unit.Default<Champion>();
+                        champion.Default.MaxMana = 10;
+                        var life = Unit.Default<Guard>().MaxLife;
+                        (Unit.Default<Guard>().MaxMana, life) = (5, 6);
+                        champion.MaxMana = 20;
+            """ + End);
+
+        Assert.Equal(new[]
+        {
+            "MW0054: Unit.Default<Guard>().MaxLife",
+            "MW0054: Item.Default<Sentry>().Charges",
+            "MW0054: champion.Default.MaxMana",
+            "MW0054: Unit.Default<Guard>().MaxMana",
+        }, found);
+    }
+
+    [Fact]
+    public void a_set_on_its_own_default_in_a_declared_constructor_is_mw0012_alone()
+    {
+        var found = MapCode.CheckFile("""
+            using Moonwell;
+            using Moonwell.Objects;
+
+            namespace Map
+            {
+                public class Guard : Human.Units.Footman
+                {
+                    public Guard()
+                    {
+                        Default.MaxLife = 5;
+                        Unit.Default<Guard>().MaxMana = 5;
+                    }
+                }
+            }
+            """);
+
+        Assert.All(found, line => Assert.StartsWith("MW0012", line));
+        Assert.Equal(2, found.Count);
+    }
 }

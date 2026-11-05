@@ -28,6 +28,17 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         context.RegisterOperationAction(HandleConversion, OperationKind.Conversion);
         context.RegisterOperationAction(HandleIsType, OperationKind.IsType);
         context.RegisterOperationAction(HandlePattern, OperationKind.DeclarationPattern, OperationKind.TypePattern, OperationKind.RecursivePattern);
+        context.RegisterOperationAction(NativeGroup, OperationKind.MethodReference);
+    }
+
+    /// <summary>MW0053: a native as a method group, which CSharp.lua writes by its full name, Moonwell.Natives.X, a table the game's Lua does not have.</summary>
+    private static void NativeGroup(OperationAnalysisContext context)
+    {
+        var method = ((IMethodReferenceOperation)context.Operation).Method;
+        if (method.ContainingType is { Name: "Natives", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } })
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rules.NativeGroup, context.Operation.Syntax.GetLocation(), method.Name, string.Join(", ", method.Parameters.Select(p => p.Name))));
+        }
     }
 
     // The methods of System.Enum that read an enum's names or members from its type.

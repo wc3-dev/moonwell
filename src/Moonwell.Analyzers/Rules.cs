@@ -136,8 +136,17 @@ public static class Rules
         isEnabledByDefault: true,
         description: "CSharp.lua checks is, as or a type pattern against the value's CSharp.lua class. A game handle is the game's own value (userdata), which has no such class, so a check for a handle type (unit, lightning, or a type parameter limited to one) never passes in the game: is, as and patterns give false or null. A cast to a handle type checks nothing since the fork's 2.0.4-moonwell.15, also the one in foreach (unit u in widgets). The same checks hide in OfType<unit>(), which tests each item with is, and in Cast<unit>() unless the items already are units. The Lua cases do not show it: there the fake world's handles are CSharp.lua objects.");
 
+    public static readonly DiagnosticDescriptor NativeGroup = new(
+        "MW0053",
+        "A native as a method group",
+        "Natives.{0} as a method group is nil in the game's Lua: call it in a lambda, ({1}) => Natives.{0}({1})",
+        LuaCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "CSharp.lua writes a call of a native as the game's own function (Natives.Cos(x) is Cos(x)), but a native given as a method group (xs.Select(Natives.Cos), Func<float, float> f = Natives.Cos, an event's += Natives.X) by its full name, Moonwell.Natives.Cos. The game's Lua has no Moonwell.Natives table, so the script stops there: attempt to index a nil value. A lambda that calls the native is written as a call.");
+
     /// <summary>The rules of C# that CSharp.lua cannot compile.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck);
+    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck, NativeGroup);
 
     private const string ObjectsCategory = "Objects";
 
@@ -313,8 +322,17 @@ public static class Rules
         isEnabledByDefault: true,
         description: "Default<T>() is declared on Widget, so C# accepts any widget class through Unit, Hero or Item: Item.Default<Guard>() compiles for a unit class, and a destructable class compiles and throws in the game. The rule rejects a class that is not of the kind the call is written on (a unit class through Item or Hero, an item class through Unit), and a destructable class anywhere, which has no default object.");
 
+    public static readonly DiagnosticDescriptor DefaultSet = new(
+        "MW0054",
+        "A set on a default object",
+        "'{0}' sets a member of a default object, which never changes: in the game the set does nothing, and in the build it changes the one shared object, so the two differ; declare the value in the class's constructor, or set it on the unit or item",
+        ObjectsCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "A default object (unit.Default, Unit.Default<T>(), Item.Default<T>()) is the class's declared values, and the guide says it never changes. In the game a set on it does nothing. On .NET, where the build runs a map's code, it is one object shared by every read of the default, so a set changes what later reads of it give there, and the build and the game can differ. In the class's own constructor its default is MW0012 instead.");
+
     /// <summary>The rules for the constructor of a declared object class, and for a class's default object.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Declared { get; } = ImmutableArray.Create(LiveInDeclaration, LevelOutsideConstructor, DefaultKind);
+    public static ImmutableArray<DiagnosticDescriptor> Declared { get; } = ImmutableArray.Create(LiveInDeclaration, LevelOutsideConstructor, DefaultKind, DefaultSet);
 
     public static readonly DiagnosticDescriptor NoId = new(
         "MW0013",
