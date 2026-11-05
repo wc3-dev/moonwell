@@ -290,6 +290,50 @@ namespace Moonwell.Testing
             Asked(frame).Level = level;
         }
 
+        /// <summary>The game's HUD frames looked up, by name or as "origin kind index", made at the first lookup.</summary>
+        public Dictionary<string, FakeFrame> GameFrames = new Dictionary<string, FakeFrame>();
+
+        /// <summary>How many lookups of the game's HUD were made.</summary>
+        public int Lookups;
+
+        /// <summary>Whether the game's HUD is hidden on this machine.</summary>
+        public bool HudHidden;
+
+        /// <summary>A frame of the game's HUD by name, the same fake at each lookup.</summary>
+        public framehandle? GameFrame(string name)
+        {
+            Lookups++;
+            if (!named.TryGetValue(name, out var found))
+            {
+                found = new framehandle();
+                named[name] = found;
+                frames[found] = new FakeFrame { Under = name };
+                GameFrames[name] = frames[found];
+            }
+
+            return found;
+        }
+
+        private readonly Dictionary<string, framehandle> named = new Dictionary<string, framehandle>();
+
+        /// <summary>A frame of the game's HUD by origin, kept as "origin kind index".</summary>
+        public framehandle? OriginFrame(int kind, int index)
+        {
+            return GameFrame("origin " + kind + " " + index);
+        }
+
+        /// <summary>Hides the game's HUD, or shows it.</summary>
+        public void HideHud(bool hidden)
+        {
+            HudHidden = hidden;
+        }
+
+        /// <summary>Gives a frame another parent.</summary>
+        public void ParentFrame(framehandle frame, framehandle parent)
+        {
+            Asked(frame).Parent = frames[parent];
+        }
+
         /// <summary>Makes the whole-width root under the console's backdrop.</summary>
         public framehandle ScreenRoot()
         {

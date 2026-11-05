@@ -22,6 +22,11 @@ namespace Moonwell
 
         private static FrameEvents events = new FrameEvents();
 
+        private static HudFrames? hud;
+
+        /// <summary>Each player's view of the HUD, by slot, made at its first use.</summary>
+        private static Dictionary<int, GameUi> gameUis = new Dictionary<int, GameUi>();
+
         /// <summary>The window the screen root was last spanned to, in pixels; 0 until it is.</summary>
         private static int windowWidth, windowHeight;
 
@@ -31,7 +36,7 @@ namespace Moonwell
         /// <summary>The TOC the build writes into the map, listing the game's template files the kinds are made from.</summary>
         internal const string TocFile = "MoonwellFrames.toc";
 
-        /// <summary>Installs the package on the game and loads its TOC, which the script load allows (seen 10-15). It makes no frame: a frame made while the script loads can desync (a claim in the game facts), so the roots are made at their first use, in a reaction.</summary>
+        /// <summary>Installs the package on the game, loads its TOC, which the script load allows (seen 10-15), and looks up the game's HUD on every machine. It makes no frame: a frame made while the script loads can desync (a claim in the game facts), so the roots are made at their first use, in a reaction.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install()
         {
@@ -47,7 +52,21 @@ namespace Moonwell
             slots = new Dictionary<framehandle, framehandle>();
             pool = new FramePool();
             events = new FrameEvents();
+            gameUis = new Dictionary<int, GameUi>();
             host.LoadToc(TocFile);
+            hud = new HudFrames(host);
+        }
+
+        /// <summary>A player's view of the game's HUD, made at its first use.</summary>
+        internal static GameUi GameUiOf(Player player)
+        {
+            if (!gameUis.TryGetValue(player.Slot, out var ui))
+            {
+                ui = new GameUi(player, hud!);
+                gameUis[player.Slot] = ui;
+            }
+
+            return ui;
         }
 
         /// <summary>The world the package talks to.</summary>

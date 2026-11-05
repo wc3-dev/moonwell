@@ -1361,6 +1361,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.fill-unmade", Run = FrameCases.FillUnmade });
             list.Add(new Case { Name = "frames.tied-to-ended", Run = FrameCases.TiedToEnded });
             list.Add(new Case { Name = "frames.tied-still-pooled", Run = FrameCases.TiedStillPooled });
+            list.Add(new Case { Name = "hud.looked-up-at-install", Run = HudCases.LookedUpAtInstall });
+            list.Add(new Case { Name = "hud.piece-for-one-player", Run = HudCases.PieceForOnePlayer });
+            list.Add(new Case { Name = "hud.command-button-by-scale", Run = HudCases.CommandButtonByScale });
+            list.Add(new Case { Name = "hud.whole-hud", Run = HudCases.WholeHud });
+            list.Add(new Case { Name = "hud.move-piece", Run = HudCases.MovePiece });
+            list.Add(new Case { Name = "hud.frame-to-piece", Run = HudCases.FrameToPiece });
         }
 
         /// <summary>Adds the special effect cases.</summary>
