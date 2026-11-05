@@ -64,6 +64,9 @@ namespace Moonwell.Engine
         /// <summary>What the physics package runs each step before the gizmos' pass, guarded by the cycle; null while there is none, and then the step does nothing for it. Reset clears it.</summary>
         internal static Action? BeforeGizmos;
 
+        /// <summary>What the physics package runs for each unit as it is tracked, for its collision size; null while there is none. Reset clears it.</summary>
+        internal static Action<Unit>? UnitTracked;
+
         /// <summary>How many things keep the cycle's timer running with nothing tracked, such as a pushed unit on a map with no gizmo; the timer stops when this is 0 and nothing is tracked. Reset clears it.</summary>
         private static int awake;
 
@@ -165,6 +168,7 @@ namespace Moonwell.Engine
             }
 
             BeforeGizmos = null;
+            UnitTracked = null;
             awake = 0;
             cycle = null;
             checks = null;
@@ -813,6 +817,16 @@ namespace Moonwell.Engine
             unitEntries[unit.Handle] = entry;
             entry.HasPlace = UnitHasPlace(unit);
             Checks.Add(entry);
+            UnitTracked?.Invoke(unit);
+        }
+
+        /// <summary>Runs an action for each unit tracked now, in no order.</summary>
+        internal static void EachUnit(Action<Unit> action)
+        {
+            foreach (var entry in unitEntries.Values)
+            {
+                action((Unit)entry.Thing);
+            }
         }
 
         /// <summary>Tracks an item that is not tracked.</summary>

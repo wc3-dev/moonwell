@@ -684,6 +684,68 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.Logged.Count, "no failure");
         }
 
+        /// <summary>
+        /// A dart a push's OnSlammed makes moves from the next step, as one made by any reaction does: with no missile
+        /// flying, and with one flying, which moves that step. It was in the pass's list before the pass read it, and moved
+        /// in the step it was made.
+        /// </summary>
+        public static void MissileMadeInSlam(FakeWorld world)
+        {
+            FakeTerrainWorld terrain;
+            FakeInteractionWorld interactions;
+            Fresh(out terrain, out interactions);
+            LineAt(terrain, 650.0f, FakeTerrainWorld.NoWalk);
+            for (var k = 0; k < 2; k++)
+            {
+                Dart? flying = null;
+                if (k == 1)
+                {
+                    flying = new Dart();
+                    Missile.Create(flying, 100.0f, 1500.0f, 100.0f, Game.Instance);
+                    flying.VX = 600.0f;
+                }
+
+                var pushee = PusheeAt(world, 600.0f, 300.0f + k * 400.0f);
+                Dart? made = null;
+                var madeX = 0.0f;
+                pushee.Slamming = slam =>
+                {
+                    if (made == null)
+                    {
+                        made = new Dart();
+                        madeX = pushee.X;
+                        Missile.Create(made, madeX, pushee.Y + 200.0f, 100.0f, Game.Instance);
+                        made.VX = 600.0f;
+                    }
+                };
+                pushee.Knockback(0.0f, 100.0f, 0.5f);
+                var flyingX = 0.0f;
+                for (var i = 0; i < 20 && made == null; i++)
+                {
+                    flyingX = flying != null ? flying.X : 0.0f;
+                    Steps(world, 1);
+                }
+
+                Expect.True(made != null, "OnSlammed made a dart");
+                Within(madeX, made!.X, 0.0f, "it did not move in the step it was made");
+                if (flying != null)
+                {
+                    Expect.True(flying.X > flyingX + 10.0f, "the dart already flying moved that step");
+                }
+
+                Steps(world, 1);
+                Expect.True(made.X > madeX + 10.0f, "it moves from the next step; at " + made.X);
+                made.End();
+                if (flying != null)
+                {
+                    flying.End();
+                }
+
+                pushee.Kill();
+                Steps(world, 1);
+            }
+        }
+
         /// <summary>A unit that does not fly whose type hovers at 50: lifted, it comes back down to 50, not to the ground, with OnGrounded once.</summary>
         public static void Hover(FakeWorld world)
         {
