@@ -85,7 +85,18 @@ namespace Moonwell
         /// <summary>The live carry, from a pick-up Moonwell saw to the drop; null outside one.</summary>
         internal Carrying? carry;
 
-        /// <summary>The scope of this carry: from a pick-up Moonwell saw, into the inventory or an equipment slot, to the drop, or to the item's or the carrier's end (decision 166); held by it (<c>carrierUnit.Add(new Haste(), heldBy: Item.Carry)</c> in OnPickedUp), a gift ends at the drop. In OnDropped it is still live, and it ends after the drop's reactions. The 3.0 bag starts none: there it gives a scope that has ended, so nothing is held by it, quietly. Read anywhere else outside a carry, it gives one too, and a development build reports it.</summary>
+        /// <summary>Ends a carry of the item, and forgets it when it is still the item's.</summary>
+        internal void EndCarry(Carrying ending)
+        {
+            if (carry == ending)
+            {
+                carry = null;
+            }
+
+            ending.End();
+        }
+
+        /// <summary>The scope of this carry: from a pick-up Moonwell saw, into the inventory or an equipment slot, to the drop, or to the item's or the carrier's end (decision 166); held by it (<c>carrierUnit.Add(new Haste(), heldBy: Item.Carry)</c> in OnPickedUp), a gift ends at the drop. In OnDropped it is still live, and it ends after the drop's reactions: inside the call for Drop, and a moment after the game's own drop (a player's), since the game fires a drop for a move between slots too, which keeps it. The 3.0 bag starts none: there it gives a scope that has ended, so nothing is held by it, quietly. Read anywhere else outside a carry, it gives one too, and a development build reports it.</summary>
         [LocalSafe]
         public Scope Carry
         {

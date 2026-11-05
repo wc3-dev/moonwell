@@ -433,7 +433,7 @@ to 5400 for level 10. The build gives the map's own to the runtime.
 | `Charges`, `Owner` | read and set; 0 charges leaves the item in place; `Owner` is the player the item belongs to: each pick-up makes it the carrier's player, and a drop leaves it |
 | `X`, `Y` | read; `MoveTo(x, y)` goes to a pathable spot; while a unit holds the item, in its inventory, bag or equipment slots, they read the unit's place |
 | `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop at a death or after `RemoveUnit` (below), where it is already null |
-| `Carry` | a scope from each pick-up into the inventory or an equipment slot to the drop: what it holds, `heldBy: Item.Carry` in `OnPickedUp`, ends at the drop, with no `OnDropped` to write; still live in `OnDropped`; the 3.0 bag starts none, so a gift held by it is not given there |
+| `Carry` | a scope from each pick-up into the inventory or an equipment slot to the drop: what it holds, `heldBy: Item.Carry` in `OnPickedUp`, ends at the drop, with no `OnDropped` to write; still live in `OnDropped`; it ends inside `Drop`, and a moment after a drop the player makes, since the game fires a drop for a move between slots too, which keeps it; the 3.0 bag starts none, so a gift held by it is not given there |
 
 `ItemIn` is not for `Local.For`: it takes in an item Moonwell has not seen, which has to happen on every machine.
 Moonwell listens for pick-ups and drops from the start, so an item a unit picks up is taken in; one a unit held before

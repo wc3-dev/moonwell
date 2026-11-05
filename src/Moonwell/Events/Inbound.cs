@@ -80,7 +80,7 @@ namespace Moonwell
             UnitItemPickedUp(by, picked);
         }
 
-        /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the item's carry ends.</summary>
+        /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the carry the drop is about ends. The game fires a drop for a move between slots too, and takes a dropped item out of its slot only after the event, so a carry whose unit still has the item in a slot is looked at again a moment later, and ends only if the unit has let go of it by then; Unit.Drop ends it inside its call.</summary>
         internal static void Dropped(unit u, item i)
         {
             if (KnownUnits.Find(u) == null && KnownItems.Find(i) == null && ObjectTypes.ItemMaker(Runtime.World.ItemTypeId(i)) == null)
@@ -95,14 +95,28 @@ namespace Moonwell
                 return;
             }
 
+            // Read before the reactions: one may give the item to another unit, whose carry starts inside them.
+            var carry = dropped.carry;
             ItemDropped(dropped, by);
             UnitItemDropped(by, dropped);
-            var carry = dropped.carry;
-            if (carry != null)
+            if (carry == null || carry.HasEnded)
             {
-                dropped.carry = null;
-                carry.End();
+                return;
             }
+
+            if (!Runtime.World.CarriesItem(u, i))
+            {
+                dropped.EndCarry(carry);
+                return;
+            }
+
+            carry.OwnAfter(0.0f, () =>
+            {
+                if (!Runtime.World.CarriesItem(u, i))
+                {
+                    dropped.EndCarry(carry);
+                }
+            });
         }
 
         /// <summary>A destructable dies: its type's OnDeath, then its components' OnDeath; one that is ending reacts to none, since the game fires the death event inside RemoveDestructable.</summary>
