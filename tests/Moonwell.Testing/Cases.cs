@@ -657,6 +657,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "sound.follows", Run = ComponentCases.SoundFollows });
             list.Add(new Case { Name = "push.knockback", Run = PushCases.Knockback });
             list.Add(new Case { Name = "push.blocked", Run = PushCases.Blocked });
+            list.Add(new Case { Name = "push.fast-into-line", Run = PushCases.FastIntoLine });
             list.Add(new Case { Name = "push.slide-along", Run = PushCases.SlideAlong });
             list.Add(new Case { Name = "push.tree", Run = PushCases.Tree });
             list.Add(new Case { Name = "push.lift-land", Run = PushCases.LiftLand });
