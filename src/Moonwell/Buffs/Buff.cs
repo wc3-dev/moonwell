@@ -98,12 +98,27 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Ends the buffs a death ends, newest first, of those that were on the unit as it died (Inbound takes them at the start of the death, and calls this after its reactions): a buff the reactions applied has not seen the death and stays.</summary>
-        internal static void EndOnDeath(List<Buff> found)
+        /// <summary>How many times the buff was applied: its start, each refresh and each apply joined to it.</summary>
+        internal int applies;
+
+        /// <summary>How many times each buff was applied, for EndOnDeath.</summary>
+        internal static List<int> AppliesOf(List<Buff> found)
+        {
+            var counts = new List<int>();
+            for (var i = 0; i < found.Count; i++)
+            {
+                counts.Add(found[i].applies);
+            }
+
+            return counts;
+        }
+
+        /// <summary>Ends the buffs a death ends, newest first, of those that were on the unit as it died (Inbound takes them, with their AppliesOf, at the start of the death, and calls this after its reactions): a buff the reactions applied, or applied again, has not seen the death and stays.</summary>
+        internal static void EndOnDeath(List<Buff> found, List<int> applied)
         {
             for (var i = found.Count - 1; i >= 0; i--)
             {
-                if (found[i].EndsOnDeath)
+                if (found[i].EndsOnDeath && found[i].applies == applied[i])
                 {
                     found[i].End();
                 }
@@ -113,6 +128,7 @@ namespace Moonwell
         /// <summary>Starts a buff that was just added to its unit: it shows when it is the first of its class, starts its ticks and expiry, listens for deaths when a death ends it, and runs OnApply. A strongest buff takes its first apply, with its holder, instead of an expiry.</summary>
         internal void Begin(Scope? heldBy = null)
         {
+            applies++;
             if (Stacking == Stacking.Strongest)
             {
                 current = Join(Strength, Source, heldBy, Duration);
@@ -172,6 +188,7 @@ namespace Moonwell
         /// <summary>Joins another apply to a strongest buff already on its unit, with its own strength, source, holder and duration, and runs at the strongest; the new buff is dropped.</summary>
         internal void Offer(Buff from, Unit? source, Scope? heldBy)
         {
+            applies++;
             Join(from.Strength, source, heldBy, from.Duration);
             if (!HasEnded)
             {
@@ -213,6 +230,7 @@ namespace Moonwell
             var held = heldBy == null ? null : HeldBy(heldBy);
             if (held != null)
             {
+                held.Renewed++;
                 held.Strength = strength;
                 held.Source = source;
                 if (held.Expiry != null)
@@ -280,8 +298,10 @@ namespace Moonwell
             hold.Expiry = null;
             if (holds != null && holds.Count == 1)
             {
+                // OnExpire may apply it again from the same holder, which renews this apply.
+                var renewed = hold.Renewed;
                 CallExpire();
-                if (HasEnded || hold.HasEnded)
+                if (HasEnded || hold.HasEnded || hold.Renewed != renewed)
                 {
                     return;
                 }
@@ -293,6 +313,7 @@ namespace Moonwell
         /// <summary>Refreshes a buff already on its unit with a new apply of its class (decision 66): it takes the new buff's duration and the source, starts its expiry again for that duration (a duration of 0 lasts until it is removed), and runs OnApply again. Its other values, and what it has counted, stay its own; the new buff is dropped.</summary>
         internal void Refresh(Buff from, Unit? source)
         {
+            applies++;
             Source = source;
             Duration = from.Duration;
             if (Duration > 0.0f)

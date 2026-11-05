@@ -373,6 +373,11 @@ namespace Moonwell.Testing
         private static void AddLifecycle(List<Case> list)
         {
             list.Add(new Case { Name = "lifecycle.units-the-game-makes-are-met", Run = LifecycleCases.UnitsTheGameMakesAreMet });
+            list.Add(new Case { Name = "buff-reentry.strongest-renewed-in-expire", Run = BuffReentryCases.StrongestRenewedInExpire });
+            list.Add(new Case { Name = "buff-reentry.reapplied-by-death-stays", Run = BuffReentryCases.ReappliedByDeathStays });
+            list.Add(new Case { Name = "buff-reentry.cleanse-inside-removal", Run = BuffReentryCases.CleanseInsideRemoval });
+            list.Add(new Case { Name = "buff-reentry.applied-inside-removal", Run = BuffReentryCases.AppliedInsideRemoval });
+            list.Add(new Case { Name = "buff-reentry.ended-buff-apply-refused", Run = BuffReentryCases.EndedBuffApplyRefused });
             list.Add(new Case { Name = "lifecycle.local-throw-keeps-sync", Run = LifecycleCases.LocalThrowKeepsSync });
             list.Add(new Case { Name = "lifecycle.death-respawn-outlives-corpse", Run = LifecycleCases.DeathRespawnOutlivesCorpse });
             list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });

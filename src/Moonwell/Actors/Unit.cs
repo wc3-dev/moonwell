@@ -1148,6 +1148,12 @@ namespace Moonwell
                 return Add(buff, heldBy);
             }
 
+            // An ended buff is reported and left as it is, also where it would refresh one on the unit.
+            if (buff.HasEnded && Refuses(buff, "Apply"))
+            {
+                return buff;
+            }
+
             var existing = StackedWith(buff, source);
             if (existing != null && existing.Stacking == Stacking.Strongest)
             {
