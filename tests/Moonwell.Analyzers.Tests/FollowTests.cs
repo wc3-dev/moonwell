@@ -461,4 +461,77 @@ public class FollowTests
             public static class Statics { public static group X = Natives.CreateGroup(); }
             """));
     }
+
+    [Fact]
+    public void a_template_method_through_a_generic_class_or_interface_is_followed()
+    {
+        var found = MapCode.Check("""
+            var f = new Fireball();
+            Local.For(p, () => f.Cast());
+            B<int> b = new D<int>();
+            Local.For(p, () => b.Go());
+            Local.For(p, () => Send(new Killer(), 1));
+            """, """
+            public abstract class Spell<T> { public void Cast() { Effect(); } protected abstract void Effect(); }
+            public sealed class Fireball : Spell<int> { protected override void Effect() { Natives.KillUnit(Natives.GetTriggerUnit()); } }
+            public class B<T> { public virtual void Go() { } }
+            public class D<T> : B<T> { public override void Go() { Natives.KillUnit(Natives.GetTriggerUnit()); } }
+            public interface IHandler<T> { void Handle(T t); }
+            public sealed class Killer : IHandler<int> { public void Handle(int t) { Natives.KillUnit(Natives.GetTriggerUnit()); } }
+            static void Send<T>(IHandler<T> h, T t) => h.Handle(t);
+            """);
+
+        Assert.Equal(new[] { "MW0001: f.Cast()", "MW0001: b.Go()", "MW0001: Send(new Killer(), 1)" }, found);
+    }
+
+    [Fact]
+    public void a_collection_expression_runs_its_classes_constructor_and_add()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Bag b = [1];
+                Made m = [];
+                Tally t = [2];
+                List<int> plain = [3];
+            });
+            """, """
+            public static int Count;
+            public sealed class Bag : System.Collections.IEnumerable
+            {
+                public void Add(int x) { Natives.KillUnit(Natives.GetTriggerUnit()); }
+                public System.Collections.IEnumerator GetEnumerator() => null!;
+            }
+            public sealed class Made : System.Collections.IEnumerable
+            {
+                public Made() { Natives.CreateGroup(); }
+                public void Add(int x) { }
+                public System.Collections.IEnumerator GetEnumerator() => null!;
+            }
+            public sealed class Tally : System.Collections.IEnumerable
+            {
+                public void Add(int x) { Count++; }
+                public System.Collections.IEnumerator GetEnumerator() => null!;
+            }
+            """);
+
+        Assert.Equal(new[] { "MW0001: [1]", "MW0001: []", "MW0048: [2]" }, found);
+    }
+
+    [Fact]
+    public void a_machine_local_constructor_still_runs_its_initializers_and_base_constructor()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => new Grouped());
+            Local.For(p, () => new Derived());
+            Local.For(p, () => new Quiet());
+            """, """
+            public sealed class Grouped { private readonly group g = Natives.CreateGroup(); [MachineLocal] public Grouped() { } }
+            public class Base { public Base() { Natives.CreateGroup(); } }
+            public sealed class Derived : Base { [MachineLocal] public Derived() { } }
+            public sealed class Quiet { private readonly int n = 1; [MachineLocal] public Quiet() { } }
+            """);
+
+        Assert.Equal(new[] { "MW0001: new Grouped()", "MW0001: new Derived()" }, found);
+    }
 }
