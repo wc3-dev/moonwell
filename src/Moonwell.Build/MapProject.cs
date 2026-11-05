@@ -43,8 +43,8 @@ namespace Moonwell.Build
         /// <summary>The folder for generated C#, <c>build\generated</c>.</summary>
         public string GeneratedFolder { get; }
 
-        /// <summary>The preprocessor symbols <c>dotnet build</c> compiled the code with, once <see cref="DotnetBuild.Run"/> has read them; TRACE and DEBUG before.</summary>
-        public IReadOnlyList<string> Symbols { get; internal set; } = new[] { "TRACE", "DEBUG" };
+        /// <summary>The preprocessor symbols <c>dotnet build</c> compiled the code with, once <see cref="DotnetBuild.Run"/> has read them; null before.</summary>
+        public IReadOnlyList<string>? Symbols { get; internal set; }
 
         /// <summary>The full paths of the C# files <c>dotnet build</c> compiled, once <see cref="DotnetBuild.Run"/> has read them; null before.</summary>
         internal IReadOnlyList<string>? Sources { get; set; }

@@ -31,10 +31,11 @@ namespace Moonwell.Build
         /// <summary>
         /// The preprocessor symbols CSharp.lua compiles the map with: those of <c>dotnet build</c> (<see cref="MapProject.Symbols"/>),
         /// MOONWELL_LUA, which leaves out the generated classes of Moonwell.Objects for the build's stubs, and __CSharpLua__.
+        /// Before <see cref="DotnetBuild.Run"/>, TRACE and DEBUG, or RELEASE in a release build.
         /// </summary>
-        public static string[] LuaSymbols(MapProject project)
+        public static string[] LuaSymbols(MapProject project, bool release = false)
         {
-            return project.Symbols.Append("MOONWELL_LUA").Append("__CSharpLua__").Distinct(StringComparer.Ordinal).ToArray();
+            return (project.Symbols ?? new[] { "TRACE", release ? "RELEASE" : "DEBUG" }).Append("MOONWELL_LUA").Append("__CSharpLua__").Distinct(StringComparer.Ordinal).ToArray();
         }
 
         /// <summary>The symbols of the other kind of build, DEBUG and RELEASE swapped, for a look at the source that serves both.</summary>
