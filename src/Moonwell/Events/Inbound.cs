@@ -172,6 +172,11 @@ namespace Moonwell
         /// <summary>A unit takes damage: the source's type and components deal it, the target's take it, then the map's and the players' reactions; returns the amount after them. A dummy's damage is the unit it casts for's, or no one's for a player's cast (decisions 168, 172).</summary>
         internal static float Damaged(unit target, unit? source, float amount, bool isAttack)
         {
+            if (dealing != null && dealing.Target == target && dealing.Source == source)
+            {
+                dealing.Fired = true;
+            }
+
             var dummy = source != null && Dummies.IsDummy(source) ? source : null;
             Unit? from = dummy != null ? Dummies.CastFor(dummy) : null;
             var knownSource = dummy != null ? from != null : source != null && KnownUnits.Find(source) != null;
@@ -202,11 +207,11 @@ namespace Moonwell
                 damage.Tag = deal.Tag;
             }
 
-            Dispatch(damage);
+            Dispatch(damage, amount == 0.0f && deal == null);
             return damage.Amount;
         }
 
-        /// <summary>Deals damage from code through the world, and returns the damage the reactions saw; one made here when none ran, null when the game dealt nothing.</summary>
+        /// <summary>Deals damage from code through the world, and returns the damage the reactions saw; one made here when the runtime does not listen for damage, null when the game dealt nothing.</summary>
         internal static Damage? Deal(Unit source, Unit target, float amount, DamageKind kind, AttackType attackType, bool isAttack, bool ranged, WeaponSound sound, object? tag)
         {
             // The game answers true for a dead target, though it deals nothing and fires no event (seen 10-31).
@@ -224,7 +229,8 @@ namespace Moonwell
                 dealing = previous;
             }
 
-            if (!dealt || !alive)
+            // Spell immunity stops a hit before its damage event, though the game answers true (seen 10-31).
+            if (!dealt || !alive || (!deal.Fired && Events.Listens(Hosting.GameEvent.Damage)))
             {
                 return null;
             }
@@ -254,16 +260,19 @@ namespace Moonwell
             internal unit Target { get; }
 
             internal Damage? Damage { get; set; }
+
+            /// <summary>Whether the game's damage event for it came.</summary>
+            internal bool Fired { get; set; }
         }
 
-        /// <summary>Runs a damage's reactions: the watch checks the target first (decision 163), then the source's type and components deal it, the target's take it, then the map's and the players' reactions; a damage package calls it with its own kind of damage.</summary>
-        internal static void Dispatch(Damage damage)
+        /// <summary>Runs a damage's reactions: the watch checks the target first (decision 163), then the source's type and components deal it, the target's take it, then the map's and the players' reactions; a damage package calls it with its own kind of damage. gameHitOfZero: the game started the hit, with 0, which is how a spell gives its buff again (seen 11-03); a hit from code or one a reaction set to 0 gives none.</summary>
+        internal static void Dispatch(Damage damage, bool gameHitOfZero)
         {
             var hit = damage.Target;
             var from = damage.Source;
 
-            // Only a hit of 0 the game starts gives a spell's buff (seen 11-03); any hit checks for one put on just before.
-            SpellBuffs.Hit(hit, from, damage.Dummy, damage.Amount == 0.0f && dealing == null);
+            // Any hit checks for a spell's buff put on just before.
+            SpellBuffs.Hit(hit, from, damage.Dummy, gameHitOfZero);
             var hitSlot = hit.Owner.Slot;
             var fromSlot = from == null ? -1 : from.Owner.Slot;
             if (from != null)

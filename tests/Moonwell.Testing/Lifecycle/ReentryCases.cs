@@ -432,6 +432,19 @@ namespace Moonwell.Testing
             Expect.True(Unit.Of(handle) == null, "Of a unit the game removed");
         }
 
+        /// <summary>Unit.Damage on a spell-immune target, while the runtime listens for damage: the game sends no damage event, so nothing was dealt and it gives null.</summary>
+        public static void DamageOnImmuneDealsNothing(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("o0wd"), () => new Ward());
+            var caster = Unit.Create(ObjectTypes.FourCC("hfoo"), Player.Get(0), 0.0f, 0.0f, Game.Instance);
+            var ward = Unit.Of(world.NewUnit(ObjectTypes.FourCC("o0wd"), slot: 1))!;
+            world.SpellImmune.Add(ward.Handle);
+            TestLog.Lines.Clear();
+            Expect.True(caster.Damage(ward, 50.0f) == null, "the magic hit dealt nothing");
+            ExpectLog(new string[0], "the log");
+            Expect.True(caster.Damage(ward, 50.0f, DamageKind.Normal, AttackType.Normal) != null, "a normal hit is dealt");
+        }
+
         /// <summary>A hero the game has removed whose level was never read reads a LevelProgress of 0, and no error.</summary>
         public static void ProgressOfRemovedHero(FakeWorld world)
         {

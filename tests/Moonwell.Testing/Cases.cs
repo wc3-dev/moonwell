@@ -389,6 +389,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "reentry.tint-clamps", Run = ReentryCases.TintClamps });
             list.Add(new Case { Name = "reentry.of-game-removed-unit", Run = ReentryCases.OfGameRemovedUnit });
             list.Add(new Case { Name = "reentry.progress-of-removed-hero", Run = ReentryCases.ProgressOfRemovedHero });
+            list.Add(new Case { Name = "reentry.damage-on-immune-deals-nothing", Run = ReentryCases.DamageOnImmuneDealsNothing });
+            list.Add(new Case { Name = "spell-buffs.package-code-hit-of-zero-gives-nothing", Run = SpellBuffCases.PackageCodeHitOfZeroGivesNothing });
             list.Add(new Case { Name = "lifecycle.local-throw-keeps-sync", Run = LifecycleCases.LocalThrowKeepsSync });
             list.Add(new Case { Name = "lifecycle.death-respawn-outlives-corpse", Run = LifecycleCases.DeathRespawnOutlivesCorpse });
             list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });
