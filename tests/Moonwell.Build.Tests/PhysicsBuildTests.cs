@@ -223,6 +223,36 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_bridge_id_with_a_quote_or_a_backslash_is_written_as_it_is()
+        {
+            // An object id is any sign from ! to ~ but the comma.
+            const string Id = "B\"\\1";
+            var project = folders.TemporaryCopyOf("Physics");
+            MapDoodads doodads;
+            using (var reader = new BinaryReader(File.OpenRead(Path.Combine(project, "map", "war3map.doo"))))
+            {
+                doodads = reader.ReadMapDoodads();
+            }
+
+            doodads.Doodads.Clear();
+            doodads.Doodads.Add(new DoodadData
+            {
+                TypeId = BitConverter.ToInt32(System.Text.Encoding.ASCII.GetBytes(Id)),
+                Position = new System.Numerics.Vector3(0f, 0f, 0f),
+                Rotation = 1.5f * MathF.PI,
+                Scale = new System.Numerics.Vector3(1f, 1f, 1f),
+                Life = 100,
+                MapItemTableId = -1,
+            });
+
+            var path = BridgeWriter.Write(MapProject.Find(project), doodads, null, new List<BridgeWriter.OwnType> { new BridgeWriter.OwnType(Id, "YT16", false, null, "Map.Bridge") }, null, new StringWriter());
+
+            var literal = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetRoot().DescendantNodes()
+                .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.LiteralExpressionSyntax>().First();
+            Assert.StartsWith(Id + " 0 ", literal.Token.ValueText, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void the_game_makes_a_placed_bridge_on_the_grid_of_64()
         {
             // Game facts (10-27): a Long Stone Bridge written at x 0 is made at x 32; CreateDestructable moves (2600, 1200) to

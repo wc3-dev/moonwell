@@ -123,13 +123,31 @@ namespace Moonwell
                     extra = 1;
                 }
 
-                for (var k = 1; k <= extra && at + k < end; k++)
+                // As .NET decodes: a byte that cannot start a letter, or a letter cut short or written too long, is one U+FFFD.
+                var ok = first < 0x80 || (first >= 0xC2 && first <= 0xF4);
+                var k = 1;
+                for (; ok && k <= extra && at + k < end; k++)
                 {
-                    c = (c << 6) | (bytes[at + k] & 63);
+                    var next = bytes[at + k];
+                    var low = k > 1 ? 0x80 : first == 0xE0 ? 0xA0 : first == 0xF0 ? 0x90 : 0x80;
+                    var high = k > 1 ? 0xBF : first == 0xED ? 0x9F : first == 0xF4 ? 0x8F : 0xBF;
+                    if (next < low || next > high)
+                    {
+                        break;
+                    }
+
+                    c = (c << 6) | (next & 63);
+                }
+
+                if (k <= extra)
+                {
+                    text.Append('\uFFFD');
+                    at += k;
+                    continue;
                 }
 
                 at += extra + 1;
-                text.Append(c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF) ? "�" : char.ConvertFromUtf32(c));
+                text.Append(char.ConvertFromUtf32(c));
             }
 
             return text.ToString();

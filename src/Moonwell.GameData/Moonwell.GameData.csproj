@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="field-names.txt" LogicalName="field-names.txt" />
+    <InternalsVisibleTo Include="Moonwell.Generator" />
     <InternalsVisibleTo Include="Moonwell.Generator.Tests" />
   </ItemGroup>
 
