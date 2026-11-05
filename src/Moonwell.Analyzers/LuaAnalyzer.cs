@@ -21,6 +21,7 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterSyntaxNodeAction(Using, SyntaxKind.UsingDirective);
         context.RegisterSyntaxNodeAction(Invocation, SyntaxKind.InvocationExpression);
+        context.RegisterSyntaxNodeAction(QueryCast, SyntaxKind.FromClause, SyntaxKind.JoinClause);
         context.RegisterSyntaxNodeAction(Joined, SyntaxKind.AddExpression);
         context.RegisterSyntaxNodeAction(JoinedByAssignment, SyntaxKind.AddAssignmentExpression);
         context.RegisterSyntaxNodeAction(Interpolated, SyntaxKind.Interpolation);
@@ -251,6 +252,32 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
 
         context.ReportDiagnostic(Diagnostic.Create(Rules.HandleCheck, invocation.GetLocation(), invocation.ToString(), target.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
         return true;
+    }
+
+    /// <summary>MW0035: from unit u in widgets, whose typed range variable is a Cast&lt;unit&gt;() of the source unless its items already are units.</summary>
+    private static void QueryCast(SyntaxNodeAnalysisContext context)
+    {
+        var clause = (QueryClauseSyntax)context.Node;
+        var (type, source) = clause switch
+        {
+            FromClauseSyntax from => (from.Type, from.Expression),
+            JoinClauseSyntax join => (join.Type, join.InExpression),
+            _ => (null, null),
+        };
+        if (type == null || source == null
+            || context.SemanticModel.GetQueryClauseInfo(clause, context.CancellationToken).CastInfo.Symbol is not IMethodSymbol { TypeArguments.Length: 1 } cast
+            || !IsHandle(cast.TypeArguments[0]))
+        {
+            return;
+        }
+
+        var target = cast.TypeArguments[0];
+        if (ItemType(context.SemanticModel.GetTypeInfo(source, context.CancellationToken).Type) is { } item && SymbolEqualityComparer.Default.Equals(item, target))
+        {
+            return;
+        }
+
+        context.ReportDiagnostic(Diagnostic.Create(Rules.HandleCheck, clause.GetLocation(), clause.ToString(), target.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
     }
 
     // The T of the IEnumerable<T> a type is or implements; null for none.

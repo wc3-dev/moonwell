@@ -306,6 +306,20 @@ public class LuaTests
     }
 
     [Fact]
+    public void a_handle_check_in_a_query_with_a_typed_range_variable_is_rejected()
+    {
+        var found = MapCode.Check("""
+            var widgets = new List<widget>();
+            var units = new List<unit>();
+            var a = (from unit w in widgets select w).ToList();
+            var b = (from unit x in units select x).ToList();
+            var c = (from x in units join unit y in widgets on x equals y select y).ToList();
+            """);
+
+        Assert.Equal(new[] { "MW0035: from unit w in widgets", "MW0035: join unit y in widgets on x equals y" }, found);
+    }
+
+    [Fact]
     public void joining_moonwell_objects_enums_is_rejected()
     {
         Assert.Equal(new[] { "MW0010: armors", "MW0010: armors", "MW0010: list", "MW0010: ArmorType.Metal", "MW0010: ArmorType.Flesh" }, MapCode.CheckFile("""
