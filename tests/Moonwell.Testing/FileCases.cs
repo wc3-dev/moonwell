@@ -71,10 +71,11 @@ namespace Moonwell.Testing
         /// <summary>Text where no letter starts in a whole piece's length is still cut, at the piece's length.</summary>
         public static void NoLetterStart(FakeWorld world)
         {
+            var inside = "å".Length == 2 ? (char)0x80 : (char)0xDC00;
             var text = new StringBuilder();
             for (var i = 0; i < 401; i++)
             {
-                text.Append('©');
+                text.Append(inside);
             }
 
             var pieces = FileText.Pieces(text.ToString());
