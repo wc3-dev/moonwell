@@ -232,8 +232,13 @@ namespace Moonwell
         /// <summary>The shared date now; 1970 before it has arrived, reported in development builds.</summary>
         internal static RealTime Now()
         {
-            Dev.Check(HasArrived, "RealTime.Now: the shared date has not arrived yet; it is ready from OnGameStart");
-            return HasArrived ? new RealTime(start + (int)(Runtime.World.Now() - arrivedAt)) : new RealTime(0);
+            if (!HasArrived)
+            {
+                Dev.Report("RealTime.Now", "the shared date has not arrived yet; it is ready from OnGameStart");
+                return new RealTime(0);
+            }
+
+            return new RealTime(start + (int)(Runtime.World.Now() - arrivedAt));
         }
     }
 }

@@ -39,4 +39,43 @@ public class KeyTests
         var values = Enum.GetValues<Key>().Select(key => (int)key).OrderBy(code => code);
         Assert.Equal(values, Moonwell.Engine.NativeKeyWorld.Codes.OrderBy(code => code));
     }
+
+    [Fact]
+    public void a_release_message_waits_for_a_second_check_then_goes_once_a_second()
+    {
+        var world = new Moonwell.Engine.NativeKeyWorld();
+        Assert.False(world.Due(65, 3, false, 0f));
+        Assert.True(world.Due(65, 3, false, 0.25f));
+        Assert.False(world.Due(65, 3, false, 0.5f));
+        Assert.False(world.Due(65, 3, false, 1.0f));
+        Assert.True(world.Due(65, 3, false, 1.25f));
+    }
+
+    [Fact]
+    public void a_check_that_finds_the_key_held_or_a_new_down_starts_over()
+    {
+        var world = new Moonwell.Engine.NativeKeyWorld();
+        Assert.False(world.Due(65, 3, false, 0f));
+        Assert.False(world.Due(65, 3, true, 0.25f));
+        Assert.False(world.Due(65, 3, false, 0.5f));
+        Assert.True(world.Due(65, 3, false, 0.75f));
+        Assert.False(world.Due(65, 4, false, 1.0f));
+        Assert.True(world.Due(65, 4, false, 1.25f));
+        Assert.False(world.Due(66, 4, false, 1.25f));
+    }
+
+    [Theory]
+    [InlineData("65:3", true, 65, 3)]
+    [InlineData("254:12345", true, 254, 12345)]
+    [InlineData(":3", false, 0, 0)]
+    [InlineData("65", false, 0, 0)]
+    [InlineData("65:", false, 65, 0)]
+    [InlineData("x:3", false, 0, 0)]
+    [InlineData("", false, 0, 0)]
+    public void a_release_message_is_read_as_key_and_downs(string data, bool read, int key, int downs)
+    {
+        Assert.Equal(read, Moonwell.Engine.NativeKeyWorld.Read(data, out var readKey, out var readDowns));
+        Assert.Equal(key, readKey);
+        Assert.Equal(downs, readDowns);
+    }
 }

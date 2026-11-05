@@ -933,10 +933,10 @@ public sealed class Dash : PlayerComponent, IKeyWatch // write only the reaction
   same on every machine, so a mouse reaction reads them too (`mouse.Player.Keyboard().Shift`). `IsHeldNow` is this
   machine's own, inside `Local.For`.
 - The game sends no release for a key held when it loses the keyboard (Alt+Tab, a click outside its window, the Start
-  menu): each machine checks its own keyboard every quarter second and sends one, so that `OnKeyReleased` comes a
-  quarter second and the network delay late. Windows' switch of keyboard language (Alt+Shift) makes the game forget the
-  keys held, so they come up then too, though still held. A player who leaves holds no keys from then on, and no
-  reaction runs for them.
+  menu): each machine checks its own keyboard every quarter second and sends one after two checks in a row find the key
+  let go, so that `OnKeyReleased` comes up to half a second and the network delay late. Windows' switch of keyboard
+  language (Alt+Shift) makes the game forget the keys held, so they come up then too, though still held. A player who
+  leaves holds no keys from then on, and no reaction runs for them.
 - The game still does what it does with a key (a hotkey, the arrows moving the camera), and keys typed in the chat box
   fire nothing. `Key` has .NET's names (`Key.Enter`, `Key.D0` for the 0 above the letters, `Key.LeftShift`); the
   punctuation keys are numbered (`Key.Oem1`), as each keyboard layout puts other characters there.

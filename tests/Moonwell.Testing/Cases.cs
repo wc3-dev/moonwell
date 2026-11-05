@@ -390,6 +390,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.dummy.nested-reported", Run = DummyCases.NestedReported });
             list.Add(new Case { Name = "debug.dummy.no-order-reported", Run = DummyCases.NoOrderReported });
             list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
+            list.Add(new Case { Name = "debug.realtime.now-early-reported", Run = RealTimeCases.NowEarlyReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
             list.Add(new Case { Name = "debug.session.new-unit-held", Run = SessionCases.NewUnitHeld });
@@ -836,6 +837,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.keys.long-gap", Run = KeyCases.LongGap });
             list.Add(new Case { Name = "input.keys.modifier-repeat", Run = KeyCases.ModifierRepeat });
             list.Add(new Case { Name = "input.keys.changed-in-reaction", Run = KeyCases.ChangedInReaction });
+            list.Add(new Case { Name = "input.keys.added-to-player-in-reaction", Run = KeyCases.AddedToPlayerInReaction });
             list.Add(new Case { Name = "input.keys.throwing", Run = KeyCases.Throwing });
             list.Add(new Case { Name = "input.keys.press-only", Run = KeyCases.PressOnly });
             list.Add(new Case { Name = "input.keys.let-go-unseen", Run = KeyCases.LetGoUnseen });
@@ -860,6 +862,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.mouse.buttons", Run = MouseCases.Buttons });
             list.Add(new Case { Name = "input.mouse.unknown-button", Run = MouseCases.UnknownButton });
             list.Add(new Case { Name = "input.mouse.order", Run = MouseCases.Order });
+            list.Add(new Case { Name = "input.mouse.added-to-player-in-reaction", Run = MouseCases.AddedToPlayerInReaction });
             list.Add(new Case { Name = "input.mouse.only-written", Run = MouseCases.OnlyWritten });
             list.Add(new Case { Name = "input.mouse.throwing", Run = MouseCases.Throwing });
             list.Add(new Case { Name = "input.mouse.computer-and-left", Run = MouseCases.ComputerAndLeft });

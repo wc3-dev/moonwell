@@ -422,6 +422,48 @@ public class ReactionTests
     }
 
     [Fact]
+    public void another_engines_name_for_a_key_or_mouse_reaction_is_an_error()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnKeyDown' is not a reaction of IKeyWatch, so it never runs; did you mean OnKeyPressed?",
+            "'OnKeyPress' is not a reaction of IKeyWatch, so it never runs; did you mean OnKeyPressed?",
+            "'OnKeyUp' is not a reaction of IKeyWatch, so it never runs; did you mean OnKeyReleased?",
+            "'OnMouseDown' is not a reaction of IMouseWatch, so it never runs; did you mean OnMousePressed?",
+            "'OnMousePress' is not a reaction of IMouseWatch, so it never runs; did you mean OnMousePressed?",
+            "'OnMouseUp' is not a reaction of IMouseWatch, so it never runs; did you mean OnMouseReleased?",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Keys : GameComponent, IKeyWatch
+                {
+                    public void OnKeyDown(Keyboard keyboard, Key key) { }
+
+                    public void OnKeyPress(Keyboard keyboard, Key key) { }
+
+                    public void OnKeyUp(Keyboard keyboard, Key key) { }
+                }
+
+                public class Buttons : PlayerComponent, IMouseWatch
+                {
+                    public void OnMouseDown(Mouse mouse, MouseButton button) { }
+
+                    public void OnMousePress(Mouse mouse, MouseButton button) { }
+
+                    public void OnMouseUp(Mouse mouse, MouseButton button) { }
+                }
+
+                public class NoWatch : GameComponent
+                {
+                    public void OnKeyDown(Keyboard keyboard, Key key) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void a_mouse_reaction_the_input_package_never_calls_is_an_error()
     {
         Assert.Equal(new[]
