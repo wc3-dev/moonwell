@@ -106,6 +106,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "file.escaped-is-safe", Run = FileCases.EscapedIsSafe });
             list.Add(new Case { Name = "file.pieces", Run = FileCases.Pieces });
             list.Add(new Case { Name = "file.empty-pieces", Run = FileCases.EmptyPieces });
+            list.Add(new Case { Name = "file.no-letter-start", Run = FileCases.NoLetterStart });
             list.Add(new Case { Name = "file.longest-line-fits", Run = FileCases.LongestLineFits });
             list.Add(new Case { Name = "file.write-then-read", Run = FileCases.WriteThenRead });
             list.Add(new Case { Name = "file.installed-folder", Run = FileCases.InstalledFolder });
@@ -141,6 +142,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "chat.ends", Run = ChatCases.Ends });
             list.Add(new Case { Name = "chat.two-of-one-name", Run = ChatCases.TwoOfOneName });
             list.Add(new Case { Name = "chat.listens-once", Run = ChatCases.ListensOnce });
+            list.Add(new Case { Name = "chat.ended-let-go", Run = ChatCases.EndedLetGo });
+            list.Add(new Case { Name = "chat.made-and-ended-by-a-handler", Run = ChatCases.MadeAndEndedByAHandler });
+            list.Add(new Case { Name = "chat.bad-name-refused", Run = ChatCases.BadNameRefused });
             list.Add(new Case { Name = "save.round-trip", Run = SaveCases.RoundTrip });
             list.Add(new Case { Name = "save.typing-tolerated", Run = SaveCases.TypingTolerated });
             list.Add(new Case { Name = "save.bad-codes", Run = SaveCases.BadCodes });
@@ -171,6 +175,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "share.scope-ended", Run = ShareCases.ScopeEnded });
             list.Add(new Case { Name = "share.leave-halfway", Run = ShareCases.LeaveHalfway });
             list.Add(new Case { Name = "share.computer", Run = ShareCases.Computer });
+            list.Add(new Case { Name = "share.read-is-local", Run = ShareCases.ReadIsLocal });
             list.Add(new Case { Name = "realtime.epoch", Run = RealTimeCases.Epoch });
             list.Add(new Case { Name = "realtime.known-day", Run = RealTimeCases.KnownDay });
             list.Add(new Case { Name = "realtime.leap-day", Run = RealTimeCases.LeapDay });
@@ -273,6 +278,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "day.over-midnight", Run = DayCases.DayOverMidnight });
             list.Add(new Case { Name = "day.speed", Run = DayCases.DaySpeed });
             list.Add(new Case { Name = "day.stopped", Run = DayCases.DayStopped });
+            list.Add(new Case { Name = "day.dawn-and-dusk", Run = DayCases.DawnAndDusk });
+            list.Add(new Case { Name = "day.jumps", Run = DayCases.DayJumps });
+            list.Add(new Case { Name = "day.backward", Run = DayCases.DayBackward });
+            list.Add(new Case { Name = "day.maps-own-dawn", Run = DayCases.MapsOwnDawn });
         }
 
         /// <summary>Adds the cases for colours, coloured text and time as text.</summary>
@@ -412,7 +421,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.dummy.no-order-reported", Run = DummyCases.NoOrderReported });
             list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
             list.Add(new Case { Name = "debug.realtime.now-early-reported", Run = RealTimeCases.NowEarlyReported });
-            list.Add(new Case { Name = "debug.chat.bad-name-reported", Run = ChatCases.BadNameReported });
+            list.Add(new Case { Name = "debug.chat.debug-name-reported", Run = ChatCases.DebugNameReported });
             list.Add(new Case { Name = "debug.save.too-long-reported", Run = SaveCases.TooLongReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });
@@ -544,6 +553,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.find.local-cached", Run = FindCases.LocalCached });
             list.Add(new Case { Name = "interactions.find.local-untracked", Run = FindCases.LocalUntracked });
             list.Add(new Case { Name = "interactions.find.local-mixed", Run = FindCases.LocalMixed });
+            list.Add(new Case { Name = "interactions.find.in-share-read", Run = FindCases.InShareRead });
             list.Add(new Case { Name = "interactions.interaction.meet-tick-part", Run = InteractionCases.MeetTickPart });
             list.Add(new Case { Name = "interactions.interaction.exact-range", Run = InteractionCases.ExactRange });
             list.Add(new Case { Name = "interactions.interaction.accepts", Run = InteractionCases.Accepts });

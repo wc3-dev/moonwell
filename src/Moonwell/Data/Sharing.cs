@@ -63,6 +63,7 @@ namespace Moonwell
             }
 
             string? text;
+            Local.Depth++;
             try
             {
                 text = read();
@@ -71,6 +72,10 @@ namespace Moonwell
             {
                 Errors.Report("Moonwell.Share", error);
                 text = null;
+            }
+            finally
+            {
+                Local.Depth--;
             }
 
             var messages = Messages(request.Number, text);

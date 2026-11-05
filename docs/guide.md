@@ -241,7 +241,8 @@ public sealed class KillCounter : UnitComponent
   its constructor, a development build reports it.
 - Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnHeroLevelUp`,
   `OnHeroSkillLearned`, `OnLeave`) go on a game or player component. `OnUnitCreated` runs once for each unit, when it
-  comes into the game (one that came in before anything wanted it runs none); a unit's own is `OnCreated`.
+  comes into the game (one that came in before anything wanted it runs none); a unit's own is `OnCreated`. `OnDawn`
+  and `OnDusk` go on a game component only (see the time of day below).
 - A hero's own reactions, `OnLevelUp(int reachedLevel)` and `OnSkillLearned(Ability learnedAbility)`, go on a hero
   class or a `UnitComponent`, where they run only for a hero. The game fires one event for a jump of several levels,
   and `OnLevelUp` runs once for each level gained, in order, while `Level` already reads the last; levels taken away
@@ -330,6 +331,19 @@ dawn (6:00) up to dusk (18:00). `Game.DaySpeed` is 1 for an hour every 20 s, 2 f
 to run backward; `Game.DayStopped = true` stops the day and keeps its speed for when it goes on. A map whose gameplay
 constants change dawn, dusk or the day's hours gets its own, but the game reads no time past 24, and the build warns of a
 longer day. The debug mode halts `Game.Time` but not the day.
+
+A game component's `OnDawn` runs when `Game.IsDay` turns true, and `OnDusk` when it turns false: within 0.25 s after
+the time passes the hour (Moonwell checks four times a second, on the timers' clock), and at once when `Game.TimeOfDay`
+is set across it. A time set within the day, or over a whole night (17:00 to 7:00), runs neither, as it is day before
+and after. Running backward, passing dusk is the dawn and passing dawn the dusk.
+
+```csharp
+public sealed class Torches : GameComponent
+{
+    public override void OnDusk() => Game.Print("Light the torches.");
+    public override void OnDawn() => Game.Print("Put them out.");
+}
+```
 
 `RealTime.Now` is the real-world date and time, in UTC and the same on every machine, so any code can use it:
 `if (RealTime.Now.Month == 12)`. It is the first person's clock, shared while the map loads (the game's start waits for
@@ -1073,7 +1087,9 @@ says who plays it. `OnLeave(Player leavingPlayer)` runs on the game's components
 
 `Command("zoom", (player, rest) => ...)` on a scope hears a chat command: a line a person types that starts with `-zoom`,
 in any case. `rest` is what follows, trimmed, so `-zoom 2000` gives `"2000"`. It runs on every machine, as chat reaches
-them all, and ends with its scope, or when the `ChatCommand` it gives back ends. A chat line holds 127 characters.
+them all, and ends with its scope, or when the `ChatCommand` it gives back ends. A chat line holds 127 characters. A
+name that is empty, holds a space or starts with the dash is reported and refused in every build, and a development
+build reports `debug`, `step`, `speed` and `stats`, the debug mode's own commands, since both would run there.
 
 `a.MakeAllies(b)` and `a.MakeEnemies(b)` go both ways and replace what the two gave each other: `MakeEnemies` leaves
 nothing between them, and `a.MakeAllies(b, sharedVision: true)` lets each see what the other sees. `a.ShowVisionTo(b)`

@@ -15,6 +15,20 @@ public class FrameTests
     }
 
     [Fact]
+    public void making_adding_and_setting_frames_inside_local_for_is_mw0001()
+    {
+        var found = MapCode.Check("""
+            var label = Screen.Add(new Label(), Game.Instance);
+            Local.For(p, () => Screen.Add(new Label(), Game.Instance));
+            Local.For(p, () => label.Add(new Image()));
+            Local.For(p, () => label.Text = "mine");
+            Local.For(p, () => { var text = label.Text; var made = new Label(); });
+            """);
+
+        Assert.Equal(new[] { "MW0001: Screen.Add(new Label(), Game.Instance)", "MW0001: label.Add(new Image())", "MW0001: label.Text" }, found);
+    }
+
+    [Fact]
     public void subscribing_inside_local_for_is_refused()
     {
         var found = MapCode.Check("""

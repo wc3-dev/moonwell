@@ -36,7 +36,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             start.RegisterOperationAction(checker.Implicit,
                 OperationKind.Binary, OperationKind.Unary, OperationKind.CompoundAssignment, OperationKind.Increment, OperationKind.Decrement,
                 OperationKind.Conversion, OperationKind.Using, OperationKind.UsingDeclaration, OperationKind.Loop, OperationKind.LocalReference,
-                OperationKind.EventReference);
+                OperationKind.EventReference, OperationKind.DeconstructionAssignment, OperationKind.RecursivePattern);
             start.RegisterOperationAction(checker.Delegates, OperationKind.Argument, OperationKind.ParameterReference);
             start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument);
             start.RegisterOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
@@ -86,6 +86,9 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         /// <summary>The delegate parameters whose delegate runs on one machine, found once.</summary>
         private readonly Lazy<HashSet<IParameterSymbol>> localParameters;
 
+        /// <summary>The arguments the map's calls give each delegate parameter met, found when first needed; null when not every value it gets can be seen.</summary>
+        private readonly ConcurrentDictionary<IParameterSymbol, List<SyntaxNode>?> given = new(SymbolEqualityComparer.Default);
+
         public Checker(Compilation compilation)
         {
             this.compilation = compilation;
@@ -95,7 +98,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             shares = compilation.GetTypeByMetadataName("Moonwell.Scope")?.GetMembers("Share").OfType<IMethodSymbol>().ToArray() ?? Array.Empty<IMethodSymbol>();
             runtime = local?.ContainingAssembly;
             // Each package is found by one of its types.
-            packages = new[] { "Moonwell.DamageSystem", "Moonwell.Vector2", "Moonwell.Find", "Moonwell.Terrain", "Moonwell.Area", "Moonwell.Mouse", "Moonwell.Missile" }
+            packages = new[] { "Moonwell.DamageSystem", "Moonwell.Vector2", "Moonwell.Find", "Moonwell.Terrain", "Moonwell.Area", "Moonwell.Mouse", "Moonwell.Missile", "Moonwell.Frame" }
                 .Select(name => compilation.GetTypeByMetadataName(name)?.ContainingAssembly)
                 .Where(assembly => assembly != null)
                 .Select(assembly => assembly!)
@@ -192,7 +195,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        /// <summary>MW0001 (or MW0039) for what Local.For reaches without a name: an operator, a conversion, a using's Dispose, a foreach's enumerator, and a delegate variable or event it runs.</summary>
+        /// <summary>MW0001 (or MW0039) for what Local.For reaches without a name: an operator, a conversion, a using's Dispose, a foreach's enumerator, a Deconstruct, and a delegate variable or event it runs.</summary>
         public void Implicit(OperationAnalysisContext context)
         {
             var operation = context.Operation;
@@ -205,7 +208,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 IConversionOperation conversion => conversion.OperatorMethod != null,
                 ILocalReferenceOperation local => local.Local.Type.TypeKind == TypeKind.Delegate,
                 IEventReferenceOperation => true,
-                IUsingOperation or IUsingDeclarationOperation or IForEachLoopOperation => true,
+                IUsingOperation or IUsingDeclarationOperation or IForEachLoopOperation or IDeconstructionAssignmentOperation => true,
+                IRecursivePatternOperation pattern => pattern.DeconstructSymbol is IMethodSymbol,
                 _ => false,
             };
             if (named && !Silenced(operation, context.ContainingSymbol) && IsLocal(operation, context.ContainingSymbol))

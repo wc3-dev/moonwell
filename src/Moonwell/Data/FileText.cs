@@ -99,6 +99,12 @@ namespace Moonwell
                     end--;
                 }
 
+                // No letter starts in the whole piece, which only text that is no UTF-8 gives.
+                if (end == start)
+                {
+                    end = start + PieceBytes;
+                }
+
                 pieces.Add(escaped.Substring(start, end - start));
                 start = end;
             }

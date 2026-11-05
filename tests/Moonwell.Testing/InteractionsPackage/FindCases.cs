@@ -679,6 +679,23 @@ namespace Moonwell.Testing
             Expect.Near(10.0f, entry.X, "and still not kept");
         }
 
+        /// <summary>A Find in a Share read runs on the asked player's machine only, so it tracks nothing, as inside Local.For.</summary>
+        public static void InShareRead(FakeWorld world)
+        {
+            Fresh();
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            var unit = UnitAt(world, 10.0f, 10.0f);
+            var found = -1;
+            Sharing.Request(Game.Instance, Player.Get(0), () =>
+            {
+                found = Find.InRange<Unit>(0.0f, 0.0f, 100.0f).Count;
+                return "";
+            }, text => { });
+            Expect.Equal(1, found, "the unit is found");
+            Expect.True(Tracking.EntryOf(unit) == null, "the unit is not tracked");
+            Expect.Equal(0, Tracking.Count, "nothing is tracked");
+        }
+
         /// <summary>Inside Local.For a Find of a kind nobody asked for finds the live things of the game in the runtime's order, and tracks nothing: the kind stays untracked and the cycle's timer stays stopped.</summary>
         public static void LocalUntracked(FakeWorld world)
         {

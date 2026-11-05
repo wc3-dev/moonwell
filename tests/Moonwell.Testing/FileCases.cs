@@ -68,6 +68,26 @@ namespace Moonwell.Testing
             Expect.Equal("", pieces[0], "empty");
         }
 
+        /// <summary>Text where no letter starts in a whole piece's length is still cut, at the piece's length.</summary>
+        public static void NoLetterStart(FakeWorld world)
+        {
+            var text = new StringBuilder();
+            for (var i = 0; i < 401; i++)
+            {
+                text.Append('©');
+            }
+
+            var pieces = FileText.Pieces(text.ToString());
+            var joined = new StringBuilder();
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                Expect.True(pieces[i].Length <= FileText.PieceBytes, "piece " + i + " within 200");
+                joined.Append(pieces[i]);
+            }
+
+            Expect.Equal(text.ToString(), joined.ToString(), "the pieces joined");
+        }
+
         /// <summary>The longest line a file holds, the extended tooltip of level 99 with a whole piece, keeps within Preload's 259 bytes.</summary>
         public static void LongestLineFits(FakeWorld world)
         {
