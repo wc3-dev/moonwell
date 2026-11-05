@@ -8,6 +8,7 @@ namespace Moonwell
     /// machine, in UTC, and <c>RealTime.LocalNow</c> is this machine's clock in its own zone. An <c>int</c> of seconds lasts
     /// to January 2038, as the game's own clock does. .NET's <c>DateTime</c> cannot work in the game, whose integers are 32 bits.
     /// </summary>
+    [LocalSafe]
     public readonly struct RealTime : IEquatable<RealTime>, IComparable<RealTime>
     {
         private const int SecondsADay = 86400;

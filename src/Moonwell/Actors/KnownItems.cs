@@ -10,7 +10,7 @@ namespace Moonwell
         private static Dictionary<item, Item> known = new Dictionary<item, Item>();
 
         /// <summary>The items the runtime holds, in the order they were taken in.</summary>
-        internal static OrderedSet<Item> Live = new OrderedSet<Item>();
+        internal static LiveSet<Item> Live = new LiveSet<Item>();
 
         /// <summary>The items whose class's constructor threw, which are not taken in again, so it does not run at each of their events.</summary>
         private static HashSet<item> failed = new HashSet<item>();

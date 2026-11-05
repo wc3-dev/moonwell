@@ -85,7 +85,7 @@ public sealed class GameFiles : IDisposable
         {
             foreach (var prefix in prefixes)
             {
-                if (_storage.Contains(prefix + candidate))
+                if (_storage.IsStored(prefix + candidate))
                 {
                     return prefix + candidate;
                 }

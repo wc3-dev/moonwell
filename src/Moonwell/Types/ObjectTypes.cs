@@ -148,6 +148,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Runs an action once every maker is registered: at once outside the register step, and in it once its registrations have run.</summary>
+        internal static void AfterRegistering(Action action)
+        {
+            Listen(action);
+        }
+
         /// <summary>Runs a registration's listen, which makes an object of its class: at once, or once the register step Registering runs has registered every maker.</summary>
         private static void Listen(Action listen)
         {

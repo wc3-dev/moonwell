@@ -10,7 +10,7 @@ namespace Moonwell
         private static Dictionary<unit, Unit> known = new Dictionary<unit, Unit>();
 
         /// <summary>The units the runtime holds, in the order they were taken in.</summary>
-        internal static OrderedSet<Unit> Live = new OrderedSet<Unit>();
+        internal static LiveSet<Unit> Live = new LiveSet<Unit>();
 
         /// <summary>The units the runtime removed whose type id still read when they ended, as the game's does in the frame of RemoveUnit, keyed by the handle, in the order removed: each handle stays mapped to its ended object, which TakeIn does not take in again, so an event the game fires after the removal (an item's drop, the enter of a unit made in the same instant) makes no second object. The sweep forgets each once its type id reads 0.</summary>
         private static OrderedMap<unit, Unit> removed = new OrderedMap<unit, Unit>();

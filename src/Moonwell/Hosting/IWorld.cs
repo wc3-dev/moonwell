@@ -17,6 +17,9 @@ namespace Moonwell.Hosting
         /// <summary>Delivers this destructable's death to Inbound.</summary>
         void WatchDeath(destructable destructable);
 
+        /// <summary>Stops delivering a destructable's death, as it has left the game.</summary>
+        void UnwatchDeath(destructable destructable);
+
         /// <summary>Shows a line on every player's screen.</summary>
         void Print(string text);
 

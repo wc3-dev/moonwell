@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Moonwell
 {
     /// <summary>Finds the units, items and destructables the game has removed, which fire no event, and ends them. A timer runs it every 0.25 seconds.</summary>
@@ -35,30 +37,30 @@ namespace Moonwell
             CheckDestructables();
         }
 
-        /// <summary>Checks the destructables after the last one checked, at most MostDestructables, going round to the first: up to that many, every run checks them all, from the first.</summary>
+        /// <summary>Checks the destructables after the last one checked, at most MostDestructables, going round to the first: up to that many, every run checks them all, from the first. The run's destructables are picked before any ends, so one whose OnLeave removes others makes it miss none.</summary>
         private static void CheckDestructables()
         {
             var live = KnownDestructables.Live;
-            var checks = live.Count < MostDestructables ? live.Count : MostDestructables;
-            var index = live.Count <= MostDestructables ? 0 : KnownDestructables.NextToCheck;
-            for (var i = 0; i < checks && live.Count > 0; i++)
+            var count = live.Count;
+            var checks = count < MostDestructables ? count : MostDestructables;
+            var start = count <= MostDestructables || KnownDestructables.NextToCheck >= count ? 0 : KnownDestructables.NextToCheck;
+            var picked = new List<Destructable>();
+            for (var i = 0; i < checks; i++)
             {
-                index = index < live.Count ? index : 0;
-                var destructable = live[index];
-                if (Runtime.World.DestructableTypeId(destructable.Handle) == 0)
+                picked.Add(live[(start + i) % count]);
+            }
+
+            for (var i = 0; i < picked.Count; i++)
+            {
+                var destructable = picked[i];
+                if (!destructable.HasEnded && !destructable.ending && Runtime.World.DestructableTypeId(destructable.Handle) == 0)
                 {
                     destructable.IsGone = true;
                     destructable.End();
                 }
-
-                // One that ended has left the list, and the next is in its place.
-                if (index < live.Count && live[index] == destructable)
-                {
-                    index++;
-                }
             }
 
-            KnownDestructables.NextToCheck = index;
+            KnownDestructables.NextToCheck = count == 0 ? 0 : (start + checks) % count;
         }
     }
 }

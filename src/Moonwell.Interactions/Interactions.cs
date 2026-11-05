@@ -155,7 +155,7 @@ namespace Moonwell
             Tracking.Reset();
             handler = TakenIn;
             Hooks.TakenIn = handler;
-            Hooks.AddEnding(Ending);
+            Hooks.AddEnding(Ending, Hooks.InteractionsEnding);
 #if DEBUG
             // The package's view in the debug mode, added once: Runtime.Reset clears the views, and with them the install.
             InteractionsView.Reset();

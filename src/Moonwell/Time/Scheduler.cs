@@ -43,12 +43,30 @@ namespace Moonwell
         /// <summary>The sequence the next timer added gets.</summary>
         private int nextSequence;
 
+        /// <summary>How many entries the heap holds, an ended timer's too until it leaves.</summary>
+        internal int Count => heap.Count;
+
+        /// <summary>How many entries in the heap are of timers that ended before they were due.</summary>
+        private int dead;
+
+        /// <summary>Counts a timer that ended while it waited in the heap: once they are more than half of it, the next Add takes them out, so an ended timer and what its action holds do not stay until its due time.</summary>
+        internal void Ended()
+        {
+            dead++;
+        }
+
         /// <summary>Puts a timer in the heap, and asks the world to wake when it is the next due.</summary>
         internal void Add(Timer timer)
         {
+            if (dead > 64 && dead * 2 > heap.Count)
+            {
+                Compact();
+            }
+
             var entry = new TimerEntry(timer.due, nextSequence, timer);
             nextSequence++;
             Push(entry);
+            timer.queued = true;
             if (heap[0] == entry)
             {
                 var wait = entry.due - Runtime.World.Now();
@@ -93,6 +111,7 @@ namespace Moonwell
                 if (timer.HasEnded)
                 {
                     Pop();
+                    dead--;
                     continue;
                 }
 
@@ -119,6 +138,7 @@ namespace Moonwell
                 else if (!timer.HasEnded)
                 {
                     Push(new TimerEntry(timer.due, entry.sequence, timer));
+                    timer.queued = true;
                 }
             }
 
@@ -144,6 +164,7 @@ namespace Moonwell
             while (heap.Count > 0 && heap[0].timer.HasEnded)
             {
                 Pop();
+                dead--;
             }
 
             if (heap.Count > 0)
@@ -200,6 +221,26 @@ namespace Moonwell
             return first.sequence < second.sequence;
         }
 
+        /// <summary>Takes the entries of ended timers out of the heap; the order of the rest stays, as it is by due time and creation.</summary>
+        private void Compact()
+        {
+            var kept = new List<TimerEntry>();
+            for (var i = 0; i < heap.Count; i++)
+            {
+                if (!heap[i].timer.HasEnded)
+                {
+                    kept.Add(heap[i]);
+                }
+            }
+
+            heap.Clear();
+            dead = 0;
+            for (var i = 0; i < kept.Count; i++)
+            {
+                Push(kept[i]);
+            }
+        }
+
         /// <summary>Adds an entry at the end of the heap and moves it up to its place.</summary>
         private void Push(TimerEntry entry)
         {
@@ -222,6 +263,7 @@ namespace Moonwell
         private TimerEntry Pop()
         {
             var top = heap[0];
+            top.timer.queued = false;
             var last = heap.Count - 1;
             heap[0] = heap[last];
             heap.RemoveAt(last);

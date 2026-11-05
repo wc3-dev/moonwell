@@ -742,6 +742,12 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>Stops delivering a destructable's death.</summary>
+        public void UnwatchDeath(destructable destructable)
+        {
+            Watched.Remove(destructable);
+        }
+
         /// <summary>Records a line printed on the screen.</summary>
         public void Print(string text)
         {

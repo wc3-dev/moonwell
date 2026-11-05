@@ -30,11 +30,17 @@ namespace Moonwell
         /// <summary>Whether this object is ending; a second End while it runs does nothing.</summary>
         internal bool ending;
 
-        /// <summary>Ends this object once: its own OnEnd, its children, then Finish.</summary>
+        /// <summary>Ends this object once: its own OnEnd, its children, then Finish. The game and the players last the whole game: ending one is refused and reported, in every build.</summary>
         public void End()
         {
             if (ending || HasEnded)
             {
+                return;
+            }
+
+            if (this is Game || this is Player)
+            {
+                Errors.Refuse(Names.NameOf(this) + ".End", "the game and the players last the whole game; end a scope of your own");
                 return;
             }
 
