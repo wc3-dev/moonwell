@@ -54,6 +54,8 @@ namespace Moonwell.Build.Tests
 
         public void ListenMouse(player p, Action? moved, Action pressed, Action released) => throw Unused();
 
+        public void ListenLeave(player p, Action left) => throw Unused();
+
         public player EventPlayer() => throw Unused();
 
         public float EventMouseX() => throw Unused();

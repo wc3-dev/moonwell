@@ -8,6 +8,9 @@ namespace Moonwell.Hosting
         /// <summary>Starts delivering one player's mouse events: the three actions run when the mouse moves, a button goes down and a button comes up; a null <paramref name="moved"/> registers no move event. Inside them, <c>EventPlayer</c>, <c>EventMouseX</c>, <c>EventMouseY</c> and <c>EventMouseButton</c> are the event's.</summary>
         void ListenMouse(player p, Action? moved, Action pressed, Action released);
 
+        /// <summary>Runs an action when a player leaves the game; EventPlayer is the one who left.</summary>
+        void ListenLeave(player p, Action left);
+
         /// <summary>The player of the mouse event being delivered.</summary>
         player EventPlayer();
 

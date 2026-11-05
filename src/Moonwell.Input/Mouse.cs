@@ -130,6 +130,20 @@ namespace Moonwell
             HasPosition = true;
         }
 
+        /// <summary>Whether the debug mode took the left press, so its release runs nothing either.</summary>
+        internal bool Taken;
+
+        /// <summary>Marks every button up, for a player who left.</summary>
+        internal void LetGoAll()
+        {
+            for (var i = 0; i < down.Length; i++)
+            {
+                down[i] = false;
+            }
+
+            Taken = false;
+        }
+
         /// <summary>Sets whether the events say a button is down.</summary>
         internal void SetDown(MouseButton button, bool isDown)
         {

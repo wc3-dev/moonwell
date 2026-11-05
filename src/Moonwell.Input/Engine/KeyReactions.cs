@@ -17,10 +17,12 @@ namespace Moonwell.Engine
 
         /// <summary>
         /// A press of a key already down that comes sooner than this after the key's last press is the game's repeat of a held
-        /// key (the first comes 0.5 s after the press, then about 30 a second); a later one is a new press whose release the
-        /// game never sent, as it sends none for a key let go while it takes no keyboard input.
+        /// key (the first comes 0.5 s after the press, seen, or up to a second with Windows' longest repeat delay, and later
+        /// online with lag, then about 30 a second); a later one is a new press whose release the game never sent, as it sends
+        /// none for a key let go while it takes no keyboard input. The check sends that release within half a second, so a
+        /// long gap loses only a press made again before it.
         /// </summary>
-        private const float RepeatGap = 0.7f;
+        private const float RepeatGap = 2.5f;
 
         /// <summary>The mask of each class seen, keyed by the class.</summary>
         private static readonly Dictionary<object, int> masks = new Dictionary<object, int>();
@@ -58,7 +60,19 @@ namespace Moonwell.Engine
                 return;
             }
 
+#if DEBUG
+            // The debug mode's own keys are its own, and the repeats come on the game's time, which the debug clock halts
+            // and speeds up.
+            if (DebugSession.TakesKey(DebugKeyOf(code), world.EventMeta()))
+            {
+                return;
+            }
+
+            Runtime.World.Now();
+            var now = Runtime.Clock.LastGame;
+#else
             var now = Runtime.World.Now();
+#endif
             if (keyboard.IsDownCode(code))
             {
                 var repeat = now - keyboard.LastPressOf(code) < RepeatGap;
@@ -74,6 +88,26 @@ namespace Moonwell.Engine
             keyboard.TakePress(code, now);
             Run(keyboard, Pressed, (Key)code);
         }
+
+#if DEBUG
+        /// <summary>The debug mode's number for a key it uses; 0 for any other.</summary>
+        private static int DebugKeyOf(int code)
+        {
+            switch ((Key)code)
+            {
+                case Key.H:
+                    return Hosting.DebugKey.H;
+                case Key.N:
+                    return Hosting.DebugKey.N;
+                case Key.OemMinus:
+                    return Hosting.DebugKey.Minus;
+                case Key.OemPlus:
+                    return Hosting.DebugKey.Plus;
+                default:
+                    return 0;
+            }
+        }
+#endif
 
         /// <summary>How often, in seconds, each machine compares the keys the events say are down with the keys it holds.</summary>
         internal const float CheckPeriod = 0.25f;

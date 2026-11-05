@@ -294,6 +294,31 @@ namespace Moonwell
             Game.Print("Speeds: 1/4, 1/2, 1, 2, 4, 8.");
         }
 
+        /// <summary>Whether a unit is held by a halt, and then the pause the map last asked for on it while it was (Unit.IsPaused reads it).</summary>
+        internal static bool HoldsPause(unit handle, out bool paused)
+        {
+            paused = false;
+            return held != null && held.Holds(handle, out paused);
+        }
+
+        /// <summary>Keeps a pause the map sets on a held unit, given to it as the halt lets go; false for a unit not held (Unit.IsPaused sets it then).</summary>
+        internal static bool WantPause(unit handle, bool paused)
+        {
+            return held != null && held.Want(handle, paused);
+        }
+
+        /// <summary>Whether the session takes a key press while on: H, N, "-" and "=" with Ctrl or Ctrl + Shift, so the input package's reactions do not hear it too.</summary>
+        internal static bool TakesKey(int key, int meta)
+        {
+            return IsOn && (meta == 2 || meta == 3) && (key == DebugKey.H || key == DebugKey.N || key == DebugKey.Minus || key == DebugKey.Plus);
+        }
+
+        /// <summary>Whether the session takes a left press from a slot while on, as Ctrl is down there, so the input package's reactions do not hear it too.</summary>
+        internal static bool TakesClick(int slot)
+        {
+            return IsOn && slot >= 0 && slot < controlDown.Length && (controlDown[slot] || rightControlDown[slot]);
+        }
+
         /// <summary>Holds a unit taken in while the units are held, as a unit made while held is not paused by the game; KnownUnits.TakeIn calls it.</summary>
         internal static void UnitTakenIn(Unit unit)
         {
@@ -552,6 +577,28 @@ namespace Moonwell
             for (var i = 0; i < live.Count; i++)
             {
                 candidates.Add(live[i]);
+            }
+
+            // A unit Moonwell never took in is selectable too: one near the click is taken in.
+            var all = Runtime.World.UnitsInWorld();
+            for (var i = 0; i < all.Count; i++)
+            {
+                var handle = all[i];
+                if (KnownUnits.Find(handle) != null)
+                {
+                    continue;
+                }
+
+                var dx = Runtime.World.UnitX(handle) - x;
+                var dy = Runtime.World.UnitY(handle) - y;
+                if (dx * dx + dy * dy <= ClickRadius * ClickRadius)
+                {
+                    var unit = Unit.Of(handle);
+                    if (unit != null)
+                    {
+                        candidates.Add(unit);
+                    }
+                }
             }
 
             var views = DebugViews.All;

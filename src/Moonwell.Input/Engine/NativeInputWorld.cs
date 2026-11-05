@@ -6,6 +6,14 @@ namespace Moonwell.Engine
     /// <summary>The game as the input package sees it, through the game's natives; the only class of the package that calls them.</summary>
     internal sealed class NativeInputWorld : IInputWorld
     {
+        /// <summary>One trigger for a player's leave.</summary>
+        public void ListenLeave(player p, Action left)
+        {
+            var trigger = Natives.CreateTrigger();
+            Natives.TriggerRegisterPlayerEvent(trigger, p, Natives.EVENT_PLAYER_LEAVE);
+            Natives.TriggerAddAction(trigger, left);
+        }
+
         /// <summary>Makes the triggers of a player's mouse: its moves (none when moved is null), its presses and its releases.</summary>
         public void ListenMouse(player p, Action? moved, Action pressed, Action released)
         {
