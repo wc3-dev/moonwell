@@ -232,6 +232,36 @@ namespace Moonwell.Testing
             Expect.Equal(1, unit.Slams.Count, "and is not slammed again");
         }
 
+        /// <summary>
+        /// Knockbacks fast enough to move more than a cell a step, square into a line one cell wide: the guide's 300 over half
+        /// a second (37.5 a step), from 580 to 608, and 600 over half a second, from 400 to 610. Each stops short of the line
+        /// and OnSlammed runs once; looking only at the end of each step's move went through it from some starts.
+        /// </summary>
+        public static void FastIntoLine(FakeWorld world)
+        {
+            FakeTerrainWorld terrain;
+            FakeInteractionWorld interactions;
+            Fresh(out terrain, out interactions);
+            LineAt(terrain, 650.0f, FakeTerrainWorld.NoWalk);
+            var pushed = new List<Pushee>();
+            for (var i = 0; i < 15; i++)
+            {
+                var guide = PusheeAt(world, 580.0f + i * 2.0f, 64.0f + i * 64.0f);
+                guide.Knockback(0.0f, 300.0f, 0.5f);
+                pushed.Add(guide);
+                var faster = PusheeAt(world, 400.0f + i * 15.0f, 1024.0f + i * 64.0f);
+                faster.Knockback(0.0f, 600.0f, 0.5f);
+                pushed.Add(faster);
+            }
+
+            Steps(world, 24);
+            foreach (var unit in pushed)
+            {
+                Expect.True(unit.X + 16.0f < 640.0f, "short of the line, its collision size off; at " + unit.X + ", y " + unit.Y);
+                Expect.Equal(1, unit.Slams.Count, "OnSlammed once, at y " + unit.Y);
+            }
+        }
+
         /// <summary>Pushed at 45 degrees into an unwalkable line: it loses the speed into the line (OnSlammed once with it) and slides on along it.</summary>
         public static void SlideAlong(FakeWorld world)
         {

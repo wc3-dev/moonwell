@@ -40,6 +40,9 @@ namespace Moonwell.Engine
         /// <summary>The most the ground beside a bridge's deck may differ from it for a pushed unit to cross between them; more, and the deck's edge is a rail.</summary>
         private const float DeckStep = 64.0f;
 
+        /// <summary>The most a look-ahead point moves between two checks of the ground: half a pathing cell, so a fast push does not step over a line one cell wide.</summary>
+        private const float Spacing = 16.0f;
+
         /// <summary>The pushes, in the order they began; an ended one stays until the step packs the list. Made on first use after an install. It holds no null, so the pass reads it raw.</summary>
         private static List<Pushed>? pushes;
 
@@ -509,7 +512,7 @@ namespace Moonwell.Engine
         /// Whether a pushed unit at (fromX, fromY) may move to (centreX, centreY), looking ahead to a point (x, y), its
         /// collision size ahead along the move: the point inside the world's bounds, with no wall it is not lifted over
         /// across the way there, and flyable for a flyer; for a unit that does not fly, walkable and where an item lands, or
-        /// on a bridge's deck. A deck is ground inside its area, whatever the terrain's pathing reads under it, and its edge
+        /// on a bridge's deck. Off a deck the look-ahead point's whole way is checked, not only its end (FreeAlong). A deck is ground inside its area, whatever the terrain's pathing reads under it, and its edge
         /// is a rail, except where the ground beyond is within DeckStep of it (its ends, on the banks). The rail stops the
         /// unit's body, not its middle: on a deck, its collision size around the place it moves to stays on the deck.
         /// </summary>
@@ -527,7 +530,7 @@ namespace Moonwell.Engine
 
             if (push.flyer)
             {
-                return Terrain.IsFlyable(x, y);
+                return FreeAlong(true, fromX + x - centreX, fromY + y - centreY, x, y);
             }
 
             if (Decks.count > 0)
@@ -567,7 +570,27 @@ namespace Moonwell.Engine
                 }
             }
 
-            return Terrain.IsWalkable(x, y) && Terrain.ItemLands(x, y);
+            return FreeAlong(false, fromX + x - centreX, fromY + y - centreY, x, y);
+        }
+
+        /// <summary>Whether the ground is walkable and where an item lands (flyable, for a flyer) at points at most Spacing apart along the way from (fromX, fromY) to (x, y), that end included.</summary>
+        private static bool FreeAlong(bool flyer, float fromX, float fromY, float x, float y)
+        {
+            var dx = x - fromX;
+            var dy = y - fromY;
+            var parts = (int)(Trig.Sqrt(dx * dx + dy * dy) / Spacing) + 1;
+            for (var i = 1; i <= parts; i++)
+            {
+                var t = (float)i / parts;
+                var px = fromX + dx * t;
+                var py = fromY + dy * t;
+                if (flyer ? !Terrain.IsFlyable(px, py) : !Terrain.IsWalkable(px, py) || !Terrain.ItemLands(px, py))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
