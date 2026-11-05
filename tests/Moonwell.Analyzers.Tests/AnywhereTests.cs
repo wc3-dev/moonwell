@@ -57,6 +57,69 @@ public class AnywhereTests
     }
 
     [Fact]
+    public void spreading_a_dictionary_or_hash_set_is_rejected()
+    {
+        var found = MapCode.Check("""
+            var seen = new HashSet<int>();
+            var map = new Dictionary<int, int>();
+            var ordered = new List<int>();
+            List<int> order = [.. seen];
+            int[] keys = [.. map.Keys, 1];
+            List<int> fine = [.. ordered];
+            """);
+
+        Assert.Equal(new[] { "MW0004: seen", "MW0004: map.Keys" }, found);
+    }
+
+    [Fact]
+    public void a_number_type_in_a_local_function_an_event_a_delegate_a_base_list_or_a_local_with_no_declarator_is_rejected()
+    {
+        var found = MapCode.CheckFile("""
+            using System;
+            using System.Collections.Generic;
+
+            namespace Map
+            {
+                public delegate double Curve(double t);
+
+                public sealed class Scores : List<long>
+                {
+                }
+
+                public sealed class Score
+                {
+                    public event Action<long>? Scored;
+
+                    public static int Run(int n, object stored)
+                    {
+                        long Fact(int k) => k <= 1 ? 1 : k * Fact(k - 1);
+                        if (long.TryParse("12", out var code) && stored is double rate)
+                        {
+                            return (int)(code % 7) + (int)Fact(n);
+                        }
+
+                        var (q, r) = (1L, 2);
+                        return stored is ulong and var big ? 1 : 0;
+                    }
+                }
+            }
+            """);
+
+        Assert.Equal(new[]
+        {
+            "MW0005: Curve",
+            "MW0005: Scores",
+            "MW0005: Scored",
+            "MW0005: Fact",
+            "MW0005: code",
+            "MW0005: rate",
+            "MW0005: q",
+            "MW0005: 1L",
+            "MW0005: big",
+        }, found);
+    }
+
+    [Fact]
     public void lookups_and_ordered_loops_are_allowed()
     {
         Assert.Empty(MapCode.Check("""

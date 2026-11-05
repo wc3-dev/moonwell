@@ -96,14 +96,18 @@ public sealed class BuildOnlyAnalyzer : DiagnosticAnalyzer
         }
     }
 
+    // Hidden itself or in what it overrides: StandardUnit's Declare overrides Unit's, which is marked.
     private static bool IsHidden(IMethodSymbol method)
     {
-        foreach (var attribute in method.OriginalDefinition.GetAttributes())
+        for (var at = method.OriginalDefinition; at != null; at = at.OverriddenMethod?.OriginalDefinition)
         {
-            if (attribute.AttributeClass?.Name == nameof(EditorBrowsableAttribute) && attribute.ConstructorArguments.Length == 1
-                && attribute.ConstructorArguments[0].Value is int state && state == (int)EditorBrowsableState.Never)
+            foreach (var attribute in at.GetAttributes())
             {
-                return true;
+                if (attribute.AttributeClass?.Name == nameof(EditorBrowsableAttribute) && attribute.ConstructorArguments.Length == 1
+                    && attribute.ConstructorArguments[0].Value is int state && state == (int)EditorBrowsableState.Never)
+                {
+                    return true;
+                }
             }
         }
 
