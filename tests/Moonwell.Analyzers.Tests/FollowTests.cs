@@ -343,4 +343,107 @@ public class FollowTests
             "MW0001: a",
         }, found);
     }
+
+    [Fact]
+    public void a_delegate_chosen_by_a_condition_or_a_coalesce_is_followed()
+    {
+        var found = MapCode.Check("""
+            OnA = () => Natives.KillUnit(u);
+            var flag = u != null;
+            Local.For(p, flag ? OnA : OnB);
+            Local.For(p, OnA ?? OnB);
+            Local.For(p, flag ? OnB : OnB);
+            """, """
+                private static Action OnA = () => { };
+                private static Action OnB = () => { };
+            """);
+
+        Assert.Equal(new[] { "MW0001: OnA", "MW0001: OnA" }, found);
+    }
+
+    [Fact]
+    public void an_interface_method_a_base_class_implements_is_followed()
+    {
+        var found = MapCode.Check("""
+            IRefresh r = new Hud();
+            Local.For(p, () => r.Refresh());
+            """, """
+                public interface IRefresh { void Refresh(); }
+                public class Base { public void Refresh() { Natives.KillUnit(Natives.GetTriggerUnit()); } }
+                public class Hud : Base, IRefresh { }
+            """);
+
+        Assert.Equal(new[] { "MW0001: r.Refresh()" }, found);
+    }
+
+    [Fact]
+    public void partial_methods_and_properties_are_followed_into_their_bodies()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => Hud.Refresh());
+            Local.For(p, () => { var n = Hud.Count; });
+            """, """
+                public static partial class Hud
+                {
+                    public static partial void Refresh();
+                    public static partial void Refresh() { Natives.KillUnit(Natives.GetTriggerUnit()); }
+                    public static partial int Count { get; }
+                    public static partial int Count { get { Natives.KillUnit(Natives.GetTriggerUnit()); return 1; } }
+                }
+            """);
+
+        Assert.Equal(new[] { "MW0001: Hud.Refresh()", "MW0001: Hud.Count" }, found);
+    }
+
+    [Fact]
+    public void a_primary_constructors_base_call_is_followed()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => new Hud());
+            Local.For(p, () => new Wide(1));
+            Local.For(p, () => new Bare());
+            Local.For(p, () => new Plain());
+            """, """
+                public class Panel
+                {
+                    public Panel() { Natives.CreateUnit(Natives.Player(0), 0, 0f, 0f, 0f); }
+                    public Panel(int x) : this() { }
+                }
+                public class Hud() : Panel() { }
+                public class Wide(int x) : Panel(x) { }
+                public class Bare() : Panel { }
+                public class Plain : Panel { }
+            """);
+
+        Assert.Equal(new[] { "MW0001: new Hud()", "MW0001: new Wide(1)", "MW0001: new Bare()", "MW0001: new Plain()" }, found);
+    }
+
+    [Fact]
+    public void an_extension_method_that_runs_its_action_locally_is_seen_in_extension_form()
+    {
+        var found = MapCode.CheckFile("""
+            using System;
+            using Moonwell;
+
+            namespace Map
+            {
+                public static class Ext
+                {
+                    public static void Mine(this Player who, Action a) => Local.For(who, a);
+                }
+
+                public static class Code
+                {
+                    public static void Run(Player p, unit u)
+                    {
+                        p.Mine(() => Natives.KillUnit(u));
+                        p.Mine(a: () => Natives.KillUnit(u));
+                        Ext.Mine(p, () => Natives.KillUnit(u));
+                    }
+                }
+            }
+            """);
+
+        Assert.Equal(new[] { "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)" }, found);
+    }
 }

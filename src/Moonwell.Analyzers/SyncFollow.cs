@@ -460,6 +460,7 @@ public sealed partial class SyncAnalyzer
             }
 
             var seen = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+            var yielded = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
             var next = new Queue<IMethodSymbol>();
             next.Enqueue(method.OriginalDefinition);
             while (next.Count > 0)
@@ -470,32 +471,38 @@ public sealed partial class SyncAnalyzer
                     continue;
                 }
 
-                foreach (var runs in below)
+                foreach (var (runs, type) in below)
                 {
-                    if (!seen.Add(runs))
+                    if (seen.Add(runs))
                     {
-                        continue;
+                        next.Enqueue(runs);
                     }
 
-                    next.Enqueue(runs);
-                    if (reach.Receiver == null || reach.Receiver.TypeKind == TypeKind.TypeParameter
-                        || compilation.ClassifyCommonConversion(runs.ContainingType, reach.Receiver.OriginalDefinition).IsImplicit
-                        || compilation.ClassifyCommonConversion(runs.ContainingType, reach.Receiver).IsImplicit)
+                    if (!yielded.Contains(runs)
+                        && (reach.Receiver == null || reach.Receiver.TypeKind == TypeKind.TypeParameter
+                            || compilation.ClassifyCommonConversion(type, reach.Receiver.OriginalDefinition).IsImplicit
+                            || compilation.ClassifyCommonConversion(type, reach.Receiver).IsImplicit))
                     {
+                        yielded.Add(runs);
                         yield return runs;
                     }
                 }
             }
         }
 
-        /// <summary>Each method or interface member of a class or interface, to the map's methods that override or implement it.</summary>
-        private Dictionary<IMethodSymbol, List<IMethodSymbol>> FindOverriders()
+        /// <summary>
+        /// Each method or interface member of a class or interface, to the map's methods that override or implement it, each
+        /// with the class it does so for: an implementation may be inherited from a base class that does not implement the
+        /// interface itself.
+        /// </summary>
+        private Dictionary<IMethodSymbol, List<(IMethodSymbol Runs, INamedTypeSymbol In)>> FindOverriders()
         {
-            var found = new Dictionary<IMethodSymbol, List<IMethodSymbol>>(SymbolEqualityComparer.Default);
-            void Add(IMethodSymbol above, IMethodSymbol below)
+            var found = new Dictionary<IMethodSymbol, List<(IMethodSymbol Runs, INamedTypeSymbol In)>>(SymbolEqualityComparer.Default);
+            void Add(IMethodSymbol above, IMethodSymbol below, INamedTypeSymbol type)
             {
                 above = above.OriginalDefinition;
                 below = below.OriginalDefinition;
+                type = type.OriginalDefinition;
                 if (SymbolEqualityComparer.Default.Equals(above, below))
                 {
                     return;
@@ -503,12 +510,12 @@ public sealed partial class SyncAnalyzer
 
                 if (!found.TryGetValue(above, out var list))
                 {
-                    found[above] = list = new List<IMethodSymbol>();
+                    found[above] = list = new List<(IMethodSymbol Runs, INamedTypeSymbol In)>();
                 }
 
-                if (!list.Contains(below, SymbolEqualityComparer.Default))
+                if (!list.Any(e => SymbolEqualityComparer.Default.Equals(e.Runs, below) && SymbolEqualityComparer.Default.Equals(e.In, type)))
                 {
-                    list.Add(below);
+                    list.Add((below, type));
                 }
             }
 
@@ -518,7 +525,7 @@ public sealed partial class SyncAnalyzer
                 {
                     if (method.OverriddenMethod is { } overridden)
                     {
-                        Add(overridden, method);
+                        Add(overridden, method, type);
                     }
                 }
 
@@ -533,7 +540,7 @@ public sealed partial class SyncAnalyzer
                     {
                         if (type.FindImplementationForInterfaceMember(member) is IMethodSymbol implementation && IsMap(implementation))
                         {
-                            Add(member, implementation);
+                            Add(member, implementation, type);
                         }
                     }
                 }
@@ -570,14 +577,17 @@ public sealed partial class SyncAnalyzer
 
         /// <summary>
         /// What making an object with a constructor of the map reaches: its body, its class's field and property
-        /// initializers, and an implicit constructor's base constructor.
+        /// initializers, and a primary constructor's base call, or an implicit one's base constructor.
         /// </summary>
         private Finding? FollowConstructor(IMethodSymbol constructor, Walk walk)
         {
             constructor = constructor.OriginalDefinition;
             var type = constructor.ContainingType;
-            var found = Follow(constructor, Syntax(constructor).Concat(Initializers(type, false)), walk);
-            if (found == null && constructor.IsImplicitlyDeclared
+            // A primary constructor's base call is in its class's base list.
+            var primary = constructor.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax()).OfType<TypeDeclarationSyntax>().ToList();
+            var baseCall = primary.SelectMany(declaration => declaration.BaseList?.Types.OfType<PrimaryConstructorBaseTypeSyntax>() ?? Enumerable.Empty<PrimaryConstructorBaseTypeSyntax>()).ToList();
+            var found = Follow(constructor, Syntax(constructor).Concat(baseCall).Concat(Initializers(type, false)), walk);
+            if (found == null && (constructor.IsImplicitlyDeclared || (primary.Count > 0 && baseCall.Count == 0))
                 && type.BaseType?.InstanceConstructors.FirstOrDefault(c => c.Parameters.Length == 0) is { } baseConstructor)
             {
                 found = Rejected(new Reach(baseConstructor), walk, type);
@@ -614,7 +624,7 @@ public sealed partial class SyncAnalyzer
 
         // The declarations of a method; a primary constructor's is its class's, whose parameters run nothing.
         private static IEnumerable<SyntaxNode> Syntax(IMethodSymbol method) =>
-            method.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax()).Where(syntax => syntax is not TypeDeclarationSyntax);
+            (method.PartialImplementationPart ?? method).DeclaringSyntaxReferences.Select(reference => reference.GetSyntax()).Where(syntax => syntax is not TypeDeclarationSyntax);
 
         /// <summary>What a method of the map reaches that may not run on one machine.</summary>
         private Finding? Follow(IMethodSymbol method, Walk walk)
@@ -720,7 +730,7 @@ public sealed partial class SyncAnalyzer
 
             var value = operation;
             var up = operation.Parent;
-            while (up is IConversionOperation or IDelegateCreationOperation)
+            while (up is IConversionOperation or IDelegateCreationOperation or ICoalesceOperation || up is IConditionalOperation choice && choice.Condition != value)
             {
                 value = up;
                 up = up.Parent;
@@ -795,7 +805,7 @@ public sealed partial class SyncAnalyzer
                 yield break;
             }
 
-            if (memberValues.Value.TryGetValue(slot, out var values))
+            if (memberValues.Value.Values.TryGetValue(slot, out var values))
             {
                 foreach (var value in values)
                 {
@@ -916,10 +926,14 @@ public sealed partial class SyncAnalyzer
         private static bool IsGiven(AssignmentExpressionSyntax assignment) =>
             assignment.IsKind(SyntaxKind.SimpleAssignmentExpression) || assignment.IsKind(SyntaxKind.AddAssignmentExpression) || assignment.IsKind(SyntaxKind.CoalesceAssignmentExpression);
 
-        /// <summary>Each delegate field, property and event of the map, to the delegates given to it: initializers and assignments.</summary>
-        private Dictionary<ISymbol, List<SyntaxNode>> FindMemberValues()
+        /// <summary>
+        /// Each delegate field, property and event of the map, to the delegates given to it: initializers and assignments;
+        /// and those given a value as an out or ref argument or in a deconstruction, whose values are not all seen.
+        /// </summary>
+        private (Dictionary<ISymbol, List<SyntaxNode>> Values, HashSet<ISymbol> Unseen) FindMemberValues()
         {
             var found = new Dictionary<ISymbol, List<SyntaxNode>>(SymbolEqualityComparer.Default);
+            var unseen = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
             var names = new HashSet<string>();
             foreach (var type in Types(compilation.Assembly.GlobalNamespace))
             {
@@ -951,37 +965,74 @@ public sealed partial class SyncAnalyzer
             foreach (var tree in compilation.SyntaxTrees)
             {
                 SemanticModel? model = null;
-                foreach (var assignment in tree.GetRoot().DescendantNodes().OfType<AssignmentExpressionSyntax>())
+                foreach (var node in tree.GetRoot().DescendantNodes())
                 {
-                    var named = assignment.Left switch
+                    var target = node switch
+                    {
+                        AssignmentExpressionSyntax assignment when IsGiven(assignment) => assignment.Left,
+                        ArgumentSyntax argument when argument.RefKindKeyword.RawKind != 0 || (argument.Parent is TupleExpressionSyntax tuple && IsDeconstructed(tuple)) => argument.Expression,
+                        _ => null,
+                    };
+                    var named = target switch
                     {
                         IdentifierNameSyntax identifier => identifier.Identifier.ValueText,
                         MemberAccessExpressionSyntax access => access.Name.Identifier.ValueText,
                         MemberBindingExpressionSyntax binding => binding.Name.Identifier.ValueText,
                         _ => null,
                     };
-                    if (named == null || !names.Contains(named) || !IsGiven(assignment))
+                    if (named == null || !names.Contains(named))
                     {
                         continue;
                     }
 
                     model ??= compilation.GetSemanticModel(tree);
-                    if (model.GetSymbolInfo(assignment.Left).Symbol?.OriginalDefinition is { } member && found.TryGetValue(member, out var values))
+                    if (model.GetSymbolInfo(target!).Symbol?.OriginalDefinition is { } member && found.TryGetValue(member, out var values))
                     {
-                        values.Add(assignment.Right);
+                        if (node is AssignmentExpressionSyntax given)
+                        {
+                            values.Add(given.Right);
+                        }
+                        else
+                        {
+                            unseen.Add(member);
+                        }
                     }
                 }
             }
 
-            return found;
+            return (found, unseen);
+        }
+
+        // A delegate field, property or event of the map whose values ValuesOf reads.
+        private bool ValuesSeen(ISymbol member) => IsMap(member) && !memberValues.Value.Unseen.Contains(member.OriginalDefinition);
+
+        // The values a method's own body returns, not those of its lambdas and local functions.
+        private IEnumerable<IOperation> Returned(IMethodSymbol method) =>
+            Syntax(method).Select(syntax => compilation.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax))
+                .SelectMany(body => body?.DescendantsAndSelf() ?? Enumerable.Empty<IOperation>())
+                .OfType<IReturnOperation>()
+                .Where(returned => returned.ReturnedValue != null && !InFunction(returned))
+                .Select(returned => returned.ReturnedValue!);
+
+        private static bool InFunction(IOperation operation)
+        {
+            for (var up = operation.Parent; up != null; up = up.Parent)
+            {
+                if (up is IAnonymousFunctionOperation or ILocalFunctionOperation)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
         /// Whether the code a delegate value runs can be followed: a lambda, a method, a parameter of a method (whose
-        /// callers' arguments are checked), a variable, field, property or event of the map (whose values are followed),
-        /// a map method's result (whose body is followed), or null.
+        /// callers' arguments are checked), a variable, field, property or event of the map whose values are all seen (and followed),
+        /// a map method's result (whose body is followed, and whose returned delegates must be followable too), or null.
         /// </summary>
-        private bool Followable(IOperation value)
+        private bool Followable(IOperation value, HashSet<IMethodSymbol>? seen = null)
         {
             while (true)
             {
@@ -1013,17 +1064,25 @@ public sealed partial class SyncAnalyzer
                     case IParameterReferenceOperation parameter:
                         return parameter.Parameter.ContainingSymbol is IMethodSymbol { MethodKind: not MethodKind.AnonymousFunction };
                     case IFieldReferenceOperation field:
-                        return IsMap(field.Field);
+                        return ValuesSeen(field.Field);
                     case IPropertyReferenceOperation property:
-                        return IsMap(property.Property);
+                        return ValuesSeen(property.Property);
                     case IEventReferenceOperation reference:
-                        return IsMap(reference.Event);
+                        return ValuesSeen(reference.Event);
                     case IInvocationOperation invocation:
-                        return invocation.TargetMethod.MethodKind != MethodKind.DelegateInvoke && IsMap(invocation.TargetMethod);
+                        var method = invocation.TargetMethod.OriginalDefinition;
+                        if (method.MethodKind == MethodKind.DelegateInvoke || !IsMap(method))
+                        {
+                            return false;
+                        }
+
+                        // shortcut: an override's returns are not checked; follow Overriders here if maps return delegates from virtual methods.
+                        seen ??= new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+                        return !seen.Add(method) || Returned(method).All(returned => Followable(returned, seen));
                     case IConditionalOperation choice:
-                        return Followable(choice.WhenTrue) && (choice.WhenFalse == null || Followable(choice.WhenFalse));
+                        return Followable(choice.WhenTrue, seen) && (choice.WhenFalse == null || Followable(choice.WhenFalse, seen));
                     case ICoalesceOperation coalesce:
-                        return Followable(coalesce.Value) && Followable(coalesce.WhenNull);
+                        return Followable(coalesce.Value, seen) && Followable(coalesce.WhenNull, seen);
                     default:
                         return false;
                 }
@@ -1072,12 +1131,14 @@ public sealed partial class SyncAnalyzer
             return up.Parent is AssignmentExpressionSyntax assignment && assignment.Left == up;
         }
 
-        // The value a ?. reads.
+        // The value a ?. reads: that of the access whose WhenNotNull holds the instance, as in a?.b?.c the inner access's own value holds one too.
         private static IOperation? Accessed(IConditionalAccessInstanceOperation instance)
         {
+            IOperation child = instance;
             var access = instance.Parent;
-            while (access != null && access is not IConditionalAccessOperation)
+            while (access != null && !(access is IConditionalAccessOperation conditional && conditional.WhenNotNull == child))
             {
+                child = access;
                 access = access.Parent;
             }
 
@@ -1189,6 +1250,13 @@ public sealed partial class SyncAnalyzer
                         return made ? null : Shared(named);
                     case ILocalReferenceOperation or IParameterReferenceOperation:
                         var variable = at is ILocalReferenceOperation local ? (ISymbol)local.Local : ((IParameterReferenceOperation)at).Parameter;
+                        if (variable is ILocalSymbol { RefKind: not RefKind.None } alias)
+                        {
+                            // A ref local names what it was made from (a ref reassignment is refused), so a write through it lands there.
+                            at = passed.Add(alias) ? RefMadeFrom(alias) : null;
+                            break;
+                        }
+
                         var isStruct = TypeOf(variable)?.IsValueType == true;
                         if (!IsInside(variable, walk))
                         {
@@ -1266,6 +1334,12 @@ public sealed partial class SyncAnalyzer
         private static bool IsInside(ISymbol variable, Walk walk) =>
             variable.IsImplicitlyDeclared
             || variable.DeclaringSyntaxReferences.Any(declared => walk.Code.Any(code => code.SyntaxTree == declared.SyntaxTree && code.Span.Contains(declared.Span)));
+
+        /// <summary>What a ref local was made from: its initializer's target (ref int r = ref Score gives Score); null for one made otherwise, as by a ref foreach.</summary>
+        private IOperation? RefMadeFrom(ILocalSymbol local) =>
+            local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is VariableDeclaratorSyntax { Initializer.Value: RefExpressionSyntax made }
+                ? compilation.GetSemanticModel(made.SyntaxTree).GetOperation(made.Expression)
+                : null;
 
         /// <summary>A local's initializer, when nothing writes the local after it; null for any other local.</summary>
         private IOperation? OnlyValue(ILocalSymbol local)
@@ -1378,6 +1452,13 @@ public sealed partial class SyncAnalyzer
             if (model.GetSymbolInfo(list.Parent).Symbol is not IMethodSymbol method || ParameterOf(method, argument, list) is not { } parameter)
             {
                 return false;
+            }
+
+            if (method.ReducedFrom is { } extension)
+            {
+                // Called as an extension (x.Ext(...)): the parameters leave out this.
+                method = extension;
+                parameter = extension.Parameters[parameter.Ordinal + 1];
             }
 
             if (RunsItsActionLocally(method))
