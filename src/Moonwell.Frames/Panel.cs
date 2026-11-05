@@ -23,7 +23,12 @@ namespace Moonwell
         internal override void MakeParts()
         {
             var world = FramesSystem.World;
-            var parts = world.ChildCount(handle!);
+            var parts = new framehandle[world.ChildCount(handle!)];
+            for (var i = 0; i < parts.Length; i++)
+            {
+                parts[i] = world.ChildAt(handle!, i);
+            }
+
             if (madeTemplate.Length == 0)
             {
                 world.PaintFrame(handle!, Image.Blank);
@@ -36,9 +41,9 @@ namespace Moonwell
             }
 
             // A template's own parts are made before the catcher, which would lie over them and take their clicks; raised once it is made, they take them (seen 11-05).
-            for (var i = 0; i < parts; i++)
+            for (var i = 0; i < parts.Length; i++)
             {
-                world.LevelFrame(world.ChildAt(handle!, i), 1);
+                world.LevelFrame(parts[i], 1);
             }
         }
 
