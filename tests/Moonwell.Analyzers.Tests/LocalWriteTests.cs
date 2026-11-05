@@ -438,6 +438,49 @@ public class LocalWriteTests
     }
 
     [Fact]
+    public void reading_backwards_and_a_loop_over_a_library_collection_change_nothing()
+    {
+        // The map's own enumerator runs only when a GetEnumerator of the map's may: a List's never does.
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                foreach (var n in Sorted.Reverse()) { }
+                foreach (var n in Numbers) { }
+                Scores.Reverse<int>();
+            });
+            """, Shared + """
+            public static SortedSet<int> Sorted = new SortedSet<int>();
+            public static IEnumerable<int> Numbers = new List<int>();
+
+            public sealed class Counter : IEnumerator<int>
+            {
+                private int index;
+                public int Current => index;
+                object System.Collections.IEnumerator.Current => index;
+                public bool MoveNext() { index++; return index < 3; }
+                public void Reset() { index = 0; }
+                public void Dispose() { }
+            }
+            """));
+    }
+
+    [Fact]
+    public void the_answer_does_not_depend_on_what_was_followed_first()
+    {
+        // A local function's or lambda's write to a local around it is shared or not by where it runs (round 1's D6).
+        for (var i = 0; i < 20; i++)
+        {
+            Assert.Equal(new[] { "MW0048: Bump", "MW0048: add" }, MapCode.Check("""
+                Local.For(p, () => Helper(p));
+                Local.For(p, () => Other(p));
+                """, """
+                static void Helper(Player q) { int shown = 0; void Bump() => shown++; Local.For(q, Bump); q.Print(shown.ToString()); }
+                static void Other(Player q) { int count = 0; Action add = () => count++; Local.For(q, add); add(); }
+                """));
+        }
+    }
+
+    [Fact]
     public void a_collection_made_in_the_block_is_free()
     {
         Assert.Empty(MapCode.Check("""
@@ -785,5 +828,62 @@ public class LocalWriteTests
 
         Assert.Equal(new[] { "MW0048: r", "MW0048: r", "MW0048: v.X", "MW0048: l", "MW0048: c", "MW0048: o" }, found);
         Assert.StartsWith("'Code.Score' is changed", MapCode.Message("Local.For(p, () => { ref int r = ref Score; r++; });", "public static int Score;"));
+    }
+
+    [Fact]
+    public void a_constructor_writing_what_its_field_points_to_writes_it_unless_it_made_it()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => new Marker(Kept));
+            Local.For(p, () => new Owner());
+            """, """
+            public static Tally Kept = new Tally();
+            public sealed class Tally { public int Count; }
+            public sealed class Marker { private readonly Tally tally; public Marker(Tally t) { tally = t; tally.Count++; } }
+            public sealed class Owner { private readonly Tally tally; public Owner() { tally = new Tally(); tally.Count++; } }
+            """);
+
+        Assert.Equal(new[] { "MW0048: new Marker(Kept)" }, found);
+    }
+
+    [Fact]
+    public void an_element_set_from_the_end_is_written()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Scores[^1] = 1;
+                Cells[^1] = 1;
+                var mine = new List<int> { 1 };
+                mine[^1] = 2;
+            });
+            """, Shared);
+
+        Assert.Equal(new[] { "MW0048: Scores[^1]", "MW0048: Cells[^1]" }, found);
+    }
+
+    [Fact]
+    public void the_arrays_a_call_fills_are_written()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Keys.TryAdd(1, 1);
+                Waiting.EnqueueRange(new[] { (1, 1) });
+                Array.Sort(Cells, Order);
+                Scores.CopyTo(Cells);
+                Rng.Shuffle(Cells);
+                var mine = new int[4];
+                Scores.CopyTo(mine);
+            });
+            """, Shared + """
+            public static PriorityQueue<int, int> Waiting = new PriorityQueue<int, int>();
+            public static int[] Order = new int[4];
+            """);
+
+        Assert.Equal(new[]
+        {
+            "MW0048: Keys", "MW0048: Waiting", "MW0048: Cells", "MW0048: Order", "MW0048: Cells", "MW0048: Rng", "MW0048: Cells",
+        }, found);
     }
 }

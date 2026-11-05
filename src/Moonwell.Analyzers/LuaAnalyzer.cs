@@ -47,7 +47,8 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (method.Name == "ToString" && !method.IsStatic && ToStringReceiver(invocation) is var (receiver, reported))
+        // ToString("D") is the number, in the game's Lua too.
+        if (method.Name == "ToString" && !method.IsStatic && ReceiverOf(invocation) is var (receiver, reported) && !IsNumberFormat(context, invocation))
         {
             var type = Choice(context.SemanticModel.GetTypeInfo(receiver, context.CancellationToken).Type);
             if (type != null)
@@ -94,16 +95,21 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         Boxed(context, invocation, method);
     }
 
-    // The receiver of a ToString call and the node to report: x.ToString() and x?.ToString(), where the receiver is the conditional access's.
-    private static (ExpressionSyntax Receiver, SyntaxNode Reported)? ToStringReceiver(InvocationExpressionSyntax invocation)
+    private static bool IsNumberFormat(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocation) =>
+        invocation.ArgumentList.Arguments.Count == 1
+        && context.SemanticModel.GetConstantValue(invocation.ArgumentList.Arguments[0].Expression, context.CancellationToken) is { HasValue: true, Value: "D" or "d" };
+
+    // The receiver of a call and the node to report: x.ToString() and x?.ToString(), where the receiver is the conditional access's.
+    private static (ExpressionSyntax Receiver, SyntaxNode Reported)? ReceiverOf(InvocationExpressionSyntax invocation)
     {
         if (invocation.Expression is MemberAccessExpressionSyntax access)
         {
             return (access.Expression, invocation);
         }
 
-        if (invocation.Expression is MemberBindingExpressionSyntax && invocation.Parent is ConditionalAccessExpressionSyntax conditional
-            && conditional.WhenNotNull == invocation)
+        // The ?. a member binding belongs to is the nearest one whose WhenNotNull holds it: x?.Cast<unit>().Count().
+        if (invocation.Expression is MemberBindingExpressionSyntax
+            && invocation.Ancestors().OfType<ConditionalAccessExpressionSyntax>().FirstOrDefault(access => access.WhenNotNull.Span.Contains(invocation.Span)) is { } conditional)
         {
             return (conditional.Expression, conditional);
         }
@@ -112,10 +118,12 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
     }
 
     // string.Format("{0}", choice), string.Concat("a", choice), builder.Append(choice): an enum given to an object parameter is
-    // made into text by the callee's ToString. Equals compares and shows nothing, and a declared object's Set keeps the choice.
+    // made into text by the callee's ToString. Equals and CompareTo compare and show nothing, Convert's numbers (ToInt32)
+    // read the number, and a declared object's Set keeps the choice.
     private static void Boxed(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocation, IMethodSymbol method)
     {
-        if (method.Name is "Equals" or "ReferenceEquals" || (method.Name == "Set" && Declares(method.ContainingType)))
+        if (method.Name is "Equals" or "ReferenceEquals" or "CompareTo" || (method.Name == "Set" && Declares(method.ContainingType))
+            || (method.ContainingType is { Name: "Convert", ContainingNamespace: { Name: "System", ContainingNamespace.IsGlobalNamespace: true } } && method.Name != "ToString"))
         {
             return;
         }
@@ -231,8 +239,9 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         var target = method.TypeArguments[0];
         if (reduced.Name == "Cast")
         {
-            var source = invocation.Expression is MemberAccessExpressionSyntax access
-                ? context.SemanticModel.GetTypeInfo(access.Expression, context.CancellationToken).Type
+            // units.Cast<unit>(), units?.Cast<unit>(), or Enumerable.Cast<unit>(units).
+            var source = method.ReducedFrom != null
+                ? ReceiverOf(invocation) is var (receiver, _) ? context.SemanticModel.GetTypeInfo(receiver, context.CancellationToken).Type : null
                 : invocation.ArgumentList.Arguments.FirstOrDefault() is { } first ? context.SemanticModel.GetTypeInfo(first.Expression, context.CancellationToken).Type : null;
             if (ItemType(source) is { } item && SymbolEqualityComparer.Default.Equals(item, target))
             {

@@ -36,8 +36,10 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             start.RegisterOperationAction(checker.Implicit,
                 OperationKind.Binary, OperationKind.Unary, OperationKind.CompoundAssignment, OperationKind.Increment, OperationKind.Decrement,
                 OperationKind.Conversion, OperationKind.Using, OperationKind.UsingDeclaration, OperationKind.Loop, OperationKind.LocalReference,
-                OperationKind.EventReference, OperationKind.DeconstructionAssignment, OperationKind.RecursivePattern);
-            start.RegisterOperationAction(checker.Delegates, OperationKind.Argument, OperationKind.ParameterReference);
+                OperationKind.EventReference, OperationKind.DeconstructionAssignment, OperationKind.RecursivePattern, OperationKind.CollectionExpression,
+                OperationKind.ImplicitIndexerReference);
+            start.RegisterOperationAction(checker.Delegates,
+                OperationKind.Argument, OperationKind.ParameterReference, OperationKind.SimpleAssignment, OperationKind.EventAssignment);
             start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument);
             start.RegisterOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
             start.RegisterOperationAction(checker.Write,
@@ -154,7 +156,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             var member = reach.Member;
             // A compound or ??= assignment and an increment read the property too.
             var write = reaches.All(r => r.Write);
-            if (member == null || Silenced(operation, context.ContainingSymbol))
+            if (member == null || Silenced(operation, context.ContainingSymbol) || InNameOf(operation))
             {
                 return;
             }
@@ -185,7 +187,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             {
                 ReportLocal(context, operation);
             }
-            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write) && !InNameOf(operation))
+            else if (IsMachineLocal(member, write) && !IsPlainWrite(operation, member) && !DeclaredName(operation, member, write))
             {
                 // 0.2.2's Name read the declared name outside the constructor too; the message says where it is now.
                 var declared = member is IPropertySymbol { Name: "Name" } && IsRuntime(member) && member.ContainingType.Name == "Unit" ? "; the declared name is Default.Name" : string.Empty;
@@ -197,7 +199,11 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        /// <summary>MW0001 (or MW0039) for what Local.For reaches without a name: an operator, a conversion, a using's Dispose, a foreach's enumerator, a Deconstruct, and a delegate variable or event it runs.</summary>
+        /// <summary>
+        /// MW0001 (or MW0039) for what Local.For reaches without a name: an operator, a conversion, a using's Dispose, a
+        /// foreach's enumerator, a Deconstruct, a collection expression's constructor and Add, an indexer from the end, and a
+        /// delegate variable or event it runs.
+        /// </summary>
         public void Implicit(OperationAnalysisContext context)
         {
             var operation = context.Operation;
@@ -212,6 +218,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 IEventReferenceOperation => true,
                 IUsingOperation or IUsingDeclarationOperation or IForEachLoopOperation or IDeconstructionAssignmentOperation => true,
                 IRecursivePatternOperation pattern => pattern.DeconstructSymbol is IMethodSymbol,
+                ICollectionExpressionOperation or IImplicitIndexerReferenceOperation => true,
                 _ => false,
             };
             if (named && !Silenced(operation, context.ContainingSymbol) && IsLocal(operation, context.ContainingSymbol))
@@ -429,13 +436,12 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             return value == null ? null : Unwrap(value);
         }
 
-        // nameof(Name) names the member without reading it.
+        // nameof(Name) names the member without reading it, or running what reading it would.
         private static bool InNameOf(IOperation operation)
         {
-            for (var node = operation.Syntax.Parent; node != null && node is not StatementSyntax and not MemberDeclarationSyntax; node = node.Parent)
+            for (var up = operation.Parent; up != null; up = up.Parent)
             {
-                if (node is InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } invocation
-                    && operation.SemanticModel!.GetSymbolInfo(invocation).Symbol == null)
+                if (up is INameOfOperation)
                 {
                     return true;
                 }
