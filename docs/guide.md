@@ -1083,7 +1083,9 @@ says who plays it. `OnLeave(Player leavingPlayer)` runs on the game's components
 
 `Command("zoom", (player, rest) => ...)` on a scope hears a chat command: a line a person types that starts with `-zoom`,
 in any case. `rest` is what follows, trimmed, so `-zoom 2000` gives `"2000"`. It runs on every machine, as chat reaches
-them all, and ends with its scope, or when the `ChatCommand` it gives back ends. A chat line holds 127 characters.
+them all, and ends with its scope, or when the `ChatCommand` it gives back ends. A chat line holds 127 characters. A
+name that is empty, holds a space or starts with the dash is reported and refused in every build, and a development
+build reports `debug`, `step`, `speed` and `stats`, the debug mode's own commands, since both would run there.
 
 `a.MakeAllies(b)` and `a.MakeEnemies(b)` go both ways and replace what the two gave each other: `MakeEnemies` leaves
 nothing between them, and `a.MakeAllies(b, sharedVision: true)` lets each see what the other sees. `a.ShowVisionTo(b)`

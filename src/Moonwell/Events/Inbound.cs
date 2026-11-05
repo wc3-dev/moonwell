@@ -1043,7 +1043,7 @@ namespace Moonwell
             RealClock.Loaded();
         }
 
-        /// <summary>A person typed a chat line that starts with a dash.</summary>
+        /// <summary>A person typed a chat line with a dash in it, anywhere.</summary>
         internal static void ChatArrived(player p, string text)
         {
             var from = Player.Of(p);

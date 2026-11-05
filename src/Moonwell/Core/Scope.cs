@@ -106,7 +106,8 @@ namespace Moonwell
         /// <summary>
         /// Hears a chat command, a line that starts with a dash and the name, in any case: <c>Command("load", (player, rest) =>
         /// ...)</c> hears "-load X7KQ-M3PA" from any person, with the rest of the line trimmed, on every machine, as a child of
-        /// this scope: it ends when the scope ends, or when the command given back ends.
+        /// this scope: it ends when the scope ends, or when the command given back ends. A name that is empty, holds a space or
+        /// starts with the dash is reported and refused in every build: the command given back has ended (decision 191).
         /// </summary>
         public ChatCommand Command(string name, Action<Player, string> heard)
         {

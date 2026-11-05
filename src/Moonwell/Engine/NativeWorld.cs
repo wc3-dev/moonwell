@@ -324,7 +324,7 @@ namespace Moonwell.Engine
             Natives.TriggerAddAction(trigger, SyncAction);
         }
 
-        /// <summary>Listens for a person's chat lines that start with a dash, for the chat commands.</summary>
+        /// <summary>Listens for a person's chat lines with a dash in them, anywhere (the event's text is not an exact match), for the chat commands.</summary>
         public void ListenChat(player player)
         {
             var trigger = Natives.CreateTrigger();

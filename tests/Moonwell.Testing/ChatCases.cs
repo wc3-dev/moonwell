@@ -18,7 +18,7 @@ namespace Moonwell.Testing
             Expect.Equal("0:", heard[1], "no rest");
         }
 
-        /// <summary>The name matches in any case and as a whole word; a line without the dash is no command.</summary>
+        /// <summary>The name matches in any case and as a whole word; a line that does not start with the dash is no command, though the game's event gives every line with one.</summary>
         public static void OnlyItsWord(FakeWorld world)
         {
             People(world, 1);
@@ -29,6 +29,9 @@ namespace Moonwell.Testing
             world.Chat(Player.One, "load c");
             world.Chat(Player.One, "-");
             world.Chat(Player.One, "- load d");
+            world.Chat(Player.One, "hi -load e");
+            world.Chat(Player.One, "xload -f");
+            world.Chat(Player.One, " -load g");
             Expect.Equal(1, heard.Count, "one line heard");
             Expect.Equal("a", heard[0], "-LOAD");
         }
@@ -64,6 +67,58 @@ namespace Moonwell.Testing
             Expect.Equal(1, world.Printed.Count, "the error is reported");
         }
 
+        /// <summary>An ended command is let go at once, and not only at the next line with a dash, so what its handler holds is not kept.</summary>
+        public static void EndedLetGo(FakeWorld world)
+        {
+            People(world, 1);
+            var command = Game.Instance.Command("a", (player, rest) => { });
+            Game.Instance.Command("b", (player, rest) => { });
+            command.End();
+            Expect.Equal(1, ChatCommand.Count, "one kept");
+        }
+
+        /// <summary>A command a handler makes waits for the next line, and one it ends runs no more, on this line or after.</summary>
+        public static void MadeAndEndedByAHandler(FakeWorld world)
+        {
+            People(world, 1);
+            var heard = new List<string>();
+            ChatCommand? second = null;
+            var made = false;
+            Game.Instance.Command("go", (player, rest) =>
+            {
+                heard.Add("first " + rest);
+                second!.End();
+                if (!made)
+                {
+                    made = true;
+                    Game.Instance.Command("go", (p, r) => heard.Add("made " + r));
+                }
+            });
+            second = Game.Instance.Command("go", (player, rest) => heard.Add("second " + rest));
+            world.Chat(Player.One, "-go 1");
+            world.Chat(Player.One, "-go 2");
+            Expect.Equal(3, heard.Count, "three ran");
+            Expect.Equal("first 1", heard[0], "the first line: only the first, which ended the second");
+            Expect.Equal("first 2", heard[1], "the second line: the first");
+            Expect.Equal("made 2", heard[2], "then the one made on the first line");
+        }
+
+        /// <summary>A bad name is reported and refused in every build: the command given back has ended and hears nothing.</summary>
+        public static void BadNameRefused(FakeWorld world)
+        {
+            People(world, 1);
+            var heard = new List<string>();
+            var empty = Game.Instance.Command("", (player, rest) => heard.Add("empty"));
+            var dashed = Game.Instance.Command("-load", (player, rest) => heard.Add("dashed"));
+            var spaced = Game.Instance.Command("a b", (player, rest) => heard.Add("spaced"));
+            world.Chat(Player.One, "- hello");
+            world.Chat(Player.One, "--load");
+            world.Chat(Player.One, "-a b");
+            Expect.Equal(0, heard.Count, "nothing heard");
+            Expect.True(empty.HasEnded && dashed.HasEnded && spaced.HasEnded, "each given back ended");
+            Expect.Equal(3, world.Printed.Count, "each reported");
+        }
+
         /// <summary>Chat is listened for only from the first command on, once for each person.</summary>
         public static void ListensOnce(FakeWorld world)
         {
@@ -76,13 +131,17 @@ namespace Moonwell.Testing
         }
 
 #if DEBUG
-        /// <summary>A name with the dash or a space is reported in a development build.</summary>
-        public static void BadNameReported(FakeWorld world)
+        /// <summary>A name a debug command has is reported in a development build, and still made: release has no debug commands.</summary>
+        public static void DebugNameReported(FakeWorld world)
         {
             People(world, 1);
-            Game.Instance.Command("-load", (player, rest) => { });
-            Expect.Equal(1, world.Logged.Count, "reported");
-            Expect.True(world.Logged[0].Contains("Command(\\\"load\\\")") || world.Logged[0].Contains("Command(\"load\")"), "the report: " + world.Logged[0]);
+            var heard = new List<string>();
+            Game.Instance.Command("Stats", (player, rest) => heard.Add(rest));
+            Game.Instance.Command("load", (player, rest) => { });
+            world.Chat(Player.One, "-stats");
+            Expect.Equal(1, world.Logged.Count, "reported once");
+            Expect.True(world.Logged[0].Contains("-stats"), "the report: " + world.Logged[0]);
+            Expect.Equal(1, heard.Count, "still heard");
         }
 #endif
 
