@@ -55,7 +55,8 @@ namespace Moonwell
 
             if (id == StunnedOrder)
             {
-                ordered.StunnedOrderCame = true;
+                // An idle unit's stunned order counts 1, and its stun's end gives no order back (seen 11-05).
+                ordered.StunnedOrderCame = queue > 1;
                 return;
             }
 
@@ -76,7 +77,9 @@ namespace Moonwell
                 y = ordered.Y;
             }
 
-            var givenBack = ordered.StunnedOrderCame && Repeats(ordered.LastOrder, id, kind, x, y, target);
+            var last = ordered.LastOrder;
+            var repeats = Repeats(last, id, kind, x, y, target);
+            var givenBack = ordered.StunnedOrderCame && repeats;
             ordered.StunnedOrderCame = false;
             if (givenBack)
             {
@@ -84,7 +87,7 @@ namespace Moonwell
             }
 
             var order = new Order(ordered, id, Runtime.World.OrderName(id), kind, x, y, target, queue > 1);
-            order.Previous = ordered.LastOrder;
+            order.Previous = repeats ? last!.Previous : last;
             var carried = ordered.Carried;
             ordered.OrdersHeard++;
             ordered.LastHeardId = id;
@@ -282,11 +285,11 @@ namespace Moonwell
             kept.Previous = null;
         }
 
-        /// <summary>A unit's spell took effect: its last order, when a spell's, is done, and Reissue does not cast it again.</summary>
+        /// <summary>A unit's spell took effect: its last order, when a spell's and the one it carries out, is done, and Reissue does not cast it again. An item's spell reads the item's order (seen 11-05).</summary>
         internal static void SpellOrderDone(Unit caster)
         {
             var last = caster.LastOrder;
-            if (last != null && IsSpellOrder(last.Id))
+            if (last != null && IsSpellOrder(last.Id) && Runtime.World.CurrentOrderOf(caster.Handle) == last.Id)
             {
                 last.Done = true;
             }

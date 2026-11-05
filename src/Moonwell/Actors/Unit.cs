@@ -823,10 +823,11 @@ namespace Moonwell
         }
 
         /// <summary>
-        /// The unit's last order worth giving again, by a player or by code: a move, an attack, a right-click, a patrol, holding
-        /// position, attacking the ground or a spell, not a stop, a toggle, an item's slot or the game's own orders. The two
-        /// before it are its <c>Previous</c>. Null until the unit has had one while Moonwell listens for orders, which it does
-        /// in a map whose code reads LastOrder or Reissue, or writes an order reaction.
+        /// The unit's last order worth giving again, by a player or by code: a move, an attack, a right-click, a
+        /// patrol, holding position, attacking the ground or a spell, not a stop, a toggle, an item's slot or the
+        /// game's own orders. The two before it are its <c>Previous</c>; an order that repeats the last one (a Reissue,
+        /// the same click again) takes its place. Null until the unit has had one while Moonwell listens for orders,
+        /// which it does in a map whose code reads LastOrder or Reissue, or writes an order reaction.
         /// </summary>
         [LocalSafe]
         public Order? LastOrder { get; internal set; }
@@ -893,7 +894,7 @@ namespace Moonwell
             return !target.IsGone;
         }
 
-        /// <summary>Whether the game's stunned order came, so that the unit's next order may be the one a stun's end gives back.</summary>
+        /// <summary>Whether the game's stunned order came while the unit carried out an order, so that the unit's next order may be the one a stun's end gives back.</summary>
         internal bool StunnedOrderCame;
 
         /// <summary>How many of the unit's orders ran their reactions: a count that changes inside an order's reactions means a reaction gave the unit another.</summary>

@@ -797,11 +797,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "orders.only-when-wanted", Run = OrderCases.OnlyWhenWanted });
             list.Add(new Case { Name = "orders.nested", Run = OrderCases.Nested });
             list.Add(new Case { Name = "orders.last-three", Run = OrderCases.LastThree });
+            list.Add(new Case { Name = "orders.repeat-takes-place", Run = OrderCases.RepeatTakesPlace });
             list.Add(new Case { Name = "orders.not-worth-it", Run = OrderCases.NotWorthIt });
             list.Add(new Case { Name = "orders.reissue", Run = OrderCases.Reissue });
             list.Add(new Case { Name = "orders.reissue-gone", Run = OrderCases.ReissueGone });
             list.Add(new Case { Name = "orders.spell-done", Run = OrderCases.SpellDone });
+            list.Add(new Case { Name = "orders.potion-on-the-way", Run = OrderCases.PotionOnTheWay });
             list.Add(new Case { Name = "orders.after-stun", Run = OrderCases.AfterStun });
+            list.Add(new Case { Name = "orders.after-idle-stun", Run = OrderCases.AfterIdleStun });
             list.Add(new Case { Name = "orders.after-stun-other", Run = OrderCases.AfterStunOther });
             list.Add(new Case { Name = "orders.current", Run = OrderCases.Current });
             list.Add(new Case { Name = "orders.cancel-gives-back", Run = OrderCases.CancelGivesBack });
