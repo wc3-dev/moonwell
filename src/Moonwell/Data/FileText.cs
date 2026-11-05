@@ -89,28 +89,7 @@ namespace Moonwell
         /// <summary>The escaped text in pieces of at most <see cref="PieceBytes"/>, none ending inside a letter; the empty text is one empty piece.</summary>
         internal static List<string> Pieces(string escaped)
         {
-            var pieces = new List<string>();
-            var start = 0;
-            while (escaped.Length - start > PieceBytes)
-            {
-                var end = start + PieceBytes;
-                while (end > start && IsInsideLetter(escaped[end]))
-                {
-                    end--;
-                }
-
-                // No letter starts in the whole piece, which only text that is no UTF-8 gives.
-                if (end == start)
-                {
-                    end = start + PieceBytes;
-                }
-
-                pieces.Add(escaped.Substring(start, end - start));
-                start = end;
-            }
-
-            pieces.Add(escaped.Substring(start));
-            return pieces;
+            return Utf8.Pieces(escaped, PieceBytes);
         }
 
         /// <summary>The Preload text of a piece: it closes Preload's own call and adds one that puts the piece in its tooltip.</summary>
@@ -118,12 +97,6 @@ namespace Moonwell
         {
             var call = index < 100 ? "BlzSetAbilityTooltip" : "BlzSetAbilityExtendedTooltip";
             return "\")\ncall " + call + "('" + StoreId + "', \"" + piece + "\", " + (index % 100) + ")\n//";
-        }
-
-        // In the game a string is its UTF-8 bytes, and a byte 10xxxxxx continues a letter; on .NET a low surrogate continues one.
-        private static bool IsInsideLetter(char c)
-        {
-            return (c & 0xC0) == 0x80 || (c >= 0xDC00 && c <= 0xDFFF);
         }
     }
 }
