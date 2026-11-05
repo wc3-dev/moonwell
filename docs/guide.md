@@ -1046,8 +1046,17 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   tied frame stays where it was.
 - A template the game does not have, as one from an `.fdf` whose TOC is not loaded, is reported in every build, and the
   frame is made by its type instead.
-- `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: the game's own HUD per player,
-  model views, and the map's `.fdf` templates.
+- `player.GameUi()` is the player's own view of the game's HUD: what is set on it changes only that player's screen,
+  and lasts until set again, as a camera's does. `Visible = false` hides the whole HUD: the console's art goes, clicks
+  reach the world down to the window's bottom, the map's frames still draw, and the command buttons and life bars stay,
+  as the game leaves them. Its pieces, `Minimap`, `MinimapButtons`, `Portrait`, `HeroBar`, `HeroButtons`, `TopBar`,
+  `CommandButtons` and `ItemButtons`, each have `Visible`; with the whole HUD hidden, a piece set `Visible` shows again,
+  but the item buttons do not come back (seen). The minimap, the command buttons and the item buttons also move,
+  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`. A map's frame ties itself to a piece with
+  `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`, with the label added by
+  `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The info panel, the chat and the game's
+  messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong (seen).
+- `Handle` is the game's frame, for anything Moonwell does not do yet. Still to come: the map's `.fdf` templates.
 
 ## Colours and text
 

@@ -334,9 +334,24 @@ namespace Moonwell
         /// <summary>Ties a point of the frame to a point of another, moved by an offset, in place of its Anchor; another Attach adds a point, so a frame tied by two points stretches between them. Does nothing once it has ended.</summary>
         public void Attach(FramePoint point, Frame other, FramePoint otherPoint, float x = 0.0f, float y = 0.0f)
         {
+            if (AddTie(new Tie(point, other, null, otherPoint, x, y)))
+            {
+                other.TiedBy(this);
+            }
+        }
+
+        /// <summary>Ties a point of the frame to a point of a piece of the game's HUD, from player.GameUi(), as Attach to a frame does: on each machine, to that machine's own piece, wherever its player has put it.</summary>
+        public void Attach(FramePoint point, GamePiece piece, FramePoint piecePoint, float x = 0.0f, float y = 0.0f)
+        {
+            AddTie(new Tie(point, null, piece.Handle, piecePoint, x, y));
+        }
+
+        /// <summary>Adds a tie in place of the Anchor, or to the ties there are, and gives it to the game; false once the frame has ended.</summary>
+        private bool AddTie(Tie tie)
+        {
             if (HasEnded)
             {
-                return;
+                return false;
             }
 
             var first = ties == null;
@@ -346,12 +361,10 @@ namespace Moonwell
                 filled = null;
             }
 
-            var tie = new Tie(point, other, otherPoint, x, y);
             ties!.Add(tie);
-            other.TiedBy(this);
             if (handle == null)
             {
-                return;
+                return true;
             }
 
             if (first)
@@ -360,6 +373,7 @@ namespace Moonwell
             }
 
             Tie(tie);
+            return true;
         }
 
         /// <summary>Sets the frame to cover another, all points, in place of its Anchor and its ties. Does nothing once it has ended.</summary>
@@ -813,9 +827,10 @@ namespace Moonwell
         /// <summary>Gives the game one tie, once the other frame is made.</summary>
         private void Tie(Tie tie)
         {
-            if (tie.Other.handle != null)
+            var other = tie.Other != null ? tie.Other.handle : tie.Piece;
+            if (other != null)
             {
-                FramesSystem.World.PlaceFrame(handle!, (int)tie.Point, tie.Other.handle, (int)tie.OtherPoint, tie.X, tie.Y);
+                FramesSystem.World.PlaceFrame(handle!, (int)tie.Point, other, (int)tie.OtherPoint, tie.X, tie.Y);
             }
         }
 
@@ -882,13 +897,14 @@ namespace Moonwell
         }
     }
 
-    /// <summary>A point of a frame tied to a point of another, moved by an offset.</summary>
+    /// <summary>A point of a frame tied to a point of another frame or of a piece of the game's HUD, moved by an offset.</summary>
     internal sealed class Tie
     {
-        internal Tie(FramePoint point, Frame other, FramePoint otherPoint, float x, float y)
+        internal Tie(FramePoint point, Frame? other, framehandle? piece, FramePoint otherPoint, float x, float y)
         {
             Point = point;
             Other = other;
+            Piece = piece;
             OtherPoint = otherPoint;
             X = x;
             Y = y;
@@ -896,7 +912,9 @@ namespace Moonwell
 
         internal FramePoint Point { get; }
 
-        internal Frame Other { get; }
+        internal Frame? Other { get; }
+
+        internal framehandle? Piece { get; }
 
         internal FramePoint OtherPoint { get; }
 

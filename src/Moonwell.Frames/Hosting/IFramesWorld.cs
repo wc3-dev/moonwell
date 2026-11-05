@@ -100,5 +100,17 @@ namespace Moonwell.Hosting
 
         /// <summary>This machine's window's height, in pixels; differs between machines.</summary>
         int ClientHeight();
+
+        /// <summary>A frame of the game's HUD by its name; null when the game has none. The first lookup gives it a handle id, so it is done on every machine.</summary>
+        framehandle? GameFrame(string name);
+
+        /// <summary>A frame of the game's HUD by the game's ORIGIN_FRAME_ number and an index; null when the game has none, as for the minimap (seen 11-05).</summary>
+        framehandle? OriginFrame(int kind, int index);
+
+        /// <summary>Hides the game's HUD on this machine, or shows it again; the command buttons and life bars stay.</summary>
+        void HideHud(bool hidden);
+
+        /// <summary>Gives a frame another parent.</summary>
+        void ParentFrame(framehandle frame, framehandle parent);
     }
 }
