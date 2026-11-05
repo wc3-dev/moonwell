@@ -687,6 +687,11 @@ public sealed partial class SyncAnalyzer
                 walk.Code.Add((syntax, depth));
                 foreach (var inner in body.DescendantsAndSelf())
                 {
+                    if (InNameOf(inner))
+                    {
+                        continue;
+                    }
+
                     if ((found = Written(inner, walk) ?? Reaches(inner, walk) ?? (node is Values ? Given(inner, walk) : null)) != null)
                     {
                         break;

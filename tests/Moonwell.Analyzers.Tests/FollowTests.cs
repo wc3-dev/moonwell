@@ -446,4 +446,19 @@ public class FollowTests
 
         Assert.Equal(new[] { "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)" }, found);
     }
+
+    [Fact]
+    public void a_name_in_nameof_runs_nothing()
+    {
+        // nameof reads no getter and touches no class, so nothing it names is followed.
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () => p.Print(nameof(Holder.Value) + nameof(Statics.X) + nameof(Natives.KillUnit) + nameof(Hurt)));
+            Local.For(p, () => Name());
+            """, """
+            static void Hurt() { Natives.KillUnit(Natives.GetTriggerUnit()); }
+            static string Name() => nameof(Holder.Value);
+            public sealed class Holder { public static int Value { get { Natives.KillUnit(Natives.GetTriggerUnit()); return 1; } } }
+            public static class Statics { public static group X = Natives.CreateGroup(); }
+            """));
+    }
 }
