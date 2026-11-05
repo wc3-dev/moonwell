@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Moonwell.Build
 {
@@ -74,7 +75,7 @@ namespace Moonwell.Build
             {
                 if (!classes[i].IsPart)
                 {
-                    var type = "global::" + classes[i].Name;
+                    var type = TypeName(classes[i].Name);
                     text.Append($"            global::Moonwell.SaveGame.Register<{type}>({Quote(classes[i].Id)}, () => new {type}(), Write{i}, Read{i});\n");
                 }
             }
@@ -82,7 +83,7 @@ namespace Moonwell.Build
             text.Append("        }\n");
             for (var i = 0; i < classes.Count; i++)
             {
-                var type = "global::" + classes[i].Name;
+                var type = TypeName(classes[i].Name);
                 text.Append('\n');
                 text.Append($"        private static void Write{i}({type} save, global::Moonwell.SaveWriter writer)\n");
                 text.Append("        {\n");
@@ -122,7 +123,7 @@ namespace Moonwell.Build
         private static string WriteLine(SavedMember member, IReadOnlyDictionary<string, int> index)
         {
             var number = member.Number.ToString(CultureInfo.InvariantCulture);
-            var value = "save." + member.Name;
+            var value = "save." + Identifier(member.Name);
             var type = member.Type;
             if (type.Stored == "part")
             {
@@ -144,12 +145,12 @@ namespace Moonwell.Build
 
         private static string ReadLine(SavedMember member, IReadOnlyDictionary<string, int> index)
         {
-            var value = "save." + member.Name;
+            var value = "save." + Identifier(member.Name);
             var type = member.Type;
             var array = type.Array ? ".ToArray()" : string.Empty;
             if (type.Stored == "part")
             {
-                var made = $"() => new global::{type.Name}()";
+                var made = $"() => new {TypeName(type.Name!)}()";
                 return type.List
                     ? $"{{ var read = reader.PartList({made}, Read{index[type.Name!]}); if (read != null) {{ {value} = read{array}; }} }}"
                     : $"{value} = reader.Part({value}, {made}, Read{index[type.Name!]});";
@@ -157,13 +158,13 @@ namespace Moonwell.Build
 
             if (type.IsEnum && type.List)
             {
-                var list = $"global::System.Collections.Generic.List<global::{type.Name}>";
-                return $"{{ var ints = reader.IntList(); if (ints != null) {{ var read = new {list}(); foreach (var one in ints) {{ read.Add((global::{type.Name})one); }} {value} = read{array}; }} }}";
+                var list = $"global::System.Collections.Generic.List<{TypeName(type.Name!)}>";
+                return $"{{ var ints = reader.IntList(); if (ints != null) {{ var read = new {list}(); foreach (var one in ints) {{ read.Add(({TypeName(type.Name!)})one); }} {value} = read{array}; }} }}";
             }
 
             if (type.IsEnum)
             {
-                return $"{value} = (global::{type.Name})reader.Int((int){value});";
+                return $"{value} = ({TypeName(type.Name!)})reader.Int((int){value});";
             }
 
             if (type.List)
@@ -172,6 +173,17 @@ namespace Moonwell.Build
             }
 
             return $"{value} = reader.{Method(type.Stored)}({value});";
+        }
+
+        // A name may be a keyword, written @class in the map's code.
+        private static string Identifier(string name)
+        {
+            return SyntaxFacts.GetKeywordKind(name) == SyntaxKind.None ? name : "@" + name;
+        }
+
+        private static string TypeName(string name)
+        {
+            return "global::" + string.Join(".", name.Split('.').Select(Identifier));
         }
 
         private static string Method(string stored)
