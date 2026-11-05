@@ -103,6 +103,24 @@ namespace Moonwell
             Sharing.Request(this, player, () => read() ? "1" : "0", text => arrived(text == "1"));
         }
 
+        /// <summary>
+        /// Reads a player's save from the default slot's file on their computer, and hands it to every machine once it has
+        /// arrived, as a child of this scope: nothing runs if the scope ends first. Null when there is no file, when it fails
+        /// its check (it is then written to the log), when the player leaves first, or when they are not a person playing.
+        /// </summary>
+        public void Load<T>(Player player, Action<T?> arrived)
+            where T : SaveGame, new()
+        {
+            SaveGame.Load(this, player, SaveGame.DefaultSlot, arrived);
+        }
+
+        /// <summary>Reads a player's save from a slot's file on their computer, as Load from the default slot does.</summary>
+        public void Load<T>(Player player, string slot, Action<T?> arrived)
+            where T : SaveGame, new()
+        {
+            SaveGame.Load(this, player, slot, arrived);
+        }
+
         /// <summary>Runs an action once after the seconds, as a timer of Moonwell's own work in this scope, which the never-ran report skips.</summary>
         internal Timer OwnAfter(float seconds, Action action)
         {

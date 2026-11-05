@@ -96,6 +96,25 @@ namespace Moonwell
             return text;
         }
 
+        /// <summary>Reads one byte, 0 to 255.</summary>
+        internal int ReadByte()
+        {
+            return Next();
+        }
+
+        /// <summary>A reader of the next bytes, which this reader then passes over.</summary>
+        internal ByteReader Take(int count)
+        {
+            if (count < 0 || count > Remaining)
+            {
+                throw new FormatException("ByteReader: a stretch of " + count + " bytes with " + Remaining + " left");
+            }
+
+            var taken = new ByteReader(bytes, at, at + count);
+            at += count;
+            return taken;
+        }
+
         private int Next()
         {
             if (at >= end)

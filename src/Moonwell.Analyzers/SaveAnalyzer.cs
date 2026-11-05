@@ -1,0 +1,299 @@
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
+
+namespace Moonwell.Analyzers;
+
+/// <summary>
+/// MW0052: a save the build can write and read (decisions 180 and 183). A <c>[Saved]</c> number is from 1 to 9999 and used
+/// once in a class; a saved member is a public field, or a property with a public get and set, of a type that can be
+/// saved; <c>[Saved]</c> sits in a save class or a part class one reaches; a save and a part have a public constructor
+/// without parameters; one save class at most has no <c>[SaveId]</c>, and no two share one.
+/// </summary>
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public sealed class SaveAnalyzer : DiagnosticAnalyzer
+{
+    private const int LastNumber = 9999;
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Rules.SavedFields;
+
+    public override void Initialize(AnalysisContext context)
+    {
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.EnableConcurrentExecution();
+        context.RegisterCompilationStartAction(start =>
+        {
+            var saveGame = start.Compilation.GetTypeByMetadataName("Moonwell.SaveGame");
+            var saved = start.Compilation.GetTypeByMetadataName("Moonwell.SavedAttribute");
+            var saveId = start.Compilation.GetTypeByMetadataName("Moonwell.SaveIdAttribute");
+            var list = start.Compilation.GetTypeByMetadataName("System.Collections.Generic.List`1");
+            if (saveGame == null || saved == null || saveId == null)
+            {
+                return;
+            }
+
+            // Which classes are parts is known once every save class is seen, so the check runs when the analysis ends.
+            var types = new ConcurrentBag<INamedTypeSymbol>();
+            start.RegisterSymbolAction(symbol => types.Add((INamedTypeSymbol)symbol.Symbol), SymbolKind.NamedType);
+            start.RegisterCompilationEndAction(end => new Check(end, saveGame, saved, saveId, list).Run(types));
+        });
+    }
+
+    private sealed class Check
+    {
+        private readonly CompilationAnalysisContext context;
+        private readonly INamedTypeSymbol saveGame;
+        private readonly INamedTypeSymbol saved;
+        private readonly INamedTypeSymbol saveId;
+        private readonly INamedTypeSymbol? list;
+
+        public Check(CompilationAnalysisContext context, INamedTypeSymbol saveGame, INamedTypeSymbol saved, INamedTypeSymbol saveId, INamedTypeSymbol? list)
+        {
+            this.context = context;
+            this.saveGame = saveGame;
+            this.saved = saved;
+            this.saveId = saveId;
+            this.list = list;
+        }
+
+        public void Run(IEnumerable<INamedTypeSymbol> found)
+        {
+            var types = found.OrderBy(type => type.Locations[0].SourceTree?.FilePath).ThenBy(type => type.Locations[0].SourceSpan.Start).ToList();
+            var saves = types.Where(type => type.TypeKind == TypeKind.Class && IsSave(type)).ToList();
+            var parts = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            var waiting = new Queue<INamedTypeSymbol>(saves);
+            while (waiting.Count > 0)
+            {
+                foreach (var member in SavedOf(waiting.Dequeue()))
+                {
+                    if (PartOf(TypeOf(member.Member)) is { } part && parts.Add(part))
+                    {
+                        waiting.Enqueue(part);
+                    }
+                }
+            }
+
+            foreach (var type in types)
+            {
+                var members = SavedOf(type).ToList();
+                var isSave = saves.Contains(type, SymbolEqualityComparer.Default);
+                if (!isSave && !parts.Contains(type))
+                {
+                    foreach (var member in members)
+                    {
+                        Report(member.Member.Locations[0], $"'{type.Name}' is neither a SaveGame nor a part of one, so [Saved] on '{member.Member.Name}' saves nothing: derive '{type.Name}' from SaveGame, or save it as a field of a save");
+                    }
+
+                    continue;
+                }
+
+                foreach (var member in members)
+                {
+                    CheckMember(member.Member, member.Attribute);
+                }
+
+                if (!type.IsAbstract && !type.InstanceConstructors.Any(constructor => constructor.Parameters.Length == 0 && constructor.DeclaredAccessibility == Accessibility.Public))
+                {
+                    Report(type.Locations[0], $"'{type.Name}' is {(isSave ? "a save class" : "a part of a save")}, so it needs a public constructor without parameters: Moonwell makes it when a save is read");
+                }
+
+                CheckNumbers(type);
+            }
+
+            CheckIds(saves.Where(type => !type.IsAbstract).ToList());
+        }
+
+        private void CheckMember(ISymbol member, AttributeData attribute)
+        {
+            var number = attribute.ConstructorArguments.Length == 1 ? attribute.ConstructorArguments[0].Value as int? : null;
+            if (number is < 1 or > LastNumber)
+            {
+                Report(attribute.ApplicationSyntaxReference!.GetSyntax().GetLocation(), $"[Saved({number})] on '{member.Name}': a number is from 1 to {LastNumber}");
+            }
+
+            var reachable = member switch
+            {
+                IFieldSymbol field => field.DeclaredAccessibility == Accessibility.Public && !field.IsStatic && !field.IsReadOnly && !field.IsConst,
+                IPropertySymbol property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic
+                    && property.GetMethod?.DeclaredAccessibility == Accessibility.Public && property.SetMethod is { IsInitOnly: false, DeclaredAccessibility: Accessibility.Public },
+                _ => false,
+            };
+            if (!reachable)
+            {
+                Report(member.Locations[0], $"'{member.Name}' is saved, so it is a public field, not readonly, or a property with a public get and set: the build's code sets it when a save is read");
+            }
+
+            var type = TypeOf(member);
+            if (!CanSave(type))
+            {
+                Report(member.Locations[0], $"'{member.Name}' is a {type.ToDisplayString()}, which cannot be saved: a saved field is an int, float, bool, string, enum, RealTime, a List or array of those, or a part class of the map's own with [Saved] fields");
+            }
+        }
+
+        // The numbers of a class and of the classes it derives from are one set, as a save writes them all.
+        private void CheckNumbers(INamedTypeSymbol type)
+        {
+            var chain = new List<INamedTypeSymbol>();
+            for (var one = type; one != null; one = one.BaseType)
+            {
+                chain.Insert(0, one);
+            }
+
+            var seen = new Dictionary<int, ISymbol>();
+            foreach (var member in chain.SelectMany(SavedOf))
+            {
+                if (member.Attribute.ConstructorArguments.Length != 1 || member.Attribute.ConstructorArguments[0].Value is not int number)
+                {
+                    continue;
+                }
+
+                if (seen.TryGetValue(number, out var first))
+                {
+                    if (SymbolEqualityComparer.Default.Equals(member.Member.ContainingType, type))
+                    {
+                        Report(member.Member.Locations[0], $"'{member.Member.Name}' and '{first.Name}' are both [Saved({number})]: each saved member has a number of its own");
+                    }
+
+                    continue;
+                }
+
+                seen[number] = member.Member;
+            }
+        }
+
+        private void CheckIds(List<INamedTypeSymbol> saves)
+        {
+            INamedTypeSymbol? without = null;
+            var ids = new Dictionary<string, INamedTypeSymbol>();
+            foreach (var save in saves)
+            {
+                var attribute = save.GetAttributes().FirstOrDefault(one => Same(one.AttributeClass, saveId));
+                if (attribute == null)
+                {
+                    if (without != null)
+                    {
+                        Report(save.Locations[0], $"'{save.Name}' has no [SaveId], and neither has '{without.Name}': one save class may go without, and each other one has an id of its own, never changed, as every save's check covers it");
+                    }
+
+                    without ??= save;
+                    continue;
+                }
+
+                var id = attribute.ConstructorArguments.Length == 1 ? attribute.ConstructorArguments[0].Value as string : null;
+                var location = attribute.ApplicationSyntaxReference!.GetSyntax().GetLocation();
+                if (!IsId(id))
+                {
+                    Report(location, $"[SaveId(\"{id}\")] on '{save.Name}': an id is letters, digits, - and _, starting with a letter or a digit");
+                }
+                else if (ids.TryGetValue(id!, out var other))
+                {
+                    Report(location, $"'{save.Name}' and '{other.Name}' are both [SaveId(\"{id}\")]: each save class has an id of its own, or a code of one would read as the other");
+                }
+                else
+                {
+                    ids[id!] = save;
+                }
+            }
+        }
+
+        private bool CanSave(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol { Rank: 1 } array)
+            {
+                return IsElement(array.ElementType);
+            }
+
+            if (type is INamedTypeSymbol { IsGenericType: true } named && Same(named.OriginalDefinition, list))
+            {
+                return IsElement(named.TypeArguments[0]);
+            }
+
+            return IsElement(type);
+        }
+
+        private bool IsElement(ITypeSymbol type)
+        {
+            return type.SpecialType is SpecialType.System_Int32 or SpecialType.System_Single or SpecialType.System_Boolean or SpecialType.System_String
+                || type.TypeKind == TypeKind.Enum
+                || type is { Name: "RealTime", ContainingNamespace.Name: "Moonwell" }
+                || IsPart(type);
+        }
+
+        // A part is a class of the map's own that is not a save and derives from nothing but object, as Moonwell's classes cannot be saved.
+        private bool IsPart(ITypeSymbol type)
+        {
+            return type is INamedTypeSymbol { TypeKind: TypeKind.Class, IsAbstract: false, IsStatic: false, IsGenericType: false } named
+                && named.BaseType?.SpecialType == SpecialType.System_Object
+                && named.Locations.Any(location => location.IsInSource);
+        }
+
+        private INamedTypeSymbol? PartOf(ITypeSymbol type)
+        {
+            var element = type switch
+            {
+                IArrayTypeSymbol array => array.ElementType,
+                INamedTypeSymbol { IsGenericType: true } named when Same(named.OriginalDefinition, list) => named.TypeArguments[0],
+                _ => type,
+            };
+            return IsPart(element) ? (INamedTypeSymbol)element.OriginalDefinition : null;
+        }
+
+        private IEnumerable<(ISymbol Member, AttributeData Attribute)> SavedOf(INamedTypeSymbol type)
+        {
+            foreach (var member in type.GetMembers())
+            {
+                if (member.IsImplicitlyDeclared || member is not (IFieldSymbol or IPropertySymbol))
+                {
+                    continue;
+                }
+
+                var attribute = member.GetAttributes().FirstOrDefault(one => Same(one.AttributeClass, saved));
+                if (attribute != null)
+                {
+                    yield return (member, attribute);
+                }
+            }
+        }
+
+        private bool IsSave(INamedTypeSymbol type)
+        {
+            for (var parent = type.BaseType; parent != null; parent = parent.BaseType)
+            {
+                if (Same(parent, saveGame))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static ITypeSymbol TypeOf(ISymbol member)
+        {
+            return member is IFieldSymbol field ? field.Type : ((IPropertySymbol)member).Type;
+        }
+
+        private static bool IsId(string? id)
+        {
+            if (string.IsNullOrEmpty(id) || id![0] is '-' or '_')
+            {
+                return false;
+            }
+
+            return id.All(c => c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '-' or '_');
+        }
+
+        private static bool Same(ISymbol? a, ISymbol? b)
+        {
+            return SymbolEqualityComparer.Default.Equals(a, b);
+        }
+
+        private void Report(Location location, string message)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(Rules.SavedField, location, message));
+        }
+    }
+}

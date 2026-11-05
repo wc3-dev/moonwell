@@ -198,6 +198,19 @@ public static class Rules
 
     /// <summary>The rule for a buff a spell lists.</summary>
     public static ImmutableArray<DiagnosticDescriptor> SpellBuffs { get; } = ImmutableArray.Create(SpellBuff);
+
+    public static readonly DiagnosticDescriptor SavedField = new(
+        "MW0052",
+        "A save the build cannot write",
+        "{0}",
+        "Saves",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "The build writes the code that writes and reads each save class (decision 180), so a save keeps to what that code can do: a [Saved] number is from 1 to 9999 and used once in a class and the classes it derives from; a saved member is a public field, not readonly, or a property with a public get and set; its type is an int, float, bool, string, enum, RealTime, a List or array of those, or a part, a class of the map's own with [Saved] fields that derives from nothing; [Saved] sits in a save class or a part one reaches; a save and a part have a public constructor without parameters. Every save's check covers its class's [SaveId] (decision 183), so one save class at most goes without one, and no two share one. Which classes are parts is known once every file is seen, so the rule reports when the build's analysis ends.",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+    /// <summary>The rule for a save the build cannot write.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> SavedFields { get; } = ImmutableArray.Create(SavedField);
     public static readonly DiagnosticDescriptor PlayerScope = new(
         "MW0043",
         "A player where a scope goes",

@@ -24,6 +24,12 @@ namespace Moonwell
         /// <summary>The folder of CustomMapData the map's player files go in, letters and digits; empty takes the map's name, so set it to keep players' files when the name changes.</summary>
         public string SaveFolder { get; protected set; } = "";
 
+        /// <summary>
+        /// The map's own private text that every save's check covers, so a save loads only in this map: required when the map
+        /// has a save class, and never changed, as a changed key fails every save made before (decision 183).
+        /// </summary>
+        public string SaveKey { get; protected set; } = "";
+
         /// <summary>The game data version the map plays with; ForsakenKingdom, World Editor's default, when the map sets none.</summary>
         public DataVersion DataVersion { get; protected set; } = DataVersion.ForsakenKingdom;
 
