@@ -713,6 +713,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "push.slide-along-x", Run = PushCases.SlideAlongX });
             list.Add(new Case { Name = "push.reentrant", Run = PushCases.Reentrant });
             list.Add(new Case { Name = "push.hover", Run = PushCases.Hover });
+            list.Add(new Case { Name = "push.missile-made-in-slam", Run = PushCases.MissileMadeInSlam });
             list.Add(new Case { Name = "push.grounded-names", Run = PushCases.GroundedNames });
             list.Add(new Case { Name = "push.thrown-step", Run = PushCases.ThrownStep });
             list.Add(new Case { Name = "contact.stop", Run = ContactCases.Stop });

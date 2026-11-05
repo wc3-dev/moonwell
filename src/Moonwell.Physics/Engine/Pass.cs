@@ -79,15 +79,16 @@ namespace Moonwell.Engine
             }
 
             var step = Interactions.Current().Step;
-            Pushes.Run(step);
+            // Read before the pushes move: a missile a push's reaction makes moves from the next step.
             var list = missiles;
+            var count = list != null ? list.Count : 0;
+            Pushes.Run(step);
             if (list == null)
             {
                 return;
             }
 
             var grid = Interactions.Grid;
-            var count = list.Count;
             for (var i = 0; i < count; i++)
             {
                 var missile = Raw.At(list, i);
