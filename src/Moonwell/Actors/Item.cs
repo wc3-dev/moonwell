@@ -82,6 +82,9 @@ namespace Moonwell
         /// <summary>The unit that last picked the item up, as the pick-up events Moonwell has seen say; a candidate that Carrier checks with the game.</summary>
         internal Unit? CarrierUnit;
 
+        /// <summary>Counts the item's pick-ups and drops, so a pick-up's reactions stop once one of them drops the item.</summary>
+        internal int moves;
+
         /// <summary>The live carry, from a pick-up Moonwell saw to the drop; null outside one.</summary>
         internal Carrying? carry;
 
@@ -129,6 +132,12 @@ namespace Moonwell
             return Runtime.World.ItemTypeId(Handle) == 0;
         }
 
+        /// <summary>Whether the item is still in the game for a setter or an action: neither gone nor removed by the game, before the sweep finds it.</summary>
+        internal bool InGame()
+        {
+            return !IsGone && !RemovedByGame();
+        }
+
         /// <summary>The item's charges (what the type gives: a healing potion 1, Claws of Attack 0). Any value is taken at once; 0 does not remove the item, it stays where it is, on the ground or in an inventory, and a carried potion of 0 charges can still be used. Once the game has removed the item, the last value read or set, and setting does nothing. In a declared class's constructor, the charges every item of the class starts with (iuse); on a default object, its type's.</summary>
         [LocalSafe]
         public int Charges
@@ -167,7 +176,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastCharges = value;
                     Runtime.World.SetCharges(Handle, value);
@@ -200,7 +209,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     OwningPlayer = value.Handle;
                     Runtime.World.SetItemOwner(Handle, value.Handle);
@@ -265,7 +274,7 @@ namespace Moonwell
         /// <summary>Moves the item to a place (SetItemPosition), through the game's pathing: a place on a tree or a farm becomes a pathable spot nearby, and past the edge it stops inside the playable area (seen), so X and Y may read other than what was given. Does nothing once the item is gone.</summary>
         public void MoveTo(float x, float y)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 Runtime.World.MoveItem(Handle, x, y);
 
@@ -324,7 +333,18 @@ namespace Moonwell
                 throw new MoonwellException("Item.Create: the game made no item of type " + Names.IdText(typeId));
             }
 
-            var made = KnownItems.TakeIn(handle, scope)!;
+            Item made;
+            try
+            {
+                made = KnownItems.TakeIn(handle, scope)!;
+            }
+            catch
+            {
+                // A class whose constructor throws leaves no item in the game that nothing holds.
+                Runtime.World.DeleteItem(handle);
+                throw;
+            }
+
             if (made.Parent == null)
             {
                 scope.Adopt(made);

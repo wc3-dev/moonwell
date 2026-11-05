@@ -1149,7 +1149,12 @@ namespace Moonwell.Testing
         {
             ExpectReadWhileMade("ReadsDefault", () => new ReadsDefault(), "Default in the constructor of a class not registered");
             ExpectReadWhileMade("ReadsDefaultOfClass", () => Unit.Default<ReadsDefaultOfClass>(), "Unit.Default<T>() in T's constructor");
-            ExpectReadWhileMade("ReadsDefault", () => ObjectTypes.Unit(ObjectTypes.FourCC("h0rd"), () => new ReadsDefault()), "Default in the constructor of a registered class");
+
+            // A registration reports its constructor's error, so the classes after it still register.
+            var before = world.Logged.Count;
+            ObjectTypes.Unit(ObjectTypes.FourCC("h0rd"), () => new ReadsDefault());
+            var expected = "ReadsDefault's default object is read while its constructor runs; read the field itself";
+            Expect.True(world.Logged.Count > before && world.Logged[before].Contains(expected), "Default in the constructor of a registered class, logged: " + (world.Logged.Count > before ? world.Logged[before] : "nothing"));
 
             // Nothing is left half made: a later ask gives the same message, not a default.
             ExpectReadWhileMade("ReadsDefault", () => new ReadsDefault(), "Default in the constructor, asked again");

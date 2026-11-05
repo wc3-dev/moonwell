@@ -328,6 +328,21 @@ namespace Moonwell.Testing
             Expect.Same(caster, buff.Source, "the source stays");
         }
 
+        /// <summary>With the damage package, a hit of 0 from code, or one a reaction set to 0, gives the buff nothing: only a hit of 0 the game starts does.</summary>
+        public static void PackageCodeHitOfZeroGivesNothing(FakeWorld world)
+        {
+            Watch();
+            DamageSystem.Install(new FakeDamageWorld(world));
+            var target = NewUnit(world);
+            var caster = Caster(world, 1);
+            world.GameBuffs.Hit(caster.Handle, target.Handle, Frozen);
+            world.Advance(0.01f);
+            var buff = target.Get<FrozenBuff>()!;
+            caster.Damage(target, 0.0f);
+            world.Advance(0.01f);
+            Expect.Equal(1, buff.Applied, "OnApply ran once");
+        }
+
         /// <summary>A buff whose OnApply deals damage from its source does not give itself again.</summary>
         public static void OnApplyDamageDoesNotLoop(FakeWorld world)
         {
