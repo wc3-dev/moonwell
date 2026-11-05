@@ -48,8 +48,10 @@ public class LuaRuntimeTests
             Assert.False(intMinimum.Success, intMinimum.Success ? compiled.Substring(Math.Max(0, intMinimum.Index - 300), 400) : "");
             var failures = lines.Where(line => line.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
             Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
-            // The debug mode's cases exist only in a development build (Cases.AddDebug).
-            var count = release ? Cases.All().Count(testCase => !testCase.Name.StartsWith("debug.", StringComparison.Ordinal)) : Cases.All().Count;
+            // The debug mode's cases exist only in a development build (Cases.AddDebug), whatever this test was built as, so they are
+            // counted in the source the script is compiled from.
+            var debug = Regex.Matches(File.ReadAllText(Path.Combine(LuaScript.RepoRoot, "tests", "Moonwell.Testing", "Cases.cs")), @"Name = ""debug\.").Count;
+            var count = Cases.All().Count(testCase => !testCase.Name.StartsWith("debug.", StringComparison.Ordinal)) + (release ? 0 : debug);
             Assert.Equal("DONE " + count, lines.LastOrDefault());
         }
         finally
