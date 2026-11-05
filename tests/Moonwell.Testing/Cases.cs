@@ -136,6 +136,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "json.parents", Run = JsonCases.Parents });
             list.Add(new Case { Name = "json.kinds", Run = JsonCases.Kinds });
             list.Add(new Case { Name = "json.through-a-file", Run = JsonCases.ThroughAFile });
+            list.Add(new Case { Name = "chat.heard", Run = ChatCases.Heard });
+            list.Add(new Case { Name = "chat.only-its-word", Run = ChatCases.OnlyItsWord });
+            list.Add(new Case { Name = "chat.ends", Run = ChatCases.Ends });
+            list.Add(new Case { Name = "chat.two-of-one-name", Run = ChatCases.TwoOfOneName });
+            list.Add(new Case { Name = "chat.listens-once", Run = ChatCases.ListensOnce });
             list.Add(new Case { Name = "save.round-trip", Run = SaveCases.RoundTrip });
             list.Add(new Case { Name = "save.typing-tolerated", Run = SaveCases.TypingTolerated });
             list.Add(new Case { Name = "save.bad-codes", Run = SaveCases.BadCodes });
@@ -407,6 +412,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.dummy.no-order-reported", Run = DummyCases.NoOrderReported });
             list.Add(new Case { Name = "debug.item.carry-not-carried-reported", Run = CarryCases.NotCarriedReported });
             list.Add(new Case { Name = "debug.realtime.now-early-reported", Run = RealTimeCases.NowEarlyReported });
+            list.Add(new Case { Name = "debug.chat.bad-name-reported", Run = ChatCases.BadNameReported });
             list.Add(new Case { Name = "debug.save.too-long-reported", Run = SaveCases.TooLongReported });
             list.Add(new Case { Name = "debug.session.halt-free", Run = SessionCases.HaltFree });
             list.Add(new Case { Name = "debug.session.map-paused-stays", Run = SessionCases.MapPausedStays });

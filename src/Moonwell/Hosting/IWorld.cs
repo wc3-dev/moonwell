@@ -35,6 +35,9 @@ namespace Moonwell.Hosting
         /// <summary>Starts delivering a player's sharing messages to Inbound; called once per player.</summary>
         void ListenSync(player player);
 
+        /// <summary>Starts delivering a person's chat lines that start with a dash to Inbound; called once per person.</summary>
+        void ListenChat(player player);
+
         /// <summary>Writes a player file's pieces with Preload, replacing the file at the path in CustomMapData.</summary>
         void WritePreload(string path, IReadOnlyList<string> pieces);
 

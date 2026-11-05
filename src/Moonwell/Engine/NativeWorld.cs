@@ -324,6 +324,14 @@ namespace Moonwell.Engine
             Natives.TriggerAddAction(trigger, SyncAction);
         }
 
+        /// <summary>Listens for a person's chat lines that start with a dash, for the chat commands.</summary>
+        public void ListenChat(player player)
+        {
+            var trigger = Natives.CreateTrigger();
+            Natives.TriggerRegisterPlayerChatEvent(trigger, player, "-", false);
+            Natives.TriggerAddAction(trigger, ChatAction);
+        }
+
         /// <summary>Writes a player file: each piece a Preload line that puts it in the store ability's tooltips (FileText).</summary>
         public void WritePreload(string path, IReadOnlyList<string> pieces)
         {
@@ -397,6 +405,18 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Loaded", error);
+            }
+        }
+
+        private static void ChatAction()
+        {
+            try
+            {
+                Inbound.ChatArrived(Natives.GetTriggerPlayer(), Natives.GetEventPlayerChatString());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Chat", error);
             }
         }
 
