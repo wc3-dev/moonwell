@@ -185,4 +185,81 @@ public class SaveRuleTests
             }
             """));
     }
+    [Fact]
+    public void a_save_or_a_part_the_build_cannot_name_is_rejected()
+    {
+        Assert.Equal(new[] { "MW0052: Hidden", "MW0052: Kept", "MW0052: Many", "MW0052: Inner" }, Check("""
+            public sealed class Outer
+            {
+                private sealed class Hidden : SaveGame
+                {
+                    [Saved(1)] public Kept? Part;
+                }
+
+                protected sealed class Kept
+                {
+                    [Saved(1)] public int Id;
+                }
+            }
+
+            [SaveId("many")]
+            public sealed class Many<T> : SaveGame
+            {
+                [Saved(1)] public int Level;
+            }
+
+            public sealed class Generic<T>
+            {
+                [SaveId("inner")]
+                public sealed class Inner : SaveGame
+                {
+                    [Saved(1)] public int Level;
+                }
+            }
+            """));
+        Assert.Equal(new[] { "MW0052: Local" }, MapCode.CheckFile("using Moonwell;\nnamespace Map\n{\nfile sealed class Local : SaveGame\n{\n[Saved(1)] public int Level;\n}\n}\n", "Saves.cs"));
+    }
+
+    [Fact]
+    public void a_member_the_build_cannot_write_is_rejected()
+    {
+        Assert.Equal(new[] { "MW0052: this", "MW0052: Level", "MW0052: Gold", "MW0052: Name" }, Check("""
+            public abstract class Base : SaveGame
+            {
+                [Saved(1)] public int Level;
+            }
+
+            public sealed class RpgSave : Base
+            {
+                [Saved(2)] public int this[int slot] { get => slot; set { } }
+                [Saved(3)] public new int Level;
+                [Saved(4)] public required int Gold;
+            }
+
+            [SaveId("named")]
+            public sealed class Named : SaveGame
+            {
+                public required string Name { get; set; }
+            }
+            """));
+    }
+
+    [Fact]
+    public void an_override_keeps_its_bases_saved_number()
+    {
+        Assert.Empty(Check("""
+            public abstract class Base : SaveGame
+            {
+                [Saved(1)] public abstract int Level { get; set; }
+                [Saved(2)] public virtual int Gold { get; set; }
+            }
+
+            public sealed class RpgSave : Base
+            {
+                public override int Level { get; set; }
+                [Saved(2)] public override int Gold { get; set; }
+                [Saved(3)] public int @class;
+            }
+            """));
+    }
 }

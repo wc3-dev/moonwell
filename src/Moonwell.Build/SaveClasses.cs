@@ -27,13 +27,18 @@ namespace Moonwell.Build
     /// <param name="Members">The saved members, by number.</param>
     public sealed record SaveClass(string Name, bool IsPart, string Id, IReadOnlyList<SavedMember> Members);
 
-    /// <summary>Reads the map's save classes and the part classes they reach from its built assembly, on .NET (decision 180).</summary>
+    /// <summary>
+    /// Reads the map's save classes and the part classes they reach from its built assembly and the libraries of its own
+    /// (<see cref="CompiledFiles.MapAssemblies"/>), on .NET (decision 180).
+    /// </summary>
     public static class SaveClasses
     {
         private const string SaveGameName = "Moonwell.SaveGame";
 
+        private const string SavedName = "Moonwell.SavedAttribute";
+
         /// <summary>The save classes, then the part classes, each by name.</summary>
-        /// <exception cref="BuildException">A saved member's type cannot be saved; the analyzer's rule rejects it first.</exception>
+        /// <exception cref="BuildException">A saved member's type cannot be saved, which the analyzer's rule rejects first, or a library's class is not public.</exception>
         public static IReadOnlyList<SaveClass> Read(string assemblyPath)
         {
             var context = new MapLoadContext(Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!);
@@ -51,56 +56,94 @@ namespace Moonwell.Build
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static IReadOnlyList<SaveClass> ReadIn(MapLoadContext context, string assemblyPath)
         {
-            var assembly = context.Open(assemblyPath);
-            var saves = assembly.GetTypes().Where(type => !type.IsAbstract && IsSave(type)).OrderBy(type => type.FullName, StringComparer.Ordinal).ToList();
+            var main = context.Open(assemblyPath);
+            var assemblies = CompiledFiles.MapAssemblies(assemblyPath).Skip(1)
+                .Select(path => context.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path))))
+                .Prepend(main).ToList();
+            var saves = assemblies.SelectMany(assembly => assembly.GetTypes()).Where(type => !type.IsAbstract && IsSave(type)).OrderBy(type => type.FullName, StringComparer.Ordinal).ToList();
             var parts = new SortedDictionary<string, Type>(StringComparer.Ordinal);
-            var classes = saves.Select(type => Of(type, false, IdOf(type), parts)).ToList();
+            var classes = saves.Select(type => Of(type, false, IdOf(type), parts, assemblies)).ToList();
 
             var done = new HashSet<string>(StringComparer.Ordinal);
             while (parts.Keys.FirstOrDefault(name => !done.Contains(name)) is { } next)
             {
                 done.Add(next);
-                classes.Add(Of(parts[next], true, string.Empty, parts));
+                classes.Add(Of(parts[next], true, string.Empty, parts, assemblies));
+            }
+
+            // The code that writes and reads them is built into the map's own project.
+            var hidden = saves.Concat(parts.Values).FirstOrDefault(type => type.Assembly != main && !type.IsVisible);
+            if (hidden != null)
+            {
+                throw new BuildException($"{MapClasses.Describe(hidden)} in the library {hidden.Assembly.GetName().Name} is saved, so the build's code in the map's project reaches it: make it public");
             }
 
             return classes.Where(one => !one.IsPart).Concat(classes.Where(one => one.IsPart).OrderBy(one => one.Name, StringComparer.Ordinal)).ToList();
         }
 
-        private static SaveClass Of(Type type, bool isPart, string id, SortedDictionary<string, Type> parts)
+        private static SaveClass Of(Type type, bool isPart, string id, SortedDictionary<string, Type> parts, IReadOnlyList<Assembly> map)
         {
             var members = new List<SavedMember>();
             const BindingFlags Public = BindingFlags.Public | BindingFlags.Instance;
             foreach (var member in type.GetFields(Public).Cast<MemberInfo>().Concat(type.GetProperties(Public)))
             {
-                var saved = member.GetCustomAttributesData().FirstOrDefault(data => data.AttributeType.FullName == "Moonwell.SavedAttribute");
+                var saved = SavedOf(member);
                 if (saved == null)
                 {
                     continue;
                 }
 
                 var valueType = member is FieldInfo field ? field.FieldType : ((PropertyInfo)member).PropertyType;
-                members.Add(new SavedMember(member.Name, (int)saved.ConstructorArguments[0].Value!, TypeOf(valueType, MapClasses.Describe(type) + "." + member.Name, parts)));
+                members.Add(new SavedMember(member.Name, (int)saved.ConstructorArguments[0].Value!, TypeOf(valueType, MapClasses.Describe(type) + "." + member.Name, parts, map)));
             }
 
             return new SaveClass(MapClasses.Describe(type), isPart, id, members.OrderBy(one => one.Number).ToList());
         }
 
-        private static SavedType TypeOf(Type type, string where, SortedDictionary<string, Type> parts)
+        // An override keeps the [Saved] of the property it overrides, as an attribute is inherited; its own one comes first.
+        private static CustomAttributeData? SavedOf(MemberInfo member)
+        {
+            while (true)
+            {
+                var saved = member.GetCustomAttributesData().FirstOrDefault(data => data.AttributeType.FullName == SavedName);
+                if (saved != null || member is not PropertyInfo property || (property.GetMethod ?? property.SetMethod) is not { } accessor
+                    || accessor.GetBaseDefinition().DeclaringType == accessor.DeclaringType)
+                {
+                    return saved;
+                }
+
+                const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+                MemberInfo? overridden = null;
+                for (var parent = property.DeclaringType!.BaseType; parent != null && overridden == null; parent = parent.BaseType)
+                {
+                    overridden = parent.GetProperties(Declared).FirstOrDefault(one => one.Name == property.Name);
+                }
+
+                if (overridden == null)
+                {
+                    return null;
+                }
+
+                member = overridden;
+            }
+        }
+
+        private static SavedType TypeOf(Type type, string where, SortedDictionary<string, Type> parts, IReadOnlyList<Assembly> map)
         {
             if (type.IsArray && type.GetArrayRank() == 1)
             {
-                return ElementOf(type.GetElementType()!, where, parts) with { List = true, Array = true };
+                return ElementOf(type.GetElementType()!, where, parts, map) with { List = true, Array = true };
             }
 
             if (type.IsGenericType && type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.List`1")
             {
-                return ElementOf(type.GetGenericArguments()[0], where, parts) with { List = true };
+                return ElementOf(type.GetGenericArguments()[0], where, parts, map) with { List = true };
             }
 
-            return ElementOf(type, where, parts);
+            return ElementOf(type, where, parts, map);
         }
 
-        private static SavedType ElementOf(Type type, string where, SortedDictionary<string, Type> parts)
+        private static SavedType ElementOf(Type type, string where, SortedDictionary<string, Type> parts, IReadOnlyList<Assembly> map)
         {
             switch (type.FullName)
             {
@@ -121,7 +164,7 @@ namespace Moonwell.Build
                 return new SavedType("int", false, false, MapClasses.Describe(type));
             }
 
-            if (type.IsClass && !type.IsAbstract && !IsSave(type) && type.Assembly.GetName().Name is { } name && !name.StartsWith("Moonwell", StringComparison.Ordinal) && !name.StartsWith("System", StringComparison.Ordinal))
+            if (type.IsClass && !type.IsAbstract && !IsSave(type) && map.Contains(type.Assembly))
             {
                 parts[MapClasses.Describe(type)] = type;
                 return new SavedType("part", false, false, MapClasses.Describe(type));

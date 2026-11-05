@@ -10,8 +10,9 @@ namespace Moonwell.Analyzers;
 /// <summary>
 /// MW0052: a save the build can write and read (decisions 180 and 183). A <c>[Saved]</c> number is from 1 to 9999 and used
 /// once in a class; a saved member is a public field, or a property with a public get and set, of a type that can be
-/// saved; <c>[Saved]</c> sits in a save class or a part class one reaches; a save and a part have a public constructor
-/// without parameters; one save class at most has no <c>[SaveId]</c>, and no two share one.
+/// saved, and no indexer; <c>[Saved]</c> sits in a save class or a part class one reaches; a save and a part have a public
+/// constructor without parameters, no required member, no member hiding a saved one, and a name the build's code can reach;
+/// one save class at most has no <c>[SaveId]</c>, and no two share one.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class SaveAnalyzer : DiagnosticAnalyzer
@@ -95,6 +96,7 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
                     CheckMember(member.Member, member.Attribute);
                 }
 
+                CheckWritten(type, isSave);
                 if (!type.IsAbstract && !type.InstanceConstructors.Any(constructor => constructor.Parameters.Length == 0 && constructor.DeclaredAccessibility == Accessibility.Public))
                 {
                     Report(type.Locations[0], $"'{type.Name}' is {(isSave ? "a save class" : "a part of a save")}, so it needs a public constructor without parameters: Moonwell makes it when a save is read");
@@ -106,8 +108,63 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
             CheckIds(saves.Where(type => !type.IsAbstract).ToList());
         }
 
+        // The build's code names the class, makes it with new() and reaches each saved member by name from it.
+        private void CheckWritten(INamedTypeSymbol type, bool isSave)
+        {
+            var kind = isSave ? "a save class" : "a part of a save";
+            if (!type.IsAbstract && (type.IsGenericType || type.IsFileLocal || !Reachable(type)))
+            {
+                Report(type.Locations[0], $"'{type.Name}' is {kind}, so the build's code names it: make it a class that is not generic, file-local, private or protected");
+            }
+
+            foreach (var member in type.GetMembers().Where(member => !member.IsImplicitlyDeclared))
+            {
+                if (member is IFieldSymbol { IsRequired: true } or IPropertySymbol { IsRequired: true })
+                {
+                    Report(member.Locations[0], $"'{member.Name}' is required, and '{type.Name}' is {kind}, which Moonwell makes with new() when a save is read: leave required off");
+                }
+
+                if (member is not IPropertySymbol { IsOverride: true } && Hidden(type, member.Name) is { } hidden)
+                {
+                    Report(member.Locations[0], $"'{member.Name}' hides the saved '{hidden.ContainingType.Name}.{hidden.Name}', which the build's code would then not reach: give it another name");
+                }
+            }
+        }
+
+        private static bool Reachable(INamedTypeSymbol type)
+        {
+            for (var one = type; one != null; one = one.ContainingType)
+            {
+                if (one.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private ISymbol? Hidden(INamedTypeSymbol type, string name)
+        {
+            for (var parent = type.BaseType; parent != null; parent = parent.BaseType)
+            {
+                if (SavedOf(parent).FirstOrDefault(one => one.Member.Name == name).Member is { } hidden)
+                {
+                    return hidden;
+                }
+            }
+
+            return null;
+        }
+
         private void CheckMember(ISymbol member, AttributeData attribute)
         {
+            if (member is IPropertySymbol { IsIndexer: true })
+            {
+                Report(member.Locations[0], "An indexer cannot be saved: save a List or an array in a field instead");
+                return;
+            }
+
             var number = attribute.ConstructorArguments.Length == 1 ? attribute.ConstructorArguments[0].Value as int? : null;
             if (number is < 1 or > LastNumber)
             {
@@ -152,6 +209,11 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
 
                 if (seen.TryGetValue(number, out var first))
                 {
+                    if (member.Member is IPropertySymbol { IsOverride: true } && first.Name == member.Member.Name)
+                    {
+                        continue;
+                    }
+
                     if (SymbolEqualityComparer.Default.Equals(member.Member.ContainingType, type))
                     {
                         Report(member.Member.Locations[0], $"'{member.Member.Name}' and '{first.Name}' are both [Saved({number})]: each saved member has a number of its own");
