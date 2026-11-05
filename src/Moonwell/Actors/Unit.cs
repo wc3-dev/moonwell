@@ -580,8 +580,8 @@ namespace Moonwell
                 Runtime.World.SlayUnit(Handle);
 
                 // The game leaves the life 0 (seen), so a unit that is killed and then removed reads 0, not the life it had;
-                // read it, as a hero may have been revived inside the death event.
-                lastLife = Life;
+                // read it, as a hero may have been revived inside the death event, unless OnDeath removed the unit.
+                lastLife = IsGone ? 0.0f : Life;
             }
         }
 

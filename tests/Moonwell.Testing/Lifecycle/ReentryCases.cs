@@ -408,7 +408,9 @@ namespace Moonwell.Testing
         {
             ObjectTypes.Unit(ObjectTypes.FourCC("h0fl"), () => new Fleeting());
             var unit = Unit.Create(ObjectTypes.FourCC("h0fl"), Player.Get(0), 0.0f, 0.0f, Game.Instance);
+            unit.MaxLife = 500.0f;
             unit.Life = 300.0f;
+            Expect.Near(300.0f, unit.Life, "the life before");
             unit.Kill();
             Expect.True(unit.HasEnded, "the unit was removed in OnDeath");
             Expect.Near(0.0f, unit.Life, "the life");
