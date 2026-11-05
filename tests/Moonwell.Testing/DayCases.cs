@@ -147,6 +147,19 @@ namespace Moonwell.Testing
             Expect.Equal("dusk night,dawn day", string.Join(",", TestLog.Lines), "back past 6 is dusk, back past 18 dawn");
         }
 
+        /// <summary>An OnDawn that sets the time to night runs the dusk for every component at once, and the dawn goes no further: the component after it gets the dusk only, so its last reaction says night. It got the dusk, then the dawn while IsDay read night.</summary>
+        public static void SetInDawn(FakeWorld world)
+        {
+            TestLog.Lines.Clear();
+            Game.TimeOfDay = 5.0f;
+            Game.Instance.Add(new NightMaker());
+            Game.Instance.Add(new DayWatch());
+            Game.TimeOfDay = 7.0f;
+            Expect.Equal("dawn day,dusk night,dusk night", string.Join(",", TestLog.Lines), "the first's dawn, then both dusks");
+            world.Advance(0.25f);
+            Expect.Equal("dawn day,dusk night,dusk night", string.Join(",", TestLog.Lines), "and nothing at the next check");
+        }
+
         /// <summary>A map's own dawn and dusk are the hours whose passing runs the reactions.</summary>
         public static void MapsOwnDawn(FakeWorld world)
         {

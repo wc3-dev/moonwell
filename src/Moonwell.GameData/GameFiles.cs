@@ -80,10 +80,16 @@ public sealed class GameFiles : IDisposable
             return null;
         }
 
-        foreach (var candidate in Candidates(normalized).Concat(
-                     _aliases.TryGetValue(normalized, out var moved) ? Candidates(moved) : []))
+        return First(prefixes, Candidates(normalized).ToList())
+            ?? (_aliases.TryGetValue(normalized, out var moved) ? First(prefixes, Candidates(moved).ToList()) : null);
+    }
+
+    // The first tier that stores any of the candidates: a tier's fallback extension comes before a later tier's own.
+    private string? First(string[] prefixes, List<string> candidates)
+    {
+        foreach (var prefix in prefixes)
         {
-            foreach (var prefix in prefixes)
+            foreach (var candidate in candidates)
             {
                 if (_storage.IsStored(prefix + candidate))
                 {
