@@ -25,6 +25,14 @@ namespace Moonwell.Testing
             Expect.Near(0.51f, hit.Fraction, "fraction along the whole segment");
         }
 
+        /// <summary>A segment that starts 0.015 under flat ground and runs level, as deep as it started all along, does not hit it; one that goes deeper does. It hit at fraction 0, as a sample as deep as the start counted.</summary>
+        public static void FlatUnderStart(FakeWorld world)
+        {
+            OneTile();
+            Expect.True(!Terrain.Raycast(new Vector3(20f, 64f, -0.015f), new Vector3(100f, 64f, -0.015f), out _), "level, as deep as it started: no hit");
+            Expect.True(Terrain.Raycast(new Vector3(20f, 64f, -0.015f), new Vector3(100f, 64f, -1f), out _), "going deeper: hits");
+        }
+
         /// <summary>A ray a million long reads the ground only over the grid: at a few points, not 31,250.</summary>
         public static void LongRayClipped(FakeWorld world)
         {

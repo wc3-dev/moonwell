@@ -131,6 +131,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "json.write", Run = JsonCases.Write });
             list.Add(new Case { Name = "json.parse-back", Run = JsonCases.ParseBack });
             list.Add(new Case { Name = "json.numbers", Run = JsonCases.Numbers });
+            list.Add(new Case { Name = "json.negative-zero", Run = JsonCases.NegativeZero });
             list.Add(new Case { Name = "json.escapes", Run = JsonCases.Escapes });
             list.Add(new Case { Name = "json.order", Run = JsonCases.Order });
             list.Add(new Case { Name = "json.bad", Run = JsonCases.Bad });
@@ -1034,6 +1035,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.shapes.polygon-far", Run = FarPolygonCases.AreaAndCenter });
             list.Add(new Case { Name = "terrain.raycast.past-the-edge", Run = GroundClipCases.PastTheEdge });
             list.Add(new Case { Name = "terrain.raycast.long-ray-clipped", Run = GroundClipCases.LongRayClipped });
+            list.Add(new Case { Name = "terrain.raycast.flat-under-start", Run = GroundClipCases.FlatUnderStart });
             list.Add(new Case { Name = "terrain.pathing.every-cell", Run = PackedPathingCases.EveryCell });
             list.Add(new Case { Name = "terrain.pathing.full-grid-memory", Run = PackedPathingCases.FullGridMemory });
             list.Add(new Case { Name = "maths.actors.face-own-place", Run = FaceOwnPlaceCases.KeepsFacing });
@@ -1110,6 +1112,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.actors.effect-position", Run = ActorMathsCases.EffectPosition });
             list.Add(new Case { Name = "maths.actors.destructable", Run = ActorMathsCases.DestructableDistances });
             list.Add(new Case { Name = "maths.polygon.contains-floats", Run = ShapeCases.PolygonContainsFloats });
+            list.Add(new Case { Name = "maths.polygon.outer-edge", Run = ShapeCases.PolygonOuterEdge });
             list.Add(new Case { Name = "maths.lua.shared-not-copied", Run = LuaShapeCases.SharedNotCopied });
             list.Add(new Case { Name = "maths.lua.out-pair", Run = LuaShapeCases.OutPair });
             list.Add(new Case { Name = "maths.lua.number-types", Run = LuaShapeCases.NumberTypes });
