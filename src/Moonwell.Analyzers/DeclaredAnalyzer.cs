@@ -44,6 +44,55 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
         context.RegisterSyntaxNodeAction(Constructor, SyntaxKind.ConstructorDeclaration);
         context.RegisterOperationAction(LevelSet, OperationKind.PropertyReference);
         context.RegisterSyntaxNodeAction(DefaultOfKind, SyntaxKind.InvocationExpression);
+        context.RegisterOperationAction(DefaultSet, OperationKind.PropertyReference, OperationKind.FieldReference);
+    }
+
+    // MW0054: unit.Default.MaxLife = 5, or Unit.Default<Champion>().Armor += 2; the class's own default in its constructor is MW0012.
+    private static void DefaultSet(OperationAnalysisContext context)
+    {
+        var reference = (IMemberReferenceOperation)context.Operation;
+        var instance = reference.Instance;
+        while (instance is IConversionOperation or IParenthesizedOperation)
+        {
+            instance = instance is IConversionOperation conversion ? conversion.Operand : ((IParenthesizedOperation)instance).Operand;
+        }
+
+        var isDefault = instance switch
+        {
+            IPropertyReferenceOperation { Property: { Name: "Default", IsStatic: false } property } => IsRuntimeType(property.ContainingType) || IsKindBase(property.ContainingType),
+            IInvocationOperation { TargetMethod: { Name: "Default", IsStatic: true, TypeArguments.Length: 1 } method } => IsNamed(method.ContainingType, "Widget"),
+            _ => false,
+        };
+        if (!isDefault || !IsWritten(reference) || OwnInConstructor(instance!, context.ContainingSymbol))
+        {
+            return;
+        }
+
+        context.ReportDiagnostic(Diagnostic.Create(Rules.DefaultSet, reference.Syntax.GetLocation(), reference.Syntax.ToString()));
+    }
+
+    // Whether a default object is the one a declared class's constructor is making: its Default, or Default<T>() of the class or one under it.
+    private static bool OwnInConstructor(IOperation instance, ISymbol container)
+    {
+        if (container is not IMethodSymbol { MethodKind: MethodKind.Constructor, ContainingType: { } type } || !IsDeclared(type))
+        {
+            return false;
+        }
+
+        if (instance is IPropertyReferenceOperation { Instance: IInstanceReferenceOperation })
+        {
+            return true;
+        }
+
+        for (var at = (instance as IInvocationOperation)?.TargetMethod.TypeArguments[0] as INamedTypeSymbol; at != null; at = at.BaseType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(at.OriginalDefinition, type.OriginalDefinition))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // MW0037: Item.Default<Guard>() for a unit class, or Default<T>() of a destructable class through any type.

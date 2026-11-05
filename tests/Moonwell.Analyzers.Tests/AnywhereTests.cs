@@ -210,4 +210,39 @@ public class AnywhereTests
             "MW0032: System.Enum.Parse(typeof(System.DayOfWeek), \"Monday\")",
         }, found);
     }
+
+    [Fact]
+    public void handles_joined_as_a_list_or_an_array_are_mw0002()
+    {
+        var found = MapCode.Check("""
+            var list = new List<unit>();
+            var units = new unit[1];
+            var names = new List<string>();
+            var a = string.Join(",", list);
+            var b = string.Join(",", (object[])units);
+            var c = string.Concat(units.AsEnumerable());
+            var d = new System.Text.StringBuilder().AppendJoin(",", list);
+            var e = string.Join(",", names);
+            Local.For(p, () => p.Print(string.Join(",", list)));
+            """);
+
+        Assert.Equal(new[] { "MW0002: list", "MW0002: units", "MW0002: units.AsEnumerable()", "MW0002: list" }, found);
+    }
+
+    [Fact]
+    public void the_keys_of_a_dictionary_interface_kept_in_a_variable_are_mw0004()
+    {
+        var found = MapCode.Check("""
+            IDictionary<int, int> map = new SortedDictionary<int, int>();
+            var keys = map.Keys;
+            ICollection<int> values;
+            values = map.Values;
+            foreach (var key in keys) { }
+            var dictionary = new Dictionary<int, int>();
+            var own = dictionary.Keys;
+            foreach (var key in own) { }
+            """);
+
+        Assert.Equal(new[] { "MW0004: map.Keys", "MW0004: map.Values", "MW0004: own" }, found);
+    }
 }
