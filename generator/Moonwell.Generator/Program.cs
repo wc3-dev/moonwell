@@ -49,8 +49,22 @@ if (command == "natives")
     return Natives(InstallScripts(files), root, files.Build.Version);
 }
 
-using var tables = GameTables.OpenInstall(files);
-return Objects(tables, root, files.Build.Version);
+// The API is named from the English text whatever language the install has, so that every contributor generates the same one.
+GameTables tables;
+try
+{
+    tables = GameTables.OpenInstall(files, "enUS");
+}
+catch (FileNotFoundException missing)
+{
+    Console.Error.WriteLine(missing.Message + ". The objects are named from the English text: add English in the game's language settings.");
+    return 1;
+}
+
+using (tables)
+{
+    return Objects(tables, root, files.Build.Version);
+}
 
 // The scripts by name, from a folder.
 static Func<string, string> ScriptsFolder(string folder)

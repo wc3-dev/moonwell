@@ -62,6 +62,26 @@ namespace Moonwell.Testing
             Expect.Equal(1, world.LevelEvents, "the game's level events");
         }
 
+        /// <summary>A level-up reaction that lowers the hero in a jump of several levels ends the jump: the levels taken away run nothing, and the hero's next real level-up runs its level once.</summary>
+        public static void LoweredInJump(FakeWorld world)
+        {
+            Arena();
+            var hero = NewHero(world);
+            LevelHero.RaiseAt = 2;
+            LevelHero.RaiseTo = 2;
+            TestLog.Lines.Clear();
+
+            world.LevelHero(hero.Handle, 4, true);
+
+            ExpectLog(new string[] { "hero level 2 reads 4", "comp level 2", "game level 2", "p0 level 2" }, "the jump");
+            LevelHero.RaiseAt = 0;
+            TestLog.Lines.Clear();
+
+            world.LevelHero(hero.Handle, 3, true);
+
+            ExpectLog(new string[] { "hero level 3 reads 3", "comp level 3", "game level 3", "p0 level 3" }, "the next level-up");
+        }
+
         /// <summary>Experience that gives several levels fires one level event, and the reactions run once for each level gained.</summary>
         public static void LevelUpFromExperience(FakeWorld world)
         {

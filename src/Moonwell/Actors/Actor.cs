@@ -22,7 +22,7 @@ namespace Moonwell
         /// <summary>Whether the list holds a null left by a removal that is not compacted yet.</summary>
         internal bool holes;
 
-        /// <summary>How many components are on this actor.</summary>
+        /// <summary>How many components are on this actor; one whose OnRemoved is running is no longer counted.</summary>
         [LocalSafe]
         public int ComponentCount
         {
@@ -31,7 +31,7 @@ namespace Moonwell
                 var count = 0;
                 for (var i = 0; i < components.Count; i++)
                 {
-                    if (components[i] != null)
+                    if (components[i] != null && !components[i]!.ending)
                     {
                         count++;
                     }
@@ -41,13 +41,13 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The first component of a class in add order, or null when there is none.</summary>
+        /// <summary>The first component of a class in add order, or null when there is none; one whose OnRemoved is running is no longer found.</summary>
         [LocalSafe]
         public T? Get<T>() where T : Component
         {
             for (var i = 0; i < components.Count; i++)
             {
-                if (components[i] is T found)
+                if (components[i] is T found && !found.ending)
                 {
                     return found;
                 }
@@ -56,14 +56,14 @@ namespace Moonwell
             return null;
         }
 
-        /// <summary>Every component of a class, in add order.</summary>
+        /// <summary>Every component of a class, in add order; one whose OnRemoved is running is no longer found.</summary>
         [LocalSafe]
         public List<T> GetAll<T>() where T : Component
         {
             var found = new List<T>();
             for (var i = 0; i < components.Count; i++)
             {
-                if (components[i] is T match)
+                if (components[i] is T match && !match.ending)
                 {
                     found.Add(match);
                 }

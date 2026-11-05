@@ -223,7 +223,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Whether a unit is a dummy: one of the pool's, or one of the dummy's type, as the game's entry comes inside CreateUnit, before the pool knows it.</summary>
+        /// <summary>Whether a unit is a dummy: one of the pool's, or one of the dummy's type, for an event before the pool knows it.</summary>
         internal static bool IsDummy(unit handle)
         {
             return byHandle.ContainsKey(handle) || (ObjectTypes.DummyTypeId != 0 && Runtime.World.UnitTypeId(handle) == ObjectTypes.DummyTypeId);

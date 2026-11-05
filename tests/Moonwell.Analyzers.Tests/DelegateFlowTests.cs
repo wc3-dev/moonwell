@@ -196,4 +196,190 @@ public class DelegateFlowTests
 
         Assert.Equal(new[] { "MW0039: Pick()", "MW0001: Kill()" }, found);
     }
+
+    [Fact]
+    public void a_parameter_a_member_or_a_local_function_captures_is_followed_to_its_callers()
+    {
+        var found = MapCode.Check(
+            """
+            var n = new Notifier(() => Natives.KillUnit(u));
+            Local.For(p, () => n.Show());
+            ShowTo(p, () => Natives.KillUnit(u));
+            """,
+            """
+                public sealed class Notifier(Action show) { public void Show() => show(); }
+                private static void ShowTo(Player w, Action a) { void Inner() => a(); Local.For(w, Inner); }
+            """);
+
+        Assert.Equal(new[] { "MW0001: n.Show()", "MW0001: Inner" }, found);
+    }
+
+    [Fact]
+    public void a_property_an_indexer_or_a_local_function_returning_a_delegate_the_analyzer_cannot_follow_is_mw0039()
+    {
+        var found = MapCode.Check(
+            """
+            var handlers = new List<Action>();
+            Action Pick() => handlers[0];
+            Local.For(p, Pick());
+            Local.For(p, Current);
+            Local.For(p, new Bag()[0]);
+            Local.For(p, Made);
+            """,
+            """
+                private static List<Action> Handlers = new List<Action>();
+                private static Action Current => Handlers[0];
+                private static Action Made => () => { };
+                public sealed class Bag { public Action this[int i] => Handlers[i]; }
+            """);
+
+        Assert.Equal(new[] { "MW0039: Pick()", "MW0039: Current", "MW0039: new Bag()[0]" }, found);
+    }
+
+    [Fact]
+    public void a_delegate_written_through_a_ref_is_not_seen()
+    {
+        var found = MapCode.Check(
+            """
+            ref Action r = ref Cb;
+            r = () => Natives.KillUnit(u);
+            Local.For(p, () => Cb());
+            Action cb = () => { };
+            ref Action s = ref cb;
+            s = () => Natives.KillUnit(u);
+            Local.For(p, cb);
+            """,
+            """
+                private static Action Cb = () => { };
+            """);
+
+        Assert.Equal(new[] { "MW0039: Cb()", "MW0039: cb" }, found);
+    }
+
+    [Fact]
+    public void a_partial_methods_parameters_are_its_callers()
+    {
+        var found = MapCode.Check(
+            """
+            Hud.Run(p, () => Natives.KillUnit(u));
+            Hud.Keep(() => Natives.KillUnit(u));
+            Local.For(p, () => Hud.Stored());
+            """,
+            """
+            }
+
+            public static partial class Hud
+            {
+                public static Action Stored = () => { };
+                public static partial void Run(Player p, Action a);
+                public static partial void Keep(Action a);
+            }
+
+            public static partial class Hud
+            {
+                public static partial void Run(Player p, Action a) { Local.For(p, a); }
+                public static partial void Keep(Action a) { Stored = a; }
+            """);
+
+        Assert.Equal(new[] { "MW0001: Natives.KillUnit(u)", "MW0001: Hud.Stored" }, found);
+    }
+
+    [Fact]
+    public void an_interface_or_abstract_delegate_property_has_the_values_of_those_over_it()
+    {
+        var found = MapCode.Check(
+            """
+            var h = new Has();
+            h.Cb = () => Natives.KillUnit(u);
+            IHas i = h;
+            Local.For(p, () => i.Cb());
+            Base b = new Derived();
+            Local.For(p, () => b.Cb());
+            """,
+            """
+                public interface IHas { Action Cb { get; } }
+                public sealed class Has : IHas { public Action Cb { get; set; } = () => { }; }
+                public abstract class Base { public abstract Action Cb { get; } }
+                public sealed class Derived : Base { public override Action Cb { get; } = () => Natives.KillUnit(Natives.GetTriggerUnit()); }
+            """);
+
+        Assert.Equal(new[] { "MW0001: i.Cb", "MW0001: b.Cb" }, found);
+    }
+
+    [Fact]
+    public void a_delegate_kept_through_a_conditional_call_is_followed()
+    {
+        var found = MapCode.Check(
+            """
+            Keeper? k = new Keeper();
+            k?.Keep(() => Natives.KillUnit(u));
+            Local.For(p, () => Keeper.Stored());
+            """,
+            """
+                public sealed class Keeper { public static Action Stored = () => { }; public void Keep(Action a) { Stored = a; } }
+            """);
+
+        Assert.Equal(new[] { "MW0001: Keeper.Stored" }, found);
+    }
+
+    [Fact]
+    public void a_parameter_given_to_local_for_through_a_condition_or_a_coalesce_checks_its_callers_lambdas()
+    {
+        var found = MapCode.Check(
+            """
+            Run(p, () => Natives.KillUnit(u), true);
+            Run2(p, () => Natives.KillUnit(u));
+            Local.For(p, true ? () => Natives.KillUnit(u) : Noop);
+            """,
+            """
+                private static void Noop() { }
+                private static void Run(Player who, Action a, bool flag) => Local.For(who, flag ? a : Noop);
+                private static void Run2(Player who, Action? a) => Local.For(who, a ?? Noop);
+            """);
+
+        Assert.Equal(new[] { "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)" }, found);
+    }
+
+    [Fact]
+    public void a_delegate_read_in_an_initializer_or_given_with_a_coalescing_assignment_is_followed()
+    {
+        var found = MapCode.Check(
+            """
+            Local.For(p, () => B());
+            Local.For(p, () => C());
+            Action? d = null;
+            d ??= A;
+            Local.For(p, d);
+            """,
+            """
+                private static Action A = () => Natives.KillUnit(Natives.GetTriggerUnit());
+                private static Action B = A;
+                private static Action C { get; } = A;
+            """);
+
+        Assert.Equal(new[] { "MW0001: B", "MW0001: C", "MW0001: d" }, found);
+    }
+
+    [Fact]
+    public void a_setters_or_adders_value_given_to_local_for_checks_what_is_assigned()
+    {
+        var found = MapCode.Check(
+            """
+            var hud = new Hud(p);
+            hud.Show = () => Natives.KillUnit(u);
+            hud.Shown += () => Natives.KillUnit(u);
+            var actions = new List<Action>();
+            hud.Show = actions[0];
+            hud.Show = () => p.Print("hi");
+            """,
+            """
+                public sealed class Hud(Player P)
+                {
+                    public Action Show { set => Local.For(P, value); }
+                    public event Action Shown { add => Local.For(P, value); remove { } }
+                }
+            """);
+
+        Assert.Equal(new[] { "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)", "MW0039: actions[0]" }, found);
+    }
 }

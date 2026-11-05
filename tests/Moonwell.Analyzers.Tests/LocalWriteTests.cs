@@ -829,4 +829,61 @@ public class LocalWriteTests
         Assert.Equal(new[] { "MW0048: r", "MW0048: r", "MW0048: v.X", "MW0048: l", "MW0048: c", "MW0048: o" }, found);
         Assert.StartsWith("'Code.Score' is changed", MapCode.Message("Local.For(p, () => { ref int r = ref Score; r++; });", "public static int Score;"));
     }
+
+    [Fact]
+    public void a_constructor_writing_what_its_field_points_to_writes_it_unless_it_made_it()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () => new Marker(Kept));
+            Local.For(p, () => new Owner());
+            """, """
+            public static Tally Kept = new Tally();
+            public sealed class Tally { public int Count; }
+            public sealed class Marker { private readonly Tally tally; public Marker(Tally t) { tally = t; tally.Count++; } }
+            public sealed class Owner { private readonly Tally tally; public Owner() { tally = new Tally(); tally.Count++; } }
+            """);
+
+        Assert.Equal(new[] { "MW0048: new Marker(Kept)" }, found);
+    }
+
+    [Fact]
+    public void an_element_set_from_the_end_is_written()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Scores[^1] = 1;
+                Cells[^1] = 1;
+                var mine = new List<int> { 1 };
+                mine[^1] = 2;
+            });
+            """, Shared);
+
+        Assert.Equal(new[] { "MW0048: Scores[^1]", "MW0048: Cells[^1]" }, found);
+    }
+
+    [Fact]
+    public void the_arrays_a_call_fills_are_written()
+    {
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                Keys.TryAdd(1, 1);
+                Waiting.EnqueueRange(new[] { (1, 1) });
+                Array.Sort(Cells, Order);
+                Scores.CopyTo(Cells);
+                Rng.Shuffle(Cells);
+                var mine = new int[4];
+                Scores.CopyTo(mine);
+            });
+            """, Shared + """
+            public static PriorityQueue<int, int> Waiting = new PriorityQueue<int, int>();
+            public static int[] Order = new int[4];
+            """);
+
+        Assert.Equal(new[]
+        {
+            "MW0048: Keys", "MW0048: Waiting", "MW0048: Cells", "MW0048: Order", "MW0048: Cells", "MW0048: Rng", "MW0048: Cells",
+        }, found);
+    }
 }

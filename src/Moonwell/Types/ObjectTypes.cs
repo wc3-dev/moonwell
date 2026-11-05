@@ -123,6 +123,7 @@ namespace Moonwell
         /// Runs a register step, then the constructors its registrations run to find the events their classes need: every maker is
         /// registered before any constructor runs, so that a constructor that reads the default object of a class registered after
         /// its own (<c>Unit.Default&lt;Lancer&gt;()</c>) gets that class's, made by its maker. Runtime.Install runs the map's registry with it.
+        /// A register step or a constructor that throws is reported, and the rest still run.
         /// </summary>
         internal static void Registering(Action register)
         {
@@ -132,6 +133,10 @@ namespace Moonwell
             {
                 register();
             }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Setup", error);
+            }
             finally
             {
                 waiting = null;
@@ -139,7 +144,7 @@ namespace Moonwell
 
             for (var i = 0; i < listens.Count; i++)
             {
-                listens[i]();
+                RunListen(listens[i]);
             }
         }
 
@@ -158,7 +163,20 @@ namespace Moonwell
             }
             else
             {
+                RunListen(listen);
+            }
+        }
+
+        /// <summary>Runs a listen; a constructor that throws is reported, and its class listens for nothing.</summary>
+        private static void RunListen(Action listen)
+        {
+            try
+            {
                 listen();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Setup", error);
             }
         }
 

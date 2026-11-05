@@ -59,7 +59,7 @@ namespace Moonwell
             Running.Add(hit);
             try
             {
-                Inbound.Dispatch(hit);
+                Inbound.Dispatch(hit, hit.Original == 0.0f && !hit.IsCode);
             }
             finally
             {

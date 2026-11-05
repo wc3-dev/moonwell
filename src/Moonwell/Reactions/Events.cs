@@ -86,6 +86,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether the world delivers a game event.</summary>
+        internal static bool Listens(GameEvent gameEvent)
+        {
+            return listening[(int)gameEvent];
+        }
+
         /// <summary>Whether a reaction bit has been needed.</summary>
         internal static bool Wants(int bit)
         {

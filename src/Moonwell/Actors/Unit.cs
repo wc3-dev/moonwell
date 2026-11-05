@@ -114,7 +114,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     owner = value.Handle;
                     Runtime.World.SetOwner(Handle, value.Handle);
@@ -174,6 +174,12 @@ namespace Moonwell
             return Runtime.World.UnitTypeId(Handle) == 0;
         }
 
+        /// <summary>Whether the unit is still in the game for a setter or an action: neither gone nor removed by the game, before the sweep finds it.</summary>
+        internal bool InGame()
+        {
+            return !IsGone && !RemovedByGame();
+        }
+
         /// <summary>The unit's life; a value above the most life is clamped to it, and setting it to 0.405 or less kills the unit (0.406 does not) (the death event runs inside the call, with life 0). Once the game has removed the unit, the last life read or set, and setting does nothing.</summary>
         [LocalSafe]
         public float Life
@@ -201,7 +207,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     // The game clamps to the most life, so that is what a removed unit gives back.
                     var most = MaxLife;
@@ -249,7 +255,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     // The game keeps the whole number, and lowers the life to it.
                     lastMaxLife = (int)value;
@@ -301,7 +307,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     // The game clamps to the most mana (0 for a unit without mana), so that is what a removed unit gives back.
                     var most = MaxMana;
@@ -354,7 +360,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     // The game keeps the whole number, and lowers the mana to it.
                     lastMaxMana = (int)value;
@@ -423,7 +429,7 @@ namespace Moonwell
         /// <summary>Moves the unit to a place through the game's pathing (SetUnitPosition): the game finds a free spot, and the unit's order ends. Does nothing once the unit is gone.</summary>
         public void MoveTo(float x, float y)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 Runtime.World.MoveUnit(Handle, x, y);
             }
@@ -432,7 +438,7 @@ namespace Moonwell
         /// <summary>Puts the unit at a place with no pathing and no bounds (SetUnitX and SetUnitY): it may stand where it could not walk, or past the edge of the world, and its order goes on. Keep it inside the map yourself. Does nothing once the unit is gone.</summary>
         public void PlaceAt(float x, float y)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 Runtime.World.PlaceUnit(Handle, x, y);
             }
@@ -465,7 +471,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     lastFacing = value;
                     Runtime.World.TurnUnit(Handle, value);
@@ -476,7 +482,7 @@ namespace Moonwell
         /// <summary>Turns the unit to a facing in degrees at once (BlzSetUnitFacingEx), so a read just after gives it. A unit that is walking turns back toward where it walks, and its order goes on. Does nothing once the unit is gone.</summary>
         public void FaceNow(float degrees)
         {
-            if (!IsGone)
+            if (InGame())
             {
                 Runtime.World.FaceUnitNow(Handle, degrees);
             }
@@ -554,7 +560,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastName = value;
                     Runtime.World.RenameUnit(Handle, value);
@@ -569,13 +575,13 @@ namespace Moonwell
         /// <summary>Kills the unit through the game (KillUnit): the game delivers the death as for any other, with no killer, so OnDeath runs once, inside this call. Does nothing once the unit is gone.</summary>
         public void Kill()
         {
-            if (!IsGone)
+            if (InGame())
             {
                 Runtime.World.SlayUnit(Handle);
 
                 // The game leaves the life 0 (seen), so a unit that is killed and then removed reads 0, not the life it had;
-                // read it, as a hero may have been revived inside the death event.
-                lastLife = Life;
+                // read it, as a hero may have been revived inside the death event, unless OnDeath removed the unit.
+                lastLife = IsGone ? 0.0f : Life;
             }
         }
 
@@ -606,7 +612,7 @@ namespace Moonwell
 
             set
             {
-                if (!IsGone)
+                if (InGame())
                 {
                     lastPaused = value;
                     Runtime.World.SetPaused(Handle, value);
@@ -653,7 +659,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastScale = value;
                     scaleKnown = true;
@@ -677,10 +683,15 @@ namespace Moonwell
         /// <summary>Tints the unit's model (SetUnitVertexColor); each value is clamped to 0-255, and an alpha of 0 makes the unit and its shadow invisible, though its selection circle and health bar still show. The game keeps no tint to read back. Does nothing once the unit is gone.</summary>
         public void Tint(int red, int green, int blue, int alpha = 255)
         {
-            if (!IsGone)
+            if (InGame())
             {
-                Runtime.World.TintUnit(Handle, red, green, blue, alpha);
+                Runtime.World.TintUnit(Handle, Clamp(red), Clamp(green), Clamp(blue), Clamp(alpha));
             }
+        }
+
+        private static int Clamp(int value)
+        {
+            return value < 0 ? 0 : value > 255 ? 255 : value;
         }
 
         /// <summary>Tints the unit's model in a colour, its alpha included; as Tint(red, green, blue, alpha).</summary>
@@ -727,7 +738,7 @@ namespace Moonwell
                     return;
                 }
 
-                if (!IsGone)
+                if (InGame())
                 {
                     lastFlyHeight = value;
                     if (!flyReady)
@@ -1006,6 +1017,12 @@ namespace Moonwell
                 return null;
             }
 
+            var known = KnownUnits.Find(handle);
+            if (known != null)
+            {
+                return known.RemovedByGame() ? null : known;
+            }
+
             return KnownUnits.TakeIn(handle, null, false);
         }
 
@@ -1021,7 +1038,17 @@ namespace Moonwell
                 throw new MoonwellException("Unit.Create: the game made no unit of type " + Names.IdText(typeId));
             }
 
-            var made = KnownUnits.TakeIn(handle, scope, true)!;
+            Unit made;
+            try
+            {
+                made = KnownUnits.TakeIn(handle, scope, true)!;
+            }
+            catch
+            {
+                // A class whose constructor throws leaves no unit in the game that nothing holds.
+                Runtime.World.DeleteUnit(handle);
+                throw;
+            }
             if (made.Parent == null)
             {
                 scope.Adopt(made);
@@ -1146,6 +1173,12 @@ namespace Moonwell
             {
                 // Add reports it and ends the given buff, adding nothing.
                 return Add(buff, heldBy);
+            }
+
+            // An ended buff is reported and left as it is, also where it would refresh one on the unit.
+            if (buff.HasEnded && Refuses(buff, "Apply"))
+            {
+                return buff;
             }
 
             var existing = StackedWith(buff, source);

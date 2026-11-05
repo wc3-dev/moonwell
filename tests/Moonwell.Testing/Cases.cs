@@ -71,6 +71,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dummy.no-cast-reactions", Run = DummyCases.NoCastReactions });
             list.Add(new Case { Name = "dummy.hit-credit", Run = DummyCases.HitCredit });
             list.Add(new Case { Name = "dummy.kill-credit", Run = DummyCases.KillCredit });
+            list.Add(new Case { Name = "dummy.kill-of-itself", Run = DummyCases.KillOfItself });
             list.Add(new Case { Name = "dummy.player-credit", Run = DummyCases.PlayerCredit });
             list.Add(new Case { Name = "dummy.spell-buff", Run = DummyCases.SpellBuff });
             list.Add(new Case { Name = "dummy.caster-gone-between-hits", Run = DummyCases.CasterGoneBetweenHits });
@@ -375,6 +376,29 @@ namespace Moonwell.Testing
         private static void AddLifecycle(List<Case> list)
         {
             list.Add(new Case { Name = "lifecycle.units-the-game-makes-are-met", Run = LifecycleCases.UnitsTheGameMakesAreMet });
+            list.Add(new Case { Name = "reentry.drop-inside-pick-up", Run = ReentryCases.DropInsidePickUp });
+            list.Add(new Case { Name = "reentry.removed-inside-pick-up", Run = ReentryCases.RemovedInsidePickUp });
+            list.Add(new Case { Name = "reentry.drop-while-removed", Run = ReentryCases.DropWhileRemoved });
+            list.Add(new Case { Name = "reentry.removed-inside-drop", Run = ReentryCases.RemovedInsideDrop });
+            list.Add(new Case { Name = "reentry.killed-while-removed", Run = ReentryCases.KilledWhileRemoved });
+            list.Add(new Case { Name = "reentry.hurt-while-removed", Run = ReentryCases.HurtWhileRemoved });
+            list.Add(new Case { Name = "reentry.removed-before-player-hears", Run = ReentryCases.RemovedBeforePlayerHears });
+            list.Add(new Case { Name = "reentry.throwing-unit-constructor", Run = ReentryCases.ThrowingUnitConstructor });
+            list.Add(new Case { Name = "reentry.throwing-item-constructor", Run = ReentryCases.ThrowingItemConstructor });
+            list.Add(new Case { Name = "reentry.throwing-class-in-register-step", Run = ReentryCases.ThrowingClassInRegisterStep });
+            list.Add(new Case { Name = "reentry.item-setters-after-game-removal", Run = ReentryCases.ItemSettersAfterGameRemoval });
+            list.Add(new Case { Name = "reentry.unit-setters-after-game-removal", Run = ReentryCases.UnitSettersAfterGameRemoval });
+            list.Add(new Case { Name = "reentry.killed-then-removed-reads-no-life", Run = ReentryCases.KilledThenRemovedReadsNoLife });
+            list.Add(new Case { Name = "reentry.tint-clamps", Run = ReentryCases.TintClamps });
+            list.Add(new Case { Name = "reentry.of-game-removed-unit", Run = ReentryCases.OfGameRemovedUnit });
+            list.Add(new Case { Name = "reentry.progress-of-removed-hero", Run = ReentryCases.ProgressOfRemovedHero });
+            list.Add(new Case { Name = "reentry.damage-on-immune-deals-nothing", Run = ReentryCases.DamageOnImmuneDealsNothing });
+            list.Add(new Case { Name = "spell-buffs.package-code-hit-of-zero-gives-nothing", Run = SpellBuffCases.PackageCodeHitOfZeroGivesNothing });
+            list.Add(new Case { Name = "buff-reentry.strongest-renewed-in-expire", Run = BuffReentryCases.StrongestRenewedInExpire });
+            list.Add(new Case { Name = "buff-reentry.reapplied-by-death-stays", Run = BuffReentryCases.ReappliedByDeathStays });
+            list.Add(new Case { Name = "buff-reentry.cleanse-inside-removal", Run = BuffReentryCases.CleanseInsideRemoval });
+            list.Add(new Case { Name = "buff-reentry.applied-inside-removal", Run = BuffReentryCases.AppliedInsideRemoval });
+            list.Add(new Case { Name = "buff-reentry.ended-buff-apply-refused", Run = BuffReentryCases.EndedBuffApplyRefused });
             list.Add(new Case { Name = "whole-game.game-end-refused", Run = WholeGameCases.GameEndRefused });
             list.Add(new Case { Name = "whole-game.player-end-refused", Run = WholeGameCases.PlayerEndRefused });
             list.Add(new Case { Name = "whole-game.sweep-after-removal", Run = WholeGameCases.SweepAfterRemoval });
@@ -1468,6 +1492,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.shared-without-handle", Run = HeroCases.SharedWithoutHandle });
             list.Add(new Case { Name = "heroes.level-up-order", Run = HeroReactionCases.LevelUpOrder });
             list.Add(new Case { Name = "heroes.level-jump", Run = HeroReactionCases.LevelJump });
+            list.Add(new Case { Name = "heroes.lowered-in-jump", Run = HeroReactionCases.LoweredInJump });
             list.Add(new Case { Name = "heroes.level-up-from-experience", Run = HeroReactionCases.LevelUpFromExperience });
             list.Add(new Case { Name = "heroes.level-up-through-set-level", Run = HeroReactionCases.LevelUpThroughSetLevel });
             list.Add(new Case { Name = "heroes.level-up-from-taken-in", Run = HeroReactionCases.LevelUpFromTakenIn });

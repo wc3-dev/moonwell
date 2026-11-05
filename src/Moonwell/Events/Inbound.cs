@@ -36,7 +36,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; a new carry starts, unless the item went into the 3.0 bag (decision 166); then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components.</summary>
+        /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; a new carry starts, unless the item went into the 3.0 bag (decision 166); then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components. A reaction that drops or removes the item ends the pick-up: the reactions after it run nothing. An item or unit that is ending reacts to none.</summary>
         internal static void PickedUp(unit u, item i)
         {
             var carrierPlayer = Runtime.World.OwnerOf(u);
@@ -57,7 +57,7 @@ namespace Moonwell
 
             var by = Unit.Of(u);
             var picked = Item.Of(i);
-            if (by == null || picked == null)
+            if (by == null || picked == null || by.ending || picked.ending)
             {
                 return;
             }
@@ -76,8 +76,9 @@ namespace Moonwell
                 picked.carry = carry;
             }
 
-            ItemPickedUp(picked, by);
-            UnitItemPickedUp(by, picked);
+            var turn = ++picked.moves;
+            ItemPickedUp(picked, by, turn);
+            UnitItemPickedUp(by, picked, turn);
         }
 
         /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the carry the drop is about ends. The game fires a drop for a move between slots too, and takes a dropped item out of its slot only after the event, so a carry whose unit still has the item in a slot is looked at again a moment later, and ends only if the unit has let go of it by then; Unit.Drop ends it inside its call.</summary>
@@ -88,17 +89,23 @@ namespace Moonwell
                 return;
             }
 
+            // One that is ending reacts to none: the game fires the drop of a carried item inside RemoveItem.
             var by = Unit.Of(u);
             var dropped = Item.Of(i);
-            if (by == null || dropped == null)
+            if (by == null || dropped == null || dropped.ending)
             {
                 return;
             }
 
             // Read before the reactions: one may give the item to another unit, whose carry starts inside them.
             var carry = dropped.carry;
+            dropped.moves++;
             ItemDropped(dropped, by);
-            UnitItemDropped(by, dropped);
+            if (!by.ending)
+            {
+                UnitItemDropped(by, dropped);
+            }
+
             if (carry == null || carry.HasEnded)
             {
                 return;
@@ -165,6 +172,11 @@ namespace Moonwell
         /// <summary>A unit takes damage: the source's type and components deal it, the target's take it, then the map's and the players' reactions; returns the amount after them. A dummy's damage is the unit it casts for's, or no one's for a player's cast (decisions 168, 172).</summary>
         internal static float Damaged(unit target, unit? source, float amount, bool isAttack)
         {
+            if (dealing != null && dealing.Target == target && dealing.Source == source)
+            {
+                dealing.Fired = true;
+            }
+
             var dummy = source != null && Dummies.IsDummy(source) ? source : null;
             Unit? from = dummy != null ? Dummies.CastFor(dummy) : null;
             var knownSource = dummy != null ? from != null : source != null && KnownUnits.Find(source) != null;
@@ -173,8 +185,9 @@ namespace Moonwell
                 return amount;
             }
 
+            // One that is ending reacts to none: it is leaving, and its OnLeave has run.
             var hit = Unit.Of(target);
-            if (hit == null)
+            if (hit == null || hit.ending)
             {
                 return amount;
             }
@@ -194,11 +207,11 @@ namespace Moonwell
                 damage.Tag = deal.Tag;
             }
 
-            Dispatch(damage);
+            Dispatch(damage, amount == 0.0f && deal == null);
             return damage.Amount;
         }
 
-        /// <summary>Deals damage from code through the world, and returns the damage the reactions saw; one made here when none ran, null when the game dealt nothing.</summary>
+        /// <summary>Deals damage from code through the world, and returns the damage the reactions saw; one made here when the runtime does not listen for damage, null when the game dealt nothing.</summary>
         internal static Damage? Deal(Unit source, Unit target, float amount, DamageKind kind, AttackType attackType, bool isAttack, bool ranged, WeaponSound sound, object? tag)
         {
             // The game answers true for a dead target, though it deals nothing and fires no event (seen 10-31).
@@ -216,7 +229,8 @@ namespace Moonwell
                 dealing = previous;
             }
 
-            if (!dealt || !alive)
+            // Spell immunity stops a hit before its damage event, though the game answers true (seen 10-31).
+            if (!dealt || !alive || (!deal.Fired && Events.Listens(Hosting.GameEvent.Damage)))
             {
                 return null;
             }
@@ -246,16 +260,19 @@ namespace Moonwell
             internal unit Target { get; }
 
             internal Damage? Damage { get; set; }
+
+            /// <summary>Whether the game's damage event for it came.</summary>
+            internal bool Fired { get; set; }
         }
 
-        /// <summary>Runs a damage's reactions: the watch checks the target first (decision 163), then the source's type and components deal it, the target's take it, then the map's and the players' reactions; a damage package calls it with its own kind of damage.</summary>
-        internal static void Dispatch(Damage damage)
+        /// <summary>Runs a damage's reactions: the watch checks the target first (decision 163), then the source's type and components deal it, the target's take it, then the map's and the players' reactions; a damage package calls it with its own kind of damage. gameHitOfZero: the game started the hit, with 0, which is how a spell gives its buff again (seen 11-03); a hit from code or one a reaction set to 0 gives none.</summary>
+        internal static void Dispatch(Damage damage, bool gameHitOfZero)
         {
             var hit = damage.Target;
             var from = damage.Source;
 
-            // Only a hit of 0 the game starts gives a spell's buff (seen 11-03); any hit checks for one put on just before.
-            SpellBuffs.Hit(hit, from, damage.Dummy, damage.Amount == 0.0f && dealing == null);
+            // Any hit checks for a spell's buff put on just before.
+            SpellBuffs.Hit(hit, from, damage.Dummy, gameHitOfZero);
             var hitSlot = hit.Owner.Slot;
             var fromSlot = from == null ? -1 : from.Owner.Slot;
             if (from != null)
@@ -293,17 +310,25 @@ namespace Moonwell
                 return;
             }
 
+            // One that is ending reacts to none: it is leaving, not dying, and its OnLeave has run.
             var dead = Unit.Of(dying);
-            if (dead == null)
+            if (dead == null || dead.ending)
             {
                 return;
             }
 
             // The buffs the death ends are those on the unit now, which see it; one its reactions apply stays.
             var buffs = dead.GetAll<Buff>();
+            var applied = Buff.AppliesOf(buffs);
             if (!byDummy)
             {
                 slayer = slain == null ? null : Unit.Of(slain);
+            }
+
+            // A dummy's cast for the dying unit itself is its own damage, which kills with no killer.
+            if (slayer == dead)
+            {
+                slayer = null;
             }
 
             var deadSlot = dead.Owner.Slot;
@@ -330,7 +355,7 @@ namespace Moonwell
                 }
             }
 
-            Buff.EndOnDeath(buffs);
+            Buff.EndOnDeath(buffs, applied);
         }
 
         /// <summary>A unit's spell takes effect: its previous cast ends, the ability and the caster see the new cast, then the map's and the caster's player's reactions run. A dummy's cast runs none (decision 171); only the spell-buff watch sees it, as the cast of the unit it casts for.</summary>
@@ -399,8 +424,14 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Runs OnPickedUp on an item, then on its components, in add order.</summary>
-        private static void ItemPickedUp(Item item, Unit by)
+        /// <summary>Whether a pick-up is over: the item was dropped or picked up again since (its turn moved on), or it is ending.</summary>
+        private static bool PickUpOver(Item item, int turn)
+        {
+            return item.moves != turn || item.ending || item.HasEnded;
+        }
+
+        /// <summary>Runs OnPickedUp on an item, then on its components, in add order, until a reaction drops or removes the item.</summary>
+        private static void ItemPickedUp(Item item, Unit by, int turn)
         {
             if (!item.HasEnded && (item.Mask & Hook.OnPickedUp) != 0)
             {
@@ -415,7 +446,7 @@ namespace Moonwell
             }
 
             var count = item.BeginDispatch();
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count && !PickUpOver(item, turn); i++)
             {
                 var component = item.ComponentAt(i) as ItemComponent;
                 if (component == null || component.HasEnded || (component.Mask & Hook.OnPickedUp) == 0)
@@ -436,10 +467,15 @@ namespace Moonwell
             item.EndDispatch();
         }
 
-        /// <summary>Runs OnItemPickedUp on a unit, then on its components, in add order.</summary>
-        private static void UnitItemPickedUp(Unit unit, Item item)
+        /// <summary>Runs OnItemPickedUp on a unit, then on its components, in add order, until a reaction drops or removes the item, or ends the unit.</summary>
+        private static void UnitItemPickedUp(Unit unit, Item item, int turn)
         {
-            if (!unit.HasEnded && (unit.Mask & Hook.OnItemPickedUp) != 0)
+            if (PickUpOver(item, turn) || unit.ending || unit.HasEnded)
+            {
+                return;
+            }
+
+            if ((unit.Mask & Hook.OnItemPickedUp) != 0)
             {
                 try
                 {
@@ -452,7 +488,7 @@ namespace Moonwell
             }
 
             var count = unit.BeginDispatch();
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count && !PickUpOver(item, turn) && !unit.ending; i++)
             {
                 var component = unit.ComponentAt(i) as UnitComponent;
                 if (component == null || component.HasEnded || (component.Mask & Hook.OnItemPickedUp) == 0)
@@ -837,6 +873,9 @@ namespace Moonwell
                 {
                     break;
                 }
+
+                // A reaction that lowered the hero took the levels above away: they run nothing.
+                reached = Runtime.World.LevelOf(handle);
             }
         }
 
