@@ -13,8 +13,8 @@ namespace Moonwell.Build
         /// <summary>Whether the value is an enum, stored as an int.</summary>
         public bool IsEnum => Stored == "int" && Name != null;
 
-        /// <summary>The type as the record file names it: <c>int</c>, <c>part-list</c> and the like.</summary>
-        public string RecordName => List ? Stored + "-list" : Stored;
+        /// <summary>The type as the record file names it: <c>int</c>, <c>part-list:Map.Gear</c>, <c>int:Map.Kind</c> and the like.</summary>
+        public string RecordName => (List ? Stored + "-list" : Stored) + (Name == null ? string.Empty : ":" + Name);
     }
 
     /// <summary>A saved field or property: its C# name, its number and its type.</summary>
