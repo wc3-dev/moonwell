@@ -90,6 +90,9 @@ namespace Moonwell.Testing
         {
             Expect.Equal("|cffff0000a|cffffff00b|cffff0000c|r", "abc".Alternate(Color.Red, Color.Yellow), "red and yellow");
             Expect.Equal("|cffff0000a |cffffff00b|r", "a b".Alternate(Color.Red, Color.Yellow), "a space takes no turn");
+            Expect.Equal("|cffff0000a|cffffff00©|cffff0000b|r", "a©b".Alternate(Color.Red, Color.Yellow), "© is a letter");
+            Expect.Equal("|cffff0000Α|cffffff00Β|cffff0000Γ|r", "ΑΒΓ".Alternate(Color.Red, Color.Yellow), "Greek letters");
+            Expect.Equal("|cffff0000中|cffffff00文|r", "中文".Alternate(Color.Red, Color.Yellow), "Chinese letters");
         }
 
         /// <summary>Confetti gives the same text the same colours each time, with no random numbers.</summary>
@@ -244,6 +247,16 @@ namespace Moonwell.Testing
             Expect.Equal("00:00", Text.TimeOfDay(0.0f), "0");
             Expect.Equal("13:15", Text.TimeOfDay(13.25f), "13.25");
             Expect.Equal("23:59", Text.TimeOfDay(23.99f), "23.99");
+            Expect.Equal("06:12", Text.TimeOfDay(6.2f), "6.2");
+            Expect.Equal("12:42", Text.TimeOfDay(12.7f), "12.7");
+            Expect.Equal("18:18", Text.TimeOfDay(18.3f), "18.3");
+            Expect.Equal("06:06", Text.TimeOfDay(6.1f), "6.1");
+            for (var minute = 0; minute < 24 * 60; minute++)
+            {
+                var hours = minute / 60.0f;
+                var shown = Text.TimeOfDay(hours);
+                Expect.Equal((minute / 60).ToString("D2") + ":" + (minute % 60).ToString("D2"), shown, "minute " + minute);
+            }
         }
     }
 }

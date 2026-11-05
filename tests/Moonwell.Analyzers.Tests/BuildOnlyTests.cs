@@ -97,6 +97,25 @@ public class BuildOnlyTests
     }
 
     [Fact]
+    public void what_the_declared_classes_hide_is_an_error_through_a_standard_class_too()
+    {
+        // StandardUnit's Declare and DeclaredValue override Unit's, which carry the mark.
+        Assert.Equal(new[] { "MW0045: Declare(\"uhpm\", 10)", "MW0045: DeclaredValue<int>(\"uhpm\")" }, MapCode.CheckFile("""
+            namespace MyMap
+            {
+                public class Guard : Moonwell.Objects.StandardUnit
+                {
+                    public int Run()
+                    {
+                        Declare("uhpm", 10);
+                        return DeclaredValue<int>("uhpm");
+                    }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void the_code_the_build_writes_is_left_alone()
     {
         Assert.Empty(MapCode.CheckFile("""

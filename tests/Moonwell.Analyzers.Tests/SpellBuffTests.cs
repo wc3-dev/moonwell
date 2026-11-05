@@ -97,6 +97,66 @@ public class SpellBuffTests
     }
 
     [Fact]
+    public void a_listed_buff_setting_what_the_game_decides_in_a_base_class_with_another_assignment_or_in_a_deconstruction_is_rejected()
+    {
+        var found = MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                [Moonwell.Objects.ObjectId("A010")]
+                public sealed class FrostBolt : Moonwell.Objects.Human.Abilities.StormBolt
+                {
+                    public FrostBolt() { Buffs.Set<Frozen>(); Buffs.Add<Chilled>(); }
+                }
+
+                public abstract class FrostBase : Moonwell.Objects.Other.Buffs.StunnedBPSE
+                {
+                    protected FrostBase() { Duration = 5f; }
+                }
+
+                [Moonwell.Objects.ObjectId("B010", Carrier = "A011")]
+                public sealed class Frozen : FrostBase
+                {
+                }
+
+                [Moonwell.Objects.ObjectId("B011", Carrier = "A012")]
+                public sealed class Chilled : Moonwell.Objects.Other.Buffs.StunnedBPSE
+                {
+                    public Chilled() { (Duration, EndsOnDeath) = (3f, false); Duration += 2f; }
+                }
+
+                [Moonwell.Objects.ObjectId("B012", Carrier = "A013")]
+                public sealed class Applied : FrostBase
+                {
+                }
+            }
+            """);
+
+        Assert.Equal(new[] { "MW0051: Duration = 5f", "MW0051: Duration", "MW0051: EndsOnDeath", "MW0051: Duration += 2f" }, found);
+        Assert.Contains("'Frozen' is a buff a spell lists, so the game decides its Duration, which FrostBase sets for it: ", MapCode.MessagesOfFile("""
+            namespace Map
+            {
+                [Moonwell.Objects.ObjectId("A010")]
+                public sealed class FrostBolt : Moonwell.Objects.Human.Abilities.StormBolt
+                {
+                    public FrostBolt() { Buffs.Set<Frozen>(); }
+                }
+
+                public abstract class FrostBase : Moonwell.Objects.Other.Buffs.StunnedBPSE
+                {
+                    protected FrostBase() { Duration = 5f; }
+                }
+
+                [Moonwell.Objects.ObjectId("B010", Carrier = "A011")]
+                public sealed class Frozen : FrostBase
+                {
+                }
+            }
+            """)[0]);
+    }
+
+    [Fact]
     public void a_listed_buff_needs_a_constructor_with_no_parameters()
     {
         var found = MapCode.CheckFile("""

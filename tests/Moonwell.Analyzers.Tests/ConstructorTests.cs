@@ -329,6 +329,27 @@ public class ConstructorTests
     }
 
     [Fact]
+    public void a_units_level_set_in_a_deconstruction_is_mw0015()
+    {
+        Assert.Equal(new[] { "MW0015: Unit.Level" }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public sealed class Promote : UnitComponent
+                {
+                    protected override void OnAdded()
+                    {
+                        int made;
+                        (Unit.Level, made) = (3, 1);
+                        var (level, other) = (Unit.Level, 2);
+                    }
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void a_units_level_set_in_a_component_is_mw0015()
     {
         var source = """
