@@ -21,11 +21,11 @@ internal static class LuaScript
     /// LineMarks) and compiled by CSharp.lua with DEBUG and MOONWELL_LUA for a development build, MOONWELL_LUA alone and no
     /// comments for a release build; the script is linked with CSharp.lua's core and the Lua that Moonwell.Natives.dll and
     /// Moonwell.dll carry (ScriptLibraries), trimmed, and given its line table. What a map build adds besides (the map's entry,
-    /// its objects, the placed things) is no part of the cases. The copy is deleted after the compile.
+    /// its objects, the placed things) is no part of the cases. The copy is made in the folder temp and deleted after the compile.
     /// </summary>
-    public static string Compile(string csproj, bool release)
+    public static string Compile(string csproj, bool release, string temp)
     {
-        var folder = Path.Combine(Path.GetTempPath(), "moonwell-lua-" + Guid.NewGuid().ToString("N"));
+        var folder = Path.Combine(temp, "moonwell-lua-" + Guid.NewGuid().ToString("N"));
         try
         {
             Rewritten(csproj, folder);
