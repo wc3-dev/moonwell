@@ -48,7 +48,7 @@ public static class Rules
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "In the game's Lua a Dictionary or HashSet gives its items in no fixed order. Lookups are fine; loops are not: foreach, LINQ, CopyTo, a copy into a list, and a Dictionary or HashSet held as an IEnumerable, ICollection or IReadOnlyCollection. A foreach or LINQ through IDictionary, IReadOnlyDictionary, ISet or IReadOnlySet (or their Keys and Values) is one too, since in a map only a Dictionary or a HashSet implements them." + Silence);
+        description: "In the game's Lua a Dictionary or HashSet gives its items in no fixed order. Lookups are fine; loops are not: foreach, LINQ, CopyTo, a copy into a list, a spread into a collection expression ([.. set]), and a Dictionary or HashSet held as an IEnumerable, ICollection or IReadOnlyCollection. A foreach or LINQ through IDictionary, IReadOnlyDictionary, ISet or IReadOnlySet (or their Keys and Values) is one too, since in a map only a Dictionary or a HashSet implements them." + Silence);
 
     public static readonly DiagnosticDescriptor NumberType = new(
         "MW0005",
@@ -75,7 +75,7 @@ public static class Rules
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "CSharp.lua's Random without a seed calls math.randomseed(os.time()) and then math.random. In the game math.random is the game's own synced generator (seen 2026-10-26), so each machine reseeds it with its own clock, and every GetRandomInt after it differs between machines, wherever the Random was made. new Random(seed) is computed in Lua alone, so it gives the same numbers on every machine when the seed is the same (one from Natives.GetRandomInt is)." + Silence);
+        description: "CSharp.lua's Random without a seed calls math.randomseed(os.time()) and then math.random. In the game math.random is the game's own synced generator (seen 2026-10-26), so each machine reseeds it with its own clock, and every GetRandomInt after it differs between machines, wherever the Random was made. new Random(seed) is computed in Lua alone, so it gives the same numbers on every machine when the seed is the same (one from Natives.GetRandomInt is). A class of Random's whose constructor calls base() or leaves the base call out has no seed either." + Silence);
 
     public static readonly DiagnosticDescriptor Unfollowed = new(
         "MW0039",
@@ -218,7 +218,7 @@ public static class Rules
         "Scopes",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "What code makes belongs to the scope named where it is made (decision 81). A player is a scope, as every actor is, but it never ends during a game, so Game.Instance does the same, and a player there is most often meant as the owner: Gizmo.Create(gizmo, x, y, scope, owner) and Missile.Create(missile, x, y, z, scope, owner) take the owning player after the scope, and the compiler cannot tell the two apart. The rule checks the scope and heldBy arguments of Moonwell's methods (Create, Fire, Interact, Add, Apply) and what a scope's After and Every are called on; a player held in a variable typed Scope is not seen.");
+        description: "What code makes belongs to the scope named where it is made (decision 81). A player is a scope, as every actor is, but it never ends during a game, so Game.Instance does the same, and a player there is most often meant as the owner: Gizmo.Create(gizmo, x, y, scope, owner) and Missile.Create(missile, x, y, z, scope, owner) take the owning player after the scope, and the compiler cannot tell the two apart. The rule checks the scope and heldBy arguments of Moonwell's methods (Create, Fire, Interact, Add, Apply) and what a scope's own methods (After, Every, ReadFile, Share, Command and Load) are called on; a player held in a variable typed Scope is not seen.");
 
     /// <summary>The rules for the scopes code makes things in.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Scopes { get; } = ImmutableArray.Create(PlayerScope);
