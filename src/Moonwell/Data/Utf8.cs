@@ -9,6 +9,39 @@ namespace Moonwell
         // "å" is one character on .NET and its two bytes in the game's Lua.
         private static readonly bool BytesAlready = "å".Length == 2;
 
+        /// <summary>Whether a character continues the letter before it: a byte 10xxxxxx in the game, a low surrogate on .NET.</summary>
+        internal static bool IsInsideLetter(char c)
+        {
+            return BytesAlready ? (c & 0xC0) == 0x80 : c >= 0xDC00 && c <= 0xDFFF;
+        }
+
+        /// <summary>The text in pieces of at most <paramref name="length"/>, none ending inside a letter unless no letter starts in a whole piece; the empty text is one empty piece.</summary>
+        internal static List<string> Pieces(string text, int length)
+        {
+            var pieces = new List<string>();
+            var start = 0;
+            while (text.Length - start > length)
+            {
+                var end = start + length;
+                while (end > start && IsInsideLetter(text[end]))
+                {
+                    end--;
+                }
+
+                // No letter starts in the whole piece, which only text that is no UTF-8 gives.
+                if (end == start)
+                {
+                    end = start + length;
+                }
+
+                pieces.Add(text.Substring(start, end - start));
+                start = end;
+            }
+
+            pieces.Add(text.Substring(start));
+            return pieces;
+        }
+
         /// <summary>The text's UTF-8 bytes, each 0 to 255.</summary>
         internal static List<int> Encode(string text)
         {

@@ -119,7 +119,9 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (call.Arguments[0].Value.ConstantValue is not { HasValue: true, Value: string id })
+        // By parameter, as named arguments may come in any order: Set("acdn", value: 3f, level: 2).
+        IOperation Argument(int ordinal) => call.Arguments.First(argument => argument.Parameter?.Ordinal == ordinal).Value;
+        if (Argument(0).ConstantValue is not { HasValue: true, Value: string id })
         {
             return;
         }
@@ -130,9 +132,9 @@ public sealed class FieldRulesAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        var value = Unbox(call.Arguments[call.Arguments.Length - 1].Value);
-        var oneLevel = call.Arguments.Length == 3;
-        int? level = oneLevel && call.Arguments[1].Value.ConstantValue is { HasValue: true, Value: int at } ? at : null;
+        var value = Unbox(Argument(method.Parameters.Length - 1));
+        var oneLevel = method.Parameters.Length == 3;
+        int? level = oneLevel && Argument(1).ConstantValue is { HasValue: true, Value: int at } ? at : null;
         var property = PropertyOf(holder, id);
         var shared = property == null ? SharedFieldOf(holder, id, null) : null;
         var held = property != null ? property.Type : shared == null ? null : HeldByShared(shared);

@@ -143,9 +143,9 @@ namespace Moonwell
         /// <summary>A time of day in hours as a 24-hour clock: 6.5 is "06:30", the minutes rounded down.</summary>
         public static string TimeOfDay(float hours)
         {
-            var whole = (int)hours;
-            var minutes = (int)((hours - whole) * 60.0f);
-            return whole.ToString("D2") + ":" + minutes.ToString("D2");
+            // A thousandth of a minute takes in the float the game keeps: 6.2 is 371.99998 minutes.
+            var total = (int)(hours * 60.0f + 0.001f);
+            return (total / 60).ToString("D2") + ":" + (total % 60).ToString("D2");
         }
 
         // Gives each letter the colour colorOf names for it from its index and the count of letters, sharing a code between
@@ -258,7 +258,7 @@ namespace Moonwell
                 }
 
                 var end = i + 1;
-                while (end < text.Length && IsInsideLetter(text[end]))
+                while (end < text.Length && Utf8.IsInsideLetter(text[end]))
                 {
                     end++;
                 }
@@ -290,12 +290,6 @@ namespace Moonwell
         private static bool IsLetter(string token)
         {
             return token != " " && token != "|n";
-        }
-
-        // A byte 10xxxxxx continues a letter in UTF-8; on .NET, a low surrogate continues one too.
-        private static bool IsInsideLetter(char c)
-        {
-            return (c & 0xC0) == 0x80 || (c >= 0xDC00 && c <= 0xDFFF);
         }
     }
 }

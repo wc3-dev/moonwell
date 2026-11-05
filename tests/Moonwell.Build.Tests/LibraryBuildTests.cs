@@ -173,6 +173,47 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_save_class_a_library_declares_is_saved()
+        {
+            var copy = folders.TemporaryCopyOf("ObjectsLibraryMap");
+            File.WriteAllText(Path.Combine(copy, "Code", "Saves.cs"), """
+                using Moonwell;
+
+                namespace ObjectsLibraryCode
+                {
+                    public sealed class Gear
+                    {
+                        [Saved(1)] public int Id;
+                    }
+
+                    public sealed class LibrarySave : SaveGame
+                    {
+                        [Saved(1)] public int Level;
+                        [Saved(2)] public Gear? Weapon;
+                    }
+
+                    public static class SaveRoundTrip
+                    {
+                        public static string Run()
+                        {
+                            var save = new LibrarySave { Level = 7, Weapon = new Gear { Id = 3 } };
+                            SaveGame.Save(Player.One, save);
+                            var back = SaveGame.FromCode<LibrarySave>(Player.One, save.Code);
+                            return back == null ? "null" : back.Level + " " + back.Weapon!.Id;
+                        }
+                    }
+                }
+                """);
+            var project = Path.Combine(copy, "Map");
+            var map = Path.Combine(project, "Map.cs");
+            File.WriteAllText(map, File.ReadAllText(map).Replace("Name = \"ObjectsLibraryMap\";", "Name = \"ObjectsLibraryMap\";\n            SaveKey = \"the tests' key\";", StringComparison.Ordinal));
+
+            Build(project);
+
+            Assert.Equal("7 3", SaveBuildTests.RoundTrip(Path.Combine(project, "build", "Map", "war3map.lua"), "ObjectsLibraryCode"));
+        }
+
+        [Fact]
         public void a_default_object_a_library_reads_gets_the_types_values()
         {
             var copy = folders.TemporaryCopyOf("ObjectsLibraryMap");
