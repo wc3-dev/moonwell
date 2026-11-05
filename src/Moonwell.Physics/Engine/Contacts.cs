@@ -1762,6 +1762,21 @@ namespace Moonwell.Engine
                     break;
                 }
 
+                var entry = missile.entry!;
+                var cut = FirstThing(missile, missile.lastX, missile.lastY, missile.lastZ, entry.X, entry.Y, missile.z, bestInside ? 0.0f : bestT);
+                if (cut < Always)
+                {
+                    // A thing before the wall along the move: the ball stops inside it, for its checks to meet it first.
+                    var cx = missile.lastX + cut * (entry.X - missile.lastX);
+                    var cy = missile.lastY + cut * (entry.Y - missile.lastY);
+                    var cz = missile.lastZ + cut * (missile.z - missile.lastZ);
+                    Interactions.Grid.Move(entry, cx, cy);
+                    missile.z = cz;
+                    Placed(missile, cx, cy, cz);
+                    Flight.Place(missile, Physics.World, cx, cy, cz);
+                    break;
+                }
+
                 var met = Raw.At(list, best);
                 var kept = TouchOf(missile, met);
                 if (kept == null)
@@ -1798,6 +1813,99 @@ namespace Moonwell.Engine
             if (footed && !Ended(missile))
             {
                 Held(missile);
+            }
+        }
+
+        /// <summary>
+        /// Where along a move from (ax, ay, az) to (bx, by, bz), as a share of it, a missile's ball is inside the thing it
+        /// enters first before a share of the move, of those its unit, destructable and item checks hold a pair with that
+        /// ticks and has not passed or been refused: halfway from where it enters to where it leaves, or to that share.
+        /// Always when it enters none before it. The ground or a wall met at that share is met after the thing, as the
+        /// ball stops there and the thing's checks meet it.
+        /// </summary>
+        internal static float FirstThing(Missile missile, float ax, float ay, float az, float bx, float by, float bz, float before)
+        {
+            var first = before;
+            var cut = Always;
+            if (missile.unitContact != Contact.None)
+            {
+                FirstOf<Unit>(missile, missile.unitChecks, ax, ay, az, bx, by, bz, before, ref first, ref cut);
+            }
+
+            if (missile.destructableContact != Contact.None)
+            {
+                FirstOf<Destructable>(missile, missile.destructableChecks, ax, ay, az, bx, by, bz, before, ref first, ref cut);
+            }
+
+            if (missile.itemContact != Contact.None)
+            {
+                FirstOf<Item>(missile, missile.itemChecks, ax, ay, az, bx, by, bz, before, ref first, ref cut);
+            }
+
+            return cut;
+        }
+
+        /// <summary>FirstThing for the pairs of one kind's checks: a thing entered before first lowers it, and sets cut, short of before.</summary>
+        private static void FirstOf<TOther>(Missile missile, Interaction? checks, float ax, float ay, float az, float bx, float by, float bz, float before, ref float first, ref float cut)
+            where TOther : Actor
+        {
+            if (checks == null)
+            {
+                return;
+            }
+
+            var radius = missile.radius;
+            var dx = bx - ax;
+            var dy = by - ay;
+            var dz = bz - az;
+            var flat = dx * dx + dy * dy;
+            var pairs = checks.pairs;
+            var count = pairs.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var pair = Pairing.As<Missile, TOther>(Raw.At(pairs, i));
+                var touch = (Touch?)pair.Data;
+                if (touch == null || touch.passed || touch.held || !pair.Ready || flat <= 0.0f)
+                {
+                    continue;
+                }
+
+                // The round part, as Check sweeps it, then the heights.
+                var cx = pair.OtherX;
+                var cy = pair.OtherY;
+                var px = ax - cx;
+                var py = ay - cy;
+                var reach = radius + touch.radius;
+                var half = px * dx + py * dy;
+                var square = half * half - flat * (px * px + py * py - reach * reach);
+                if (square < 0.0f)
+                {
+                    continue;
+                }
+
+                var root = Trig.Sqrt(square);
+                var enter = (-half - root) / flat;
+                var exit = (-half + root) / flat;
+                var unit = pair.Other as Unit;
+                var bottom = Ground.Height(cx, cy) + (unit != null ? unit.FlyHeight : 0.0f) - radius;
+                var top = bottom + (unit != null ? Shapes.UnitHeight(unit) : touch.height) + radius * 2.0f;
+                if (dz != 0.0f)
+                {
+                    var z0 = (bottom - az) / dz;
+                    var z1 = (top - az) / dz;
+                    enter = z0 < z1 ? (enter > z0 ? enter : z0) : (enter > z1 ? enter : z1);
+                    exit = z0 < z1 ? (exit < z1 ? exit : z1) : (exit < z0 ? exit : z0);
+                }
+                else if (az < bottom || az > top)
+                {
+                    continue;
+                }
+
+                if (enter >= 0.0f && enter < first && enter <= exit)
+                {
+                    first = enter;
+                    cut = (enter + (exit < before ? exit : before)) * 0.5f;
+                }
             }
         }
 
