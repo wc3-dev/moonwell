@@ -17,7 +17,7 @@ namespace Moonwell
         /// <summary>The newest child, the first one to end.</summary>
         internal Scoped? newest;
 
-        /// <summary>Whether the children have ended; a child adopted from then on ends at once.</summary>
+        /// <summary>Whether the children are ending or have ended; a child adopted from then on ends at once.</summary>
         internal bool childrenEnded;
 
         /// <summary>How many children are linked to this scope.</summary>

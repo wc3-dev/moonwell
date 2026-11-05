@@ -44,6 +44,12 @@ namespace Moonwell
             var count = game.BeginDispatch();
             for (var i = 0; i < count; i++)
             {
+                if (wasDay != isDay)
+                {
+                    // A reaction set the time across the hour: the check its set ran has told every component.
+                    break;
+                }
+
                 var component = game.ComponentAt(i) as GameComponent;
                 if (component == null || component.HasEnded || (component.Mask & bit) == 0)
                 {
