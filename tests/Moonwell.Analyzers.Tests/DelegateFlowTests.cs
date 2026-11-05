@@ -382,4 +382,26 @@ public class DelegateFlowTests
 
         Assert.Equal(new[] { "MW0001: Natives.KillUnit(u)", "MW0001: Natives.KillUnit(u)", "MW0039: actions[0]" }, found);
     }
+
+    [Fact]
+    public void a_delegates_invoke_as_a_method_group_is_the_delegate()
+    {
+        var found = MapCode.Check(
+            """
+            Local.For(p, OnShow.Invoke);
+            var actions = new List<Action>();
+            Local.For(p, actions[0].Invoke);
+            Mine(p, () => Natives.KillUnit(u));
+            Mine(p, () => p.Print("hi"));
+            Local.For(p, Quiet.Invoke);
+            """,
+            """
+                public static unit Hero = null!;
+                public static Action OnShow = () => Natives.KillUnit(Hero);
+                public static Action Quiet = () => { };
+                public static void Mine(Player who, Action action) { Local.For(who, action.Invoke); }
+            """);
+
+        Assert.Equal(new[] { "MW0001: OnShow", "MW0039: actions[0].Invoke", "MW0001: Natives.KillUnit(u)" }, found);
+    }
 }

@@ -824,6 +824,7 @@ public sealed partial class SyncAnalyzer
             var runs = up switch
             {
                 IInvocationOperation invocation => invocation.Instance == value,
+                IMethodReferenceOperation { Method.MethodKind: MethodKind.DelegateInvoke } invoke => invoke.Instance == value,
                 IConditionalAccessOperation access => access.Operation == value,
                 IArgumentOperation => true,
                 ISimpleAssignmentOperation assignment => assignment.Value == value,
@@ -1158,6 +1159,10 @@ public sealed partial class SyncAnalyzer
 
                         value = accessed;
                         continue;
+                    case IMethodReferenceOperation { Method.MethodKind: MethodKind.DelegateInvoke, Instance: { } invoked }:
+                        // a.Invoke as a method group runs a.
+                        value = invoked;
+                        continue;
                     case IAnonymousFunctionOperation or IMethodReferenceOperation or IDefaultValueOperation:
                         return true;
                     case ILocalReferenceOperation local:
@@ -1417,8 +1422,8 @@ public sealed partial class SyncAnalyzer
                             return Shared(isStruct || named == null ? variable : named);
                         }
 
-                        // A local that is its own value (only error CS0165) ends the way.
-                        if (isStruct || !passed.Add(variable))
+                        // A local that is its own value (only error CS0165) ends the way, and so does a write to the local itself.
+                        if (isStruct || !passed.Add(variable) || (at == target && IsWritten(at)))
                         {
                             return null;
                         }
@@ -1561,18 +1566,29 @@ public sealed partial class SyncAnalyzer
                 ? compilation.GetSemanticModel(made.SyntaxTree).GetOperation(made.Expression)
                 : null;
 
-        /// <summary>A local's initializer, when nothing writes the local after it; null for any other local.</summary>
+        /// <summary>
+        /// A local's one value, when it is given one once: by its initializer, a plain =, or a deconstruction from a tuple
+        /// written out (<c>(s, n) = (Scores, 1)</c>, <c>var (s, n) = ...</c>). Null for a local given values more than once,
+        /// or one whose value cannot be seen (an out argument, a compound assignment, a deconstruction of anything else).
+        /// </summary>
         private IOperation? OnlyValue(ILocalSymbol local)
         {
-            if (local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not VariableDeclaratorSyntax { Initializer.Value: { } initial } declarator
-                || BodyOf(declarator) is not { } body)
+            if (local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not { } declared || BodyOf(declared) is not { } body)
             {
                 return null;
             }
 
-            var model = compilation.GetSemanticModel(declarator.SyntaxTree);
+            var model = compilation.GetSemanticModel(declared.SyntaxTree);
+            var value = declared is VariableDeclaratorSyntax { Initializer.Value: { } initial } ? model.GetOperation(initial) : null;
+            var writes = value != null ? 1 : 0;
             foreach (var node in body.DescendantNodes())
             {
+                if (node is AssignmentExpressionSyntax { Left: TupleExpressionSyntax or DeclarationExpressionSyntax } && model.GetOperation(node) is IDeconstructionAssignmentOperation deconstruction)
+                {
+                    Deconstructed(deconstruction.Target, deconstruction.Value, local, ref value, ref writes);
+                    continue;
+                }
+
                 var written = node switch
                 {
                     AssignmentExpressionSyntax assignment => assignment.Left,
@@ -1581,11 +1597,36 @@ public sealed partial class SyncAnalyzer
                 };
                 if (written != null && SymbolEqualityComparer.Default.Equals(model.GetSymbolInfo(written).Symbol, local))
                 {
-                    return null;
+                    writes++;
+                    value = node is AssignmentExpressionSyntax { RawKind: (int)SyntaxKind.SimpleAssignmentExpression } plain ? model.GetOperation(plain.Right) : null;
                 }
             }
 
-            return model.GetOperation(initial);
+            return writes == 1 ? value : null;
+        }
+
+        /// <summary>Counts the writes of a local in a deconstruction's target, keeping the value a tuple written out gives it (null from anything else).</summary>
+        private static void Deconstructed(IOperation target, IOperation? value, ILocalSymbol local, ref IOperation? found, ref int writes)
+        {
+            if (target is IDeclarationExpressionOperation declaration)
+            {
+                target = declaration.Expression;
+            }
+
+            if (target is ITupleOperation tuple)
+            {
+                var given = value is IConversionOperation { IsImplicit: true } conversion ? conversion.Operand : value;
+                var values = given is ITupleOperation literal && literal.Elements.Length == tuple.Elements.Length ? literal : null;
+                for (var i = 0; i < tuple.Elements.Length; i++)
+                {
+                    Deconstructed(tuple.Elements[i], values?.Elements[i], local, ref found, ref writes);
+                }
+            }
+            else if (target is ILocalReferenceOperation reference && SymbolEqualityComparer.Default.Equals(reference.Local, local))
+            {
+                writes++;
+                found = value;
+            }
         }
 
         /// <summary>Whether an operation gives a field or auto-property a value without reading the old one: a plain =, a tuple's assignment or an out argument.</summary>
@@ -1786,7 +1827,9 @@ public sealed partial class SyncAnalyzer
 
                     foreach (var (name, model) in pair.Value)
                     {
-                        if (InLocalPosition(name, model, local) || ((IsCalled(name) || name.Parent is ArgumentSyntax) && IsLocal(name, model, local, null)))
+                        // a.Invoke as a method group is a.
+                        ExpressionSyntax used = name.Parent is MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Invoke" } invoke && invoke.Expression == name && invoke.Parent is not InvocationExpressionSyntax ? invoke : name;
+                        if (InLocalPosition(used, model, local) || ((IsCalled(name) || used.Parent is ArgumentSyntax) && IsLocal(name, model, local, null)))
                         {
                             local.Add(pair.Key);
                             changed = true;
