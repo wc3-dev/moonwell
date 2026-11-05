@@ -509,6 +509,24 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>
+        /// A ball of 16 at 900 a second passing 110 from the middle of a unit of collision size 96 grazes it, 2 inside its
+        /// side, and meets it once, though no unit wider than 64 was met before: the checks' range covered a unit's middle
+        /// only 108 away until such a unit was met, so the unit was never paired.
+        /// </summary>
+        public static void BigUnitGrazed(FakeWorld world)
+        {
+            var fake = Fresh();
+            var big = FootmanAt(world, 600.0f, 610.0f, 1);
+            fake.Sizes[big.Handle] = 96.0f;
+            var shot = new Shot();
+            shot.UnitContact = Contact.Pass;
+            ShotAt(shot, 100.0f, 500.0f, 32.0f, 900.0f, 0.0f, 0.0f);
+            Steps(world, 40);
+            Expect.True(shot.X > 1000.0f, "it flew past; at " + shot.X);
+            Expect.Equal(1, shot.Met.Count, "it met the wide unit once");
+        }
+
         /// <summary>A missile that starts at a unit's middle (24 up) meets it at its first step, once; one there with no velocity, whose normal would be zero, gets a normal of length 1 and no NaN.</summary>
         public static void Inside(FakeWorld world)
         {

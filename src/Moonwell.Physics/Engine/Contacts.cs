@@ -47,7 +47,7 @@ namespace Moonwell.Engine
         /// <summary>How far beyond its radius from a wall a ball is still taken to be at it, so one sliding along it, which float rounding may carry just out and back in, does not meet it again.</summary>
         private const float Skin = 1.0f;
 
-        /// <summary>The largest radius of a unit taken before a larger one is met.</summary>
+        /// <summary>The least radius of a unit the unit checks' range covers.</summary>
         private const float FirstUnit = 64.0f;
 
         /// <summary>The fastest a unit walks, in game units a second: what a unit may add to the speed a missile closes on it at, with the fastest push (Pushes.fastest).</summary>
@@ -80,7 +80,7 @@ namespace Moonwell.Engine
         /// <summary>How many steps after a pair last touched a ball coming back onto the thing's top counts as settling on it.</summary>
         private const int Recent = 4;
 
-        /// <summary>The largest radius of a unit met so far, at least FirstUnit; the unit checks' range covers it.</summary>
+        /// <summary>The largest radius of a unit tracked or met since the install, at least FirstUnit; the unit checks' range covers it, so a unit wider than the range would be without it is met by a ball that grazes it.</summary>
         private static float largestUnit;
 
         /// <summary>The largest radius of a destructable met so far, at least the default's.</summary>
@@ -296,6 +296,16 @@ namespace Moonwell.Engine
                 {
                     checks.range = missile.meetReach + farthest;
                 }
+            }
+        }
+
+        /// <summary>A unit is tracked: its radius raises the largest unit's if larger.</summary>
+        internal static void UnitTracked(Unit unit)
+        {
+            var radius = Shapes.UnitRadius(unit);
+            if (radius > largestUnit)
+            {
+                largestUnit = radius;
             }
         }
 
