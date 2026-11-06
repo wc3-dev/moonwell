@@ -9,6 +9,13 @@ namespace Moonwell.Build
     {
         private const string MapBaseName = "Moonwell.Map";
 
+        // The slots a person or a computer can play, Moonwell.Player.PlayableSlots.
+        private const int PlayableSlots = 24;
+
+        // The last Moonwell.Controller and Moonwell.Race a slot can have.
+        private const int Neutral = 3;
+        private const int NightElf = 3;
+
         /// <summary>Loads the built assembly, finds the map class, constructs it and reads its settings.</summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
         /// <param name="project">The map project; lines in messages are relative to its folder.</param>
@@ -76,6 +83,7 @@ namespace Moonwell.Build
                 throw MapClasses.ConstructionError(wrapped.InnerException, name, project);
             }
 
+            var (slots, teams) = ReadSlots(map, name);
             return new MapSettings(
                 name,
                 ReadSetting(map, "Name"),
@@ -85,7 +93,74 @@ namespace Moonwell.Build
                 ReadNumber(map, "DataSet"),
                 ReadNumber(map, "DataVersion"),
                 ReadSetting(map, "SaveFolder"),
-                ReadSetting(map, "SaveKey"));
+                ReadSetting(map, "SaveKey"),
+                slots,
+                teams);
+        }
+
+        // The map's Slots, a protected list, each read across the load context by its properties; teams in the order the slots first name them.
+        private static (List<SlotSetting> Slots, List<TeamSetting> Teams) ReadSlots(object map, string name)
+        {
+            var slots = new List<SlotSetting>();
+            var teams = new List<TeamSetting>();
+            var teamObjects = new List<object>();
+            var property = SettingOf(map, "Slots", BindingFlags.Instance | BindingFlags.NonPublic);
+            var list = (System.Collections.IEnumerable?)property.GetValue(map);
+            if (list == null)
+            {
+                return (slots, teams);
+            }
+
+            foreach (var slot in list)
+            {
+                if (slot == null)
+                {
+                    throw new BuildException($"{name}.Slots holds a null slot");
+                }
+
+                var number = (int)Value(slot, "Number")!;
+                if (number < 0 || number >= PlayableSlots)
+                {
+                    throw new BuildException($"{name}.Slots: slot {number} is not one a person or a computer plays; slots go from 0 to {PlayableSlots - 1}");
+                }
+
+                if (slots.Any(other => other.Number == number))
+                {
+                    throw new BuildException($"{name}.Slots: slot {number} is set up twice");
+                }
+
+                var team = Value(slot, "Team") ?? throw new BuildException($"{name}.Slots: slot {number} has no team");
+                var controller = Value(slot, "Controller")!;
+                var controllerNumber = Convert.ToInt32(controller, CultureInfo.InvariantCulture);
+                if (controllerNumber > Neutral)
+                {
+                    throw new BuildException($"{name}.Slots: slot {number} cannot be played by {controller}; use User, Computer, Rescuable or Neutral");
+                }
+
+                var race = Value(slot, "Race");
+                var raceNumber = race == null ? -1 : Convert.ToInt32(race, CultureInfo.InvariantCulture);
+                if (raceNumber > NightElf)
+                {
+                    throw new BuildException($"{name}.Slots: slot {number} cannot play {race}; use Human, Orc, Undead, NightElf, or none for the player's pick");
+                }
+
+                var index = teamObjects.IndexOf(team);
+                if (index < 0)
+                {
+                    index = teamObjects.Count;
+                    teamObjects.Add(team);
+                    teams.Add(new TeamSetting((string)Value(team, "Name")!, (bool)Value(team, "SharedVision")!, (bool)Value(team, "SharedControl")!));
+                }
+
+                slots.Add(new SlotSetting(number, index, controllerNumber, raceNumber, (string?)Value(slot, "Name") ?? string.Empty));
+            }
+
+            return (slots, teams);
+        }
+
+        private static object? Value(object target, string property)
+        {
+            return target.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!.GetValue(target);
         }
 
         private static bool IsMapClass(Type type)
@@ -118,7 +193,7 @@ namespace Moonwell.Build
         }
 
         // Read from the Moonwell.Map base type, so that a property the class hides with new is not asked for.
-        private static PropertyInfo SettingOf(object map, string property)
+        private static PropertyInfo SettingOf(object map, string property, BindingFlags flags = BindingFlags.Instance | BindingFlags.Public)
         {
             var baseType = map.GetType().BaseType!;
             while (baseType.FullName != MapBaseName)
@@ -126,7 +201,7 @@ namespace Moonwell.Build
                 baseType = baseType.BaseType!;
             }
 
-            return baseType.GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!;
+            return baseType.GetProperty(property, flags)!;
         }
     }
 }

@@ -83,5 +83,8 @@ namespace Moonwell
 
         /// <summary>A player selects or deselects a unit: one bit for the unit's and the map's reactions (decision 203).</summary>
         internal const int OnSelection = 134217728;
+
+        /// <summary>A player changes what it gives another: the map components' OnAllianceChanged (decision 198).</summary>
+        internal const int OnAllianceChanged = 67108864;
     }
 }

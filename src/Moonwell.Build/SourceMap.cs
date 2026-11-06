@@ -13,7 +13,7 @@ namespace Moonwell.Build
         private const MapFiles ScriptFiles = MapFiles.Info | MapFiles.Units | MapFiles.UnitObjectData | MapFiles.Doodads
             | MapFiles.Regions | MapFiles.Cameras | MapFiles.Sounds | MapFiles.Environment | MapFiles.TriggerStrings;
 
-        /// <summary>Opens the project's map without its GUI triggers and applies the map class's settings, its game data option among them.</summary>
+        /// <summary>Opens the project's map without its GUI triggers and applies the map class's settings, its game data option and its slots among them.</summary>
         /// <param name="project">The map project.</param>
         /// <param name="settings">The settings read from the map class; empty ones keep World Editor's values.</param>
         /// <param name="log">The build log; a game data option the map class changes is noted in it.</param>
@@ -60,6 +60,8 @@ namespace Moonwell.Build
             {
                 info.RecommendedPlayers = settings.RecommendedPlayers;
             }
+
+            MapSetup.Apply(map, settings, log);
 
             return map;
         }

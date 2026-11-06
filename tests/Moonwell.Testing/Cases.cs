@@ -61,6 +61,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "selection.read-in-local", Run = SelectionCases.ReadInLocal });
             list.Add(new Case { Name = "selection.select-calls", Run = SelectionCases.SelectCalls });
             list.Add(new Case { Name = "selection.only-when-wanted", Run = SelectionCases.OnlyWhenWanted });
+            list.Add(new Case { Name = "teams.numbered", Run = TeamCases.Numbered });
+            list.Add(new Case { Name = "teams.players", Run = TeamCases.Players });
+            list.Add(new Case { Name = "teams.undeclared", Run = TeamCases.Undeclared });
+            list.Add(new Case { Name = "teams.move-sets-alliances", Run = TeamCases.MoveSetsAlliances });
+            list.Add(new Case { Name = "teams.move-to-unlisted-refused", Run = TeamCases.MoveToUnlistedRefused });
+            list.Add(new Case { Name = "teams.win-and-lose", Run = TeamCases.WinAndLose });
+            list.Add(new Case { Name = "teams.second-result-refused", Run = TeamCases.SecondResultRefused });
+            list.Add(new Case { Name = "teams.over-team", Run = TeamCases.OverTeam });
+            list.Add(new Case { Name = "teams.over-player", Run = TeamCases.OverPlayer });
+            list.Add(new Case { Name = "teams.end-refusal-names-over", Run = TeamCases.EndRefusalNamesOver });
+            list.Add(new Case { Name = "teams.alliance-once-per-pair", Run = TeamCases.AllianceOncePerPair });
+            list.Add(new Case { Name = "teams.alliance-order", Run = TeamCases.AllianceOrder });
+            list.Add(new Case { Name = "teams.alliance-from-the-game", Run = TeamCases.AllianceFromTheGame });
+            list.Add(new Case { Name = "teams.alliance-listened-when-reacted", Run = TeamCases.AllianceListenedWhenReacted });
+            list.Add(new Case { Name = "teams.alliance-team-move", Run = TeamCases.AllianceTeamMove });
         }
 
         /// <summary>Adds the cases for dummy casters.</summary>

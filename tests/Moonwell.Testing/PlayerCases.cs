@@ -232,14 +232,13 @@ namespace Moonwell.Testing
             Expect.True(Player.Blue == null, "nobody is blue");
         }
 
-        /// <summary>A player's team is the game's: read and set.</summary>
+        /// <summary>A player's team is the game's (setting it is in TeamCases).</summary>
         public static void PlayersTeam(FakeWorld world)
         {
-            Player.Three.Team = 1;
+            world.MoveToTeam(world.PlayerAt(2), 1);
 
-            Expect.Equal(1, Player.Three.Team, "the new team");
-            Expect.Equal(1, world.TeamOf(world.PlayerAt(2)), "the game's team");
-            Expect.Equal(0, Player.One.Team, "another player's team");
+            Expect.Equal(1, Player.Three.Team.Number, "the team");
+            Expect.Equal(0, Player.One.Team.Number, "another player's team");
         }
 
         /// <summary>A player's race is the game's.</summary>
