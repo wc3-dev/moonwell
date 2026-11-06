@@ -44,25 +44,26 @@ namespace Moonwell
                     return;
                 }
 
-                if (handle != null && value != text)
+                // A set to the text it reads is not given to the game, where it would undo typing on its way and come back as the player's (review G4).
+                if (handle == null || value == text)
                 {
-                    sent ??= new List<string>();
-                    sent.Add(value);
-                    if (sent.Count > 8)
-                    {
-                        sent.RemoveAt(0);
-                    }
+                    text = value;
+                    return;
+                }
+
+                sent ??= new List<string>();
+                sent.Add(value);
+                if (sent.Count > 8)
+                {
+                    sent.RemoveAt(0);
                 }
 
                 text = value;
-                if (handle != null)
-                {
-                    FramesSystem.World.WriteFrameText(handle, value);
-                }
+                FramesSystem.World.WriteFrameText(handle, value);
             }
         }
 
-        /// <summary>The most characters the player can type; 0 unless set, which leaves the game's.</summary>
+        /// <summary>The most characters the player can type; 0 unless set, which leaves the game's. Once the game has a limit of the map's, 0 is refused and reported, as the game's own cannot be given back.</summary>
         [LocalSafe]
         public int MaxLength
         {
@@ -71,6 +72,12 @@ namespace Moonwell
             {
                 if (HasEnded)
                 {
+                    return;
+                }
+
+                if (value <= 0 && maxLength > 0 && handle != null)
+                {
+                    Errors.Refuse(Names.NameOf(this) + ".MaxLength", "the game's own limit cannot be given back once the box has one of the map's: give a limit of your own (review E09)");
                     return;
                 }
 

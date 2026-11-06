@@ -141,6 +141,18 @@ namespace Moonwell.Engine
             Natives.BlzFrameSetSize(frame, width, height);
         }
 
+        /// <summary>A frame's width: BlzFrameGetWidth.</summary>
+        public float FrameWidth(framehandle frame)
+        {
+            return Natives.BlzFrameGetWidth(frame);
+        }
+
+        /// <summary>A frame's height: BlzFrameGetHeight.</summary>
+        public float FrameHeight(framehandle frame)
+        {
+            return Natives.BlzFrameGetHeight(frame);
+        }
+
         /// <summary>Scales a frame: BlzFrameSetScale.</summary>
         public void ScaleFrame(framehandle frame, float scale)
         {

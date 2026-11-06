@@ -1407,6 +1407,19 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.fill-unmade", Run = FrameCases.FillUnmade });
             list.Add(new Case { Name = "frames.tied-to-ended", Run = FrameCases.TiedToEnded });
             list.Add(new Case { Name = "frames.tied-still-pooled", Run = FrameCases.TiedStillPooled });
+            list.Add(new Case { Name = "frames.added-again-refused", Run = FrameCases.AddedAgainRefused });
+            list.Add(new Case { Name = "frames.tooltip-gone-lets-clicks-through", Run = FrameCases.TooltipGoneLetsClicksThrough });
+            list.Add(new Case { Name = "frames.turned-off-then-listened", Run = FrameCases.TurnedOffThenListened });
+            list.Add(new Case { Name = "frames.one-side-keeps-template", Run = FrameCases.OneSideKeepsTemplate });
+            list.Add(new Case { Name = "frames.progress-bar-follows-resize", Run = FrameCases.ProgressBarFollowsResize });
+            list.Add(new Case { Name = "frames.fill-loop-refused", Run = FrameCases.FillLoopRefused });
+            list.Add(new Case { Name = "frames.tied-inside-ended", Run = FrameCases.TiedInsideEnded });
+            list.Add(new Case { Name = "frames.tie-to-ended-refused", Run = FrameCases.TieToEndedRefused });
+            list.Add(new Case { Name = "frames.unmade-tied-holds", Run = FrameCases.UnmadeTiedHolds });
+            list.Add(new Case { Name = "frames.slider-same-value-after-drag", Run = FrameCases.SliderSameValueAfterDrag });
+            list.Add(new Case { Name = "frames.text-box-same-text-after-typing", Run = FrameCases.TextBoxSameTextAfterTyping });
+            list.Add(new Case { Name = "frames.slider-pool-keeps-range", Run = FrameCases.SliderPoolKeepsRange });
+            list.Add(new Case { Name = "frames.text-box-limit-kept", Run = FrameCases.TextBoxLimitKept });
             list.Add(new Case { Name = "hud.looked-up-at-install", Run = HudCases.LookedUpAtInstall });
             list.Add(new Case { Name = "hud.piece-for-one-player", Run = HudCases.PieceForOnePlayer });
             list.Add(new Case { Name = "hud.command-button-by-scale", Run = HudCases.CommandButtonByScale });
@@ -1416,6 +1429,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });
+            list.Add(new Case { Name = "fdf.child-makes-its-own", Run = FdfCases.ChildMakesItsOwn });
+            list.Add(new Case { Name = "fdf.found-label-lets-clicks-through", Run = FdfCases.FoundLabelLetsClicksThrough });
+            list.Add(new Case { Name = "fdf.ended-part-refused", Run = FdfCases.EndedPartRefused });
         }
 
         /// <summary>Adds the special effect cases.</summary>

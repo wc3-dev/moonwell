@@ -23,8 +23,9 @@ namespace Moonwell
         private static T Put<T>(T frame, Scope scope, Player? shownTo, bool over)
             where T : Frame
         {
+            var added = frame.Parent != null;
             scope.Adopt(frame);
-            if (frame.Parent != scope || frame.HasEnded)
+            if (added || frame.Parent != scope || frame.HasEnded)
             {
                 return frame;
             }

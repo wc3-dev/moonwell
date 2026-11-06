@@ -71,6 +71,12 @@ namespace Moonwell.Hosting
         /// <summary>Sizes a frame.</summary>
         void SizeFrame(framehandle frame, float width, float height);
 
+        /// <summary>A frame's width, as this machine reads it: a template's at once, one from points only later (seen 11-05).</summary>
+        float FrameWidth(framehandle frame);
+
+        /// <summary>A frame's height, as FrameWidth reads.</summary>
+        float FrameHeight(framehandle frame);
+
         /// <summary>Scales a frame, with its children.</summary>
         void ScaleFrame(framehandle frame, float scale);
 

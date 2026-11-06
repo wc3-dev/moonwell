@@ -32,6 +32,9 @@ namespace Moonwell.Testing
         /// <summary>The handle of each fake, for a child asked for by index.</summary>
         private readonly Dictionary<FakeFrame, framehandle> handles = new Dictionary<FakeFrame, framehandle>();
 
+        /// <summary>The size each template makes a frame, width then height; a template not listed makes one 0 by 0.</summary>
+        public Dictionary<string, Vector2> TemplateSizes = new Dictionary<string, Vector2>();
+
         /// <summary>The templates the game does not have, as one from an .fdf whose TOC is not loaded: making a frame from one gives null.</summary>
         public List<string> MissingTemplates = new List<string>();
 
@@ -183,6 +186,12 @@ namespace Moonwell.Testing
 
             var made = new framehandle();
             var fake = new FakeFrame { Type = type, Template = template, Parent = frames[parent] };
+            if (TemplateSizes.TryGetValue(template, out var size))
+            {
+                fake.Width = size.X;
+                fake.Height = size.Y;
+            }
+
             frames[made] = fake;
             handles[fake] = made;
             Frames.Add(fake);
@@ -268,6 +277,18 @@ namespace Moonwell.Testing
             var fake = Asked(frame);
             fake.Width = width;
             fake.Height = height;
+        }
+
+        /// <summary>A frame's width, as last sized or as its template made it.</summary>
+        public float FrameWidth(framehandle frame)
+        {
+            return frames[frame].Width;
+        }
+
+        /// <summary>A frame's height, as last sized or as its template made it.</summary>
+        public float FrameHeight(framehandle frame)
+        {
+            return frames[frame].Height;
         }
 
         /// <summary>Scales a frame.</summary>
