@@ -15,6 +15,8 @@ namespace Moonwell.Testing
             AddMiddle(list);
             AddHeroes(list);
             AddEffects(list);
+            AddFloatingText(list);
+            AddSounds(list);
             AddUnitAbilities(list);
             AddLast(list);
             AddCompiler(list);
@@ -1528,6 +1530,33 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "effects.play-once-on-unit", Run = EffectCases.PlayOnceOnUnit });
             list.Add(new Case { Name = "effects.shown-to", Run = EffectCases.ShownTo });
             list.Add(new Case { Name = "effects.shown-to-other", Run = EffectCases.ShownToOther });
+        }
+
+        /// <summary>Adds the floating text cases.</summary>
+        private static void AddFloatingText(List<Case> list)
+        {
+            list.Add(new Case { Name = "floating-text.create", Run = FloatingTextCases.Create });
+            list.Add(new Case { Name = "floating-text.sets", Run = FloatingTextCases.Sets });
+            list.Add(new Case { Name = "floating-text.pop", Run = FloatingTextCases.Pop });
+            list.Add(new Case { Name = "floating-text.duration-and-fade", Run = FloatingTextCases.DurationAndFade });
+            list.Add(new Case { Name = "floating-text.scope-end", Run = FloatingTextCases.ScopeEnd });
+            list.Add(new Case { Name = "floating-text.ended-scope", Run = FloatingTextCases.EndedScope });
+            list.Add(new Case { Name = "floating-text.on-unit-follows", Run = FloatingTextCases.OnUnitFollows });
+            list.Add(new Case { Name = "floating-text.hidden-from-unseen", Run = FloatingTextCases.HiddenFromUnseen });
+            list.Add(new Case { Name = "floating-text.ends-with-unit", Run = FloatingTextCases.EndsWithUnit });
+            list.Add(new Case { Name = "floating-text.shown-to", Run = FloatingTextCases.ShownTo });
+        }
+
+        /// <summary>Adds the sound and music cases.</summary>
+        private static void AddSounds(List<Case> list)
+        {
+            list.Add(new Case { Name = "sounds.play-once", Run = SoundCases.PlayOnce });
+            list.Add(new Case { Name = "sounds.heard-by", Run = SoundCases.HeardBy });
+            list.Add(new Case { Name = "sounds.held-fades", Run = SoundCases.HeldFades });
+            list.Add(new Case { Name = "sounds.stop-at-once", Run = SoundCases.StopAtOnce });
+            list.Add(new Case { Name = "sounds.on-unit", Run = SoundCases.OnUnit });
+            list.Add(new Case { Name = "sounds.music", Run = SoundCases.PlaysMusic });
+            list.Add(new Case { Name = "sounds.music-shuffle-heard-by", Run = SoundCases.MusicShuffleHeardBy });
         }
 
         /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>

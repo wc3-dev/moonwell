@@ -322,7 +322,10 @@ namespace Moonwell
                 Runtime.World.EndEffect(handle, playsDeath);
             }
 
-            carrier?.Detach(this);
+            if (carrier != null)
+            {
+                carrier.Detach(this);
+            }
         }
     }
 }
