@@ -16,6 +16,17 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>A DayWatch whose dawn sets the time to night, 20 o'clock.</summary>
+    public class NightMaker : DayWatch
+    {
+        /// <summary>Logs the dawn, then sets the time to 20.</summary>
+        public override void OnDawn()
+        {
+            base.OnDawn();
+            Game.TimeOfDay = 20.0f;
+        }
+    }
+
     /// <summary>A game component that overrides no reaction of the day.</summary>
     public class QuietGameWatch : GameComponent
     {
