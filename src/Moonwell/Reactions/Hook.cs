@@ -80,5 +80,8 @@ namespace Moonwell
 
         /// <summary>A saved game is loaded.</summary>
         internal const int OnGameLoaded = 33554432;
+
+        /// <summary>A player selects or deselects a unit: one bit for the unit's and the map's reactions (decision 203).</summary>
+        internal const int OnSelection = 134217728;
     }
 }
