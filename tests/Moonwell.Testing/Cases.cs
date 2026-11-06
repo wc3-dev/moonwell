@@ -1574,6 +1574,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "sounds.on-unit", Run = SoundCases.OnUnit });
             list.Add(new Case { Name = "sounds.music", Run = SoundCases.PlaysMusic });
             list.Add(new Case { Name = "sounds.music-shuffle-heard-by", Run = SoundCases.MusicShuffleHeardBy });
+            list.Add(new Case { Name = "sounds.music-playlist-loops", Run = SoundCases.MusicPlaylistLoops });
+            list.Add(new Case { Name = "sounds.music-replaced-and-stopped", Run = SoundCases.MusicReplacedAndStopped });
+            list.Add(new Case { Name = "sounds.music-missing-file", Run = SoundCases.MusicMissingFile });
+            list.Add(new Case { Name = "sounds.music-play-once", Run = SoundCases.MusicPlayOnce });
         }
 
         /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>

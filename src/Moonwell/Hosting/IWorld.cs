@@ -641,14 +641,14 @@ namespace Moonwell.Hosting
         /// <summary>Stops a sound at once and lets the game free it.</summary>
         void StopPlaying(sound sound);
 
-        /// <summary>Plays music on this machine: one file, or a list of them joined by ";", which the game plays in order and starts again.</summary>
-        void StartMusic(string list);
+        /// <summary>Plays one file of music on this machine now, and makes it the map's music, which the game goes back to.</summary>
+        void StartMusic(string path);
 
-        /// <summary>Plays one file of music once on this machine, cutting the music off, which goes on after it.</summary>
-        void StartMusicOnce(string path);
-
-        /// <summary>Stops the music on this machine, the music played once included, fading or at once.</summary>
+        /// <summary>Stops the music on this machine, fading or at once, and leaves the map with no music to go back to.</summary>
         void StopAllMusic(bool fadeOut);
+
+        /// <summary>A file's length in milliseconds as this machine reads it; 0 when the game has no such file.</summary>
+        int MusicLength(string path);
 
         /// <summary>Sets the music's volume on this machine, 0 to 127.</summary>
         void SetMusicLoudness(int volume);

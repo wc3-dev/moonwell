@@ -3298,19 +3298,22 @@ namespace Moonwell.Testing
             return fake;
         }
 
-        /// <summary>What the runtime asked of this machine's music, in order: "play a;b", "once a", "stop fading" or "stop at once", "volume 76".</summary>
+        /// <summary>What the runtime asked of this machine's music, in order: "play a", "stop fading" or "stop at once", "volume 76".</summary>
         public List<string> MusicCalls = new List<string>();
 
-        /// <summary>Records a playlist.</summary>
-        public void StartMusic(string list)
+        /// <summary>The length of each music file in milliseconds, as this machine reads it; a file not here reads 0.</summary>
+        public Dictionary<string, int> MusicLengths = new Dictionary<string, int>();
+
+        /// <summary>Records a file played.</summary>
+        public void StartMusic(string path)
         {
-            MusicCalls.Add("play " + list);
+            MusicCalls.Add("play " + path);
         }
 
-        /// <summary>Records music played once.</summary>
-        public void StartMusicOnce(string path)
+        /// <summary>A file's length from MusicLengths.</summary>
+        public int MusicLength(string path)
         {
-            MusicCalls.Add("once " + path);
+            return MusicLengths.TryGetValue(path, out var length) ? length : 0;
         }
 
         /// <summary>Records a stop.</summary>
