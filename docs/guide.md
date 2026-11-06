@@ -663,12 +663,16 @@ Music.SetVolume(60);
   timer of the game's, so it outlives the scope.
 - `heardBy: player` plays it for that player only: every machine makes and plays the sound, the others at volume 0, so
   the game's handles stay in step. Reads give what the map set, the same on every machine.
-- `Music.Play` gives the game one file, played again and again, or a playlist, which it plays in order and starts
-  again. `shuffle: true` mixes the order once, with the game's random numbers, on every machine. `PlayOnce` cuts in with
-  a file that plays once, and the music goes on after it. `Stop()` fades the music out, the file played once included;
-  `Stop(fadeOut: false)` stops it at once. The game chooses where a playlist starts: after the map's own music it
-  started at its first file, but a playlist played again after itself started at a later one (seen), and Moonwell has
-  no way to choose. Music goes on while the game is paused.
+- `Music.Play` plays one file again and again, or a playlist: its files in order from the first, then again.
+  `shuffle: true` mixes the order once, with the game's random numbers, on every machine. Moonwell plays a playlist
+  itself, one file at a time, each for its length: the game's own list plays once from a place it picks, then goes back
+  to the map's music (seen). The lengths are read on the first person's machine and shared, so the first file plays at
+  once and the next comes at the same moment on every machine. The music goes on while the game is paused, and the
+  playlist moves on when play does; it goes on after a saved game loads (seen).
+- `PlayOnce` cuts in with a file that plays once, on Moonwell's clock too; the playlist then goes on from the file it is
+  at, and with no playlist the music stops. It is not the game's own cut-in (`PlayThematicMusic`), after which a stop
+  did not hold (seen). `Stop()` fades the music out, the file played once included; `Stop(fadeOut: false)` stops it at
+  once. After a stop the map has no music until the next `Play`, its own included.
 - Every `Music` call takes `heardBy:` too, which changes the music for that player only; the others' stays as it is.
 - A file of the map's own goes in `assets/`. A path to one of the game's sounds works with `.wav`, `.flac` or `.ogg`
   alike.
