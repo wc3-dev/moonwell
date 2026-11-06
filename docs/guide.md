@@ -246,6 +246,7 @@ public sealed class KillCounter : UnitComponent
   `OnHeroSkillLearned`, `OnLeave`) go on a game or player component. A game component hears them for every unit; a
   player's components only for its own player's units: the unit's owner (the caster's for `OnUnitCast`), and for
   `OnUnitDied` the dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
+  `OnUnitSelected` and `OnUnitDeselected` go there too, and run for the selecting player's components ([Players](#players)).
   `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before anything wanted it
   runs none); a unit's own is `OnCreated`. `OnDawn` and `OnDusk` go on a game component only (see the time of day
   below), and so does `OnGameLoaded`, which runs once when a game saved with the game's own Save Game is loaded, after
@@ -380,6 +381,10 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
+| `PlayAnimation(name)`, `QueueAnimation(name)` | as an effect's ([below](#special-effects)); it plays once, then an idle unit stands; a walking unit keeps walking and only stutters; a name the model lacks plays its stand, and a name picks no variant (`"attack 2"` is any attack) |
+| `PlayAnimation(index)` | by the animation's index in the model, from 0: the one way to pick a variant; indices differ between models |
+| `AnimationSpeed` | read and set, 1 unless set; 0.5 plays at half speed, 0 holds the unit still mid-animation |
+| `AddAnimationTag(tag)`, `RemoveAnimationTag(tag)` | `AnimationTag.Defend`, `Alternate`, `Gold`, `Lumber`, `Work`, or any tag the game takes (`"upgrade first"`): the unit's animations play with it until it is removed |
 | `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
 | `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
@@ -1137,6 +1142,43 @@ nothing between them, and `a.MakeAllies(b, sharedVision: true)` lets each see wh
 lets `b` see what `a` sees, `a.HideVisionFrom(b)` stops it and `a.ShowsVisionTo(b)` reads it: these go one way and leave
 the alliance as it is. For anything finer, `a.SetAlliance(b, Alliance.Allied | Alliance.SharedControl)` sets what `a`
 gives `b`, one way as the game keeps it, and `a.AllianceWith(b)`, `a.IsAlly(b)` and `a.IsEnemy(b)` read it.
+
+**Selection.** `player.Select(unit)` selects only that unit for the player, as a click does; `AddToSelection(unit)`,
+`Deselect(unit)` and `ClearSelection()` do the rest. `player.Selection` is the units the player has selected, in the
+order selected, the same on every machine, so it is read anywhere, `Local.For` included:
+
+```csharp
+Command("kill", (player, rest) =>
+{
+    foreach (var unit in player.Selection)
+    {
+        unit.Kill();
+    }
+});
+
+public sealed class Tavern : UnitComponent
+{
+    public override void OnSelected(Player selectingPlayer) => selectingPlayer.Print("Pick a hero.");
+}
+```
+
+- `OnSelected(Player selectingPlayer)` and `OnDeselected(Player deselectingPlayer)` on a unit's class and its components,
+  then `OnUnitSelected(Unit selectedUnit, Player selectingPlayer)` and `OnUnitDeselected` on the game's components and
+  the selecting player's (whoever owns the unit), run as the game's events come. Inside them `Selection` already holds
+  the unit, or no longer does.
+- The events reach every machine a moment after a click or a `Select` (0.1 to 0.2 s in single player, the network's
+  delay online), and `Selection` follows them, so it does not hold a unit in the instant `Select` is called.
+- They run as the game fires them: a click on another unit, a drag or a control group deselects every unit, then
+  selects the new ones, a unit already selected among them; a click on a selected unit selects it again; a double-click
+  selects each unit of its type on screen.
+- The game drops a unit from a selection with no event when it dies, is removed, hidden, gets Locust, or changes hands to
+  a player who does not share control: `Selection` leaves it out and no `OnDeselected` runs, so what `OnSelected` set up
+  is also undone in `OnDeath` or `OnLeave`. A unit hidden and shown again in one instant stays in `Selection`, though the
+  game dropped it.
+- `Select` and the rest change the selection on the player's own machine only, unit by unit, as the game takes it; they
+  are changes, not for `Local.For`. A dead, hidden or Locust unit is not selected. Seen in single player; with two
+  players it is not checked yet.
+- A map listens for selections only when its code writes a selection reaction or reads `Selection`.
 
 `LevelOf<T>()` and `SetLevel<T>(2)` take an upgrade class;
 `SetMaxAllowed<T>(1)` a unit or upgrade class, where 0 forbids it and `Player.NoLimit` lifts a unit's limit; and
