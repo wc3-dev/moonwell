@@ -198,7 +198,10 @@ no default object, is error MW0037. On a declared class `Default` is typed as it
 `StandardHero` or `StandardItem`), so it holds every field of it (`Default.Model`, `Default.GoldCost`); the class's own
 members come through `Unit.Default<T>()`. Its live actions do nothing. In the class's own constructor the default
 object is what the constructor is making, so `Default` and `Unit.Default<T>()` of the class there are error MW0012:
-read the field itself (`MaxLife`, not `Default.MaxLife`).
+read the field itself (`MaxLife`, not `Default.MaxLife`). Setting a member through a default object anywhere else
+(`unit.Default.MaxLife = 500`) is error MW0054: in the game it does nothing, and in the build, which runs on .NET, it
+changes the one object every read of that default gives, so the build and the game would differ. Declare the value in
+the class's constructor, or set it on the unit or item.
 
 An ability class has no default object either. `unit.AbilityOf<Smite>()` is the object a unit has of it, made if the
 unit has none yet, and its fields read what the class declares. A destructable's read on one in the game.
@@ -1338,6 +1341,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0032 | `Enum.Parse(typeof(Color), text)` (gives the number) | `Enum.Parse<Color>(text)` |
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
+| MW0053 | a native as a method group, `xs.Select(Natives.Cos)` or `Func<float, float> f = Natives.Cos`: it is written `Moonwell.Natives.Cos`, which the game's Lua does not have, so the script stops there | a lambda that calls it, `x => Natives.Cos(x)` |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
 
