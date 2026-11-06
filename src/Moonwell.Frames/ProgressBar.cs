@@ -2,8 +2,9 @@ namespace Moonwell
 {
     /// <summary>
     /// A bar that fills from the left: its Texture drawn over the share of its width that Value is of the range from Min to
-    /// Max. The bar itself draws nothing, and its size is the map's: its Width and Height, or those of the frame it covers with
-    /// Fill. It is two images, not the game's status bar, which follows no parent (seen 10-14).
+    /// Max. The bar itself draws nothing. The fill is as high as the bar, and its width is the map's: the bar's Width, or that
+    /// of the frame it covers with Fill, as the game reads a size from points late (seen 11-05). It is two images, not the
+    /// game's status bar, which follows no parent (seen 10-14).
     /// </summary>
     public class ProgressBar : Frame
     {
@@ -102,13 +103,14 @@ namespace Moonwell
             return true;
         }
 
-        /// <summary>Paints the bar blank and makes the fill, tied by its top left to the bar's.</summary>
+        /// <summary>Paints the bar blank and makes the fill, tied by its left corners to the bar's, so it is as high as the bar however the bar is sized (review G3).</summary>
         internal override void MakeParts()
         {
             var world = FramesSystem.World;
             world.PaintFrame(handle!, Image.Blank);
             fill = world.MakeFrame("BACKDROP", "", handle!)!;
             world.PlaceFrame(fill, (int)FramePoint.TopLeft, handle!, (int)FramePoint.TopLeft, 0.0f, 0.0f);
+            world.PlaceFrame(fill, (int)FramePoint.BottomLeft, handle!, (int)FramePoint.BottomLeft, 0.0f, 0.0f);
         }
 
         /// <summary>Takes an ended bar's fill with its frame.</summary>
@@ -126,10 +128,11 @@ namespace Moonwell
             base.Place();
         }
 
-        /// <summary>The fill follows a new size.</summary>
+        /// <summary>The fill follows a new size, the bar's own or that of the frame it covers.</summary>
         internal override void Resized()
         {
             Refill();
+            base.Resized();
         }
 
         /// <summary>Keeps the value within the range and sizes the fill to it.</summary>
@@ -148,8 +151,13 @@ namespace Moonwell
                 return;
             }
 
-            // The game reads a frame's size only some time after it is placed (seen 11-05), so the size is the map's: the bar's own, or that of the frame it covers.
-            var size = sized || filled == null ? this : filled;
+            // The game reads a frame's size only some time after it is placed (seen 11-05), so the size is the map's: the bar's own, or that of the frame it covers, or of the one that one covers.
+            Frame size = this;
+            while (!size.sized && size.filled != null)
+            {
+                size = size.filled;
+            }
+
             var share = max == min ? 0.0f : (value - min) / (max - min);
             FramesSystem.World.SizeFrame(fill, size.width * share, size.height);
         }
