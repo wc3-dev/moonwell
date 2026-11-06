@@ -48,6 +48,13 @@ namespace Moonwell.Engine
             registered[mouse] = done;
         }
 
+        /// <summary>Forgets every game frame, as a saved game's load took them: the frames made again register anew, on the same triggers.</summary>
+        internal void Forget()
+        {
+            owners.Clear();
+            registered.Clear();
+        }
+
         /// <summary>Takes away an ended frame's ownership, so the events of its game frame reach no one until another frame owns it.</summary>
         internal void Disown(Frame frame)
         {

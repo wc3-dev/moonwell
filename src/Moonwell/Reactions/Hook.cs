@@ -77,5 +77,8 @@ namespace Moonwell
 
         /// <summary>Day turns to night.</summary>
         internal const int OnDusk = 16777216;
+
+        /// <summary>A saved game is loaded.</summary>
+        internal const int OnGameLoaded = 33554432;
     }
 }

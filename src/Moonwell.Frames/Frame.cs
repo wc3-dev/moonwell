@@ -83,12 +83,18 @@ namespace Moonwell
         /// <summary>Whether the frame was found in its window's template, not made: it is never given out on its own.</summary>
         internal bool foundInTemplate;
 
+        /// <summary>The name it was found by in its window's template, to be found again after a load; empty for a frame made.</summary>
+        internal string foundName = "";
+
+        /// <summary>Whether the frame was added to the screen, so it is made again when a saved game loads.</summary>
+        internal bool rooted;
+
         /// <summary>Internal, as a map's own frame inherits Panel.</summary>
         internal Frame()
         {
         }
 
-        /// <summary>The game's frame, for anything Moonwell does not do; null until the frame is added to the screen, or to a frame that is. Once the frame has ended, the game's frame may be given to the next frame of its kind.</summary>
+        /// <summary>The game's frame, for anything Moonwell does not do; null until the frame is added to the screen, or to a frame that is. Once the frame has ended, the game's frame may be given to the next frame of its kind. A saved game's load makes a new one, with what Moonwell set: redo what the map set itself in GameComponent.OnGameLoaded.</summary>
         [LocalSafe]
         public framehandle? Handle => handle;
 
@@ -369,7 +375,7 @@ namespace Moonwell
         /// <summary>Ties a point of the frame to a point of a piece of the game's HUD, from player.GameUi(), as Attach to a frame does: on each machine, to that machine's own piece, wherever its player has put it.</summary>
         public void Attach(FramePoint point, GamePiece piece, FramePoint piecePoint, float x = 0.0f, float y = 0.0f)
         {
-            AddTie(new Tie(point, null, piece.Handle, piecePoint, x, y));
+            AddTie(new Tie(point, null, piece, piecePoint, x, y));
         }
 
         /// <summary>Adds a tie in place of the Anchor, or to the ties there are, and gives it to the game; false once the frame has ended.</summary>
@@ -590,6 +596,7 @@ namespace Moonwell
             child.player = player;
             child.over = over;
             child.foundInTemplate = true;
+            child.foundName = name;
             Adopt(child);
             found ??= new Dictionary<string, Frame>();
             found[name] = child;
@@ -828,6 +835,109 @@ namespace Moonwell
             }
 
             MakeChildren();
+            if (found != null)
+            {
+                FindAgain();
+            }
+        }
+
+        /// <summary>
+        /// Forgets the game's frames a saved game's load took (game facts, 11-06), this one's and those inside it, and lines up
+        /// the frames made under it to be made again with it, in the order added. Its tooltip is made again with it, and the
+        /// frames found in its template are found again (FindAgain); a frame added to the screen in its scope is made again as
+        /// the screen's.
+        /// </summary>
+        internal void Forget()
+        {
+            var was = handle;
+            handle = null;
+            ForgetParts();
+            children.Clear();
+            for (var item = Oldest(); item != null; item = item.after)
+            {
+                if (!(item is Frame frame) || frame.HasEnded || frame.handle == null)
+                {
+                    continue;
+                }
+
+                if (frame == tooltip || frame.foundInTemplate)
+                {
+                    frame.Forget();
+                }
+                else if (frame.parentHandle == was)
+                {
+                    frame.Forget();
+                    children.Add(frame);
+                }
+            }
+        }
+
+        /// <summary>The oldest of the frame's children in its scope, the first added; null when it has none.</summary>
+        private Scoped? Oldest()
+        {
+            var oldest = newest;
+            while (oldest?.before != null)
+            {
+                oldest = oldest.before;
+            }
+
+            return oldest;
+        }
+
+        /// <summary>Forgets the game's frames a kind keeps that its MakeParts does not always make again.</summary>
+        internal virtual void ForgetParts()
+        {
+        }
+
+        /// <summary>Finds again, in this frame made anew after a load, the frames found in its template before, in the order found, and gives each what the map set on it, as Child did.</summary>
+        private void FindAgain()
+        {
+            for (var item = Oldest(); item != null; item = item.after)
+            {
+                if (!(item is Frame frame) || !frame.foundInTemplate || frame.HasEnded)
+                {
+                    continue;
+                }
+
+                var match = Find(handle!, frame.foundName);
+                if (match == null)
+                {
+                    continue;
+                }
+
+                frame.handle = match;
+                frame.parentHandle = handle;
+                frame.player = player;
+                frame.over = over;
+                if (frame.listened != 0)
+                {
+                    FramesSystem.Events.Own(frame);
+                }
+
+                if (frame.WantsMouse())
+                {
+                    frame.PrepareMouse();
+                }
+
+                if (frame.tooltip != null && !frame.tooltip.HasEnded)
+                {
+                    frame.MakeTip();
+                }
+
+                frame.MakeChildren();
+                if (frame.found != null)
+                {
+                    frame.FindAgain();
+                }
+
+                frame.Place();
+            }
+        }
+
+        /// <summary>Whether the map placed the frame: a frame found in its template keeps the template's place until it does.</summary>
+        private bool PlacedByMap()
+        {
+            return ties != null || filled != null || anchor != FramePoint.Center || offset.X != 0.0f || offset.Y != 0.0f;
         }
 
         /// <summary>Makes the frames added to this one before it was made, under its game frame.</summary>
@@ -919,7 +1029,13 @@ namespace Moonwell
         internal virtual void Place()
         {
             var world = FramesSystem.World;
-            PlacePoints();
+
+            // shortcut: a found frame given Anchor Center with no offset keeps its template's place after a load; keep a flag if a map needs that.
+            if (!foundInTemplate || PlacedByMap())
+            {
+                PlacePoints();
+            }
+
             if (sized)
             {
                 GiveSize();
@@ -999,7 +1115,7 @@ namespace Moonwell
         /// <summary>Gives the game one tie, once the other frame is made.</summary>
         private void Tie(Tie tie)
         {
-            var other = tie.Other != null ? tie.Other.handle : tie.Piece;
+            var other = tie.Other != null ? tie.Other.handle : tie.Piece!.Handle;
             if (other != null)
             {
                 FramesSystem.World.PlaceFrame(handle!, (int)tie.Point, other, (int)tie.OtherPoint, tie.X, tie.Y);
@@ -1069,6 +1185,11 @@ namespace Moonwell
         /// <summary>Hides the game's frame and keeps it for the next of its kind: a frame is never destroyed, as destroying one can desync (a claim in the game facts). One a live frame is still tied to, once its parent has closed up, is not given out again, so the tied frame stays where it was rather than follow the next frame of the kind (review G6).</summary>
         internal override void Finish()
         {
+            if (rooted)
+            {
+                FramesSystem.Unrooted(this);
+            }
+
             if (handle != null)
             {
                 FramesSystem.World.ShowFrame(handle, false);
@@ -1100,10 +1221,10 @@ namespace Moonwell
         }
     }
 
-    /// <summary>A point of a frame tied to a point of another frame or of a piece of the game's HUD, moved by an offset.</summary>
+    /// <summary>A point of a frame tied to a point of another frame or of a piece of the game's HUD, moved by an offset; also a piece of the HUD tied to a frame.</summary>
     internal sealed class Tie
     {
-        internal Tie(FramePoint point, Frame? other, framehandle? piece, FramePoint otherPoint, float x, float y)
+        internal Tie(FramePoint point, Frame? other, GamePiece? piece, FramePoint otherPoint, float x, float y)
         {
             Point = point;
             Other = other;
@@ -1117,7 +1238,8 @@ namespace Moonwell
 
         internal Frame? Other { get; }
 
-        internal framehandle? Piece { get; }
+        /// <summary>The piece of the HUD tied to, whose game frame is looked up again after a load; null for a frame.</summary>
+        internal GamePiece? Piece { get; }
 
         internal FramePoint OtherPoint { get; }
 

@@ -15,6 +15,9 @@ namespace Moonwell
         /// <summary>Set by a damage package: called in place of listening for the game's damage event; null without one.</summary>
         internal static Action? DamageListener;
 
+        /// <summary>Set by the frames package: makes its frames again when a saved game loads, before the map's OnGameLoaded; null without one.</summary>
+        internal static Action? LoadListener;
+
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, Damage?>? DamageDealer;
 
@@ -84,6 +87,11 @@ namespace Moonwell
             {
                 DayChange.Start();
             }
+
+            if ((mask & Hook.OnGameLoaded) != 0)
+            {
+                Listen(GameEvent.Loaded);
+            }
         }
 
         /// <summary>Whether the world delivers a game event.</summary>
@@ -104,6 +112,7 @@ namespace Moonwell
             listening = new bool[11];
             wanted = 0;
             DamageListener = null;
+            LoadListener = null;
             DamageDealer = null;
         }
 

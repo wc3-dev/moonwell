@@ -71,6 +71,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>The catcher went with the game's frames at a load; one found in a template, or not listened to, gets one only when it wants the mouse.</summary>
+        internal override void ForgetParts()
+        {
+            catcher = null;
+        }
+
         private void MakeCatcher()
         {
             catcher = FramesSystem.World.MakeFrame("TEXT", "", handle!)!;
