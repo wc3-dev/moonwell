@@ -77,7 +77,8 @@ namespace Moonwell.Objects.Tests
             var table = Objects.GetType("Moonwell.Objects.CoreChoices", true)!;
             var texts = table.GetNestedType("WeaponSound", BindingFlags.NonPublic)!.GetFields(BindingFlags.Public | BindingFlags.Static);
 
-            Assert.Equal(13, texts.Length);
+            // The 13 World Editor lists, and None, written empty.
+            Assert.Equal(14, texts.Length);
             Assert.All(texts, field => Assert.Equal((int)Enum.Parse<Moonwell.WeaponSound>(field.Name), Convert.ToInt32(field.GetValue(null))));
         }
 

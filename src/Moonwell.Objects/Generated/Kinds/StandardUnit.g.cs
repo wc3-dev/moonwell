@@ -821,7 +821,7 @@ namespace Moonwell.Objects
 
         /// <summary>Attack 1 - Weapon Sound (ucs1).</summary>
         [global::Moonwell.Objects.Field("ucs1", Label = "Attack 1 - Weapon Sound")]
-        [global::Moonwell.Objects.ListedValues(22, 8, 3, 6, 1, 4, 7, 2, 5, 23, 16, 14, 15)]
+        [global::Moonwell.Objects.ListedValues(22, 8, 3, 6, 1, 4, 7, 2, 5, 23, 16, 14, 15, 0)]
         public global::Moonwell.WeaponSound Attack1WeaponSound
         {
             get { return Fields.Get<global::Moonwell.WeaponSound>(this, "ucs1"); }
@@ -830,7 +830,7 @@ namespace Moonwell.Objects
 
         /// <summary>Attack 2 - Weapon Sound (ucs2).</summary>
         [global::Moonwell.Objects.Field("ucs2", Label = "Attack 2 - Weapon Sound")]
-        [global::Moonwell.Objects.ListedValues(22, 8, 3, 6, 1, 4, 7, 2, 5, 23, 16, 14, 15)]
+        [global::Moonwell.Objects.ListedValues(22, 8, 3, 6, 1, 4, 7, 2, 5, 23, 16, 14, 15, 0)]
         public global::Moonwell.WeaponSound Attack2WeaponSound
         {
             get { return Fields.Get<global::Moonwell.WeaponSound>(this, "ucs2"); }
