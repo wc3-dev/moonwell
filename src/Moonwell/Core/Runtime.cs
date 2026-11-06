@@ -33,6 +33,8 @@ namespace Moonwell
             Events.Reset();
             Game.Instance = new Game();
             Player.Reset();
+            Team.Reset();
+            Inbound.ResetAlliances();
             Sharing.Reset();
             ChatCommand.Reset();
             RealClock.Reset();
@@ -142,6 +144,7 @@ namespace Moonwell
         internal static void Install(Map map, Action register)
         {
             SaveGame.Key = map.SaveKey;
+            Team.Install(map.StartSlots);
             ObjectTypes.Registering(register);
             var components = map.StartComponents;
             for (var i = 0; i < components.Count; i++)

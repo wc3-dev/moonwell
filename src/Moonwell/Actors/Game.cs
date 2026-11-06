@@ -81,6 +81,48 @@ namespace Moonwell
             set { Runtime.World.StopDay(value); }
         }
 
+        /// <summary>
+        /// Ends the game: the team's players in the game win and every other player in the game loses, as Win and Lose do, the
+        /// losers first. A player who has won or lost already is left as they are (decision 197).
+        /// </summary>
+        public static void Over(Team winners, bool dialog = true, bool scores = true)
+        {
+            Finish(null, winners, dialog, scores);
+        }
+
+        /// <summary>Ends the game with one winner, as in a free-for-all: every other player in the game loses, as Over with a team does.</summary>
+        public static void Over(Player winner, bool dialog = true, bool scores = true)
+        {
+            Finish(winner, null, dialog, scores);
+        }
+
+        // Loses every player in the game who is not a winner, then wins the winners; one with a result already is left as it is.
+        private static void Finish(Player? winner, Team? winners, bool dialog, bool scores)
+        {
+            var playing = Player.Playing;
+            for (var pass = 0; pass < 2; pass++)
+            {
+                for (var i = 0; i < playing.Count; i++)
+                {
+                    var player = playing[i];
+                    var wins = player == winner || (winners != null && player.Team == winners);
+                    if (player.HasResult || wins != (pass == 1))
+                    {
+                        continue;
+                    }
+
+                    if (wins)
+                    {
+                        player.Win(dialog, scores);
+                    }
+                    else
+                    {
+                        player.Lose();
+                    }
+                }
+            }
+        }
+
         /// <summary>Whether the fog of war is on, for every player; true unless set. Off, every player sees all the ground they have explored; the black mask still covers the rest.</summary>
         [LocalSafe]
         public static bool Fog
