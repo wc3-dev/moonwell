@@ -107,6 +107,13 @@ namespace Moonwell
             Events.Need(Hook.OnUnitOrdered);
         }
 
+        /// <summary>Listens for every player's selections from the start, so that Player.Selection has them: the map's Main calls it, in the register step, when the map's code reads it.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void ListenForSelection()
+        {
+            Events.Need(Hook.OnSelection);
+        }
+
         /// <summary>Gives the day the map's dawn, dusk and hours; the map's Main calls it, before anything registers, when the map's gameplay constants change the standard ones.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void InstallDay(float dawn, float dusk, float hours)

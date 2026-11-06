@@ -224,6 +224,11 @@ namespace Moonwell.Build
                 installs.Add("global::Moonwell.Runtime.ListenForOrders();");
             }
 
+            if (ReadsSelection(targetPath))
+            {
+                installs.Add("global::Moonwell.Runtime.ListenForSelection();");
+            }
+
             if (day != GameDay.Standard)
             {
                 installs.Add(day.Install());
@@ -368,10 +373,21 @@ namespace Moonwell.Build
         /// <param name="assemblyPath">The map's built assembly.</param>
         internal static bool ReadsLastOrders(string assemblyPath)
         {
-            return CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsLastOrdersIn);
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Unit", "get_LastOrder", "Reissue"));
         }
 
-        private static bool ReadsLastOrdersIn(string assemblyPath)
+        /// <summary>
+        /// Whether a map's code reads a player's selection (a member reference to <c>Player.Selection</c>), which only listening
+        /// for every player's selections from the start fills (decision 203). A library of the map's own counts as its code.
+        /// </summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        internal static bool ReadsSelection(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Player", "get_Selection", "get_Selection"));
+        }
+
+        /// <summary>Whether an assembly refers to either of two members of a Moonwell class.</summary>
+        private static bool References(string assemblyPath, string typeName, string first, string second)
         {
             using var stream = File.OpenRead(assemblyPath);
             using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
@@ -385,13 +401,13 @@ namespace Moonwell.Build
                 }
 
                 var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
-                if (metadata.GetString(type.Name) != "Unit" || metadata.GetString(type.Namespace) != "Moonwell")
+                if (metadata.GetString(type.Name) != typeName || metadata.GetString(type.Namespace) != "Moonwell")
                 {
                     continue;
                 }
 
                 var name = metadata.GetString(member.Name);
-                if (name == "get_LastOrder" || name == "Reissue")
+                if (name == first || name == second)
                 {
                     return true;
                 }
