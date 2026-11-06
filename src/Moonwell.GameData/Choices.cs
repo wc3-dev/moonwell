@@ -320,7 +320,9 @@ public static class Choices
 
     /// <summary>
     /// The choice types with the members of a partial type (<see cref="IsPartial"/>) numbered as its core enum numbers
-    /// them; other types are returned as they are.
+    /// them, and the core enum's <c>None</c> (0) added last as an empty text: the game's data leaves <c>combatSound</c>
+    /// empty on 581 of its 929 weapons (the missile units), and the fields can be empty. Other types are returned as
+    /// they are.
     /// </summary>
     /// <param name="choices">The choice types by type.</param>
     /// <param name="core">The members of a core enum by its name (<c>RuntimeMembers.EnumMembers</c> in Moonwell's generator); null when Moonwell has no such enum.</param>
@@ -349,6 +351,11 @@ public static class Choices
                 }
 
                 members.Add(member with { Value = found[0].Value });
+            }
+
+            if (numbers.Contains(("None", 0)))
+            {
+                members.Add(new ChoiceMember("None", 0, "", Array.Empty<string>(), "None"));
             }
 
             result[type] = choice with { Members = members };
