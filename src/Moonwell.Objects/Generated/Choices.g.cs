@@ -1516,6 +1516,10 @@ namespace Moonwell.Objects
             /// <summary>Wood Medium Bash.</summary>
             [global::Moonwell.Objects.GameValue("WoodMediumBash")]
             WoodMediumBash = 15,
+
+            /// <summary>None.</summary>
+            [global::Moonwell.Objects.GameValue("")]
+            None = 0,
         }
     }
 }

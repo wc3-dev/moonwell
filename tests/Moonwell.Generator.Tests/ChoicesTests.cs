@@ -245,7 +245,7 @@ public class ChoicesTests
     }
 
     [Fact]
-    public void a_sound_is_a_part_of_core_weapon_sound_with_its_numbers()
+    public void a_sound_is_a_part_of_core_weapon_sound_with_its_numbers_and_none_as_empty()
     {
         var sound = Choices.Make("combatSound", "string", new[] { Entry(0, "MetalHeavySlice", "LABEL"), Entry(1, "WoodLightBash", "LABEL") }, _ => "");
         var core = new (string Name, int Value)[] { ("None", 0), ("MetalHeavySlice", 6), ("WoodLightBash", 14), ("ClawHeavySlice", 21) };
@@ -254,7 +254,7 @@ public class ChoicesTests
 
         Assert.Equal("global::Moonwell.WeaponSound", sound.TypeName);
         Assert.True(sound.Partial);
-        Assert.Equal(new[] { ("MetalHeavySlice", 6), ("WoodLightBash", 14) }, numbered.Members.Select(member => (member.Name, member.Value)));
+        Assert.Equal(new[] { ("MetalHeavySlice", 6, "MetalHeavySlice"), ("WoodLightBash", 14, "WoodLightBash"), ("None", 0, "") }, numbered.Members.Select(member => (member.Name, member.Value, member.Text)));
     }
 
     [Fact]
