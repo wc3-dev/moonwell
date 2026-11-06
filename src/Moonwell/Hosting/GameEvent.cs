@@ -35,5 +35,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A game saved with the game's own Save Game is loaded.</summary>
         Loaded,
+
+        /// <summary>A player selects or deselects a unit.</summary>
+        Selection,
     }
 }

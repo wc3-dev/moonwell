@@ -26,6 +26,12 @@ namespace Moonwell
             StartName = Runtime.World.NameOf(handle);
         }
 
+        /// <summary>The units the game's events say the player has selected, in the order selected, and each one's owner then; a unit the game dropped with no event stays until a read or an event outside Local.For finds it gone.</summary>
+        private readonly List<Unit> selection = new List<Unit>();
+
+        /// <summary>The owner of each unit in selection when it was selected, in the same order.</summary>
+        private readonly List<Player> selectedOwners = new List<Player>();
+
         /// <summary>The player's name when the player object was made, at the start, which a save is tied to, as the map may rename the player.</summary>
         internal string StartName { get; }
 
@@ -532,6 +538,117 @@ namespace Moonwell
         {
             return (Alliance)Runtime.World.AllianceOf(Handle, other.Handle);
         }
+
+        /// <summary>
+        /// The units the player has selected, in the order selected, as the game's selection events told every machine: the
+        /// same on every machine, so it is read anywhere, Local.For included (decision 203). It follows the events, so a click
+        /// or a Select shows a moment later (0.1 to 0.2 s in single player, the network's delay online). It leaves out a unit
+        /// the game drops with no event: one that died, is gone, is hidden, has Locust, or changed hands to a player who does not
+        /// share control with this one (seen 11-06). A unit hidden and shown again before a read stays in it, though the game
+        /// dropped it. A new list at each read.
+        /// </summary>
+        [LocalSafe]
+        public List<Unit> Selection
+        {
+            get
+            {
+                var units = new List<Unit>();
+                for (var i = 0; i < selection.Count; i++)
+                {
+                    if (StillSelected(i))
+                    {
+                        units.Add(selection[i]);
+                    }
+                    else if (Local.Depth == 0)
+                    {
+                        selection.RemoveAt(i);
+                        selectedOwners.RemoveAt(i);
+                        i--;
+                    }
+                }
+
+                return units;
+            }
+        }
+
+        /// <summary>Selects only this unit for the player, as a click does: the player's machine clears its selection and selects the unit, and the game's events then reach every machine, with OnDeselected and OnSelected, a moment later. Does nothing for a unit that is gone, dead, hidden or has Locust (seen 11-06). A change to the game: not for Local.For.</summary>
+        public void Select(Unit unit)
+        {
+            if (unit.InGame())
+            {
+                Runtime.World.ClearSelectionFor(Handle);
+                Runtime.World.SelectFor(Handle, unit.Handle, true);
+            }
+        }
+
+        /// <summary>Adds a unit to the player's selection, as a Shift-click does; one already selected is selected again, with its OnSelected (seen 11-06). As Select otherwise.</summary>
+        public void AddToSelection(Unit unit)
+        {
+            if (unit.InGame())
+            {
+                Runtime.World.SelectFor(Handle, unit.Handle, true);
+            }
+        }
+
+        /// <summary>Takes a unit out of the player's selection, with its OnDeselected a moment later; one not selected runs nothing. As Select otherwise.</summary>
+        public void Deselect(Unit unit)
+        {
+            if (unit.InGame())
+            {
+                Runtime.World.SelectFor(Handle, unit.Handle, false);
+            }
+        }
+
+        /// <summary>Clears the player's selection, with OnDeselected for each unit a moment later. A change to the game: not for Local.For.</summary>
+        public void ClearSelection()
+        {
+            Runtime.World.ClearSelectionFor(Handle);
+        }
+
+        /// <summary>A selection event reached this machine: the unit joins the selection at the end, or keeps its place with its owner now, or leaves it; then the units the game dropped are let go.</summary>
+        internal void Selected(Unit unit, bool selected)
+        {
+            var at = selection.IndexOf(unit);
+            if (selected && at < 0)
+            {
+                selection.Add(unit);
+                selectedOwners.Add(unit.Owner);
+            }
+            else if (selected)
+            {
+                selectedOwners[at] = unit.Owner;
+            }
+            else if (at >= 0)
+            {
+                selection.RemoveAt(at);
+                selectedOwners.RemoveAt(at);
+            }
+
+            for (var i = selection.Count - 1; i >= 0; i--)
+            {
+                if (!StillSelected(i))
+                {
+                    selection.RemoveAt(i);
+                    selectedOwners.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>Whether the unit at an index of the selection is still selected: the game drops one that dies, is removed, hidden, given Locust or given to a player who shares no control with this one, and fires no event (seen 11-06).</summary>
+        private bool StillSelected(int index)
+        {
+            var unit = selection[index];
+            if (!unit.IsAlive || Runtime.World.IsHidden(unit.Handle) || unit.HasAbility(LocustId))
+            {
+                return false;
+            }
+
+            var owner = unit.Owner;
+            return owner == selectedOwners[index] || owner == this || (owner.AllianceWith(this) & Alliance.SharedControl) != 0;
+        }
+
+        /// <summary>Locust, Aloc, which makes a unit unselectable.</summary>
+        private const int LocustId = 0x416C6F63;
 
         /// <summary>Sets what the player gives another player, e.g. Alliance.Allied | Alliance.SharedVision; the other's alliance with this one stays.</summary>
         public void SetAlliance(Player other, Alliance alliance)

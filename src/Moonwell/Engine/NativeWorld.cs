@@ -155,6 +155,23 @@ namespace Moonwell.Engine
                 case GameEvent.OwnerChange:
                     Register(Natives.EVENT_PLAYER_UNIT_CHANGE_OWNER, OwnerChangeAction);
                     break;
+                case GameEvent.Selection:
+                    Register(Natives.EVENT_PLAYER_UNIT_SELECTED, () => SelectionAction(true));
+                    Register(Natives.EVENT_PLAYER_UNIT_DESELECTED, () => SelectionAction(false));
+                    break;
+            }
+        }
+
+        /// <summary>Hands a player's selection or deselection of a unit to Inbound.</summary>
+        private static void SelectionAction(bool selected)
+        {
+            try
+            {
+                Inbound.Selection(Natives.GetTriggerUnit(), Natives.GetTriggerPlayer(), selected);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Selection", error);
             }
         }
 
@@ -1164,6 +1181,61 @@ namespace Moonwell.Engine
         public void TintUnit(unit unit, int red, int green, int blue, int alpha)
         {
             Natives.SetUnitVertexColor(unit, red, green, blue, alpha);
+        }
+
+        /// <summary>Plays an animation of a unit by name (SetUnitAnimation), or queues it (QueueUnitAnimation).</summary>
+        public void AnimateUnit(unit unit, string name, bool queued)
+        {
+            if (queued)
+            {
+                Natives.QueueUnitAnimation(unit, name);
+            }
+            else
+            {
+                Natives.SetUnitAnimation(unit, name);
+            }
+        }
+
+        /// <summary>Plays an animation of a unit by index: SetUnitAnimationByIndex.</summary>
+        public void AnimateUnitByIndex(unit unit, int index)
+        {
+            Natives.SetUnitAnimationByIndex(unit, index);
+        }
+
+        /// <summary>Sets the speed of a unit's animations: SetUnitTimeScale.</summary>
+        public void SetUnitAnimationSpeed(unit unit, float speed)
+        {
+            Natives.SetUnitTimeScale(unit, speed);
+        }
+
+        /// <summary>Adds or removes an animation tag: AddUnitAnimationProperties.</summary>
+        public void TagUnitAnimation(unit unit, string tag, bool add)
+        {
+            Natives.AddUnitAnimationProperties(unit, tag, add);
+        }
+
+        /// <summary>Whether a unit is hidden: IsUnitHidden.</summary>
+        public bool IsHidden(unit unit)
+        {
+            return Natives.IsUnitHidden(unit);
+        }
+
+        /// <summary>Selects or deselects a unit on the player's machine only, unit by unit, as the game takes it in a local block (game facts, Desyncs).</summary>
+        public void SelectFor(player player, unit unit, bool selected)
+        {
+            if (Natives.GetLocalPlayer() == player)
+            {
+                Natives.SelectUnit(unit, selected);
+            }
+        }
+
+        /// <summary>Clears a player's selection on the player's machine only.</summary>
+        public void ClearSelectionFor(player player)
+        {
+            if (Natives.GetLocalPlayer() == player)
+            {
+                Natives.ClearSelection();
+            }
         }
 
         /// <summary>The fly height of a unit, from the game.</summary>

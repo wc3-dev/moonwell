@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection });
                 }
 
                 return mapHooks;
@@ -50,6 +50,20 @@ namespace Moonwell
 
         /// <summary>Runs when a unit in the map is given an order, for the game's components, then the components of the unit's player, after the unit and its components heard it; <c>order.Cancel()</c> refuses it.</summary>
         public virtual void OnUnitOrdered(Order order)
+        {
+        }
+
+        /// <summary>Runs when a player selects a unit, for the game's components, then the selecting player's, whoever owns the unit, after the unit and its components saw it (see Unit.OnSelected).</summary>
+        /// <param name="selectedUnit">The unit selected.</param>
+        /// <param name="selectingPlayer">The player who selected it.</param>
+        public virtual void OnUnitSelected(Unit selectedUnit, Player selectingPlayer)
+        {
+        }
+
+        /// <summary>Runs when a player deselects a unit, for the game's components, then the deselecting player's, after the unit and its components saw it (see Unit.OnDeselected).</summary>
+        /// <param name="deselectedUnit">The unit deselected.</param>
+        /// <param name="deselectingPlayer">The player who deselected it.</param>
+        public virtual void OnUnitDeselected(Unit deselectedUnit, Player deselectingPlayer)
         {
         }
 

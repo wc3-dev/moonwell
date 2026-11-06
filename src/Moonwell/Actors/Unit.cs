@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection });
                 }
 
                 return unitHooks;
@@ -155,6 +155,9 @@ namespace Moonwell
 
         /// <summary>Whether the scale has been read or set, so that lastScale holds it.</summary>
         internal bool scaleKnown;
+
+        /// <summary>The speed AnimationSpeed last set; the game keeps none to read.</summary>
+        internal float animationSpeed = 1.0f;
 
         /// <summary>The fly height last read or set.</summary>
         internal float lastFlyHeight = 0.0f;
@@ -717,6 +720,70 @@ namespace Moonwell
         public void Tint(Color color)
         {
             Tint(color.R, color.G, color.B, color.A);
+        }
+
+        /// <summary>Plays an animation of the unit's model by name (SetUnitAnimation): Animation.Attack, or any name the model has with its tags ("attack slam"); a name the model lacks plays its stand. It plays once, then an idle unit stands; a walking unit keeps walking and only stutters. A name picks no variant ("attack 2" is any attack): PlayAnimation(index) does (seen 11-06). Does nothing once the unit is gone.</summary>
+        public void PlayAnimation(string name)
+        {
+            if (InGame())
+            {
+                Runtime.World.AnimateUnit(Handle, name, false);
+            }
+        }
+
+        /// <summary>Plays an animation of the unit's model by its index in the model, from 0 (SetUnitAnimationByIndex): the one way to pick a variant, such as the second attack. Indices differ between models. Does nothing once the unit is gone.</summary>
+        public void PlayAnimation(int index)
+        {
+            if (InGame())
+            {
+                Runtime.World.AnimateUnitByIndex(Handle, index);
+            }
+        }
+
+        /// <summary>Queues an animation of the unit's model by name, to play after the one playing, a stand's loop included (QueueUnitAnimation, seen 11-06). Does nothing once the unit is gone.</summary>
+        public void QueueAnimation(string name)
+        {
+            if (InGame())
+            {
+                Runtime.World.AnimateUnit(Handle, name, true);
+            }
+        }
+
+        /// <summary>The speed of the unit's animations as a factor of the model's own (SetUnitTimeScale): 0.25 plays them at a quarter, 0 holds the unit still mid-animation (seen 11-06). It reads what was set, 1 unless set, as the game keeps none to read. Once the unit is gone, setting does nothing.</summary>
+        [LocalSafe]
+        public float AnimationSpeed
+        {
+            get
+            {
+                return animationSpeed;
+            }
+
+            set
+            {
+                if (InGame())
+                {
+                    animationSpeed = value;
+                    Runtime.World.SetUnitAnimationSpeed(Handle, value);
+                }
+            }
+        }
+
+        /// <summary>Adds a tag to the unit's animations (AddUnitAnimationProperties): AnimationTag.Defend, or any the game takes ("upgrade first"). The unit plays its animations with the tag, a standing footman with Defend its shield raised, until RemoveAnimationTag (seen 11-06). Does nothing once the unit is gone.</summary>
+        public void AddAnimationTag(string tag)
+        {
+            if (InGame())
+            {
+                Runtime.World.TagUnitAnimation(Handle, tag, true);
+            }
+        }
+
+        /// <summary>Removes a tag AddAnimationTag added. Does nothing once the unit is gone.</summary>
+        public void RemoveAnimationTag(string tag)
+        {
+            if (InGame())
+            {
+                Runtime.World.TagUnitAnimation(Handle, tag, false);
+            }
         }
 
         /// <summary>How high the unit flies above the ground, set at once (SetUnitFlyHeight with a rate of 0). A unit that does not fly only shows the height once Amrf has been added to it and removed (seen 10-21), so the first set on such a unit does that; reading gives the height set either way. Once the game has removed the unit, the last value read or set, and setting does nothing. In a declared class's constructor, the height every unit of the class flies at (umvh); on a default object, its type's.</summary>
@@ -1357,6 +1424,18 @@ namespace Moonwell
         /// orders (the stunned order, undefend, the order a stun's end gives back) and Moonwell's own refusing orders run nothing.
         /// </summary>
         public virtual void OnOrdered(Order order)
+        {
+        }
+
+        /// <summary>Runs when a player selects the unit, before the unit's components see it: a click, a drag, a control group or code, as the game's event says, so a click on a unit already selected runs it again. It comes a moment after Select (0.1 to 0.2 s in single player, the network's delay online), and Selection already holds the unit. A unit the game drops from a selection with no event (it dies, is removed, hidden, gets Locust or changes hands) runs no OnDeselected (decision 203).</summary>
+        /// <param name="selectingPlayer">The player who selected it.</param>
+        public virtual void OnSelected(Player selectingPlayer)
+        {
+        }
+
+        /// <summary>Runs when a player deselects the unit, before the unit's components see it; Selection no longer holds it. A click on another unit, a drag or a control group deselects every unit first, even one selected again in the same instant.</summary>
+        /// <param name="deselectingPlayer">The player who deselected it.</param>
+        public virtual void OnDeselected(Player deselectingPlayer)
         {
         }
 

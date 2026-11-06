@@ -175,6 +175,15 @@ namespace Moonwell.Testing
         /// <summary>The red, green, blue and alpha each unit was last tinted with.</summary>
         public Dictionary<unit, int[]> Tints = new Dictionary<unit, int[]>();
 
+        /// <summary>What was asked of each unit's animations, in order: "play attack", "queue stand", "index 3", "speed 0.5", "tag defend", "untag defend".</summary>
+        public Dictionary<unit, List<string>> UnitAnimations = new Dictionary<unit, List<string>>();
+
+        /// <summary>The units hidden; a test adds one to stand for ShowUnit(false).</summary>
+        public List<unit> HiddenUnits = new List<unit>();
+
+        /// <summary>What the local machine was asked to do to its selection, in order: "select", "deselect" or "clear", with the slot asked for ("0 select"); another player's ask changes nothing here, as in the game.</summary>
+        public List<string> SelectionCalls = new List<string>();
+
         /// <summary>The drops of units the runtime removed (RemoveUnit): the game fires them after the call (seen 10-21), so they wait for the next Advance. The items are removed with the unit.</summary>
         private readonly List<KeyValuePair<unit, item>> pendingDrops = new List<KeyValuePair<unit, item>>();
 
@@ -2373,6 +2382,75 @@ namespace Moonwell.Testing
         {
             NoteGone(unit);
             Tints[unit] = new int[] { red, green, blue, alpha };
+        }
+
+        /// <summary>Records an animation played by name, or queued.</summary>
+        public void AnimateUnit(unit unit, string name, bool queued)
+        {
+            Animated(unit, (queued ? "queue " : "play ") + name);
+        }
+
+        /// <summary>Records an animation played by index.</summary>
+        public void AnimateUnitByIndex(unit unit, int index)
+        {
+            Animated(unit, "index " + index);
+        }
+
+        /// <summary>Records an animation speed.</summary>
+        public void SetUnitAnimationSpeed(unit unit, float speed)
+        {
+            Animated(unit, "speed " + speed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>Records a tag added or removed.</summary>
+        public void TagUnitAnimation(unit unit, string tag, bool add)
+        {
+            Animated(unit, (add ? "tag " : "untag ") + tag);
+        }
+
+        private void Animated(unit unit, string what)
+        {
+            NoteGone(unit);
+            if (!UnitAnimations.TryGetValue(unit, out var asked))
+            {
+                asked = new List<string>();
+                UnitAnimations[unit] = asked;
+            }
+
+            asked.Add(what);
+        }
+
+        /// <summary>Whether a unit is in HiddenUnits.</summary>
+        public bool IsHidden(unit unit)
+        {
+            return HiddenUnits.Contains(unit);
+        }
+
+        /// <summary>Records a selection change on the local machine only; the game's events follow later, which a test fires with PlayerSelects.</summary>
+        public void SelectFor(player player, unit unit, bool selected)
+        {
+            if (IsLocal(player))
+            {
+                SelectionCalls.Add(SlotOf(player) + (selected ? " select" : " deselect"));
+            }
+        }
+
+        /// <summary>Records a clear on the local machine only.</summary>
+        public void ClearSelectionFor(player player)
+        {
+            if (IsLocal(player))
+            {
+                SelectionCalls.Add(SlotOf(player) + " clear");
+            }
+        }
+
+        /// <summary>The game's selection event: a player in a slot selects or deselects a unit; delivered when the runtime listens for selections.</summary>
+        public void PlayerSelects(unit unit, int slot, bool selected = true)
+        {
+            if (Listening.Contains(GameEvent.Selection))
+            {
+                Inbound.Selection(unit, PlayerAt(slot), selected);
+            }
         }
 
         /// <summary>The fly height of a unit; 0 until set.</summary>

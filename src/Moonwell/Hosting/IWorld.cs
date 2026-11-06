@@ -383,6 +383,27 @@ namespace Moonwell.Hosting
         /// <summary>Tints a unit's model; each value is 0-255.</summary>
         void TintUnit(unit unit, int red, int green, int blue, int alpha);
 
+        /// <summary>Plays an animation of a unit's model by name, or queues it after the one playing.</summary>
+        void AnimateUnit(unit unit, string name, bool queued);
+
+        /// <summary>Plays an animation of a unit's model by its index in the model.</summary>
+        void AnimateUnitByIndex(unit unit, int index);
+
+        /// <summary>Sets the speed of a unit's animations as a factor of the model's own.</summary>
+        void SetUnitAnimationSpeed(unit unit, float speed);
+
+        /// <summary>Adds an animation tag to a unit ("alternate"), or removes it.</summary>
+        void TagUnitAnimation(unit unit, string tag, bool add);
+
+        /// <summary>Whether a unit is hidden (ShowUnit false).</summary>
+        bool IsHidden(unit unit);
+
+        /// <summary>Selects a unit for a player, or deselects it: only the player's own machine changes its selection, and the game's events tell every machine.</summary>
+        void SelectFor(player player, unit unit, bool selected);
+
+        /// <summary>Clears a player's selection, on the player's own machine only.</summary>
+        void ClearSelectionFor(player player);
+
         /// <summary>The height a unit flies at above the ground.</summary>
         float FlyHeightOf(unit unit);
 
