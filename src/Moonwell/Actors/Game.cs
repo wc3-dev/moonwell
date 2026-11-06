@@ -123,6 +123,43 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether the fog of war is on, for every player; true unless set. Off, every player sees all the ground they have explored; the black mask still covers the rest.</summary>
+        [LocalSafe]
+        public static bool Fog
+        {
+            get { return Runtime.World.IsFogOn(); }
+            set { Runtime.World.SetFogOn(value); }
+        }
+
+        /// <summary>Whether the black mask covers the ground a player has not explored, for every player; true unless set. Off, that ground shows as fog.</summary>
+        [LocalSafe]
+        public static bool BlackMask
+        {
+            get { return Runtime.World.IsBlackMaskOn(); }
+            set { Runtime.World.SetBlackMaskOn(value); }
+        }
+
+        /// <summary>Pings the minimap for every player, in white, for the seconds; it changes nothing in the game. PingStyle.Attack is the game's red warning ping.</summary>
+        [LocalSafe]
+        public static void Ping(float x, float y, float seconds = 3.0f, PingStyle style = PingStyle.Simple)
+        {
+            Ping(x, y, Color.White, seconds, style);
+        }
+
+        /// <summary>Pings the minimap for every player in a colour, as Ping does. A pure red (255, 0, 0) is drawn as 254, 0, 0, as Blizzard.j does, as the game would make it the warning ping; PingStyle.Attack is that ping, whatever the colour.</summary>
+        [LocalSafe]
+        public static void Ping(float x, float y, Color color, float seconds = 3.0f, PingStyle style = PingStyle.Simple)
+        {
+            if (style == PingStyle.Attack)
+            {
+                Runtime.World.Ping(x, y, seconds, 255, 0, 0, false);
+                return;
+            }
+
+            var red = color.R == 255 && color.G == 0 && color.B == 0 ? 254 : color.R;
+            Runtime.World.Ping(x, y, seconds, red, color.G, color.B, style == PingStyle.Flashy);
+        }
+
         /// <summary>Adds a component to the game, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
         public T Add<T>(T component, Scope? heldBy = null) where T : GameComponent => AddComponent(component, heldBy);
     }

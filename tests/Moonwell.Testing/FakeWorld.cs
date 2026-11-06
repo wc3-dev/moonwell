@@ -2947,6 +2947,393 @@ namespace Moonwell.Testing
             return Ground(x, y);
         }
 
+        /// <summary>The weather effects, lightning, fog modifiers, pings and minimap icons the runtime made, in the order made.</summary>
+        public List<FakeWeather> Weathers = new List<FakeWeather>();
+        public List<FakeBolt> Bolts = new List<FakeBolt>();
+        public List<FakeVision> Visions = new List<FakeVision>();
+        public List<FakePing> Pings = new List<FakePing>();
+        public List<FakeIcon> Icons = new List<FakeIcon>();
+
+        /// <summary>The fog of war and the black mask, on until set.</summary>
+        public bool FogOn = true;
+        public bool BlackMaskOn = true;
+
+        private readonly Dictionary<weathereffect, FakeWeather> weathers = new Dictionary<weathereffect, FakeWeather>();
+        private readonly Dictionary<lightning, FakeBolt> bolts = new Dictionary<lightning, FakeBolt>();
+        private readonly Dictionary<fogmodifier, FakeVision> visions = new Dictionary<fogmodifier, FakeVision>();
+        private readonly Dictionary<minimapicon, FakeIcon> icons = new Dictionary<minimapicon, FakeIcon>();
+
+        /// <summary>The world's bounds: -4096 to 4096 both ways.</summary>
+        public float[] WorldBounds()
+        {
+            return new float[] { -4096f, -4096f, 4096f, 4096f };
+        }
+
+        /// <summary>A weather effect over a rect, off.</summary>
+        public weathereffect MakeWeather(string kind, float left, float bottom, float right, float top)
+        {
+            var made = new weathereffect();
+            var fake = new FakeWeather { Kind = kind, Left = left, Bottom = bottom, Right = right, Top = top };
+            weathers[made] = fake;
+            Weathers.Add(fake);
+            return made;
+        }
+
+        /// <summary>Turns a weather effect on or off.</summary>
+        public void ShowWeather(weathereffect weather, bool shown)
+        {
+            Live(weathers[weather].Ended, "weather");
+            weathers[weather].Shown = shown;
+        }
+
+        /// <summary>Removes a weather effect; a second removal fails the case.</summary>
+        public void EndWeather(weathereffect weather)
+        {
+            Live(weathers[weather].Ended, "weather");
+            weathers[weather].Ended = true;
+        }
+
+        /// <summary>A lightning between two points.</summary>
+        public lightning MakeLightning(string kind, float x1, float y1, float z1, float x2, float y2, float z2)
+        {
+            var made = new lightning();
+            var fake = new FakeBolt { Kind = kind, X1 = x1, Y1 = y1, Z1 = z1, X2 = x2, Y2 = y2, Z2 = z2 };
+            bolts[made] = fake;
+            Bolts.Add(fake);
+            return made;
+        }
+
+        /// <summary>Moves a lightning, and counts the moves.</summary>
+        public void MoveBolt(lightning bolt, float x1, float y1, float z1, float x2, float y2, float z2)
+        {
+            var fake = bolts[bolt];
+            Live(fake.Ended, "lightning");
+            fake.Moves++;
+            fake.X1 = x1;
+            fake.Y1 = y1;
+            fake.Z1 = z1;
+            fake.X2 = x2;
+            fake.Y2 = y2;
+            fake.Z2 = z2;
+        }
+
+        /// <summary>Removes a lightning; a second removal fails the case.</summary>
+        public void EndLightning(lightning bolt)
+        {
+            Live(bolts[bolt].Ended, "lightning");
+            bolts[bolt].Ended = true;
+        }
+
+        /// <summary>A fog modifier over a circle.</summary>
+        public fogmodifier MakeVision(player player, int state, float x, float y, float radius, bool overUnits)
+        {
+            return Vision(new FakeVision { Player = player, State = state, X = x, Y = y, Radius = radius, OverUnits = overUnits });
+        }
+
+        /// <summary>A fog modifier over a rect.</summary>
+        public fogmodifier MakeVisionRect(player player, int state, float left, float bottom, float right, float top, bool overUnits)
+        {
+            return Vision(new FakeVision { Player = player, State = state, Left = left, Bottom = bottom, Right = right, Top = top, OverUnits = overUnits });
+        }
+
+        /// <summary>Ends a fog modifier; a second end fails the case.</summary>
+        public void EndVision(fogmodifier vision)
+        {
+            Live(visions[vision].Ended, "fog modifier");
+            visions[vision].Ended = true;
+        }
+
+        /// <summary>Whether the fog is on.</summary>
+        public bool IsFogOn()
+        {
+            return FogOn;
+        }
+
+        /// <summary>Sets the fog.</summary>
+        public void SetFogOn(bool on)
+        {
+            FogOn = on;
+        }
+
+        /// <summary>Whether the black mask is on.</summary>
+        public bool IsBlackMaskOn()
+        {
+            return BlackMaskOn;
+        }
+
+        /// <summary>Sets the black mask.</summary>
+        public void SetBlackMaskOn(bool on)
+        {
+            BlackMaskOn = on;
+        }
+
+        /// <summary>Records a ping at this machine.</summary>
+        public void Ping(float x, float y, float seconds, int red, int green, int blue, bool flashy)
+        {
+            Pings.Add(new FakePing { X = x, Y = y, Seconds = seconds, Red = red, Green = green, Blue = blue, Flashy = flashy });
+        }
+
+        /// <summary>A minimap icon at a place.</summary>
+        public minimapicon MakeIcon(string path, float x, float y, int red, int green, int blue)
+        {
+            return Icon(new FakeIcon { Path = path, X = x, Y = y, Red = red, Green = green, Blue = blue });
+        }
+
+        /// <summary>A minimap icon on a unit.</summary>
+        public minimapicon MakeIconOn(string path, unit unit, int red, int green, int blue)
+        {
+            return Icon(new FakeIcon { Path = path, Unit = unit, Red = red, Green = green, Blue = blue });
+        }
+
+        /// <summary>Shows or hides a minimap icon.</summary>
+        public void ShowIcon(minimapicon icon, bool shown)
+        {
+            Live(icons[icon].Ended, "minimap icon");
+            icons[icon].Shown = shown;
+        }
+
+        /// <summary>Removes a minimap icon; a second removal fails the case.</summary>
+        public void EndIcon(minimapicon icon)
+        {
+            Live(icons[icon].Ended, "minimap icon");
+            icons[icon].Ended = true;
+        }
+
+        private fogmodifier Vision(FakeVision fake)
+        {
+            var made = new fogmodifier();
+            visions[made] = fake;
+            Visions.Add(fake);
+            return made;
+        }
+
+        private minimapicon Icon(FakeIcon fake)
+        {
+            var made = new minimapicon();
+            icons[made] = fake;
+            Icons.Add(fake);
+            return made;
+        }
+
+        // The runtime asking anything of what it has removed fails the case.
+        private static void Live(bool ended, string what)
+        {
+            if (ended)
+            {
+                throw new ExpectationFailed("the runtime asked the game about a " + what + " it had removed");
+            }
+        }
+
+        /// <summary>The floating texts the runtime made, in the order made.</summary>
+        public List<FakeText> Texts = new List<FakeText>();
+
+        /// <summary>The units the player at this machine does not see; every other unit is seen.</summary>
+        public List<unit> Unseen = new List<unit>();
+
+        private readonly Dictionary<texttag, FakeText> texts = new Dictionary<texttag, FakeText>();
+
+        /// <summary>The fake behind a text handle the runtime was given.</summary>
+        public FakeText TextOf(texttag text)
+        {
+            return texts[text];
+        }
+
+        /// <summary>Makes a text that stays until it is ended.</summary>
+        public texttag MakeText()
+        {
+            var made = new texttag();
+            var fake = new FakeText();
+            texts[made] = fake;
+            Texts.Add(fake);
+            return made;
+        }
+
+        /// <summary>Writes a text's words and height.</summary>
+        public void WriteText(texttag text, string words, float height)
+        {
+            var fake = LiveText(text);
+            fake.Words = words;
+            fake.LetterHeight = height;
+        }
+
+        /// <summary>Puts a text at a place and counts it.</summary>
+        public void PlaceText(texttag text, float x, float y, float height)
+        {
+            var fake = LiveText(text);
+            fake.Over = null;
+            fake.X = x;
+            fake.Y = y;
+            fake.Height = height;
+            fake.Places++;
+        }
+
+        /// <summary>Puts a text over a unit, where the unit is, and counts it.</summary>
+        public void PlaceTextOver(texttag text, unit unit, float height)
+        {
+            var fake = LiveText(text);
+            fake.Over = unit;
+            fake.X = UnitX(unit);
+            fake.Y = UnitY(unit);
+            fake.Height = height;
+            fake.Places++;
+        }
+
+        /// <summary>Colours a text and counts it.</summary>
+        public void ColorText(texttag text, int red, int green, int blue, int alpha)
+        {
+            var fake = LiveText(text);
+            fake.Color = new int[] { red, green, blue, alpha };
+            fake.Colors++;
+        }
+
+        /// <summary>Sets a text's velocity.</summary>
+        public void DriftText(texttag text, float xVelocity, float yVelocity)
+        {
+            var fake = LiveText(text);
+            fake.XVelocity = xVelocity;
+            fake.YVelocity = yVelocity;
+        }
+
+        /// <summary>Shows or hides a text.</summary>
+        public void ShowText(texttag text, bool shown)
+        {
+            LiveText(text).Shown = shown;
+        }
+
+        /// <summary>Ends a text; a second end fails the case.</summary>
+        public void EndText(texttag text)
+        {
+            LiveText(text).Ended = true;
+        }
+
+        /// <summary>Whether the player at this machine sees a unit: every unit not in Unseen.</summary>
+        public bool LocalSees(unit unit)
+        {
+            return !Unseen.Contains(unit);
+        }
+
+        /// <summary>The fake behind a text handle; the runtime asking anything of a text it has ended fails the case, as the game gives its id to the next.</summary>
+        private FakeText LiveText(texttag text)
+        {
+            var fake = texts[text];
+            if (fake.Ended)
+            {
+                throw new ExpectationFailed("the runtime asked the game about a text it had ended");
+            }
+
+            return fake;
+        }
+
+        /// <summary>The sounds the runtime made, in the order made.</summary>
+        public List<FakeSound> Sounds = new List<FakeSound>();
+
+        private readonly Dictionary<sound, FakeSound> sounds = new Dictionary<sound, FakeSound>();
+
+        /// <summary>The fake behind a sound handle the runtime was given.</summary>
+        public FakeSound SoundOf(sound sound)
+        {
+            return sounds[sound];
+        }
+
+        /// <summary>Makes a sound.</summary>
+        public sound MakeSound(string path, bool looping, bool is3D)
+        {
+            var made = new sound();
+            var fake = new FakeSound { Path = path, Looping = looping, Is3D = is3D };
+            sounds[made] = fake;
+            Sounds.Add(fake);
+            return made;
+        }
+
+        /// <summary>Puts a sound at a place.</summary>
+        public void PlaceSound(sound sound, float x, float y, float z)
+        {
+            var fake = LiveSound(sound);
+            fake.X = x;
+            fake.Y = y;
+            fake.Z = z;
+        }
+
+        /// <summary>Puts a sound on a unit.</summary>
+        public void PutSoundOn(sound sound, unit unit)
+        {
+            LiveSound(sound).Unit = unit;
+        }
+
+        /// <summary>Sets a sound's volume and lists it.</summary>
+        public void SetLoudness(sound sound, int volume)
+        {
+            var fake = LiveSound(sound);
+            fake.Volume = volume;
+            fake.Volumes.Add(volume);
+        }
+
+        /// <summary>Starts a sound.</summary>
+        public void StartPlaying(sound sound)
+        {
+            LiveSound(sound).Started = true;
+        }
+
+        /// <summary>Leaves a sound to the game to free.</summary>
+        public void FreeWhenDone(sound sound)
+        {
+            LiveSound(sound).FreedWhenDone = true;
+        }
+
+        /// <summary>Stops a sound; a second stop fails the case.</summary>
+        public void StopPlaying(sound sound)
+        {
+            LiveSound(sound).Stopped = true;
+        }
+
+        /// <summary>The fake behind a sound handle; the runtime asking anything of a sound it has stopped fails the case.</summary>
+        private FakeSound LiveSound(sound sound)
+        {
+            var fake = sounds[sound];
+            if (fake.Stopped)
+            {
+                throw new ExpectationFailed("the runtime asked the game about a sound it had stopped");
+            }
+
+            return fake;
+        }
+
+        /// <summary>What the runtime asked of this machine's music, in order: "play a;b", "once a", "stop fading" or "stop at once", "volume 76".</summary>
+        public List<string> MusicCalls = new List<string>();
+
+        /// <summary>Records a playlist.</summary>
+        public void StartMusic(string list)
+        {
+            MusicCalls.Add("play " + list);
+        }
+
+        /// <summary>Records music played once.</summary>
+        public void StartMusicOnce(string path)
+        {
+            MusicCalls.Add("once " + path);
+        }
+
+        /// <summary>Records a stop.</summary>
+        public void StopAllMusic(bool fadeOut)
+        {
+            MusicCalls.Add(fadeOut ? "stop fading" : "stop at once");
+        }
+
+        /// <summary>Records a volume.</summary>
+        public void SetMusicLoudness(int volume)
+        {
+            MusicCalls.Add("volume " + volume);
+        }
+
+        /// <summary>The game's random numbers: low, the first allowed, unless a case sets another way to pick.</summary>
+        public System.Func<int, int, int> Pick = (low, high) => low;
+
+        /// <summary>A number from Pick.</summary>
+        public int RandomBetween(int low, int high)
+        {
+            return Pick(low, high);
+        }
+
         /// <summary>A destructable the runtime asked the game to make: its type, place, facing, scale and variation.</summary>
         public sealed class DestructableSpawn
         {

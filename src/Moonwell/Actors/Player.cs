@@ -397,6 +397,61 @@ namespace Moonwell
             Runtime.World.PrintTo(Handle, text, seconds);
         }
 
+        /// <summary>Pings the minimap for the player alone, in white unless a colour is given, for the seconds; it changes nothing in the game. PingStyle.Attack is the game's red warning ping, whatever the colour.</summary>
+        [LocalSafe]
+        public void Ping(float x, float y, float seconds = 3.0f, PingStyle style = PingStyle.Simple)
+        {
+            Ping(x, y, Moonwell.Color.White, seconds, style);
+        }
+
+        /// <summary>Pings the minimap for the player alone in a colour, as Ping does.</summary>
+        [LocalSafe]
+        public void Ping(float x, float y, Color color, float seconds = 3.0f, PingStyle style = PingStyle.Simple)
+        {
+            if (Runtime.World.IsLocal(Handle))
+            {
+                Game.Ping(x, y, color, seconds, style);
+            }
+        }
+
+        /// <summary>Lets the player see a circle of the map until the scope ends, or the vision's End, and returns the vision; allies who share the player's vision see it too. The ground stays explored after.</summary>
+        public Vision Reveal(float x, float y, float radius, Scope scope)
+        {
+            return Vision.Circle(this, Vision.Visible, x, y, radius, false, scope);
+        }
+
+        /// <summary>Lets the player see a rect of the map, by its left, bottom, right and top edges, as Reveal of a circle does.</summary>
+        public Vision Reveal(float left, float bottom, float right, float top, Scope scope)
+        {
+            return Vision.Rect(this, Vision.Visible, left, bottom, right, top, false, scope);
+        }
+
+        /// <summary>Lets the player see the whole map, as Reveal of a circle does.</summary>
+        public Vision Reveal(Scope scope)
+        {
+            var world = Runtime.World.WorldBounds();
+            return Reveal(world[0], world[1], world[2], world[3], scope);
+        }
+
+        /// <summary>Covers a circle of the map in fog for the player, or in the black mask when black is true, until the scope ends, or the vision's End, and returns the vision; with overUnits, also over what the player's units see there. The newest vision on a place wins over older ones.</summary>
+        public Vision Hide(float x, float y, float radius, Scope scope, bool black = false, bool overUnits = false)
+        {
+            return Vision.Circle(this, black ? Vision.Masked : Vision.Fogged, x, y, radius, overUnits, scope);
+        }
+
+        /// <summary>Covers a rect of the map, by its left, bottom, right and top edges, as Hide of a circle does.</summary>
+        public Vision Hide(float left, float bottom, float right, float top, Scope scope, bool black = false, bool overUnits = false)
+        {
+            return Vision.Rect(this, black ? Vision.Masked : Vision.Fogged, left, bottom, right, top, overUnits, scope);
+        }
+
+        /// <summary>Covers the whole map, as Hide of a circle does.</summary>
+        public Vision Hide(Scope scope, bool black = false, bool overUnits = false)
+        {
+            var world = Runtime.World.WorldBounds();
+            return Hide(world[0], world[1], world[2], world[3], scope, black, overUnits);
+        }
+
         /// <summary>Whether the slot is in the game: empty, playing, or left.</summary>
         [LocalSafe]
         public SlotState SlotState => (SlotState)Runtime.World.SlotStateOf(Handle);

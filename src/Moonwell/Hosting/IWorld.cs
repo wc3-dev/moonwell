@@ -535,5 +535,125 @@ namespace Moonwell.Hosting
 
         /// <summary>The ground's height at a place, on this machine: it only places what is drawn.</summary>
         float GroundZ(float x, float y);
+
+        /// <summary>The world's bounds, the map's edges included: left, bottom, right and top.</summary>
+        float[] WorldBounds();
+
+        /// <summary>Makes a weather effect of a four-letter id over a rect, off until shown.</summary>
+        weathereffect MakeWeather(string kind, float left, float bottom, float right, float top);
+
+        /// <summary>Turns a weather effect on or off, on this machine.</summary>
+        void ShowWeather(weathereffect weather, bool shown);
+
+        /// <summary>Removes a weather effect.</summary>
+        void EndWeather(weathereffect weather);
+
+        /// <summary>Draws a lightning of a code between two points, each at an absolute height.</summary>
+        lightning MakeLightning(string kind, float x1, float y1, float z1, float x2, float y2, float z2);
+
+        /// <summary>Moves a lightning's two ends.</summary>
+        void MoveBolt(lightning bolt, float x1, float y1, float z1, float x2, float y2, float z2);
+
+        /// <summary>Removes a lightning.</summary>
+        void EndLightning(lightning bolt);
+
+        /// <summary>Starts a fog modifier of a player over a circle: state 0 visible, 1 fogged, 2 masked; shared with the allies who share the player's vision.</summary>
+        fogmodifier MakeVision(player player, int state, float x, float y, float radius, bool overUnits);
+
+        /// <summary>Starts a fog modifier of a player over a rect, as MakeVision.</summary>
+        fogmodifier MakeVisionRect(player player, int state, float left, float bottom, float right, float top, bool overUnits);
+
+        /// <summary>Stops and ends a fog modifier.</summary>
+        void EndVision(fogmodifier vision);
+
+        /// <summary>Whether the fog of war is on.</summary>
+        bool IsFogOn();
+
+        /// <summary>Turns the fog of war on or off, for every player.</summary>
+        void SetFogOn(bool on);
+
+        /// <summary>Whether the black mask is on.</summary>
+        bool IsBlackMaskOn();
+
+        /// <summary>Turns the black mask on or off, for every player.</summary>
+        void SetBlackMaskOn(bool on);
+
+        /// <summary>Pings the minimap on this machine: a colour of 0-255 parts, flashy or not.</summary>
+        void Ping(float x, float y, float seconds, int red, int green, int blue, bool flashy);
+
+        /// <summary>Makes a minimap icon of a model at a place, coloured, shown over the black mask.</summary>
+        minimapicon MakeIcon(string path, float x, float y, int red, int green, int blue);
+
+        /// <summary>Makes a minimap icon of a model on a unit, which it follows, as MakeIcon.</summary>
+        minimapicon MakeIconOn(string path, unit unit, int red, int green, int blue);
+
+        /// <summary>Shows or hides a minimap icon, on this machine.</summary>
+        void ShowIcon(minimapicon icon, bool shown);
+
+        /// <summary>Removes a minimap icon.</summary>
+        void EndIcon(minimapicon icon);
+
+        /// <summary>Makes a floating text that stays until it is ended: CreateTextTag, made permanent so the game never frees it (and gives its id to another).</summary>
+        texttag MakeText();
+
+        /// <summary>Sets a text's words and its height in the game's units (World Editor's size * 0.023 / 10).</summary>
+        void WriteText(texttag text, string words, float height);
+
+        /// <summary>Puts a text at a place, its height above the ground there.</summary>
+        void PlaceText(texttag text, float x, float y, float height);
+
+        /// <summary>Puts a text over a unit, its height above the unit's health bar; it does not follow the unit.</summary>
+        void PlaceTextOver(texttag text, unit unit, float height);
+
+        /// <summary>Colours a text: red, green and blue, and its alpha, each 0 to 255.</summary>
+        void ColorText(texttag text, int red, int green, int blue, int alpha);
+
+        /// <summary>Moves a text on by itself, in the game's units (Blizzard.j's speed * 0.071 / 128 a second).</summary>
+        void DriftText(texttag text, float xVelocity, float yVelocity);
+
+        /// <summary>Shows or hides a text on this machine.</summary>
+        void ShowText(texttag text, bool shown);
+
+        /// <summary>Ends a text: DestroyTextTag.</summary>
+        void EndText(texttag text);
+
+        /// <summary>Whether the player at this machine sees a unit.</summary>
+        bool LocalSees(unit unit);
+
+        /// <summary>Makes a sound of a file, looping or not, 3D or not; it does not play yet.</summary>
+        sound MakeSound(string path, bool looping, bool is3D);
+
+        /// <summary>Puts a 3D sound at a place and a height.</summary>
+        void PlaceSound(sound sound, float x, float y, float z);
+
+        /// <summary>Puts a 3D sound on a unit, which it follows.</summary>
+        void PutSoundOn(sound sound, unit unit);
+
+        /// <summary>Sets a sound's volume, 0 to 127.</summary>
+        void SetLoudness(sound sound, int volume);
+
+        /// <summary>Starts a sound.</summary>
+        void StartPlaying(sound sound);
+
+        /// <summary>Lets the game free a sound when it has played.</summary>
+        void FreeWhenDone(sound sound);
+
+        /// <summary>Stops a sound at once and lets the game free it.</summary>
+        void StopPlaying(sound sound);
+
+        /// <summary>Plays music on this machine: one file, or a list of them joined by ";", which the game plays in order and starts again.</summary>
+        void StartMusic(string list);
+
+        /// <summary>Plays one file of music once on this machine, cutting the music off, which goes on after it.</summary>
+        void StartMusicOnce(string path);
+
+        /// <summary>Stops the music on this machine, the music played once included, fading or at once.</summary>
+        void StopAllMusic(bool fadeOut);
+
+        /// <summary>Sets the music's volume on this machine, 0 to 127.</summary>
+        void SetMusicLoudness(int volume);
+
+        /// <summary>A whole number from low to high, both included, from the game's random numbers, which every machine shares.</summary>
+        int RandomBetween(int low, int high);
     }
 }
