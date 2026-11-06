@@ -1469,6 +1469,78 @@ namespace Moonwell.Engine
             return Natives.GetLocationZ(spot);
         }
 
+        /// <summary>CreateTextTag, permanent.</summary>
+        public texttag MakeText()
+        {
+            var made = Natives.CreateTextTag();
+            Natives.SetTextTagPermanent(made, true);
+            return made;
+        }
+
+        /// <summary>SetTextTagText.</summary>
+        public void WriteText(texttag text, string words, float height) => Natives.SetTextTagText(text, words, height);
+
+        /// <summary>SetTextTagPos.</summary>
+        public void PlaceText(texttag text, float x, float y, float height) => Natives.SetTextTagPos(text, x, y, height);
+
+        /// <summary>SetTextTagPosUnit.</summary>
+        public void PlaceTextOver(texttag text, unit unit, float height) => Natives.SetTextTagPosUnit(text, unit, height);
+
+        /// <summary>SetTextTagColor.</summary>
+        public void ColorText(texttag text, int red, int green, int blue, int alpha) => Natives.SetTextTagColor(text, red, green, blue, alpha);
+
+        /// <summary>SetTextTagVelocity.</summary>
+        public void DriftText(texttag text, float xVelocity, float yVelocity) => Natives.SetTextTagVelocity(text, xVelocity, yVelocity);
+
+        /// <summary>SetTextTagVisibility.</summary>
+        public void ShowText(texttag text, bool shown) => Natives.SetTextTagVisibility(text, shown);
+
+        /// <summary>DestroyTextTag.</summary>
+        public void EndText(texttag text) => Natives.DestroyTextTag(text);
+
+        /// <summary>IsUnitVisible for the local player.</summary>
+        public bool LocalSees(unit unit) => Natives.IsUnitVisible(unit, Natives.GetLocalPlayer());
+
+        /// <summary>CreateSound, as the physics package makes its sounds.</summary>
+        public sound MakeSound(string path, bool looping, bool is3D) => Natives.CreateSound(path, looping, is3D, false, 10, 10, "DefaultEAXON");
+
+        /// <summary>SetSoundPosition.</summary>
+        public void PlaceSound(sound sound, float x, float y, float z) => Natives.SetSoundPosition(sound, x, y, z);
+
+        /// <summary>AttachSoundToUnit.</summary>
+        public void PutSoundOn(sound sound, unit unit) => Natives.AttachSoundToUnit(sound, unit);
+
+        /// <summary>SetSoundVolume.</summary>
+        public void SetLoudness(sound sound, int volume) => Natives.SetSoundVolume(sound, volume);
+
+        /// <summary>StartSound.</summary>
+        public void StartPlaying(sound sound) => Natives.StartSound(sound);
+
+        /// <summary>KillSoundWhenDone.</summary>
+        public void FreeWhenDone(sound sound) => Natives.KillSoundWhenDone(sound);
+
+        /// <summary>StopSound, freed when done, with no fade of the game's.</summary>
+        public void StopPlaying(sound sound) => Natives.StopSound(sound, true, false);
+
+        /// <summary>PlayMusic.</summary>
+        public void StartMusic(string list) => Natives.PlayMusic(list);
+
+        /// <summary>PlayThematicMusic.</summary>
+        public void StartMusicOnce(string path) => Natives.PlayThematicMusic(path);
+
+        /// <summary>EndThematicMusic and StopMusic.</summary>
+        public void StopAllMusic(bool fadeOut)
+        {
+            Natives.EndThematicMusic();
+            Natives.StopMusic(fadeOut);
+        }
+
+        /// <summary>SetMusicVolume.</summary>
+        public void SetMusicLoudness(int volume) => Natives.SetMusicVolume(volume);
+
+        /// <summary>GetRandomInt.</summary>
+        public int RandomBetween(int low, int high) => Natives.GetRandomInt(low, high);
+
         /// <summary>Runs a callback once, after the map's main function has returned.</summary>
         internal static void Later(Action callback)
         {

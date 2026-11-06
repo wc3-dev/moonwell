@@ -508,5 +508,68 @@ namespace Moonwell.Hosting
 
         /// <summary>The ground's height at a place, on this machine: it only places what is drawn.</summary>
         float GroundZ(float x, float y);
+
+        /// <summary>Makes a floating text that stays until it is ended: CreateTextTag, made permanent so the game never frees it (and gives its id to another).</summary>
+        texttag MakeText();
+
+        /// <summary>Sets a text's words and its height in the game's units (World Editor's size * 0.023 / 10).</summary>
+        void WriteText(texttag text, string words, float height);
+
+        /// <summary>Puts a text at a place, its height above the ground there.</summary>
+        void PlaceText(texttag text, float x, float y, float height);
+
+        /// <summary>Puts a text over a unit, its height above the unit's health bar; it does not follow the unit.</summary>
+        void PlaceTextOver(texttag text, unit unit, float height);
+
+        /// <summary>Colours a text: red, green and blue, and its alpha, each 0 to 255.</summary>
+        void ColorText(texttag text, int red, int green, int blue, int alpha);
+
+        /// <summary>Moves a text on by itself, in the game's units (Blizzard.j's speed * 0.071 / 128 a second).</summary>
+        void DriftText(texttag text, float xVelocity, float yVelocity);
+
+        /// <summary>Shows or hides a text on this machine.</summary>
+        void ShowText(texttag text, bool shown);
+
+        /// <summary>Ends a text: DestroyTextTag.</summary>
+        void EndText(texttag text);
+
+        /// <summary>Whether the player at this machine sees a unit.</summary>
+        bool LocalSees(unit unit);
+
+        /// <summary>Makes a sound of a file, looping or not, 3D or not; it does not play yet.</summary>
+        sound MakeSound(string path, bool looping, bool is3D);
+
+        /// <summary>Puts a 3D sound at a place and a height.</summary>
+        void PlaceSound(sound sound, float x, float y, float z);
+
+        /// <summary>Puts a 3D sound on a unit, which it follows.</summary>
+        void PutSoundOn(sound sound, unit unit);
+
+        /// <summary>Sets a sound's volume, 0 to 127.</summary>
+        void SetLoudness(sound sound, int volume);
+
+        /// <summary>Starts a sound.</summary>
+        void StartPlaying(sound sound);
+
+        /// <summary>Lets the game free a sound when it has played.</summary>
+        void FreeWhenDone(sound sound);
+
+        /// <summary>Stops a sound at once and lets the game free it.</summary>
+        void StopPlaying(sound sound);
+
+        /// <summary>Plays music on this machine: one file, or a list of them joined by ";", which the game plays in order and starts again.</summary>
+        void StartMusic(string list);
+
+        /// <summary>Plays one file of music once on this machine, cutting the music off, which goes on after it.</summary>
+        void StartMusicOnce(string path);
+
+        /// <summary>Stops the music on this machine, the music played once included, fading or at once.</summary>
+        void StopAllMusic(bool fadeOut);
+
+        /// <summary>Sets the music's volume on this machine, 0 to 127.</summary>
+        void SetMusicLoudness(int volume);
+
+        /// <summary>A whole number from low to high, both included, from the game's random numbers, which every machine shares.</summary>
+        int RandomBetween(int low, int high);
     }
 }
