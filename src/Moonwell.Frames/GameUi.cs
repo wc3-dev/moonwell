@@ -13,7 +13,7 @@ namespace Moonwell
     {
         private readonly Player player;
 
-        private readonly framehandle backdrop;
+        private framehandle backdrop;
 
         private readonly List<GamePiece> pieces = new List<GamePiece>();
 
@@ -31,6 +31,36 @@ namespace Moonwell
             TopBar = Keep(new GamePiece(player, hud.TopBar));
             CommandButtons = Movable(hud.CommandButtons, true);
             ItemButtons = Movable(hud.ItemButtons, false);
+        }
+
+        /// <summary>A saved game loaded: each piece takes its game frames, looked up again on every machine, before the map's frames are made again, so a frame tied to a piece finds it.</summary>
+        internal void Rebind(HudFrames hud)
+        {
+            var fresh = new GameUi(player, hud);
+            backdrop = fresh.backdrop;
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                pieces[i].Rebind(fresh.pieces[i]);
+            }
+        }
+
+        /// <summary>After the map's frames are made again, the player's machine sets the HUD again as the map left it, as the load may give it back as the game starts it; a piece tied to a frame follows the frame made again.</summary>
+        internal void Restore()
+        {
+            if (!Runtime.World.IsLocal(player.Handle))
+            {
+                return;
+            }
+
+            if (!visible)
+            {
+                Visible = false;
+            }
+
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                pieces[i].Restore();
+            }
         }
 
         /// <summary>Whether the game's HUD shows on the player's screen; true unless set. Hidden, the console's art and the frames over it go, and clicks reach the world down to the window's bottom; the command buttons and life bars stay, as the game leaves them, and the map's own frames still draw (seen 11-05). A piece set Visible again shows (see GamePiece.Visible); shown again, pieces the map hid stay hidden.</summary>

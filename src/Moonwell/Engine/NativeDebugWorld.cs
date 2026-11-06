@@ -51,6 +51,11 @@ namespace Moonwell.Engine
         /// <summary>The panel's text frame; null until the first ShowPanel.</summary>
         private framehandle? panelText;
 
+        /// <summary>Whether the panel was last shown, and its text, to make it again as it was when a saved game loads.</summary>
+        private bool panelShown;
+
+        private string panelWords = "";
+
         /// <summary>The location the ground's height is read through; made on the first read.</summary>
         private location? spot;
 
@@ -272,32 +277,50 @@ namespace Moonwell.Engine
         /// Shows or hides the panel. The first call makes its frames, on the game's UI: a backdrop (Textures\Black32.blp at
         /// alpha 180) with its top right corner at (0.8, 0.575), 0.22 by 0.36, below the top bar and clear of the minimap and
         /// command card (game facts), and a text frame 0.012 in from each of its edges, which holds 30 lines. They are never
-        /// destroyed: destroying a frame can desync (a claim in game facts).
+        /// destroyed: destroying a frame can desync (a claim in game facts). A saved game's load takes them (game facts, 11-06),
+        /// so they are made again then, shown and with the text as before.
         /// </summary>
         public void ShowPanel(bool shown)
         {
             if (panel == null)
             {
-                var root = Natives.BlzGetOriginFrame(Natives.ORIGIN_FRAME_GAME_UI, 0);
-                var back = Natives.BlzCreateFrameByType("BACKDROP", "MoonwellDebugPanel", root, "", 0);
-                Natives.BlzFrameSetTexture(back, "Textures\\Black32.blp", 0, true);
-                Natives.BlzFrameSetAlpha(back, 180);
-                Natives.BlzFrameSetAbsPoint(back, Natives.FRAMEPOINT_TOPRIGHT, PanelRight, PanelTop);
-                Natives.BlzFrameSetSize(back, PanelWidth, PanelHeight);
-                var text = Natives.BlzCreateFrameByType("TEXT", "MoonwellDebugPanelText", back, "", 0);
-                Natives.BlzFrameSetPoint(text, Natives.FRAMEPOINT_TOPLEFT, back, Natives.FRAMEPOINT_TOPLEFT, PanelInset, -PanelInset);
-                Natives.BlzFrameSetPoint(text, Natives.FRAMEPOINT_BOTTOMRIGHT, back, Natives.FRAMEPOINT_BOTTOMRIGHT, -PanelInset, PanelInset);
-                Natives.BlzFrameSetTextAlignment(text, Natives.TEXT_JUSTIFY_TOP, Natives.TEXT_JUSTIFY_LEFT);
-                panel = back;
-                panelText = text;
+                var loaded = Natives.CreateTrigger();
+                Natives.TriggerRegisterGameEvent(loaded, Natives.EVENT_GAME_LOADED);
+                Natives.TriggerAddAction(loaded, () => PanelLoaded());
+                MakePanel();
             }
 
-            Natives.BlzFrameSetVisible(panel, shown);
+            panelShown = shown;
+            Natives.BlzFrameSetVisible(panel!, shown);
+        }
+
+        private void PanelLoaded()
+        {
+            MakePanel();
+            Natives.BlzFrameSetVisible(panel!, panelShown);
+            Natives.BlzFrameSetText(panelText!, panelWords);
+        }
+
+        private void MakePanel()
+        {
+            var root = Natives.BlzGetOriginFrame(Natives.ORIGIN_FRAME_GAME_UI, 0);
+            var back = Natives.BlzCreateFrameByType("BACKDROP", "MoonwellDebugPanel", root, "", 0);
+            Natives.BlzFrameSetTexture(back, "Textures\\Black32.blp", 0, true);
+            Natives.BlzFrameSetAlpha(back, 180);
+            Natives.BlzFrameSetAbsPoint(back, Natives.FRAMEPOINT_TOPRIGHT, PanelRight, PanelTop);
+            Natives.BlzFrameSetSize(back, PanelWidth, PanelHeight);
+            var text = Natives.BlzCreateFrameByType("TEXT", "MoonwellDebugPanelText", back, "", 0);
+            Natives.BlzFrameSetPoint(text, Natives.FRAMEPOINT_TOPLEFT, back, Natives.FRAMEPOINT_TOPLEFT, PanelInset, -PanelInset);
+            Natives.BlzFrameSetPoint(text, Natives.FRAMEPOINT_BOTTOMRIGHT, back, Natives.FRAMEPOINT_BOTTOMRIGHT, -PanelInset, PanelInset);
+            Natives.BlzFrameSetTextAlignment(text, Natives.TEXT_JUSTIFY_TOP, Natives.TEXT_JUSTIFY_LEFT);
+            panel = back;
+            panelText = text;
         }
 
         /// <summary>Sets the text frame's text; nothing before the first ShowPanel.</summary>
         public void SetPanelText(string text)
         {
+            panelWords = text;
             if (panelText != null)
             {
                 Natives.BlzFrameSetText(panelText, text);

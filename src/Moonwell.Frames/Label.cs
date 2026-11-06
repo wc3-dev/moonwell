@@ -133,7 +133,11 @@ namespace Moonwell
                 FramesSystem.World.ColourFrameText(handle!, color.R, color.G, color.B, color.A);
             }
 
-            Align();
+            if (!foundInTemplate || alignment != FramePoint.TopLeft)
+            {
+                Align();
+            }
+
             base.Place();
         }
 

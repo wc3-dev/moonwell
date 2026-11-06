@@ -33,6 +33,7 @@ namespace Moonwell
             frame.player = shownTo;
             frame.over = over;
             frame.MakeTree(over ? FramesSystem.OverRoot : FramesSystem.ScreenRoot, shownTo);
+            FramesSystem.Rooted(frame);
             return frame;
         }
     }
