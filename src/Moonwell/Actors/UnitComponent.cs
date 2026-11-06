@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection });
                 }
 
                 return componentHooks;
@@ -68,6 +68,18 @@ namespace Moonwell
 
         /// <summary>Runs when the unit is given an order, after its class has heard it; <c>order.Cancel()</c> refuses it, and an order given here replaces it.</summary>
         public virtual void OnOrdered(Order order)
+        {
+        }
+
+        /// <summary>Runs when a player selects the unit, after its class has seen it (see Unit.OnSelected).</summary>
+        /// <param name="selectingPlayer">The player who selected it.</param>
+        public virtual void OnSelected(Player selectingPlayer)
+        {
+        }
+
+        /// <summary>Runs when a player deselects the unit, after its class has seen it (see Unit.OnDeselected).</summary>
+        /// <param name="deselectingPlayer">The player who deselected it.</param>
+        public virtual void OnDeselected(Player deselectingPlayer)
         {
         }
 

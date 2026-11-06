@@ -32,6 +32,7 @@ namespace Moonwell.Testing
             AddFrames(list);
             AddKeys(list);
             AddOrders(list);
+            AddSelection(list);
             AddLifecycle(list);
             AddScope(list);
             AddAuditDocs(list);
@@ -47,6 +48,19 @@ namespace Moonwell.Testing
             AddJson(list);
             AddDebug(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for a unit's animation and players' selections.</summary>
+        private static void AddSelection(List<Case> list)
+        {
+            list.Add(new Case { Name = "animation.calls", Run = SelectionCases.AnimationCalls });
+            list.Add(new Case { Name = "animation.gone", Run = SelectionCases.AnimationGone });
+            list.Add(new Case { Name = "selection.reactions-order", Run = SelectionCases.ReactionsOrder });
+            list.Add(new Case { Name = "selection.follows-events", Run = SelectionCases.FollowsEvents });
+            list.Add(new Case { Name = "selection.silent-drops", Run = SelectionCases.SilentDrops });
+            list.Add(new Case { Name = "selection.read-in-local", Run = SelectionCases.ReadInLocal });
+            list.Add(new Case { Name = "selection.select-calls", Run = SelectionCases.SelectCalls });
+            list.Add(new Case { Name = "selection.only-when-wanted", Run = SelectionCases.OnlyWhenWanted });
         }
 
         /// <summary>Adds the cases for dummy casters.</summary>
