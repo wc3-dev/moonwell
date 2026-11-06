@@ -886,4 +886,29 @@ public class LocalWriteTests
             "MW0048: Keys", "MW0048: Waiting", "MW0048: Cells", "MW0048: Order", "MW0048: Cells", "MW0048: Rng", "MW0048: Cells",
         }, found);
     }
+
+    [Fact]
+    public void a_local_given_a_shared_list_once_by_deconstruction_or_assignment_is_followed()
+    {
+        var found = MapCode.Check(
+            """
+            Local.For(p, () =>
+            {
+                List<int> s;
+                int n;
+                (s, n) = (Scores, 1);
+                s.Add(1);
+                var (t, m) = (Scores, 2);
+                t.Add(2);
+                List<int> later;
+                later = Scores;
+                later.Add(3);
+                var own = new List<int>();
+                (own, n) = (new List<int>(), 3);
+                own.Add(4);
+            });
+            """, Shared);
+
+        Assert.Equal(new[] { "MW0048: s", "MW0048: t", "MW0048: later" }, found);
+    }
 }
