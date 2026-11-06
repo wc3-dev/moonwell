@@ -1094,7 +1094,7 @@ namespace Moonwell
         internal static void GameLoaded()
         {
             RealClock.Loaded();
-            Lightning.Loaded();
+            LastingLightning.Loaded();
             try
             {
                 Events.LoadListener?.Invoke();

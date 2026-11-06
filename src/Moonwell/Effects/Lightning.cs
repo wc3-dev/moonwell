@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Moonwell.Hosting;
-
 namespace Moonwell
 {
     /// <summary>
@@ -20,12 +17,6 @@ namespace Moonwell
 
         /// <summary>How high above the ground, or a unit's feet and flying height, an end is drawn unless set.</summary>
         private const float DefaultHeight = 60.0f;
-
-        /// <summary>The lasting lightning in the game, made again when a saved game loads.</summary>
-        private static readonly List<Lightning> lasting = new List<Lightning>();
-
-        /// <summary>How many saved games have loaded since the start.</summary>
-        private static int loads;
 
         private readonly string kind;
 
@@ -138,7 +129,7 @@ namespace Moonwell
             if (!bolt.HasEnded)
             {
                 bolt.Make();
-                Last(bolt);
+                LastingLightning.Keep(bolt);
             }
 
             return bolt;
@@ -157,7 +148,7 @@ namespace Moonwell
             if (!bolt.HasEnded)
             {
                 bolt.Make();
-                Last(bolt);
+                LastingLightning.Keep(bolt);
                 from.Attach(bolt);
                 to.Attach(bolt);
                 bolt.follow = Game.Instance.OwnEvery(FollowStep, bolt.Draw);
@@ -202,37 +193,13 @@ namespace Moonwell
             Draw();
         }
 
-        /// <summary>Forgets the lightning of the game before.</summary>
-        internal static void Reset()
-        {
-            lasting.Clear();
-            loads = 0;
-        }
-
-        /// <summary>A saved game loaded: makes each lasting lightning again, where its ends are now.</summary>
-        internal static void Loaded()
-        {
-            loads++;
-            for (var i = 0; i < lasting.Count; i++)
-            {
-                lasting[i].Make();
-            }
-        }
-
-        /// <summary>Keeps a lasting lightning to be made again at a load.</summary>
-        private static void Last(Lightning bolt)
-        {
-            lasting.Add(bolt);
-            Events.Listen(GameEvent.Loaded);
-        }
-
         /// <summary>Removes a PlayOnce bolt after its time, unless a load dropped it first, as its handle may be another bolt's by then.</summary>
         private static void RemoveLater(lightning made)
         {
-            var load = loads;
+            var load = LastingLightning.Loads;
             Game.Instance.OwnAfter(PlayOnceSeconds, () =>
             {
-                if (load == loads)
+                if (load == LastingLightning.Loads)
                 {
                     Runtime.World.EndLightning(made);
                 }
@@ -240,7 +207,7 @@ namespace Moonwell
         }
 
         /// <summary>Asks the game for the lightning where its ends are now.</summary>
-        private void Make()
+        internal void Make()
         {
             float ax = X1, ay = Y1, bx = X2, by = Y2;
             handle = Runtime.World.MakeLightning(kind, ax, ay, HeightAt(from, ax, ay, fromHeight), bx, by, HeightAt(to, bx, by, toHeight));
@@ -275,7 +242,7 @@ namespace Moonwell
 
             from?.Detach(this);
             to?.Detach(this);
-            lasting.Remove(this);
+            LastingLightning.Forget(this);
         }
     }
 }
