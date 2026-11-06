@@ -40,7 +40,7 @@ namespace Moonwell
 
             if (this is Game || this is Player)
             {
-                Errors.Refuse(Names.NameOf(this) + ".End", "the game and the players last the whole game; end a scope of your own");
+                Errors.Refuse(Names.NameOf(this) + ".End", "the game and the players last the whole game: end the game with Game.Over, take a player out with Win or Lose, or end a scope of your own");
                 return;
             }
 

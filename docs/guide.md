@@ -60,6 +60,34 @@ new one for each player. They are added when the game starts, before the units a
 `OnUnitCreated` hears of their own player's units among those. One added later, such as `player.Add(new Aim())` for a
 single player or a neutral one, does not.
 
+`Slots` sets up the player slots in place of World Editor's players and forces. Each slot, numbered from 0 as
+`Player.Get` takes it, is on a team, played by a person or a computer, with a race or, without one, the player's pick.
+A team is declared on the map class as a static field, so code finds it by name; its players are allies, and
+`SharedVision` and `SharedControl` share more between them.
+
+```csharp
+public sealed class Arena : Map
+{
+    public static readonly Team West = new("West") { SharedVision = true };
+    public static readonly Team East = new("East") { SharedVision = true };
+
+    public Arena()
+    {
+        Slots.Add(
+            new Slot(0, West, Controller.User),
+            new Slot(1, West, Controller.User),
+            new Slot(4, East, Controller.User, Race.Orc),
+            new Slot(10, East, Controller.Computer, Race.Undead) { Name = "The Scourge" });
+    }
+}
+```
+
+The build writes them into the map's `war3map.w3i` with fixed player settings: the lobby shows the teams, nobody changes
+their team or race there, and the game starts with each team's alliances set. Teams are numbered in the order the
+slots first name them. A slot starts at its start location placed in World Editor; one without starts in the map's
+middle, and the build notes it. Fixed settings lock alliance changes: the Allies menu (F11) is greyed out, and only
+code changes alliances. A map with no slots keeps World Editor's setup.
+
 ## Objects
 
 A unit, hero, item, ability, buff, destructable, doodad or upgrade is a class that inherits one of the game's own,
@@ -243,7 +271,7 @@ public sealed class KillCounter : UnitComponent
   it is not on is reported and refused, in a release build too. A component's `Actor` is set from `OnAdded` on: read in
   its constructor, a development build reports it.
 - Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnHeroLevelUp`,
-  `OnHeroSkillLearned`, `OnLeave`) go on a game or player component. A game component hears them for every unit; a
+  `OnHeroSkillLearned`, `OnLeave`, `OnAllianceChanged`) go on a game or player component. A game component hears them for every unit; a
   player's components only for its own player's units: the unit's owner (the caster's for `OnUnitCast`), and for
   `OnUnitDied` the dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
   `OnUnitSelected` and `OnUnitDeselected` go there too, and run for the selecting player's components ([Players](#players)).
@@ -1257,7 +1285,21 @@ screen, `seconds: 10f`. `Game.Log("wave 2 started")` writes a line to the log fi
 `foreach (var player in Player.Users)`. `player.SlotState` is `Empty`, `Playing` or `Left`, and `player.Controller`
 says who plays it. `OnLeave(Player leavingPlayer)` runs on the game's components, then the leaving player's.
 
-`Name`, `Color` and `Team` are read and set, and `Race` read; setting `Color` also recolours the player's units.
+`Name` and `Color` are read and set, and `Race` read; setting `Color` also recolours the player's units. `Team` is the
+player's team: the map's own (under The map's settings), or, in a map without `Slots`, one named after the game's team
+number ("Team 1"). `player.Team == Arena.West` compares, and `team.Players` is the team's players in the game. Setting
+`Team` moves the player: it becomes an ally of the new team's players, with the team's shared vision and control, and an
+enemy of the old team's, both ways. A team no slot names is refused.
+
+**Victory and defeat.** `player.Win()` and `player.Lose("Your hero has fallen.")` take one player out, as World Editor's
+Victory and Defeat do, and the others play on. A person sees the victory or defeat box, which pauses a single-player
+game. The victory box's Continue ends their game with the score screen: `Win(scores: false)` leaves the scores out, and
+`Win(dialog: false)` ends it at once. The defeat box shows the message, or the game's own words without one, and offers
+Restart in single player. A loser's slot turns `Left` and a winner's stays `Playing`; the units of both stay, and
+neither runs `OnLeave`, which is for a player who quits. `Game.Over(Arena.West)` ends the game: the team's players in
+the game win and everyone else in it loses, the losers first; `Game.Over(player)` has one winner. A player who has won
+or lost already is left as they are, and a second `Win` or `Lose`, or one for a player not in the game, is refused. The
+game and the players are not scopes to end: `Game.Instance.End()` is refused.
 
 `Command("zoom", (player, rest) => ...)` on a scope hears a chat command: a line a person types that starts with `-zoom`,
 in any case. `rest` is what follows, trimmed, so `-zoom 2000` gives `"2000"`. It runs on every machine, as chat reaches
@@ -1270,6 +1312,12 @@ nothing between them, and `a.MakeAllies(b, sharedVision: true)` lets each see wh
 lets `b` see what `a` sees, `a.HideVisionFrom(b)` stops it and `a.ShowsVisionTo(b)` reads it: these go one way and leave
 the alliance as it is. For anything finer, `a.SetAlliance(b, Alliance.Allied | Alliance.SharedControl)` sets what `a`
 gives `b`, one way as the game keeps it, and `a.AllianceWith(b)`, `a.IsAlly(b)` and `a.IsEnemy(b)` read it.
+
+`OnAllianceChanged(Player givingPlayer, Player receivingPlayer, Alliance before)` runs on the game's components, then
+the giving player's, then the receiving player's, inside the change, once for each pair whose alliance changed, made by
+code, a native or the game. `before` is what was given until then, and `givingPlayer.AllianceWith(receivingPlayer)` reads
+what is given now. `MakeAllies` runs it once for each way that changed, and a team move for each pair it changes. A raw
+native that sets the alliance one type at a time runs it once for each type.
 
 **Selection.** `player.Select(unit)` selects only that unit for the player, as a click does; `AddToSelection(unit)`,
 `Deselect(unit)` and `ClearSelection()` do the rest. `player.Selection` is the units the player has selected, in the

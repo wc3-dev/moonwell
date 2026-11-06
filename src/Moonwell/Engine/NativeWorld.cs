@@ -136,6 +136,21 @@ namespace Moonwell.Engine
 
                     Natives.TriggerAddAction(trigger, LeaveAction);
                     break;
+                case GameEvent.Alliance:
+                    // The game tells only the giving player's registration, with no trigger player (game facts, 11-06): one trigger for each giver.
+                    for (var slot = 0; slot < Natives.bj_MAX_PLAYER_SLOTS; slot++)
+                    {
+                        var giver = Natives.Player(slot);
+                        var watch = Natives.CreateTrigger();
+                        for (var type = 0; type < 10; type++)
+                        {
+                            Natives.TriggerRegisterPlayerAllianceChange(watch, giver, Natives.ConvertAllianceType(type));
+                        }
+
+                        Natives.TriggerAddAction(watch, () => AllianceAction(giver));
+                    }
+
+                    break;
                 case GameEvent.Loaded:
                     var loaded = Natives.CreateTrigger();
                     Natives.TriggerRegisterGameEvent(loaded, Natives.EVENT_GAME_LOADED);
@@ -865,6 +880,18 @@ namespace Moonwell.Engine
         public bool IsEnemyOf(player source, player other)
         {
             return Natives.IsPlayerEnemy(source, other);
+        }
+
+        /// <summary>Takes a player out as a winner, as World Editor's Victory: CustomVictoryBJ.</summary>
+        public void Win(player player, bool dialog, bool scores)
+        {
+            Natives.CustomVictoryBJ(player, dialog, scores);
+        }
+
+        /// <summary>Takes a player out as a loser, as World Editor's Defeat: CustomDefeatBJ, with the game's own words, in each player's language, for an empty message (the box's text only, so it may differ between machines).</summary>
+        public void Lose(player player, string message)
+        {
+            Natives.CustomDefeatBJ(player, message.Length > 0 ? message : Natives.GetLocalizedString("GAMEOVER_DEFEAT_MSG"));
         }
 
         /// <summary>The level of an ability on a unit; 0 when the unit has none.</summary>
@@ -1925,7 +1952,20 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Hands a drop to Inbound.</summary>
+        /// <summary>Hands an alliance change of a giving player to Inbound.</summary>
+        private static void AllianceAction(player giver)
+        {
+            try
+            {
+                Inbound.AllianceChanged(giver);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Alliance", error);
+            }
+        }
+
+        /// <summary>Hands a leave to Inbound.</summary>
         private static void LeaveAction()
         {
             try

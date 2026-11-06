@@ -39,6 +39,16 @@ namespace Moonwell
         /// <summary>What makes the components each player in the game starts with, people and computers: when the game starts each maker runs once for each player, in list order, before the units already in the map come in. The constructor lists them, or assigns a new list.</summary>
         protected List<Func<PlayerComponent>> PlayerComponents { get; set; } = new List<Func<PlayerComponent>>();
 
+        /// <summary>
+        /// The player slots the map sets up, each on a team, in place of World Editor's players and forces: the build writes them
+        /// into war3map.w3i, with fixed player settings, and numbers the teams in the order the slots first name them. Empty
+        /// keeps World Editor's (decision 198).
+        /// </summary>
+        protected List<Slot> Slots { get; set; } = new List<Slot>();
+
+        /// <summary>The slots the map sets up, in the order they were listed.</summary>
+        internal List<Slot> StartSlots => Slots;
+
         /// <summary>The starting components, in the order they were listed.</summary>
         internal List<GameComponent> StartComponents => Components;
 
