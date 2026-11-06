@@ -18,9 +18,6 @@ namespace Moonwell
 
         internal const int Masked = 2;
 
-        /// <summary>The visions in the game, oldest first.</summary>
-        private static readonly List<Vision> live = new List<Vision>();
-
         private readonly Player player;
 
         private readonly int state;
@@ -62,12 +59,6 @@ namespace Moonwell
         [LocalSafe]
         public fogmodifier? Handle => handle;
 
-        /// <summary>Forgets the visions of the game before.</summary>
-        internal static void Reset()
-        {
-            live.Clear();
-        }
-
         /// <summary>Starts a vision over a circle in a scope; in a scope that has ended it ends at once, and the game is not asked to make it.</summary>
         internal static Vision Circle(Player player, int state, float x, float y, float radius, bool overUnits, Scope scope)
         {
@@ -90,7 +81,7 @@ namespace Moonwell
             }
 
             var older = new List<Vision>();
-            foreach (var other in live)
+            foreach (var other in LiveVisions.All)
             {
                 if (other.player == vision.player)
                 {
@@ -105,7 +96,7 @@ namespace Moonwell
                 older[i].Make();
             }
 
-            live.Add(vision);
+            LiveVisions.All.Add(vision);
             return vision;
         }
 
@@ -122,7 +113,7 @@ namespace Moonwell
             if (handle != null)
             {
                 Runtime.World.EndVision(handle);
-                live.Remove(this);
+                LiveVisions.All.Remove(this);
             }
         }
     }
