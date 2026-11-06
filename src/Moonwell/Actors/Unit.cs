@@ -41,7 +41,7 @@ namespace Moonwell
 
         // The instance fields are internal, not private, as a map's subclass may name a field of its own the same (see Scope).
 
-        /// <summary>The effects, texts and sounds on the unit that have not ended, which end when it ends; null until the first.</summary>
+        /// <summary>The effects, texts, sounds, lightning and minimap icons on the unit that have not ended, which end when it ends; null until the first.</summary>
         internal List<Scoped>? attached;
 
         /// <summary>The ability objects of the unit, one per ability id, in the order they were first asked for.</summary>
@@ -688,6 +688,12 @@ namespace Moonwell
         public SpecialEffect AddEffect(string model, string point, Scope scope, Player? shownTo = null)
         {
             return SpecialEffect.On(this, model, point, scope, shownTo);
+        }
+
+        /// <summary>Puts an icon of a model (MinimapIcon.Boss, or any model path) on the minimap at the unit, in a colour, in a scope, and returns it. It follows the unit and ends when the scope ends or the unit ends, whichever is first. Given shownTo, only that player sees it. On a unit that is gone it ends at once and the game is not asked to make it.</summary>
+        public MinimapIcon AddMinimapIcon(string path, Color color, Scope scope, Player? shownTo = null)
+        {
+            return MinimapIcon.On(this, path, color, scope, shownTo);
         }
 
         /// <summary>Plays an effect of a model once on the unit, at an attachment point of its model: it is made and ended at once, so its death animation plays. Given shownTo, only that player sees it. Does nothing once the unit is gone.</summary>
@@ -1496,7 +1502,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Ends the unit's effects, texts and sounds, removes the unit from the game unless the game has already, and forgets it.</summary>
+        /// <summary>Ends the unit's effects, texts, sounds, lightning and minimap icons, removes the unit from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
             if (attached != null)

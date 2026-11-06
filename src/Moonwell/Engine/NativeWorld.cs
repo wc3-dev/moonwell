@@ -1541,6 +1541,138 @@ namespace Moonwell.Engine
             return Natives.GetLocationZ(spot);
         }
 
+        /// <summary>GetWorldBounds' edges; the rect is removed after.</summary>
+        public float[] WorldBounds()
+        {
+            var world = Natives.GetWorldBounds();
+            var bounds = new float[] { Natives.GetRectMinX(world), Natives.GetRectMinY(world), Natives.GetRectMaxX(world), Natives.GetRectMaxY(world) };
+            Natives.RemoveRect(world);
+            return bounds;
+        }
+
+        /// <summary>AddWeatherEffect over a rect made for it and removed after; the game makes it off (seen 11-06).</summary>
+        public weathereffect MakeWeather(string kind, float left, float bottom, float right, float top)
+        {
+            var where = Natives.Rect(left, bottom, right, top);
+            var weather = Natives.AddWeatherEffect(where, Natives.FourCC(kind));
+            Natives.RemoveRect(where);
+            return weather;
+        }
+
+        /// <summary>EnableWeatherEffect.</summary>
+        public void ShowWeather(weathereffect weather, bool shown)
+        {
+            Natives.EnableWeatherEffect(weather, shown);
+        }
+
+        /// <summary>RemoveWeatherEffect.</summary>
+        public void EndWeather(weathereffect weather)
+        {
+            Natives.RemoveWeatherEffect(weather);
+        }
+
+        /// <summary>AddLightningEx, drawn for every player wherever it is: the visibility check would make it on some machines only.</summary>
+        public lightning MakeLightning(string kind, float x1, float y1, float z1, float x2, float y2, float z2)
+        {
+            return Natives.AddLightningEx(kind, false, x1, y1, z1, x2, y2, z2);
+        }
+
+        /// <summary>MoveLightningEx, with no visibility check.</summary>
+        public void MoveBolt(lightning bolt, float x1, float y1, float z1, float x2, float y2, float z2)
+        {
+            Natives.MoveLightningEx(bolt, false, x1, y1, z1, x2, y2, z2);
+        }
+
+        /// <summary>DestroyLightning.</summary>
+        public void EndLightning(lightning bolt)
+        {
+            Natives.DestroyLightning(bolt);
+        }
+
+        /// <summary>CreateFogModifierRadius, shared vision on as the game's own triggers make it, and FogModifierStart.</summary>
+        public fogmodifier MakeVision(player player, int state, float x, float y, float radius, bool overUnits)
+        {
+            var vision = Natives.CreateFogModifierRadius(player, FogStateOf(state), x, y, radius, true, overUnits);
+            Natives.FogModifierStart(vision);
+            return vision;
+        }
+
+        /// <summary>CreateFogModifierRect over a rect made for it and removed after, and FogModifierStart.</summary>
+        public fogmodifier MakeVisionRect(player player, int state, float left, float bottom, float right, float top, bool overUnits)
+        {
+            var where = Natives.Rect(left, bottom, right, top);
+            var vision = Natives.CreateFogModifierRect(player, FogStateOf(state), where, true, overUnits);
+            Natives.RemoveRect(where);
+            Natives.FogModifierStart(vision);
+            return vision;
+        }
+
+        /// <summary>FogModifierStop and DestroyFogModifier.</summary>
+        public void EndVision(fogmodifier vision)
+        {
+            StopSeeing(vision);
+        }
+
+        /// <summary>IsFogEnabled.</summary>
+        public bool IsFogOn()
+        {
+            return Natives.IsFogEnabled();
+        }
+
+        /// <summary>FogEnable.</summary>
+        public void SetFogOn(bool on)
+        {
+            Natives.FogEnable(on);
+        }
+
+        /// <summary>IsFogMaskEnabled.</summary>
+        public bool IsBlackMaskOn()
+        {
+            return Natives.IsFogMaskEnabled();
+        }
+
+        /// <summary>FogMaskEnable.</summary>
+        public void SetBlackMaskOn(bool on)
+        {
+            Natives.FogMaskEnable(on);
+        }
+
+        /// <summary>PingMinimapEx.</summary>
+        public void Ping(float x, float y, float seconds, int red, int green, int blue, bool flashy)
+        {
+            Natives.PingMinimapEx(x, y, seconds, red, green, blue, flashy);
+        }
+
+        /// <summary>CreateMinimapIcon, shown wherever the player has not seen the ground too (FOG_OF_WAR_MASKED), as the campaign's are.</summary>
+        public minimapicon MakeIcon(string path, float x, float y, int red, int green, int blue)
+        {
+            return Natives.CreateMinimapIcon(x, y, red, green, blue, path, Natives.FOG_OF_WAR_MASKED);
+        }
+
+        /// <summary>CreateMinimapIconOnUnit, as MakeIcon.</summary>
+        public minimapicon MakeIconOn(string path, unit unit, int red, int green, int blue)
+        {
+            return Natives.CreateMinimapIconOnUnit(unit, red, green, blue, path, Natives.FOG_OF_WAR_MASKED);
+        }
+
+        /// <summary>SetMinimapIconVisible.</summary>
+        public void ShowIcon(minimapicon icon, bool shown)
+        {
+            Natives.SetMinimapIconVisible(icon, shown);
+        }
+
+        /// <summary>DestroyMinimapIcon.</summary>
+        public void EndIcon(minimapicon icon)
+        {
+            Natives.DestroyMinimapIcon(icon);
+        }
+
+        /// <summary>The game's fog state of MakeVision's number: 0 visible, 1 fogged, 2 masked.</summary>
+        private static fogstate FogStateOf(int state)
+        {
+            return state == 0 ? Natives.FOG_OF_WAR_VISIBLE : state == 1 ? Natives.FOG_OF_WAR_FOGGED : Natives.FOG_OF_WAR_MASKED;
+        }
+
         /// <summary>CreateTextTag, permanent.</summary>
         public texttag MakeText()
         {
