@@ -4,7 +4,8 @@ namespace Moonwell
     /// A lightning the game draws between two points, or between two units, which it follows. It is in the scope it was
     /// made in and ends when that scope ends, or by End; one between units also ends when either unit ends. Every player
     /// sees it, in the fog and the black mask too (seen), and the game shows no colour set on it (seen), so it has
-    /// neither shownTo nor a tint. Every read gives what was set, the same on every machine.
+    /// neither shownTo nor a tint. Every read gives what was set, the same on every machine. A saved game's load drops the
+    /// game's lightning (seen 11-06), so Moonwell makes each lasting one again there, with a new Handle.
     /// </summary>
     public sealed class Lightning : Scoped
     {
@@ -62,7 +63,7 @@ namespace Moonwell
         [LocalSafe]
         public Unit? To => to;
 
-        /// <summary>The game's lightning, for anything Moonwell does not do; null for one that ended before the game made it.</summary>
+        /// <summary>The game's lightning, for anything Moonwell does not do; null for one that ended before the game made it. A saved game's load makes a new one.</summary>
         [LocalSafe]
         public lightning? Handle => handle;
 
@@ -128,6 +129,7 @@ namespace Moonwell
             if (!bolt.HasEnded)
             {
                 bolt.Make();
+                LastingLightning.Keep(bolt);
             }
 
             return bolt;
@@ -146,6 +148,7 @@ namespace Moonwell
             if (!bolt.HasEnded)
             {
                 bolt.Make();
+                LastingLightning.Keep(bolt);
                 from.Attach(bolt);
                 to.Attach(bolt);
                 bolt.follow = Game.Instance.OwnEvery(FollowStep, bolt.Draw);
@@ -159,8 +162,7 @@ namespace Moonwell
         {
             var bolt = new Lightning(kind, null, null, x1, y1, x2, y2);
             bolt.Make();
-            var made = bolt.handle!;
-            Game.Instance.OwnAfter(PlayOnceSeconds, () => Runtime.World.EndLightning(made));
+            RemoveLater(bolt.handle!);
         }
 
         /// <summary>Draws a lightning of a code from one unit to another once, where they stand, as PlayOnce between points does; nothing when either unit is gone.</summary>
@@ -173,8 +175,7 @@ namespace Moonwell
 
             var bolt = new Lightning(kind, from, to, 0.0f, 0.0f, 0.0f, 0.0f);
             bolt.Make();
-            var made = bolt.handle!;
-            Game.Instance.OwnAfter(PlayOnceSeconds, () => Runtime.World.EndLightning(made));
+            RemoveLater(bolt.handle!);
         }
 
         /// <summary>Moves a lightning between points to two other points. Does nothing on one between units, and once it has ended.</summary>
@@ -192,8 +193,21 @@ namespace Moonwell
             Draw();
         }
 
+        /// <summary>Removes a PlayOnce bolt after its time, unless a load dropped it first, as its handle may be another bolt's by then.</summary>
+        private static void RemoveLater(lightning made)
+        {
+            var load = LastingLightning.Loads;
+            Game.Instance.OwnAfter(PlayOnceSeconds, () =>
+            {
+                if (load == LastingLightning.Loads)
+                {
+                    Runtime.World.EndLightning(made);
+                }
+            });
+        }
+
         /// <summary>Asks the game for the lightning where its ends are now.</summary>
-        private void Make()
+        internal void Make()
         {
             float ax = X1, ay = Y1, bx = X2, by = Y2;
             handle = Runtime.World.MakeLightning(kind, ax, ay, HeightAt(from, ax, ay, fromHeight), bx, by, HeightAt(to, bx, by, toHeight));
@@ -228,6 +242,7 @@ namespace Moonwell
 
             from?.Detach(this);
             to?.Detach(this);
+            LastingLightning.Forget(this);
         }
     }
 }

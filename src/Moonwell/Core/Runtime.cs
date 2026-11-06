@@ -50,6 +50,7 @@ namespace Moonwell
             DayConstants.Reset();
             DayChange.Reset();
             FloatingTexts.Reset();
+            LastingLightning.Reset();
 #if DEBUG
             DebugSession.Reset();
             DebugViews.Reset();
