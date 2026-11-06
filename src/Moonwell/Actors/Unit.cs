@@ -41,8 +41,8 @@ namespace Moonwell
 
         // The instance fields are internal, not private, as a map's subclass may name a field of its own the same (see Scope).
 
-        /// <summary>The effects on the unit that have not ended, which end when it ends; null until the first.</summary>
-        internal List<SpecialEffect>? effects;
+        /// <summary>The effects, texts and sounds on the unit that have not ended, which end when it ends; null until the first.</summary>
+        internal List<Scoped>? attached;
 
         /// <summary>The ability objects of the unit, one per ability id, in the order they were first asked for.</summary>
         internal readonly OrderedMap<int, Ability> abilities = new OrderedMap<int, Ability>();
@@ -694,6 +694,50 @@ namespace Moonwell
         public void PlayEffectOnce(string model, string point, Player? shownTo = null)
         {
             SpecialEffect.PlayOnceOn(this, model, point, shownTo);
+        }
+
+        /// <summary>Puts a text over the unit, above its health bar, in a scope, and returns it. It follows the unit, stays over its corpse after a death, shows only to the players who see the unit, and ends when the scope ends or the unit ends, whichever is first. Given shownTo, only that player sees it. On a unit that is gone it ends at once and the game is not asked to make it.</summary>
+        public FloatingText AddText(string text, Scope scope, Player? shownTo = null)
+        {
+            return FloatingText.On(this, text, scope, shownTo);
+        }
+
+        /// <summary>Plays a text once over the unit, as a damage number: it starts above the health bar, rises 64 a second, lasts 2 s and fades over the last 1, shown only to the players who see the unit when it is made. Given shownTo, only that player sees it. Does nothing once the unit is gone.</summary>
+        public void PopText(string text, Color? color = null, Player? shownTo = null)
+        {
+            FloatingText.PopOn(this, text, color, shownTo);
+        }
+
+        /// <summary>Puts a looping 3D sound on the unit, in a scope, and returns it. It follows the unit, and ends, fading over its FadeOut, when the scope ends or the unit ends, whichever is first. Given heardBy, only that player hears it. On a unit that is gone it ends at once and the game is not asked to make it.</summary>
+        public Sound AddSound(string path, Scope scope, Player? heardBy = null)
+        {
+            return Sound.On(this, path, scope, heardBy);
+        }
+
+        /// <summary>Plays a 3D sound once on the unit, which it follows; volume is 0 to 100. Given heardBy, only that player hears it. Does nothing once the unit is gone.</summary>
+        public void PlaySound(string path, Player? heardBy = null, float volume = 100.0f)
+        {
+            Sound.PlayOn(this, path, heardBy, volume);
+        }
+
+        /// <summary>Lists an effect, text or sound on the unit, which ends it when the unit ends.</summary>
+        internal void Attach(Scoped thing)
+        {
+            if (attached == null)
+            {
+                attached = new List<Scoped>();
+            }
+
+            attached.Add(thing);
+        }
+
+        /// <summary>Takes an ended effect, text or sound off the unit's list.</summary>
+        internal void Detach(Scoped thing)
+        {
+            if (attached != null)
+            {
+                attached.Remove(thing);
+            }
         }
 
         /// <summary>Tints the unit's model (SetUnitVertexColor); each value is clamped to 0-255, and an alpha of 0 makes the unit and its shadow invisible, though its selection circle and health bar still show. The game keeps no tint to read back. Does nothing once the unit is gone.</summary>
@@ -1452,12 +1496,12 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Ends the unit's effects, removes the unit from the game unless the game has already, and forgets it.</summary>
+        /// <summary>Ends the unit's effects, texts and sounds, removes the unit from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
-            if (effects != null)
+            if (attached != null)
             {
-                var ending = new List<SpecialEffect>(effects);
+                var ending = new List<Scoped>(attached);
                 for (var i = 0; i < ending.Count; i++)
                 {
                     ending[i].End();
