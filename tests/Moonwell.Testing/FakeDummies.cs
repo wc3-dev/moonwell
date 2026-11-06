@@ -20,7 +20,8 @@ namespace Moonwell.Testing
     /// <summary>
     /// The spells a dummy casts in a fake world, as seen 11-03: an order of a spell's string by a unit that has it takes effect
     /// inside the order call, after the order's own event, and an instant spell's end-cast comes in the same call, a channel's
-    /// at its end, at a stop or when the ability is removed. The game refuses an order of the wrong kind, a target the caster's
+    /// at its end, at a stop, at the caster's death or when the ability is removed; a move order is refused while it channels
+    /// (seen 11-06). The game refuses an order of the wrong kind, a target the caster's
     /// player does not see (in fog, until a vision patch covers it) or one invisible to it, and what a case says to refuse. It
     /// also keeps what the runtime sets on a dummy's spell and reads of it. Kept apart from FakeWorld, at the Lua local limit.
     /// </summary>
@@ -217,13 +218,18 @@ namespace Moonwell.Testing
             return held.Contains(spell.Ability) || target == null || Sees(world.OwnerOf(caster), target);
         }
 
-        /// <summary>A spell's order taken: its effect inside the call, then an instant spell's end-cast; a channel goes on. A held spell's order takes no effect.</summary>
+        /// <summary>A spell's order taken: its effect inside the call, then an instant spell's end-cast; a channel goes on from before its effect, so a stop inside the effect ends it. A held spell's order, or one whose spell the order's reactions took away, takes no effect.</summary>
         internal void TakeEffect(unit caster, string order, unit? target, float x, float y)
         {
-            var spell = Find(caster, order)!;
-            if (held.Contains(spell.Ability))
+            var spell = Find(caster, order);
+            if (spell == null || held.Contains(spell.Ability))
             {
                 return;
+            }
+
+            if (spell.Channel)
+            {
+                channels[caster] = spell.Ability;
             }
 
             var listening = world.Listening.Contains(GameEvent.Spell);
@@ -233,17 +239,19 @@ namespace Moonwell.Testing
             }
 
             spell.Effect(caster, target, x, y);
-            if (spell.Channel)
-            {
-                channels[caster] = spell.Ability;
-            }
-            else if (listening)
+            if (!spell.Channel && listening)
             {
                 Inbound.SpellEnded(caster, spell.Ability);
             }
         }
 
-        /// <summary>A stop order ends a unit's channel.</summary>
+        /// <summary>Whether a unit channels a spell now.</summary>
+        internal bool Channels(unit u)
+        {
+            return channels.ContainsKey(u);
+        }
+
+        /// <summary>A stop order, a change of owner or a death ends a unit's channel.</summary>
         internal void Stopped(unit u)
         {
             EndChannel(u);

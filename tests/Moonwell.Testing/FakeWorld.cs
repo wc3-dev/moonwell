@@ -97,6 +97,9 @@ namespace Moonwell.Testing
         /// <summary>The type id of each unit the world made.</summary>
         private readonly Dictionary<unit, int> unitTypes = new Dictionary<unit, int>();
 
+        /// <summary>Each unit the world made, in the order made.</summary>
+        private readonly List<unit> madeUnits = new List<unit>();
+
         /// <summary>The slot of the player that owns each unit the world made.</summary>
         private readonly Dictionary<unit, int> unitSlots = new Dictionary<unit, int>();
 
@@ -341,6 +344,7 @@ namespace Moonwell.Testing
         public unit NewUnit(int typeId, int slot = 0, bool hero = false)
         {
             var created = new unit();
+            madeUnits.Add(created);
             unitTypes[created] = typeId;
             unitSlots[created] = slot;
             heroes[created] = hero;
@@ -476,7 +480,7 @@ namespace Moonwell.Testing
             return null;
         }
 
-        /// <summary>Moves time forward by the seconds, calling Runtime.Wake at each wake request on the way, WakeLate after the time it asked for. The frame of the last calls ends first: the drops that waited for it fire, and the units removed in it read type id 0. The second wake in a row that would not move the time comes at the game's next tick instead (NextTick), as the game's own clock moves on.</summary>
+        /// <summary>Moves time forward by the seconds, calling Runtime.Wake at each wake request on the way, WakeLate after the time it asked for; time never goes back, so a wake that came late keeps its time. The frame of the last calls ends first, and again each time the time moves: the drops that waited for it fire, and the units removed in it read type id 0. The second wake in a row that would not move the time comes at the game's next tick instead (NextTick), as the game's own clock moves on.</summary>
         public void Advance(float seconds)
         {
             var target = Time + seconds;
@@ -498,13 +502,25 @@ namespace Moonwell.Testing
                     }
                 }
 
+                if (next > Time)
+                {
+                    DeliverPendingDrops();
+                    EndPendingRemovals();
+                }
+
                 Time = next;
                 WakeAt = null;
                 GameBuffs.Step(Time);
                 Runtime.Wake();
             }
 
-            Time = target;
+            if (target > Time)
+            {
+                DeliverPendingDrops();
+                EndPendingRemovals();
+                Time = target;
+            }
+
             GameBuffs.Step(Time);
         }
 
@@ -614,17 +630,22 @@ namespace Moonwell.Testing
             Dummies.Unpatch(patch);
         }
 
-        /// <summary>The units in the world within a radius of a place, centre to centre, alive or dead, in the order made.</summary>
+        /// <summary>The units in the world within a radius of a place, centre to centre, alive or dead, in the order made; a removed unit is not seen, in the instant of its removal too (seen 10-02), and its place is not read.</summary>
         public List<unit> UnitsInRange(float x, float y, float radius)
         {
             var found = new List<unit>();
-            foreach (var entry in unitTypes)
+            foreach (var made in madeUnits)
             {
-                var dx = UnitX(entry.Key) - x;
-                var dy = UnitY(entry.Key) - y;
-                if (entry.Value != 0 && dx * dx + dy * dy <= radius * radius)
+                if (unitTypes[made] == 0 || RemovedUnits.Contains(made))
                 {
-                    found.Add(entry.Key);
+                    continue;
+                }
+
+                var dx = UnitX(made) - x;
+                var dy = UnitY(made) - y;
+                if (dx * dx + dy * dy <= radius * radius)
+                {
+                    found.Add(made);
                 }
             }
 
@@ -640,20 +661,20 @@ namespace Moonwell.Testing
 #endif
         }
 
-        /// <summary>Requests a wake the seconds from now; replaces any earlier request. In a development build the seconds are Moonwell's, and a request while its clock is halted drops the wake until the clock re-arms it, as NativeWorld's.</summary>
+        /// <summary>Requests a wake the seconds from now, or now for seconds below 0, as NativeWorld starts the game's timer at 0 for them; replaces any earlier request. In a development build the seconds are Moonwell's, and a request while its clock is halted drops the wake until the clock re-arms it, as NativeWorld's.</summary>
         public void WakeIn(float seconds)
         {
 #if DEBUG
             if (Runtime.Clock.Arm(seconds, out var gameSeconds))
             {
-                WakeAt = Time + gameSeconds;
+                WakeAt = Time + (gameSeconds < 0.0f ? 0.0f : gameSeconds);
             }
             else
             {
                 WakeAt = null;
             }
 #else
-            WakeAt = Time + seconds;
+            WakeAt = Time + (seconds < 0.0f ? 0.0f : seconds);
 #endif
         }
 
@@ -1033,7 +1054,7 @@ namespace Moonwell.Testing
             return new List<destructable>(PlacedDestructables);
         }
 
-        /// <summary>Makes a unit owned by the owner's slot at the place, and keeps the facing in LastFacing; null for a type in Unmakeable, as the game's CreateUnit gives for a type it cannot make.</summary>
+        /// <summary>Makes a unit owned by the owner's slot at the place and facing, a hero when its type's id starts with a capital letter (the id decides, seen 10-28), and keeps the facing in LastFacing; null for a type in Unmakeable, as the game's CreateUnit gives for a type it cannot make.</summary>
         public unit SpawnUnit(player owner, int typeId, float x, float y, float facing)
         {
             LastFacing = facing;
@@ -1042,9 +1063,11 @@ namespace Moonwell.Testing
                 return null!;
             }
 
-            var created = NewUnit(typeId, SlotOf(owner));
+            var first = (typeId >> 24) & 0xFF;
+            var created = NewUnit(typeId, SlotOf(owner), first >= 'A' && first <= 'Z');
             unitXs[created] = x;
             unitYs[created] = y;
+            facings[created] = facing;
             return created;
         }
 
@@ -1126,11 +1149,12 @@ namespace Moonwell.Testing
             itemPlaces[item] = new float[] { x, y };
         }
 
-        /// <summary>Records an item removed by the runtime, and reads its type id as 0.</summary>
+        /// <summary>Records an item removed by the runtime: a carried one leaves its slot with its drop event inside the call, as UnitRemoveItem does, and none later (seen 11-06); its type id and every number of it read 0 in the same frame (seen 10-21).</summary>
         public void DeleteItem(item item)
         {
             RemovedItems.Add(item);
-            itemTypes[item] = 0;
+            TakeFromHolder(item);
+            VanishItem(item);
         }
 
         /// <summary>The x of a destructable; 100 unless placed, and 0 once it is removed or vanished.</summary>
@@ -1602,11 +1626,11 @@ namespace Moonwell.Testing
             ItemCalls.Add("charges " + charges);
         }
 
-        /// <summary>The player that owns an item; slot 0 until set, null once LoseItemOwner has been called for it.</summary>
+        /// <summary>The player that owns an item; neutral passive until set, as a new item's is (seen 10-21), null once LoseItemOwner has been called for it.</summary>
         public player ItemOwnerOf(item item)
         {
             NoteGoneItem(item);
-            var slot = itemSlots.TryGetValue(item, out var kept) ? kept : 0;
+            var slot = itemSlots.TryGetValue(item, out var kept) ? kept : NeutralPassive;
             if (slot < 0)
             {
                 return null!;
@@ -1786,10 +1810,10 @@ namespace Moonwell.Testing
             SlotsOf(unit)[slot] = item;
         }
 
-        /// <summary>Counts a call on a unit the world has removed.</summary>
+        /// <summary>Counts a call on a unit the world or the runtime has removed.</summary>
         private void NoteGone(unit unit)
         {
-            if (UnitTypeId(unit) == 0)
+            if (UnitTypeId(unit) == 0 || RemovedUnits.Contains(unit))
             {
                 GoneCalls++;
             }
@@ -1956,11 +1980,11 @@ namespace Moonwell.Testing
             return levels.TryGetValue(unit, out var level) ? level : 1;
         }
 
-        /// <summary>Whether a unit has not been killed.</summary>
+        /// <summary>Whether a unit has not been killed and is not gone: one given to RemoveUnit reads alive for the rest of its frame, and not alive from the next (seen 11-06).</summary>
         public bool IsAlive(unit unit)
         {
             NoteGone(unit);
-            return !dead.Contains(unit);
+            return !dead.Contains(unit) && !vanishedUnits.Contains(unit);
         }
 
         /// <summary>Kills a unit as the game does: the unit is dead with life 0, and when deaths are listened for, its death is delivered inside the call, with no killer; killing a dead unit does nothing.</summary>
@@ -1969,6 +1993,12 @@ namespace Moonwell.Testing
             NoteGone(unit);
             KillCalls++;
             Die(unit, null);
+        }
+
+        /// <summary>Kills a unit by a hit of the damage package's fake, with the source as the killer, as a killing hit's death comes inside its call (seen 10-20).</summary>
+        public void KillBy(unit unit, unit? killer)
+        {
+            Die(unit, killer);
         }
 
         /// <summary>The death itself, for KillUnit, for a life set to 0.405 or less and for damage: life 0, the death inside the call when deaths are listened for, and nothing for a unit already dead (seen 10-21).</summary>
@@ -1981,6 +2011,8 @@ namespace Moonwell.Testing
             }
 
             lives[unit] = 0.0f;
+            // Its channel's end-cast comes inside the kill (seen 11-06); before the death event is this fake's guess.
+            Dummies.Stopped(unit);
             DropAll(unit);
             GameBuffs.TakeAll(unit);
             if (Listening.Contains(GameEvent.Death))
@@ -2414,7 +2446,8 @@ namespace Moonwell.Testing
             OrderPoints.Add(x);
             OrderPoints.Add(y);
             var spell = Dummies.Answer(unit, order, SpellKind.Point, null);
-            var answer = spell ?? OrderAnswer;
+            // A channelling unit refuses a move order and channels on (seen 11-06, on Moonwell's dummy, which cannot move).
+            var answer = spell ?? (OrderAnswer && !(order == "move" && Dummies.Channels(unit)));
             if (answer)
             {
                 DeliverOrder(unit, OrderIdOf(order), OrderKind.Place, x, y, null, null);
@@ -2594,6 +2627,12 @@ namespace Moonwell.Testing
                 {
                     InventoryCalls.Add("give");
                     TakeFromHolder(item);
+                    // A drop reaction may have given the item elsewhere or filled the slot: an item stays in one slot.
+                    if (InSlots(item) || slots[i] != null)
+                    {
+                        return false;
+                    }
+
                     slots[i] = item;
                     if (Listening.Contains(GameEvent.PickUp))
                     {
@@ -2601,6 +2640,23 @@ namespace Moonwell.Testing
                     }
 
                     return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether an item is in some unit's slots.</summary>
+        private bool InSlots(item item)
+        {
+            foreach (var slots in inventories.Values)
+            {
+                for (var i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == item)
+                    {
+                        return true;
+                    }
                 }
             }
 

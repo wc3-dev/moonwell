@@ -147,6 +147,7 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.Files.Count, "nothing written");
 #if DEBUG
             Expect.Equal(2, world.Logged.Count, "both reported");
+            Expect.True(world.Logged[0].Contains("\"a/b.txt\" is no file name"), "the report: " + world.Logged[0]);
             Expect.True(world.Logged[1].Contains("PlayerFile.Write") && world.Logged[1].Contains(".txt or .pld"), "the report: " + world.Logged[1]);
 #endif
         }
@@ -165,6 +166,7 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.Files.Count, "nothing written");
 #if DEBUG
             Expect.Equal(1, world.Logged.Count, "reported");
+            Expect.True(world.Logged[0].Contains("is too long for a file"), "the report: " + world.Logged[0]);
 #endif
         }
 

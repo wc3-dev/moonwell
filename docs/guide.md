@@ -583,7 +583,8 @@ public sealed class Shield : Buff, IDamageTarget
 ```
 
 The game sends two events for each hit. Before armor, the hit has its full amount and its types can still change;
-after armor, the target's armor has cut it and only the amount can change. The life drops after that.
+after armor, the target's armor has cut it and only the amount can change. The life drops after that. Armor cuts only
+`DamageKind.Normal`, what attacks deal, so `source.Damage`'s magic is not cut.
 
 | Stage | When | `IDamageSource` | `IDamageTarget` | `IDamageWatch` |
 |---|---|---|---|---|
