@@ -139,6 +139,35 @@ namespace Moonwell.Testing
             Expect.Equal(2, world.Bolts.Count, "none for a unit that is gone");
         }
 
+        /// <summary>A saved game's load drops the game's lightning (I36): the lasting ones are made again, where they are, and go on; a PlayOnce bolt from before the load is left to the game.</summary>
+        public static void LightningAfterLoad(FakeWorld world)
+        {
+            var a = NewFootman(world, 0f, 0f);
+            var b = NewFootman(world, 300f, 0f);
+            var points = Lightning.Create(LightningKind.AerialShackles, 0f, 0f, 600f, 0f, Game.Instance);
+            points.FromHeight = 200f;
+            var link = Lightning.Between(LightningKind.DrainLife, a, b, Game.Instance);
+            Lightning.PlayOnce(LightningKind.ChainLightningPrimary, 0f, 0f, 10f, 10f);
+            var ended = Lightning.Create(LightningKind.DrainMana, 0f, 0f, 1f, 1f, Game.Instance);
+            ended.End();
+            Expect.True(world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded), "a loaded game is listened for");
+
+            Inbound.GameLoaded();
+
+            Expect.Equal(6, world.Bolts.Count, "the two lasting ones made again, and only those");
+            Expect.Equal("LEAS", world.Bolts[4].Kind, "the first, with its code");
+            Expect.Near(200f, world.Bolts[4].Z1, "and its height");
+            Expect.Near(300f, world.Bolts[5].X2, "the link, to its unit");
+            world.PlaceUnit(b.Handle, 500f, 0f);
+            world.Advance(2.1f);
+            Expect.Near(500f, world.Bolts[5].X2, "the new link follows");
+            Expect.Equal(false, world.Bolts[2].Ended, "the PlayOnce bolt from before the load is not removed");
+            link.End();
+            points.End();
+            Expect.Equal(true, world.Bolts[5].Ended && world.Bolts[4].Ended, "End removes the new ones");
+            Expect.Equal(false, world.Bolts[0].Ended, "and not the dropped ones");
+        }
+
         /// <summary>Reveal and Hide start fog modifiers in their states, over a circle, a rect or the world, and end with their scope.</summary>
         public static void VisionModifiers(FakeWorld world)
         {

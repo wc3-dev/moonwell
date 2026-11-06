@@ -3,9 +3,10 @@ namespace Moonwell
     /// <summary>
     /// The game's music. Play gives the game one file or a playlist, which it plays in order and starts again (seen 11-06);
     /// shuffle mixes the order once, with the game's random numbers, on every machine. PlayOnce cuts in with a file that plays
-    /// once, and the music goes on after it. The first file of the first playlist may not be heard (a 2 s one was not, seen
-    /// 11-06). Given heardBy, the music changes for that player only: it makes nothing in the game, so the other machines
-    /// leave theirs as it is.
+    /// once, and the music goes on after it. The game chooses where a playlist starts: after the map's own music it started
+    /// at its first file, but played again after itself at a later one, and Moonwell has no way to choose (seen 11-06).
+    /// Music goes on while the game is paused. Given heardBy, the music changes for that player only: it makes nothing in
+    /// the game, so the other machines leave theirs as it is.
     /// </summary>
     public static class Music
     {

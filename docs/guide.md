@@ -666,7 +666,9 @@ Music.SetVolume(60);
 - `Music.Play` gives the game one file, played again and again, or a playlist, which it plays in order and starts
   again. `shuffle: true` mixes the order once, with the game's random numbers, on every machine. `PlayOnce` cuts in with
   a file that plays once, and the music goes on after it. `Stop()` fades the music out, the file played once included;
-  `Stop(fadeOut: false)` stops it at once. The first file of the first playlist may not be heard: a 2 s file was not.
+  `Stop(fadeOut: false)` stops it at once. The game chooses where a playlist starts: after the map's own music it
+  started at its first file, but a playlist played again after itself started at a later one (seen), and Moonwell has
+  no way to choose. Music goes on while the game is paused.
 - Every `Music` call takes `heardBy:` too, which changes the music for that player only; the others' stays as it is.
 - A file of the map's own goes in `assets/`. A path to one of the game's sounds works with `.wav`, `.flac` or `.ogg`
   alike.
