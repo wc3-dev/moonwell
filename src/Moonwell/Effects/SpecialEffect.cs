@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Moonwell
 {
     /// <summary>
@@ -295,12 +293,7 @@ namespace Moonwell
             if (!fx.HasEnded)
             {
                 fx.handle = Runtime.World.MakeEffectOn(ShownModel(model, shownTo), unit.Handle, point);
-                if (unit.effects == null)
-                {
-                    unit.effects = new List<SpecialEffect>();
-                }
-
-                unit.effects.Add(fx);
+                unit.Attach(fx);
             }
 
             return fx;
@@ -329,9 +322,9 @@ namespace Moonwell
                 Runtime.World.EndEffect(handle, playsDeath);
             }
 
-            if (carrier != null && carrier.effects != null)
+            if (carrier != null)
             {
-                carrier.effects.Remove(this);
+                carrier.Detach(this);
             }
         }
     }

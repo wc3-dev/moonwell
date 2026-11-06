@@ -2927,6 +2927,216 @@ namespace Moonwell.Testing
             return Ground(x, y);
         }
 
+        /// <summary>The floating texts the runtime made, in the order made.</summary>
+        public List<FakeText> Texts = new List<FakeText>();
+
+        /// <summary>The units the player at this machine does not see; every other unit is seen.</summary>
+        public List<unit> Unseen = new List<unit>();
+
+        private readonly Dictionary<texttag, FakeText> texts = new Dictionary<texttag, FakeText>();
+
+        /// <summary>The fake behind a text handle the runtime was given.</summary>
+        public FakeText TextOf(texttag text)
+        {
+            return texts[text];
+        }
+
+        /// <summary>Makes a text that stays until it is ended.</summary>
+        public texttag MakeText()
+        {
+            var made = new texttag();
+            var fake = new FakeText();
+            texts[made] = fake;
+            Texts.Add(fake);
+            return made;
+        }
+
+        /// <summary>Writes a text's words and height.</summary>
+        public void WriteText(texttag text, string words, float height)
+        {
+            var fake = LiveText(text);
+            fake.Words = words;
+            fake.LetterHeight = height;
+        }
+
+        /// <summary>Puts a text at a place and counts it.</summary>
+        public void PlaceText(texttag text, float x, float y, float height)
+        {
+            var fake = LiveText(text);
+            fake.Over = null;
+            fake.X = x;
+            fake.Y = y;
+            fake.Height = height;
+            fake.Places++;
+        }
+
+        /// <summary>Puts a text over a unit, where the unit is, and counts it.</summary>
+        public void PlaceTextOver(texttag text, unit unit, float height)
+        {
+            var fake = LiveText(text);
+            fake.Over = unit;
+            fake.X = UnitX(unit);
+            fake.Y = UnitY(unit);
+            fake.Height = height;
+            fake.Places++;
+        }
+
+        /// <summary>Colours a text and counts it.</summary>
+        public void ColorText(texttag text, int red, int green, int blue, int alpha)
+        {
+            var fake = LiveText(text);
+            fake.Color = new int[] { red, green, blue, alpha };
+            fake.Colors++;
+        }
+
+        /// <summary>Sets a text's velocity.</summary>
+        public void DriftText(texttag text, float xVelocity, float yVelocity)
+        {
+            var fake = LiveText(text);
+            fake.XVelocity = xVelocity;
+            fake.YVelocity = yVelocity;
+        }
+
+        /// <summary>Shows or hides a text.</summary>
+        public void ShowText(texttag text, bool shown)
+        {
+            LiveText(text).Shown = shown;
+        }
+
+        /// <summary>Ends a text; a second end fails the case.</summary>
+        public void EndText(texttag text)
+        {
+            LiveText(text).Ended = true;
+        }
+
+        /// <summary>Whether the player at this machine sees a unit: every unit not in Unseen.</summary>
+        public bool LocalSees(unit unit)
+        {
+            return !Unseen.Contains(unit);
+        }
+
+        /// <summary>The fake behind a text handle; the runtime asking anything of a text it has ended fails the case, as the game gives its id to the next.</summary>
+        private FakeText LiveText(texttag text)
+        {
+            var fake = texts[text];
+            if (fake.Ended)
+            {
+                throw new ExpectationFailed("the runtime asked the game about a text it had ended");
+            }
+
+            return fake;
+        }
+
+        /// <summary>The sounds the runtime made, in the order made.</summary>
+        public List<FakeSound> Sounds = new List<FakeSound>();
+
+        private readonly Dictionary<sound, FakeSound> sounds = new Dictionary<sound, FakeSound>();
+
+        /// <summary>The fake behind a sound handle the runtime was given.</summary>
+        public FakeSound SoundOf(sound sound)
+        {
+            return sounds[sound];
+        }
+
+        /// <summary>Makes a sound.</summary>
+        public sound MakeSound(string path, bool looping, bool is3D)
+        {
+            var made = new sound();
+            var fake = new FakeSound { Path = path, Looping = looping, Is3D = is3D };
+            sounds[made] = fake;
+            Sounds.Add(fake);
+            return made;
+        }
+
+        /// <summary>Puts a sound at a place.</summary>
+        public void PlaceSound(sound sound, float x, float y, float z)
+        {
+            var fake = LiveSound(sound);
+            fake.X = x;
+            fake.Y = y;
+            fake.Z = z;
+        }
+
+        /// <summary>Puts a sound on a unit.</summary>
+        public void PutSoundOn(sound sound, unit unit)
+        {
+            LiveSound(sound).Unit = unit;
+        }
+
+        /// <summary>Sets a sound's volume and lists it.</summary>
+        public void SetLoudness(sound sound, int volume)
+        {
+            var fake = LiveSound(sound);
+            fake.Volume = volume;
+            fake.Volumes.Add(volume);
+        }
+
+        /// <summary>Starts a sound.</summary>
+        public void StartPlaying(sound sound)
+        {
+            LiveSound(sound).Started = true;
+        }
+
+        /// <summary>Leaves a sound to the game to free.</summary>
+        public void FreeWhenDone(sound sound)
+        {
+            LiveSound(sound).FreedWhenDone = true;
+        }
+
+        /// <summary>Stops a sound; a second stop fails the case.</summary>
+        public void StopPlaying(sound sound)
+        {
+            LiveSound(sound).Stopped = true;
+        }
+
+        /// <summary>The fake behind a sound handle; the runtime asking anything of a sound it has stopped fails the case.</summary>
+        private FakeSound LiveSound(sound sound)
+        {
+            var fake = sounds[sound];
+            if (fake.Stopped)
+            {
+                throw new ExpectationFailed("the runtime asked the game about a sound it had stopped");
+            }
+
+            return fake;
+        }
+
+        /// <summary>What the runtime asked of this machine's music, in order: "play a;b", "once a", "stop fading" or "stop at once", "volume 76".</summary>
+        public List<string> MusicCalls = new List<string>();
+
+        /// <summary>Records a playlist.</summary>
+        public void StartMusic(string list)
+        {
+            MusicCalls.Add("play " + list);
+        }
+
+        /// <summary>Records music played once.</summary>
+        public void StartMusicOnce(string path)
+        {
+            MusicCalls.Add("once " + path);
+        }
+
+        /// <summary>Records a stop.</summary>
+        public void StopAllMusic(bool fadeOut)
+        {
+            MusicCalls.Add(fadeOut ? "stop fading" : "stop at once");
+        }
+
+        /// <summary>Records a volume.</summary>
+        public void SetMusicLoudness(int volume)
+        {
+            MusicCalls.Add("volume " + volume);
+        }
+
+        /// <summary>The game's random numbers: low, the first allowed, unless a case sets another way to pick.</summary>
+        public System.Func<int, int, int> Pick = (low, high) => low;
+
+        /// <summary>A number from Pick.</summary>
+        public int RandomBetween(int low, int high)
+        {
+            return Pick(low, high);
+        }
+
         /// <summary>A destructable the runtime asked the game to make: its type, place, facing, scale and variation.</summary>
         public sealed class DestructableSpawn
         {

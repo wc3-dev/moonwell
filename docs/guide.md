@@ -568,6 +568,81 @@ After(3f, mark.End);
 - With `Moonwell.Maths`, `effect.Position()` and `effect.PlaceAt(vector)`.
 - Missiles keep their own: `Model`, `Scale`, `Tint` and `AddEffect` on the missile, and `missile.Effect` for the rest.
 
+## Floating text
+
+Floating text is words the game draws at a place or over a unit: a damage number, gold, a label. As with effects, one
+is played once or held in a scope.
+
+```csharp
+target.PopText("-" + (int)hit.Amount, Color.Red);                          // rises, fades and goes by itself
+FloatingText.Pop("+25", x, y, Color.TooltipGold, shownTo: killer.Owner);   // for one player
+
+var label = boss.AddText("Enraged", this);                                  // follows the unit
+label.Color = Color.Red;
+var sign = FloatingText.Create("Shop", x, y, Game.Instance);
+sign.Duration = 3f;                                                         // goes after 3 s,
+sign.FadeOut = 1f;                                                          // fading over the last 1
+```
+
+| FloatingText | |
+|---|---|
+| `Text`, `Size`, `Color` | read and set; `Size` is World Editor's font size, 10 unless set; `Color`'s alpha is the opacity a fade lowers from |
+| `Height`, `PlaceAt(x, y)` | read and set; above the ground at a place, above the health bar on a unit (0 is just over it); `PlaceAt` does nothing on a unit |
+| `Speed`, `Angle` | read and set; how fast it moves by itself, a second, and which way in degrees (90, the default, is up the screen) |
+| `Duration`, `FadeOut` | read and set; the seconds from when it was made to when it ends by itself (0, the default, lasts until ended), and the seconds before that end over which it fades |
+| `Unit`, `IsShownTo(player)` | read |
+
+- `FloatingText.Pop(text, x, y)` and `unit.PopText(text)` play one once: it rises 64 a second, lasts 2 s and fades over
+  the last 1. A colour follows the text, and `shownTo:` a player. A unit's starts above its health bar and rises from
+  there.
+- `FloatingText.Create(text, x, y, scope)` and `unit.AddText(text, scope)` hold one in a scope, which ends it when it
+  ends, as `End()` and its `Duration` do. A unit's follows the unit, stays over its corpse after a death, and ends when
+  the unit ends, if that comes first. It does not move by its `Speed`.
+- Text on a unit shows only to the players who see the unit: in the fog, or invisible, it is hidden. A Pop is checked
+  when it is made, a held text as it follows.
+- `shownTo: player` makes the text on that player's machine only, so each player has the game's room for text to
+  themselves. A text takes no handle id (seen in single player); with two players it is not checked yet. Who sees it
+  cannot change later.
+- Moonwell times and fades every text itself, on the timers' clock, and never lets the game end one: the game gives an
+  ended text's number to the next text made, and a late end would take that one. 120 texts at once all showed; the
+  game's old limit of 100 was not seen.
+- Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting and making are
+  not.
+
+## Sound and music
+
+```csharp
+Sound.Play(@"Sound\Interface\Rescue.wav");                  // 2D, everyone
+Sound.Play(path, x, y, volume: 60);                         // 3D at a place, once
+unit.PlaySound(path, heardBy: unit.Owner);                  // 3D on the unit, one player
+
+var hum = unit.AddSound(@"...\Loop.wav", this);             // loops, follows the unit, ends with the scope
+hum.Volume = 50;
+hum.FadeOut = 1f;
+
+Music.Play(trackA, trackB, trackC);                         // a playlist
+Music.Play(new[] { trackA, trackB, trackC }, shuffle: true);
+Music.PlayOnce(victory);                                    // cuts in once, then the playlist goes on
+Music.Stop();
+Music.SetVolume(60);
+```
+
+- `Sound.Play(path)` plays a file once, 2D, as loud on the whole screen; `Sound.Play(path, x, y)` 3D at a place, and
+  `unit.PlaySound(path)` 3D on a unit, which it follows. `volume:` is 0 to 100. The game frees each when it has played.
+- `Sound.Create(path, scope)`, `Sound.Create(path, x, y, scope)` and `unit.AddSound(path, scope)` loop until their scope
+  ends, as `End()` does, or the unit ends. `Volume` (0 to 100) and `FadeOut` (0.5 s unless set, 0 to stop at once) are
+  read and set, as on the physics package's `LoopingSound`, and `PlaceAt(x, y)` moves one at a place. The fade runs on a
+  timer of the game's, so it outlives the scope.
+- `heardBy: player` plays it for that player only: every machine makes and plays the sound, the others at volume 0, so
+  the game's handles stay in step. Reads give what the map set, the same on every machine.
+- `Music.Play` gives the game one file, played again and again, or a playlist, which it plays in order and starts
+  again. `shuffle: true` mixes the order once, with the game's random numbers, on every machine. `PlayOnce` cuts in with
+  a file that plays once, and the music goes on after it. `Stop()` fades the music out, the file played once included;
+  `Stop(fadeOut: false)` stops it at once. The first file of the first playlist may not be heard: a 2 s file was not.
+- Every `Music` call takes `heardBy:` too, which changes the music for that player only; the others' stays as it is.
+- A file of the map's own goes in `assets/`. A path to one of the game's sounds works with `.wav`, `.flac` or `.ogg`
+  alike.
+
 ## Damage
 
 `OnDamaged` sees a hit after armor. `source.Damage(target, 10f)` deals damage from code, as a spell does: magic,
