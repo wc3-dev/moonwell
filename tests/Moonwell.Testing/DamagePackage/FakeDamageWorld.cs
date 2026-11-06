@@ -88,16 +88,16 @@ namespace Moonwell.Testing
             if (!(body.Immune && stops))
             {
                 var armor = body.Armor + body.ArmorBonus;
-                // Magic (10 took 10 off a footman, seen 10-16) and sonic (Storm Bolt's 100, seen 10-01) are not cut by armor.
-                var cut = current.Damage != 14 && current.Damage != 15;
+                // From code armor cuts only damage type normal (seen 11-06).
+                var cut = current.Damage == 4;
                 if (cut && armor > 0f)
                 {
                     current.Amount = current.Amount * (1f - 0.06f * armor / (1f + 0.06f * armor));
                 }
                 else if (cut && armor < 0f)
                 {
-                    // 100 at armor -20 took 171 (seen 10-20).
-                    current.Amount = current.Amount * (2f - (float)Math.Pow(0.94, -armor));
+                    // The whole part toward zero counts, down to -20 (seen 11-06).
+                    current.Amount = current.Amount * (2f - (float)Math.Pow(0.94, Math.Min(20, (int)-armor)));
                 }
 
                 if (Listening && !withheld)

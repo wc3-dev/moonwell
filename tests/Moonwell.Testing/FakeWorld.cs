@@ -1149,10 +1149,11 @@ namespace Moonwell.Testing
             itemPlaces[item] = new float[] { x, y };
         }
 
-        /// <summary>Records an item removed by the runtime: its type id and every number of it read 0 in the same frame (seen 10-21).</summary>
+        /// <summary>Records an item removed by the runtime: a carried one leaves its slot with its drop event inside the call, as UnitRemoveItem does, and none later (seen 11-06); its type id and every number of it read 0 in the same frame (seen 10-21).</summary>
         public void DeleteItem(item item)
         {
             RemovedItems.Add(item);
+            TakeFromHolder(item);
             VanishItem(item);
         }
 
@@ -1979,11 +1980,11 @@ namespace Moonwell.Testing
             return levels.TryGetValue(unit, out var level) ? level : 1;
         }
 
-        /// <summary>Whether a unit has not been killed.</summary>
+        /// <summary>Whether a unit has not been killed and is not gone: one given to RemoveUnit reads alive for the rest of its frame, and not alive from the next (seen 11-06).</summary>
         public bool IsAlive(unit unit)
         {
             NoteGone(unit);
-            return !dead.Contains(unit);
+            return !dead.Contains(unit) && !vanishedUnits.Contains(unit);
         }
 
         /// <summary>Kills a unit as the game does: the unit is dead with life 0, and when deaths are listened for, its death is delivered inside the call, with no killer; killing a dead unit does nothing.</summary>
@@ -2010,6 +2011,8 @@ namespace Moonwell.Testing
             }
 
             lives[unit] = 0.0f;
+            // Its channel's end-cast comes inside the kill (seen 11-06); before the death event is this fake's guess.
+            Dummies.Stopped(unit);
             DropAll(unit);
             GameBuffs.TakeAll(unit);
             if (Listening.Contains(GameEvent.Death))
@@ -2443,7 +2446,8 @@ namespace Moonwell.Testing
             OrderPoints.Add(x);
             OrderPoints.Add(y);
             var spell = Dummies.Answer(unit, order, SpellKind.Point, null);
-            var answer = spell ?? OrderAnswer;
+            // A channelling unit refuses a move order and channels on (seen 11-06, on Moonwell's dummy, which cannot move).
+            var answer = spell ?? (OrderAnswer && !(order == "move" && Dummies.Channels(unit)));
             if (answer)
             {
                 DeliverOrder(unit, OrderIdOf(order), OrderKind.Place, x, y, null, null);

@@ -20,7 +20,8 @@ namespace Moonwell.Testing
     /// <summary>
     /// The spells a dummy casts in a fake world, as seen 11-03: an order of a spell's string by a unit that has it takes effect
     /// inside the order call, after the order's own event, and an instant spell's end-cast comes in the same call, a channel's
-    /// at its end, at a stop or when the ability is removed. The game refuses an order of the wrong kind, a target the caster's
+    /// at its end, at a stop, at the caster's death or when the ability is removed; a move order is refused while it channels
+    /// (seen 11-06). The game refuses an order of the wrong kind, a target the caster's
     /// player does not see (in fog, until a vision patch covers it) or one invisible to it, and what a case says to refuse. It
     /// also keeps what the runtime sets on a dummy's spell and reads of it. Kept apart from FakeWorld, at the Lua local limit.
     /// </summary>
@@ -244,7 +245,13 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>A stop order ends a unit's channel.</summary>
+        /// <summary>Whether a unit channels a spell now.</summary>
+        internal bool Channels(unit u)
+        {
+            return channels.ContainsKey(u);
+        }
+
+        /// <summary>A stop order, a change of owner or a death ends a unit's channel.</summary>
         internal void Stopped(unit u)
         {
             EndChannel(u);
