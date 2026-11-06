@@ -702,8 +702,9 @@ var skull = boss.AddMinimapIcon(MinimapIcon.Boss, Color.Red, this);
 - `player.Reveal(x, y, radius, scope)` lets the player see a circle, `Reveal(left, bottom, right, top, scope)` a rect
   and `Reveal(scope)` the whole map; allies who share the player's vision see it too (seen). The ground stays explored
   after. `player.Hide` covers a place in fog, or in the black mask with `black: true`; `overUnits: true` asks the game
-  to cover what the player's units see there too, which is not checked yet. Of two on one place, the newer wins as they
-  start (seen).
+  to cover what the player's units see there too: it beats a Reveal or Hide without it (seen). Of a player's visions on
+  one place, the newest wins: the game itself keeps the oldest once it recomputes the fog, so each new vision makes the
+  player's older ones again after its own (seen).
 - `Game.Fog` and `Game.BlackMask` turn the fog of war and the black mask off and on for every player. With the fog off
   and the mask on, the ground a player has not explored is still black (seen). For one player, reveal the whole map:
   `player.Reveal(this)`.

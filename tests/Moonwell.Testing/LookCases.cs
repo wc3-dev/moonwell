@@ -155,17 +155,43 @@ namespace Moonwell.Testing
             Player.One.Hide(0f, 0f, 300f, holder);
             Expect.Equal(1, world.Visions[2].State, "fog unless black");
             Player.One.Hide(-10f, -20f, 30f, 40f, holder, black: true, overUnits: true);
-            var dark = world.Visions[3];
+            var dark = world.Visions[4];
             Expect.Equal(2, dark.State, "the black mask");
             Expect.Equal(true, dark.OverUnits, "over the player's units");
             Expect.Near(40f, dark.Top, "the rect's top");
             sight.End();
-            Expect.Equal(true, made.Ended, "ended by End");
+            Expect.Equal(true, world.Visions[6].Ended, "ended by End");
             holder.End();
-            Expect.Equal(true, world.Visions[3].Ended, "the rest end with the scope");
+            Expect.Equal(true, dark.Ended, "the rest end with the scope");
             var late = Player.One.Reveal(0f, 0f, 1f, holder);
             Expect.Equal(true, late.HasEnded, "ended at once in an ended scope");
-            Expect.Equal(4, world.Visions.Count, "the game is not asked again");
+            Expect.Equal(7, world.Visions.Count, "the game is not asked again");
+        }
+
+        /// <summary>The game keeps the oldest of a player's fog modifiers on a place (I35), so a new vision makes the player's older ones again after its own, newest first: a Hide in a Reveal holds.</summary>
+        public static void VisionNewestWins(FakeWorld world)
+        {
+            var holder = Game.Instance.Add(new Holder());
+            var sight = Player.One.Reveal(-400f, -400f, 400f, 400f, holder);
+            Player.Two.Reveal(holder);
+            var first = sight.Handle;
+            var fog = Player.One.Hide(0f, 0f, 300f, holder);
+            Player.One.Hide(0f, 0f, 150f, holder, black: true);
+
+            // 0 the reveal, 1 player two's; the fog hide: 2, then 3 the reveal again; the black hide: 4, then 5 the fog hide and 6 the reveal again.
+            Expect.Equal(7, world.Visions.Count, "each Hide made first, then the older ones again, newest first");
+            Expect.Equal(true, world.Visions[0].Ended && world.Visions[2].Ended && world.Visions[3].Ended, "the older fog modifiers ended");
+            Expect.Equal(false, world.Visions[1].Ended, "another player's vision is left alone");
+            Expect.Equal(2, world.Visions[4].State, "the black hide made first");
+            Expect.Equal(1, world.Visions[5].State, "then the fog hide");
+            Expect.Equal(0, world.Visions[6].State, "then the reveal");
+            Expect.Near(400f, world.Visions[6].Top, "with its rect");
+            Expect.True(sight.Handle != first, "the reveal's handle is the new one");
+            fog.End();
+            Expect.Equal(true, world.Visions[5].Ended, "End ends a hide's new one");
+            Expect.Equal(false, world.Visions[4].Ended || world.Visions[6].Ended, "and leaves the others");
+            sight.End();
+            Expect.Equal(true, world.Visions[6].Ended, "End ends the reveal's new one");
         }
 
         /// <summary>Game.Fog and Game.BlackMask read and set the game's.</summary>

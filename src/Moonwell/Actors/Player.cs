@@ -433,7 +433,7 @@ namespace Moonwell
             return Reveal(world[0], world[1], world[2], world[3], scope);
         }
 
-        /// <summary>Covers a circle of the map in fog for the player, or in the black mask when black is true, until the scope ends, or the vision's End, and returns the vision; with overUnits, also over what the player's units see there. The newest vision on a place wins over older ones.</summary>
+        /// <summary>Covers a circle of the map in fog for the player, or in the black mask when black is true, until the scope ends, or the vision's End, and returns the vision; with overUnits, also over what the player's units see there. The newest of the player's visions on a place wins over older ones, and one with overUnits over those without.</summary>
         public Vision Hide(float x, float y, float radius, Scope scope, bool black = false, bool overUnits = false)
         {
             return Vision.Circle(this, black ? Vision.Masked : Vision.Fogged, x, y, radius, overUnits, scope);
