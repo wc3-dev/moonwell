@@ -1459,6 +1459,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "hud.whole-hud", Run = HudCases.WholeHud });
             list.Add(new Case { Name = "hud.move-piece", Run = HudCases.MovePiece });
             list.Add(new Case { Name = "hud.frame-to-piece", Run = HudCases.FrameToPiece });
+            list.Add(new Case { Name = "frames.load-makes-again", Run = FramesLoadCases.MakesAgain });
+            list.Add(new Case { Name = "frames.load-events", Run = FramesLoadCases.Events });
+            list.Add(new Case { Name = "frames.load-ended-stay-gone", Run = FramesLoadCases.EndedStayGone });
+            list.Add(new Case { Name = "frames.load-template-parts", Run = FramesLoadCases.TemplateParts });
+            list.Add(new Case { Name = "frames.load-hud", Run = FramesLoadCases.Hud });
+            list.Add(new Case { Name = "frames.load-reaction", Run = FramesLoadCases.Reaction });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });

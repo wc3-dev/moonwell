@@ -24,6 +24,9 @@ namespace Moonwell
 
         private static HudFrames? hud;
 
+        /// <summary>The frames added to the screen that have not ended, in the order added: the trees made again when a saved game loads.</summary>
+        private static List<Frame> roots = new List<Frame>();
+
         /// <summary>Each player's view of the HUD, by slot, made at its first use.</summary>
         private static Dictionary<int, GameUi> gameUis = new Dictionary<int, GameUi>();
 
@@ -56,9 +59,75 @@ namespace Moonwell
             pool = new FramePool();
             events = new FrameEvents();
             gameUis = new Dictionary<int, GameUi>();
+            roots = new List<Frame>();
             host.LoadToc(TocFile);
             host.LoadToc(MapTocFile);
             hud = new HudFrames(host);
+            Moonwell.Events.LoadListener = Loaded;
+        }
+
+        /// <summary>
+        /// A saved game loaded: the game has dropped every frame the map made, though their handles stay the same (game facts,
+        /// 11-06). On every machine, loads the TOCs again and looks up the HUD again, as a claim says a load needs, then makes the
+        /// roots and every frame on the screen again from what Moonwell keeps, in the order added, and sets each player's HUD as
+        /// the map left it. The ended frames kept for reuse and the tooltips' slots went with the rest.
+        /// </summary>
+        internal static void Loaded()
+        {
+            var host = World;
+            host.LoadToc(TocFile);
+            host.LoadToc(MapTocFile);
+            hud = new HudFrames(host);
+            foreach (var ui in gameUis.Values)
+            {
+                ui.Rebind(hud);
+            }
+
+            slots = new Dictionary<framehandle, framehandle>();
+            pool = new FramePool();
+            events.Forget();
+            if (screenRoot != null)
+            {
+                // The window check made with the first root goes on, and spans the new one.
+                screenRoot = host.ScreenRoot();
+                windowWidth = 0;
+                windowHeight = 0;
+                FitScreen();
+            }
+
+            if (overRoot != null)
+            {
+                overRoot = host.OverRoot();
+            }
+
+            // Every tree forgets first, so no frame is placed against a frame of the save.
+            for (var i = 0; i < roots.Count; i++)
+            {
+                roots[i].Forget();
+            }
+
+            for (var i = 0; i < roots.Count; i++)
+            {
+                roots[i].MakeTree(roots[i].over ? OverRoot : ScreenRoot, roots[i].player);
+            }
+
+            foreach (var ui in gameUis.Values)
+            {
+                ui.Restore();
+            }
+        }
+
+        /// <summary>Keeps a frame added to the screen, to be made again when a saved game loads.</summary>
+        internal static void Rooted(Frame frame)
+        {
+            frame.rooted = true;
+            roots.Add(frame);
+        }
+
+        /// <summary>Lets an ended frame of the screen go.</summary>
+        internal static void Unrooted(Frame frame)
+        {
+            roots.Remove(frame);
         }
 
         /// <summary>A player's view of the game's HUD, made at its first use.</summary>
@@ -66,6 +135,7 @@ namespace Moonwell
         {
             if (!gameUis.TryGetValue(player.Slot, out var ui))
             {
+                Moonwell.Events.Listen(GameEvent.Loaded);
                 ui = new GameUi(player, hud!);
                 gameUis[player.Slot] = ui;
             }
@@ -113,6 +183,7 @@ namespace Moonwell
             {
                 if (screenRoot == null)
                 {
+                    Moonwell.Events.Listen(GameEvent.Loaded);
                     screenRoot = World.ScreenRoot();
                     windowWidth = 0;
                     windowHeight = 0;
@@ -152,6 +223,7 @@ namespace Moonwell
             {
                 if (overRoot == null)
                 {
+                    Moonwell.Events.Listen(GameEvent.Loaded);
                     overRoot = World.OverRoot();
                 }
 

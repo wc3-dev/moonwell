@@ -248,7 +248,8 @@ public sealed class KillCounter : UnitComponent
   `OnUnitDied` the dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
   `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before anything wanted it
   runs none); a unit's own is `OnCreated`. `OnDawn` and `OnDusk` go on a game component only (see the time of day
-  below).
+  below), and so does `OnGameLoaded`, which runs once when a game saved with the game's own Save Game is loaded, after
+  Moonwell has made the map's frames again (see Frames).
 - A hero's own reactions, `OnLevelUp(int reachedLevel)` and `OnSkillLearned(Ability learnedAbility)`, go on a hero
   class or a `UnitComponent`, where they run only for a hero. The game fires one event for a jump of several levels,
   and `OnLevelUp` runs once for each level gained, in order, while `Level` already reads the last; levels taken away
@@ -1082,6 +1083,12 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   set on them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
   gives its look in full; a `SIMPLEFRAME` template is not made, as no kind is one (seen).
 - `Handle` is the game's frame, for anything Moonwell does not do yet.
+- A game saved with the game's own Save Game and loaded loses every frame the map made: they keep their handles but
+  show nothing, and setting them does nothing (seen). So Moonwell makes every frame on the screen again at the load,
+  with all it keeps: text, colour, values, checks, visibility, size, places, tooltips, the frames found in a window's
+  `.fdf`, and the events listened to; ended frames stay gone. Each player's HUD is set again as the map left it. The
+  objects stay the same, but `Handle` is a new frame, so what the map did itself on it is redone in a game
+  component's `OnGameLoaded`, which runs after. A text box loses the keyboard, and a slider being dragged stops.
 
 ## Colours and text
 

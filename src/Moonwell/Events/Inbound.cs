@@ -1090,10 +1090,40 @@ namespace Moonwell
             Sharing.Left(leaving);
         }
 
-        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old.</summary>
+        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's frames are gone (game facts, 11-06). The frames package makes them again, then the game components' OnGameLoaded runs.</summary>
         internal static void GameLoaded()
         {
             RealClock.Loaded();
+            try
+            {
+                Events.LoadListener?.Invoke();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Frames", error);
+            }
+
+            var game = Game.Instance;
+            var count = game.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = game.ComponentAt(i) as GameComponent;
+                if (component == null || component.HasEnded || (component.Mask & Hook.OnGameLoaded) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    component.OnGameLoaded();
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(Names.NameOf(component) + ".OnGameLoaded", error);
+                }
+            }
+
+            game.EndDispatch();
         }
 
         /// <summary>A person typed a chat line with a dash in it, anywhere.</summary>

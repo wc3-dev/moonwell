@@ -41,6 +41,19 @@ namespace Moonwell.Testing
         /// <summary>This machine's window, in pixels; a case changes it to resize the window.</summary>
         public int WindowWidth = 800, WindowHeight = 600;
 
+        /// <summary>A saved game is loaded: every frame made so far, the HUD's looked up ones too, is lost, and the HUD is the game's again, looked up anew (game facts, 11-06; the HUD's handles are a claim). The case then sends the load to the package.</summary>
+        public void Load()
+        {
+            foreach (var fake in frames.Values)
+            {
+                fake.Lost = true;
+            }
+
+            named.Clear();
+            GameFrames = new Dictionary<string, FakeFrame>();
+            HudHidden = false;
+        }
+
         /// <summary>The fake behind a frame handle the package was given.</summary>
         public FakeFrame FrameOf(framehandle frame)
         {
@@ -68,7 +81,7 @@ namespace Moonwell.Testing
         public void TipFrame(framehandle frame, framehandle tooltip)
         {
             var owner = Asked(frame);
-            var tip = frames[tooltip];
+            var tip = Live(tooltip);
             if (tip.TipOf != null && tip.TipOf != owner)
             {
                 throw new System.InvalidOperationException("the game crashes: a frame given as one frame's tooltip was given to a second");
@@ -185,7 +198,7 @@ namespace Moonwell.Testing
             }
 
             var made = new framehandle();
-            var fake = new FakeFrame { Type = type, Template = template, Parent = frames[parent] };
+            var fake = new FakeFrame { Type = type, Template = template, Parent = Live(parent) };
             if (TemplateSizes.TryGetValue(template, out var size))
             {
                 fake.Width = size.X;
@@ -222,7 +235,7 @@ namespace Moonwell.Testing
         /// <summary>How many children a frame has.</summary>
         public int ChildCount(framehandle frame)
         {
-            return frames[frame].Children.Count;
+            return Live(frame).Children.Count;
         }
 
         /// <summary>A frame's child by index.</summary>
@@ -246,15 +259,27 @@ namespace Moonwell.Testing
         /// <summary>The fake behind a frame handle, counting the call.</summary>
         private FakeFrame Asked(framehandle frame)
         {
-            var fake = frames[frame];
+            var fake = Live(frame);
             fake.Calls++;
+            return fake;
+        }
+
+        /// <summary>The fake behind a handle, which throws for a frame a load took.</summary>
+        private FakeFrame Live(framehandle frame)
+        {
+            var fake = frames[frame];
+            if (fake.Lost)
+            {
+                throw new System.InvalidOperationException("a frame a saved game's load took was used");
+            }
+
             return fake;
         }
 
         /// <summary>Ties a point of a frame to a point of another.</summary>
         public void PlaceFrame(framehandle frame, int point, framehandle other, int otherPoint, float x, float y)
         {
-            Asked(frame).Points.Add(new FakePoint { Point = point, Other = frames[other], OtherPoint = otherPoint, X = x, Y = y });
+            Asked(frame).Points.Add(new FakePoint { Point = point, Other = Live(other), OtherPoint = otherPoint, X = x, Y = y });
         }
 
         /// <summary>Clears a frame's points, and what it covered.</summary>
@@ -268,7 +293,7 @@ namespace Moonwell.Testing
         /// <summary>Sets a frame to cover another, all points; the points it had stay, as nothing says the game clears them.</summary>
         public void FillFrame(framehandle frame, framehandle other)
         {
-            Asked(frame).Filled = frames[other];
+            Asked(frame).Filled = Live(other);
         }
 
         /// <summary>Sizes a frame.</summary>
@@ -398,7 +423,7 @@ namespace Moonwell.Testing
         /// <summary>Gives a frame another parent.</summary>
         public void ParentFrame(framehandle frame, framehandle parent)
         {
-            Asked(frame).Parent = frames[parent];
+            Asked(frame).Parent = Live(parent);
         }
 
         /// <summary>Makes the whole-width root under the console's backdrop.</summary>

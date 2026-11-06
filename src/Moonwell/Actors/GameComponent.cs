@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (gameHooks == null)
                 {
-                    gameHooks = new HookTable(typeof(GameComponent), new[] { "OnDawn", "OnDusk" }, new[] { Hook.OnDawn, Hook.OnDusk }, MapHooks);
+                    gameHooks = new HookTable(typeof(GameComponent), new[] { "OnDawn", "OnDusk", "OnGameLoaded" }, new[] { Hook.OnDawn, Hook.OnDusk, Hook.OnGameLoaded }, MapHooks);
                 }
 
                 return gameHooks;
@@ -31,6 +31,11 @@ namespace Moonwell
 
         /// <summary>Runs when day turns to night, as Game.IsDay turns false: within 0.25 s after the time passes dusk (18:00, or the map's own), or dawn when the day runs backward, and at once when Game.TimeOfDay is set from day to night. A time set within the night, or across a whole day, runs nothing.</summary>
         public virtual void OnDusk()
+        {
+        }
+
+        /// <summary>Runs once when a game saved with the game's own Save Game is loaded, after Moonwell has made its frames again (the load takes every frame a map made, game facts 11-06): redo here what the map did with the game's natives itself, as on a frame's Handle, which is a new one now. Lua's state is as at the save.</summary>
+        public virtual void OnGameLoaded()
         {
         }
 

@@ -80,6 +80,9 @@ namespace Moonwell.Testing
         /// <summary>Its texture; empty until set.</summary>
         public string Texture = "";
 
+        /// <summary>Whether a saved game's load took it: the game keeps its handle, but it shows nothing and takes nothing (seen 11-06), so the fake throws when it is used.</summary>
+        public bool Lost;
+
         /// <summary>Where a root's corners sit on the screen, set by absolute points: the bottom left at Left, Bottom and the top right at Right, Top; the 4:3 middle until the package spans it.</summary>
         public float Left, Bottom, Right = 0.8f, Top = 0.6f;
     }
