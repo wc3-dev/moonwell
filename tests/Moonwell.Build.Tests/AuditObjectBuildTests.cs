@@ -191,6 +191,29 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void no_weapon_sound_is_written_empty_as_a_missile_units()
+        {
+            var staged = Build("""
+                using Moonwell;
+                using Moonwell.Objects;
+
+                namespace Sample
+                {
+                    [ObjectId("h001")]
+                    public sealed class Slinger : Human.Units.Footman
+                    {
+                        public Slinger()
+                        {
+                            Attack1WeaponSound = WeaponSound.None;
+                        }
+                    }
+                }
+                """);
+
+            Assert.Equal(new[] { "0=" }, LevelsOf(ReadUnits(staged), "h001", "ucs1"));
+        }
+
+        [Fact]
         public void a_choice_set_by_id_is_written_as_one_set_by_name()
         {
             var staged = Build("""
