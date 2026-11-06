@@ -1753,18 +1753,22 @@ namespace Moonwell.Engine
         /// <summary>StopSound, freed when done, with no fade of the game's.</summary>
         public void StopPlaying(sound sound) => Natives.StopSound(sound, true, false);
 
-        /// <summary>PlayMusic.</summary>
-        public void StartMusic(string list) => Natives.PlayMusic(list);
+        /// <summary>SetMapMusic and PlayMusic: PlayMusic alone plays from a place the game carries over and then goes back to the map's music (game facts, 11-06).</summary>
+        public void StartMusic(string path)
+        {
+            Natives.SetMapMusic(path, false, 0);
+            Natives.PlayMusic(path);
+        }
 
-        /// <summary>PlayThematicMusic.</summary>
-        public void StartMusicOnce(string path) => Natives.PlayThematicMusic(path);
-
-        /// <summary>EndThematicMusic and StopMusic.</summary>
+        /// <summary>StopMusic and ClearMapMusic.</summary>
         public void StopAllMusic(bool fadeOut)
         {
-            Natives.EndThematicMusic();
             Natives.StopMusic(fadeOut);
+            Natives.ClearMapMusic();
         }
+
+        /// <summary>GetSoundFileDuration.</summary>
+        public int MusicLength(string path) => Natives.GetSoundFileDuration(path);
 
         /// <summary>SetMusicVolume.</summary>
         public void SetMusicLoudness(int volume) => Natives.SetMusicVolume(volume);
