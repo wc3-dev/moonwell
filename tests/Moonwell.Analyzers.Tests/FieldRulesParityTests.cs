@@ -50,84 +50,87 @@ public class FieldRulesParityTests
     private const string Archmage = "Moonwell.Objects.Human.Units.Archmage";
     private const string Tree = "Moonwell.Objects.Doodads.AlchemySet";
 
+    private const bool Stops = true;
+    private const bool Allows = false;
+
     public static IEnumerable<object[]> Cases()
     {
         var suffix = new string('x', 51);
         var names = string.Join(",", Enumerable.Range(1, 33).Select(i => "N" + i));
 
-        // base, attribute, statement; whether the build and the analyzer both allow it is part of the case.
-        yield return new object[] { "range", Footman, "", "MaxLife = 600000;" };
-        yield return new object[] { "range, lower end", Footman, "", "MaxLife = 0;" };
-        yield return new object[] { "range, lifted", Footman, "[BeyondLimits(nameof(MaxLife))]", "MaxLife = 600000;" };
-        yield return new object[] { "range, at the end", Footman, "", "MaxLife = 500000;" };
-        yield return new object[] { "range, another property lifted", Footman, "[BeyondLimits(nameof(Speed))]", "MaxLife = 600000;" };
-        yield return new object[] { "range, a float truncated", Footman, "", "MaxLife = 0.5f;" };
-        yield return new object[] { "range of a declared field", Footman, "", "GoldCost = 200000;" };
-        yield return new object[] { "range, a shared float field", Footman, "", "FlyHeight = 2000f;" };
-        yield return new object[] { "range, a hero's attribute", "Moonwell.Objects.Human.Units.Paladin", "", "Strength = 0;" };
-        yield return new object[] { "range, an item's charges", "Moonwell.Objects.Items.ClawsOfAttack15", "", "Charges = 1001;" };
-        yield return new object[] { "range of a field without a label", "Probe", "", "Unlabelled = 5;" };
-        yield return new object[] { "range of a field without a label, in range", "Probe", "", "Unlabelled = 3;" };
-        yield return new object[] { "or more", "Probe", "", "AtLeast = 0;" };
-        yield return new object[] { "or more, lifted", "Probe", "[BeyondLimits(nameof(AtLeast))]", "AtLeast = 0;" };
-        yield return new object[] { "at most", StormBolt, "", "RequirementsLevels = \"1,200\";" };
-        yield return new object[] { "at most, lifted", StormBolt, "[BeyondLimits(nameof(RequirementsLevels))]", "RequirementsLevels = \"1,200\";" };
-        yield return new object[] { "at most, in range", StormBolt, "", "RequirementsLevels = \"-5,100\";" };
-        yield return new object[] { "number list, a part that is no number", StormBolt, "", "RequirementsLevels = \"1,abc\";" };
-        yield return new object[] { "number list with no limits", Footman, "", "RequirementsLevels = \"1,abc\";" };
-        yield return new object[] { "number list, a part that is no number, lifted", StormBolt, "[BeyondLimits(nameof(RequirementsLevels))]", "RequirementsLevels = \"1,abc\";" };
-        yield return new object[] { "number list, an empty part", StormBolt, "", "RequirementsLevels = \"1,,2\";" };
-        yield return new object[] { "number list, spaces", StormBolt, "", "RequirementsLevels = \"1, 2\";" };
-        yield return new object[] { "number list, empty", StormBolt, "", "RequirementsLevels = \"\";" };
-        yield return new object[] { "negative", Footman, "", "MaxLife = -5;" };
-        yield return new object[] { "negative, lifted", Footman, "[BeyondLimits(nameof(MaxLife))]", "MaxLife = -5;" };
-        yield return new object[] { "negative the game forbids, shared", Footman, "[BeyondLimits(nameof(Scale))]", "Scale = -1f;" };
-        yield return new object[] { "negative the game forbids", Footman, "", "CollisionSize = -5f;" };
-        yield return new object[] { "negative the game forbids, lifted", Footman, "[BeyondLimits(nameof(CollisionSize))]", "CollisionSize = -5f;" };
-        yield return new object[] { "negative a standard object holds, lifted", Footman, "[BeyondLimits(nameof(ButtonPositionY))]", "ButtonPositionY = -11;" };
-        yield return new object[] { "negative, no limits", "Probe", "", "NotNegative = -1f;" };
-        yield return new object[] { "negative, no limits, lifted", "Probe", "[BeyondLimits(nameof(NotNegative))]", "NotNegative = -1f;" };
-        yield return new object[] { "negative, no limits, zero", "Probe", "", "NotNegative = 0f;" };
-        yield return new object[] { "level", StormBolt, "", "Cooldown = Levels(1f, 2f, 3900f);" };
-        yield return new object[] { "level, lowest first", StormBolt, "", "Cooldown = Levels(1f, -1f, 3900f);" };
-        yield return new object[] { "level, in range", StormBolt, "", "Cooldown = Levels(0f, 3600f);" };
-        yield return new object[] { "set by id", Footman, "", "Set(\"uhpm\", 600000);" };
-        yield return new object[] { "set by id and level", StormBolt, "", "Set(\"acdn\", 2, 3900f);" };
-        yield return new object[] { "set by id and levels", StormBolt, "", "Set(\"acdn\", Levels(1f, 3900f));" };
-        yield return new object[] { "empty name", Footman, "", "Name = \"\";" };
-        yield return new object[] { "null name", Footman, "", "Name = null;" };
-        yield return new object[] { "empty name, lifted", Footman, "[BeyondLimits(nameof(Name))]", "Name = \"\";" };
-        yield return new object[] { "name", Footman, "", "Name = \"Giant\";" };
-        yield return new object[] { "too long", Archmage, "", $"NameEditorSuffix = \"{suffix}\";" };
-        yield return new object[] { "too long, lifted", Archmage, "[BeyondLimits(nameof(NameEditorSuffix))]", $"NameEditorSuffix = \"{suffix}\";" };
-        yield return new object[] { "long enough", Archmage, "", $"NameEditorSuffix = \"{new string('x', 50)}\";" };
-        yield return new object[] { "too many entries", Archmage, "", $"ProperNames = \"{names}\";" };
-        yield return new object[] { "too many entries, lifted", Archmage, "[BeyondLimits(nameof(ProperNames))]", $"ProperNames = \"{names}\";" };
-        yield return new object[] { "entries", Archmage, "", "ProperNames = \"A,B\"; ProperNames = \"\";" };
-        yield return new object[] { "choice", Footman, "", "AttackType = (AttackType)42;" };
-        yield return new object[] { "choice, lifted", Footman, "[BeyondLimits(nameof(AttackType))]", "AttackType = (AttackType)42;" };
-        yield return new object[] { "choice, a member", Footman, "", "AttackType = AttackType.Normal;" };
-        yield return new object[] { "int-stored choice", Footman, "", "DeathType = (DeathType)9;" };
-        yield return new object[] { "listed choice", Footman, "", "Attack1WeaponSound = WeaponSound.MetalHeavySlice;" };
-        yield return new object[] { "choice World Editor does not list", Footman, "", "Attack1WeaponSound = WeaponSound.ClawLightSlice;" };
-        yield return new object[] { "choice World Editor does not list, lifted", Footman, "[BeyondLimits(nameof(Attack1WeaponSound))]", "Attack1WeaponSound = WeaponSound.ClawLightSlice;" };
-        yield return new object[] { "choice of none", Footman, "", "Attack2WeaponSound = WeaponSound.None;" };
-        yield return new object[] { "listed choice by id", Footman, "", "Set(\"ucs1\", WeaponSound.MetalHeavySlice);" };
-        yield return new object[] { "choice World Editor does not list, by id", Footman, "", "Set(\"ucs1\", WeaponSound.ClawLightSlice);" };
-        yield return new object[] { "flags choice", Footman, "", "PlacementRequires = (PathingRequire)(1 << 10);" };
-        yield return new object[] { "flags choice, a combination", Footman, "", "PlacementRequires = PathingRequire.Buildable | PathingRequire.AirPathable;" };
-        yield return new object[] { "float at the lower limit", Tree, "", "Scale = 0.01f;" };
-        yield return new object[] { "float below the lower limit", Tree, "", "Scale = 0.0099999f;" };
-        yield return new object[] { "float at the upper limit", Tree, "", "MaximumScale = 100f;" };
-        yield return new object[] { "float above the upper limit", Tree, "", "MaximumScale = 100.00001f;" };
+        // base, attribute, statement, and whether the build stops it.
+        yield return new object[] { "range", Footman, "", "MaxLife = 600000;", Stops };
+        yield return new object[] { "range, lower end", Footman, "", "MaxLife = 0;", Stops };
+        yield return new object[] { "range, lifted", Footman, "[BeyondLimits(nameof(MaxLife))]", "MaxLife = 600000;", Allows };
+        yield return new object[] { "range, at the end", Footman, "", "MaxLife = 500000;", Allows };
+        yield return new object[] { "range, another property lifted", Footman, "[BeyondLimits(nameof(Speed))]", "MaxLife = 600000;", Stops };
+        yield return new object[] { "range, a float truncated", Footman, "", "MaxLife = 0.5f;", Stops };
+        yield return new object[] { "range of a declared field", Footman, "", "GoldCost = 200000;", Stops };
+        yield return new object[] { "range, a shared float field", Footman, "", "FlyHeight = 2000f;", Stops };
+        yield return new object[] { "range, a hero's attribute", "Moonwell.Objects.Human.Units.Paladin", "", "Strength = 0;", Stops };
+        yield return new object[] { "range, an item's charges", "Moonwell.Objects.Items.ClawsOfAttack15", "", "Charges = 1001;", Stops };
+        yield return new object[] { "range of a field without a label", "Probe", "", "Unlabelled = 5;", Stops };
+        yield return new object[] { "range of a field without a label, in range", "Probe", "", "Unlabelled = 3;", Allows };
+        yield return new object[] { "or more", "Probe", "", "AtLeast = 0;", Stops };
+        yield return new object[] { "or more, lifted", "Probe", "[BeyondLimits(nameof(AtLeast))]", "AtLeast = 0;", Allows };
+        yield return new object[] { "at most", StormBolt, "", "RequirementsLevels = \"1,200\";", Stops };
+        yield return new object[] { "at most, lifted", StormBolt, "[BeyondLimits(nameof(RequirementsLevels))]", "RequirementsLevels = \"1,200\";", Allows };
+        yield return new object[] { "at most, in range", StormBolt, "", "RequirementsLevels = \"-5,100\";", Allows };
+        yield return new object[] { "number list, a part that is no number", StormBolt, "", "RequirementsLevels = \"1,abc\";", Stops };
+        yield return new object[] { "number list with no limits", Footman, "", "RequirementsLevels = \"1,abc\";", Stops };
+        yield return new object[] { "number list, a part that is no number, lifted", StormBolt, "[BeyondLimits(nameof(RequirementsLevels))]", "RequirementsLevels = \"1,abc\";", Stops };
+        yield return new object[] { "number list, an empty part", StormBolt, "", "RequirementsLevels = \"1,,2\";", Stops };
+        yield return new object[] { "number list, spaces", StormBolt, "", "RequirementsLevels = \"1, 2\";", Allows };
+        yield return new object[] { "number list, empty", StormBolt, "", "RequirementsLevels = \"\";", Allows };
+        yield return new object[] { "negative", Footman, "", "MaxLife = -5;", Stops };
+        yield return new object[] { "negative, lifted", Footman, "[BeyondLimits(nameof(MaxLife))]", "MaxLife = -5;", Allows };
+        yield return new object[] { "negative the game forbids, shared", Footman, "[BeyondLimits(nameof(Scale))]", "Scale = -1f;", Stops };
+        yield return new object[] { "negative the game forbids", Footman, "", "CollisionSize = -5f;", Stops };
+        yield return new object[] { "negative the game forbids, lifted", Footman, "[BeyondLimits(nameof(CollisionSize))]", "CollisionSize = -5f;", Stops };
+        yield return new object[] { "negative a standard object holds, lifted", Footman, "[BeyondLimits(nameof(ButtonPositionY))]", "ButtonPositionY = -11;", Allows };
+        yield return new object[] { "negative, no limits", "Probe", "", "NotNegative = -1f;", Stops };
+        yield return new object[] { "negative, no limits, lifted", "Probe", "[BeyondLimits(nameof(NotNegative))]", "NotNegative = -1f;", Stops };
+        yield return new object[] { "negative, no limits, zero", "Probe", "", "NotNegative = 0f;", Allows };
+        yield return new object[] { "level", StormBolt, "", "Cooldown = Levels(1f, 2f, 3900f);", Stops };
+        yield return new object[] { "level, lowest first", StormBolt, "", "Cooldown = Levels(1f, -1f, 3900f);", Stops };
+        yield return new object[] { "level, in range", StormBolt, "", "Cooldown = Levels(0f, 3600f);", Allows };
+        yield return new object[] { "set by id", Footman, "", "Set(\"uhpm\", 600000);", Stops };
+        yield return new object[] { "set by id and level", StormBolt, "", "Set(\"acdn\", 2, 3900f);", Stops };
+        yield return new object[] { "set by id and levels", StormBolt, "", "Set(\"acdn\", Levels(1f, 3900f));", Stops };
+        yield return new object[] { "empty name", Footman, "", "Name = \"\";", Stops };
+        yield return new object[] { "null name", Footman, "", "Name = null;", Stops };
+        yield return new object[] { "empty name, lifted", Footman, "[BeyondLimits(nameof(Name))]", "Name = \"\";", Stops };
+        yield return new object[] { "name", Footman, "", "Name = \"Giant\";", Allows };
+        yield return new object[] { "too long", Archmage, "", $"NameEditorSuffix = \"{suffix}\";", Stops };
+        yield return new object[] { "too long, lifted", Archmage, "[BeyondLimits(nameof(NameEditorSuffix))]", $"NameEditorSuffix = \"{suffix}\";", Allows };
+        yield return new object[] { "long enough", Archmage, "", $"NameEditorSuffix = \"{new string('x', 50)}\";", Allows };
+        yield return new object[] { "too many entries", Archmage, "", $"ProperNames = \"{names}\";", Stops };
+        yield return new object[] { "too many entries, lifted", Archmage, "[BeyondLimits(nameof(ProperNames))]", $"ProperNames = \"{names}\";", Allows };
+        yield return new object[] { "entries", Archmage, "", "ProperNames = \"A,B\"; ProperNames = \"\";", Allows };
+        yield return new object[] { "choice", Footman, "", "AttackType = (AttackType)42;", Stops };
+        yield return new object[] { "choice, lifted", Footman, "[BeyondLimits(nameof(AttackType))]", "AttackType = (AttackType)42;", Stops };
+        yield return new object[] { "choice, a member", Footman, "", "AttackType = AttackType.Normal;", Allows };
+        yield return new object[] { "int-stored choice", Footman, "", "DeathType = (DeathType)9;", Stops };
+        yield return new object[] { "listed choice", Footman, "", "Attack1WeaponSound = WeaponSound.MetalHeavySlice;", Allows };
+        yield return new object[] { "choice World Editor does not list", Footman, "", "Attack1WeaponSound = WeaponSound.ClawLightSlice;", Stops };
+        yield return new object[] { "choice World Editor does not list, lifted", Footman, "[BeyondLimits(nameof(Attack1WeaponSound))]", "Attack1WeaponSound = WeaponSound.ClawLightSlice;", Stops };
+        yield return new object[] { "choice of none", Footman, "", "Attack2WeaponSound = WeaponSound.None;", Stops };
+        yield return new object[] { "listed choice by id", Footman, "", "Set(\"ucs1\", WeaponSound.MetalHeavySlice);", Allows };
+        yield return new object[] { "choice World Editor does not list, by id", Footman, "", "Set(\"ucs1\", WeaponSound.ClawLightSlice);", Stops };
+        yield return new object[] { "flags choice", Footman, "", "PlacementRequires = (PathingRequire)(1 << 10);", Stops };
+        yield return new object[] { "flags choice, a combination", Footman, "", "PlacementRequires = PathingRequire.Buildable | PathingRequire.AirPathable;", Allows };
+        yield return new object[] { "float at the lower limit", Tree, "", "Scale = 0.01f;", Allows };
+        yield return new object[] { "float below the lower limit", Tree, "", "Scale = 0.0099999f;", Stops };
+        yield return new object[] { "float at the upper limit", Tree, "", "MaximumScale = 100f;", Allows };
+        yield return new object[] { "float above the upper limit", Tree, "", "MaximumScale = 100.00001f;", Stops };
         // NaN made by dividing: float.NaN is MW0042 too, as the game's Lua has no NaN, and this case is about MW0009 alone.
-        yield return new object[] { "float that is not a number", Tree, "", "Scale = 0f / 0f;" };
-        yield return new object[] { "float, an int constant", Tree, "", "Scale = 200;" };
+        yield return new object[] { "float that is not a number", Tree, "", "Scale = 0f / 0f;", Stops };
+        yield return new object[] { "float, an int constant", Tree, "", "Scale = 200;", Stops };
     }
 
     [Theory]
     [MemberData(nameof(Cases))]
-    public void the_analyzer_gives_the_text_the_build_gives(string name, string @base, string attribute, string statements)
+    public void the_analyzer_gives_the_text_the_build_gives(string name, string @base, string attribute, string statements, bool stops)
     {
         var classes = (@base == "Probe" ? ProbeSource + "\n" : string.Empty)
             + FieldRulesTests.Class("Subject", @base, statements, attribute);
@@ -136,6 +139,7 @@ public class FieldRulesParityTests
         var analyzer = MapCode.MessagesOfFile(source);
         var thrown = Record.Exception(() => Construct(MapCode.Load(source)));
 
+        Assert.True(stops == (thrown != null), name + (stops ? ": the build allows it" : ": the build stops it, " + thrown?.Message));
         if (thrown == null)
         {
             Assert.True(analyzer.Count == 0, name + ": the build allows it, the analyzer says " + string.Join(" | ", analyzer));
@@ -150,10 +154,11 @@ public class FieldRulesParityTests
     [Fact]
     public void the_cases_cover_both_outcomes_and_every_wording()
     {
-        var all = Cases().Select(c => (string)c[0]).ToList();
+        var all = Cases().ToList();
+        Assert.Contains(all, c => !(bool)c[4]);
         foreach (var wording in new[] { "range", "or more", "at most", "negative", "level", "empty name", "too long", "too many entries", "choice", "flags choice", "float", "number list" })
         {
-            Assert.Contains(all, name => name.Contains(wording));
+            Assert.True(all.Exists(c => ((string)c[0]).Contains(wording) && (bool)c[4]), "no case the build stops for " + wording);
         }
     }
 

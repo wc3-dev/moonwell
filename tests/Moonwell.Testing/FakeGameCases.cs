@@ -199,6 +199,377 @@ namespace Moonwell.Testing
             Expect.Equal("hero dropped orb|tally dropped orb|hero got orb|tally got orb", string.Join("|", TestLog.Lines), "a drop, then a pick-up");
             Expect.Near(100.0f, world.ItemX(item), "it reads the old holder's place");
         }
+
+        /// <summary>An item a drop reaction gives to a third unit, while UnitAddItem takes it from its holder, stays in one inventory: that give answers false.</summary>
+        public static void ItemGivenAwayInItsDrop(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H005"), () => new DropRegiver());
+            var first = world.NewUnit(ObjectTypes.FourCC("H005"), hero: true);
+            var second = world.NewUnit(ObjectTypes.FourCC("H005"), hero: true);
+            var third = world.NewUnit(ObjectTypes.FourCC("H005"), hero: true);
+            Unit.Of(first);
+            Unit.Of(second);
+            Unit.Of(third);
+            var item = world.NewItem(ObjectTypes.FourCC("I001"));
+            Item.Of(item);
+            world.GiveItem(first, item);
+            DropRegiver.World = world;
+            DropRegiver.To = third;
+            Expect.True(!world.GiveItem(second, item), "the give answers false");
+            Expect.True(!world.CarriesItem(first, item) && !world.CarriesItem(second, item) && world.CarriesItem(third, item), "only the third unit has it");
+        }
+
+        /// <summary>Game time never goes back: a wake asked for in the past is due now, as NativeWorld starts the game's timer at 0 for it, and a wake that comes late keeps its time past the end of the Advance.</summary>
+        public static void TimeNeverGoesBack(FakeWorld world)
+        {
+            world.Advance(5.0f);
+            world.WakeIn(-0.5f);
+            Expect.Near(5.0f, world.WakeAt!.Value, "a wake asked for 0.5 s ago is due now");
+            world.Advance(1.0f);
+            Expect.Near(6.0f, world.Time, "the time after");
+            world.WakeLate = 0.0005f;
+            Game.Instance.After(1.0f, () => { });
+            world.Advance(1.0f);
+            Expect.True(world.Time > 7.0002f, "the late wake's time is kept: " + world.Time);
+        }
+
+        /// <summary>A unit removed in one wake reads type id 0 at the next, though one Advance runs both: its frame ends before the game's time moves on (seen 10-21: 0 by 0.05 s).</summary>
+        public static void RemovalEndsBetweenWakes(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+            var typeLater = -1;
+            Game.Instance.After(1.0f, () => unit.Remove());
+            Game.Instance.After(2.0f, () => typeLater = world.UnitTypeId(handle));
+            world.Advance(3.0f);
+            Expect.Equal(0, typeLater, "the type id a second after the removal");
+        }
+
+        /// <summary>A call on a unit the runtime removed counts as a call on a gone unit from the call that removed it on, as one on a unit the game removed does.</summary>
+        public static void RemovedUnitCallsCounted(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            Unit.Of(handle)!.Remove();
+            world.GoneCalls = 0;
+            world.LifeOf(handle);
+            world.SetLife(handle, 50.0f);
+            Expect.Equal(2, world.GoneCalls, "both calls counted in the frame of the removal");
+        }
+
+        /// <summary>The units in range come in the order they were made, in Lua too, where a dictionary's order is not that.</summary>
+        public static void UnitsInRangeInTheOrderMade(FakeWorld world)
+        {
+            var made = new List<unit>();
+            for (var i = 0; i < 12; i++)
+            {
+                var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+                world.MoveUnit(handle, i * 10.0f, 0.0f);
+                made.Add(handle);
+            }
+
+            var found = world.UnitsInRange(0.0f, 0.0f, 500.0f);
+            Expect.Equal(made.Count, found.Count, "every unit found");
+            for (var i = 0; i < made.Count; i++)
+            {
+                Expect.True(found[i] == made[i], "unit " + i + " in its place");
+            }
+        }
+
+        /// <summary>An aura whose holder was removed stops: a unit near the origin, where a removed unit reads, never gets its buff, a unit it gave it to loses it 3 s later, and it makes no call on the removed holder.</summary>
+        public static void AuraOfARemovedHolderStops(FakeWorld world)
+        {
+            var buff = ObjectTypes.FourCC("B020");
+            var holder = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.MoveUnit(holder, 1000.0f, 1000.0f);
+            var near = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.MoveUnit(near, 1000.0f, 1050.0f);
+            var bystander = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.MoveUnit(bystander, 50.0f, 0.0f);
+            world.GameBuffs.Aura(holder, ObjectTypes.FourCC("A020"), buff, 300.0f);
+            Expect.Equal(1, world.AbilityLevel(near, buff), "the near unit has the buff");
+            world.VanishUnit(holder);
+            world.GoneCalls = 0;
+            world.Advance(4.0f);
+            Expect.Equal(0, world.GoneCalls, "no call on the removed holder");
+            Expect.Equal(0, world.AbilityLevel(bystander, buff), "the unit near the origin never got it");
+            world.Advance(4.0f);
+            Expect.Equal(0, world.AbilityLevel(near, buff), "the near unit lost it 3 s after");
+        }
+
+        /// <summary>A unit in reach of two auras that give the same buff keeps it while one of them still reaches it, when the other's 3 s run out at the last step of an Advance.</summary>
+        public static void BuffKeptWhileAnAuraReaches(FakeWorld world)
+        {
+            var buff = ObjectTypes.FourCC("B021");
+            var weak = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var strong = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var reached = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.MoveUnit(reached, 100.0f, 0.0f);
+            world.GameBuffs.Aura(weak, ObjectTypes.FourCC("A021"), buff, 300.0f);
+            world.GameBuffs.Aura(strong, ObjectTypes.FourCC("A022"), buff, 300.0f);
+            world.MoveUnit(strong, 5000.0f, 0.0f);
+            world.Advance(0.1f);
+            world.Advance(3.0f);
+            Expect.Equal(1, world.AbilityLevel(reached, buff), "the weak aura still gives it");
+        }
+
+        /// <summary>A new item belongs to neutral passive (seen 10-21).</summary>
+        public static void NewItemIsNeutralPassives(FakeWorld world)
+        {
+            var item = Item.Create(ObjectTypes.FourCC("ofoo"), 0.0f, 0.0f, Game.Instance);
+            Expect.Same(Player.NeutralPassive, item.Owner, "its owner");
+        }
+
+        /// <summary>After RemoveItem the item's type id and every number of it read 0 in the same frame (seen 10-21).</summary>
+        public static void RemovedItemReadsNothing(FakeWorld world)
+        {
+            var item = world.NewItem(ObjectTypes.FourCC("I001"));
+            world.SetCharges(item, 3);
+            world.MoveItem(item, 50.0f, 60.0f);
+            world.DeleteItem(item);
+            Expect.Equal(0, world.ItemTypeId(item), "the type id");
+            Expect.Equal(0, world.ChargesOf(item), "the charges");
+            Expect.Near(0.0f, world.ItemX(item), "the x");
+            Expect.Near(0.0f, world.ItemY(item), "the y");
+        }
+
+        /// <summary>A unit made by CreateUnit faces as asked, and is a hero when its type's id starts with a capital letter, as the id decides (seen 10-28).</summary>
+        public static void SpawnedUnitFacesAndIsAHero(FakeWorld world)
+        {
+            var footman = world.SpawnUnit(world.PlayerAt(0), ObjectTypes.FourCC("hfoo"), 0.0f, 0.0f, 90.0f);
+            var paladin = world.SpawnUnit(world.PlayerAt(0), ObjectTypes.FourCC("Hpal"), 0.0f, 0.0f, 0.0f);
+            Expect.Near(90.0f, world.FacingOf(footman), "the facing");
+            Expect.True(!world.IsHero(footman), "a footman is no hero");
+            Expect.True(world.IsHero(paladin), "a paladin is");
+        }
+
+        /// <summary>A mouse button past the game's three reads not held, as NativeInputWorld answers.</summary>
+        public static void MouseButtonsPastThree(FakeWorld world)
+        {
+            var fake = new FakeInputWorld();
+            fake.Held[1] = true;
+            Expect.True(fake.IsMouseButtonPressed(1), "the left button held");
+            Expect.True(!fake.IsMouseButtonPressed(0) && !fake.IsMouseButtonPressed(4) && !fake.IsMouseButtonPressed(-1), "no button 0, 4 or -1");
+        }
+
+        /// <summary>A stop given inside a channel's effect ends the channel, with its end-cast inside the stop, as a stop does (seen 11-03).</summary>
+        public static void DummyStopInsideEffect(FakeWorld world)
+        {
+            var watch = new FakeCastWatch();
+            Game.Instance.Add(watch);
+            world.Dummies.Spell(DummyStorm, "blizzard", SpellKind.Point, (caster, target, x, y) => world.OrderUnit(caster, "stop"), channel: true);
+            var dummy = SpellCaster(world, DummyStorm);
+            Expect.True(world.OrderUnitAt(dummy, "blizzard", 300.0f, 0.0f), "the channel starts");
+            Expect.True(watch.Last != null && watch.Last.HasEnded, "the stop inside the effect ended it");
+        }
+
+        /// <summary>An order whose reaction takes the spell away casts nothing.</summary>
+        public static void DummySpellTakenInItsOrder(FakeWorld world)
+        {
+            world.Dummies.Spell(DummyBolt, "thunderbolt", SpellKind.Target, (caster, target, x, y) => TestLog.Lines.Add("effect"));
+            var bolter = SpellCaster(world, DummyBolt);
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 1);
+            Game.Instance.Add(new SpellTaker(world, DummyBolt));
+            TestLog.Lines.Clear();
+            world.OrderUnitOn(bolter, "thunderbolt", target);
+            Expect.True(!TestLog.Lines.Contains("effect"), "no effect");
+        }
+
+        /// <summary>The fake damage world cuts a normal hit by armor as the game does, below 0 too (100 at armor -20 took 171, seen 10-20), and leaves a magic and a sonic hit whole (10 magic took 10 off a footman, seen 10-16; Storm Bolt's sonic 100 was not cut, seen 10-01).</summary>
+        public static void DamageWorldArmor(FakeWorld world)
+        {
+            var fake = new FakeDamageWorld(world);
+            var source = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            fake.Body(target).Life = 1000.0f;
+            fake.Body(target).Armor = -20.0f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(829.0106f, fake.Life(target), "a normal hit at armor -20 takes 171");
+            fake.Body(target).Armor = 2.0f;
+            var before = fake.Life(target);
+            fake.Hit(source, target, 10.0f, damageType: 14);
+            fake.Hit(source, target, 100.0f, damageType: 15);
+            Expect.Near(before - 110.0f, fake.Life(target), "a magic and a sonic hit at armor 2 take all of 10 and 100");
+        }
+
+        /// <summary>The fake damage world tells core's fake of a hit that kills, whose death comes inside the call with the source as the killer (seen 10-20), and plays no hit on a dead unit, which fires neither event and takes no life (seen 10-31).</summary>
+        public static void DamageWorldDeaths(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H002"), () => new Striker());
+            var fake = new FakeDamageWorld(world);
+            var source = world.NewUnit(ObjectTypes.FourCC("H002"));
+            Unit.Of(source);
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var victim = Unit.Of(target)!;
+            var events = 0;
+            fake.Listen(() => events++, () => events++);
+            TestLog.Lines.Clear();
+            fake.Hit(source, target, 200.0f, damageType: 4);
+            Expect.True(!world.IsAlive(target) && !victim.IsAlive, "the target is dead in core's fake too");
+            Expect.True(TestLog.Lines.Contains("striker killed"), "the death came, with the source as the killer");
+            events = 0;
+            fake.Hit(source, target, 10.0f, damageType: 4);
+            Expect.Equal(0, events, "no event for the dead");
+            Expect.Near(0.0f, fake.Life(target), "and no life taken");
+        }
+
+        /// <summary>From code, armor cuts only damage type normal: at armor 10 a normal 100 takes 62.5, and enhanced and fire take all of it (seen 11-06).</summary>
+        public static void DamageWorldArmorCutsNormalOnly(FakeWorld world)
+        {
+            var fake = new FakeDamageWorld(world);
+            var source = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            fake.Body(target).Life = 1000.0f;
+            fake.Body(target).Armor = 10.0f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(937.5f, fake.Life(target), "a normal hit is cut to 62.5");
+            fake.Hit(source, target, 100.0f, damageType: 5);
+            fake.Hit(source, target, 100.0f, damageType: 8);
+            Expect.Near(737.5f, fake.Life(target), "an enhanced and a fire hit take all of 100");
+        }
+
+        /// <summary>Negative armor counts its whole part toward zero and stops at -20: 100 at -2.5 takes 111.64, and at -30 the 170.99 of -20 (seen 11-06).</summary>
+        public static void DamageWorldNegativeArmor(FakeWorld world)
+        {
+            var fake = new FakeDamageWorld(world);
+            var source = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            fake.Body(target).Life = 1000.0f;
+            fake.Body(target).Armor = -2.5f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(888.36f, fake.Life(target), "-2.5 counts as -2");
+            fake.Body(target).Armor = -30.0f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(717.3706f, fake.Life(target), "-30 counts as -20");
+        }
+
+        /// <summary>A living unit given to RemoveUnit reads alive, with its type id and life, for the rest of its frame, and then type id 0, life 0 and not alive; a dead one reads dead and its type id in the frame (seen 11-06).</summary>
+        public static void RemovedUnitReadsAliveInItsFrame(FakeWorld world)
+        {
+            var footman = ObjectTypes.FourCC("hfoo");
+            var live = world.NewUnit(footman);
+            world.SetLife(live, 420.0f);
+            var killed = world.NewUnit(footman);
+            world.SlayUnit(killed);
+            world.DeleteUnit(live);
+            world.DeleteUnit(killed);
+            Expect.True(world.IsAlive(live), "the live one reads alive in the frame");
+            Expect.Equal(footman, world.UnitTypeId(live), "with its type id");
+            Expect.Near(420.0f, world.LifeOf(live), "and its life");
+            Expect.True(!world.IsAlive(killed), "the killed one reads dead");
+            Expect.Equal(footman, world.UnitTypeId(killed), "with its type id");
+            world.Advance(0.0f);
+            Expect.True(!world.IsAlive(live), "from the next frame the live one reads not alive");
+            Expect.Equal(0, world.UnitTypeId(live), "type id 0");
+            Expect.Near(0.0f, world.LifeOf(live), "life 0");
+            Expect.Equal(0, world.UnitTypeId(killed), "and the killed one type id 0");
+        }
+
+        /// <summary>RemoveItem on a carried item fires the drop inside the call, as UnitRemoveItem does, and the slot is empty right after; no drop comes later (seen 11-06). Removed by Moonwell, the item is ending and runs no drop reaction.</summary>
+        public static void RemovedCarriedItemDropsInside(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H002"), () => new TestHero());
+            var holder = world.NewUnit(ObjectTypes.FourCC("H002"), hero: true);
+            var hero = Unit.Of(holder)!;
+            var raw = world.NewItem(ObjectTypes.FourCC("I001"));
+            var kept = world.NewItem(ObjectTypes.FourCC("I001"));
+            hero.Give(Item.Of(raw)!);
+            hero.Give(Item.Of(kept)!);
+            TestLog.Lines.Clear();
+            world.DeleteItem(raw);
+            Expect.Equal("hero dropped orb|tally dropped orb", string.Join("|", TestLog.Lines), "the drop came inside the call");
+            Expect.True(!world.CarriesItem(holder, raw), "and the slot is empty");
+            Item.Of(kept)!.Remove();
+            Expect.True(!world.CarriesItem(holder, kept), "an item Moonwell removes leaves its slot too");
+            world.Advance(1.0f);
+            Expect.Equal(2, TestLog.Lines.Count, "with no drop reaction for it, and none later");
+        }
+
+        /// <summary>A unit channelling refuses a move order and channels on; killing one fires its end-cast inside the kill (seen 11-06, Moonwell's dummy, which cannot move).</summary>
+        public static void DummyChannelMovedAndKilled(FakeWorld world)
+        {
+            var watch = new FakeCastWatch();
+            Game.Instance.Add(watch);
+            world.Dummies.Spell(DummyStorm, "blizzard", SpellKind.Point, (caster, target, x, y) => { }, channel: true);
+            var moved = SpellCaster(world, DummyStorm);
+            var killed = SpellCaster(world, DummyStorm);
+            world.OrderUnitAt(moved, "blizzard", 300.0f, 0.0f);
+            var first = watch.Last!;
+            Expect.True(!world.OrderUnitAt(moved, "move", 600.0f, 0.0f), "the move order is refused");
+            Expect.True(!first.HasEnded, "and the channel goes on");
+            world.OrderUnitAt(killed, "blizzard", 300.0f, 0.0f);
+            var second = watch.Last!;
+            world.SlayUnit(killed);
+            Expect.True(second.HasEnded, "the kill ended the other's channel inside the call");
+        }
+
+#if DEBUG
+        /// <summary>The fake debug world runs an After asked for from a game wake at its own time, before one asked earlier and due later, and with none waiting too.</summary>
+        public static void DebugAfterFromAWake(FakeWorld world)
+        {
+            var debug = new FakeDebugWorld(world);
+            var names = new List<string>();
+            var times = new List<float>();
+            Game.Instance.After(0.25f, () => debug.After(0.25f, () =>
+            {
+                names.Add("B");
+                times.Add(world.Time);
+            }));
+            debug.After(0.75f, () =>
+            {
+                names.Add("A");
+                times.Add(world.Time);
+            });
+            debug.Advance(1.0f);
+            Expect.Equal("B,A", string.Join(",", names), "in due order");
+            Expect.Near(0.5f, times[0], "B at its time");
+            Expect.Near(0.75f, times[1], "A at its time");
+            var ranAt = -1.0f;
+            Game.Instance.After(0.25f, () => debug.After(0.25f, () => ranAt = world.Time));
+            debug.Advance(1.0f);
+            Expect.Near(1.5f, ranAt, "one asked with none waiting");
+        }
+#endif
+    }
+
+    /// <summary>A unit that gives an item it drops to another unit, once, inside the drop event.</summary>
+    public sealed class DropRegiver : Unit
+    {
+        /// <summary>The fake world to give through.</summary>
+        public static FakeWorld? World;
+
+        /// <summary>The unit to give the next dropped item to; null once given.</summary>
+        public static unit? To;
+
+        /// <summary>Gives the dropped item to To.</summary>
+        public override void OnItemDropped(Item droppedItem)
+        {
+            if (To != null)
+            {
+                var to = To;
+                To = null;
+                World!.GiveItem(to, droppedItem.Handle);
+            }
+        }
+    }
+
+    /// <summary>A game component that takes a spell from a unit when the unit is ordered.</summary>
+    public sealed class SpellTaker : GameComponent
+    {
+        private readonly FakeWorld world;
+        private readonly int abilityId;
+
+        /// <summary>Takes the spell on each order.</summary>
+        public SpellTaker(FakeWorld world, int abilityId)
+        {
+            this.world = world;
+            this.abilityId = abilityId;
+        }
+
+        /// <summary>Takes the spell from the ordered unit.</summary>
+        public override void OnUnitOrdered(Order order)
+        {
+            world.RemoveAbility(order.Unit.Handle, abilityId);
+        }
     }
 
     /// <summary>A unit that notes the life it has in its OnDamaged, and takes half the damage.</summary>

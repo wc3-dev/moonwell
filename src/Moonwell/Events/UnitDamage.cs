@@ -8,9 +8,10 @@ namespace Moonwell
     {
         /// <summary>
         /// Deals damage from a unit to another, as a spell does unless told otherwise: magic, which spell immunity
-        /// stops, of the spells attack type, with no sound. The reactions run inside the call, and it returns the damage
-        /// they saw, or one with the amount given when none ran; null when the game dealt nothing. With the
-        /// Moonwell.Damage package started, the hit goes through its stages and is the package's Hit.
+        /// stops and armor does not cut (it cuts only Normal), of the spells attack type, with no sound. The reactions run
+        /// inside the call, and it returns the damage they saw, or one with the amount given when none ran; null when the
+        /// game dealt nothing. With the Moonwell.Damage package started, the hit goes through its stages and is the
+        /// package's Hit.
         /// </summary>
         /// <param name="source">The unit that deals the damage.</param>
         /// <param name="target">The unit that takes the damage.</param>

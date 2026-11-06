@@ -265,8 +265,8 @@ namespace Moonwell.Testing
         /// <summary>The unit a case put under the cursor.</summary>
         public unit? MouseFocusUnit() => Focus;
 
-        /// <summary>Whether a case holds the button.</summary>
-        public bool IsMouseButtonPressed(int button) => Held[button];
+        /// <summary>Whether a case holds the button; false for a number past the game's three, as NativeInputWorld answers.</summary>
+        public bool IsMouseButtonPressed(int button) => button >= 1 && button <= 3 && Held[button];
 
         /// <summary>Remembers the cursor move.</summary>
         public void SetMouseScreen(player p, int x, int y)
