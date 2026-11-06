@@ -884,9 +884,10 @@ namespace Moonwell.Engine
 
         /// <summary>
         /// Reads a unit: whether it has a place and, if it has, where. A unit with none keeps the place it was last read at.
-        /// It asks the worlds what UnitHasPlace, X and Y ask, in the same order, and keeps the unit's last x and y as X and Y
-        /// do; it is written out here, as the cycle reads a few hundred units a step. A read runs only once the package is
-        /// installed, so it takes the package's world and grid as they are; the entry's cell changes only when the index does.
+        /// It asks the worlds what UnitHasPlace asks, in the same order, then the place, which it keeps as the unit's last x and
+        /// y, as X and Y do; it is written out here, as the cycle reads a few hundred units a step. A read runs only once the
+        /// package is installed, so it takes the package's world and grid as they are; the entry's cell changes only when the
+        /// index does.
         /// </summary>
         private static void ReadUnit(Entry entry, Unit unit)
         {
@@ -899,24 +900,13 @@ namespace Moonwell.Engine
                 return;
             }
 
+            // A living unit reads its type id and place: a removed one reads type id 0 only once it reads not alive (seen 11-06).
             entry.HasPlace = true;
             var x = world.UnitX(handle);
-            if (x == 0.0f && world.UnitTypeId(handle) == 0)
-            {
-                x = unit.lastX;
-            }
-            else if (Local.Depth == 0)
+            var y = world.UnitY(handle);
+            if (Local.Depth == 0)
             {
                 unit.lastX = x;
-            }
-
-            var y = world.UnitY(handle);
-            if (y == 0.0f && world.UnitTypeId(handle) == 0)
-            {
-                y = unit.lastY;
-            }
-            else if (Local.Depth == 0)
-            {
                 unit.lastY = y;
             }
 

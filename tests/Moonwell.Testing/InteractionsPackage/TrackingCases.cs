@@ -574,8 +574,8 @@ namespace Moonwell.Testing
         /// A read of a unit, which the package writes out for speed (in Lua it skips the getters and casts and works the cell
         /// with math.floor): a dead, hidden or loaded unit has no place and keeps its last one; a move inside a cell keeps the
         /// cell, and one onto a cell's edge takes the unit to the end of that cell's list, with the edge cell for a place past
-        /// the world; a unit that reads x and y 0 with type id 0 keeps its last place, and X gives it
-        /// after, as Unit.X does; inside Local.For the read keeps no last place on the unit.
+        /// the world; a gone unit, which reads x and y 0, type id 0 and not alive (seen 11-06), has no place and keeps its
+        /// last, and Unit.X gives it after; inside Local.For the read keeps no last place on the unit.
         /// </summary>
         public static void UnitRead(FakeWorld world)
         {
@@ -605,9 +605,9 @@ namespace Moonwell.Testing
             world.MoveUnit(unit.Handle, 0.0f, 0.0f);
             world.VanishUnit(unit.Handle);
             Tracking.ReadNow(entry);
-            Expect.True(entry.HasPlace, "a unit that reads type id 0 but is alive still has a place");
-            Expect.Near(5000.0f, entry.X, "and its x 0 is taken for the last x read");
-            Expect.Near(-5000.0f, entry.Y, "and its y 0 for the last y");
+            Expect.True(!entry.HasPlace, "a gone unit, which reads type id 0 and not alive, has no place");
+            Expect.Near(5000.0f, entry.X, "and keeps the last x read");
+            Expect.Near(-5000.0f, entry.Y, "and the last y");
             Expect.Equal(7, entry.Cell, "so it stays in its cell");
             Expect.Near(5000.0f, unit.X, "and Unit.X gives the last x");
             world.MoveUnit(other.Handle, 100.0f, 900.0f);
@@ -619,18 +619,21 @@ namespace Moonwell.Testing
             world.MoveUnit(other.Handle, 0.0f, 0.0f);
             world.VanishUnit(other.Handle);
             Expect.Near(300.0f, other.X, "but keeps no last x on the unit");
-            world.MoveUnit(other.Handle, 0.0f, 0.0f);
-            fake.Hidden.Add(other.Handle);
-            Tracking.ReadNow(otherEntry);
-            Expect.True(!otherEntry.HasPlace, "a hidden unit has no place");
-            Expect.Near(100.0f, otherEntry.X, "and keeps the place it was last read at");
+            var shy = UnitAt(world, 100.0f, 900.0f);
+            var shyEntry = Tracked(shy);
+            Tracking.ReadNow(shyEntry);
+            world.MoveUnit(shy.Handle, 0.0f, 0.0f);
+            fake.Hidden.Add(shy.Handle);
+            Tracking.ReadNow(shyEntry);
+            Expect.True(!shyEntry.HasPlace, "a hidden unit has no place");
+            Expect.Near(100.0f, shyEntry.X, "and keeps the place it was last read at");
             fake.Hidden.Clear();
-            fake.Loaded.Add(other.Handle);
-            Tracking.ReadNow(otherEntry);
-            Expect.True(!otherEntry.HasPlace, "a loaded unit has none");
+            fake.Loaded.Add(shy.Handle);
+            Tracking.ReadNow(shyEntry);
+            Expect.True(!shyEntry.HasPlace, "a loaded unit has none");
             fake.Loaded.Clear();
-            Tracking.ReadNow(otherEntry);
-            Expect.True(otherEntry.HasPlace, "shown and unloaded, it has a place again");
+            Tracking.ReadNow(shyEntry);
+            Expect.True(shyEntry.HasPlace, "shown and unloaded, it has a place again");
             var victim = UnitAt(world, -300.0f, 10.0f);
             var victimEntry = Tracked(victim);
             world.SlayUnit(victim.Handle);
