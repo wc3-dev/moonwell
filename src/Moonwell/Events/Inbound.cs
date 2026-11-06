@@ -1090,10 +1090,11 @@ namespace Moonwell
             Sharing.Left(leaving);
         }
 
-        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's frames are gone (game facts, 11-06). The frames package makes them again, then the game components' OnGameLoaded runs.</summary>
+        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06). Moonwell makes its lasting lightning again, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
         internal static void GameLoaded()
         {
             RealClock.Loaded();
+            Lightning.Loaded();
             try
             {
                 Events.LoadListener?.Invoke();

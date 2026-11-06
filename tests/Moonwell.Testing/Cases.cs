@@ -1533,6 +1533,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "lightning.follows", Run = LookCases.LightningFollows });
             list.Add(new Case { Name = "lightning.ends-with-unit", Run = LookCases.LightningEndsWithUnit });
             list.Add(new Case { Name = "lightning.play-once", Run = LookCases.LightningPlayOnce });
+            list.Add(new Case { Name = "lightning.after-load", Run = LookCases.LightningAfterLoad });
             list.Add(new Case { Name = "vision.modifiers", Run = LookCases.VisionModifiers });
             list.Add(new Case { Name = "vision.fog-toggles", Run = LookCases.FogToggles });
             list.Add(new Case { Name = "minimap.pings", Run = LookCases.Pings });
