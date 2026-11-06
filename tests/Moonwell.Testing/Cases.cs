@@ -1151,6 +1151,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fake.dummy-spell-taken-in-its-order", Run = FakeGameCases.DummySpellTakenInItsOrder });
             list.Add(new Case { Name = "fake.damage-world-armor", Run = FakeGameCases.DamageWorldArmor });
             list.Add(new Case { Name = "fake.damage-world-deaths", Run = FakeGameCases.DamageWorldDeaths });
+            list.Add(new Case { Name = "fake.damage-world-armor-cuts-normal-only", Run = FakeGameCases.DamageWorldArmorCutsNormalOnly });
+            list.Add(new Case { Name = "fake.damage-world-negative-armor", Run = FakeGameCases.DamageWorldNegativeArmor });
+            list.Add(new Case { Name = "fake.removed-unit-reads-alive-in-its-frame", Run = FakeGameCases.RemovedUnitReadsAliveInItsFrame });
+            list.Add(new Case { Name = "fake.removed-carried-item-drops-inside", Run = FakeGameCases.RemovedCarriedItemDropsInside });
+            list.Add(new Case { Name = "fake.dummy-channel-moved-and-killed", Run = FakeGameCases.DummyChannelMovedAndKilled });
             list.Add(new Case { Name = "collections.set-keeps-order", Run = CollectionCases.SetKeepsOrder });
             list.Add(new Case { Name = "collections.set-remove-keeps-order", Run = CollectionCases.SetRemoveKeepsOrder });
             list.Add(new Case { Name = "collections.set-snapshot", Run = CollectionCases.SetSnapshot });

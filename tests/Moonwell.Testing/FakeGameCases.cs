@@ -412,6 +412,96 @@ namespace Moonwell.Testing
             Expect.Near(0.0f, fake.Life(target), "and no life taken");
         }
 
+        /// <summary>From code, armor cuts only damage type normal: at armor 10 a normal 100 takes 62.5, and enhanced and fire take all of it (seen 11-06).</summary>
+        public static void DamageWorldArmorCutsNormalOnly(FakeWorld world)
+        {
+            var fake = new FakeDamageWorld(world);
+            var source = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            fake.Body(target).Life = 1000.0f;
+            fake.Body(target).Armor = 10.0f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(937.5f, fake.Life(target), "a normal hit is cut to 62.5");
+            fake.Hit(source, target, 100.0f, damageType: 5);
+            fake.Hit(source, target, 100.0f, damageType: 8);
+            Expect.Near(737.5f, fake.Life(target), "an enhanced and a fire hit take all of 100");
+        }
+
+        /// <summary>Negative armor counts its whole part toward zero and stops at -20: 100 at -2.5 takes 111.64, and at -30 the 170.99 of -20 (seen 11-06).</summary>
+        public static void DamageWorldNegativeArmor(FakeWorld world)
+        {
+            var fake = new FakeDamageWorld(world);
+            var source = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var target = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            fake.Body(target).Life = 1000.0f;
+            fake.Body(target).Armor = -2.5f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(888.36f, fake.Life(target), "-2.5 counts as -2");
+            fake.Body(target).Armor = -30.0f;
+            fake.Hit(source, target, 100.0f, damageType: 4);
+            Expect.Near(717.3706f, fake.Life(target), "-30 counts as -20");
+        }
+
+        /// <summary>A living unit given to RemoveUnit reads alive, with its type id and life, for the rest of its frame, and then type id 0, life 0 and not alive; a dead one reads dead and its type id in the frame (seen 11-06).</summary>
+        public static void RemovedUnitReadsAliveInItsFrame(FakeWorld world)
+        {
+            var footman = ObjectTypes.FourCC("hfoo");
+            var live = world.NewUnit(footman);
+            world.SetLife(live, 420.0f);
+            var killed = world.NewUnit(footman);
+            world.SlayUnit(killed);
+            world.DeleteUnit(live);
+            world.DeleteUnit(killed);
+            Expect.True(world.IsAlive(live), "the live one reads alive in the frame");
+            Expect.Equal(footman, world.UnitTypeId(live), "with its type id");
+            Expect.Near(420.0f, world.LifeOf(live), "and its life");
+            Expect.True(!world.IsAlive(killed), "the killed one reads dead");
+            Expect.Equal(footman, world.UnitTypeId(killed), "with its type id");
+            world.Advance(0.0f);
+            Expect.True(!world.IsAlive(live), "from the next frame the live one reads not alive");
+            Expect.Equal(0, world.UnitTypeId(live), "type id 0");
+            Expect.Near(0.0f, world.LifeOf(live), "life 0");
+            Expect.Equal(0, world.UnitTypeId(killed), "and the killed one type id 0");
+        }
+
+        /// <summary>RemoveItem on a carried item fires the drop inside the call, as UnitRemoveItem does, and the slot is empty right after; no drop comes later (seen 11-06). Removed by Moonwell, the item is ending and runs no drop reaction.</summary>
+        public static void RemovedCarriedItemDropsInside(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("H002"), () => new TestHero());
+            var holder = world.NewUnit(ObjectTypes.FourCC("H002"), hero: true);
+            var hero = Unit.Of(holder)!;
+            var raw = world.NewItem(ObjectTypes.FourCC("I001"));
+            var kept = world.NewItem(ObjectTypes.FourCC("I001"));
+            hero.Give(Item.Of(raw)!);
+            hero.Give(Item.Of(kept)!);
+            TestLog.Lines.Clear();
+            world.DeleteItem(raw);
+            Expect.Equal("hero dropped orb|tally dropped orb", string.Join("|", TestLog.Lines), "the drop came inside the call");
+            Expect.True(!world.CarriesItem(holder, raw), "and the slot is empty");
+            Item.Of(kept)!.Remove();
+            Expect.True(!world.CarriesItem(holder, kept), "an item Moonwell removes leaves its slot too");
+            world.Advance(1.0f);
+            Expect.Equal(2, TestLog.Lines.Count, "with no drop reaction for it, and none later");
+        }
+
+        /// <summary>A unit channelling refuses a move order and channels on; killing one fires its end-cast inside the kill (seen 11-06, Moonwell's dummy, which cannot move).</summary>
+        public static void DummyChannelMovedAndKilled(FakeWorld world)
+        {
+            var watch = new FakeCastWatch();
+            Game.Instance.Add(watch);
+            world.Dummies.Spell(DummyStorm, "blizzard", SpellKind.Point, (caster, target, x, y) => { }, channel: true);
+            var moved = SpellCaster(world, DummyStorm);
+            var killed = SpellCaster(world, DummyStorm);
+            world.OrderUnitAt(moved, "blizzard", 300.0f, 0.0f);
+            var first = watch.Last!;
+            Expect.True(!world.OrderUnitAt(moved, "move", 600.0f, 0.0f), "the move order is refused");
+            Expect.True(!first.HasEnded, "and the channel goes on");
+            world.OrderUnitAt(killed, "blizzard", 300.0f, 0.0f);
+            var second = watch.Last!;
+            world.SlayUnit(killed);
+            Expect.True(second.HasEnded, "the kill ended the other's channel inside the call");
+        }
+
 #if DEBUG
         /// <summary>The fake debug world runs an After asked for from a game wake at its own time, before one asked earlier and due later, and with none waiting too.</summary>
         public static void DebugAfterFromAWake(FakeWorld world)
