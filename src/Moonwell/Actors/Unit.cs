@@ -41,8 +41,8 @@ namespace Moonwell
 
         // The instance fields are internal, not private, as a map's subclass may name a field of its own the same (see Scope).
 
-        /// <summary>The effects on the unit that have not ended, which end when it ends; null until the first.</summary>
-        internal List<SpecialEffect>? effects;
+        /// <summary>What is on the unit and has not ended (effects, lightning, minimap icons), which ends when it ends; null until the first.</summary>
+        internal List<Scoped>? attached;
 
         /// <summary>The ability objects of the unit, one per ability id, in the order they were first asked for.</summary>
         internal readonly OrderedMap<int, Ability> abilities = new OrderedMap<int, Ability>();
@@ -685,6 +685,12 @@ namespace Moonwell
         public SpecialEffect AddEffect(string model, string point, Scope scope, Player? shownTo = null)
         {
             return SpecialEffect.On(this, model, point, scope, shownTo);
+        }
+
+        /// <summary>Puts an icon of a model (MinimapIcon.Boss, or any model path) on the minimap at the unit, in a colour, in a scope, and returns it. It follows the unit and ends when the scope ends or the unit ends, whichever is first. Given shownTo, only that player sees it. On a unit that is gone it ends at once and the game is not asked to make it.</summary>
+        public MinimapIcon AddMinimapIcon(string path, Color color, Scope scope, Player? shownTo = null)
+        {
+            return MinimapIcon.On(this, path, color, scope, shownTo);
         }
 
         /// <summary>Plays an effect of a model once on the unit, at an attachment point of its model: it is made and ended at once, so its death animation plays. Given shownTo, only that player sees it. Does nothing once the unit is gone.</summary>
@@ -1373,12 +1379,29 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Ends the unit's effects, removes the unit from the game unless the game has already, and forgets it.</summary>
+        /// <summary>Lists something on the unit, to end when the unit ends.</summary>
+        internal void Attach(Scoped thing)
+        {
+            if (attached == null)
+            {
+                attached = new List<Scoped>();
+            }
+
+            attached.Add(thing);
+        }
+
+        /// <summary>Takes something off the unit's list, once it has ended.</summary>
+        internal void Detach(Scoped thing)
+        {
+            attached?.Remove(thing);
+        }
+
+        /// <summary>Ends what is on the unit, removes the unit from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
-            if (effects != null)
+            if (attached != null)
             {
-                var ending = new List<SpecialEffect>(effects);
+                var ending = new List<Scoped>(attached);
                 for (var i = 0; i < ending.Count; i++)
                 {
                     ending[i].End();

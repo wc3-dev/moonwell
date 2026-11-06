@@ -563,6 +563,56 @@ After(3f, mark.End);
 - With `Moonwell.Maths`, `effect.Position()` and `effect.PlaceAt(vector)`.
 - Missiles keep their own: `Model`, `Scale`, `Tint` and `AddEffect` on the missile, and `missile.Effect` for the rest.
 
+## Weather, lightning, vision and the minimap
+
+Weather, lightning, a player's vision and minimap icons are in the scope named where they are made, and end with it,
+as effects do. Places are plain numbers: a rect is its left, bottom, right and top edges.
+
+```csharp
+var rain = Weather.Create(WeatherKind.LordaeronHeavyRain, this);               // the whole map
+Weather.Create(WeatherKind.NorthrendLightSnow, -2048f, -2048f, 0f, 0f, this);  // a rect
+var drain = Lightning.Between(LightningKind.DrainLife, caster, target, cast);  // follows both, ends with the cast
+Lightning.PlayOnce(LightningKind.ChainLightningPrimary, caster, first);        // one hop
+var sight = player.Reveal(x, y, 600f, this);
+player.Hide(x, y, 600f, this, black: true, overUnits: true);
+Game.Ping(x, y);
+var skull = boss.AddMinimapIcon(MinimapIcon.Boss, Color.Red, this);
+```
+
+- `WeatherKind` names the game's 48 weathers (rain, snow, wind, dungeon fog, rays of light, energy fields and the
+  rest), and any id of the map's own Weather.slk works too. `Weather.Create(kind, scope)` covers the whole map,
+  `Weather.Create(kind, left, bottom, right, top, scope)` a rect.
+- `Lightning.Create(kind, x1, y1, x2, y2, scope)` draws one between points, which `MoveTo` moves;
+  `Lightning.Between(kind, from, to, scope)` one between units, moved every 1/32 s, which also ends when either unit
+  ends. Each end is drawn `FromHeight` and `ToHeight` (60 unless set) above the ground, or above a unit's feet and
+  its flying height. Of the game's looks, Drain Life, Drain Mana and Aerial Shackles stay drawn; Chain Lightning,
+  Healing Wave, Spirit Link, Mana Burn, Mana Flare, Forked Lightning and Finger of Death fade at once by themselves
+  (seen), so they are for `Lightning.PlayOnce`, which draws one and removes it 2 s later. `LightningKind` says which
+  each is; the rest are not seen yet.
+- Every player sees a lightning, in the fog and the black mask too (seen), so a link to a unit in the fog shows where
+  it is. The game draws no colour set on a lightning (seen), so it has neither a tint nor `shownTo`.
+- `player.Reveal(x, y, radius, scope)` lets the player see a circle, `Reveal(left, bottom, right, top, scope)` a rect
+  and `Reveal(scope)` the whole map; allies who share the player's vision see it too (seen). The ground stays explored
+  after. `player.Hide` covers a place in fog, or in the black mask with `black: true`; `overUnits: true` asks the game
+  to cover what the player's units see there too, which is not checked yet. Of two on one place, the newer wins as they
+  start (seen).
+- `Game.Fog` and `Game.BlackMask` turn the fog of war and the black mask off and on for every player. With the fog off
+  and the mask on, the ground a player has not explored is still black (seen). For one player, reveal the whole map:
+  `player.Reveal(this)`.
+- `Game.Ping(x, y)` pings the minimap for everyone and `player.Ping(x, y)` for one player, in white for 3 s unless
+  given a colour and seconds; they change nothing in the game, as `Print` does. `PingStyle.Flashy` adds rings, and
+  `PingStyle.Attack` is the game's red warning ping. A pure red (255, 0, 0) is drawn 254, 0, 0, as `Blizzard.j` does,
+  since the game would make it the warning ping.
+- `MinimapIcon.Create(path, x, y, color, scope)` puts an icon on the minimap and `unit.AddMinimapIcon(path, color,
+  scope)` one that follows a unit and ends when the unit ends. `MinimapIcon.QuestGiver`, `QuestObjective`,
+  `QuestBonus`, `QuestTurnIn`, `Boss` and `ControlPoint` are the campaign's, the same in HD and SD, and any model works.
+  An icon shows over the fog and the black mask, as the campaign's do.
+- `shownTo: player` on weather and icons shows them to that player only: every machine makes them and turns them on
+  (weather) or leaves them shown (icons) at that player's alone, so the game's handles stay the same everywhere. Seen
+  in single player; with two players it is not checked yet.
+- Reads give what the map made, the same on every machine; making, setting and ending are not for `Local.For`, and
+  pings are fine anywhere. `Handle` on each is the game's, for anything Moonwell does not do.
+
 ## Damage
 
 `OnDamaged` sees a hit after armor. `source.Damage(target, 10f)` deals damage from code, as a spell does: magic,

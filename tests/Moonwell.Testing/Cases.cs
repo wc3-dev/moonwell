@@ -1495,6 +1495,18 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "effects.on-unit", Run = EffectCases.OnUnit });
             list.Add(new Case { Name = "effects.at-point-has-no-unit", Run = EffectCases.AtPointHasNoUnit });
             list.Add(new Case { Name = "effects.ends-with-unit", Run = EffectCases.EndsWithUnit });
+            list.Add(new Case { Name = "weather.whole-map", Run = LookCases.WeatherWholeMap });
+            list.Add(new Case { Name = "weather.rect-ends", Run = LookCases.WeatherRectEnds });
+            list.Add(new Case { Name = "weather.shown-to-other", Run = LookCases.WeatherShownToOther });
+            list.Add(new Case { Name = "lightning.points", Run = LookCases.LightningPoints });
+            list.Add(new Case { Name = "lightning.follows", Run = LookCases.LightningFollows });
+            list.Add(new Case { Name = "lightning.ends-with-unit", Run = LookCases.LightningEndsWithUnit });
+            list.Add(new Case { Name = "lightning.play-once", Run = LookCases.LightningPlayOnce });
+            list.Add(new Case { Name = "vision.modifiers", Run = LookCases.VisionModifiers });
+            list.Add(new Case { Name = "vision.fog-toggles", Run = LookCases.FogToggles });
+            list.Add(new Case { Name = "minimap.pings", Run = LookCases.Pings });
+            list.Add(new Case { Name = "minimap.icon-at-place", Run = LookCases.IconAtPlace });
+            list.Add(new Case { Name = "minimap.icon-on-unit", Run = LookCases.IconOnUnit });
             list.Add(new Case { Name = "effects.unit-swept", Run = EffectCases.UnitSwept });
             list.Add(new Case { Name = "effects.unit-is-scope", Run = EffectCases.UnitIsScope });
             list.Add(new Case { Name = "effects.on-gone-unit", Run = EffectCases.OnGoneUnit });
