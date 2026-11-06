@@ -87,6 +87,17 @@ namespace Moonwell.Testing
             Expect.True(l.Contains(0f, 0f), "on a corner");
         }
 
+        /// <summary>A point 0.0005 outside an edge counts as on it, as for a slanted edge so for one along the bounds: the square's left and top edges, and the diamond's edge; 0.002 outside is out. The bounds were checked exactly first, so an edge along them had no tolerance outside.</summary>
+        public static void PolygonOuterEdge(FakeWorld world)
+        {
+            var square = new Polygon(new Vector2(0f, 0f), new Vector2(10f, 0f), new Vector2(10f, 10f), new Vector2(0f, 10f));
+            Expect.True(square.Contains(-0.0005f, 5f), "0.0005 left of the left edge");
+            Expect.True(square.Contains(5f, 10.0005f), "0.0005 above the top edge");
+            Expect.True(!square.Contains(-0.002f, 5f), "0.002 left of it is out");
+            var diamond = new Polygon(new Vector2(5f, 0f), new Vector2(10f, 5f), new Vector2(5f, 10f), new Vector2(0f, 5f));
+            Expect.True(diamond.Contains(7.5f + 0.00035f, 7.5f + 0.00035f), "0.0005 outside the diamond's edge");
+        }
+
         /// <summary>Area is positive in either winding; Center is the area's centroid; Bounds holds every point.</summary>
         public static void PolygonAreaCenter(FakeWorld world)
         {

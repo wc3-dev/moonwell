@@ -149,7 +149,9 @@ namespace Moonwell.Json
                 case Kind.Int:
                     return whole.ToString(CultureInfo.InvariantCulture);
                 case Kind.Float:
-                    return number.ToString("R", CultureInfo.InvariantCulture);
+                    // -0 written whole would read back as the int 0, its sign lost.
+                    var written = number.ToString("R", CultureInfo.InvariantCulture);
+                    return written == "-0" ? "-0.0" : written;
                 case Kind.Bool:
                     return truth ? "true" : "false";
                 default:
