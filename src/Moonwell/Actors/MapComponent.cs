@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnAllianceChanged" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged });
                 }
 
                 return mapHooks;
@@ -72,9 +72,21 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Runs when a player leaves the game, for the game's components, then the leaving player's.</summary>
+        /// <summary>Runs when a player leaves the game, for the game's components, then the leaving player's. A player taken out by Win or Lose has not left: it runs none.</summary>
         /// <param name="leavingPlayer">The player who left.</param>
         public virtual void OnLeave(Player leavingPlayer)
+        {
+        }
+
+        /// <summary>
+        /// Runs when one player changes what it gives another, by Moonwell's code, a native or the game, inside the change: for
+        /// the game's components, then the giving player's, then the receiving player's, once for each pair that changed
+        /// (decision 198).
+        /// </summary>
+        /// <param name="givingPlayer">The player whose alliance changed; givingPlayer.AllianceWith(receivingPlayer) reads it now.</param>
+        /// <param name="receivingPlayer">The player it gives the alliance to.</param>
+        /// <param name="before">What the giving player gave until the change.</param>
+        public virtual void OnAllianceChanged(Player givingPlayer, Player receivingPlayer, Alliance before)
         {
         }
 

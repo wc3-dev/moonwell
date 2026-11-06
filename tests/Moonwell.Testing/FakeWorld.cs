@@ -1460,10 +1460,30 @@ namespace Moonwell.Testing
             return alliances.TryGetValue(SlotOf(source) * 32 + SlotOf(other), out var alliance) ? alliance : 0;
         }
 
-        /// <summary>Sets the alliance from one slot to another.</summary>
+        /// <summary>Sets the alliance from one slot to another; as the game does, the giver's alliance event fires inside the call, when listened for.</summary>
         public void SetAllianceOf(player source, player other, int alliance)
         {
             alliances[SlotOf(source) * 32 + SlotOf(other)] = alliance;
+            if (Listening.Contains(GameEvent.Alliance))
+            {
+                Inbound.AllianceChanged(source);
+            }
+        }
+
+        /// <summary>Each Win and Lose, in order: "win 0", with "(no dialog)" or "(no scores)" when off, or "lose 2: message".</summary>
+        public List<string> Results = new List<string>();
+
+        /// <summary>Takes a player out as a winner, as the game does: its slot stays Playing.</summary>
+        public void Win(player player, bool dialog, bool scores)
+        {
+            Results.Add("win " + SlotOf(player) + (dialog ? "" : " (no dialog)") + (scores ? "" : " (no scores)"));
+        }
+
+        /// <summary>Takes a player out as a loser, as the game does: its slot turns Left.</summary>
+        public void Lose(player player, string message)
+        {
+            slotStates[SlotOf(player)] = (int)SlotState.Left;
+            Results.Add("lose " + SlotOf(player) + ": " + message);
         }
 
         /// <summary>Whether the other is an ally: the same slot, or one the source is passive to.</summary>

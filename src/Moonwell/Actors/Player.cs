@@ -465,12 +465,75 @@ namespace Moonwell
             set { Runtime.World.Recolor(Handle, (int)value); }
         }
 
-        /// <summary>The player's team.</summary>
+        /// <summary>
+        /// The player's team. Setting it moves the player: it becomes an ally of the new team's players, as the team sets
+        /// (shared vision, shared control), and an enemy of the old team's, both ways. A team no slot of the map names is
+        /// refused (decision 198).
+        /// </summary>
         [LocalSafe]
-        public int Team
+        public Team Team
         {
-            get { return Runtime.World.TeamOf(Handle); }
-            set { Runtime.World.MoveToTeam(Handle, value); }
+            get
+            {
+                return Moonwell.Team.Of(Runtime.World.TeamOf(Handle));
+            }
+
+            set
+            {
+                if (value.Number < 0)
+                {
+                    Errors.Refuse(Names.NameOf(this) + ".Team", value.Name + " is not one of the map's teams: no slot of the map names it");
+                    return;
+                }
+
+                var old = Team;
+                Runtime.World.MoveToTeam(Handle, value.Number);
+                var playing = Playing;
+                for (var i = 0; i < playing.Count; i++)
+                {
+                    var other = playing[i];
+                    var team = other.Team;
+                    if (team == value)
+                    {
+                        SetBothWays(other, value.Gives);
+                    }
+                    else if (team == old)
+                    {
+                        SetBothWays(other, Alliance.None);
+                    }
+                }
+            }
+        }
+
+        /// <summary>Whether the player has won or lost, by Win, Lose or Game.Over.</summary>
+        internal bool HasResult { get; private set; }
+
+        /// <summary>
+        /// Takes the player out of the game as a winner, as World Editor's Victory does. A person sees the victory box, which
+        /// pauses a single-player game, and its Continue ends their game, with the score screen unless scores is false; without
+        /// the dialog it ends at once. The others play on. A player who has won or lost already, or is not in the game, is
+        /// refused (decision 197).
+        /// </summary>
+        public void Win(bool dialog = true, bool scores = true)
+        {
+            if (TakesResult("Win"))
+            {
+                Runtime.World.Win(Handle, dialog, scores);
+            }
+        }
+
+        /// <summary>
+        /// Takes the player out of the game as a loser, as World Editor's Defeat does: its slot turns Left, its units stay, and
+        /// OnLeave does not run. A person sees the defeat box with the message, or the game's own words without one; in single
+        /// player it pauses the game and offers Restart. The others play on. A player who has won or lost already, or is not in
+        /// the game, is refused (decision 197).
+        /// </summary>
+        public void Lose(string message = "")
+        {
+            if (TakesResult("Lose"))
+            {
+                Runtime.World.Lose(Handle, message);
+            }
         }
 
         /// <summary>The race the player plays.</summary>
@@ -598,7 +661,15 @@ namespace Moonwell
         /// <summary>Sets what the player gives another player, e.g. Alliance.Allied | Alliance.SharedVision; the other's alliance with this one stays.</summary>
         public void SetAlliance(Player other, Alliance alliance)
         {
-            Runtime.World.SetAllianceOf(Handle, other.Handle, (int)alliance);
+            Inbound.HoldAlliances();
+            try
+            {
+                Runtime.World.SetAllianceOf(Handle, other.Handle, (int)alliance);
+            }
+            finally
+            {
+                Inbound.ReleaseAlliances(this, other);
+            }
         }
 
         /// <summary>Makes the two players allies, both ways, in place of what they gave each other, and lets each see what the other sees with sharedVision; does nothing for the player itself.</summary>
@@ -687,6 +758,25 @@ namespace Moonwell
                 SetAlliance(other, alliance);
                 other.SetAlliance(this, alliance);
             }
+        }
+
+        // Whether the player can take a result: in the game, and none taken yet; it is taken if so.
+        private bool TakesResult(string action)
+        {
+            if (HasResult)
+            {
+                Errors.Refuse(Names.NameOf(this) + "." + action, "the player has won or lost already");
+                return false;
+            }
+
+            if (SlotState != SlotState.Playing)
+            {
+                Errors.Refuse(Names.NameOf(this) + "." + action, "the player is not in the game");
+                return false;
+            }
+
+            HasResult = true;
+            return true;
         }
 
         // The playing players of the slots a person or computer can have, people only when asked.

@@ -38,5 +38,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A player selects or deselects a unit.</summary>
         Selection,
+
+        /// <summary>A player changes what it gives another.</summary>
+        Alliance,
     }
 }

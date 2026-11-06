@@ -230,6 +230,12 @@ namespace Moonwell.Hosting
         /// <summary>Whether the game counts the other player as the player's enemy.</summary>
         bool IsEnemyOf(player source, player other);
 
+        /// <summary>Takes a player out of the game as a winner, with the game's victory box for a person.</summary>
+        void Win(player player, bool dialog, bool scores);
+
+        /// <summary>Takes a player out of the game as a loser, with the game's defeat box for a person; an empty message is the game's own words.</summary>
+        void Lose(player player, string message);
+
         /// <summary>The level of an ability on a unit; 0 when the unit has none.</summary>
         int AbilityLevel(unit unit, int abilityId);
 
