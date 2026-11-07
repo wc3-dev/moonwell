@@ -167,7 +167,10 @@ namespace Moonwell.Testing
             var gear = Screen.Add(new SlotGrid { Columns = 2 }, Game.Instance);
             Expect.Equal(12, bag.Count, "Columns by Rows");
             Expect.Near(4 * 0.04f + 3 * SlotGrid.SlotGap, bag.Width, "sized by its slots");
+            var look = frames.Frames.Find(f => f.Parent == frames.FrameOf(bag[0].Handle!) && f.Type == "BACKDROP")!;
+            Expect.Equal(IconSlot.Empty, look.Texture, "an empty slot draws as the game's empty slots do");
             bag[0].Icon = "sword.blp";
+            Expect.Equal("sword.blp", look.Texture, "its icon");
             gear[1].Icon = "shield.blp";
             var heard = new List<string>();
             bag.Moved += (who, from, to) => heard.Add("bag " + (from.Grid == bag ? "bag" : "gear") + from.Index + ">" + to.Index);
@@ -179,6 +182,8 @@ namespace Moonwell.Testing
             ClickOn(frames, bag[7], 0);
             Expect.Equal("bag bag0>5, bag gear1>2", string.Join(", ", heard), "the moves, on the target's grid; the empty slot not picked up");
             Expect.True(FramesSystem.Drags.HeldBy(Player.Get(0)) == null, "nothing held");
+            bag[0].Icon = "";
+            Expect.Equal(IconSlot.Empty, look.Texture, "emptied, it draws as an empty slot again");
         }
 
         /// <summary>A rich tooltip lays its title beside its icon, or at the corner without one, and shows its cost.</summary>
