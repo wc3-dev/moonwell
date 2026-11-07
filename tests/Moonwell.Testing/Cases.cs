@@ -18,6 +18,7 @@ namespace Moonwell.Testing
             AddFloatingText(list);
             AddSounds(list);
             AddQuestsAndCinematics(list);
+            AddBoardsAndDialogs(list);
             AddUnitAbilities(list);
             AddLast(list);
             AddCompiler(list);
@@ -1601,6 +1602,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "cinematics.skip-ends-line", Run = CinematicCases.SkipEndsLine });
             list.Add(new Case { Name = "transmissions.voice", Run = CinematicCases.TransmissionVoice });
             list.Add(new Case { Name = "cinematics.hides-over-frames", Run = CinematicCases.HidesOverFrames });
+        }
+
+        /// <summary>Adds the multiboard, leaderboard and dialog cases.</summary>
+        private static void AddBoardsAndDialogs(List<Case> list)
+        {
+            list.Add(new Case { Name = "boards.cells", Run = BoardCases.Cells });
+            list.Add(new Case { Name = "boards.rows", Run = BoardCases.Rows });
+            list.Add(new Case { Name = "boards.newest", Run = BoardCases.Newest });
+            list.Add(new Case { Name = "boards.shown-to", Run = BoardCases.ShownTo });
+            list.Add(new Case { Name = "boards.tooltips", Run = BoardCases.Tooltips });
+            list.Add(new Case { Name = "boards.leaderboards", Run = BoardCases.Leaderboards });
+            list.Add(new Case { Name = "boards.leaderboard-limit", Run = BoardCases.LeaderboardLimit });
+            list.Add(new Case { Name = "dialogs.click", Run = BoardCases.Dialogs });
+            list.Add(new Case { Name = "dialogs.queue", Run = BoardCases.DialogQueue });
+            list.Add(new Case { Name = "dialogs.ends", Run = BoardCases.DialogEnds });
         }
 
         /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>
