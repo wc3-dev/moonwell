@@ -376,6 +376,105 @@ namespace Moonwell
             }
         }
 
+        /// <summary>
+        /// Swaps two frames' tooltips without ending them, for a kit slot's SwapWith (Sven, 11-07): each goes to the other
+        /// frame, a made one moved into that frame's slot, and what was tied to the frame it left is tied to the one it joins.
+        /// A made tooltip cannot go to a frame not made: that is refused and nothing changes.
+        /// </summary>
+        internal static void SwapTooltips(Frame a, Frame b)
+        {
+            var tipA = a.tooltip;
+            var tipB = b.tooltip;
+            if (a == b || tipA == tipB || a.HasEnded || b.HasEnded)
+            {
+                return;
+            }
+
+            if ((tipA?.handle != null && b.MouseHandle == null) || (tipB?.handle != null && a.MouseHandle == null))
+            {
+                Errors.Refuse(Names.NameOf(a) + ".SwapWith", "a tooltip on the screen cannot go to a frame that is not: add both to the screen first");
+                return;
+            }
+
+            a.GiveUpTooltip();
+            b.GiveUpTooltip();
+            b.TakeTooltip(tipA, a);
+            a.TakeTooltip(tipB, b);
+        }
+
+        // Out of the tree, but not ended: its game frame stays where it is until the frame it goes to takes it.
+        private void GiveUpTooltip()
+        {
+            var tip = tooltip;
+            if (tip == null)
+            {
+                return;
+            }
+
+            tooltip = null;
+            Unlink(tip);
+            tip.Parent = null;
+            if (!WantsMouse())
+            {
+                LetMouseGo();
+            }
+        }
+
+        private void TakeTooltip(Tooltip? tip, Frame from)
+        {
+            if (tip == null)
+            {
+                return;
+            }
+
+            tip.Retie(from, this);
+            if (tip.handle == null)
+            {
+                Tooltip = tip;
+                return;
+            }
+
+            var wanted = WantsMouse();
+            tip.player = player;
+            Adopt(tip);
+            tooltip = tip;
+            if (!wanted)
+            {
+                PrepareMouse();
+            }
+
+            var slot = FramesSystem.SlotFor(MouseHandle!, over);
+            FramesSystem.World.ParentFrame(tip.handle, slot);
+            tip.parentHandle = slot;
+            tip.over = over;
+            tip.PlacePoints();
+        }
+
+        // The ties and cover to one frame, made to another.
+        private void Retie(Frame from, Frame to)
+        {
+            if (filled == from)
+            {
+                filled = to;
+                to.TiedBy(this);
+            }
+
+            if (ties == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < ties.Count; i++)
+            {
+                var tie = ties[i];
+                if (tie.Other == from)
+                {
+                    ties[i] = new Tie(tie.Point, to, null, tie.OtherPoint, tie.X, tie.Y);
+                    to.TiedBy(this);
+                }
+            }
+        }
+
         /// <summary>Whether the frame takes the mouse for the map's sake: it is listened to, or has a tooltip.</summary>
         internal bool WantsMouse()
         {
