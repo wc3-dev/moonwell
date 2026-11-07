@@ -29,6 +29,8 @@ namespace Moonwell
 
         private bool hidesForTooltips = true;
 
+        private bool relayoutDue;
+
         internal Board(string title, Player? shownTo)
         {
             this.title = title ?? "";
@@ -246,18 +248,44 @@ namespace Moonwell
                 {
                     var cell = new BoardCell(this, row, line.Count);
                     line.Add(cell);
-                    Write(cell);
+                    Write(cell, false);
                 }
             }
+
+            Relayout();
         }
 
-        /// <summary>Writes a cell to the game's board.</summary>
-        internal void Write(BoardCell cell)
+        /// <summary>Writes a cell to the game's board; a new width or icon also lays the board out again.</summary>
+        internal void Write(BoardCell cell, bool layout)
         {
             if (handle != null && !HasEnded)
             {
                 Runtime.World.WriteCell(handle, cell.Row, cell.Column, cell.Text, cell.Icon, cell.Color, cell.Width);
+                if (layout)
+                {
+                    Relayout();
+                }
             }
+        }
+
+        // A displayed board keeps the layout it was displayed with: a new column, or a width, shows only once it is displayed
+        // again (seen 11-07). So it is displayed again once, in the instant after its changes.
+        private void Relayout()
+        {
+            if (relayoutDue)
+            {
+                return;
+            }
+
+            relayoutDue = true;
+            Game.Instance.OwnAfter(0.0f, () =>
+            {
+                relayoutDue = false;
+                if (!HasEnded)
+                {
+                    Boards.Relayout(this);
+                }
+            });
         }
 
         /// <summary>Takes the board off the screen, showing the one before, and destroys it.</summary>
@@ -314,7 +342,7 @@ namespace Moonwell
                 if ((value ?? "") != text)
                 {
                     text = value ?? "";
-                    board?.Write(this);
+                    board?.Write(this, false);
                 }
             }
         }
@@ -333,7 +361,7 @@ namespace Moonwell
                 if ((value ?? "") != icon)
                 {
                     icon = value ?? "";
-                    board?.Write(this);
+                    board?.Write(this, true);
                 }
             }
         }
@@ -352,7 +380,7 @@ namespace Moonwell
                 if (value != color)
                 {
                     color = value;
-                    board?.Write(this);
+                    board?.Write(this, false);
                 }
             }
         }
@@ -371,7 +399,7 @@ namespace Moonwell
                 if (value != width)
                 {
                     width = value;
-                    board?.Write(this);
+                    board?.Write(this, true);
                 }
             }
         }
@@ -503,6 +531,16 @@ namespace Moonwell
         {
             order.Remove(board);
             Update();
+        }
+
+        /// <summary>Displays a board again on this machine, if it is the one displayed here, so the game lays it out again.</summary>
+        internal static void Relayout(Board board)
+        {
+            if (board == here && board.Handle != null)
+            {
+                Runtime.World.DisplayBoard(board.Handle, false);
+                Display();
+            }
         }
 
         /// <summary>A board's tooltip setting changed.</summary>

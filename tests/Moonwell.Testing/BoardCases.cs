@@ -10,7 +10,7 @@ namespace Moonwell.Testing
         {
         }
 
-        /// <summary>A board of cells writes every cell when made, so none shows the game's eye icon, and a cell writes again only when it changes.</summary>
+        /// <summary>A board of cells writes every cell when made, so none shows the game's eye icon, a cell writes again only when it changes, and a new width or size lays the board out again.</summary>
         public static void Cells(FakeWorld world)
         {
             var info = Board.Create("Round 3", columns: 2, rows: 2, Game.Instance);
@@ -31,6 +31,17 @@ namespace Moonwell.Testing
             var writes = made.Writes;
             info[0, 0].Text = "Wave";
             Expect.Equal(writes, made.Writes, "the same text writes nothing");
+            world.Advance(0.01f);
+            var displays = made.Displays;
+            info[0, 0].Text = "Waves";
+            world.Advance(0.01f);
+            Expect.Equal(displays, made.Displays, "a new text needs no new layout");
+            info[0, 0].Width = 0.08f;
+            info[1, 1].Width = 0.08f;
+            world.Advance(0.01f);
+            Expect.Equal(displays + 1, made.Displays, "new widths display the board again once, so the game lays it out");
+            Expect.Equal(true, made.Displayed, "displayed after");
+            info[0, 0].Text = "Wave";
             info.Rows = 3;
             Expect.Equal(6, made.Cells.Count, "a new row's cells written");
             Expect.Equal("Wave", made.Text(0, 0), "the old cells kept");

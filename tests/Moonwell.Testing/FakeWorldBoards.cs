@@ -104,6 +104,10 @@ namespace Moonwell.Testing
             }
 
             fake.Displayed = shown;
+            if (shown)
+            {
+                fake.Displays++;
+            }
         }
 
         /// <summary>Destroys a multiboard; a second end fails the case.</summary>
@@ -270,8 +274,10 @@ namespace Moonwell.Testing
 
         public int Writes;
 
-        /// <summary>Whether this machine displays it, and whether it ended.</summary>
+        /// <summary>Whether this machine displays it, whether it ended, and how often it was displayed.</summary>
         public bool Displayed, Ended;
+
+        public int Displays;
 
         /// <summary>A cell's text.</summary>
         public string Text(int row, int column)
