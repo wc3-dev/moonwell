@@ -520,6 +520,60 @@ namespace Moonwell
             return false;
         }
 
+        /// <summary>Moves the frame's Offset to a new one over the seconds, eased (linear unless given): it replaces the frame's points, as setting Offset does, and stops the frame's last MoveTo.</summary>
+        public Tween MoveTo(Vector2 to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = offset;
+            return Tweened(TweenMove, seconds, ease, t => Offset = Vector2.Lerp(from, to, t));
+        }
+
+        /// <summary>Sizes the frame from the size the map gave it to a new one over the seconds, eased; it stops the frame's last SizeTo. A side the map left at 0 grows from 0, so give it a size first.</summary>
+        public Tween SizeTo(float toWidth, float toHeight, float seconds, Func<float, float>? ease = null)
+        {
+            var fromWidth = width;
+            var fromHeight = height;
+            return Tweened(TweenSize, seconds, ease, t => Size(Maths.Lerp(fromWidth, toWidth, t), Maths.Lerp(fromHeight, toHeight, t)));
+        }
+
+        /// <summary>Scales the frame to a new Scale over the seconds, eased; it stops the frame's last ScaleTo.</summary>
+        public Tween ScaleTo(float to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = scale;
+            return Tweened(TweenScale, seconds, ease, t => Scale = Maths.Lerp(from, to, t));
+        }
+
+        /// <summary>Fades the frame to a new Alpha (0 to 255) over the seconds, eased; it stops the frame's last FadeTo.</summary>
+        public Tween FadeTo(int to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = alpha;
+            return Tweened(TweenFade, seconds, ease, t => Alpha = (int)(Maths.Lerp(from, to, t) + 0.5f));
+        }
+
+        /// <summary>Runs a step with how far along it is, eased, 32 times a second for the seconds, ending with 1: for anything the named tweens do not move. It stops no other tween.</summary>
+        public Tween Tween(float seconds, Func<float, float>? ease, Action<float> step)
+        {
+            return new Tween(this, seconds, ease, step);
+        }
+
+        internal const int TweenMove = 0;
+        internal const int TweenSize = 1;
+        internal const int TweenScale = 2;
+        internal const int TweenFade = 3;
+        internal const int TweenColour = 4;
+
+        /// <summary>The last tween of each kind, by the kinds above; null until one is made.</summary>
+        internal Tween?[]? tweens;
+
+        /// <summary>Makes a tween of a kind, stopping the frame's last one of that kind.</summary>
+        internal Tween Tweened(int kind, float seconds, Func<float, float>? ease, Action<float> step)
+        {
+            tweens ??= new Tween?[5];
+            tweens[kind]?.Stop();
+            var made = new Tween(this, seconds, ease, step);
+            tweens[kind] = made;
+            return made;
+        }
+
         /// <summary>Adds a frame to this one and returns it: it is made under this frame, shown to this frame's player, and ends with it. Added to a frame that has ended, it ends at once and nothing is made.</summary>
         public T Add<T>(T child)
             where T : Frame
