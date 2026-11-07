@@ -1137,6 +1137,16 @@ namespace Moonwell
             }
         }
 
+        /// <summary>A person pressed Esc.</summary>
+        internal static void EscArrived(player p)
+        {
+            var from = Player.Of(p);
+            if (from != null)
+            {
+                Cinematic.Esc(from);
+            }
+        }
+
         /// <summary>A sharing message arrived from a player.</summary>
         internal static void SyncArrived(player p, string data)
         {

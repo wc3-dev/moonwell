@@ -64,6 +64,7 @@ namespace Moonwell
             host.LoadToc(MapTocFile);
             hud = new HudFrames(host);
             Moonwell.Events.LoadListener = Loaded;
+            Cinematic.ScreenChanged = CinematicChanged;
         }
 
         /// <summary>
@@ -114,6 +115,18 @@ namespace Moonwell
             foreach (var ui in gameUis.Values)
             {
                 ui.Restore();
+            }
+        }
+
+        /// <summary>A cinematic's letterbox came or went on this machine: the frames over the HUD hide or show again.</summary>
+        internal static void CinematicChanged()
+        {
+            for (var i = 0; i < roots.Count; i++)
+            {
+                if (roots[i].over)
+                {
+                    roots[i].Reshow();
+                }
             }
         }
 

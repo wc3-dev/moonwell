@@ -52,6 +52,9 @@ namespace Moonwell
             FloatingTexts.Reset();
             LastingLightning.Reset();
             Music.Reset();
+            Cinematic.Reset();
+            Transmission.Reset();
+            FileLengths.Reset();
             LiveVisions.Reset();
 #if DEBUG
             DebugSession.Reset();

@@ -1179,7 +1179,36 @@ namespace Moonwell
         /// <summary>Whether the frame is to be shown on this machine: it is everyone's, or this machine's player's.</summary>
         internal bool ShownHere()
         {
-            return player == null || Runtime.World.IsLocal(player.Handle);
+            return (player == null || Runtime.World.IsLocal(player.Handle)) && !HiddenByCinematic();
+        }
+
+        /// <summary>Shows or hides the game's frame again as it should be on this machine: after a cinematic's letterbox comes or goes.</summary>
+        internal void Reshow()
+        {
+            if (handle != null && !HasEnded)
+            {
+                FramesSystem.World.ShowFrame(handle, visible && ShownHere());
+            }
+        }
+
+        // A frame over the HUD hides while this machine's screen has a cinematic's letterbox, as the HUD does, unless it was made on that cinematic (decision 208).
+        private bool HiddenByCinematic()
+        {
+            if (!rooted || !over)
+            {
+                return false;
+            }
+
+            var cinematic = Cinematic.LetterboxHere();
+            for (var scope = Parent; cinematic != null && scope != null; scope = scope.Parent)
+            {
+                if (scope == cinematic)
+                {
+                    return false;
+                }
+            }
+
+            return cinematic != null;
         }
 
         /// <summary>Hides the game's frame and keeps it for the next of its kind: a frame is never destroyed, as destroying one can desync (a claim in the game facts). One a live frame is still tied to, once its parent has closed up, is not given out again, so the tied frame stays where it was rather than follow the next frame of the kind (review G6).</summary>

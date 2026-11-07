@@ -23,5 +23,12 @@ namespace Moonwell
         {
             return InputSystem.CameraOf(player.Slot);
         }
+
+        /// <summary>The cameras of a cinematic's watchers: a change goes to every person watching (decision 208).</summary>
+        [LocalSafe]
+        public static CinematicCamera Camera(this Cinematic cinematic)
+        {
+            return new CinematicCamera(cinematic);
+        }
     }
 }
