@@ -1268,6 +1268,96 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   objects stay the same, but `Handle` is a new frame, so what the map did itself on it is redone in a game
   component's `OnGameLoaded`, which runs after. A text box loses the keyboard, and a slider being dragged stops.
 
+## Quests
+
+A quest is a line in the game's quest log (F9): main quests on the left, optional ones on the right. As with effects,
+it is in a scope, which takes it out of the log when it ends.
+
+```csharp
+var sword = Quest.Create("Find the sword", "The blade lies in the crypt.", this);       // the new-quest message
+var wolves = sword.AddRequirement("Wolves killed: 0/5");
+wolves.Text = "Wolves killed: 3/5";                                                    // no message
+wolves.Done = true;                                                                    // the quest-updated message
+sword.Complete();                                                                      // completed: message, sound, flash
+Quest.Create("Your own task", text, this, shownTo: hero.Owner, optional: true);       // in one player's log
+Quest.Create("The hidden shrine", text, this, discovered: false).Discover();           // later: the new-quest message
+```
+
+- `Create`, `Discover()`, `Complete()`, `Fail()` and a requirement turned `Done` each show the game's quest message: a
+  gold heading ("MAIN QUEST", "OPTIONAL QUEST COMPLETED", "QUEST UPDATED") and the title, for 20 s, with the game's own
+  sound for it and the quest button's flash, as World Editor's Quest Message does. `quiet: true` leaves one out, and a
+  quest's `Quiet` (or `Create(..., quiet: true)`) every one. The new-quest message of `Create` comes in the instant after,
+  so it lists the requirements added on the lines after it.
+- A requirement's `Text` changes with no message, so it can count. One turned done on a quest that is undiscovered,
+  completed or failed shows none.
+- `Title`, `Description` and `Icon` are read and set; `Quest.DefaultIcon` unless given. `IsOptional`, `IsDiscovered`,
+  `IsCompleted` and `IsFailed` read the state. `Complete` after `Fail` turns it completed, and the other way round.
+- The log shows an undiscovered quest as "Undiscovered Quest" with a "?" icon, a done requirement as "- text ( Completed
+  )" and a completed or failed quest with "Completed" or "Failed" under its title (seen).
+- `shownTo: player` puts the quest in that player's log only, with its messages: it is made on every machine and shown
+  on that player's (seen in single player; with two players it is not checked yet).
+- Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting and making are
+  not.
+
+## Cinematics
+
+A cinematic plays a scene on its watchers' screens: a method that returns `IEnumerable<Wait>` and waits at each
+`yield return`, as GDScript's `await` waits for a timer. Moonwell goes on with the method when the line, the fade or the
+wait is over.
+
+```csharp
+public sealed class Intro : GameComponent
+{
+    private static readonly CameraSetup Gate = CameraSetup.Named("Gate");
+
+    public override void OnGameStart()
+    {
+        var cine = Cinematic.Play(Scene, this);
+        cine.Ended += skipped => cine.Camera().Reset();          // at the end, or after Esc
+    }
+
+    private IEnumerable<Wait> Scene(Cinematic cine)
+    {
+        yield return cine.FadeIn(1f);
+        cine.Camera().Apply(Gate, 2f);                             // Moonwell.Input: every watcher's camera
+        yield return cine.Say(arthas, "We march at dawn.", @"Sound\Dialogue\Arthas01.flac");
+        yield return Wait.Seconds(2f);
+        yield return cine.Say(uther, "As you command.");
+        yield return cine.FadeOut(1f);
+    }
+}
+
+Transmission.Play(uther, "Hold the bridge!", voice);              // a line in play, with no cinematic
+```
+
+- A cinematic is a scope: what is made on it (its lines, `cine.After` timers, effects, sounds, frames) ends with it, when
+  the scene's method returns or at a skip, so a skip stops the scene at the step it is at. `Ended` runs after, with
+  `true` for a skip: the place to set things up for play, whichever way it ended. The scene starts in the instant after
+  `Play`, so `Ended` can be set first. A scene that throws is reported, and the cinematic ends.
+- While it plays, each watcher's screen has the letterbox and no HUD, no controls (no orders, no camera moves, no
+  cursor), the game's sounds lowered as its cinematic mode does, and the messages before it cleared. The map's frames
+  beneath the HUD go with it (seen); those over it are hidden by Moonwell, but those made on the cinematic, as a
+  `Screen.AddOver(new Label { Text = "Esc to skip" }, cine)`. `letterbox: false` keeps the HUD for a scene in play, its
+  controls still off. Fog, the game's speed, the day and the random numbers are left as they are, unlike World Editor's
+  cinematic mode: stop the day (`Game.DayStopped`) or show the place (`Reveal`) yourself.
+- Esc skips it once every person watching has pressed it (one press in single player). `skippable: false` turns that
+  off, and `cine.Skip()` skips it from code. Esc is the game's skip-cinematic event, which comes on every press, also with
+  the controls off (seen); a map that names `Keyboard` hears it too, as `Key.Escape`.
+- `shownTo: player` plays it on that player's screen only, and only their Esc counts. A player watches one cinematic at a
+  time: a new one for them ends the one before (not as a skip). `Cinematic.Of(player)` is the one they watch, or null.
+- `cine.Say(unit, text, voice)` is a line of the scene, to its watchers: the unit's talking portrait in its owner's
+  colour, its name (a hero's proper name, or `name:`) and the text, in the letterbox, and the voice. It lasts the voice's
+  length, read on the first person's machine and shared, as music's lengths are; with no voice 2 s and 0.05 s a letter;
+  `seconds:` sets it. The portrait stays 1.5 s more, unless the next line comes. The unit flashes red and the minimap is
+  pinged at it, as the game's transmissions do. The subtitles show whatever the player's setting.
+- `Transmission.Play(unit, text, voice)` says a line with no cinematic: the portrait shows in the HUD's portrait place
+  (seen). `Transmission.Play<Paladin>("Uther", text)` uses a unit class's portrait, for a speaker not on the map. Both
+  take `shownTo:`, and a scene can `yield return` one; `IsOver` reads whether it is over.
+- `cine.FadeOut(seconds)` covers the watchers' screens with black, or a `Color`, and `cine.FadeIn(seconds)` uncovers
+  them from it; a scene that starts with `FadeIn` starts black. A cinematic that ends covered fades back in over 1 s.
+- `cine.Camera()`, with `Moonwell.Input`, changes the camera of every person watching, as a player's `Camera()` does.
+  The camera stays where the scene left it: put it back in `Ended`.
+
 ## Colours and text
 
 `Color` is a colour as the game takes it, each part 0 to 255: `new Color(255, 204, 0)`, `Color.FromHtml("#ffcc00")`,
