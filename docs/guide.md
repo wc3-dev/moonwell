@@ -1237,7 +1237,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
   `Screen.AddOver`), and ends with the frame; taken away, or ended, it shows no more; it is 0.2 by 0.06 unless sized, and placing it (`Anchor`,
-  `Attach`) puts it elsewhere.
+  `Attach`) puts it elsewhere. Unplaced, it opens above the frame, or below it where there is no room above (near the
+  top bar), and kept in at the screen's sides: as it shows, Moonwell judges the room from the cursor on that machine,
+  as a frame's place on the screen cannot be read.
 - `Row`, `Column` and `Grid` draw nothing unless given a `Template`, and place the frames added to them in the order
   added: a row left to right, a column top to bottom, a grid in cells (`Columns`, `CellWidth`, `CellHeight`), with `Gap`
   between and `Padding` around; when one ends the rest close up. Their size, and their frames', are the map's.

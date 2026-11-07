@@ -1444,6 +1444,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.progress-bar", Run = FrameCases.ProgressBar });
             list.Add(new Case { Name = "frames.label-colour", Run = FrameCases.LabelColour });
             list.Add(new Case { Name = "frames.tooltip", Run = FrameCases.Tooltip });
+            list.Add(new Case { Name = "frames.tooltip-on-screen", Run = FrameCases.TooltipOnScreen });
             list.Add(new Case { Name = "frames.tooltip-on-image", Run = FrameCases.TooltipOnImage });
             list.Add(new Case { Name = "frames.tooltip-for-one-player", Run = FrameCases.TooltipForOnePlayer });
             list.Add(new Case { Name = "frames.tooltip-ends-with-its-frame", Run = FrameCases.TooltipEndsWithItsFrame });
