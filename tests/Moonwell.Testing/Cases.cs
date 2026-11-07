@@ -1526,6 +1526,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.tabs", Run = KitCases.TabsPages });
             list.Add(new Case { Name = "kit.list", Run = KitCases.List });
             list.Add(new Case { Name = "kit.slots", Run = KitCases.Slots });
+            list.Add(new Case { Name = "kit.swap-with", Run = KitCases.SwapWith });
             list.Add(new Case { Name = "kit.tooltip", Run = KitCases.RichTip });
             list.Add(new Case { Name = "kit.moved-throws", Run = KitCases.MovedThrows });
             list.Add(new Case { Name = "kit.shop", Run = KitWindowCases.Shop });

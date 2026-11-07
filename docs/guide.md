@@ -1383,7 +1383,7 @@ var tabs = bag.Add(new Tabs());
 var slots = tabs.Page("Gear").Add(new SlotGrid { Columns = 4, Rows = 3 });
 slots[0].Icon = @"ReplaceableTextures\CommandButtons\BTNSteelMelee.blp";
 slots[0].Tooltip = new RichTooltip { Icon = slots[0].Icon, Title = "Sword", Text = "+10 damage", Cost = "150 gold" };
-slots.Moved += (who, from, to) => { var icon = from.Icon; from.Icon = to.Icon; to.Icon = icon; }; // synced: move the items too
+slots.Moved += (who, from, to) => from.SwapWith(to); // synced: move the items too
 var heroes = tabs.Page("Heroes").Add(new ScrollList<Unit> { Rows = 6 });
 heroes.Items = party;
 heroes.Show = (row, hero) => row.Text = hero.Name;
@@ -1403,7 +1403,9 @@ heroes.Picked += (who, hero) => who.Select(hero);
 - `SlotGrid` is `Columns` by `Rows` icon slots (`IconSlot`, with its `Grid` and `Index`), 0.04 square unless
   `SlotSize` is set, sized by them. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
   which runs that grid's `Moved` with the two slots; an empty slot only takes drops. The grid keeps nothing but icons,
-  so the map moves what the slots hold.
+  so the map moves what the slots hold. `from.SwapWith(to)` in `Moved` swaps the two slots' icons and tooltips, and
+  the tooltips move and do not end, as one set in place of another does; a handler that does not call it leaves both
+  slots as they were.
 - `RichTooltip` is a tooltip with an `Icon`, a `Title` and a `Cost` (written as the map likes, "150 gold") over its
   `Text`, 0.24 by 0.12 unless sized.
 - A list, tabs and every other part keeps one set of values for everyone, as frames do: a click on a tab or the wheel
