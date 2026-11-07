@@ -96,6 +96,26 @@ namespace Moonwell.Testing
             Expect.True(Player.Two.Camera().Player == Player.Two, "another player's camera is its own");
         }
 
+        private static IEnumerable<Wait> LongScene(Cinematic cine)
+        {
+            yield return Wait.Seconds(10f);
+        }
+
+        /// <summary>A cinematic's camera changes the camera of every person watching it: both for everyone's, one for one player's.</summary>
+        public static void CinematicCamera(FakeWorld world)
+        {
+            var fake = Fresh(world);
+            var everyone = Cinematic.Play(LongScene, Game.Instance);
+            everyone.Camera().PanTo(7f, 8f, 3f);
+            Expect.Equal(2, fake.CameraCalls.Count, "a pan for each person");
+            Expect.Equal(0, fake.CameraCalls[0].Slot, "player one's");
+            Expect.Equal(1, fake.CameraCalls[1].Slot, "player two's");
+            var theirs = Cinematic.Play(LongScene, Game.Instance, shownTo: Player.Two);
+            theirs.Camera().Reset(1f);
+            Expect.Equal(3, fake.CameraCalls.Count, "one change for one watcher");
+            Expect.Equal(1, fake.CameraCalls[2].Slot, "player two's");
+        }
+
         /// <summary>Each change reaches the world with the camera's player, and the angles pass in degrees.</summary>
         public static void Changes(FakeWorld world)
         {

@@ -653,6 +653,60 @@ namespace Moonwell.Hosting
         /// <summary>Sets the music's volume on this machine, 0 to 127.</summary>
         void SetMusicLoudness(int volume);
 
+        /// <summary>Makes a quest in the log (F9), disabled until shown.</summary>
+        quest MakeQuest();
+
+        /// <summary>Sets a quest's title, description and icon.</summary>
+        void WriteQuest(quest quest, string title, string description, string icon);
+
+        /// <summary>Sets whether a quest is a main quest (required), discovered, completed and failed.</summary>
+        void SetQuestState(quest quest, bool main, bool discovered, bool completed, bool failed);
+
+        /// <summary>Shows or hides a quest in the log on this machine.</summary>
+        void ShowQuest(quest quest, bool shown);
+
+        /// <summary>Takes a quest out of the log: DestroyQuest.</summary>
+        void EndQuest(quest quest);
+
+        /// <summary>Adds a requirement to a quest.</summary>
+        questitem MakeRequirement(quest quest);
+
+        /// <summary>Sets a requirement's text and whether it is done.</summary>
+        void SetRequirement(questitem requirement, string text, bool done);
+
+        /// <summary>On this machine: shows a quest message's lines, plays its sound and flashes the quest button, as QuestMessageBJ does.</summary>
+        void QuestNews(QuestNews kind, string text);
+
+        /// <summary>Listens for a person's Esc: the game's skip-cinematic event, which comes on every press.</summary>
+        void ListenEsc(player player);
+
+        /// <summary>On this machine: hides the HUD behind the letterbox, or shows it again, over the seconds.</summary>
+        void Letterbox(bool on, float seconds);
+
+        /// <summary>On this machine: lets the player give orders and move the camera, or not, and shows the cursor or not.</summary>
+        void UserControl(bool on);
+
+        /// <summary>On this machine: lowers the game's sounds as cinematic mode does, or puts them back.</summary>
+        void CinematicSounds(bool on);
+
+        /// <summary>On this machine: clears the lines printed on the screen.</summary>
+        void ClearMessages();
+
+        /// <summary>On this machine: shows a speaker's talking portrait, name and line for the seconds, the portrait talking for talkSeconds.</summary>
+        void ShowScene(int unitTypeId, int playerColor, string name, string text, float seconds, float talkSeconds);
+
+        /// <summary>On this machine: ends the speaker's portrait and line at once.</summary>
+        void EndScene();
+
+        /// <summary>On this machine: marks a unit that talks with a red flash and pings the minimap at it.</summary>
+        void MarkSpeaker(unit unit, float x, float y);
+
+        /// <summary>On this machine: covers the screen with a colour, its alpha going from one value to another (0 to 255) over the seconds.</summary>
+        void ScreenFilter(int red, int green, int blue, int fromAlpha, int toAlpha, float seconds);
+
+        /// <summary>On this machine: takes the screen's colour cover away.</summary>
+        void EndScreenFilter();
+
         /// <summary>A whole number from low to high, both included, from the game's random numbers, which every machine shares.</summary>
         int RandomBetween(int low, int high);
     }
