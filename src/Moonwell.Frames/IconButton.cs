@@ -23,7 +23,7 @@ namespace Moonwell
             listened = 1 << FrameEvents.Click;
         }
 
-        /// <summary>The icon's texture, as ReplaceableTextures\CommandButtons\BTNFootman.blp; empty unless set, which draws nothing.</summary>
+        /// <summary>The icon's texture, as ReplaceableTextures\CommandButtons\BTNFootman.blp; empty unless set, which draws nothing (a kit slot draws black).</summary>
         [LocalSafe]
         public string Icon
         {
@@ -38,7 +38,7 @@ namespace Moonwell
                 icon = value;
                 if (iconFrame != null)
                 {
-                    FramesSystem.World.PaintFrame(iconFrame, value);
+                    FramesSystem.World.PaintFrame(iconFrame, Look());
                 }
             }
         }
@@ -65,27 +65,26 @@ namespace Moonwell
             FramesSystem.World.FillFrame(iconFrame, handle!);
         }
 
-        /// <summary>Takes an ended icon button's image with its frame, painted over when this one has no icon.</summary>
+        /// <summary>Takes an ended icon button's image with its frame; Place paints it.</summary>
         internal override void TakeOver(Frame old)
         {
-            var ended = (IconButton)old;
-            iconFrame = ended.iconFrame;
+            iconFrame = ((IconButton)old).iconFrame;
             base.TakeOver(old);
-            if (icon.Length == 0 && ended.icon.Length > 0)
-            {
-                FramesSystem.World.PaintFrame(iconFrame!, Image.Blank);
-            }
         }
 
-        /// <summary>Gives the game the icon, then the points and looks.</summary>
+        /// <summary>Gives the game the icon, or the empty look (an unpainted image draws the game's green missing texture), then the points and looks.</summary>
         internal override void Place()
         {
-            if (icon.Length > 0)
-            {
-                FramesSystem.World.PaintFrame(iconFrame!, icon);
-            }
-
+            FramesSystem.World.PaintFrame(iconFrame!, Look());
             base.Place();
+        }
+
+        /// <summary>What an empty button draws: nothing.</summary>
+        internal virtual string EmptyLook => Image.Blank;
+
+        private string Look()
+        {
+            return icon.Length > 0 ? icon : EmptyLook;
         }
 
         /// <summary>The icon follows the cursor while the button is held, unless DragIcon is set.</summary>

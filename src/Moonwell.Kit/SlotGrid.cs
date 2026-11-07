@@ -134,6 +134,9 @@ namespace Moonwell
     /// <summary>A slot of a SlotGrid: an icon button that can be picked up while it shows an icon, and takes a drop.</summary>
     public class IconSlot : IconButton
     {
+        /// <summary>What an empty slot draws: black, as the game's empty inventory and command slots.</summary>
+        internal const string Empty = @"Textures\Black32.blp";
+
         internal IconSlot(SlotGrid grid, int index)
         {
             Grid = grid;
@@ -155,5 +158,7 @@ namespace Moonwell
         /// <summary>Its number in its grid, from 0.</summary>
         [LocalSafe]
         public int Index { get; }
+
+        internal override string EmptyLook => Empty;
     }
 }
