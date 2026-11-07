@@ -45,6 +45,19 @@ public class FrameTests
     }
 
     [Fact]
+    public void drag_and_drop_inside_local_for_is_refused()
+    {
+        var found = MapCode.Check("""
+            var slot = Screen.Add(new IconButton(), Game.Instance);
+            Local.For(p, () => slot.Draggable = true);
+            Local.For(p, () => slot.Dropped += (who, dragged) => { });
+            Local.For(p, () => { var can = slot.Draggable; var icon = slot.DragIcon; });
+            """);
+
+        Assert.Equal(new[] { "MW0001: slot.Draggable", "MW0048: slot.Dropped" }, found);
+    }
+
+    [Fact]
     public void subscribing_inside_local_for_is_refused()
     {
         var found = MapCode.Check("""
