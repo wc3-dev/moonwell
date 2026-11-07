@@ -324,7 +324,7 @@ namespace Moonwell
             return dragIcon;
         }
 
-        /// <summary>A tooltip the game shows while a player's mouse is on the frame: made on the frame's layer for the frame's player (the screen's whole width, beneath the HUD, or over the HUD for a frame added with Screen.AddOver), above the frame unless the map places it, and ended with the frame; setting another ends the one before. The frame takes the mouse for it, but no event is sent, as listening to the mouse's enter and leave makes a tooltip and the cursor flicker (seen 11-03). Null unless set.</summary>
+        /// <summary>A tooltip the game shows while a player's mouse is on the frame: made on the frame's layer for the frame's player (the screen's whole width, beneath the HUD, or over the HUD for a frame added with Screen.AddOver), above the frame unless the map places it (or below it, kept in at the screen's sides, where there is no room as it shows), and ended with the frame; setting another ends the one before. The frame takes the mouse for it, but no event is sent, as listening to the mouse's enter and leave makes a tooltip and the cursor flicker (seen 11-03). Null unless set.</summary>
         [LocalSafe]
         public Tooltip? Tooltip
         {
@@ -502,7 +502,8 @@ namespace Moonwell
             var tip = tooltip!;
             if (tip.ties == null && tip.filled == null && tip.anchor == FramePoint.Center && tip.offset.X == 0.0f && tip.offset.Y == 0.0f)
             {
-                tip.PlaceBy(FramePoint.Bottom, this, FramePoint.Top, 0.0f, 0.01f);
+                tip.PlaceBy(FramePoint.Bottom, this, FramePoint.Top, 0.0f, Tips.Gap);
+                FramesSystem.Tips.Watch(tip);
             }
 
             tip.over = over;

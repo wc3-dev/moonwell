@@ -1239,7 +1239,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
   `Screen.AddOver`), and ends with the frame; taken away, or ended, it shows no more; it is 0.2 by 0.06 unless sized, and placing it (`Anchor`,
-  `Attach`) puts it elsewhere.
+  `Attach`) puts it elsewhere. Unplaced, it opens above the frame, or below it where there is no room above (near the
+  top bar), and kept in at the screen's sides: as it shows, Moonwell judges the room from the cursor on that machine,
+  as a frame's place on the screen cannot be read.
 - `Row`, `Column` and `Grid` draw nothing unless given a `Template`, and place the frames added to them in the order
   added: a row left to right, a column top to bottom, a grid in cells (`Columns`, `CellWidth`, `CellHeight`), with `Gap`
   between and `Padding` around; when one ends the rest close up. Their size, and their frames', are the map's.
@@ -1364,7 +1366,10 @@ Transmission.Play(uther, "Hold the bridge!", voice);              // a line in p
   colour, its name (a hero's proper name, or `name:`) and the text, in the letterbox, and the voice. It lasts the voice's
   length, read on the first person's machine and shared, as music's lengths are; with no voice 2 s and 0.05 s a letter;
   `seconds:` sets it. The portrait stays 1.5 s more, unless the next line comes. The unit flashes red and the minimap is
-  pinged at it, as the game's transmissions do. The subtitles show whatever the player's setting.
+  pinged at it, as the game's transmissions do. The subtitles show whatever the player's setting. A line starts once
+  the letterbox is in, 0.6 s after `Play`: said while the HUD fades, the game shows its words and no portrait (seen).
+- Esc that starts a cinematic, heard by a trigger of the map's own, does not also skip it: a press in the instant the
+  cinematic starts is not counted.
 - `Transmission.Play(unit, text, voice)` says a line with no cinematic: the portrait shows in the HUD's portrait place
   (seen). `Transmission.Play<Paladin>("Uther", text)` uses a unit class's portrait, for a speaker not on the map. Both
   take `shownTo:`, and a scene can `yield return` one; `IsOver` reads whether it is over.

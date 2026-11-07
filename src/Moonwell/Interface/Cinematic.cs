@@ -16,6 +16,9 @@ namespace Moonwell
         /// <summary>The seconds the letterbox takes to come and go, as Blizzard.j's.</summary>
         private const float LetterboxFade = 0.5f;
 
+        /// <summary>When a line's portrait can show, from Play: the HUD's fade and a little. A line said in the fade shows its words and no portrait (probe, 11-07).</summary>
+        private const float PortraitAfter = LetterboxFade + 0.1f;
+
         /// <summary>The seconds a cinematic that ends faded out takes to fade back in.</summary>
         private const float FadeBack = 1.0f;
 
@@ -42,6 +45,8 @@ namespace Moonwell
         private IEnumerator<Wait>? steps;
 
         private bool skipped;
+
+        private float enteredAt;
 
         private bool filtered;
 
@@ -127,7 +132,7 @@ namespace Moonwell
             return made;
         }
 
-        /// <summary>A unit says a line in the cinematic, to its watchers; it ends with the cinematic. <c>yield return</c> waits for it.</summary>
+        /// <summary>A unit says a line in the cinematic, to its watchers, starting once the letterbox is in; it ends with the cinematic. <c>yield return</c> waits for it.</summary>
         public Transmission Say(Unit speaker, string text, string? voice = null, string? name = null, float seconds = 0.0f)
         {
             return Transmission.Say(this, speaker, text, voice, shownTo, name, seconds);
@@ -149,6 +154,12 @@ namespace Moonwell
             var fade = Filter(255, 0, seconds);
             OwnAfter(seconds, () => ClearFilter(fade));
             return Wait.Seconds(seconds);
+        }
+
+        /// <summary>The seconds a line waits before it starts, until the letterbox is in; 0 with no letterbox.</summary>
+        internal float UntilLetterbox()
+        {
+            return letterbox ? Math.Max(0.0f, enteredAt + PortraitAfter - Game.Time) : 0.0f;
         }
 
         /// <summary>Ends the cinematic as a skip, as Esc does, skippable or not.</summary>
@@ -267,6 +278,7 @@ namespace Moonwell
 
         private void Enter()
         {
+            enteredAt = Game.Time;
             if (ShownHere())
             {
                 Runtime.World.ClearMessages();
@@ -325,7 +337,8 @@ namespace Moonwell
 
         private void Pressed(Player from)
         {
-            if (!skippable || ending || HasEnded)
+            // Before the scene's first step is the instant of Play: a press then is the one that started it from another Esc trigger.
+            if (!skippable || ending || HasEnded || steps == null)
             {
                 return;
             }

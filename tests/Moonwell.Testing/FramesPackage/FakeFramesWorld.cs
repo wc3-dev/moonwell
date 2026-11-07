@@ -370,6 +370,12 @@ namespace Moonwell.Testing
             return WindowHeight;
         }
 
+        /// <summary>Whether a frame is shown, as the test set it.</summary>
+        public bool FrameShown(framehandle frame)
+        {
+            return Asked(frame).Shown;
+        }
+
         /// <summary>Sets a frame's drawing level.</summary>
         public void LevelFrame(framehandle frame, int level)
         {

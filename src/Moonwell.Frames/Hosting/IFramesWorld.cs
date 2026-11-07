@@ -104,6 +104,9 @@ namespace Moonwell.Hosting
         /// <summary>This machine's window's height, in pixels; differs between machines.</summary>
         int ClientHeight();
 
+        /// <summary>Whether the game shows a frame on this machine; a tooltip's while the mouse is on its frame, so it differs between machines.</summary>
+        bool FrameShown(framehandle frame);
+
         /// <summary>A frame of the game's HUD by its name; null when the game has none. The first lookup gives it a handle id, so it is done on every machine.</summary>
         framehandle? GameFrame(string name);
 

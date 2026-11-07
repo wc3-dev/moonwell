@@ -21,7 +21,10 @@ namespace Moonwell.Testing
             Expect.Equal("EscMenuBackdrop", fake.Template, "each player's race: the game's Esc menu window");
             Expect.Near(0.3f, fake.Width, "its width");
             Expect.Equal("|cfffcd312Bag|r", frames.FrameOf(window.title.Handle!).Text, "its title, in the theme's gold");
-            Expect.Equal(Window.CloseIcon, frames.FrameOf(window.close.iconFrame!).Texture, "the close button's icon");
+            Expect.Equal(Moonwell.Image.Blank, frames.FrameOf(window.bar.iconFrame!).Texture, "the title bar draws nothing over the title");
+            var close = frames.FrameOf(window.close.Handle!);
+            Expect.Equal("ScriptDialogButton", close.Template, "the close button is the game's dialog button");
+            Expect.Equal("X", close.Text, "marked X");
         }
 
         /// <summary>Kit.Theme gives the windows made from then on their template and colours; a window's own Theme overrides it.</summary>

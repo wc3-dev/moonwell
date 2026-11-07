@@ -208,6 +208,9 @@ namespace Moonwell.Engine
             return Natives.BlzGetLocalClientHeight();
         }
 
+        /// <summary>BlzFrameIsVisible.</summary>
+        public bool FrameShown(framehandle frame) => Natives.BlzFrameIsVisible(frame);
+
         /// <summary>A frame of the game's HUD by its name: BlzGetFrameByName.</summary>
         public framehandle? GameFrame(string name)
         {
