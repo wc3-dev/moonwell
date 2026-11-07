@@ -277,7 +277,7 @@ namespace Moonwell
 
         internal List<Action<Player, Frame>>? dropped;
 
-        /// <summary>Whether a player can pick the frame up with a click, to drop it on a frame listened to for Dropped with another click (decision 210); false unless set. While it is held, its DragIcon follows that player's cursor, on their screen only. Right-click, Esc, a click on it again or a left click on anything else puts it back. A click that picks up or drops runs nothing else, as Clicked does not.</summary>
+        /// <summary>Whether a player can pick the frame up with a click, to drop it on a frame listened to for Dropped with another click (decision 210); false unless set. While it is held, its DragIcon follows that player's cursor, on their screen only. Right-click, Esc, a click on it again or a left click on anything else puts it back. A click that picks up or drops runs nothing else, as Clicked does not. A frame with no icon to draw, as an icon button with none, is not picked up: its click is a click.</summary>
         [LocalSafe]
         public bool Draggable
         {

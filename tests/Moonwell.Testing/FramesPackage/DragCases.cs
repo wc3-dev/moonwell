@@ -216,6 +216,21 @@ namespace Moonwell.Testing
             Expect.Same(label, FramesSystem.Drags.HeldBy(Player.Get(0)), "a label picked up");
         }
 
+        /// <summary>A draggable frame with no icon to draw is not picked up, and its click is a click; it still takes drops.</summary>
+        public static void EmptyNotPicked(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = FrameCases.Installed();
+            var slots = Made();
+            slots.Hand.Draggable = true;
+            ClickOn(frames, slots.Hand, 0);
+            Expect.True(FramesSystem.Drags.HeldBy(Player.Get(0)) == null, "the empty slot not picked up");
+            Expect.Equal("hand clicked", string.Join(", ", slots.Heard), "its click a click");
+            ClickOn(frames, slots.Bag, 0);
+            ClickOn(frames, slots.Hand, 0);
+            Expect.Equal("hand clicked, dropped bag by 0", string.Join(", ", slots.Heard), "it still takes a drop");
+        }
+
         /// <summary>A Dropped handler that throws is reported with the frame, and the next still runs.</summary>
         public static void DroppedThrows(FakeWorld world)
         {

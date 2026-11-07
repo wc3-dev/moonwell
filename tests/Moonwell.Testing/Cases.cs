@@ -1507,6 +1507,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.drag-ended-and-loaded", Run = DragCases.EndedAndLoaded });
             list.Add(new Case { Name = "frames.drag-icons", Run = DragCases.Icons });
             list.Add(new Case { Name = "frames.drag-dropped-throws", Run = DragCases.DroppedThrows });
+            list.Add(new Case { Name = "frames.drag-empty-not-picked", Run = DragCases.EmptyNotPicked });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });

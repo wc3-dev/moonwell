@@ -1200,7 +1200,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   frame dropped, synced. Right-click, Esc, a click on the frame held, or a left click on anything else puts it back; a
   click on another draggable frame picks that one up instead. A click that picks up or drops runs nothing else. While a
   frame is held, its `DragIcon` (unless set, an icon button's `Icon` or an image's `Texture`), the frame's size or
-  0.04 square, follows that player's cursor on their screen alone. A load puts every drag back.
+  0.04 square, follows that player's cursor on their screen alone; a frame with none to draw, as an empty slot, is not
+  picked up, and its click is a click. A load puts every drag back.
 
   ```csharp
   var sword = bag.Add(new IconButton { Icon = item.Icon, Draggable = true });

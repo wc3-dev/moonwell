@@ -59,7 +59,7 @@ namespace Moonwell.Engine
             released.Remove(who.Slot);
             if (!held.TryGetValue(who.Slot, out var holding))
             {
-                if (!frame.draggable)
+                if (!CanPick(frame))
                 {
                     return false;
                 }
@@ -81,7 +81,7 @@ namespace Moonwell.Engine
                 return true;
             }
 
-            if (frame.draggable)
+            if (CanPick(frame))
             {
                 Pick(frame, who);
                 return true;
@@ -89,6 +89,12 @@ namespace Moonwell.Engine
 
             PutBack(who);
             return false;
+        }
+
+        /// <summary>Whether a click picks the frame up: it is draggable and has an icon to draw under the cursor, so an empty slot only takes drops.</summary>
+        private static bool CanPick(Frame frame)
+        {
+            return frame.draggable && frame.DragTexture() != "";
         }
 
         /// <summary>A saved game loaded and took the icons: every drag is put back, and the icons are made anew at the next pick.</summary>
