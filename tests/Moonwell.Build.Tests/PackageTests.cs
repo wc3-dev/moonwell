@@ -66,6 +66,7 @@ namespace Moonwell.Build.Tests
         [InlineData("Moonwell.Areas")]
         [InlineData("Moonwell.Input")]
         [InlineData("Moonwell.Frames")]
+        [InlineData("Moonwell.Kit")]
         [InlineData("Moonwell.Json")]
         public void package_ships_xml_docs_beside_its_library(string id)
         {
