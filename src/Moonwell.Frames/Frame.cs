@@ -271,6 +271,59 @@ namespace Moonwell
             remove { Unsubscribe(wheeled, value); }
         }
 
+        internal bool draggable;
+
+        internal string dragIcon = "";
+
+        internal List<Action<Player, Frame>>? dropped;
+
+        /// <summary>Whether a player can pick the frame up with a click, to drop it on a frame listened to for Dropped with another click (decision 210); false unless set. While it is held, its DragIcon follows that player's cursor, on their screen only. Right-click, Esc, a click on it again or a left click on anything else puts it back. A click that picks up or drops runs nothing else, as Clicked does not.</summary>
+        [LocalSafe]
+        public bool Draggable
+        {
+            get { return draggable; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                draggable = value;
+                if (value)
+                {
+                    Listen(FrameEvents.Click);
+                    FramesSystem.Drags.Listen();
+                }
+            }
+        }
+
+        /// <summary>The texture that follows the cursor while the frame is held, the frame's size or 0.04 square; empty unless set, which draws an icon button's Icon or an image's Texture.</summary>
+        [LocalSafe]
+        public string DragIcon
+        {
+            get { return dragIcon; }
+            set { dragIcon = value; }
+        }
+
+        /// <summary>Runs when a player drops a frame they hold on this one, with the player and the frame dropped; the frame dropped is put back first, and a click that drops runs nothing else. Synced: a handler may change the game. Not inside Local.For.</summary>
+        public event Action<Player, Frame>? Dropped
+        {
+            add
+            {
+                Subscribe(ref dropped, value, FrameEvents.Click, FrameEvents.Click);
+                FramesSystem.Drags.Listen();
+            }
+
+            remove { Unsubscribe(dropped, value); }
+        }
+
+        /// <summary>The texture that follows the cursor while the frame is held.</summary>
+        internal virtual string DragTexture()
+        {
+            return dragIcon;
+        }
+
         /// <summary>A tooltip the game shows while a player's mouse is on the frame: made on the frame's layer for the frame's player (the screen's whole width, beneath the HUD, or over the HUD for a frame added with Screen.AddOver), above the frame unless the map places it, and ended with the frame; setting another ends the one before. The frame takes the mouse for it, but no event is sent, as listening to the mouse's enter and leave makes a tooltip and the cursor flicker (seen 11-03). Null unless set.</summary>
         [LocalSafe]
         public Tooltip? Tooltip
