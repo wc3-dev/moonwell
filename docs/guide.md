@@ -1400,6 +1400,36 @@ heroes.Picked += (who, hero) => who.Select(hero);
   `Orc`, `NightElf` and `Undead` show that race's to everyone. A theme is the template windows are made from and the
   colours of titles and text, so `new Theme { Window = "MyWindow" }` uses a window of the map's own `.fdf`. The build
   writes the four races' templates into a map that uses the kit, before the map's own `.fdf` files.
+- `ShopWindow` is a ready shop: `Sell(new ShopEntry { Icon, Name, Text, Cost })` puts a good in it (four a line unless
+  `Columns` is set), as an icon button with a rich tooltip, and `Remove` takes one out. A click runs `Bought` with the
+  player and the good; the shop takes no gold and gives nothing, so the map does both there. Inherit `ShopEntry` to
+  carry what is sold.
+
+  ```csharp
+  var shop = Screen.Add(new ShopWindow { Title = "Blacksmith" }, this, shownTo: buyer);
+  shop.Sell(new ShopEntry { Icon = @"ReplaceableTextures\CommandButtons\BTNSteelMelee.blp", Name = "Sword", Text = "+10 damage", Cost = 150 });
+  shop.Bought += (who, entry) =>
+  {
+      if (who.Gold >= entry.Cost)
+      {
+          who.Gold -= entry.Cost; // synced: give the item here too
+      }
+  };
+  ```
+- `SettingsWindow` is a ready settings window, one player's: a line for each setting, `Check(label, on)` a check box,
+  `Slider(label, min, max, value, step)` a slider, and `Choice(label, "Slow", "Fast")` a button that steps through
+  choices. Each gives a `Setting` with its `Value` and a `Changed` event, synced. The values are kept in the player's
+  `kit-settings.txt` (`FileName`) and come back in their next game a moment after the window is added, running
+  `Changed` once, so the map applies a setting in one place; a spoiled file, or a value out of range, is let be.
+  Reading the file needs the `Moonwell.Objects` package, as every file does.
+
+  ```csharp
+  var settings = new SettingsWindow();
+  var damage = settings.Check("Show damage numbers", on: true);
+  var zoom = settings.Slider("Camera distance", 1650f, 3000f);
+  zoom.Changed += (who, distance) => { /* synced: set that player's camera distance */ };
+  Screen.Add(settings, this, shownTo: player);
+  ```
 - Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
 ## Colours and text

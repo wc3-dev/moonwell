@@ -1518,6 +1518,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.slots", Run = KitCases.Slots });
             list.Add(new Case { Name = "kit.tooltip", Run = KitCases.RichTip });
             list.Add(new Case { Name = "kit.moved-throws", Run = KitCases.MovedThrows });
+            list.Add(new Case { Name = "kit.shop", Run = KitWindowCases.Shop });
+            list.Add(new Case { Name = "kit.settings", Run = KitWindowCases.Settings });
+            list.Add(new Case { Name = "kit.settings-spoiled", Run = KitWindowCases.SettingsSpoiled });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });
