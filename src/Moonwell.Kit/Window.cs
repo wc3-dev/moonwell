@@ -15,7 +15,6 @@ namespace Moonwell
         /// <summary>How far the body sits in from the border, and the title bar's height.</summary>
         internal const float Inset = 0.025f, BarHeight = 0.024f, BarTop = 0.014f;
 
-        /// <summary>The close button's icon.</summary>
         internal readonly Label title;
 
         /// <summary>The title bar: an icon button with no icon over the title, which takes the clicks that move the window.</summary>
