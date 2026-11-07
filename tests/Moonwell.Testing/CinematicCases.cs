@@ -47,7 +47,8 @@ namespace Moonwell.Testing
             Expect.Same(cine, Cinematic.Of(Player.One), "the cinematic player one watches");
             world.Advance(0.01f);
             Expect.Equal("start", string.Join("|", steps), "started in the instant after");
-            Expect.True(world.ScreenCalls.Contains("scene Arthas: We march at dawn. 3.5/2"), "the first line, its portrait 1.5 s longer: " + string.Join("|", world.ScreenCalls));
+            world.Advance(0.6f);
+            Expect.True(world.ScreenCalls.Contains("scene Arthas: We march at dawn. 3.5/2"), "the first line once the letterbox is in, its portrait 1.5 s longer: " + string.Join("|", world.ScreenCalls));
             world.Advance(1.9f);
             Expect.Equal("start", string.Join("|", steps), "waits for the line");
             world.Advance(0.2f);
@@ -249,13 +250,35 @@ namespace Moonwell.Testing
             steps.Add("over " + line.IsOver);
         }
 
+        /// <summary>A line said as the letterbox comes in starts once it is in, 0.6 s after Play, and lasts its time from then: said in the HUD's fade, the game shows its words and no portrait (probe, 11-07, I38).</summary>
+        public static void LineWaitsForLetterbox(FakeWorld world)
+        {
+            steps = new List<string>();
+            var footman = NewFootman(world);
+            var cine = Cinematic.Play(c => SaysOne(c, footman), Game.Instance);
+            world.Advance(0.5f);
+            Expect.True(!world.ScreenCalls.Exists(call => call.StartsWith("scene ")), "no portrait while the HUD fades: " + string.Join("|", world.ScreenCalls));
+            world.Advance(0.15f);
+            Expect.True(world.ScreenCalls.Contains("scene : Hold. 2.5/1"), "the portrait once the letterbox is in: " + string.Join("|", world.ScreenCalls));
+            world.Advance(0.9f);
+            Expect.Equal(0, steps.Count, "the line lasts its second from then");
+            world.Advance(0.2f);
+            Expect.Equal("over True", string.Join("|", steps), "then it is over");
+            var bare = Cinematic.Play(c => SaysOne(c, footman), Game.Instance, letterbox: false);
+            world.ScreenCalls.Clear();
+            world.Advance(0.01f);
+            Expect.True(world.ScreenCalls.Contains("scene : Hold. 2.5/1"), "with no letterbox, at once: " + string.Join("|", world.ScreenCalls));
+            bare.End();
+            footman.Remove();
+        }
+
         /// <summary>A scene that waited for a line reads it over when it goes on.</summary>
         public static void LineOverWhenResumed(FakeWorld world)
         {
             steps = new List<string>();
             var footman = NewFootman(world);
             Cinematic.Play(c => SaysOne(c, footman), Game.Instance);
-            world.Advance(1.1f);
+            world.Advance(1.7f);
             Expect.Equal("over True", string.Join("|", steps), "the line reads over");
             footman.Remove();
         }

@@ -1635,6 +1635,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "cinematics.skip-ends-line", Run = CinematicCases.SkipEndsLine });
             list.Add(new Case { Name = "cinematics.press-that-starts-it", Run = CinematicCases.PressThatStartsIt });
             list.Add(new Case { Name = "cinematics.line-over-when-resumed", Run = CinematicCases.LineOverWhenResumed });
+            list.Add(new Case { Name = "cinematics.line-waits-for-letterbox", Run = CinematicCases.LineWaitsForLetterbox });
             list.Add(new Case { Name = "transmissions.voice", Run = CinematicCases.TransmissionVoice });
             list.Add(new Case { Name = "cinematics.hides-over-frames", Run = CinematicCases.HidesOverFrames });
         }

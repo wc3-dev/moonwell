@@ -1362,7 +1362,10 @@ Transmission.Play(uther, "Hold the bridge!", voice);              // a line in p
   colour, its name (a hero's proper name, or `name:`) and the text, in the letterbox, and the voice. It lasts the voice's
   length, read on the first person's machine and shared, as music's lengths are; with no voice 2 s and 0.05 s a letter;
   `seconds:` sets it. The portrait stays 1.5 s more, unless the next line comes. The unit flashes red and the minimap is
-  pinged at it, as the game's transmissions do. The subtitles show whatever the player's setting.
+  pinged at it, as the game's transmissions do. The subtitles show whatever the player's setting. A line starts once
+  the letterbox is in, 0.6 s after `Play`: said while the HUD fades, the game shows its words and no portrait (seen).
+- Esc that starts a cinematic, heard by a trigger of the map's own, does not also skip it: a press in the instant the
+  cinematic starts is not counted.
 - `Transmission.Play(unit, text, voice)` says a line with no cinematic: the portrait shows in the HUD's portrait place
   (seen). `Transmission.Play<Paladin>("Uther", text)` uses a unit class's portrait, for a speaker not on the map. Both
   take `shownTo:`, and a scene can `yield return` one; `IsOver` reads whether it is over.

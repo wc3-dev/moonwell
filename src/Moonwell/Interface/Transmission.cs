@@ -138,10 +138,17 @@ namespace Moonwell
             }
         }
 
-        private void Start(float seconds)
+        private void Start(float seconds, bool waited = false)
         {
             if (line.HasEnded || length >= 0.0f)
             {
+                return;
+            }
+
+            var early = waited || !(scope is Cinematic cine) ? 0.0f : cine.UntilLetterbox();
+            if (early > 0.0f)
+            {
+                scope.OwnAfter(early, () => Start(seconds, true));
                 return;
             }
 
