@@ -1177,6 +1177,19 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   lower one) do as named. A side left at 0 keeps the size the frame's template gives, read once, when the frame is made
   (a template's size reads at once, seen), so a button given only a `Width` keeps its height; one made by its type, as
   a label is, has 0 there, and a label given only a `Width` is as tall as its lines.
+- Tweens move a value over time: `MoveTo(offset, seconds)`, `SizeTo(width, height, seconds)`, `ScaleTo`, `FadeTo` (an
+  alpha) and a label's `ColorTo`, each with an ease from `Ease` (linear unless given), and `Tween(seconds, ease, t =>
+  ...)` for anything else, given how far along it is, eased, ending with 1. A tween steps 32 times a second on every
+  machine, as a timer in the frame's scope, so it ends with the frame and goes on after a load; a new tween of a kind
+  stops the frame's last one of that kind, from where it had got to. Each gives a `Tween` with `Stop()`, `IsRunning` and
+  `Finished`, which runs once the end is reached, not when stopped. `SizeTo` grows from the size the map set, so give the
+  frame one first. Not inside `Local.For`.
+
+  ```csharp
+  toast.FadeTo(255, 0.3f).Finished += () => toast.After(2f, () => toast.FadeTo(0, 0.5f, Ease.InQuad));
+  panel.MoveTo(new Vector2(0f, -0.05f), 0.4f, Ease.OutBack);
+  icon.Tween(1f, Ease.InOutSine, t => icon.Scale = 1f + 0.2f * t);
+  ```
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
   `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
@@ -1195,6 +1208,19 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   player's machine, so the hotkeys go on (a clicked button keeps it otherwise, seen); a text box keeps it while typed in.
   Giving it back blinks the clicked frame's tooltip and the cursor once (seen). `KeepsKeyboard = true` leaves the
   keyboard with the frame instead: no blink, but the game's hotkeys stop until the player clicks the world.
+- Drag and drop is two clicks, as a frame gives no mouse down or up (seen): a click picks up a frame with `Draggable =
+  true`, and a click on a frame listened to for `Dropped` drops it there, running `Dropped` with the player and the
+  frame dropped, synced. Right-click, Esc, a click on the frame held, or a left click on anything else puts it back; a
+  click on another draggable frame picks that one up instead. A click that picks up or drops runs nothing else. While a
+  frame is held, its `DragIcon` (unless set, an icon button's `Icon` or an image's `Texture`), the frame's size or
+  0.04 square, follows that player's cursor on their screen alone; a frame with none to draw, as an empty slot, is not
+  picked up, and its click is a click. A load puts every drag back.
+
+  ```csharp
+  var sword = bag.Add(new IconButton { Icon = item.Icon, Draggable = true });
+  var hand = gear.Add(new IconButton());
+  hand.Dropped += (who, dragged) => hand.Icon = ((IconButton)dragged).Icon; // synced: safe to move the item
+  ```
 - `CheckBox` (`Checked`), `Slider` (`Min`, `Max`, `Step`, `Value`) and `TextBox` (`Text`, `MaxLength`) are one player's
   only: add them to a frame made for that player, as the shop above; a development build reports one that is not, so
   the screens never disagree. They read what their last event brought or what the map last set, the same on every
@@ -1344,6 +1370,50 @@ Transmission.Play(uther, "Hold the bridge!", voice);              // a line in p
   them from it; a scene that starts with `FadeIn` starts black. A cinematic that ends covered fades back in over 1 s.
 - `cine.Camera()`, with `Moonwell.Input`, changes the camera of every person watching, as a player's `Camera()` does.
   The camera stays where the scene left it: put it back in `Ended`.
+
+## The UI kit
+
+Add the `Moonwell.Kit` package (the template's `.csproj` has the line, commented) for UI made of parts on top of frames:
+windows, tabs, lists, icon slots and rich tooltips. Each part is a frame: set it, listen to its events, add frames to it,
+or inherit it.
+
+```csharp
+var bag = Screen.Add(new Window { Title = "Bag", Width = 0.3f, Height = 0.25f }, this, shownTo: owner);
+var tabs = bag.Add(new Tabs());
+var slots = tabs.Page("Gear").Add(new SlotGrid { Columns = 4, Rows = 3 });
+slots[0].Icon = @"ReplaceableTextures\CommandButtons\BTNSteelMelee.blp";
+slots[0].Tooltip = new RichTooltip { Icon = slots[0].Icon, Title = "Sword", Text = "+10 damage", Cost = "150 gold" };
+slots.Moved += (who, from, to) => { var icon = from.Icon; from.Icon = to.Icon; to.Icon = icon; }; // synced: move the items too
+var heroes = tabs.Page("Heroes").Add(new ScrollList<Unit> { Rows = 6 });
+heroes.Items = party;
+heroes.Show = (row, hero) => row.Text = hero.Name;
+heroes.Picked += (who, hero) => who.Select(hero);
+```
+
+- `Window` is a panel 0.3 square with a `Title`, a close button (`Closable`) that hides it and runs `Closed`, and a
+  title bar: a click on it picks the window up and the next puts it down, following that player's cursor on their
+  screen alone until then; its new place reaches every machine when it is put down, as its `Offset` from the screen's
+  centre. Only a window added to the screen moves, and `Movable = false` keeps it still. A frame added to a window with
+  no place or size of its own covers the body, below the title.
+- `Tabs` has a row of tab buttons over its pages: `Page(title)` adds one and gives its panel. The first shows unless
+  `Selected` is set; the chosen tab's button is turned off. A click on a tab shows its page and runs `Changed`.
+- `ScrollList<T>` shows `Rows` rows (8 unless set) of its `Items`, as frames cannot be clipped: the rows stay and the
+  items move through them, with the wheel or the two buttons at its side. `Show` writes an item onto its row, a button
+  (its text unless set), and `Picked` runs with a clicked row's item. After changing the list itself, call `Refresh()`.
+- `SlotGrid` is `Columns` by `Rows` icon slots (`IconSlot`, with its `Grid` and `Index`), 0.04 square unless
+  `SlotSize` is set, sized by them. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
+  which runs that grid's `Moved` with the two slots; an empty slot only takes drops. The grid keeps nothing but icons,
+  so the map moves what the slots hold.
+- `RichTooltip` is a tooltip with an `Icon`, a `Title` and a `Cost` (written as the map likes, "150 gold") over its
+  `Text`, 0.24 by 0.12 unless sized.
+- A list, tabs and every other part keeps one set of values for everyone, as frames do: a click on a tab or the wheel
+  over a list changes every player's view of it. Give each player a window of their own with `shownTo:`.
+- `Kit.Theme` sets the look of the windows and rich tooltips made from then on, and a window's `Theme` its own:
+  `Theme.PlayersRace` (unless set) is the game's window, which shows each player their own race's art; `Theme.Human`,
+  `Orc`, `NightElf` and `Undead` show that race's to everyone. A theme is the template windows are made from and the
+  colours of titles and text, so `new Theme { Window = "MyWindow" }` uses a window of the map's own `.fdf`. The build
+  writes the four races' templates into a map that uses the kit, before the map's own `.fdf` files.
+- Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
 ## Boards and dialogs
 

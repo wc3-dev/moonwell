@@ -29,6 +29,35 @@ public class FrameTests
     }
 
     [Fact]
+    public void tweens_inside_local_for_are_refused()
+    {
+        var found = MapCode.Check("""
+            var label = Screen.Add(new Label(), Game.Instance);
+            var fade = label.FadeTo(0, 1f);
+            Local.For(p, () => label.MoveTo(new Vector2(0.1f, 0f), 1f));
+            Local.For(p, () => label.Tween(1f, null, t => { }));
+            Local.For(p, () => fade.Stop());
+            Local.For(p, () => fade.Finished += () => { });
+            Local.For(p, () => { var running = fade.IsRunning; });
+            """);
+
+        Assert.Equal(new[] { "MW0001: label.MoveTo(new Vector2(0.1f, 0f), 1f)", "MW0001: label.Tween(1f, null, t => { })", "MW0001: fade.Stop()", "MW0048: fade.Finished" }, found);
+    }
+
+    [Fact]
+    public void drag_and_drop_inside_local_for_is_refused()
+    {
+        var found = MapCode.Check("""
+            var slot = Screen.Add(new IconButton(), Game.Instance);
+            Local.For(p, () => slot.Draggable = true);
+            Local.For(p, () => slot.Dropped += (who, dragged) => { });
+            Local.For(p, () => { var can = slot.Draggable; var icon = slot.DragIcon; });
+            """);
+
+        Assert.Equal(new[] { "MW0001: slot.Draggable", "MW0048: slot.Dropped" }, found);
+    }
+
+    [Fact]
     public void subscribing_inside_local_for_is_refused()
     {
         var found = MapCode.Check("""

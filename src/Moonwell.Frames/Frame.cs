@@ -271,6 +271,59 @@ namespace Moonwell
             remove { Unsubscribe(wheeled, value); }
         }
 
+        internal bool draggable;
+
+        internal string dragIcon = "";
+
+        internal List<Action<Player, Frame>>? dropped;
+
+        /// <summary>Whether a player can pick the frame up with a click, to drop it on a frame listened to for Dropped with another click (decision 210); false unless set. While it is held, its DragIcon follows that player's cursor, on their screen only. Right-click, Esc, a click on it again or a left click on anything else puts it back. A click that picks up or drops runs nothing else, as Clicked does not. A frame with no icon to draw, as an icon button with none, is not picked up: its click is a click.</summary>
+        [LocalSafe]
+        public bool Draggable
+        {
+            get { return draggable; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                draggable = value;
+                if (value)
+                {
+                    Listen(FrameEvents.Click);
+                    FramesSystem.Drags.Listen();
+                }
+            }
+        }
+
+        /// <summary>The texture that follows the cursor while the frame is held, the frame's size or 0.04 square; empty unless set, which draws an icon button's Icon or an image's Texture.</summary>
+        [LocalSafe]
+        public string DragIcon
+        {
+            get { return dragIcon; }
+            set { dragIcon = value; }
+        }
+
+        /// <summary>Runs when a player drops a frame they hold on this one, with the player and the frame dropped; the frame dropped is put back first, and a click that drops runs nothing else. Synced: a handler may change the game. Not inside Local.For.</summary>
+        public event Action<Player, Frame>? Dropped
+        {
+            add
+            {
+                Subscribe(ref dropped, value, FrameEvents.Click, FrameEvents.Click);
+                FramesSystem.Drags.Listen();
+            }
+
+            remove { Unsubscribe(dropped, value); }
+        }
+
+        /// <summary>The texture that follows the cursor while the frame is held.</summary>
+        internal virtual string DragTexture()
+        {
+            return dragIcon;
+        }
+
         /// <summary>A tooltip the game shows while a player's mouse is on the frame: made on the frame's layer for the frame's player (the screen's whole width, beneath the HUD, or over the HUD for a frame added with Screen.AddOver), above the frame unless the map places it, and ended with the frame; setting another ends the one before. The frame takes the mouse for it, but no event is sent, as listening to the mouse's enter and leave makes a tooltip and the cursor flicker (seen 11-03). Null unless set.</summary>
         [LocalSafe]
         public Tooltip? Tooltip
@@ -518,6 +571,60 @@ namespace Moonwell
             }
 
             return false;
+        }
+
+        /// <summary>Moves the frame's Offset to a new one over the seconds, eased (linear unless given): it replaces the frame's points, as setting Offset does, and stops the frame's last MoveTo.</summary>
+        public Tween MoveTo(Vector2 to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = offset;
+            return Tweened(TweenMove, seconds, ease, t => Offset = Vector2.Lerp(from, to, t));
+        }
+
+        /// <summary>Sizes the frame from the size the map gave it to a new one over the seconds, eased; it stops the frame's last SizeTo. A side the map left at 0 grows from 0, so give it a size first.</summary>
+        public Tween SizeTo(float toWidth, float toHeight, float seconds, Func<float, float>? ease = null)
+        {
+            var fromWidth = width;
+            var fromHeight = height;
+            return Tweened(TweenSize, seconds, ease, t => Size(Maths.Lerp(fromWidth, toWidth, t), Maths.Lerp(fromHeight, toHeight, t)));
+        }
+
+        /// <summary>Scales the frame to a new Scale over the seconds, eased; it stops the frame's last ScaleTo.</summary>
+        public Tween ScaleTo(float to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = scale;
+            return Tweened(TweenScale, seconds, ease, t => Scale = Maths.Lerp(from, to, t));
+        }
+
+        /// <summary>Fades the frame to a new Alpha (0 to 255) over the seconds, eased; it stops the frame's last FadeTo.</summary>
+        public Tween FadeTo(int to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = alpha;
+            return Tweened(TweenFade, seconds, ease, t => Alpha = (int)(Maths.Lerp(from, to, t) + 0.5f));
+        }
+
+        /// <summary>Runs a step with how far along it is, eased, 32 times a second for the seconds, ending with 1: for anything the named tweens do not move. It stops no other tween.</summary>
+        public Tween Tween(float seconds, Func<float, float>? ease, Action<float> step)
+        {
+            return new Tween(this, seconds, ease, step);
+        }
+
+        internal const int TweenMove = 0;
+        internal const int TweenSize = 1;
+        internal const int TweenScale = 2;
+        internal const int TweenFade = 3;
+        internal const int TweenColour = 4;
+
+        /// <summary>The last tween of each kind, by the kinds above; null until one is made.</summary>
+        internal Tween?[]? tweens;
+
+        /// <summary>Makes a tween of a kind, stopping the frame's last one of that kind.</summary>
+        internal Tween Tweened(int kind, float seconds, Func<float, float>? ease, Action<float> step)
+        {
+            tweens ??= new Tween?[5];
+            tweens[kind]?.Stop();
+            var made = new Tween(this, seconds, ease, step);
+            tweens[kind] = made;
+            return made;
         }
 
         /// <summary>Adds a frame to this one and returns it: it is made under this frame, shown to this frame's player, and ends with it. Added to a frame that has ended, it ends at once and nothing is made.</summary>

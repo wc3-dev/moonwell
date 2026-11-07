@@ -36,6 +36,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>The texture follows the cursor while the image is held, unless DragIcon is set.</summary>
+        internal override string DragTexture()
+        {
+            return dragIcon != "" ? dragIcon : texture;
+        }
+
         /// <summary>A BACKDROP, which draws a texture (seen 10-14).</summary>
         internal override string GameType => "BACKDROP";
 

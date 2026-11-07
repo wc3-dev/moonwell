@@ -265,5 +265,47 @@ namespace Moonwell.Engine
             Natives.BlzFrameSetAbsPoint(root, Natives.FRAMEPOINT_TOPRIGHT, 0.8f, 0.6f);
             return root;
         }
+
+        /// <summary>One trigger for every player slot's EVENT_PLAYER_MOUSE_UP.</summary>
+        public void ListenMouseUp(Action action)
+        {
+            var trigger = Natives.CreateTrigger();
+            for (var slot = 0; slot < Player.PlayableSlots; slot++)
+            {
+                Natives.TriggerRegisterPlayerEvent(trigger, Natives.Player(slot), Natives.EVENT_PLAYER_MOUSE_UP);
+            }
+
+            Natives.TriggerAddAction(trigger, action);
+        }
+
+        /// <summary>One trigger for every player slot's EVENT_PLAYER_END_CINEMATIC, Esc.</summary>
+        public void ListenEscape(Action action)
+        {
+            var trigger = Natives.CreateTrigger();
+            for (var slot = 0; slot < Player.PlayableSlots; slot++)
+            {
+                Natives.TriggerRegisterPlayerEvent(trigger, Natives.Player(slot), Natives.EVENT_PLAYER_END_CINEMATIC);
+            }
+
+            Natives.TriggerAddAction(trigger, action);
+        }
+
+        /// <summary>Whether the release was the left button's: BlzGetTriggerPlayerMouseButton against the game's constant.</summary>
+        public bool EventLeftButton()
+        {
+            return Natives.BlzGetTriggerPlayerMouseButton() == Natives.MOUSE_BUTTON_TYPE_LEFT;
+        }
+
+        /// <summary>The cursor's x: BlzGetMouseScreenPosX.</summary>
+        public int MouseScreenX()
+        {
+            return Natives.BlzGetMouseScreenPosX();
+        }
+
+        /// <summary>The cursor's y: BlzGetMouseScreenPosY.</summary>
+        public int MouseScreenY()
+        {
+            return Natives.BlzGetMouseScreenPosY();
+        }
     }
 }

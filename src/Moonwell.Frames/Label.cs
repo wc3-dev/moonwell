@@ -1,3 +1,5 @@
+using System;
+
 namespace Moonwell
 {
     /// <summary>
@@ -81,6 +83,18 @@ namespace Moonwell
 
         /// <summary>A TEXT, which draws its text in the game's font (seen 10-14).</summary>
         internal override string GameType => "TEXT";
+
+        /// <summary>Moves the text's Color, its alpha too, to a new one over the seconds, eased (linear unless given); it stops the label's last ColorTo.</summary>
+        public Tween ColorTo(Color to, float seconds, Func<float, float>? ease = null)
+        {
+            var from = color;
+            return Tweened(TweenColour, seconds, ease, t => Color = new Color(Mix(from.R, to.R, t), Mix(from.G, to.G, t), Mix(from.B, to.B, t), Mix(from.A, to.A, t)));
+        }
+
+        private static int Mix(int from, int to, float t)
+        {
+            return (int)(Maths.Lerp(from, to, t) + 0.5f);
+        }
 
         /// <summary>Shows a text on this machine only, inside Local.For, as for a player's own language or a number only they see. Text keeps the shared text, and setting it shows that on every machine again. Does nothing until the label is made or once it has ended.</summary>
         [MachineLocal]

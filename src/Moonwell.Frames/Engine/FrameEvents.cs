@@ -92,6 +92,12 @@ namespace Moonwell.Engine
                 return;
             }
 
+            if (kind == Click && FramesSystem.Drags.Clicked(frame, who))
+            {
+                frame.GiveKeyboardBack(who);
+                return;
+            }
+
             frame.Receive(kind, who, world.EventValue(), world.EventText());
         }
     }
