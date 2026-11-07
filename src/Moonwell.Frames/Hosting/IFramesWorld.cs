@@ -20,9 +20,6 @@ namespace Moonwell.Hosting
         /// <summary>Adds a line to a frame's text: a text area's.</summary>
         void AddFrameText(framehandle frame, string line);
 
-        /// <summary>Colours a frame's text, each channel 0 to 255.</summary>
-        void ColourFrameText(framehandle frame, int r, int g, int b, int a);
-
         /// <summary>Sets a frame's value: a slider's.</summary>
         void SetFrameValue(framehandle frame, float value);
 

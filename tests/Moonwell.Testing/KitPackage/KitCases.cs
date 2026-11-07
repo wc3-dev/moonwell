@@ -20,7 +20,7 @@ namespace Moonwell.Testing
             var fake = frames.FrameOf(window.Handle!);
             Expect.Equal("EscMenuBackdrop", fake.Template, "each player's race: the game's Esc menu window");
             Expect.Near(0.3f, fake.Width, "its width");
-            Expect.Equal("Bag", frames.FrameOf(window.title.Handle!).Text, "its title");
+            Expect.Equal("|cfffcd312Bag|r", frames.FrameOf(window.title.Handle!).Text, "its title, in the theme's gold");
             Expect.Equal(Moonwell.Image.Blank, frames.FrameOf(window.bar.iconFrame!).Texture, "the title bar draws nothing over the title");
             var close = frames.FrameOf(window.close.Handle!);
             Expect.Equal("ScriptDialogButton", close.Template, "the close button is the game's dialog button");
@@ -229,7 +229,7 @@ namespace Moonwell.Testing
             tip.Icon = "sword.blp";
             Expect.Near(Moonwell.Tooltip.Inset + RichTooltip.IconSize + 0.006f, tip.title.Offset.X, "beside the icon");
             Expect.Equal(true, tip.icon.Visible, "the icon shows");
-            Expect.Equal("150 gold", frames.FrameOf(tip.cost.Handle!).Text, "the cost");
+            Expect.Equal("|cfffcd312150 gold|r", frames.FrameOf(tip.cost.Handle!).Text, "the cost, in gold");
             Expect.Equal("+10 damage", tip.Text, "the text");
         }
 

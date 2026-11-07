@@ -45,12 +45,6 @@ namespace Moonwell.Engine
             Natives.BlzFrameAddText(frame, line);
         }
 
-        /// <summary>Colours a frame's text: BlzFrameSetTextColor with BlzConvertColor.</summary>
-        public void ColourFrameText(framehandle frame, int r, int g, int b, int a)
-        {
-            Natives.BlzFrameSetTextColor(frame, Natives.BlzConvertColor(a, r, g, b));
-        }
-
         /// <summary>Sets a frame's value: BlzFrameSetValue.</summary>
         public void SetFrameValue(framehandle frame, float value)
         {

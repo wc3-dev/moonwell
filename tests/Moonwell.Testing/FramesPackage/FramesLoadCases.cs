@@ -52,8 +52,7 @@ namespace Moonwell.Testing
             Expect.Near(0.1f, fakePanel.Points[0].X, "its offset");
             var fakeLabel = Remade(frames, label, before[1], "the label");
             Expect.Same(fakePanel, fakeLabel.Parent, "the label under the panel made again");
-            Expect.Equal("Gold", fakeLabel.Text, "its text");
-            Expect.Equal(200, fakeLabel.TextColor.G, "its colour");
+            Expect.Equal("|cffffc800Gold|r", fakeLabel.Text, "its text in its colour");
             Expect.Equal(4, fakeLabel.Horizontal, "its alignment");
             Expect.True(fakeLabel.Tip != null && !fakeLabel.Tip.Lost, "its tooltip's slot made again");
             Expect.Equal("tip", frames.FrameOf(label.Tooltip!.words.Handle!).Text, "the tooltip's text");

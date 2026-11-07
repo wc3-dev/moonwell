@@ -132,7 +132,7 @@ namespace Moonwell.Testing
             Expect.Near(0.3f, panel.Width, "its width");
             Expect.Near(0.2f, frames.FrameOf(panel.Handle!).Height, "the game's frame's height");
             Expect.Equal(0, label.Color.G, "the label's green");
-            Expect.Equal(128, frames.FrameOf(label.Handle!).TextColor.A, "the game's text alpha");
+            Expect.Equal("|cffff0000hi|r", frames.FrameOf(label.Handle!).Text, "the game's text in red");
             Expect.Near(1.0f, last, "the general one's last step");
         }
 

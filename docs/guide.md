@@ -1232,7 +1232,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 - `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
   the share of its width that `Value` is of `Min` to `Max`: the fill is as high as the bar, and its width is the share of
   the bar's `Width`, or of the frame it covers with `Fill` (or that frame covers), whose new size it follows (the game
-  gives a size from points too late to read); a label's `Color` colours its text, white unless set.
+  gives a size from points too late to read); a label's `Color` colours its text, white unless set, as a colour code
+  around it: a label lets clicks through by being turned off, and the game draws a turned-off label's text colour grey
+  (seen). Codes in the text draw over it, and its alpha is not drawn, so fade a label with `Alpha`.
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
