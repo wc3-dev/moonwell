@@ -16,14 +16,12 @@ namespace Moonwell
         internal const float Inset = 0.025f, BarHeight = 0.024f, BarTop = 0.014f;
 
         /// <summary>The close button's icon.</summary>
-        internal const string CloseIcon = @"ReplaceableTextures\CommandButtons\BTNCancel.blp";
-
         internal readonly Label title;
 
         /// <summary>The title bar: an icon button with no icon over the title, which takes the clicks that move the window.</summary>
         internal readonly IconButton bar;
 
-        internal readonly IconButton close;
+        internal readonly Button close;
 
         internal Theme theme;
 
@@ -49,7 +47,7 @@ namespace Moonwell
             bar.Attach(FramePoint.TopLeft, this, FramePoint.TopLeft, Inset + BarHeight, -BarTop);
             bar.Attach(FramePoint.TopRight, this, FramePoint.TopRight, -Inset - BarHeight, -BarTop);
             bar.Clicked += Grab;
-            close = Add(new IconButton { Icon = CloseIcon, Width = BarHeight, Height = BarHeight, Anchor = FramePoint.TopRight, Offset = new Vector2(-BarTop, -BarTop) });
+            close = Add(new Button { Text = "X", Width = BarHeight, Height = BarHeight, Anchor = FramePoint.TopRight, Offset = new Vector2(-BarTop, -BarTop) });
             close.Clicked += Close;
         }
 
