@@ -145,7 +145,9 @@ namespace Moonwell
                 return;
             }
 
-            var early = waited || !(scope is Cinematic cine) ? 0.0f : cine.UntilLetterbox();
+            // Not a pattern variable: CSharp.lua scopes one declared in a negated `is` under `||` away from the `?:` that reads it.
+            var cine = scope as Cinematic;
+            var early = waited || cine == null ? 0.0f : cine.UntilLetterbox();
             if (early > 0.0f)
             {
                 scope.OwnAfter(early, () => Start(seconds, true));
