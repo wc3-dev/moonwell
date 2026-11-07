@@ -15,6 +15,9 @@ namespace Moonwell
 
         internal Color color = Color.White;
 
+        /// <summary>The text ShowLocal shows on this machine, until Text is set; null for the shared text.</summary>
+        private string? local;
+
         /// <summary>Makes a label, to be added to the screen or to another frame.</summary>
         public Label()
         {
@@ -34,14 +37,12 @@ namespace Moonwell
                 }
 
                 text = value;
-                if (handle != null)
-                {
-                    FramesSystem.World.WriteFrameText(handle, value);
-                }
+                local = null;
+                Write();
             }
         }
 
-        /// <summary>The text's colour, its alpha the text's opacity, the same on every machine; white unless set. Colour codes in the text (B9's Text) draw over it.</summary>
+        /// <summary>The text's colour, the same on every machine; white unless set. It is a colour code around the text, as a label turned off (so clicks pass) draws the game's text colour grey (seen 11-07), and codes in the text (B9's Text) draw over it. Its alpha is not drawn: text draws solid (seen), so fade a label with Alpha.</summary>
         [LocalSafe]
         public Color Color
         {
@@ -54,10 +55,7 @@ namespace Moonwell
                 }
 
                 color = value;
-                if (handle != null)
-                {
-                    FramesSystem.World.ColourFrameText(handle, value.R, value.G, value.B, value.A);
-                }
+                Write();
             }
         }
 
@@ -84,7 +82,7 @@ namespace Moonwell
         /// <summary>A TEXT, which draws its text in the game's font (seen 10-14).</summary>
         internal override string GameType => "TEXT";
 
-        /// <summary>Moves the text's Color, its alpha too, to a new one over the seconds, eased (linear unless given); it stops the label's last ColorTo.</summary>
+        /// <summary>Moves the text's Color to a new one over the seconds, eased (linear unless given); it stops the label's last ColorTo.</summary>
         public Tween ColorTo(Color to, float seconds, Func<float, float>? ease = null)
         {
             var from = color;
@@ -102,7 +100,8 @@ namespace Moonwell
         {
             if (handle != null && !HasEnded)
             {
-                FramesSystem.World.WriteFrameText(handle, localText);
+                local = localText;
+                Write();
             }
         }
 
@@ -119,15 +118,10 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Clears an ended label's text, shared or local, when this one has none, and its colour; Place writes what this one has.</summary>
+        /// <summary>Clears an ended label's text, shared or local, with its colour, when this one has none; Place writes what this one has.</summary>
         internal override void TakeOver(Frame old)
         {
             base.TakeOver(old);
-            if (!((Label)old).color.Equals(Color.White) && color.Equals(Color.White))
-            {
-                FramesSystem.World.ColourFrameText(handle!, 255, 255, 255, 255);
-            }
-
             if (text.Length == 0)
             {
                 FramesSystem.World.WriteFrameText(handle!, "");
@@ -139,12 +133,7 @@ namespace Moonwell
         {
             if (text.Length > 0)
             {
-                FramesSystem.World.WriteFrameText(handle!, text);
-            }
-
-            if (!color.Equals(Color.White))
-            {
-                FramesSystem.World.ColourFrameText(handle!, color.R, color.G, color.B, color.A);
+                Write();
             }
 
             if (!foundInTemplate || alignment != FramePoint.TopLeft)
@@ -153,6 +142,24 @@ namespace Moonwell
             }
 
             base.Place();
+        }
+
+        /// <summary>Gives the game this machine's text in the label's colour: a code around it, again after each reset in it, as its own codes end with one.</summary>
+        private void Write()
+        {
+            if (handle == null)
+            {
+                return;
+            }
+
+            var shown = local ?? text;
+            if (!color.Equals(Color.White) && shown.Length > 0)
+            {
+                var code = "|cff" + color.ToHtml(false);
+                shown = code + shown.Replace("|r", "|r" + code).Replace("|R", "|R" + code) + "|r";
+            }
+
+            FramesSystem.World.WriteFrameText(handle, shown);
         }
 
         /// <summary>Gives the game the alignment: the point's row is the vertical, its column the horizontal.</summary>

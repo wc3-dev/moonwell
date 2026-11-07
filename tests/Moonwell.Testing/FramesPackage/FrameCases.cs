@@ -878,19 +878,30 @@ namespace Moonwell.Testing
             Expect.Near(0.1f, fill.Width, "a new range");
         }
 
-        /// <summary>A label's colour is given to the game and read back; a label given out again by the pool is white unless set.</summary>
+        /// <summary>A label's colour is a colour code around its text, as a label turned off (so clicks pass) draws the game's text colour grey (seen 11-07, I39); the label's own codes keep theirs, its machine's own text takes the colour, and a label given out again by the pool is white unless set.</summary>
         public static void LabelColour(FakeWorld world)
         {
             var frames = Installed();
             var label = Screen.Add(new Label { Text = "x", Color = Color.Red }, Game.Instance);
             var fake = frames.FrameOf(label.Handle!);
-            Expect.True(fake.TextColor.Equals(Color.Red), "red");
+            Expect.Equal("|cffff0000x|r", fake.Text, "red, by a colour code");
             Expect.True(label.Color.Equals(Color.Red), "reads red");
+            Expect.Equal("x", label.Text, "its text reads without the code");
             Expect.True(new Label().Color.Equals(Color.White), "white unless set");
+            label.Text = "a |cff00ff00b|r c";
+            Expect.Equal("|cffff0000a |cff00ff00b|r|cffff0000 c|r", fake.Text, "a code of its own draws over it, then its colour again");
+            label.ShowLocal("mine");
+            label.Color = Color.Blue;
+            Expect.Equal("|cff0000ffmine|r", fake.Text, "this machine's own text keeps it, in the new colour");
+            label.Text = "z";
+            Expect.Equal("|cff0000ffz|r", fake.Text, "the shared text again");
+            label.Color = Color.White;
+            Expect.Equal("z", fake.Text, "white has no code");
+            label.Color = Color.Red;
             label.End();
             var next = Screen.Add(new Label { Text = "y" }, Game.Instance);
             Expect.Same(label.Handle, next.Handle, "the same game frame");
-            Expect.True(fake.TextColor.Equals(Color.White), "white again");
+            Expect.Equal("y", fake.Text, "white again");
         }
 
         /// <summary>A tooltip is a bordered panel with its text, made in the frame's slot on its layer for the frame's player, shown by the game while the mouse is on the frame, above it; the frame takes the mouse for it, and is registered for no event, as that makes the tooltip and the cursor flicker (seen).</summary>

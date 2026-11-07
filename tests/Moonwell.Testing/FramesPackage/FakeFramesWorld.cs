@@ -98,12 +98,6 @@ namespace Moonwell.Testing
             fake.Text = fake.Text.Length == 0 ? line : fake.Text + "\n" + line;
         }
 
-        /// <summary>Colours a frame's text.</summary>
-        public void ColourFrameText(framehandle frame, int r, int g, int b, int a)
-        {
-            Asked(frame).TextColor = new Color(r, g, b, a);
-        }
-
         /// <summary>Sets a frame's value.</summary>
         public void SetFrameValue(framehandle frame, float value)
         {
