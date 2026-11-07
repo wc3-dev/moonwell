@@ -1498,6 +1498,15 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.load-template-parts", Run = FramesLoadCases.TemplateParts });
             list.Add(new Case { Name = "frames.load-hud", Run = FramesLoadCases.Hud });
             list.Add(new Case { Name = "frames.load-reaction", Run = FramesLoadCases.Reaction });
+            list.Add(new Case { Name = "frames.tween-moves", Run = TweenCases.Moves });
+            list.Add(new Case { Name = "frames.tween-eased", Run = TweenCases.Eased });
+            list.Add(new Case { Name = "frames.tween-new-stops-old", Run = TweenCases.NewStopsOld });
+            list.Add(new Case { Name = "frames.tween-stop", Run = TweenCases.Stop });
+            list.Add(new Case { Name = "frames.tween-ends-with-frame", Run = TweenCases.EndsWithFrame });
+            list.Add(new Case { Name = "frames.tween-no-time", Run = TweenCases.NoTime });
+            list.Add(new Case { Name = "frames.tween-size-colour-general", Run = TweenCases.SizeColourAndGeneral });
+            list.Add(new Case { Name = "frames.tween-finished-throws", Run = TweenCases.FinishedThrows });
+            list.Add(new Case { Name = "frames.tween-after-load", Run = TweenCases.AfterLoad });
             list.Add(new Case { Name = "frames.drag-pick-and-drop", Run = DragCases.PickAndDrop });
             list.Add(new Case { Name = "frames.drag-follows-cursor", Run = DragCases.FollowsCursor });
             list.Add(new Case { Name = "frames.drag-other-machine", Run = DragCases.OtherMachine });
