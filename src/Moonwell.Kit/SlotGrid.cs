@@ -159,6 +159,20 @@ namespace Moonwell
         [LocalSafe]
         public int Index { get; }
 
+        /// <summary>Swaps this slot's icon and tooltip with another slot's, as a drop's Moved handler does: the tooltips move between them and do not end (Sven, 11-07).</summary>
+        public void SwapWith(IconSlot other)
+        {
+            if (other == this || HasEnded || other.HasEnded)
+            {
+                return;
+            }
+
+            var icon = Icon;
+            Icon = other.Icon;
+            other.Icon = icon;
+            SwapTooltips(this, other);
+        }
+
         internal override string EmptyLook => Empty;
     }
 }

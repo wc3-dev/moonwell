@@ -189,6 +189,34 @@ namespace Moonwell.Testing
             Expect.Equal(IconSlot.Empty, look.Texture, "emptied, it draws as an empty slot again");
         }
 
+        /// <summary>SwapWith swaps two slots' icons and tooltips, as a drop's Moved does (Sven, 11-07, I42): a tooltip moves to the other slot, shown there and placed above it, and does not end.</summary>
+        public static void SwapWith(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = FrameCases.Installed();
+            var bag = Screen.Add(new SlotGrid { Columns = 4, Rows = 2 }, Game.Instance);
+            var sword = new RichTooltip { Title = "Sword" };
+            bag[0].Icon = "sword.blp";
+            bag[0].Tooltip = sword;
+            bag[0].SwapWith(bag[5]);
+            Expect.Equal("|sword.blp", bag[0].Icon + "|" + bag[5].Icon, "the icons swapped");
+            Expect.Same(sword, bag[5].Tooltip, "the tooltip went with the sword");
+            Expect.Same(null, bag[0].Tooltip, "the slot it left has none");
+            Expect.Equal(false, sword.HasEnded, "the tooltip did not end");
+            var five = frames.FrameOf(bag[5].Handle!);
+            var shown = FrameCases.WindowOf(frames, five);
+            Expect.True(shown != null && shown == frames.FrameOf(sword.Handle!), "shown in the slot's tooltip place");
+            FrameCases.ExpectPoint(shown!, 7, five, 1, 0.0f, 0.01f, "above its new slot");
+            Expect.True(FrameCases.WindowOf(frames, frames.FrameOf(bag[0].Handle!)) == null, "the slot it left shows none");
+            var shield = new RichTooltip { Title = "Shield" };
+            bag[0].Icon = "shield.blp";
+            bag[0].Tooltip = shield;
+            bag[5].SwapWith(bag[0]);
+            Expect.Equal("sword.blp|shield.blp", bag[0].Icon + "|" + bag[5].Icon, "swapped back");
+            Expect.True(bag[0].Tooltip == sword && bag[5].Tooltip == shield && !sword.HasEnded && !shield.HasEnded, "both tooltips moved, neither ended");
+            Expect.True(FrameCases.WindowOf(frames, five) == frames.FrameOf(shield.Handle!), "the shield's tooltip in slot 6's place");
+        }
+
         /// <summary>A rich tooltip lays its title beside its icon, or at the corner without one, and shows its cost.</summary>
         public static void RichTip(FakeWorld world)
         {

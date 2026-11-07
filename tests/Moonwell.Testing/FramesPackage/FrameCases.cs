@@ -469,7 +469,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>Checks a frame has one point: its point tied to another frame's, moved by an offset.</summary>
-        private static void ExpectPoint(FakeFrame frame, int point, FakeFrame other, int otherPoint, float x, float y, string what)
+        internal static void ExpectPoint(FakeFrame frame, int point, FakeFrame other, int otherPoint, float x, float y, string what)
         {
             Expect.Equal(1, frame.Points.Count, what + ": one point");
             Expect.Equal(point, frame.Points[0].Point, what + ": its point");
@@ -960,7 +960,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>The tooltip the game shows for a frame: the window shown in the slot the frame was given; null when there is none.</summary>
-        private static FakeFrame? WindowOf(FakeFramesWorld frames, FakeFrame frame)
+        internal static FakeFrame? WindowOf(FakeFramesWorld frames, FakeFrame frame)
         {
             var slot = frame.Tip;
             return slot == null ? null : frames.Frames.Find(f => f.Parent == slot && f.Shown);
