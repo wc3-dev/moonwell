@@ -166,6 +166,21 @@ namespace Moonwell
         /// <summary>The game's frame events, sent to the frames that own them.</summary>
         internal static FrameEvents Events => events;
 
+        /// <summary>Where this machine's cursor is, in the game's units, from its pixels from the window's top left (seen 11-07); false for a window with no size, as a minimised one. Differs between machines.</summary>
+        internal static bool CursorAt(out Vector2 at)
+        {
+            float width = World.ClientWidth();
+            float height = World.ClientHeight();
+            if (width <= 0.0f || height <= 0.0f)
+            {
+                at = Vector2.Zero;
+                return false;
+            }
+
+            at = new Vector2(0.4f + (World.MouseScreenX() / width - 0.5f) * 0.6f * width / height, 0.6f * (1.0f - World.MouseScreenY() / height));
+            return true;
+        }
+
         /// <summary>The players' drags: what each holds, and the icon that follows their cursor.</summary>
         internal static Drags Drags => drags;
 

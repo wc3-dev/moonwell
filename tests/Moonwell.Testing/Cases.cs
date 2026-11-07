@@ -1508,6 +1508,16 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.drag-icons", Run = DragCases.Icons });
             list.Add(new Case { Name = "frames.drag-dropped-throws", Run = DragCases.DroppedThrows });
             list.Add(new Case { Name = "frames.drag-empty-not-picked", Run = DragCases.EmptyNotPicked });
+            list.Add(new Case { Name = "kit.window-made", Run = KitCases.WindowMade });
+            list.Add(new Case { Name = "kit.themes", Run = KitCases.Themes });
+            list.Add(new Case { Name = "kit.close", Run = KitCases.Close });
+            list.Add(new Case { Name = "kit.body", Run = KitCases.Body });
+            list.Add(new Case { Name = "kit.move", Run = KitCases.Move });
+            list.Add(new Case { Name = "kit.tabs", Run = KitCases.TabsPages });
+            list.Add(new Case { Name = "kit.list", Run = KitCases.List });
+            list.Add(new Case { Name = "kit.slots", Run = KitCases.Slots });
+            list.Add(new Case { Name = "kit.tooltip", Run = KitCases.RichTip });
+            list.Add(new Case { Name = "kit.moved-throws", Run = KitCases.MovedThrows });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });

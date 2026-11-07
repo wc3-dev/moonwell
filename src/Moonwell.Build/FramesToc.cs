@@ -26,23 +26,52 @@ namespace Moonwell.Build
             @"UI\FrameDef\UI\QuestDialog.fdf",
         };
 
-        /// <summary>Writes the TOCs into the staged map: the game's, and the map's when its assets hold .fdf files, by their paths in the map.</summary>
-        internal static void Write(string stagedFolder, string assetsFolder)
+        /// <summary>The kit's templates' file in the map, written for a map that references Moonwell.Kit and listed first in the map's TOC, so a map's own .fdf may build on them.</summary>
+        internal const string KitFileName = "MoonwellKit.fdf";
+
+        /// <summary>The races Moonwell.Kit's Theme has a window look for, as the game's art folders name them.</summary>
+        private static readonly string[] KitRaces = { "Human", "Orc", "NightElf", "Undead" };
+
+        /// <summary>Writes the TOCs into the staged map: the game's, and the map's when the map uses the kit or its assets hold .fdf files, by their paths in the map, the kit's templates first.</summary>
+        internal static void Write(string stagedFolder, string assetsFolder, bool kit)
         {
             WriteToc(Path.Combine(stagedFolder, FileName), GameFiles);
-            if (!Directory.Exists(assetsFolder))
-            {
-                return;
-            }
-
-            var own = Directory.GetFiles(assetsFolder, "*.fdf", SearchOption.AllDirectories)
+            var own = (Directory.Exists(assetsFolder) ? Directory.GetFiles(assetsFolder, "*.fdf", SearchOption.AllDirectories) : Array.Empty<string>())
                 .Select(file => Path.GetRelativePath(assetsFolder, file).Replace('/', '\\'))
                 .OrderBy(file => file, StringComparer.Ordinal)
-                .ToArray();
-            if (own.Length > 0)
+                .ToList();
+            if (kit)
             {
-                WriteToc(Path.Combine(stagedFolder, MapFileName), own);
+                File.WriteAllBytes(Path.Combine(stagedFolder, KitFileName), Encoding.ASCII.GetBytes(KitTemplates()));
+                own.Insert(0, KitFileName);
             }
+
+            if (own.Count > 0)
+            {
+                WriteToc(Path.Combine(stagedFolder, MapFileName), own.ToArray());
+            }
+        }
+
+        /// <summary>The kit's templates: a window look for each race (MoonwellKitWindowHuman and the rest, which Moonwell.Kit's Theme names), from the game's art, war3skins.txt's EscMenuBorder and EscMenuBackground, with EscMenuBackdrop's sizes.</summary>
+        internal static string KitTemplates()
+        {
+            var text = new StringBuilder();
+            foreach (var race in KitRaces)
+            {
+                var art = @"UI\Widgets\EscMenu\" + race + @"\" + race.ToLowerInvariant() + "-options-menu-";
+                text.Append("Frame \"BACKDROP\" \"MoonwellKitWindow").Append(race).Append("\" {\r\n")
+                    .Append("    BackdropTileBackground,\r\n")
+                    .Append("    BackdropBackground  \"").Append(art).Append("background.blp\",\r\n")
+                    .Append("    BackdropCornerFlags \"UL|UR|BL|BR|T|L|B|R\",\r\n")
+                    .Append("    BackdropCornerSize  0.05,\r\n")
+                    .Append("    BackdropBackgroundSize  0.256,\r\n")
+                    .Append("    BackdropBackgroundInsets 0.01 0.01 0.01 0.01,\r\n")
+                    .Append("    BackdropEdgeFile  \"").Append(art).Append("border.blp\",\r\n")
+                    .Append("    BackdropBlendAll,\r\n")
+                    .Append("}\r\n\r\n");
+            }
+
+            return text.ToString();
         }
 
         private static void WriteToc(string path, string[] files)

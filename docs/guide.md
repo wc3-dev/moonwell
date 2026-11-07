@@ -1358,6 +1358,50 @@ Transmission.Play(uther, "Hold the bridge!", voice);              // a line in p
 - `cine.Camera()`, with `Moonwell.Input`, changes the camera of every person watching, as a player's `Camera()` does.
   The camera stays where the scene left it: put it back in `Ended`.
 
+## The UI kit
+
+Add the `Moonwell.Kit` package (the template's `.csproj` has the line, commented) for UI made of parts on top of frames:
+windows, tabs, lists, icon slots and rich tooltips. Each part is a frame: set it, listen to its events, add frames to it,
+or inherit it.
+
+```csharp
+var bag = Screen.Add(new Window { Title = "Bag", Width = 0.3f, Height = 0.25f }, this, shownTo: owner);
+var tabs = bag.Add(new Tabs());
+var slots = tabs.Page("Gear").Add(new SlotGrid { Columns = 4, Rows = 3 });
+slots[0].Icon = @"ReplaceableTextures\CommandButtons\BTNSteelMelee.blp";
+slots[0].Tooltip = new RichTooltip { Icon = slots[0].Icon, Title = "Sword", Text = "+10 damage", Cost = "150 gold" };
+slots.Moved += (who, from, to) => { var icon = from.Icon; from.Icon = to.Icon; to.Icon = icon; }; // synced: move the items too
+var heroes = tabs.Page("Heroes").Add(new ScrollList<Unit> { Rows = 6 });
+heroes.Items = party;
+heroes.Show = (row, hero) => row.Text = hero.Name;
+heroes.Picked += (who, hero) => who.Select(hero);
+```
+
+- `Window` is a panel 0.3 square with a `Title`, a close button (`Closable`) that hides it and runs `Closed`, and a
+  title bar: a click on it picks the window up and the next puts it down, following that player's cursor on their
+  screen alone until then; its new place reaches every machine when it is put down, as its `Offset` from the screen's
+  centre. Only a window added to the screen moves, and `Movable = false` keeps it still. A frame added to a window with
+  no place or size of its own covers the body, below the title.
+- `Tabs` has a row of tab buttons over its pages: `Page(title)` adds one and gives its panel. The first shows unless
+  `Selected` is set; the chosen tab's button is turned off. A click on a tab shows its page and runs `Changed`.
+- `ScrollList<T>` shows `Rows` rows (8 unless set) of its `Items`, as frames cannot be clipped: the rows stay and the
+  items move through them, with the wheel or the two buttons at its side. `Show` writes an item onto its row, a button
+  (its text unless set), and `Picked` runs with a clicked row's item. After changing the list itself, call `Refresh()`.
+- `SlotGrid` is `Columns` by `Rows` icon slots (`IconSlot`, with its `Grid` and `Index`), 0.04 square unless
+  `SlotSize` is set, sized by them. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
+  which runs that grid's `Moved` with the two slots; an empty slot only takes drops. The grid keeps nothing but icons,
+  so the map moves what the slots hold.
+- `RichTooltip` is a tooltip with an `Icon`, a `Title` and a `Cost` (written as the map likes, "150 gold") over its
+  `Text`, 0.24 by 0.12 unless sized.
+- A list, tabs and every other part keeps one set of values for everyone, as frames do: a click on a tab or the wheel
+  over a list changes every player's view of it. Give each player a window of their own with `shownTo:`.
+- `Kit.Theme` sets the look of the windows and rich tooltips made from then on, and a window's `Theme` its own:
+  `Theme.PlayersRace` (unless set) is the game's window, which shows each player their own race's art; `Theme.Human`,
+  `Orc`, `NightElf` and `Undead` show that race's to everyone. A theme is the template windows are made from and the
+  colours of titles and text, so `new Theme { Window = "MyWindow" }` uses a window of the map's own `.fdf`. The build
+  writes the four races' templates into a map that uses the kit, before the map's own `.fdf` files.
+- Events run as frames' do: synced, with the player, and not inside `Local.For`.
+
 ## Colours and text
 
 `Color` is a colour as the game takes it, each part 0 to 255: `new Color(255, 204, 0)`, `Color.FromHtml("#ffcc00")`,
