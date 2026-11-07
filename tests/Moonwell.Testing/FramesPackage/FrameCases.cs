@@ -712,6 +712,10 @@ namespace Moonwell.Testing
             Expect.Equal(1, fake.KeyboardReleases, "the keyboard given back");
             button.Icon = "x.blp";
             Expect.Equal("x.blp", icon.Texture, "a new icon");
+            button.Icon = "";
+            Expect.Equal(Moonwell.Image.Blank, icon.Texture, "no icon draws nothing, not the game's missing texture");
+            var empty = Screen.Add(new IconButton(), Game.Instance);
+            Expect.Equal(Moonwell.Image.Blank, frames.Frames.Find(f => f.Parent == frames.FrameOf(empty.Handle!) && f.Type == "BACKDROP")!.Texture, "made with no icon, it draws nothing");
         }
 
         private const int Checked = 7, TextChanged = 9, SliderChanged = 13, TextEntered = 16;
