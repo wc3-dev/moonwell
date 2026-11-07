@@ -325,7 +325,8 @@ namespace Moonwell
 
         private void Pressed(Player from)
         {
-            if (!skippable || ending || HasEnded)
+            // Before the scene's first step is the instant of Play: a press then is the one that started it from another Esc trigger.
+            if (!skippable || ending || HasEnded || steps == null)
             {
                 return;
             }

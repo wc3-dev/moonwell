@@ -41,6 +41,9 @@ namespace Moonwell
 
         private bool runOut;
 
+        // Set as the line ends, before what waited for it goes on: line.HasEnded is set only after that.
+        private bool over;
+
         private List<Action>? waiting;
 
         private Transmission(Scope scope, Unit? speaker, int typeId, int color, string? name, string text, string? voice, Player? shownTo)
@@ -62,7 +65,7 @@ namespace Moonwell
 
         /// <summary>Whether it is over: its time is up, or what held it ended.</summary>
         [LocalSafe]
-        public bool IsOver => line.HasEnded;
+        public bool IsOver => over;
 
         /// <summary>
         /// A unit says a line, with its portrait in its owner's colour, and its voice if given. The name shown is the given one,
@@ -94,7 +97,7 @@ namespace Moonwell
 
         internal override void Await(Scope waiter, Action resume)
         {
-            if (line.HasEnded)
+            if (over)
             {
                 waiter.OwnAfter(0.0f, resume);
                 return;
@@ -187,6 +190,7 @@ namespace Moonwell
         /// <summary>The line ended: its voice stops, its portrait goes at once unless its time ran out (it then stays its 1.5 s), and what waits for it goes on.</summary>
         private void Ended()
         {
+            over = true;
             if (playing != null)
             {
                 Runtime.World.StopPlaying(playing);

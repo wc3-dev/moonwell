@@ -228,6 +228,38 @@ namespace Moonwell.Testing
             footman.Remove();
         }
 
+        /// <summary>A press of Esc in the instant a cinematic starts, as when another Esc trigger started it with that press, does not skip it; the next press does (the 0.8 gate, I38).</summary>
+        public static void PressThatStartsIt(FakeWorld world)
+        {
+            steps = new List<string>();
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            var cine = Cinematic.Play(Long, Game.Instance);
+            world.Esc(Player.One);
+            Expect.Equal(false, cine.HasEnded, "the press that started it is not a skip");
+            world.Advance(0.01f);
+            Expect.Equal("start", string.Join("|", steps), "its scene started");
+            world.Esc(Player.One);
+            Expect.Equal(true, cine.IsSkipped, "the next press skips it");
+        }
+
+        private static IEnumerable<Wait> SaysOne(Cinematic cine, Unit speaker)
+        {
+            var line = cine.Say(speaker, "Hold.", seconds: 1f);
+            yield return line;
+            steps.Add("over " + line.IsOver);
+        }
+
+        /// <summary>A scene that waited for a line reads it over when it goes on.</summary>
+        public static void LineOverWhenResumed(FakeWorld world)
+        {
+            steps = new List<string>();
+            var footman = NewFootman(world);
+            Cinematic.Play(c => SaysOne(c, footman), Game.Instance);
+            world.Advance(1.1f);
+            Expect.Equal("over True", string.Join("|", steps), "the line reads over");
+            footman.Remove();
+        }
+
         /// <summary>While a cinematic's letterbox is on this screen, the frames over the HUD hide, but those made on the cinematic; the frames beneath are the game's to hide; at the end they show again.</summary>
         public static void HidesOverFrames(FakeWorld world)
         {
