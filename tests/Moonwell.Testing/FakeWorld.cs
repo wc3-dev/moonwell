@@ -1543,6 +1543,121 @@ namespace Moonwell.Testing
             return given;
         }
 
+        /// <summary>The full cooldowns set, by unit, ability and level index; 0 when none was set.</summary>
+        private readonly Dictionary<unit, Dictionary<long, float>> cooldowns = new Dictionary<unit, Dictionary<long, float>>();
+
+        /// <summary>The mana costs set, by unit, ability and level index; 0 when none was set.</summary>
+        private readonly Dictionary<unit, Dictionary<long, int>> manaCosts = new Dictionary<unit, Dictionary<long, int>>();
+
+        /// <summary>When each unit's ability's cooldown ends, in the fake's time.</summary>
+        private readonly Dictionary<unit, Dictionary<int, float>> cooldownEnds = new Dictionary<unit, Dictionary<int, float>>();
+
+        /// <summary>The ability each unit has started to cast and that has not taken effect (StartCasting), so a stop ends it inside the call, as in the game (seen 11-08).</summary>
+        private readonly Dictionary<unit, int> casting = new Dictionary<unit, int>();
+
+        /// <summary>The key of an ability's level in the cooldown and mana tables.</summary>
+        private static long LevelKey(int abilityId, int levelIndex) => ((long)abilityId * 1000) + levelIndex;
+
+        /// <summary>The full cooldown set for a unit's ability at a level; 0 when none was set.</summary>
+        public float AbilityCooldown(unit unit, int abilityId, int levelIndex)
+        {
+            return cooldowns.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var seconds) ? seconds : 0.0f;
+        }
+
+        /// <summary>Sets the full cooldown of a unit's ability at a level.</summary>
+        public void SetAbilityCooldown(unit unit, int abilityId, int levelIndex, float seconds)
+        {
+            if (!cooldowns.TryGetValue(unit, out var set))
+            {
+                set = new Dictionary<long, float>();
+                cooldowns[unit] = set;
+            }
+
+            set[LevelKey(abilityId, levelIndex)] = seconds;
+        }
+
+        /// <summary>The seconds left of a unit's ability's cooldown, from the fake's time.</summary>
+        public float AbilityCooldownLeft(unit unit, int abilityId)
+        {
+            if (!cooldownEnds.TryGetValue(unit, out var ends) || !ends.TryGetValue(abilityId, out var end))
+            {
+                return 0.0f;
+            }
+
+            return end > Time ? end - Time : 0.0f;
+        }
+
+        /// <summary>Starts a unit's ability's cooldown in place of what is left; 0 does nothing, as in the game (seen 11-08).</summary>
+        public void StartAbilityCooldown(unit unit, int abilityId, float seconds)
+        {
+            if (seconds <= 0.0f)
+            {
+                return;
+            }
+
+            if (!cooldownEnds.TryGetValue(unit, out var ends))
+            {
+                ends = new Dictionary<int, float>();
+                cooldownEnds[unit] = ends;
+            }
+
+            ends[abilityId] = Time + seconds;
+        }
+
+        /// <summary>Ends a unit's ability's cooldown.</summary>
+        public void EndAbilityCooldown(unit unit, int abilityId)
+        {
+            if (cooldownEnds.TryGetValue(unit, out var ends))
+            {
+                ends.Remove(abilityId);
+            }
+        }
+
+        /// <summary>The mana cost set for a unit's ability at a level; 0 when none was set.</summary>
+        public int AbilityManaCost(unit unit, int abilityId, int levelIndex)
+        {
+            return manaCosts.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var mana) ? mana : 0;
+        }
+
+        /// <summary>Sets the mana cost of a unit's ability at a level.</summary>
+        public void SetAbilityManaCost(unit unit, int abilityId, int levelIndex, int mana)
+        {
+            if (!manaCosts.TryGetValue(unit, out var set))
+            {
+                set = new Dictionary<long, int>();
+                manaCosts[unit] = set;
+            }
+
+            set[LevelKey(abilityId, levelIndex)] = mana;
+        }
+
+        /// <summary>A unit starts to cast an ability: the channel event, delivered when the runtime listens for spells; a stop before TakeEffect ends it with its endcast inside the stop.</summary>
+        public void StartCasting(unit unit, int abilityId, unit? target = null, float x = 0.0f, float y = 0.0f)
+        {
+            casting[unit] = abilityId;
+            if (Listening.Contains(GameEvent.Spell))
+            {
+                Inbound.SpellChannel(unit, abilityId, target, x, y);
+            }
+        }
+
+        /// <summary>The spell a unit started to cast takes effect (the effect event), when it was not stopped; whether it did.</summary>
+        public bool TakeEffect(unit unit, int abilityId, unit? target = null, float x = 0.0f, float y = 0.0f)
+        {
+            if (!casting.TryGetValue(unit, out var started) || started != abilityId)
+            {
+                return false;
+            }
+
+            casting.Remove(unit);
+            if (Listening.Contains(GameEvent.Spell))
+            {
+                Inbound.SpellEffect(unit, abilityId, target, x, y);
+            }
+
+            return true;
+        }
+
         /// <summary>Whether an ability the unit has was marked a hero skill.</summary>
         public bool IsHeroAbility(unit unit, int abilityId)
         {
@@ -2539,6 +2654,14 @@ namespace Moonwell.Testing
             if (order == "stop")
             {
                 Dummies.Stopped(unit);
+                if (casting.TryGetValue(unit, out var started))
+                {
+                    casting.Remove(unit);
+                    if (Listening.Contains(GameEvent.Spell))
+                    {
+                        Inbound.SpellEnded(unit, started);
+                    }
+                }
             }
 
             return answer;

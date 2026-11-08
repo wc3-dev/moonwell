@@ -248,6 +248,27 @@ namespace Moonwell.Hosting
         /// <summary>Sets the level of an ability on a unit, kept within the ability's levels, and answers the level it set; 0, and nothing changes, when the unit lacks the ability.</summary>
         int ChangeAbilityLevel(unit unit, int abilityId, int level);
 
+        /// <summary>The full cooldown of a unit's ability at a level counted from 0, in seconds.</summary>
+        float AbilityCooldown(unit unit, int abilityId, int levelIndex);
+
+        /// <summary>Sets the full cooldown of a unit's ability at a level counted from 0, for its next casts.</summary>
+        void SetAbilityCooldown(unit unit, int abilityId, int levelIndex, float seconds);
+
+        /// <summary>The seconds left of a unit's ability's cooldown; 0 when it is ready.</summary>
+        float AbilityCooldownLeft(unit unit, int abilityId);
+
+        /// <summary>Starts a unit's ability's cooldown for so many seconds, more than 0, in place of what is left.</summary>
+        void StartAbilityCooldown(unit unit, int abilityId, float seconds);
+
+        /// <summary>Ends a unit's ability's cooldown, making it ready.</summary>
+        void EndAbilityCooldown(unit unit, int abilityId);
+
+        /// <summary>The mana cost of a unit's ability at a level counted from 0.</summary>
+        int AbilityManaCost(unit unit, int abilityId, int levelIndex);
+
+        /// <summary>Sets the mana cost of a unit's ability at a level counted from 0, for its next casts.</summary>
+        void SetAbilityManaCost(unit unit, int abilityId, int levelIndex, int mana);
+
         /// <summary>Whether an ability the unit has is a hero skill; false when the unit lacks it.</summary>
         bool IsHeroAbility(unit unit, int abilityId);
 

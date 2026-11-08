@@ -36,6 +36,9 @@ namespace Moonwell
         /// <summary>The cast the unit is making now, which ends when its spell ends or its next cast begins; null when none.</summary>
         internal Cast? ActiveCast;
 
+        /// <summary>The cast the unit has started and that has not yet taken effect (decision 225); null when none.</summary>
+        internal Cast? Starting;
+
         /// <summary>The components the class starts with, added in order when the unit enters. Assigning a new list drops what a parent class listed.</summary>
         protected List<UnitComponent> Components { get; set; } = new List<UnitComponent>();
 
