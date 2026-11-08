@@ -19,6 +19,7 @@ namespace Moonwell.Testing
             AddSounds(list);
             AddQuestsAndCinematics(list);
             AddBoardsAndDialogs(list);
+            AddStatsAndScores(list);
             AddUnitAbilities(list);
             AddSummons(list);
             AddLast(list);
@@ -1663,6 +1664,16 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dialogs.click", Run = BoardCases.Dialogs });
             list.Add(new Case { Name = "dialogs.queue", Run = BoardCases.DialogQueue });
             list.Add(new Case { Name = "dialogs.ends", Run = BoardCases.DialogEnds });
+        }
+
+        /// <summary>Adds the stat and score cases.</summary>
+        private static void AddStatsAndScores(List<Case> list)
+        {
+            list.Add(new Case { Name = "stats.own", Run = StatCases.Own });
+            list.Add(new Case { Name = "stats.refused", Run = StatCases.Refused });
+            list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
+            list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
+            list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
         }
 
         /// <summary>The summons' cases (decision 227).</summary>
