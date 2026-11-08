@@ -593,6 +593,44 @@ public override void OnUnitDied(Unit dyingUnit, Unit? killerUnit)
 `Kills[player]` reads it, 0 until counted, and `Set` sets it. Scores and stats are not saved by themselves: a save class
 copies what it keeps ([Saves](#saves)). The game's own counts stay on its score screen, which a map cannot add to.
 
+## Spells
+
+A spell is an ability class: the game keeps its button, targeting, mana and cooldown, and the class adds what the
+game cannot. `OnCasting` runs as the caster starts to cast, before anything is spent, and can refuse the cast;
+`OnCast` runs when it takes effect; `OnFinished` only when it runs to its end.
+
+```csharp
+public sealed class Execute : Creeps.Abilities.Channel
+{
+    public override void OnCasting(Cast cast)
+    {
+        if (cast.Target!.Life > cast.Target.MaxLife / 2)
+        {
+            cast.Refuse("Target must be below half life"); // the game's error line; no mana, cooldown or effect
+        }
+    }
+
+    public override void OnCast(Cast cast) => cast.Caster.Damage(cast.Target!, 500f);
+
+    public override void OnFinished(Cast cast) => cast.Caster.Owner.Print("The channel ran its whole time.");
+}
+
+hero.AbilityOf<Execute>().ResetCooldown();
+```
+
+- `OnCasting` gets the cast `OnCast` gets later, with its target, place and level. `cast.Refuse(text)` stops the
+  caster, shows the text to its owner where the game shows its errors, with the sound, and spends nothing; empty text
+  shows no line. Anywhere but `OnCasting` it is too late, and a development build reports it.
+- A cast stopped before it takes effect ends with no `OnCast`. `OnFinished` runs before the cast ends, when a channel
+  ran its whole time or another spell its casting animation; one stopped early, by a stun, an order or a death, ends
+  without it.
+- These run on the ability class only, not on the caster's components or the game's, and a dummy's cast runs none.
+- Cooldown and mana, per unit: `CooldownLeft` reads what is left; `StartCooldown(seconds)` starts it at any length,
+  shown on the button, and 0 makes the spell ready, as `ResetCooldown()` does. `LiveCooldown` and `LiveManaCost` read
+  and set the full cooldown and the cost at the ability's level now, for its next casts, where the declared fields
+  `Cooldown` and `ManaCost` set every unit's in the constructor; a level gained later has its own. On a unit without
+  the ability they read 0 and setting does nothing; a development build reports it.
+
 ## Casting real spells
 
 A unit, or a player with no unit, casts any spell through a hidden dummy: a Storm Bolt from a hero's passive, a trap's

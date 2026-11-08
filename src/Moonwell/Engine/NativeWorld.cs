@@ -121,7 +121,9 @@ namespace Moonwell.Engine
                     Register(Natives.EVENT_PLAYER_UNIT_DEATH, DeathAction);
                     break;
                 case GameEvent.Spell:
+                    Register(Natives.EVENT_PLAYER_UNIT_SPELL_CHANNEL, SpellChannelAction);
                     Register(Natives.EVENT_PLAYER_UNIT_SPELL_EFFECT, SpellEffectAction);
+                    Register(Natives.EVENT_PLAYER_UNIT_SPELL_FINISH, SpellFinishedAction);
                     Register(Natives.EVENT_PLAYER_UNIT_SPELL_ENDCAST, SpellEndedAction);
                     break;
                 case GameEvent.PickUp:
@@ -965,6 +967,48 @@ namespace Moonwell.Engine
         public int ChangeAbilityLevel(unit unit, int abilityId, int level)
         {
             return Natives.SetUnitAbilityLevel(unit, abilityId, level);
+        }
+
+        /// <summary>The full cooldown of a unit's ability at a level.</summary>
+        public float AbilityCooldown(unit unit, int abilityId, int levelIndex)
+        {
+            return Natives.BlzGetUnitAbilityCooldown(unit, abilityId, levelIndex);
+        }
+
+        /// <summary>Sets the full cooldown of a unit's ability at a level.</summary>
+        public void SetAbilityCooldown(unit unit, int abilityId, int levelIndex, float seconds)
+        {
+            Natives.BlzSetUnitAbilityCooldown(unit, abilityId, levelIndex, seconds);
+        }
+
+        /// <summary>The seconds left of a unit's ability's cooldown.</summary>
+        public float AbilityCooldownLeft(unit unit, int abilityId)
+        {
+            return Natives.BlzGetUnitAbilityCooldownRemaining(unit, abilityId);
+        }
+
+        /// <summary>Starts a unit's ability's cooldown, shown on its button (seen 11-08).</summary>
+        public void StartAbilityCooldown(unit unit, int abilityId, float seconds)
+        {
+            Natives.BlzStartUnitAbilityCooldown(unit, abilityId, seconds);
+        }
+
+        /// <summary>Ends a unit's ability's cooldown.</summary>
+        public void EndAbilityCooldown(unit unit, int abilityId)
+        {
+            Natives.BlzEndUnitAbilityCooldown(unit, abilityId);
+        }
+
+        /// <summary>The mana cost of a unit's ability at a level.</summary>
+        public int AbilityManaCost(unit unit, int abilityId, int levelIndex)
+        {
+            return Natives.BlzGetUnitAbilityManaCost(unit, abilityId, levelIndex);
+        }
+
+        /// <summary>Sets the mana cost of a unit's ability at a level.</summary>
+        public void SetAbilityManaCost(unit unit, int abilityId, int levelIndex, int mana)
+        {
+            Natives.BlzSetUnitAbilityManaCost(unit, abilityId, levelIndex, mana);
         }
 
         /// <summary>Gives a unit the summoned type, so dispels hurt it as the game's summons (seen 11-08).</summary>
@@ -2373,6 +2417,37 @@ namespace Moonwell.Engine
         public int BagSizeOf(unit unit)
         {
             return Natives.UnitExtendedInventorySize(unit);
+        }
+
+        /// <summary>Hands the start of a spell's cast to Inbound.</summary>
+        private static void SpellChannelAction()
+        {
+            try
+            {
+                Inbound.SpellChannel(
+                    Natives.GetSpellAbilityUnit(),
+                    Natives.GetSpellAbilityId(),
+                    Natives.GetSpellTargetUnit(),
+                    Natives.GetSpellTargetX(),
+                    Natives.GetSpellTargetY());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.SpellChannel", error);
+            }
+        }
+
+        /// <summary>Hands a spell that ran to its end to Inbound.</summary>
+        private static void SpellFinishedAction()
+        {
+            try
+            {
+                Inbound.SpellFinished(Natives.GetSpellAbilityUnit(), Natives.GetSpellAbilityId());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.SpellFinished", error);
+            }
         }
 
         /// <summary>Hands a sale or a pawn to Selling.</summary>
