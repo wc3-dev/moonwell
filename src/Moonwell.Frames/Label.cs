@@ -16,7 +16,7 @@ namespace Moonwell
         internal Color color = Color.White;
 
         /// <summary>The text ShowLocal shows on this machine, until Text is set; null for the shared text.</summary>
-        private string? local;
+        internal string? local;
 
         /// <summary>Makes a label, to be added to the screen or to another frame.</summary>
         public Label()
