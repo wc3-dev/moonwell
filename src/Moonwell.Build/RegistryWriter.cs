@@ -11,7 +11,7 @@ namespace Moonwell.Build
         /// <summary>
         /// Writes <c>ObjectRegistry.g.cs</c> into the project's generated folder: <c>Moonwell.Generated.ObjectRegistry.Register()</c>
         /// gives each used class that has an object its id (a declared class its own, a standard class its standard id), then
-        /// registers how units, items, destructables and abilities of each are made, and each declared buff's display. A
+        /// registers how units, items, destructables, abilities and upgrades of each are made, and each declared buff's display. A
         /// <c>[Replaces]</c> class is made at the standard id instead of the standard class, which keeps the id only.
         /// </summary>
         /// <param name="project">The map project.</param>
@@ -114,6 +114,8 @@ namespace Moonwell.Build
                     return "Destructable";
                 case "ability":
                     return "Ability";
+                case "upgrade":
+                    return "Upgrade";
                 default:
                     return null;
             }

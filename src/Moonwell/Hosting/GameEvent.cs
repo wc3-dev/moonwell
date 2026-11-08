@@ -47,5 +47,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A unit summons another with the game's spell.</summary>
         Summon,
+
+        /// <summary>A building starts, cancels or finishes a research.</summary>
+        Research,
     }
 }

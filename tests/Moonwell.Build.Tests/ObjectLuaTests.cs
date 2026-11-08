@@ -763,6 +763,7 @@ namespace Moonwell.Build.Tests
             Assert.Contains($"global::Moonwell.ObjectTypes.Destructable<global::Objects.Gate>(global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Gate"]}\"), () => new global::Objects.Gate());", registry);
             Assert.Contains($"global::Moonwell.ObjectTypes.Id<global::Objects.Rock>(global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Rock"]}\"));", registry);
             Assert.Contains($"global::Moonwell.ObjectTypes.Id<global::Objects.Forge>(global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Forge"]}\"));", registry);
+            Assert.Contains($"global::Moonwell.ObjectTypes.Upgrade<global::Objects.Forge>(global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Forge"]}\"), () => new global::Objects.Forge());", registry);
             Assert.Contains($"global::Moonwell.ObjectTypes.Id<global::Objects.Burn>(global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Burn"]}\"));", registry);
             Assert.Contains($"global::Moonwell.ObjectTypes.BuffDisplay<global::Objects.Burn>(global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Burn"]}\"), global::Moonwell.ObjectTypes.FourCC(\"{ids["Objects.Burn#carrier"]}\"));", registry);
 
