@@ -154,5 +154,108 @@ namespace Moonwell.Testing
 
             return kids;
         }
+
+        private sealed class Toughness : Talent
+        {
+            public Toughness()
+            {
+                Name = "Toughness";
+                Icon = "toughness.blp";
+                Text = "+2 armor a rank.";
+                MaxRank = 2;
+            }
+
+            protected override void OnRankChanged()
+            {
+                Hero.Modify(Stat.Armor, 2.0f * Rank, heldBy: RankScope);
+            }
+        }
+
+        private sealed class Cleave : Talent
+        {
+            public Cleave()
+            {
+                Name = "Cleave";
+                Row = 1;
+                Column = 1;
+                Needs<Toughness>(2);
+            }
+        }
+
+        /// <summary>A scoreboard has a header, a team line with totals when a team has more than one player, and a row per player sorted by the first number column; a score column follows its score, SortBy picks another, and its end lets go of the score.</summary>
+        public static void Scoreboard(FakeWorld world)
+        {
+            FrameCases.Installed();
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            world.SetSlot(1, SlotState.Playing, Controller.User);
+            world.SetSlot(2, SlotState.Playing, Controller.Computer);
+            var kills = new Score("Kills");
+            var board = Screen.Add(new Scoreboard(), Game.Instance);
+            board.Column(kills);
+            board.Column("Gold", who => who.Slot * 10);
+            board.Column("Hero", who => "Paladin");
+            Expect.Equal("Player", board.cells[0].Text, "the header");
+            Expect.Equal("Gold", board.cells[2].Text, "a column's name");
+            Expect.Equal(5 * 4, board.cells.Count, "a header, a team line and three players");
+            Expect.Equal("0", board.cells[4 + 1].Text, "the team's kills");
+            Expect.Equal("30", board.cells[4 + 2].Text, "the team's gold");
+            Expect.Equal("", board.cells[4 + 3].Text, "no total of a text");
+            kills.Add(Player.Two, 3);
+            kills.Add(Player.Three, 1);
+            Expect.Equal(Player.Two.ColoredName, board.cells[8].Text, "most kills first, at once");
+            Expect.Equal("3", board.cells[9].Text, "their kills");
+            Expect.Equal("Paladin", board.cells[11].Text, "a text column");
+            Expect.Equal("4", board.cells[5].Text, "the team's total");
+            world.MoveToTeam(Player.Two.Handle, 1);
+            world.MoveToTeam(Player.Three.Handle, 2);
+            board.SortBy("Gold");
+            Expect.Equal(4 * 4, board.cells.Count, "no team lines once each team has one player");
+            Expect.Equal(Player.Three.ColoredName, board.cells[4].Text, "the most gold first");
+            Expect.Near(2.0f * Window.Inset + Moonwell.Scoreboard.NameWidth + 3 * Moonwell.Scoreboard.ValueWidth, board.Width, "sized to the columns");
+            board.End();
+            Expect.Equal(0, kills.changed!.Count, "the score let go");
+        }
+
+        /// <summary>A talent tree learns a rank on its hero's owner's click when the hero has a point, the row is open and the talent needed is at its rank; a talent's modifiers last a rank; Ranks, Reset and Restore keep, give back and bring back the ranks.</summary>
+        public static void Talents(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var handle = world.NewUnit(ObjectTypes.FourCC("Hpal"), hero: true);
+            var hero = (Hero)Unit.Of(handle)!;
+            world.SetArmor(handle, 4.0f);
+            var tree = Screen.Add(new TalentWindow(hero), Game.Instance, shownTo: Player.One);
+            tree.PointsPerRow = 2;
+            tree.Add(() => new Toughness());
+            tree.Add(() => new Cleave());
+            var heard = new List<string>();
+            tree.Learned += (who, talent) => heard.Add(talent.Name + " " + talent.Rank);
+            ClickOn(frames, tree.buttons[0], 0);
+            Expect.Equal(0, tree.Ranks()[0], "no point, nothing learned");
+            tree.Points = 3;
+            ClickOn(frames, tree.buttons[1], 0);
+            Expect.Equal(0, tree.Ranks()[1], "row 1 is shut and Toughness is not at 2");
+            Expect.True(((RichTooltip)tree.buttons[1].Tooltip!).Text.Contains("Needs Toughness 2"), "the tooltip says what it needs");
+            ClickOn(frames, tree.buttons[0], 0);
+            Expect.Near(6.0f, world.ArmorOf(handle), "rank 1");
+            ClickOn(frames, tree.buttons[0], 1);
+            Expect.Equal(1, tree.Ranks()[0], "another player's click learns nothing");
+            ClickOn(frames, tree.buttons[0], 0);
+            ClickOn(frames, tree.buttons[0], 0);
+            Expect.Near(8.0f, world.ArmorOf(handle), "rank 2 replaces rank 1's modifier");
+            Expect.Equal("2/2", tree.rankLabels[0].Text, "the rank shown");
+            ClickOn(frames, tree.buttons[1], 0);
+            Expect.Equal("2 1", string.Join(" ", tree.Ranks()), "Cleave learned once open");
+            Expect.Equal(0, tree.Points, "every point spent");
+            Expect.Equal("Toughness 1, Toughness 2, Cleave 1", string.Join(", ", heard), "Learned after each rank");
+            Expect.True(hero.Has<Cleave>(), "a learned talent is on the hero");
+            tree.Reset();
+            Expect.Equal(3, tree.Points, "the points back");
+            Expect.Near(4.0f, world.ArmorOf(handle), "the modifiers off");
+            Expect.True(!hero.Has<Toughness>(), "the talents off the hero");
+            tree.Restore(new List<int> { 2, 1 });
+            Expect.Equal("2 1", string.Join(" ", tree.Ranks()), "the ranks back");
+            Expect.Near(8.0f, world.ArmorOf(handle), "and their modifiers");
+            Expect.Equal(3, tree.Points, "points as they were");
+        }
     }
 }
