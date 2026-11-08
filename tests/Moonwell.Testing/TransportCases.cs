@@ -81,6 +81,24 @@ namespace Moonwell.Testing
             Expect.Same(null, other.Transport, "and has no transport");
         }
 
+        /// <summary>The unit pool keeps neither a pooled unit inside a transport nor a pooled transport carrying units (decisions 219 and 220): either would come out of the pool still loaded.</summary>
+        public static void PoolSkipsTransports(FakeWorld world)
+        {
+            var footman = ObjectTypes.FourCC("hfoo");
+            ObjectTypes.Pooled(footman);
+            Moonwell.Runtime.ListenForTransports();
+            var zeppelin = Unit.Create(footman, Player.Get(0), 0.0f, 0.0f, Game.Instance);
+            var inside = Unit.Create(footman, Player.Get(0), 0.0f, 0.0f, Game.Instance);
+            var aboard = Unit.Create(footman, Player.Get(0), 0.0f, 0.0f, Game.Instance);
+            world.Load(inside.Handle, zeppelin.Handle);
+            world.Load(aboard.Handle, zeppelin.Handle);
+            inside.Remove();
+            zeppelin.Remove();
+
+            Expect.Equal(0, world.PutAwayUnits.Count, "nothing kept");
+            Expect.Equal(true, world.RemovedUnits.Contains(inside.Handle), "the loaded unit removed");
+        }
+
         /// <summary>The cargo capacity reads and sets the game's; Load, Unload and UnloadAll are the game's orders.</summary>
         public static void CapacityAndOrders(FakeWorld world)
         {

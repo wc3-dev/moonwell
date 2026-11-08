@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport });
                 }
 
                 return componentHooks;
@@ -68,6 +68,12 @@ namespace Moonwell
 
         /// <summary>Runs when the unit is given an order, after its class has heard it; <c>order.Cancel()</c> refuses it, and an order given here replaces it.</summary>
         public virtual void OnOrdered(Order order)
+        {
+        }
+
+        /// <summary>Runs when the unit summons another, after its class has seen it (see Unit.OnSummon).</summary>
+        /// <param name="summonedUnit">The unit summoned.</param>
+        public virtual void OnSummon(Unit summonedUnit)
         {
         }
 

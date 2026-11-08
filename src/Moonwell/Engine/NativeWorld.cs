@@ -180,6 +180,9 @@ namespace Moonwell.Engine
                     Register(Natives.EVENT_PLAYER_UNIT_SELECTED, () => SelectionAction(true));
                     Register(Natives.EVENT_PLAYER_UNIT_DESELECTED, () => SelectionAction(false));
                     break;
+                case GameEvent.Summon:
+                    Register(Natives.EVENT_PLAYER_UNIT_SUMMON, SummonAction);
+                    break;
             }
         }
 
@@ -753,6 +756,21 @@ namespace Moonwell.Engine
             Natives.SetUnitOwner(unit, player, true);
         }
 
+        /// <summary>ShowUnit.</summary>
+        public void SetUnitShown(unit unit, bool shown)
+        {
+            Natives.ShowUnit(unit, shown);
+        }
+
+        /// <summary>Stops the unit, takes its buffs off, gives it to the keeper and hides it.</summary>
+        public void PutAway(unit unit, player keeper)
+        {
+            Natives.IssueImmediateOrder(unit, "stop");
+            Natives.UnitRemoveBuffs(unit, true, true);
+            Natives.SetUnitOwner(unit, keeper, false);
+            Natives.ShowUnit(unit, false);
+        }
+
         /// <summary>The level a player has of an upgrade; 0 when the player has none.</summary>
         public int UpgradeLevel(player p, int upgradeId)
         {
@@ -929,6 +947,18 @@ namespace Moonwell.Engine
         public int ChangeAbilityLevel(unit unit, int abilityId, int level)
         {
             return Natives.SetUnitAbilityLevel(unit, abilityId, level);
+        }
+
+        /// <summary>Gives a unit the summoned type, so dispels hurt it as the game's summons (seen 11-08).</summary>
+        public void MakeSummoned(unit unit)
+        {
+            Natives.UnitAddType(unit, Natives.UNIT_TYPE_SUMMONED);
+        }
+
+        /// <summary>Gives a unit the game's timed life, with its bar, which kills it with no killer when it runs out (seen 11-08).</summary>
+        public void ApplyTimedLife(unit unit, float seconds)
+        {
+            Natives.UnitApplyTimedLife(unit, ObjectTypes.FourCC("BTLF"), seconds);
         }
 
         /// <summary>Whether an ability the unit has is a hero skill, by its hero ability field.</summary>
@@ -2227,6 +2257,19 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Ordered", error);
+            }
+        }
+
+        /// <summary>Hands a summon to Inbound.</summary>
+        private static void SummonAction()
+        {
+            try
+            {
+                Summoning.FromGame(Natives.GetSummoningUnit(), Natives.GetSummonedUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Summon", error);
             }
         }
 

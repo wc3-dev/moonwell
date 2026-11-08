@@ -74,6 +74,13 @@ namespace Moonwell
             });
         }
 
+        /// <summary>Marks a unit type pooled: its [Pooled] class's units are kept when they end and given out again (decision 220).</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Pooled(int id)
+        {
+            UnitPool.Mark(id);
+        }
+
         /// <summary>Registers an item type with its id and the function that makes its object, and listens for the events its class needs.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Item<T>(int id, Func<T> make)

@@ -199,6 +199,13 @@ public sealed class Champion : Human.Units.Paladin
   `Destructable.Create<Gate>(x, y, scope)` a destructable, facing 270 degrees, at scale 1 and in its type's first model
   (variation 0) unless they follow. `new Champion()` gives an object with nothing in the game behind it, and is error
   MW0046.
+- `[Pooled]` on a unit class keeps its units when they end (`Remove()`, or their scope ending) hidden, and
+  `Unit.Create` gives a kept one out again, as a new object of the class: making a unit costs the game about ten times
+  what hiding, moving and showing one does (0.4 ms against 0.04), which shows when a wave of units comes at once. A
+  kept unit has its items removed and its buffs taken off, and comes out with its life and mana as made; anything else
+  code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero, an
+  illusion, a unit inside a transport and a transport carrying units are never kept,
+  and `[Pooled]` on a hero class fails the build.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -569,6 +576,40 @@ Player.NeutralAggressive.CastAt<Human.Abilities.FlameStrike>(x, y, Game.Instance
   from `Unit.Of`. A dummy keeps its player until its spell is over (its channel, its duration and its missile's
   flight), as a hit names its source when it lands, and goes with its unit when the unit changes hands.
 - The calls change what every machine shares, so they are not for `Local.For`.
+
+## Summons
+
+`unit.Summon<T>(x, y, seconds, scope)` makes a unit of class `T` for the unit's player, as the game's summons are: it
+has the summoned type, so a dispel hurts it (Dispel Magic took 200 life), and with seconds above 0 the game's timed
+life and its bar, which kills it with no killer when it runs out. `Summon(typeId, ...)` takes an id.
+
+```csharp
+public sealed class CallWolves : Creeps.Abilities.Channel
+{
+    public override void OnCast(Cast cast)
+    {
+        // At most three wolves from one shaman: a fourth kills the oldest. They die with him too.
+        cast.Caster.Summon<SpiritWolf>(cast.X, cast.Y, 60f, this, limit: 3, diesWithSummoner: true);
+    }
+}
+
+public sealed class Howl : GameComponent
+{
+    public override void OnUnitSummoned(Unit summoningUnit, Unit summonedUnit) => summoningUnit.Owner.Print("A summon!");
+}
+```
+
+- `summon.Summoner` is the unit that summoned it, and `unit.Summons` the living ones it summoned, oldest first. The
+  game's own summons (a Water Elemental, Feral Spirit's wolves, an illusion) are linked too, from the game's summon
+  event, once the map's code reads `Summoner` or `Summons` or a reaction below is written; a dummy's spell links them
+  to the unit it cast for.
+- A summon dies when its scope ends, as when its time runs out, and leaves its corpse; it is not removed. Made in a
+  scope that has ended, it dies at once and runs no reaction. With `diesWithSummoner: true` it dies when its summoner
+  dies or leaves the game; otherwise it lives on, as a Water Elemental outlives its Archmage.
+- `limit:` above 0 keeps at most that many of the class from that summoner: a summon past it kills the oldest.
+- `OnSummon(Unit summonedUnit)` runs on the summoner's class, then its components, then `OnUnitSummoned(summoningUnit,
+  summonedUnit)` on the game's components and the summoner's player's, for a summon by code or by the game. The summon's
+  own `OnCreated` and `OnUnitCreated` run first, while its `Summoner` is still null.
 
 ## Special effects
 

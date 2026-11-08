@@ -41,8 +41,8 @@ namespace Moonwell
                 return existing;
             }
 
-            // A unit the runtime removed is not taken in again, though its type id still reads in that frame.
-            if (removed.ContainsKey(handle) || failed.Contains(handle))
+            // A unit the runtime removed is not taken in again, though its type id still reads in that frame, nor one the pool keeps.
+            if (removed.ContainsKey(handle) || failed.Contains(handle) || UnitPool.Holds(handle))
             {
                 return null;
             }
@@ -149,7 +149,7 @@ namespace Moonwell
         }
 
         /// <summary>Forgets a unit that is ending, as it leaves the game, so that its handle makes no object again. A handle whose type id still reads (the runtime removed the unit in this frame) is kept in removed until the sweep reads its type id 0.</summary>
-        internal static void Forget(Unit unit)
+        internal static void Forget(Unit unit, bool kept = false)
         {
             Live.Remove(unit);
             if (unit.Handle == null)
@@ -158,7 +158,8 @@ namespace Moonwell
             }
 
             known.Remove(unit.Handle);
-            if (Runtime.World.UnitTypeId(unit.Handle) != 0)
+            // A unit the pool keeps is taken in again, as a new object, when Unit.Create gives it out.
+            if (!kept && Runtime.World.UnitTypeId(unit.Handle) != 0)
             {
                 removed[unit.Handle] = unit;
             }
