@@ -41,5 +41,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A player changes what it gives another.</summary>
         Alliance,
+
+        /// <summary>A unit summons another with the game's spell.</summary>
+        Summon,
     }
 }
