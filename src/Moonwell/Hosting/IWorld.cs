@@ -755,6 +755,15 @@ namespace Moonwell.Hosting
         /// <summary>Destroys a dialog and its buttons' triggers.</summary>
         void EndDialog(dialog dialog);
 
+        /// <summary>Whether a unit is in a transport: IsUnitLoaded.</summary>
+        bool IsLoaded(unit unit);
+
+        /// <summary>The Cargo Capacity of the unit's cargo hold, the first of its abilities that has one; 0 for a unit with none.</summary>
+        int CargoCapacity(unit unit);
+
+        /// <summary>Sets the Cargo Capacity of the unit's cargo hold, for this unit alone; nothing for a unit with none.</summary>
+        void SetCargoCapacity(unit unit, int capacity);
+
         /// <summary>A whole number from low to high, both included, from the game's random numbers, which every machine shares.</summary>
         int RandomBetween(int low, int high);
     }

@@ -42,6 +42,7 @@ namespace Moonwell
         /// </summary>
         internal static void Ordered(unit handle, int id, OrderKind kind, float x, float y, unit? targetUnit, item? targetItem, destructable? targetDestructable, int queue)
         {
+            CheckUnloaded(handle);
             if (handle == ownOrder || id == UndefendOrder || (KnownUnits.Find(handle) == null && !Events.Wants(Hook.OnUnitOrdered)))
             {
                 return;

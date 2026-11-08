@@ -494,6 +494,31 @@ comment.
 
 A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
 
+### Transports
+
+A unit loaded into a zeppelin, a ship or a burrow runs `OnLoaded(transport)`, then its components, then the
+transport's `OnCargoLoaded(cargo)` and its components, then `OnUnitLoaded(cargo, transport)` on the game's components
+and on the cargo's player's. Coming out runs `OnUnloaded`, `OnCargoUnloaded` and `OnUnitUnloaded` the same way: for an
+unload, an unload all, and a transport that dies or is removed, which puts its cargo down alive where it was. The game
+has no unload event; Moonwell sees it from the order the game gives the cargo as it comes out. A unit that dies or is
+removed inside runs no unload reaction.
+
+`unit.Transport` is the transport carrying it, or null, and `transport.Cargo` the units aboard in the order they were
+loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
+read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
+zeppelin). `transport.Load(unit)`, `Unload(unit)` and `UnloadAll(x, y)` are the game's orders.
+
+```csharp
+public sealed class Ferry : Unit
+{
+    public override void OnCargoLoaded(Unit loadedUnit)
+    {
+        Owner.Print(Cargo.Count + " aboard");
+        if (Cargo.Count == CargoCapacity) UnloadAll(4000f, 0f);
+    }
+}
+```
+
 ## Casting real spells
 
 A unit, or a player with no unit, casts any spell through a hidden dummy: a Storm Bolt from a hero's passive, a trap's

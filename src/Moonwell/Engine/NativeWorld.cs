@@ -173,10 +173,26 @@ namespace Moonwell.Engine
                 case GameEvent.OwnerChange:
                     Register(Natives.EVENT_PLAYER_UNIT_CHANGE_OWNER, OwnerChangeAction);
                     break;
+                case GameEvent.Cargo:
+                    Register(Natives.EVENT_PLAYER_UNIT_LOADED, CargoAction);
+                    break;
                 case GameEvent.Selection:
                     Register(Natives.EVENT_PLAYER_UNIT_SELECTED, () => SelectionAction(true));
                     Register(Natives.EVENT_PLAYER_UNIT_DESELECTED, () => SelectionAction(false));
                     break;
+            }
+        }
+
+        /// <summary>Hands a unit loaded into a transport to Inbound.</summary>
+        private static void CargoAction()
+        {
+            try
+            {
+                Inbound.Loaded(Natives.GetLoadedUnit(), Natives.GetTransportUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Loaded", error);
             }
         }
 
@@ -2061,6 +2077,48 @@ namespace Moonwell.Engine
 
         /// <summary>GetRandomInt.</summary>
         public int RandomBetween(int low, int high) => Natives.GetRandomInt(low, high);
+
+        /// <summary>IsUnitLoaded.</summary>
+        public bool IsLoaded(unit unit) => Natives.IsUnitLoaded(unit);
+
+        /// <summary>The Cargo Capacity of the unit's cargo hold, read at its first level.</summary>
+        public int CargoCapacity(unit unit)
+        {
+            var hold = CargoHold(unit);
+            return hold == null ? 0 : Natives.BlzGetAbilityIntegerLevelField(hold, Natives.ABILITY_ILF_CARGO_CAPACITY, 0);
+        }
+
+        /// <summary>Sets the Cargo Capacity of the unit's cargo hold at its first level.</summary>
+        public void SetCargoCapacity(unit unit, int capacity)
+        {
+            var hold = CargoHold(unit);
+            if (hold != null)
+            {
+                Natives.BlzSetAbilityIntegerLevelField(hold, Natives.ABILITY_ILF_CARGO_CAPACITY, 0, capacity);
+            }
+        }
+
+        // shortcut: a map's own cargo hold is found by a capacity above 0, so one set to 0 is found no more; keep the hold per unit if that matters.
+        private ability? CargoHold(unit unit)
+        {
+            for (var i = 0; ; i++)
+            {
+                var found = Natives.BlzGetUnitAbilityByIndex(unit, i);
+                if (found == null)
+                {
+                    return null;
+                }
+
+                var id = Natives.BlzGetAbilityId(found);
+                if (cargoHolds.Contains(id) || Natives.BlzGetAbilityIntegerLevelField(found, Natives.ABILITY_ILF_CARGO_CAPACITY, 0) > 0)
+                {
+                    return found;
+                }
+            }
+        }
+
+        /// <summary>The game's cargo holds: ship, zeppelin, the others with one, the orc burrow, Devour Cargo and the entangled gold mine.</summary>
+        private readonly List<int> cargoHolds = new List<int> { ObjectTypes.FourCC("Sch2"), ObjectTypes.FourCC("Sch3"), ObjectTypes.FourCC("Sch4"), ObjectTypes.FourCC("Sch5"), ObjectTypes.FourCC("Abun"), ObjectTypes.FourCC("Advc"), ObjectTypes.FourCC("Aenc") };
 
         /// <summary>Runs a callback once, after the map's main function has returned.</summary>
         internal static void Later(Action callback)

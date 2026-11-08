@@ -41,5 +41,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A player changes what it gives another.</summary>
         Alliance,
+
+        /// <summary>A unit is loaded into a transport.</summary>
+        Cargo,
     }
 }
