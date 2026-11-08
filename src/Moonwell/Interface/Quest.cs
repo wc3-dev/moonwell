@@ -2,13 +2,15 @@ using System.Collections.Generic;
 
 namespace Moonwell
 {
-    /// <summary>The kinds of quest message, each with the game's own sound.</summary>
+    /// <summary>The kinds of quest message, each with the game's own sound; a hint and a warning are the game's lines of those kinds, which flash no quest button.</summary>
     internal enum QuestNews
     {
         Discovered,
         Updated,
         Completed,
         Failed,
+        Hint,
+        Warning,
     }
 
     /// <summary>
