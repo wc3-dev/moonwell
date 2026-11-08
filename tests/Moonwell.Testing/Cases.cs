@@ -75,6 +75,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "teams.end-refusal-names-over", Run = TeamCases.EndRefusalNamesOver });
             list.Add(new Case { Name = "teams.alliance-once-per-pair", Run = TeamCases.AllianceOncePerPair });
             list.Add(new Case { Name = "teams.alliance-order", Run = TeamCases.AllianceOrder });
+            list.Add(new Case { Name = "messages.on-their-machine", Run = MessageCases.OnTheirMachine });
+            list.Add(new Case { Name = "messages.error", Run = MessageCases.Error });
+            list.Add(new Case { Name = "messages.to-a-team", Run = MessageCases.ToATeam });
             list.Add(new Case { Name = "teams.alliance-from-the-game", Run = TeamCases.AllianceFromTheGame });
             list.Add(new Case { Name = "teams.alliance-listened-when-reacted", Run = TeamCases.AllianceListenedWhenReacted });
             list.Add(new Case { Name = "teams.alliance-team-move", Run = TeamCases.AllianceTeamMove });

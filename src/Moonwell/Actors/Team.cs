@@ -59,6 +59,55 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Shows a line to each player of the team, for the seconds, or for the game's own time without them; it changes nothing in the game.</summary>
+        [LocalSafe]
+        public void Print(string text, float seconds = -1.0f)
+        {
+            foreach (var player in Players)
+            {
+                player.Print(text, seconds);
+            }
+        }
+
+        /// <summary>Shows each player of the team a line where the game shows its errors, with the error sound. Not inside Local.For, as the sound is made on every machine.</summary>
+        public void Error(string text)
+        {
+            foreach (var player in Players)
+            {
+                player.Error(text);
+            }
+        }
+
+        /// <summary>Shows each player of the team a hint as the game does, with its sound.</summary>
+        [LocalSafe]
+        public void Hint(string text)
+        {
+            foreach (var player in Players)
+            {
+                player.Hint(text);
+            }
+        }
+
+        /// <summary>Shows each player of the team a warning as the game does, with its sound.</summary>
+        [LocalSafe]
+        public void Warning(string text)
+        {
+            foreach (var player in Players)
+            {
+                player.Warning(text);
+            }
+        }
+
+        /// <summary>Clears the lines shown on the screens of the team's players.</summary>
+        [LocalSafe]
+        public void ClearMessages()
+        {
+            foreach (var player in Players)
+            {
+                player.ClearMessages();
+            }
+        }
+
         /// <summary>What each player of the team gives each of the others.</summary>
         internal Alliance Gives
         {
