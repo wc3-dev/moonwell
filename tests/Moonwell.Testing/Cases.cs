@@ -21,6 +21,7 @@ namespace Moonwell.Testing
             AddBoardsAndDialogs(list);
             AddStatsAndScores(list);
             AddUnitAbilities(list);
+            AddSummons(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -76,6 +77,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "teams.end-refusal-names-over", Run = TeamCases.EndRefusalNamesOver });
             list.Add(new Case { Name = "teams.alliance-once-per-pair", Run = TeamCases.AllianceOncePerPair });
             list.Add(new Case { Name = "teams.alliance-order", Run = TeamCases.AllianceOrder });
+            list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
+            list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
+            list.Add(new Case { Name = "pool.scope-ends", Run = PoolCases.ScopeEnds });
             list.Add(new Case { Name = "teams.alliance-from-the-game", Run = TeamCases.AllianceFromTheGame });
             list.Add(new Case { Name = "teams.alliance-listened-when-reacted", Run = TeamCases.AllianceListenedWhenReacted });
             list.Add(new Case { Name = "teams.alliance-team-move", Run = TeamCases.AllianceTeamMove });
@@ -1672,6 +1676,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
             list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
             list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
+        }
+
+        /// <summary>The summons' cases (decision 227).</summary>
+        private static void AddSummons(List<Case> list)
+        {
+            list.Add(new Case { Name = "summons.made-and-linked", Run = SummonCases.MadeAndLinked });
+            list.Add(new Case { Name = "summons.no-time-no-timed-life", Run = SummonCases.NoTimeNoTimedLife });
+            list.Add(new Case { Name = "summons.scope-end-kills", Run = SummonCases.ScopeEndKills });
+            list.Add(new Case { Name = "summons.removed-lets-go", Run = SummonCases.RemovedLetsGo });
+            list.Add(new Case { Name = "summons.timed-life-kills", Run = SummonCases.TimedLifeKills });
+            list.Add(new Case { Name = "summons.limit-kills-oldest", Run = SummonCases.LimitKillsOldest });
+            list.Add(new Case { Name = "summons.dies-with-summoner", Run = SummonCases.DiesWithSummoner });
+            list.Add(new Case { Name = "summons.reaction-order", Run = SummonCases.ReactionOrder });
+            list.Add(new Case { Name = "summons.game-summon-links", Run = SummonCases.GameSummonLinks });
+            list.Add(new Case { Name = "summons.ended-scope-dies-at-once", Run = SummonCases.EndedScopeDiesAtOnce });
         }
 
         /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>

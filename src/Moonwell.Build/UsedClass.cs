@@ -14,6 +14,7 @@ namespace Moonwell.Build
     /// member reads them through the kind base's hooks while the object has no handle, so the values of every class under it hold
     /// them all. None for the other classes.
     /// </param>
+    /// <param name="Pooled">Whether the class is a unit class of the map marked <c>[Pooled]</c> (decision 220).</param>
     public sealed record UsedClass(
         string FullName,
         string BaseFullName,
@@ -23,5 +24,6 @@ namespace Moonwell.Build
         IReadOnlyList<UsedField> Fields,
         IReadOnlyList<UsedMethod> Methods,
         string Stub,
-        IReadOnlyList<UsedField> Shared);
+        IReadOnlyList<UsedField> Shared,
+        bool Pooled = false);
 }
