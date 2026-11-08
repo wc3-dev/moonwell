@@ -154,22 +154,19 @@ namespace Moonwell.Engine
             return icon;
         }
 
-        /// <summary>Puts the icon under this machine's cursor: pixels from the window's top left to the game's units (seen 11-07).</summary>
+        /// <summary>Puts the icon under this machine's cursor.</summary>
         private static void Place(framehandle icon, Frame frame)
         {
-            var world = FramesSystem.World;
-            float width = world.ClientWidth();
-            float height = world.ClientHeight();
-            if (width <= 0.0f || height <= 0.0f)
+            if (!FramesSystem.CursorAt(out var cursor))
             {
                 return;
             }
 
-            var x = 0.4f + (world.MouseScreenX() / width - 0.5f) * 0.6f * width / height;
-            var y = 0.6f * (1.0f - world.MouseScreenY() / height);
+            var x = cursor.X;
+            var y = cursor.Y;
             var halfWidth = (frame.width > 0.0f ? frame.width : IconSize) / 2.0f;
             var halfHeight = (frame.height > 0.0f ? frame.height : IconSize) / 2.0f;
-            world.SpanFrame(icon, x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight);
+            FramesSystem.World.SpanFrame(icon, x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight);
         }
 
         /// <summary>On every machine: puts back what a player holds once it has ended, and moves this machine's player's icon.</summary>

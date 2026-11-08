@@ -16,6 +16,7 @@ internal static class Packages
         typeof(Moonwell.Mouse).Assembly,
         typeof(Moonwell.Physics).Assembly,
         typeof(Moonwell.FramesSystem).Assembly,
+        typeof(Moonwell.Kit).Assembly,
         typeof(Moonwell.Json.JsonNode).Assembly,
     };
 }

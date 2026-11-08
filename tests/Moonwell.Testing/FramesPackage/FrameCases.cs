@@ -469,7 +469,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>Checks a frame has one point: its point tied to another frame's, moved by an offset.</summary>
-        private static void ExpectPoint(FakeFrame frame, int point, FakeFrame other, int otherPoint, float x, float y, string what)
+        internal static void ExpectPoint(FakeFrame frame, int point, FakeFrame other, int otherPoint, float x, float y, string what)
         {
             Expect.Equal(1, frame.Points.Count, what + ": one point");
             Expect.Equal(point, frame.Points[0].Point, what + ": its point");
@@ -712,6 +712,10 @@ namespace Moonwell.Testing
             Expect.Equal(1, fake.KeyboardReleases, "the keyboard given back");
             button.Icon = "x.blp";
             Expect.Equal("x.blp", icon.Texture, "a new icon");
+            button.Icon = "";
+            Expect.Equal(Moonwell.Image.Blank, icon.Texture, "no icon draws nothing, not the game's missing texture");
+            var empty = Screen.Add(new IconButton(), Game.Instance);
+            Expect.Equal(Moonwell.Image.Blank, frames.Frames.Find(f => f.Parent == frames.FrameOf(empty.Handle!) && f.Type == "BACKDROP")!.Texture, "made with no icon, it draws nothing");
         }
 
         private const int Checked = 7, TextChanged = 9, SliderChanged = 13, TextEntered = 16;
@@ -910,6 +914,56 @@ namespace Moonwell.Testing
             Expect.Equal("A hint", label.Tooltip!.Text, "reads its text");
         }
 
+        /// <summary>A tooltip placed above its frame is moved, on the viewer's machine as the game shows it, to the side of the frame with room, judged from the cursor: below it near the top bar, above it lower down, and kept in at the screen's sides; one the map placed is left alone (I43).</summary>
+        public static void TooltipOnScreen(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = Installed();
+            frames.WindowWidth = 1600;
+            frames.WindowHeight = 900;
+            var button = Screen.Add(new IconButton { Icon = "x.blp", Width = 0.04f, Height = 0.04f }, Game.Instance);
+            var tip = new Tooltip { Text = "hint", Width = 0.24f, Height = 0.12f };
+            button.Tooltip = tip;
+            var fake = frames.FrameOf(button.Handle!);
+            var slot = fake.Tip!;
+            var shown = frames.FrameOf(tip.Handle!);
+            var other = Screen.Add(new IconButton { Icon = "y.blp" }, Game.Instance);
+            other.Tooltip = new Tooltip { Text = "mine", Anchor = FramePoint.Bottom };
+            var mine = frames.FrameOf(other.Tooltip.Handle!);
+            var mineBefore = mine.Points.Count;
+            slot.Shown = false;
+            frames.FrameOf(other.Handle!).Tip!.Shown = false;
+            world.Advance(0.1f);
+            Hover(world, frames, slot, 800, 60);
+            ExpectPoint(shown, 1, fake, 7, 0.0f, -0.01f, "below its frame near the top bar");
+            Hover(world, frames, slot, 800, 600);
+            ExpectPoint(shown, 7, fake, 1, 0.0f, 0.01f, "above it lower down");
+            Hover(world, frames, slot, 1590, 600);
+            ExpectPoint(shown, 8, fake, 2, 0.0f, 0.01f, "kept in at the right side");
+            Hover(world, frames, slot, 10, 60);
+            ExpectPoint(shown, 0, fake, 6, 0.0f, -0.01f, "kept in at the left side, below");
+            Hover(world, frames, frames.FrameOf(other.Handle!).Tip!, 800, 60);
+            Expect.Equal(mineBefore, mine.Points.Count, "the map's own place left alone");
+        }
+
+        // The game shows a slot while the cursor is on its frame: the cursor moves there, the slot shows, and a check passes.
+        private static void Hover(FakeWorld world, FakeFramesWorld frames, FakeFrame slot, int x, int y)
+        {
+            foreach (var each in frames.Frames)
+            {
+                if (each.TipOf != null)
+                {
+                    each.Shown = false;
+                }
+            }
+
+            world.Advance(0.1f);
+            frames.MouseX = x;
+            frames.MouseY = y;
+            slot.Shown = true;
+            world.Advance(0.1f);
+        }
+
         /// <summary>An image's tooltip is shown by a catcher over it, as an image takes no mouse; a tooltip set before the frame is added is made with it.</summary>
         public static void TooltipOnImage(FakeWorld world)
         {
@@ -956,7 +1010,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>The tooltip the game shows for a frame: the window shown in the slot the frame was given; null when there is none.</summary>
-        private static FakeFrame? WindowOf(FakeFramesWorld frames, FakeFrame frame)
+        internal static FakeFrame? WindowOf(FakeFramesWorld frames, FakeFrame frame)
         {
             var slot = frame.Tip;
             return slot == null ? null : frames.Frames.Find(f => f.Parent == slot && f.Shown);
