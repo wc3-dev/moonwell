@@ -1498,6 +1498,16 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.load-template-parts", Run = FramesLoadCases.TemplateParts });
             list.Add(new Case { Name = "frames.load-hud", Run = FramesLoadCases.Hud });
             list.Add(new Case { Name = "frames.load-reaction", Run = FramesLoadCases.Reaction });
+            list.Add(new Case { Name = "frames.drag-pick-and-drop", Run = DragCases.PickAndDrop });
+            list.Add(new Case { Name = "frames.drag-follows-cursor", Run = DragCases.FollowsCursor });
+            list.Add(new Case { Name = "frames.drag-other-machine", Run = DragCases.OtherMachine });
+            list.Add(new Case { Name = "frames.drag-put-back", Run = DragCases.PutBack });
+            list.Add(new Case { Name = "frames.drag-other-frames", Run = DragCases.OtherFrames });
+            list.Add(new Case { Name = "frames.drag-two-players", Run = DragCases.TwoPlayers });
+            list.Add(new Case { Name = "frames.drag-ended-and-loaded", Run = DragCases.EndedAndLoaded });
+            list.Add(new Case { Name = "frames.drag-icons", Run = DragCases.Icons });
+            list.Add(new Case { Name = "frames.drag-dropped-throws", Run = DragCases.DroppedThrows });
+            list.Add(new Case { Name = "frames.drag-empty-not-picked", Run = DragCases.EmptyNotPicked });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });

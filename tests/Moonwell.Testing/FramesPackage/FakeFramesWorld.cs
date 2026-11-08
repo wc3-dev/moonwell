@@ -437,5 +437,69 @@ namespace Moonwell.Testing
         {
             return Root("GameUI");
         }
+
+        private System.Action? mouseUp;
+
+        private System.Action? escape;
+
+        private bool eventLeft;
+
+        /// <summary>This machine's cursor, in pixels from the window's top left.</summary>
+        public int MouseX, MouseY;
+
+        /// <summary>Listens for every player's mouse releases.</summary>
+        public void ListenMouseUp(System.Action action)
+        {
+            mouseUp = action;
+        }
+
+        /// <summary>Listens for every player's Esc.</summary>
+        public void ListenEscape(System.Action action)
+        {
+            escape = action;
+        }
+
+        /// <summary>Whether the release being delivered was the left button's.</summary>
+        public bool EventLeftButton()
+        {
+            return eventLeft;
+        }
+
+        /// <summary>This machine's cursor's x.</summary>
+        public int MouseScreenX()
+        {
+            return MouseX;
+        }
+
+        /// <summary>This machine's cursor's y.</summary>
+        public int MouseScreenY()
+        {
+            return MouseY;
+        }
+
+        /// <summary>Sends a mouse release from the player in a slot, as the game does, when the package listens for them.</summary>
+        public void ReleaseMouse(int slot, bool left = true)
+        {
+            if (mouseUp == null)
+            {
+                return;
+            }
+
+            eventPlayer = Player.Get(slot).Handle;
+            eventLeft = left;
+            mouseUp();
+        }
+
+        /// <summary>Sends an Esc from the player in a slot, when the package listens for it.</summary>
+        public void PressEscape(int slot)
+        {
+            if (escape == null)
+            {
+                return;
+            }
+
+            eventPlayer = Player.Get(slot).Handle;
+            escape();
+        }
     }
 }
