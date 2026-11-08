@@ -161,13 +161,13 @@ namespace Moonwell.Testing
         public static void CooldownAndMana(FakeWorld world)
         {
             var picky = Arena(world);
-            picky.Cooldown = 9f;
-            picky.ManaCost = 75;
+            picky.LiveCooldown = 9f;
+            picky.LiveManaCost = 75;
             Expect.Near(9f, world.AbilityCooldown(picky.Unit.Handle, Id, 0), "the cooldown set at level 1");
-            Expect.Near(9f, picky.Cooldown, "the cooldown read");
-            Expect.Equal(75, picky.ManaCost, "the mana cost read");
+            Expect.Near(9f, picky.LiveCooldown, "the cooldown read");
+            Expect.Equal(75, picky.LiveManaCost, "the mana cost read");
             world.SetAbilityLevel(picky.Unit.Handle, Id, 2);
-            Expect.Near(0f, picky.Cooldown, "level 2 has its own cooldown");
+            Expect.Near(0f, picky.LiveCooldown, "level 2 has its own cooldown");
             world.SetAbilityLevel(picky.Unit.Handle, Id, 1);
             picky.StartCooldown(20f);
             Expect.Near(20f, picky.CooldownLeft, "started past the full cooldown");
@@ -185,11 +185,11 @@ namespace Moonwell.Testing
         {
             var picky = Arena(world);
             world.SetAbilityLevel(picky.Unit.Handle, Id, 0);
-            picky.Cooldown = 9f;
+            picky.LiveCooldown = 9f;
             picky.StartCooldown(5f);
-            Expect.Near(0f, picky.Cooldown, "the cooldown");
+            Expect.Near(0f, picky.LiveCooldown, "the cooldown");
             Expect.Near(0f, picky.CooldownLeft, "the cooldown left");
-            Expect.Equal(0, picky.ManaCost, "the mana cost");
+            Expect.Equal(0, picky.LiveManaCost, "the mana cost");
             Expect.Near(0f, world.AbilityCooldown(picky.Unit.Handle, Id, 0), "nothing was set");
         }
 

@@ -113,12 +113,12 @@ namespace Moonwell
 
         /// <summary>The full cooldown of the ability at its level now, on this unit, in seconds; 0 when the unit lacks it or is gone. Setting it changes this unit's cooldown at this level only, from its next cast on (a level gained later has its own), and does nothing on a unit without the ability; a development build reports that.</summary>
         [LocalSafe]
-        public float Cooldown
+        public float LiveCooldown
         {
             get => Has() ? Runtime.World.AbilityCooldown(Unit.Handle, Id, Level - 1) : 0.0f;
             set
             {
-                if (Usable("Cooldown"))
+                if (Usable("LiveCooldown"))
                 {
                     Runtime.World.SetAbilityCooldown(Unit.Handle, Id, Level - 1, value);
                 }
@@ -131,12 +131,12 @@ namespace Moonwell
 
         /// <summary>The mana a cast of the ability costs at its level now, on this unit; 0 when the unit lacks it or is gone. Setting it changes this unit's cost at this level only, from its next cast on, and does nothing on a unit without the ability; a development build reports that.</summary>
         [LocalSafe]
-        public int ManaCost
+        public int LiveManaCost
         {
             get => Has() ? Runtime.World.AbilityManaCost(Unit.Handle, Id, Level - 1) : 0;
             set
             {
-                if (Usable("ManaCost"))
+                if (Usable("LiveManaCost"))
                 {
                     Runtime.World.SetAbilityManaCost(Unit.Handle, Id, Level - 1, value);
                 }

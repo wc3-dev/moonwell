@@ -533,9 +533,10 @@ hero.AbilityOf<Execute>().ResetCooldown();
   without it.
 - These run on the ability class only, not on the caster's components or the game's, and a dummy's cast runs none.
 - Cooldown and mana, per unit: `CooldownLeft` reads what is left; `StartCooldown(seconds)` starts it at any length,
-  shown on the button, and 0 makes the spell ready, as `ResetCooldown()` does. `Cooldown` and `ManaCost` read and set
-  the full cooldown and the cost at the ability's level now, for its next casts; a level gained later has its own. On
-  a unit without the ability they read 0 and setting does nothing; a development build reports it.
+  shown on the button, and 0 makes the spell ready, as `ResetCooldown()` does. `LiveCooldown` and `LiveManaCost` read
+  and set the full cooldown and the cost at the ability's level now, for its next casts, where the declared fields
+  `Cooldown` and `ManaCost` set every unit's in the constructor; a level gained later has its own. On a unit without
+  the ability they read 0 and setting does nothing; a development build reports it.
 
 ## Casting real spells
 
