@@ -1360,6 +1360,30 @@ namespace Moonwell.Testing
             return PlayerAt(0);
         }
 
+        /// <summary>Each shop's goods put on sale by AddStock: the count and the most, by item id.</summary>
+        public Dictionary<unit, Dictionary<int, int[]>> Stock = new Dictionary<unit, Dictionary<int, int[]>>();
+
+        /// <summary>Records a good put on sale.</summary>
+        public void AddStock(unit shop, int itemId, int count, int max)
+        {
+            if (!Stock.TryGetValue(shop, out var goods))
+            {
+                goods = new Dictionary<int, int[]>();
+                Stock[shop] = goods;
+            }
+
+            goods[itemId] = new int[] { count, max };
+        }
+
+        /// <summary>Forgets a good put on sale.</summary>
+        public void RemoveStock(unit shop, int itemId)
+        {
+            if (Stock.TryGetValue(shop, out var goods))
+            {
+                goods.Remove(itemId);
+            }
+        }
+
         /// <summary>The level set on a unit for an ability; 0 when none was set.</summary>
         public int AbilityLevel(unit unit, int abilityId)
         {

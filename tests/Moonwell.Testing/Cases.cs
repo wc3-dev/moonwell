@@ -23,6 +23,7 @@ namespace Moonwell.Testing
             AddUnitAbilities(list);
             AddSummons(list);
             AddResearch(list);
+            AddShops(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -1685,6 +1686,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
             list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
             list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
+        }
+
+        /// <summary>Adds the cases for shops (decision 214).</summary>
+        private static void AddShops(List<Case> list)
+        {
+            list.Add(new Case { Name = "shops.sale-reactions", Run = ShopCases.SaleReactions });
+            list.Add(new Case { Name = "shops.unknown-shop", Run = ShopCases.UnknownShop });
+            list.Add(new Case { Name = "shops.stock", Run = ShopCases.Stock });
         }
 
         /// <summary>Adds the cases for research (decision 213).</summary>

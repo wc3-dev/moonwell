@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale });
                 }
 
                 return componentHooks;
@@ -92,6 +92,27 @@ namespace Moonwell
         /// <summary>Runs when the unit's research finishes, after its class has seen it (see Unit.OnResearchFinished).</summary>
         /// <param name="upgrade">The upgrade researched.</param>
         public virtual void OnResearchFinished(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when the unit, a shop, sells an item, after its class has seen it (see Unit.OnItemSold).</summary>
+        /// <param name="item">The item sold.</param>
+        /// <param name="buyer">The unit that receives it.</param>
+        public virtual void OnItemSold(Item item, Unit buyer)
+        {
+        }
+
+        /// <summary>Runs when a unit sells an item to the unit, a shop, after its class has seen it (see Unit.OnItemPawned).</summary>
+        /// <param name="item">The item sold to the shop.</param>
+        /// <param name="seller">The unit that sold it.</param>
+        public virtual void OnItemPawned(Item item, Unit seller)
+        {
+        }
+
+        /// <summary>Runs when the unit, a shop, sells a unit, after its class has seen it (see Unit.OnUnitSold).</summary>
+        /// <param name="soldUnit">The unit sold.</param>
+        /// <param name="buyer">The unit that bought it.</param>
+        public virtual void OnUnitSold(Unit soldUnit, Unit buyer)
         {
         }
 
