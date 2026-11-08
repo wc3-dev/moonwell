@@ -1540,6 +1540,22 @@ band every second) change its shape. A screen line shows 1,023 characters, and a
 game shows no alpha in text, and `|r` goes back to white, not to an outer colour. `Text.Clock(125f)` writes "2:05", and
 `Text.TimeOfDay(6.5f)` "06:30".
 
+## Random numbers
+
+`Game.Random` draws from the game's own random generator, the one every machine shares: `Game.Random.Int(1, 6)` (both
+ends included), `Real(0f, 1f)`, `Chance(0.25f)` (true one time in four), `Angle()` in degrees, `Pick(list)` and
+`Shuffle(list)`. `new Dice(seed)` is a generator of its own with the same methods: the same seed gives the same numbers
+in every game and in .NET tests, for a level built from a seed. Neither may be used inside `Local.For`, where only one
+machine would draw (MW0001), and `new Random()` without a seed is refused everywhere (MW0038).
+
+```csharp
+var spawn = Game.Random.Pick(spawnPoints);
+if (Game.Random.Chance(0.1f)) Game.Print("A rare creep appears.");
+
+var level = new Dice(seed: 1234);
+var rooms = level.Int(5, 9);
+```
+
 ## Players
 
 `Player.One` to `Player.TwentyFour` are the player slots, as the lobby numbers them; `Player.Get(slot)` takes the
@@ -1655,7 +1671,7 @@ which is in each player's language. The build rejects, as compile errors:
   `new Panel { Count = 3 }`, a local that only holds a `new` of the block, and a struct in a local. A method called on a new object is still checked.
   A list assigned to a local later, given as a parameter, or returned by a method or a property with a body, is not seen.
 - `new Random()` without a seed, anywhere (MW0038): it reseeds the game's own random generator with each machine's
-  clock. Use `Natives.GetRandomInt`, or `new Random(seed)` with a seed every machine shares.
+  clock. Use `Game.Random`, or `new Dice(seed)` with a seed every machine shares (see Random numbers).
 - `GetHandleId` (MW0003), looping over a `Dictionary` or `HashSet`, or one held as `IDictionary`, `ISet` or an
   `ICollection` (MW0004; use `OrderedMap` and `OrderedSet`), and `long`, `ulong`, `uint`, `double` and `decimal`
   (MW0005).

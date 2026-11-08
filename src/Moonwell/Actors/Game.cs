@@ -12,6 +12,12 @@ namespace Moonwell
         [LocalSafe]
         public static Game Instance { get; internal set; } = null!;
 
+        private static Dice? random;
+
+        /// <summary>Random numbers from the game's own generator, the same on every machine: Game.Random.Int(1, 6). Not inside Local.For, where only one machine would draw.</summary>
+        [LocalSafe]
+        public static Dice Random => random ??= Dice.OfGame();
+
         /// <summary>Shows a line to every player, for the seconds, or for the game's own time without them; it changes nothing in the game.</summary>
         [LocalSafe]
         public static void Print(string text, float seconds = -1.0f)
