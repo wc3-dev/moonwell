@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale });
                 }
 
                 return unitHooks;
@@ -35,6 +35,9 @@ namespace Moonwell
 
         /// <summary>The cast the unit is making now, which ends when its spell ends or its next cast begins; null when none.</summary>
         internal Cast? ActiveCast;
+
+        /// <summary>The cast the unit has started and that has not yet taken effect (decision 225); null when none.</summary>
+        internal Cast? Starting;
 
         /// <summary>The components the class starts with, added in order when the unit enters. Assigning a new list drops what a parent class listed.</summary>
         protected List<UnitComponent> Components { get; set; } = new List<UnitComponent>();
@@ -1568,6 +1571,76 @@ namespace Moonwell
         /// <param name="summonedUnit">The unit summoned.</param>
         public virtual void OnSummon(Unit summonedUnit)
         {
+        }
+
+        /// <summary>Runs when this building starts a research, inside the order that starts it, before its components see it (decision 213).</summary>
+        /// <param name="upgrade">The upgrade researched: its class's object, or a plain Upgrade of its id.</param>
+        public virtual void OnResearchStarted(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when this building's research is cancelled, before its components see it.</summary>
+        /// <param name="upgrade">The upgrade whose research was cancelled.</param>
+        public virtual void OnResearchCancelled(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when this building's research finishes, after the upgrade's OnResearched for the new level, before its components see it.</summary>
+        /// <param name="upgrade">The upgrade researched.</param>
+        public virtual void OnResearchFinished(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when this shop sells an item, to a player's click or to IssueNeutralImmediateOrder: inside the game's sale, with the gold and lumber already taken and before the buyer's pick-up, so the item has no owner yet (seen 11-08). Before its components see it (decision 214).</summary>
+        /// <param name="item">The item sold.</param>
+        /// <param name="buyer">The unit that receives it.</param>
+        public virtual void OnItemSold(Item item, Unit buyer)
+        {
+        }
+
+        /// <summary>Runs when a unit sells an item to this shop: before the seller's drop, and before its gold comes; the game removes the item soon after (seen 11-08). Before its components see it.</summary>
+        /// <param name="item">The item sold to the shop.</param>
+        /// <param name="seller">The unit that sold it.</param>
+        public virtual void OnItemPawned(Item item, Unit seller)
+        {
+        }
+
+        /// <summary>Runs when this shop sells a unit, as a mercenary camp does, on the game's sale event; how it falls among the new unit's other events is not measured. Before its components see it.</summary>
+        /// <param name="soldUnit">The unit sold.</param>
+        /// <param name="buyer">The unit that bought it.</param>
+        public virtual void OnUnitSold(Unit soldUnit, Unit buyer)
+        {
+        }
+
+        /// <summary>
+        /// Puts an item class on sale in this shop, with a stock count and a most (AddItemToStock), or changes the count of one put
+        /// on sale so. The game sells it only from a shop with Sell Items (Asid, as the Marketplace has; a development build reports
+        /// one without), and never changes a good of the shop's own data (seen 11-08). A neutral passive shop takes a good sold
+        /// out of its stock (Blizzard.j's RemovePurchasedItem, which every map runs), so it does not restock. Does nothing once
+        /// the shop is gone.
+        /// </summary>
+        public void AddStock<T>(int count, int max) where T : Item
+        {
+            if (IsGone)
+            {
+                return;
+            }
+
+            if (Runtime.World.AbilityLevel(Handle, ObjectTypes.FourCC("Asid")) == 0)
+            {
+                Dev.Report(Names.NameOf(this) + ".AddStock", "the shop has no Sell Items (Asid), so the game sells nothing added to it");
+            }
+
+            Runtime.World.AddStock(Handle, ObjectTypes.IdOf<T>(), count, max);
+        }
+
+        /// <summary>Takes an item class put on sale with AddStock off sale in this shop (RemoveItemFromStock); a good of the shop's own data stays. Does nothing once the shop is gone.</summary>
+        public void RemoveStock<T>() where T : Item
+        {
+            if (!IsGone)
+            {
+                Runtime.World.RemoveStock(Handle, ObjectTypes.IdOf<T>());
+            }
         }
 
         /// <summary>Runs when a player selects the unit, before the unit's components see it: a click, a drag, a control group or code, as the game's event says, so a click on a unit already selected runs it again. It comes a moment after Select (0.1 to 0.2 s in single player, the network's delay online), and Selection already holds the unit. A unit the game drops from a selection with no event (it dies, is removed, hidden, gets Locust or changes hands) runs no OnDeselected (decision 203).</summary>

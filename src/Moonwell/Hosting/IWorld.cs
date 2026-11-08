@@ -242,11 +242,38 @@ namespace Moonwell.Hosting
         /// <summary>The level of an ability on a unit; 0 when the unit has none.</summary>
         int AbilityLevel(unit unit, int abilityId);
 
+        /// <summary>Puts an item type on sale in a shop with a stock count and a most (AddItemToStock).</summary>
+        void AddStock(unit shop, int itemId, int count, int max);
+
+        /// <summary>Takes an item type off sale in a shop (RemoveItemFromStock).</summary>
+        void RemoveStock(unit shop, int itemId);
+
         /// <summary>Gives a unit an ability at level 1; false, and nothing changes, when the unit has it already or there is no such ability.</summary>
         bool AddAbility(unit unit, int abilityId);
 
         /// <summary>Sets the level of an ability on a unit, kept within the ability's levels, and answers the level it set; 0, and nothing changes, when the unit lacks the ability.</summary>
         int ChangeAbilityLevel(unit unit, int abilityId, int level);
+
+        /// <summary>The full cooldown of a unit's ability at a level counted from 0, in seconds.</summary>
+        float AbilityCooldown(unit unit, int abilityId, int levelIndex);
+
+        /// <summary>Sets the full cooldown of a unit's ability at a level counted from 0, for its next casts.</summary>
+        void SetAbilityCooldown(unit unit, int abilityId, int levelIndex, float seconds);
+
+        /// <summary>The seconds left of a unit's ability's cooldown; 0 when it is ready.</summary>
+        float AbilityCooldownLeft(unit unit, int abilityId);
+
+        /// <summary>Starts a unit's ability's cooldown for so many seconds, more than 0, in place of what is left.</summary>
+        void StartAbilityCooldown(unit unit, int abilityId, float seconds);
+
+        /// <summary>Ends a unit's ability's cooldown, making it ready.</summary>
+        void EndAbilityCooldown(unit unit, int abilityId);
+
+        /// <summary>The mana cost of a unit's ability at a level counted from 0.</summary>
+        int AbilityManaCost(unit unit, int abilityId, int levelIndex);
+
+        /// <summary>Sets the mana cost of a unit's ability at a level counted from 0, for its next casts.</summary>
+        void SetAbilityManaCost(unit unit, int abilityId, int levelIndex, int mana);
 
         /// <summary>Gives a unit the summoned type.</summary>
         void MakeSummoned(unit unit);
