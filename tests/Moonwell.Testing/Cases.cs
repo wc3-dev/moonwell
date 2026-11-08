@@ -19,6 +19,7 @@ namespace Moonwell.Testing
             AddSounds(list);
             AddQuestsAndCinematics(list);
             AddBoardsAndDialogs(list);
+            AddStatsAndScores(list);
             AddUnitAbilities(list);
             AddSpells(list);
             AddSummons(list);
@@ -80,6 +81,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "messages.on-their-machine", Run = MessageCases.OnTheirMachine });
             list.Add(new Case { Name = "messages.error", Run = MessageCases.Error });
             list.Add(new Case { Name = "messages.to-a-team", Run = MessageCases.ToATeam });
+            list.Add(new Case { Name = "transports.reactions-order", Run = TransportCases.ReactionsOrder });
+            list.Add(new Case { Name = "transports.reads-follow", Run = TransportCases.ReadsFollow });
+            list.Add(new Case { Name = "transports.leaving-the-game", Run = TransportCases.LeavingTheGame });
+            list.Add(new Case { Name = "transports.capacity-and-orders", Run = TransportCases.CapacityAndOrders });
+            list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
             list.Add(new Case { Name = "pool.scope-ends", Run = PoolCases.ScopeEnds });
@@ -1548,6 +1554,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.shop", Run = KitWindowCases.Shop });
             list.Add(new Case { Name = "kit.settings", Run = KitWindowCases.Settings });
             list.Add(new Case { Name = "kit.settings-spoiled", Run = KitWindowCases.SettingsSpoiled });
+            list.Add(new Case { Name = "kit.scoreboard", Run = KitWindowCases.Scoreboard });
+            list.Add(new Case { Name = "kit.talents", Run = KitWindowCases.Talents });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });
@@ -1683,6 +1691,16 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "spells.finished-listens", Run = SpellCases.FinishedListens });
             list.Add(new Case { Name = "spells.cooldown-and-mana", Run = SpellCases.CooldownAndMana });
             list.Add(new Case { Name = "spells.cooldown-of-missing-ability", Run = SpellCases.CooldownOfMissingAbility });
+        }
+
+        /// <summary>Adds the stat and score cases.</summary>
+        private static void AddStatsAndScores(List<Case> list)
+        {
+            list.Add(new Case { Name = "stats.own", Run = StatCases.Own });
+            list.Add(new Case { Name = "stats.refused", Run = StatCases.Refused });
+            list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
+            list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
+            list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
         }
 
         /// <summary>The summons' cases (decision 227).</summary>

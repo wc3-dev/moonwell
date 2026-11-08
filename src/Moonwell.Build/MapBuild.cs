@@ -142,6 +142,19 @@ namespace Moonwell.Build
                 writtenIds = new Dictionary<string, string>(writtenIds) { [FileStore.ClassName] = FileStore.Id };
             }
 
+            if (BonusAbilities.UsedBy(targetPath))
+            {
+                BonusAbilities.Check(ids, sourceMapIds);
+                written = written.Concat(BonusAbilities.Objects).ToList();
+                var withBonuses = new Dictionary<string, string>(writtenIds);
+                foreach (var bonus in BonusAbilities.Objects)
+                {
+                    withBonuses[bonus.ClassName] = bonus.PinnedId!;
+                }
+
+                writtenIds = withBonuses;
+            }
+
             var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
                 .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? DummyType.MapAbilities(project.MapFolder) : null))
                 .ToList();
@@ -174,6 +187,9 @@ namespace Moonwell.Build
 
             // Player files are read back through the store ability, which only the object files Moonwell.Objects writes can hold.
             FileStore.CheckWithoutObjects(targetPath);
+
+            // Damage, armor and attack speed go through bonus abilities, which likewise only those object files can hold.
+            BonusAbilities.CheckWithoutObjects(targetPath);
 
             // Without the standard data the map's own constants still count, over the standard ones the runtime has.
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), HeroExperience.Standard);
@@ -229,6 +245,11 @@ namespace Moonwell.Build
             if (ReadsSelection(targetPath))
             {
                 installs.Add("global::Moonwell.Runtime.ListenForSelection();");
+            }
+
+            if (ReadsTransports(targetPath))
+            {
+                installs.Add("global::Moonwell.Runtime.ListenForTransports();");
             }
 
             if (ReadsSummons(targetPath))
@@ -396,6 +417,13 @@ namespace Moonwell.Build
         internal static bool ReadsSelection(string assemblyPath)
         {
             return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Player", "get_Selection", "get_Selection"));
+        }
+
+        /// <summary>Whether a map's code reads a unit's transport or cargo (Unit.Transport or Unit.Cargo), which only listening for loads and unloads from the start fills (decision 219). A library of the map's own counts as its code.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        internal static bool ReadsTransports(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Unit", "get_Transport", "get_Cargo"));
         }
 
         /// <summary>Whether an assembly refers to either of two members of a Moonwell class.</summary>

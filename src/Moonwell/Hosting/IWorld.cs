@@ -29,7 +29,7 @@ namespace Moonwell.Hosting
         /// <summary>Shows a line to every player, for the seconds, or for the game's own time when the seconds are below 0.</summary>
         void PrintToAll(string text, float seconds);
 
-        /// <summary>Shows a line to one player where the game shows its errors, in their colour, for two seconds.</summary>
+        /// <summary>Shows a line to one player in the error's colour, just above where the game shows its errors, for two seconds.</summary>
         void ErrorTo(player player, string text);
 
         /// <summary>Appends a line to CustomMapData\Moonwell\log.txt.</summary>
@@ -310,6 +310,27 @@ namespace Moonwell.Hosting
 
         /// <summary>Sets the most mana a unit can have, as a whole number; a mana above it falls to it.</summary>
         void SetMaxMana(unit unit, float mana);
+
+        /// <summary>The armor of a unit, with every bonus.</summary>
+        float ArmorOf(unit unit);
+
+        /// <summary>The middle of a unit's white damage: its base damage and the middle of its dice, without bonuses.</summary>
+        float AverageDamageOf(unit unit);
+
+        /// <summary>The move speed of a unit.</summary>
+        float MoveSpeedOf(unit unit);
+
+        /// <summary>Sets the move speed of a unit, which the game holds to the map's least and most speed.</summary>
+        void SetMoveSpeed(unit unit, float speed);
+
+        /// <summary>A unit's own life or mana regeneration a second, without what a hero's attributes add.</summary>
+        float RegenOf(unit unit, bool mana);
+
+        /// <summary>Sets a unit's own life or mana regeneration a second.</summary>
+        void SetRegen(unit unit, bool mana, float perSecond);
+
+        /// <summary>Sets the level-1 field of an ability a unit has, a whole number unless real; the game takes it at once for the stats' bonus abilities (seen 11-08).</summary>
+        void PutBonus(unit unit, int abilityId, int fieldId, bool real, float value);
 
         /// <summary>The x of a unit.</summary>
         float UnitX(unit unit);
@@ -790,6 +811,15 @@ namespace Moonwell.Hosting
 
         /// <summary>Destroys a dialog and its buttons' triggers.</summary>
         void EndDialog(dialog dialog);
+
+        /// <summary>Whether a unit is in a transport: IsUnitLoaded.</summary>
+        bool IsLoaded(unit unit);
+
+        /// <summary>The Cargo Capacity of the unit's cargo hold, the first of its abilities that has one; 0 for a unit with none.</summary>
+        int CargoCapacity(unit unit);
+
+        /// <summary>Sets the Cargo Capacity of the unit's cargo hold, for this unit alone; nothing for a unit with none.</summary>
+        void SetCargoCapacity(unit unit, int capacity);
 
         /// <summary>A whole number from low to high, both included, from the game's random numbers, which every machine shares.</summary>
         int RandomBetween(int low, int high);

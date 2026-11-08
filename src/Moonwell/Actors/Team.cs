@@ -69,7 +69,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Shows each player of the team a line where the game shows its errors, with the error sound. Not inside Local.For, as the sound is made on every machine.</summary>
+        /// <summary>Shows each player of the team a line like the game's errors, with the error sound (see Player.Error). Not inside Local.For, as the sound is made on every machine.</summary>
         public void Error(string text)
         {
             foreach (var player in Players)

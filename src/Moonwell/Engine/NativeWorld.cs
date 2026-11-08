@@ -175,6 +175,9 @@ namespace Moonwell.Engine
                 case GameEvent.OwnerChange:
                     Register(Natives.EVENT_PLAYER_UNIT_CHANGE_OWNER, OwnerChangeAction);
                     break;
+                case GameEvent.Cargo:
+                    Register(Natives.EVENT_PLAYER_UNIT_LOADED, CargoAction);
+                    break;
                 case GameEvent.Selection:
                     Register(Natives.EVENT_PLAYER_UNIT_SELECTED, () => SelectionAction(true));
                     Register(Natives.EVENT_PLAYER_UNIT_DESELECTED, () => SelectionAction(false));
@@ -182,6 +185,19 @@ namespace Moonwell.Engine
                 case GameEvent.Summon:
                     Register(Natives.EVENT_PLAYER_UNIT_SUMMON, SummonAction);
                     break;
+            }
+        }
+
+        /// <summary>Hands a unit loaded into a transport to Inbound.</summary>
+        private static void CargoAction()
+        {
+            try
+            {
+                Inbound.Loaded(Natives.GetLoadedUnit(), Natives.GetTransportUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Loaded", error);
             }
         }
 
@@ -330,11 +346,12 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Shows a line where the game shows its errors, to one player: the game shows it only on that player's machine.</summary>
+        /// <summary>Shows a line to one player in the game's message text, in the error's colour, at the left edge of the game's error line and as low as a message goes: one line above it (seen 11-08).</summary>
         public void ErrorTo(player player, string text)
         {
-            // The game's own trick (SimError): the offset and the blank lines put the line above the command card.
-            Natives.DisplayTimedTextToPlayer(player, 0.52f, 0.96f, 2.0f, "\n\n\n\n\n\n\n\n\n\n\n\n\n" + text.Colored(Color.TooltipGold));
+            // The offset moves the whole message box; below 0 it stays at 0. Blank lines before the text only move it by
+            // overflowing the box, and a message shown after it pushes it up (seen 11-08).
+            Natives.DisplayTimedTextToPlayer(player, 0.52f, 0.0f, 2.0f, text.Colored(Color.TooltipGold));
         }
 
         /// <summary>Shows a line to every player: each machine shows it to its own player.</summary>
@@ -1067,6 +1084,56 @@ namespace Moonwell.Engine
         public void SetMaxMana(unit unit, float mana)
         {
             Natives.BlzSetUnitMaxMana(unit, (int)mana);
+        }
+
+        /// <summary>The armor of a unit, with every bonus: BlzGetUnitArmor.</summary>
+        public float ArmorOf(unit unit)
+        {
+            return Natives.BlzGetUnitArmor(unit);
+        }
+
+        /// <summary>The middle of a unit's white damage: BlzGetUnitBaseDamage and the middle of its dice, of the first weapon.</summary>
+        public float AverageDamageOf(unit unit)
+        {
+            return Natives.BlzGetUnitBaseDamage(unit, 0) + Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
+        }
+
+        /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>
+        public float MoveSpeedOf(unit unit)
+        {
+            return Natives.GetUnitMoveSpeed(unit);
+        }
+
+        /// <summary>Sets the move speed of a unit: SetUnitMoveSpeed, held to the map's least and most speed (seen 10-21).</summary>
+        public void SetMoveSpeed(unit unit, float speed)
+        {
+            Natives.SetUnitMoveSpeed(unit, speed);
+        }
+
+        /// <summary>A unit's own regeneration a second: its UNIT_RF_HIT_POINTS_REGENERATION_RATE or UNIT_RF_MANA_REGENERATION, to which a hero's attributes add (seen 11-08).</summary>
+        public float RegenOf(unit unit, bool mana)
+        {
+            return Natives.BlzGetUnitRealField(unit, mana ? Natives.UNIT_RF_MANA_REGENERATION : Natives.UNIT_RF_HIT_POINTS_REGENERATION_RATE);
+        }
+
+        /// <summary>Sets a unit's own regeneration a second, which the game takes at once (seen 11-08).</summary>
+        public void SetRegen(unit unit, bool mana, float perSecond)
+        {
+            Natives.BlzSetUnitRealField(unit, mana ? Natives.UNIT_RF_MANA_REGENERATION : Natives.UNIT_RF_HIT_POINTS_REGENERATION_RATE, perSecond);
+        }
+
+        /// <summary>Sets the level-1 field of an ability on a unit: BlzSetAbilityIntegerLevelField or BlzSetAbilityRealLevelField of the unit's copy.</summary>
+        public void PutBonus(unit unit, int abilityId, int fieldId, bool real, float value)
+        {
+            var ability = Natives.BlzGetUnitAbility(unit, abilityId);
+            if (real)
+            {
+                Natives.BlzSetAbilityRealLevelField(ability, Natives.ConvertAbilityRealLevelField(fieldId), 0, value);
+            }
+            else
+            {
+                Natives.BlzSetAbilityIntegerLevelField(ability, Natives.ConvertAbilityIntegerLevelField(fieldId), 0, (int)value);
+            }
         }
 
         /// <summary>The x of a unit, from the game.</summary>
@@ -2153,6 +2220,48 @@ namespace Moonwell.Engine
 
         /// <summary>GetRandomInt.</summary>
         public int RandomBetween(int low, int high) => Natives.GetRandomInt(low, high);
+
+        /// <summary>IsUnitLoaded.</summary>
+        public bool IsLoaded(unit unit) => Natives.IsUnitLoaded(unit);
+
+        /// <summary>The Cargo Capacity of the unit's cargo hold, read at its first level.</summary>
+        public int CargoCapacity(unit unit)
+        {
+            var hold = CargoHold(unit);
+            return hold == null ? 0 : Natives.BlzGetAbilityIntegerLevelField(hold, Natives.ABILITY_ILF_CARGO_CAPACITY, 0);
+        }
+
+        /// <summary>Sets the Cargo Capacity of the unit's cargo hold at its first level.</summary>
+        public void SetCargoCapacity(unit unit, int capacity)
+        {
+            var hold = CargoHold(unit);
+            if (hold != null)
+            {
+                Natives.BlzSetAbilityIntegerLevelField(hold, Natives.ABILITY_ILF_CARGO_CAPACITY, 0, capacity);
+            }
+        }
+
+        // shortcut: a map's own cargo hold is found by a capacity above 0, so one set to 0 is found no more; keep the hold per unit if that matters.
+        private ability? CargoHold(unit unit)
+        {
+            for (var i = 0; ; i++)
+            {
+                var found = Natives.BlzGetUnitAbilityByIndex(unit, i);
+                if (found == null)
+                {
+                    return null;
+                }
+
+                var id = Natives.BlzGetAbilityId(found);
+                if (cargoHolds.Contains(id) || Natives.BlzGetAbilityIntegerLevelField(found, Natives.ABILITY_ILF_CARGO_CAPACITY, 0) > 0)
+                {
+                    return found;
+                }
+            }
+        }
+
+        /// <summary>The game's cargo holds: ship, zeppelin, the others with one, the orc burrow, Devour Cargo and the entangled gold mine.</summary>
+        private readonly List<int> cargoHolds = new List<int> { ObjectTypes.FourCC("Sch2"), ObjectTypes.FourCC("Sch3"), ObjectTypes.FourCC("Sch4"), ObjectTypes.FourCC("Sch5"), ObjectTypes.FourCC("Abun"), ObjectTypes.FourCC("Advc"), ObjectTypes.FourCC("Aenc") };
 
         /// <summary>Runs a callback once, after the map's main function has returned.</summary>
         internal static void Later(Action callback)

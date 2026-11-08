@@ -203,8 +203,9 @@ public sealed class Champion : Human.Units.Paladin
   `Unit.Create` gives a kept one out again, as a new object of the class: making a unit costs the game about ten times
   what hiding, moving and showing one does (0.4 ms against 0.04), which shows when a wave of units comes at once. A
   kept unit has its items removed and its buffs taken off, and comes out with its life and mana as made; anything else
-  code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero and
-  an illusion are never kept, and `[Pooled]` on a hero class fails the build.
+  code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero, an
+  illusion, a unit inside a transport and a transport carrying units are never kept,
+  and `[Pooled]` on a hero class fails the build.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -499,6 +500,93 @@ comment.
 | `X`, `Y` | read; where the game put it, which is not always where it was asked: a tree asked at 1000 stands at 960 |
 
 A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
+
+### Transports
+
+A unit loaded into a zeppelin, a ship or a burrow runs `OnLoaded(transport)`, then its components, then the
+transport's `OnCargoLoaded(cargo)` and its components, then `OnUnitLoaded(cargo, transport)` on the game's components
+and on the cargo's player's. Coming out runs `OnUnloaded`, `OnCargoUnloaded` and `OnUnitUnloaded` the same way: for an
+unload, an unload all, and a transport that dies or is removed, which puts its cargo down alive where it was. The game
+has no unload event; Moonwell sees it from the order the game gives the cargo as it comes out. A unit that dies or is
+removed inside runs no unload reaction.
+
+`unit.Transport` is the transport carrying it, or null, and `transport.Cargo` the units aboard in the order they were
+loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
+read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
+zeppelin). `transport.Load(unit)`, `Unload(unit)` and `UnloadAll(x, y)` are the game's orders.
+
+```csharp
+public sealed class Ferry : Unit
+{
+    public override void OnCargoLoaded(Unit loadedUnit)
+    {
+        Owner.Print(Cargo.Count + " aboard");
+        if (Cargo.Count == CargoCapacity) UnloadAll(4000f, 0f);
+    }
+}
+```
+
+## Stats and scores
+
+A stat is a number a unit or a player has: a base, then modifiers, flat or percent, each held by a scope, which takes it
+off when it ends (an item's `Item.Carry`, a buff, a talent, the unit itself). Percents add up, then multiply:
+(base + flat) × (1 + percents / 100), so +20% and +30% make +50%.
+
+```csharp
+public static class Stats
+{
+    public static readonly Stat SpellPower = new Stat("Spell power");
+}
+
+// A buff: +20% damage and -30% move speed while it is on.
+protected override void OnApply()
+{
+    Target.Modify(Stat.Damage, percent: 20, heldBy: this);
+    Target.Modify(Stat.MoveSpeed, percent: -30, heldBy: this);
+}
+
+// An item component: +5 armor and +10 spell power while carried.
+Carrier.Modify(Stat.Armor, 5, heldBy: Item.Carry);
+Carrier.Modify(Stats.SpellPower, 10, heldBy: Item.Carry);
+
+var power = hero.Get(Stats.SpellPower);
+```
+
+`Modify` gives back the modifier, whose `End()` takes it off sooner. A holder that has ended adds nothing, reported in
+development builds. A map's own stat (`new Stat(name)`, or `new Stat(name, base)`) is only a number the map reads, on
+units and players. The game's stats are units' only, and change the unit in the game:
+
+| Stat | |
+|---|---|
+| `Damage`, `Armor` | the card's green bonus, red when negative; whole numbers; a percent of damage is of the middle of the white damage |
+| `AttackSpeed` | percent points, as an item's "+15% attack speed": no base |
+| `MaxLife`, `MaxMana` | the unit's own most, shown white; the most life never goes below 1 |
+| `MoveSpeed` | the unit's own, held to the map's least and most speed (150 to 400 unless its gameplay constants say otherwise) |
+| `LifeRegen`, `ManaRegen` | the unit's own a second, to which a hero's strength and intelligence add |
+| `Strength`, `Agility`, `Intelligence` | a hero's base, shown white; whole numbers |
+
+A game stat never goes below 0. Its base is the game's number less Moonwell's part, so what the game changes meanwhile (a
+level's life, a tome) stays; a percent of a base the game changed is put again at the stat's next change. `Get` reads
+(base + flat) × (1 + percents / 100), without what items and the game's own abilities add to damage and attack speed.
+Damage, armor and attack speed go through three abilities Moonwell declares, so a map that reads them needs
+Moonwell.Objects.
+
+A score is a whole number for each player that the map counts itself, as a kill means something else in each map:
+
+```csharp
+public static readonly Score Kills = new Score("Kills");
+
+public override void OnUnitDied(Unit dyingUnit, Unit? killerUnit)
+{
+    if (killerUnit != null && killerUnit.Owner.IsEnemy(dyingUnit.Owner))
+    {
+        Kills.Add(killerUnit.Owner, 1);
+    }
+}
+```
+
+`Kills[player]` reads it, 0 until counted, and `Set` sets it. Scores and stats are not saved by themselves: a save class
+copies what it keeps ([Saves](#saves)). The game's own counts stay on its score screen, which a map cannot add to.
 
 ## Spells
 
@@ -1530,6 +1618,48 @@ heroes.Picked += (who, hero) => who.Select(hero);
   zoom.Changed += (who, distance) => { /* synced: set that player's camera distance */ };
   Screen.Add(settings, this, shownTo: player);
   ```
+- `Scoreboard` is a ready scoreboard: a row for each player in the game, in their colour, and a column for each
+  `Column(score)` ([scores](#stats-and-scores)), `Column(name, player => number)` or `Column(name, player => text)`.
+  When a team has more than one player, the players go under a line for each team with its totals. Rows are sorted by
+  the first number column, highest first, or the one `SortBy(name)` names. A score's column follows the score by
+  itself; call `Refresh()` once what another column reads has changed. It shows and hides with `Visible`; to show it
+  while a key is held, set `Visible` in `OnKeyPressed` and `OnKeyReleased`.
+
+  ```csharp
+  var board = Screen.Add(new Scoreboard(), Game.Instance);
+  board.Column(Kills);
+  board.Column("Gold", player => player.Gold);
+  ```
+- `TalentWindow` is a ready talent tree, one hero's. A talent is a class inheriting `Talent`, whose constructor sets
+  `Name`, `Icon`, `Text`, `MaxRank`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the hero as a
+  component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with `RankScope`
+  new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns a rank
+  when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are spent
+  and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as in
+  `OnLevelUp`). `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back,
+  running each talent once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the
+  points back.
+
+  ```csharp
+  public sealed class Cleave : Talent
+  {
+      public Cleave()
+      {
+          Name = "Cleave";
+          Icon = @"ReplaceableTextures\CommandButtons\BTNCleavingAttack.blp";
+          MaxRank = 3;
+          Column = 1;
+      }
+
+      protected override void OnRankChanged()
+      {
+          Hero.Modify(Stat.Damage, percent: 5 * Rank, heldBy: RankScope);
+      }
+  }
+
+  var tree = Screen.Add(new TalentWindow(hero), hero, shownTo: hero.Owner);
+  tree.Add(() => new Cleave());
+  ```
 - Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
 ## Boards and dialogs
@@ -1645,9 +1775,10 @@ variable: the first in slot order, or null when nobody in the game has it, so ch
 
 `player.Print("Kills: 3")` shows a line to one player and `Game.Print("Wave 2")` to everyone; both take a time on
 screen, `seconds: 10f`. The game's own kinds of message have their sounds: `player.Hint("Press F to open the shop")`
-and `player.Warning("The boss wakes")` show as the game's hints and warnings, and `player.Error("Not enough mana.")` as
-its error line above the command card, with the error sound (not inside `Local.For`, as the sound is made on every
-machine). `player.ClearMessages()` clears the player's screen. A team has `Print`, `Hint`, `Warning`, `Error` and
+and `player.Warning("The boss wakes")` show as the game's hints and warnings, and `player.Error("Not enough mana.")`
+like its errors: the same letters and colour, with the error sound, one line above the game's own error line (as low
+as a message goes), and kept in the message log (F12). It is not allowed inside `Local.For`, as the sound is made on
+every machine. `player.ClearMessages()` clears the player's screen. A team has `Print`, `Hint`, `Warning`, `Error` and
 `ClearMessages` too, for each of its players. `Game.Log("wave 2 started")` writes a line to the log file instead (under The build). `Package.Version` is the version of Moonwell the map is built with. `Gold`, `Lumber`, `FoodUsed`, `FoodCap`, `FoodCapCeiling`, `GoldGathered`, `LumberGathered`,
 `GoldUpkeepRate` and `LumberUpkeepRate` are the player's own: `player.Gold += 25`.
 
