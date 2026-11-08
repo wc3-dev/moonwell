@@ -325,6 +325,13 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>Shows a line where the game shows its errors, to one player: the game shows it only on that player's machine.</summary>
+        public void ErrorTo(player player, string text)
+        {
+            // The game's own trick (SimError): the offset and the blank lines put the line above the command card.
+            Natives.DisplayTimedTextToPlayer(player, 0.52f, 0.96f, 2.0f, "\n\n\n\n\n\n\n\n\n\n\n\n\n" + text.Colored(Color.TooltipGold));
+        }
+
         /// <summary>Shows a line to every player: each machine shows it to its own player.</summary>
         public void PrintToAll(string text, float seconds)
         {
@@ -1821,6 +1828,17 @@ namespace Moonwell.Engine
         public void QuestNews(QuestNews kind, string text)
         {
             var local = Natives.GetLocalPlayer();
+            if (kind == Moonwell.QuestNews.Hint || kind == Moonwell.QuestNews.Warning)
+            {
+                // As QuestMessageBJ shows bj_QUESTMESSAGE_HINT and bj_QUESTMESSAGE_WARNING.
+                var hint = kind == Moonwell.QuestNews.Hint;
+                var seconds = hint ? Natives.bj_TEXT_DELAY_HINT : Natives.bj_TEXT_DELAY_WARNING;
+                Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, seconds, " ");
+                Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, seconds, text);
+                Natives.StartSound(hint ? Natives.bj_questHintSound : Natives.bj_questWarningSound);
+                return;
+            }
+
             Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, Natives.bj_TEXT_DELAY_QUEST, " ");
             Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, Natives.bj_TEXT_DELAY_QUEST, text);
             switch (kind)
