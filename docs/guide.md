@@ -327,6 +327,9 @@ public sealed class KillCounter : UnitComponent
   as its `Stacking` says, and ends with its last holder or at its `Duration`, whichever comes first; one given with no
   holder stays after its holders let go. A component is never joined, so two holders give two. A holder that has
   ended adds nothing, and a player as the holder is error MW0043.
+- `Remove<T>()` takes the first component of the class, whoever added it, so an item that removes its gift in
+  `OnDropped` or `OnUnequipped` takes another item's when two give the same class: warning MW0055. Give it with
+  `heldBy: Item.Carry` instead, and it ends with this item's carry.
 - Game work starts in a reaction. Top-level code and static fields make nothing in the game.
 
 **Scopes.** What code makes belongs to the scope named where it is made, and ends when that scope ends: the game, a
@@ -481,6 +484,8 @@ to 5400 for level 10. The build gives the map's own to the runtime.
 | `X`, `Y` | read; `MoveTo(x, y)` goes to a pathable spot; while a unit holds the item, in its inventory, bag or equipment slots, they read the unit's place |
 | `Carrier`, `IsCarried` | the unit that picked it up, while it still holds it: null for an item in a bag or equipped (the 3.0 inventory), and in `OnDropped` it is still the unit, except for a drop at a death or after `RemoveUnit` (below), where it is already null |
 | `Carry` | a scope from each pick-up into the inventory or an equipment slot to the drop: what it holds, `heldBy: Item.Carry` in `OnPickedUp`, ends at the drop, with no `OnDropped` to write; still live in `OnDropped`; it ends inside `Drop`, and a moment after a drop the player makes, since the game fires a drop for a move between slots too, which keeps it; the 3.0 bag starts none, so a gift held by it is not given there |
+
+| `Place` | read: `ItemPlace.Ground` (or gone), `Inventory` (the six slots), `Bag` or `Equipped` (the 3.0 slots) |
 
 `ItemIn` is not for `Local.For`: it takes in an item Moonwell has not seen, which has to happen on every machine.
 Moonwell listens for pick-ups and drops from the start, so an item a unit picks up is taken in; one a unit held before
@@ -1862,6 +1867,31 @@ public sealed class Smithy : Human.Units.Blacksmith
 - The building's three reactions run on it and on its components; `upgrade` is the upgrade class's object, or a plain
   `Upgrade` with its `TypeId` for an upgrade with no class.
 - A requirement of the map's own ("needs 10 kills") is `SetMaxAllowed<T>`: 0 hides the button, the level count shows it.
+
+### The 3.0 bag and equipment slots
+
+A hero given the equipment slots (`AEqu`) and the bag (`AIni`) has nine equipment slots (head, chest, gloves, boots, two
+rings, primary, offhand, trinket, in that order) and a bag of 30, with the game's own panel:
+
+```csharp
+hero.Equip(ring);               // from the ground, the six slots or the bag; false when its slots are full (it goes to the bag)
+hero.Unequip(ring);             // into the bag
+var worn = hero.Equipped;       // a new list each read, in slot order
+var bagged = hero.Bag;
+
+public sealed class Crown : Items.CrownOfKings
+{
+    public override void OnEquipped(Unit carrierUnit) { }    // after OnPickedUp, then the unit's OnItemEquipped
+    public override void OnUnequipped(Unit carrierUnit) { }  // after OnDropped, then the unit's OnItemUnequipped
+}
+```
+
+- Equipping and unequipping are a drop and a pick-up in the game; `OnEquipped` runs after the pick-up into the slots,
+  `OnUnequipped` after the drop of an item Moonwell saw equipped. `Item.Carry` runs in the equipment slots, so a gift
+  `heldBy: Item.Carry` holds while the item is worn and ends when it goes to the bag, where an item's abilities do
+  nothing.
+- `Equipped` and `Bag` take in items Moonwell has not seen, so they are not for `Local.For`. Items do not stack: the game
+  never stacked any in the probes, the Max Stacks field set or not.
 
 ### Shops
 

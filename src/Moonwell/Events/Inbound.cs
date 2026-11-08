@@ -79,6 +79,11 @@ namespace Moonwell
             var turn = ++picked.moves;
             ItemPickedUp(picked, by, turn);
             UnitItemPickedUp(by, picked, turn);
+            if (picked.moves == turn && !picked.ending && !by.ending && Runtime.World.IsEquipped(i))
+            {
+                picked.equippedOn = by;
+                Equipment(picked, by, true);
+            }
         }
 
         /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the carry the drop is about ends. The game fires a drop for a move between slots too, and takes a dropped item out of its slot only after the event, so a carry whose unit still has the item in a slot is looked at again a moment later, and ends only if the unit has let go of it by then; Unit.Drop ends it inside its call.</summary>
@@ -104,6 +109,15 @@ namespace Moonwell
             if (!by.ending)
             {
                 UnitItemDropped(by, dropped);
+            }
+
+            if (dropped.equippedOn == by)
+            {
+                dropped.equippedOn = null;
+                if (!dropped.ending)
+                {
+                    Equipment(dropped, by, false);
+                }
             }
 
             if (carry == null || carry.HasEnded)

@@ -497,6 +497,24 @@ namespace Moonwell.Hosting
         /// <summary>Whether an item is in a unit's 3.0 bag, not its inventory or equipment slots.</summary>
         bool IsInBag(item item);
 
+        /// <summary>Whether an item is in a unit's 3.0 equipment slots (IsItemEquipped).</summary>
+        bool IsEquipped(item item);
+
+        /// <summary>Puts an item into a unit's equipment slots (UnitEquipItem).</summary>
+        void EquipItem(unit unit, item item);
+
+        /// <summary>Takes an item out of a unit's equipment slots into its bag (UnitUnequipItem).</summary>
+        void UnequipItem(unit unit, item item);
+
+        /// <summary>The item in an equipment slot of a unit, from 0; null when it is empty.</summary>
+        item? ItemInEquipmentSlot(unit unit, int slot);
+
+        /// <summary>The item in a slot of a unit's 3.0 bag, from 0; null when it is empty.</summary>
+        item? ItemInBagSlot(unit unit, int slot);
+
+        /// <summary>The size of a unit's 3.0 bag (UnitExtendedInventorySize); 0 without one.</summary>
+        int BagSizeOf(unit unit);
+
         /// <summary>The units within a radius of a place, as the game finds them, in a new list.</summary>
         List<unit> UnitsInRange(float x, float y, float radius);
 
