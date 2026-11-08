@@ -1879,7 +1879,8 @@ hero.Unequip(ring);             // into the bag
 var worn = hero.Equipped;       // a new list each read, in slot order
 var bagged = hero.Bag;
 
-public sealed class Crown : Items.CrownOfKings
+[ObjectId("I000")]
+public sealed class Helm : Items.AncientBronzeHelmet
 {
     public override void OnEquipped(Unit carrierUnit) { }    // after OnPickedUp, then the unit's OnItemEquipped
     public override void OnUnequipped(Unit carrierUnit) { }  // after OnDropped, then the unit's OnItemUnequipped
