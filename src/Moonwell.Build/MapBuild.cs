@@ -247,6 +247,11 @@ namespace Moonwell.Build
                 installs.Add("global::Moonwell.Runtime.ListenForSelection();");
             }
 
+            if (ReadsTransports(targetPath))
+            {
+                installs.Add("global::Moonwell.Runtime.ListenForTransports();");
+            }
+
             if (ReadsSummons(targetPath))
             {
                 installs.Add("global::Moonwell.Runtime.ListenForSummons();");
@@ -412,6 +417,13 @@ namespace Moonwell.Build
         internal static bool ReadsSelection(string assemblyPath)
         {
             return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Player", "get_Selection", "get_Selection"));
+        }
+
+        /// <summary>Whether a map's code reads a unit's transport or cargo (Unit.Transport or Unit.Cargo), which only listening for loads and unloads from the start fills (decision 219). A library of the map's own counts as its code.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        internal static bool ReadsTransports(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Unit", "get_Transport", "get_Cargo"));
         }
 
         /// <summary>Whether an assembly refers to either of two members of a Moonwell class.</summary>

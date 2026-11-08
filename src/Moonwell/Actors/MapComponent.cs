@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnAllianceChanged", "OnUnitSummoned" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport });
                 }
 
                 return mapHooks;
@@ -64,6 +64,20 @@ namespace Moonwell
         /// <param name="selectedUnit">The unit selected.</param>
         /// <param name="selectingPlayer">The player who selected it.</param>
         public virtual void OnUnitSelected(Unit selectedUnit, Player selectingPlayer)
+        {
+        }
+
+        /// <summary>Runs when a unit is loaded into a transport, for the game's components, then the cargo's player's, after the cargo, the transport and their components saw it (see Unit.OnLoaded).</summary>
+        /// <param name="loadedUnit">The unit loaded.</param>
+        /// <param name="carryingTransport">The transport it is in.</param>
+        public virtual void OnUnitLoaded(Unit loadedUnit, Unit carryingTransport)
+        {
+        }
+
+        /// <summary>Runs when a unit comes out of a transport, for the game's components, then the cargo's player's, after the cargo, the transport and their components saw it (see Unit.OnUnloaded).</summary>
+        /// <param name="unloadedUnit">The unit that came out.</param>
+        /// <param name="carryingTransport">The transport it was in.</param>
+        public virtual void OnUnitUnloaded(Unit unloadedUnit, Unit carryingTransport)
         {
         }
 

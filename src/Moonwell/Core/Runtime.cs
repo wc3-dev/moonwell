@@ -134,6 +134,13 @@ namespace Moonwell
             Events.Need(Hook.OnSelection);
         }
 
+        /// <summary>Listens for loads and unloads from the start, so that Unit.Transport and Cargo have them: the map's Main calls it, in the register step, when the map's code reads them.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void ListenForTransports()
+        {
+            Events.Need(Hook.OnTransport);
+        }
+
         /// <summary>Gives the day the map's dawn, dusk and hours; the map's Main calls it, before anything registers, when the map's gameplay constants change the standard ones.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void InstallDay(float dawn, float dusk, float hours)

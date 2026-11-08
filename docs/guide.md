@@ -203,8 +203,9 @@ public sealed class Champion : Human.Units.Paladin
   `Unit.Create` gives a kept one out again, as a new object of the class: making a unit costs the game about ten times
   what hiding, moving and showing one does (0.4 ms against 0.04), which shows when a wave of units comes at once. A
   kept unit has its items removed and its buffs taken off, and comes out with its life and mana as made; anything else
-  code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero and
-  an illusion are never kept, and `[Pooled]` on a hero class fails the build.
+  code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero, an
+  illusion, a unit inside a transport and a transport carrying units are never kept,
+  and `[Pooled]` on a hero class fails the build.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -499,6 +500,31 @@ comment.
 | `X`, `Y` | read; where the game put it, which is not always where it was asked: a tree asked at 1000 stands at 960 |
 
 A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
+
+### Transports
+
+A unit loaded into a zeppelin, a ship or a burrow runs `OnLoaded(transport)`, then its components, then the
+transport's `OnCargoLoaded(cargo)` and its components, then `OnUnitLoaded(cargo, transport)` on the game's components
+and on the cargo's player's. Coming out runs `OnUnloaded`, `OnCargoUnloaded` and `OnUnitUnloaded` the same way: for an
+unload, an unload all, and a transport that dies or is removed, which puts its cargo down alive where it was. The game
+has no unload event; Moonwell sees it from the order the game gives the cargo as it comes out. A unit that dies or is
+removed inside runs no unload reaction.
+
+`unit.Transport` is the transport carrying it, or null, and `transport.Cargo` the units aboard in the order they were
+loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
+read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
+zeppelin). `transport.Load(unit)`, `Unload(unit)` and `UnloadAll(x, y)` are the game's orders.
+
+```csharp
+public sealed class Ferry : Unit
+{
+    public override void OnCargoLoaded(Unit loadedUnit)
+    {
+        Owner.Print(Cargo.Count + " aboard");
+        if (Cargo.Count == CargoCapacity) UnloadAll(4000f, 0f);
+    }
+}
+```
 
 ## Stats and scores
 
