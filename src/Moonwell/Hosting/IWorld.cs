@@ -404,6 +404,12 @@ namespace Moonwell.Hosting
         /// <summary>Whether a unit is hidden (ShowUnit false).</summary>
         bool IsHidden(unit unit);
 
+        /// <summary>Shows a unit or hides it: ShowUnit.</summary>
+        void SetUnitShown(unit unit, bool shown);
+
+        /// <summary>Puts a unit of a pooled class away: its order stopped, its buffs taken off, given to the keeper without changing its colour, and hidden.</summary>
+        void PutAway(unit unit, player keeper);
+
         /// <summary>Selects a unit for a player, or deselects it: only the player's own machine changes its selection, and the game's events tell every machine.</summary>
         void SelectFor(player player, unit unit, bool selected);
 

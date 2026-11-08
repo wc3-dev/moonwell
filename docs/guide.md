@@ -199,6 +199,12 @@ public sealed class Champion : Human.Units.Paladin
   `Destructable.Create<Gate>(x, y, scope)` a destructable, facing 270 degrees, at scale 1 and in its type's first model
   (variation 0) unless they follow. `new Champion()` gives an object with nothing in the game behind it, and is error
   MW0046.
+- `[Pooled]` on a unit class keeps its units when they end (`Remove()`, or their scope ending) hidden, and
+  `Unit.Create` gives a kept one out again, as a new object of the class: making a unit costs the game about ten times
+  what hiding, moving and showing one does (0.4 ms against 0.04), which shows when a wave of units comes at once. A
+  kept unit has its items removed and its buffs taken off, and comes out with its life and mana as made; anything else
+  code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero and
+  an illusion are never kept, and `[Pooled]` on a hero class fails the build.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:

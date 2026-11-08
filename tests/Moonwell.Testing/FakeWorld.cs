@@ -2440,6 +2440,27 @@ namespace Moonwell.Testing
             asked.Add(what);
         }
 
+        /// <summary>Hides a unit (into HiddenUnits) or shows it.</summary>
+        public void SetUnitShown(unit unit, bool shown)
+        {
+            HiddenUnits.Remove(unit);
+            if (!shown)
+            {
+                HiddenUnits.Add(unit);
+            }
+        }
+
+        /// <summary>The units put away for a pool, in order.</summary>
+        public List<unit> PutAwayUnits = new List<unit>();
+
+        /// <summary>Puts a unit away for a pool: recorded, given to the keeper and hidden.</summary>
+        public void PutAway(unit unit, player keeper)
+        {
+            PutAwayUnits.Add(unit);
+            ((IWorld)this).SetOwner(unit, keeper);
+            SetUnitShown(unit, false);
+        }
+
         /// <summary>Whether a unit is in HiddenUnits.</summary>
         public bool IsHidden(unit unit)
         {

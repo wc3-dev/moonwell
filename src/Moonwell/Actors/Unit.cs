@@ -1162,10 +1162,16 @@ namespace Moonwell
         /// <summary>Creates a unit of a type for its owning player at a place, in a scope, which ends it when it ends, and with a facing (270 degrees without one). Throws a MoonwellException naming the id when the game makes no unit of the type.</summary>
         public static Unit Create(int typeId, Player owner, float x, float y, Scope scope, float facing = DefaultFacing)
         {
-            var handle = Runtime.World.SpawnUnit(owner.Handle, typeId, x, y, facing);
+            var handle = UnitPool.Take(typeId, owner, x, y, facing);
             if (handle == null)
             {
-                throw new MoonwellException("Unit.Create: the game made no unit of type " + Names.IdText(typeId));
+                handle = Runtime.World.SpawnUnit(owner.Handle, typeId, x, y, facing);
+                if (handle == null)
+                {
+                    throw new MoonwellException("Unit.Create: the game made no unit of type " + Names.IdText(typeId));
+                }
+
+                UnitPool.Made(typeId, handle);
             }
 
             Unit made;
@@ -1514,13 +1520,19 @@ namespace Moonwell
                 }
             }
 
+            var kept = false;
             if (!IsGone)
             {
-                Runtime.World.DeleteUnit(Handle);
+                kept = UnitPool.Keep(this);
+                if (!kept)
+                {
+                    Runtime.World.DeleteUnit(Handle);
+                }
+
                 IsGone = true;
             }
 
-            KnownUnits.Forget(this);
+            KnownUnits.Forget(this, kept);
         }
     }
 }

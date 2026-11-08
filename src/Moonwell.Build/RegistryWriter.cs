@@ -60,6 +60,16 @@ namespace Moonwell.Build
                     makerLines.Add($"{Types}.{maker}<{type}>({FourCC(id)}, () => new {type}());");
                 }
 
+                if (one.Pooled)
+                {
+                    if (one.Kind != "unit")
+                    {
+                        throw new BuildException(one.FullName + " is [Pooled], which is for unit classes; a hero, an item or another kind is never kept (decision 220)");
+                    }
+
+                    makerLines.Add($"{Types}.Pooled({FourCC(id)});");
+                }
+
                 if (one.Kind == "buff" && objects.ContainsKey(one.FullName))
                 {
                     makerLines.Add($"{Types}.BuffDisplay<{type}>({FourCC(id)}, {FourCC(IdOf(ids, one.FullName + CarrierSuffix))});");

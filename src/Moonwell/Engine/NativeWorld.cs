@@ -737,6 +737,21 @@ namespace Moonwell.Engine
             Natives.SetUnitOwner(unit, player, true);
         }
 
+        /// <summary>ShowUnit.</summary>
+        public void SetUnitShown(unit unit, bool shown)
+        {
+            Natives.ShowUnit(unit, shown);
+        }
+
+        /// <summary>Stops the unit, takes its buffs off, gives it to the keeper and hides it.</summary>
+        public void PutAway(unit unit, player keeper)
+        {
+            Natives.IssueImmediateOrder(unit, "stop");
+            Natives.UnitRemoveBuffs(unit, true, true);
+            Natives.SetUnitOwner(unit, keeper, false);
+            Natives.ShowUnit(unit, false);
+        }
+
         /// <summary>The level a player has of an upgrade; 0 when the player has none.</summary>
         public int UpgradeLevel(player p, int upgradeId)
         {

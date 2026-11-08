@@ -42,6 +42,7 @@ namespace Moonwell
             SaveGame.Reset();
             PlayerFile.Folder = "Map";
             KnownUnits.Reset();
+            UnitPool.Reset();
             KnownItems.Reset();
             KnownDestructables.Reset();
             ObjectTypes.Reset();
