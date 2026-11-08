@@ -112,13 +112,13 @@ namespace Moonwell.Build
         }
 
         /// <summary>
-        /// Whether a map that uses files references Moonwell.Objects though its code uses none of it, so the compiler left the
+        /// Whether a map that uses files or the bonus stats references Moonwell.Objects though its code uses none of it, so the compiler left the
         /// reference out of the assembly: the deps file each build writes anew still names the package.
         /// </summary>
         public static bool ReferencesObjects(string assemblyPath)
         {
             var deps = Path.ChangeExtension(assemblyPath, ".deps.json");
-            if (!UsedBy(assemblyPath) || !File.Exists(deps))
+            if (!(UsedBy(assemblyPath) || BonusAbilities.UsedBy(assemblyPath)) || !File.Exists(deps))
             {
                 return false;
             }

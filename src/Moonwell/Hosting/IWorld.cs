@@ -281,6 +281,27 @@ namespace Moonwell.Hosting
         /// <summary>Sets the most mana a unit can have, as a whole number; a mana above it falls to it.</summary>
         void SetMaxMana(unit unit, float mana);
 
+        /// <summary>The armor of a unit, with every bonus.</summary>
+        float ArmorOf(unit unit);
+
+        /// <summary>The middle of a unit's white damage: its base damage and the middle of its dice, without bonuses.</summary>
+        float AverageDamageOf(unit unit);
+
+        /// <summary>The move speed of a unit.</summary>
+        float MoveSpeedOf(unit unit);
+
+        /// <summary>Sets the move speed of a unit, which the game holds to the map's least and most speed.</summary>
+        void SetMoveSpeed(unit unit, float speed);
+
+        /// <summary>A unit's own life or mana regeneration a second, without what a hero's attributes add.</summary>
+        float RegenOf(unit unit, bool mana);
+
+        /// <summary>Sets a unit's own life or mana regeneration a second.</summary>
+        void SetRegen(unit unit, bool mana, float perSecond);
+
+        /// <summary>Sets the level-1 field of an ability a unit has, a whole number unless real; the game takes it at once for the stats' bonus abilities (seen 11-08).</summary>
+        void PutBonus(unit unit, int abilityId, int fieldId, bool real, float value);
+
         /// <summary>The x of a unit.</summary>
         float UnitX(unit unit);
 
