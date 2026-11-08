@@ -53,6 +53,9 @@ namespace Moonwell
             LastingLightning.Reset();
             Music.Reset();
             Cinematic.Reset();
+            Boards.Reset();
+            Leaderboards.Reset();
+            Dialogs.Reset();
             Transmission.Reset();
             FileLengths.Reset();
             LiveVisions.Reset();

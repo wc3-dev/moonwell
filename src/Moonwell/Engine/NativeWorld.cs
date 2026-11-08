@@ -10,6 +10,9 @@ namespace Moonwell.Engine
         /// <summary>How often the log file is checked for lines that wait to be written.</summary>
         private const float LogCheck = 0.25f;
 
+        /// <summary>The triggers of each dialog's buttons, destroyed with it.</summary>
+        private readonly Dictionary<dialog, List<trigger>> dialogTriggers = new Dictionary<dialog, List<trigger>>();
+
         /// <summary>The seconds the clock runs before it starts again: its elapsed time reads exact at 10 s, and steps by 0.0625 s at 604800 s.</summary>
         private const float Lap = 10.0f;
 
@@ -1918,6 +1921,143 @@ namespace Moonwell.Engine
 
         /// <summary>DisplayCineFilter(false).</summary>
         public void EndScreenFilter() => Natives.DisplayCineFilter(false);
+
+        /// <summary>CreateMultiboard.</summary>
+        public multiboard MakeBoard() => Natives.CreateMultiboard();
+
+        /// <summary>MultiboardSetColumnCount and MultiboardSetRowCount: a count changed by any amount at once is safe (seen 11-07).</summary>
+        public void SizeBoard(multiboard board, int rows, int columns)
+        {
+            Natives.MultiboardSetColumnCount(board, columns);
+            Natives.MultiboardSetRowCount(board, rows);
+        }
+
+        /// <summary>MultiboardSetTitleText.</summary>
+        public void TitleBoard(multiboard board, string title) => Natives.MultiboardSetTitleText(board, title);
+
+        /// <summary>One cell, its item fetched and released: a new cell shows an eye icon until its style is set (seen 09-29).</summary>
+        public void WriteCell(multiboard board, int row, int column, string text, string icon, Color color, float width)
+        {
+            var item = Natives.MultiboardGetItem(board, row, column);
+            Natives.MultiboardSetItemStyle(item, true, icon != "");
+            Natives.MultiboardSetItemValue(item, text);
+            Natives.MultiboardSetItemValueColor(item, color.R, color.G, color.B, color.A);
+            Natives.MultiboardSetItemWidth(item, width);
+            if (icon != "")
+            {
+                Natives.MultiboardSetItemIcon(item, icon);
+            }
+
+            Natives.MultiboardReleaseItem(item);
+        }
+
+        /// <summary>MultiboardDisplay, on this machine.</summary>
+        public void DisplayBoard(multiboard board, bool shown) => Natives.MultiboardDisplay(board, shown);
+
+        /// <summary>DestroyMultiboard.</summary>
+        public void EndBoard(multiboard board) => Natives.DestroyMultiboard(board);
+
+        /// <summary>Whether the uber tooltip shows on this machine.</summary>
+        public bool TooltipShown() => Natives.BlzFrameIsVisible(Natives.BlzGetOriginFrame(Natives.ORIGIN_FRAME_UBERTOOLTIP, 0));
+
+        /// <summary>CreateLeaderboard, with labels, names and values shown.</summary>
+        public leaderboard MakeLeaderboard()
+        {
+            var board = Natives.CreateLeaderboard();
+            Natives.LeaderboardSetStyle(board, true, true, true, true);
+            return board;
+        }
+
+        /// <summary>The rows kept by their slot keys, which follow the sort (seen 11-07); sized as LeaderboardResizeBJ does.</summary>
+        public void WriteLeaderboard(leaderboard board, string title, List<string> labels, List<int> values)
+        {
+            Natives.LeaderboardSetLabel(board, title);
+            var had = Natives.LeaderboardGetItemCount(board);
+            for (var slot = had - 1; slot >= labels.Count; slot--)
+            {
+                Natives.LeaderboardRemovePlayerItem(board, Natives.Player(slot));
+            }
+
+            for (var slot = 0; slot < labels.Count; slot++)
+            {
+                var key = Natives.Player(slot);
+                if (slot >= had)
+                {
+                    Natives.LeaderboardAddItem(board, labels[slot], values[slot], key);
+                }
+                else
+                {
+                    var at = Natives.LeaderboardGetPlayerIndex(board, key);
+                    Natives.LeaderboardSetItemLabel(board, at, labels[slot]);
+                    Natives.LeaderboardSetItemValue(board, at, values[slot]);
+                }
+            }
+
+            Natives.LeaderboardSortItemsByValue(board, false);
+            Natives.LeaderboardSetSizeByItemCount(board, Math.Max(0, title == "" ? labels.Count - 1 : labels.Count));
+        }
+
+        /// <summary>PlayerSetLeaderboard.</summary>
+        public void GiveLeaderboard(player player, leaderboard board) => Natives.PlayerSetLeaderboard(player, board);
+
+        /// <summary>LeaderboardDisplay, on this machine.</summary>
+        public void DisplayLeaderboard(leaderboard board, bool shown) => Natives.LeaderboardDisplay(board, shown);
+
+        /// <summary>DestroyLeaderboard.</summary>
+        public void EndLeaderboard(leaderboard board) => Natives.DestroyLeaderboard(board);
+
+        /// <summary>DialogCreate and DialogSetMessage.</summary>
+        public dialog MakeDialog(string message)
+        {
+            var made = Natives.DialogCreate();
+            Natives.DialogSetMessage(made, message);
+            return made;
+        }
+
+        /// <summary>DialogAddButton, with a trigger on the button's click, kept to be destroyed with the dialog.</summary>
+        public void AddDialogButton(dialog dialog, string text, int hotkey, Action<player> clicked)
+        {
+            var button = Natives.DialogAddButton(dialog, text, hotkey);
+            var trigger = Natives.CreateTrigger();
+            Natives.TriggerRegisterDialogButtonEvent(trigger, button);
+            Natives.TriggerAddAction(trigger, () =>
+            {
+                try
+                {
+                    clicked(Natives.GetTriggerPlayer());
+                }
+                catch (Exception error)
+                {
+                    Errors.Report("Moonwell.Dialog", error);
+                }
+            });
+            if (!dialogTriggers.TryGetValue(dialog, out var triggers))
+            {
+                triggers = new List<trigger>();
+                dialogTriggers[dialog] = triggers;
+            }
+
+            triggers.Add(trigger);
+        }
+
+        /// <summary>DialogDisplay.</summary>
+        public void DisplayDialog(player player, dialog dialog, bool shown) => Natives.DialogDisplay(player, dialog, shown);
+
+        /// <summary>DialogDestroy, and the triggers of its buttons.</summary>
+        public void EndDialog(dialog dialog)
+        {
+            if (dialogTriggers.TryGetValue(dialog, out var triggers))
+            {
+                foreach (var trigger in triggers)
+                {
+                    Natives.DestroyTrigger(trigger);
+                }
+
+                dialogTriggers.Remove(dialog);
+            }
+
+            Natives.DialogDestroy(dialog);
+        }
 
         /// <summary>GetRandomInt.</summary>
         public int RandomBetween(int low, int high) => Natives.GetRandomInt(low, high);
