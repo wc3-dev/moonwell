@@ -500,6 +500,68 @@ comment.
 
 A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
 
+## Stats and scores
+
+A stat is a number a unit or a player has: a base, then modifiers, flat or percent, each held by a scope, which takes it
+off when it ends (an item's `Item.Carry`, a buff, a talent, the unit itself). Percents add up, then multiply:
+(base + flat) × (1 + percents / 100), so +20% and +30% make +50%.
+
+```csharp
+public static class Stats
+{
+    public static readonly Stat SpellPower = new Stat("Spell power");
+}
+
+// A buff: +20% damage and -30% move speed while it is on.
+protected override void OnApply()
+{
+    Target.Modify(Stat.Damage, percent: 20, heldBy: this);
+    Target.Modify(Stat.MoveSpeed, percent: -30, heldBy: this);
+}
+
+// An item component: +5 armor and +10 spell power while carried.
+Carrier.Modify(Stat.Armor, 5, heldBy: Item.Carry);
+Carrier.Modify(Stats.SpellPower, 10, heldBy: Item.Carry);
+
+var power = hero.Get(Stats.SpellPower);
+```
+
+`Modify` gives back the modifier, whose `End()` takes it off sooner. A holder that has ended adds nothing, reported in
+development builds. A map's own stat (`new Stat(name)`, or `new Stat(name, base)`) is only a number the map reads, on
+units and players. The game's stats are units' only, and change the unit in the game:
+
+| Stat | |
+|---|---|
+| `Damage`, `Armor` | the card's green bonus, red when negative; whole numbers; a percent of damage is of the middle of the white damage |
+| `AttackSpeed` | percent points, as an item's "+15% attack speed": no base |
+| `MaxLife`, `MaxMana` | the unit's own most, shown white; the most life never goes below 1 |
+| `MoveSpeed` | the unit's own, held to the map's least and most speed (150 to 400 unless its gameplay constants say otherwise) |
+| `LifeRegen`, `ManaRegen` | the unit's own a second, to which a hero's strength and intelligence add |
+| `Strength`, `Agility`, `Intelligence` | a hero's base, shown white; whole numbers |
+
+A game stat never goes below 0. Its base is the game's number less Moonwell's part, so what the game changes meanwhile (a
+level's life, a tome) stays; a percent of a base the game changed is put again at the stat's next change. `Get` reads
+(base + flat) × (1 + percents / 100), without what items and the game's own abilities add to damage and attack speed.
+Damage, armor and attack speed go through three abilities Moonwell declares, so a map that reads them needs
+Moonwell.Objects.
+
+A score is a whole number for each player that the map counts itself, as a kill means something else in each map:
+
+```csharp
+public static readonly Score Kills = new Score("Kills");
+
+public override void OnUnitDied(Unit dyingUnit, Unit? killerUnit)
+{
+    if (killerUnit != null && killerUnit.Owner.IsEnemy(dyingUnit.Owner))
+    {
+        Kills.Add(killerUnit.Owner, 1);
+    }
+}
+```
+
+`Kills[player]` reads it, 0 until counted, and `Set` sets it. Scores and stats are not saved by themselves: a save class
+copies what it keeps ([Saves](#saves)). The game's own counts stay on its score screen, which a map cannot add to.
+
 ## Casting real spells
 
 A unit, or a player with no unit, casts any spell through a hidden dummy: a Storm Bolt from a hero's passive, a trap's
@@ -1491,6 +1553,48 @@ heroes.Picked += (who, hero) => who.Select(hero);
   var zoom = settings.Slider("Camera distance", 1650f, 3000f);
   zoom.Changed += (who, distance) => { /* synced: set that player's camera distance */ };
   Screen.Add(settings, this, shownTo: player);
+  ```
+- `Scoreboard` is a ready scoreboard: a row for each player in the game, in their colour, and a column for each
+  `Column(score)` ([scores](#stats-and-scores)), `Column(name, player => number)` or `Column(name, player => text)`.
+  When a team has more than one player, the players go under a line for each team with its totals. Rows are sorted by
+  the first number column, highest first, or the one `SortBy(name)` names. A score's column follows the score by
+  itself; call `Refresh()` once what another column reads has changed. It shows and hides with `Visible`; to show it
+  while a key is held, set `Visible` in `OnKeyPressed` and `OnKeyReleased`.
+
+  ```csharp
+  var board = Screen.Add(new Scoreboard(), Game.Instance);
+  board.Column(Kills);
+  board.Column("Gold", player => player.Gold);
+  ```
+- `TalentWindow` is a ready talent tree, one hero's. A talent is a class inheriting `Talent`, whose constructor sets
+  `Name`, `Icon`, `Text`, `MaxRank`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the hero as a
+  component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with `RankScope`
+  new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns a rank
+  when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are spent
+  and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as in
+  `OnLevelUp`). `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back,
+  running each talent once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the
+  points back.
+
+  ```csharp
+  public sealed class Cleave : Talent
+  {
+      public Cleave()
+      {
+          Name = "Cleave";
+          Icon = @"ReplaceableTextures\CommandButtons\BTNCleavingAttack.blp";
+          MaxRank = 3;
+          Column = 1;
+      }
+
+      protected override void OnRankChanged()
+      {
+          Hero.Modify(Stat.Damage, percent: 5 * Rank, heldBy: RankScope);
+      }
+  }
+
+  var tree = Screen.Add(new TalentWindow(hero), hero, shownTo: hero.Owner);
+  tree.Add(() => new Cleave());
   ```
 - Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
