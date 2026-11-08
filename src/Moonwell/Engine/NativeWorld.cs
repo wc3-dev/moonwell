@@ -30,6 +30,8 @@ namespace Moonwell.Engine
 
         /// <summary>The timer that calls Runtime.Wake when the next wake is due.</summary>
         private readonly timer wake;
+        private readonly Dictionary<int, timer> errorTimers = new Dictionary<int, timer>();
+        private framehandle? errorLine;
 
         /// <summary>The rect of the whole map, made once; every call to GetWorldBounds makes a new one.</summary>
         private readonly rect bounds;
@@ -70,7 +72,12 @@ namespace Moonwell.Engine
             // First of anything that hears a saved game load, so no code meets the string type the load left (game facts, 11-03).
             var loaded = Natives.CreateTrigger();
             Natives.TriggerRegisterGameEvent(loaded, Natives.EVENT_GAME_LOADED);
-            Natives.TriggerAddAction(loaded, () => LoadRepair.Strings());
+            Natives.TriggerAddAction(loaded, () =>
+            {
+                LoadRepair.Strings();
+                // A load takes the map's frames away (game facts, 11-06); the next error makes the line again.
+                errorLine = null;
+            });
 
             // Every machine runs the check, so a line logged inside Local.For starts no timer of one machine's.
             Natives.TimerStart(Natives.CreateTimer(), LogCheck, true, LogCheckAction);
@@ -325,11 +332,41 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Shows a line where the game shows its errors, to one player: the game shows it only on that player's machine.</summary>
+        /// <summary>Shows a line to one player where the game shows its errors, in a text frame of Moonwell's own, made on every machine at the first error; the line goes after two seconds. The message log is left alone.</summary>
         public void ErrorTo(player player, string text)
         {
-            // The game's own trick (SimError): the offset and the blank lines put the line above the command card.
-            Natives.DisplayTimedTextToPlayer(player, 0.52f, 0.96f, 2.0f, "\n\n\n\n\n\n\n\n\n\n\n\n\n" + text.Colored(Color.TooltipGold));
+            if (errorLine == null)
+            {
+                errorLine = Natives.BlzCreateFrameByType("TEXT", "MoonwellErrorLine", Natives.BlzGetOriginFrame(Natives.ORIGIN_FRAME_GAME_UI, 0), "", 0);
+                // Where the game's own error line was (3.0.1, measured from a screenshot): DisplayTimedTextToPlayer's
+                // offsets with blank lines (SimError) drew it near the top of the screen.
+                Natives.BlzFrameSetAbsPoint(errorLine, Natives.FRAMEPOINT_LEFT, 0.211f, 0.194f);
+                // A TEXT by type draws smaller than the game's error line, whose letters are 1.31 times as wide.
+                Natives.BlzFrameSetScale(errorLine, 1.31f);
+                Natives.BlzFrameSetVisible(errorLine, false);
+            }
+
+            var slot = Natives.GetPlayerId(player);
+            if (!errorTimers.TryGetValue(slot, out var hide))
+            {
+                hide = Natives.CreateTimer();
+                errorTimers[slot] = hide;
+            }
+
+            var line = errorLine;
+            if (Natives.GetLocalPlayer() == player)
+            {
+                Natives.BlzFrameSetText(line, text.Colored(Color.TooltipGold));
+                Natives.BlzFrameSetVisible(line, true);
+            }
+
+            Natives.TimerStart(hide, 2.0f, false, () =>
+            {
+                if (Natives.GetLocalPlayer() == player && errorLine == line)
+                {
+                    Natives.BlzFrameSetVisible(line, false);
+                }
+            });
         }
 
         /// <summary>Shows a line to every player: each machine shows it to its own player.</summary>
