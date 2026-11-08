@@ -17,6 +17,7 @@ namespace Moonwell.Testing
             AddEffects(list);
             AddFloatingText(list);
             AddSounds(list);
+            AddQuestsAndCinematics(list);
             AddUnitAbilities(list);
             AddLast(list);
             AddCompiler(list);
@@ -993,6 +994,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.mouse.setters", Run = MouseCases.Setters });
             list.Add(new Case { Name = "input.camera.reads", Run = CameraCases.Reads });
             list.Add(new Case { Name = "input.camera.changes", Run = CameraCases.Changes });
+            list.Add(new Case { Name = "input.camera.cinematic", Run = CameraCases.CinematicCamera });
             list.Add(new Case { Name = "input.camera.named", Run = CameraCases.Named });
             list.Add(new Case { Name = "input.camera.unknown-camera", Run = CameraCases.UnknownCamera });
             list.Add(new Case { Name = "input.camera.wrong-data", Run = CameraCases.WrongData });
@@ -1578,6 +1580,30 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "sounds.music-replaced-and-stopped", Run = SoundCases.MusicReplacedAndStopped });
             list.Add(new Case { Name = "sounds.music-missing-file", Run = SoundCases.MusicMissingFile });
             list.Add(new Case { Name = "sounds.music-play-once", Run = SoundCases.MusicPlayOnce });
+        }
+
+        /// <summary>Adds the quest, cinematic and transmission cases.</summary>
+        private static void AddQuestsAndCinematics(List<Case> list)
+        {
+            list.Add(new Case { Name = "quests.create", Run = QuestCases.Create });
+            list.Add(new Case { Name = "quests.complete-and-fail", Run = QuestCases.CompleteAndFail });
+            list.Add(new Case { Name = "quests.requirements", Run = QuestCases.Requirements });
+            list.Add(new Case { Name = "quests.undiscovered", Run = QuestCases.Undiscovered });
+            list.Add(new Case { Name = "quests.shown-to", Run = QuestCases.ShownTo });
+            list.Add(new Case { Name = "quests.ends-with-scope", Run = QuestCases.EndsWithScope });
+            list.Add(new Case { Name = "cinematics.scene-runs", Run = CinematicCases.SceneRuns });
+            list.Add(new Case { Name = "cinematics.esc-skips-when-all-pressed", Run = CinematicCases.EscSkipsWhenAllPressed });
+            list.Add(new Case { Name = "cinematics.not-skippable", Run = CinematicCases.NotSkippable });
+            list.Add(new Case { Name = "cinematics.shown-to", Run = CinematicCases.ShownTo });
+            list.Add(new Case { Name = "cinematics.one-at-a-time", Run = CinematicCases.OneAtATime });
+            list.Add(new Case { Name = "cinematics.fades", Run = CinematicCases.Fades });
+            list.Add(new Case { Name = "cinematics.scene-throws", Run = CinematicCases.SceneThrows });
+            list.Add(new Case { Name = "cinematics.skip-ends-line", Run = CinematicCases.SkipEndsLine });
+            list.Add(new Case { Name = "cinematics.press-that-starts-it", Run = CinematicCases.PressThatStartsIt });
+            list.Add(new Case { Name = "cinematics.line-over-when-resumed", Run = CinematicCases.LineOverWhenResumed });
+            list.Add(new Case { Name = "cinematics.line-waits-for-letterbox", Run = CinematicCases.LineWaitsForLetterbox });
+            list.Add(new Case { Name = "transmissions.voice", Run = CinematicCases.TransmissionVoice });
+            list.Add(new Case { Name = "cinematics.hides-over-frames", Run = CinematicCases.HidesOverFrames });
         }
 
         /// <summary>Adds the cases for giving and taking abilities and setting their level.</summary>

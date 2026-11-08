@@ -34,6 +34,11 @@ namespace Moonwell
             frame.over = over;
             frame.MakeTree(over ? FramesSystem.OverRoot : FramesSystem.ScreenRoot, shownTo);
             FramesSystem.Rooted(frame);
+            if (over && Cinematic.LetterboxHere() != null)
+            {
+                frame.Reshow();
+            }
+
             return frame;
         }
     }

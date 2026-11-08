@@ -1773,6 +1773,152 @@ namespace Moonwell.Engine
         /// <summary>SetMusicVolume.</summary>
         public void SetMusicLoudness(int volume) => Natives.SetMusicVolume(volume);
 
+        /// <summary>CreateQuest, disabled until ShowQuest, as the game enables a new quest.</summary>
+        public quest MakeQuest()
+        {
+            var made = Natives.CreateQuest();
+            Natives.QuestSetEnabled(made, false);
+            return made;
+        }
+
+        /// <summary>QuestSetTitle, QuestSetDescription and QuestSetIconPath.</summary>
+        public void WriteQuest(quest quest, string title, string description, string icon)
+        {
+            Natives.QuestSetTitle(quest, title);
+            Natives.QuestSetDescription(quest, description);
+            Natives.QuestSetIconPath(quest, icon);
+        }
+
+        /// <summary>QuestSetRequired, QuestSetDiscovered, QuestSetCompleted and QuestSetFailed.</summary>
+        public void SetQuestState(quest quest, bool main, bool discovered, bool completed, bool failed)
+        {
+            Natives.QuestSetRequired(quest, main);
+            Natives.QuestSetDiscovered(quest, discovered);
+            Natives.QuestSetCompleted(quest, completed);
+            Natives.QuestSetFailed(quest, failed);
+        }
+
+        /// <summary>QuestSetEnabled, on this machine only: a quest enabled on one machine shows in that player's log only (seen 11-07).</summary>
+        public void ShowQuest(quest quest, bool shown) => Natives.QuestSetEnabled(quest, shown);
+
+        /// <summary>DestroyQuest.</summary>
+        public void EndQuest(quest quest) => Natives.DestroyQuest(quest);
+
+        /// <summary>QuestCreateItem.</summary>
+        public questitem MakeRequirement(quest quest) => Natives.QuestCreateItem(quest);
+
+        /// <summary>QuestItemSetDescription and QuestItemSetCompleted.</summary>
+        public void SetRequirement(questitem requirement, string text, bool done)
+        {
+            Natives.QuestItemSetDescription(requirement, text);
+            Natives.QuestItemSetCompleted(requirement, done);
+        }
+
+        /// <summary>QuestMessageBJ's local part: a blank line and the message for 20 s, the game's sound for the kind (made by InitBlizzard on every machine), and the quest button's flash.</summary>
+        public void QuestNews(QuestNews kind, string text)
+        {
+            var local = Natives.GetLocalPlayer();
+            Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, Natives.bj_TEXT_DELAY_QUEST, " ");
+            Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, Natives.bj_TEXT_DELAY_QUEST, text);
+            switch (kind)
+            {
+                case Moonwell.QuestNews.Discovered:
+                    Natives.StartSound(Natives.bj_questDiscoveredSound);
+                    break;
+                case Moonwell.QuestNews.Updated:
+                    Natives.StartSound(Natives.bj_questUpdatedSound);
+                    break;
+                case Moonwell.QuestNews.Completed:
+                    Natives.StartSound(Natives.bj_questCompletedSound);
+                    break;
+                default:
+                    Natives.StartSound(Natives.bj_questFailedSound);
+                    break;
+            }
+
+            Natives.FlashQuestDialogButton();
+        }
+
+        /// <summary>A trigger on the player's skip-cinematic event (Esc), which fires with the controls off too (seen 11-07).</summary>
+        public void ListenEsc(player player)
+        {
+            var trigger = Natives.CreateTrigger();
+            Natives.TriggerRegisterPlayerEvent(trigger, player, Natives.EVENT_PLAYER_END_CINEMATIC);
+            Natives.TriggerAddAction(trigger, EscAction);
+        }
+
+        private static void EscAction()
+        {
+            try
+            {
+                Inbound.EscArrived(Natives.GetTriggerPlayer());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Esc", error);
+            }
+        }
+
+        /// <summary>ShowInterface and EnableOcclusion, as CinematicModeExBJ does them.</summary>
+        public void Letterbox(bool on, float seconds)
+        {
+            Natives.ShowInterface(!on, seconds);
+            Natives.EnableOcclusion(!on);
+        }
+
+        /// <summary>EnableUserControl.</summary>
+        public void UserControl(bool on) => Natives.EnableUserControl(on);
+
+        /// <summary>SetCineModeVolumeGroupsBJ, or VolumeGroupReset.</summary>
+        public void CinematicSounds(bool on)
+        {
+            if (on)
+            {
+                Natives.SetCineModeVolumeGroupsBJ();
+            }
+            else
+            {
+                Natives.VolumeGroupReset();
+            }
+        }
+
+        /// <summary>ClearTextMessages.</summary>
+        public void ClearMessages() => Natives.ClearTextMessages();
+
+        /// <summary>SetCinematicScene, with the subtitles forced on so the line shows whatever the player's setting.</summary>
+        public void ShowScene(int unitTypeId, int playerColor, string name, string text, float seconds, float talkSeconds)
+        {
+            Natives.ForceCinematicSubtitles(true);
+            Natives.SetCinematicScene(unitTypeId, Natives.ConvertPlayerColor(playerColor), name, text, seconds, talkSeconds);
+        }
+
+        /// <summary>EndCinematicScene.</summary>
+        public void EndScene() => Natives.EndCinematicScene();
+
+        /// <summary>UnitAddIndicator in red and PingMinimap for 1 s, as TransmissionFromUnitWithNameBJ does.</summary>
+        public void MarkSpeaker(unit unit, float x, float y)
+        {
+            Natives.UnitAddIndicator(unit, 255, 0, 0, 255);
+            Natives.PingMinimap(x, y, 1.0f);
+        }
+
+        /// <summary>The cine filter as CinematicFadeCommonBJ sets it, on the white mask tinted by the colour.</summary>
+        public void ScreenFilter(int red, int green, int blue, int fromAlpha, int toAlpha, float seconds)
+        {
+            Natives.SetCineFilterTexture(@"ReplaceableTextures\CameraMasks\White_mask.blp");
+            Natives.SetCineFilterBlendMode(Natives.BLEND_MODE_BLEND);
+            Natives.SetCineFilterTexMapFlags(Natives.TEXMAP_FLAG_NONE);
+            Natives.SetCineFilterStartUV(0.0f, 0.0f, 1.0f, 1.0f);
+            Natives.SetCineFilterEndUV(0.0f, 0.0f, 1.0f, 1.0f);
+            Natives.SetCineFilterStartColor(red, green, blue, fromAlpha);
+            Natives.SetCineFilterEndColor(red, green, blue, toAlpha);
+            Natives.SetCineFilterDuration(seconds);
+            Natives.DisplayCineFilter(true);
+        }
+
+        /// <summary>DisplayCineFilter(false).</summary>
+        public void EndScreenFilter() => Natives.DisplayCineFilter(false);
+
         /// <summary>GetRandomInt.</summary>
         public int RandomBetween(int low, int high) => Natives.GetRandomInt(low, high);
 

@@ -4,7 +4,7 @@ using Moonwell.Hosting;
 namespace Moonwell.Testing
 {
     /// <summary>The fake game a case runs against: it records what the runtime asks of it and moves time by hand.</summary>
-    public sealed class FakeWorld : IWorld
+    public sealed partial class FakeWorld : IWorld
     {
         /// <summary>Game seconds since the world was made.</summary>
         public float Time;
