@@ -389,8 +389,16 @@ namespace Moonwell
             }
 
             var ability = by.AbilityOf(abilityId);
-            var cast = new Cast(ability, by, target == null ? null : Unit.Of(target), x, y, Runtime.World.AbilityLevel(caster, abilityId));
-            ability.Adopt(cast);
+            var cast = by.Starting;
+            by.Starting = null;
+            if (cast == null || cast.HasEnded || cast.Ability != ability)
+            {
+                cast?.End();
+                cast = new Cast(ability, by, target == null ? null : Unit.Of(target), x, y, Runtime.World.AbilityLevel(caster, abilityId));
+                ability.Adopt(cast);
+            }
+
+            cast.TookEffect = true;
             by.ActiveCast = cast;
             SpellBuffs.Cast(caster, by, abilityId, cast.Level, cast.Target, x, y);
             AbilityCast(ability, cast);
@@ -400,6 +408,87 @@ namespace Moonwell
             if (first != null)
             {
                 MapCast(first, cast);
+            }
+        }
+
+        /// <summary>A unit starts to cast a spell (the game's channel event, before mana, cooldown and effect): an ability class with a cast reaction gets the cast in OnCasting (decision 225), and a cast it refuses ends, the caster is stopped, which spends nothing (seen 11-08), and the caster's owner sees the text as an error. A dummy's cast runs none (decision 171).</summary>
+        internal static void SpellChannel(unit caster, int abilityId, unit? target, float x, float y)
+        {
+            if (ObjectTypes.AbilityMaker(abilityId) == null || Dummies.IsDummy(caster))
+            {
+                return;
+            }
+
+            var by = Unit.Of(caster);
+            if (by == null)
+            {
+                return;
+            }
+
+            var ability = by.AbilityOf(abilityId);
+            if (ability.HasEnded || (ability.Mask & Hook.OnCast) == 0)
+            {
+                return;
+            }
+
+            by.Starting?.End();
+            var cast = new Cast(ability, by, target == null ? null : Unit.Of(target), x, y, Runtime.World.AbilityLevel(caster, abilityId));
+            ability.Adopt(cast);
+            by.Starting = cast;
+            try
+            {
+                ability.OnCasting(cast);
+            }
+            catch (Exception error)
+            {
+                Errors.Report(Names.NameOf(ability) + ".OnCasting", error);
+            }
+
+            var refusal = cast.Refusal;
+            if (refusal == null || cast.HasEnded)
+            {
+                return;
+            }
+
+            if (by.Starting == cast)
+            {
+                by.Starting = null;
+            }
+
+            cast.End();
+            if (!by.IsGone)
+            {
+                Runtime.World.OrderUnit(caster, "stop");
+                if (refusal.Length > 0)
+                {
+                    by.Owner.Error(refusal);
+                }
+            }
+        }
+
+        /// <summary>A unit's spell runs to its end (the game's finish event): the ability's OnFinished, when the cast it is making is live, has taken effect and is for this ability.</summary>
+        internal static void SpellFinished(unit caster, int abilityId)
+        {
+            var by = KnownUnits.Find(caster);
+            var cast = by?.ActiveCast;
+            if (cast == null || cast.HasEnded || cast.Ability.Id != abilityId)
+            {
+                return;
+            }
+
+            var ability = cast.Ability;
+            if (ability.HasEnded || (ability.Mask & Hook.OnCast) == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                ability.OnFinished(cast);
+            }
+            catch (Exception error)
+            {
+                Errors.Report(Names.NameOf(ability) + ".OnFinished", error);
             }
         }
 
@@ -416,6 +505,13 @@ namespace Moonwell
             if (ended == null)
             {
                 return;
+            }
+
+            var starting = ended.Starting;
+            if (starting != null && starting.Ability.Id == abilityId)
+            {
+                ended.Starting = null;
+                starting.End();
             }
 
             var cast = ended.ActiveCast;
