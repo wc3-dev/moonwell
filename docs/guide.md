@@ -1737,9 +1737,10 @@ variable: the first in slot order, or null when nobody in the game has it, so ch
 
 `player.Print("Kills: 3")` shows a line to one player and `Game.Print("Wave 2")` to everyone; both take a time on
 screen, `seconds: 10f`. The game's own kinds of message have their sounds: `player.Hint("Press F to open the shop")`
-and `player.Warning("The boss wakes")` show as the game's hints and warnings, and `player.Error("Not enough mana.")` as
-its error line above the command card, with the error sound (not inside `Local.For`, as the sound is made on every
-machine). `player.ClearMessages()` clears the player's screen. A team has `Print`, `Hint`, `Warning`, `Error` and
+and `player.Warning("The boss wakes")` show as the game's hints and warnings, and `player.Error("Not enough mana.")`
+like its errors: the same letters and colour, with the error sound, one line above the game's own error line (as low
+as a message goes), and kept in the message log (F12). It is not allowed inside `Local.For`, as the sound is made on
+every machine. `player.ClearMessages()` clears the player's screen. A team has `Print`, `Hint`, `Warning`, `Error` and
 `ClearMessages` too, for each of its players. `Game.Log("wave 2 started")` writes a line to the log file instead (under The build). `Package.Version` is the version of Moonwell the map is built with. `Gold`, `Lumber`, `FoodUsed`, `FoodCap`, `FoodCapCeiling`, `GoldGathered`, `LumberGathered`,
 `GoldUpkeepRate` and `LumberUpkeepRate` are the player's own: `player.Gold += 25`.
 

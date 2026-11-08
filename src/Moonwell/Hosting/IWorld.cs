@@ -29,7 +29,7 @@ namespace Moonwell.Hosting
         /// <summary>Shows a line to every player, for the seconds, or for the game's own time when the seconds are below 0.</summary>
         void PrintToAll(string text, float seconds);
 
-        /// <summary>Shows a line to one player where the game shows its errors, in their colour, for two seconds.</summary>
+        /// <summary>Shows a line to one player in the error's colour, just above where the game shows its errors, for two seconds.</summary>
         void ErrorTo(player player, string text);
 
         /// <summary>Appends a line to CustomMapData\Moonwell\log.txt.</summary>

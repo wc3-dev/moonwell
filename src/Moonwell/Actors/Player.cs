@@ -397,7 +397,7 @@ namespace Moonwell
             Runtime.World.PrintTo(Handle, text, seconds);
         }
 
-        /// <summary>Shows the player a line where the game shows its errors ("Not enough gold."), in their colour and with the error sound; it changes nothing in the game. Not inside Local.For, as the sound is made on every machine.</summary>
+        /// <summary>Shows the player a line like the game's errors ("Not enough gold."): the game's message text in the error's colour, one line above the game's own error line, with the error sound; it changes nothing in the game. It is also kept in the message log (F12). Not inside Local.For, as the sound is made on every machine.</summary>
         public void Error(string text)
         {
             Runtime.World.ErrorTo(Handle, text);
