@@ -1819,9 +1819,36 @@ public sealed class Tavern : UnitComponent
   players it is not checked yet.
 - A map listens for selections only when its code writes a selection reaction or reads `Selection`.
 
-`LevelOf<T>()` and `SetLevel<T>(2)` take an upgrade class;
+`LevelOf<T>()`, `SetLevel<T>(2)` and `AddLevel<T>()` take an upgrade class;
 `SetMaxAllowed<T>(1)` a unit or upgrade class, where 0 forbids it and `Player.NoLimit` lifts a unit's limit; and
 `SetAvailable<T>(false)` an ability class.
+
+### Research
+
+An upgrade class can run code for each level a player gains, and a building hears its own research:
+
+```csharp
+[ObjectId("R000")]
+public sealed class SharpBlades : Human.Upgrades.IronForgedSwords
+{
+    public override void OnResearched(Player player, int level) => player.Print("Blades " + level);
+}
+
+[ObjectId("h000")]
+public sealed class Smithy : Human.Units.Blacksmith
+{
+    public override void OnResearchStarted(Upgrade upgrade) { }
+    public override void OnResearchCancelled(Upgrade upgrade) { }
+    public override void OnResearchFinished(Upgrade upgrade) { }  // after the upgrade's OnResearched
+}
+```
+
+- `OnResearched` runs on every machine, once per level, in order: when the game's research finishes, and inside
+  `SetLevel` and `AddLevel` for each level they raise. Lowering a level runs nothing, nor does a level set with the
+  natives. `AddLevel` stops at the top level (`MaxAllowed`).
+- The building's three reactions run on it and on its components; `upgrade` is the upgrade class's object, or a plain
+  `Upgrade` with its `TypeId` for an upgrade with no class.
+- A requirement of the map's own ("needs 10 kills") is `SetMaxAllowed<T>`: 0 hides the button, the level count shows it.
 
 The `Natives` class has every native of the game for what Moonwell does not cover yet.
 

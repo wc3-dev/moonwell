@@ -22,6 +22,7 @@ namespace Moonwell.Testing
             AddStatsAndScores(list);
             AddUnitAbilities(list);
             AddSummons(list);
+            AddResearch(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -1684,6 +1685,16 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
             list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
             list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
+        }
+
+        /// <summary>Adds the cases for research (decision 213).</summary>
+        private static void AddResearch(List<Case> list)
+        {
+            list.Add(new Case { Name = "research.levels-in-order", Run = ResearchCases.LevelsInOrder });
+            list.Add(new Case { Name = "research.set-inside-runs-in-order", Run = ResearchCases.SetInsideRunsInOrder });
+            list.Add(new Case { Name = "research.lowered-inside-stops", Run = ResearchCases.LoweredInsideStops });
+            list.Add(new Case { Name = "research.game-research", Run = ResearchCases.GameResearch });
+            list.Add(new Case { Name = "research.plain-upgrade", Run = ResearchCases.PlainUpgrade });
         }
 
         /// <summary>The summons' cases (decision 227).</summary>
