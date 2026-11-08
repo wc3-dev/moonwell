@@ -220,8 +220,8 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         ["System.Nullable.GetUnderlyingType"] = Missing,
         ["System.String.Create"] = Missing,
         ["System.String.Normalize"] = Missing,
-        ["System.Random.Shared"] = Missing + "; use Natives.GetRandomInt",
-        ["System.Linq.Enumerable.Shuffle"] = Missing + ", and would order each machine's list another way; shuffle with Natives.GetRandomInt",
+        ["System.Random.Shared"] = Missing + "; use Game.Random",
+        ["System.Linq.Enumerable.Shuffle"] = Missing + ", and would order each machine's list another way; shuffle with Game.Random.Shuffle",
     }.ToImmutableDictionary();
 
     // The static methods of int and float the Lua core has; .NET's others (int.Clamp, float.Lerp and about 80 more) it lacks.
