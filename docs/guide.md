@@ -1454,6 +1454,75 @@ heroes.Picked += (who, hero) => who.Select(hero);
   ```
 - Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
+## Boards and dialogs
+
+A multiboard is the game's table in the top right; a leaderboard its list of names and numbers there; a dialog its
+popup of buttons. As with effects, each is in a scope, which ends it when it ends.
+
+```csharp
+var board = Board.Create("Kills", Player.Users, this);                  // a row for each player
+board.Column("Player", p => p.ColoredName);
+board.Column("Kills", p => kills[p].ToString(), width: 0.03f);
+Every(0.5f, board.Refresh);                                              // read the rows again
+
+var info = Board.Create("Round 3", columns: 2, rows: 2, this, shownTo: player);  // cells by hand
+info[0, 0].Text = "Wave";
+info[0, 1].Text = "3 of 10";
+info[1, 0].Icon = @"ReplaceableTextures\CommandButtons\BTNFootman.blp";
+
+var top = Leaderboard.Create("Team gold", teams, this);
+top.Label(t => t.Name).Value(t => gold[t]);                              // sorted, highest first
+Every(1f, top.Refresh);
+
+var mode = Dialog.Create("Pick a mode", this);
+mode.AddButton("Easy", who => votes[who] = Mode.Easy, hotkey: 'E');
+mode.AddButton("Hard", who => votes[who] = Mode.Hard, hotkey: 'H');
+mode.ShowTo(Player.Users);
+```
+
+- `Board.Create(title, rows, scope)` makes a row for each of the rows, any list (players, teams, heroes), and
+  `Column(name, row => text)` a column, with `width:` (`Board.DefaultWidth`, 0.06, unless given) and `icon: row => path`.
+  When any column has a name, the first row is the names, in the game's gold. `Refresh()` reads the rows again and
+  writes only the cells that changed; it runs by itself in the instant after `Create`, so the columns added on the next
+  lines show, and after that when the map calls it, as in `Every` above.
+- `Board.Create(title, columns, rows, scope)` makes a board of empty cells. `board[row, column]`, from 0, has `Text`,
+  `Icon` (none unless set), `Color` (white unless set) and `Width`; `Title`, `Rows` and `Columns` are read and set. A cell
+  outside the board is reported. Colour codes work in a text.
+- A player sees one multiboard, the newest shown to them; when it ends, or is set `Visible = false`, the one before
+  shows again, and set `Visible` again it is the newest (seen). A board hides while the game's tooltip for a button
+  shows, as it would cover it and no frame change puts it under (seen): `HidesForTooltips = false` keeps it.
+- `Leaderboard.Create(title, rows, scope)` makes a leaderboard, `Label(row => text)` (a player's name unless given) and
+  `Value(row => number)` its rows, sorted highest first, and `Refresh()` reads them again, as a board's does. The game
+  keys each row to a player slot, and two rows on one slot crash it (seen), so Moonwell gives row 1 slot 1, row 2 slot 2,
+  and a leaderboard shows at most `Leaderboard.MaxRows`, 24: the rest are left out and reported. A player sees one
+  leaderboard, the newest shown to them, as with multiboards, and a leaderboard shows beside a multiboard (seen).
+- `shownTo: player` makes a board or leaderboard for that player: it is made on every machine and shown on theirs
+  (seen in single player; with two players it is not checked yet).
+- `Dialog.Create(message, scope)` makes a dialog and `AddButton(text, who => ..., hotkey: 'E')` a button: its action
+  runs with the clicking player, as a synced event, so it may change the game, and the click closes the dialog for that
+  player. `ShowTo` takes a player or a list of them; `IsShownTo(player)` reads whether it is on their screen now.
+- A player sees one dialog at a time: one shown while another is up waits, and shows once that one is answered or
+  ended. A dialog shown from a button's action waits behind those waiting already. `End()` takes it off every screen.
+- In single player a dialog pauses the game while it shows (seen), so a timer that waits for the answers waits too.
+  14 buttons fit on the screen (seen); a development build reports more than `Dialog.MaxButtons`.
+- Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting, making and
+  showing are not. `Handle` on each is the game's, for anything Moonwell does not do.
+
+A vote is a dialog, a map and a timer:
+
+```csharp
+var votes = new OrderedMap<Player, Mode>();
+var mode = Dialog.Create("Pick a mode", this);
+mode.AddButton("Easy", who => votes[who] = Mode.Easy);
+mode.AddButton("Hard", who => votes[who] = Mode.Hard);
+mode.ShowTo(Player.Users);
+After(15f, () =>
+{
+    mode.End();
+    Start(MostVoted(votes)); // the map's own
+});
+```
+
 ## Colours and text
 
 `Color` is a colour as the game takes it, each part 0 to 255: `new Color(255, 204, 0)`, `Color.FromHtml("#ffcc00")`,

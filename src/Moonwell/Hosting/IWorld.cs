@@ -707,6 +707,54 @@ namespace Moonwell.Hosting
         /// <summary>On this machine: takes the screen's colour cover away.</summary>
         void EndScreenFilter();
 
+        /// <summary>Makes a multiboard, not displayed.</summary>
+        multiboard MakeBoard();
+
+        /// <summary>Sets a multiboard's rows and columns.</summary>
+        void SizeBoard(multiboard board, int rows, int columns);
+
+        /// <summary>Sets a multiboard's title.</summary>
+        void TitleBoard(multiboard board, string title);
+
+        /// <summary>Writes a cell: its text, its icon (none when empty, with no eye icon), its text's colour and its width.</summary>
+        void WriteCell(multiboard board, int row, int column, string text, string icon, Color color, float width);
+
+        /// <summary>On this machine: displays a multiboard or hides it.</summary>
+        void DisplayBoard(multiboard board, bool shown);
+
+        /// <summary>Destroys a multiboard.</summary>
+        void EndBoard(multiboard board);
+
+        /// <summary>On this machine: whether the game's tooltip for a button shows.</summary>
+        bool TooltipShown();
+
+        /// <summary>Makes a leaderboard, not displayed.</summary>
+        leaderboard MakeLeaderboard();
+
+        /// <summary>Sets a leaderboard's title and rows, row n keyed to slot n (a slot never has two), sorted by value, highest first, and sized to them.</summary>
+        void WriteLeaderboard(leaderboard board, string title, List<string> labels, List<int> values);
+
+        /// <summary>Makes a leaderboard a player's: PlayerSetLeaderboard, on every machine.</summary>
+        void GiveLeaderboard(player player, leaderboard board);
+
+        /// <summary>On this machine: displays a leaderboard or hides it.</summary>
+        void DisplayLeaderboard(leaderboard board, bool shown);
+
+        /// <summary>Destroys a leaderboard.</summary>
+        void EndLeaderboard(leaderboard board);
+
+        /// <summary>Makes a dialog with its message.</summary>
+        dialog MakeDialog(string message);
+
+        /// <summary>Adds a button, whose click runs clicked with the clicking player, a synced event.</summary>
+        void AddDialogButton(dialog dialog, string text, int hotkey, System.Action<player> clicked);
+
+        /// <summary>Shows a dialog to a player or hides it from them: DialogDisplay, on every machine.</summary>
+        void DisplayDialog(player player, dialog dialog, bool shown);
+
+        /// <summary>Destroys a dialog and its buttons' triggers.</summary>
+        void EndDialog(dialog dialog);
+
         /// <summary>A whole number from low to high, both included, from the game's random numbers, which every machine shares.</summary>
         int RandomBetween(int low, int high);
     }
