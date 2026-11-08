@@ -80,6 +80,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "messages.on-their-machine", Run = MessageCases.OnTheirMachine });
             list.Add(new Case { Name = "messages.error", Run = MessageCases.Error });
             list.Add(new Case { Name = "messages.to-a-team", Run = MessageCases.ToATeam });
+            list.Add(new Case { Name = "transports.reactions-order", Run = TransportCases.ReactionsOrder });
+            list.Add(new Case { Name = "transports.reads-follow", Run = TransportCases.ReadsFollow });
+            list.Add(new Case { Name = "transports.leaving-the-game", Run = TransportCases.LeavingTheGame });
+            list.Add(new Case { Name = "transports.capacity-and-orders", Run = TransportCases.CapacityAndOrders });
+            list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
             list.Add(new Case { Name = "pool.scope-ends", Run = PoolCases.ScopeEnds });
