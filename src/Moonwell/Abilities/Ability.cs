@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (abilityHooks == null)
                 {
-                    abilityHooks = new HookTable(typeof(Ability), new string[] { "OnCast", "OnLearned", "OnLost" }, new int[] { Hook.OnCast, Hook.OnSkillLearned, Hook.OnLost });
+                    abilityHooks = new HookTable(typeof(Ability), new string[] { "OnCast", "OnCasting", "OnFinished", "OnLearned", "OnLost" }, new int[] { Hook.OnCast, Hook.OnCast, Hook.OnCast, Hook.OnSkillLearned, Hook.OnLost });
                 }
 
                 return abilityHooks;
@@ -111,7 +111,98 @@ namespace Moonwell
             return false;
         }
 
-        /// <summary>Runs when the unit begins a cast of the ability. This ability object is a scope that lasts as long as the caster is in the game, so a delayed effect made here with After runs after the spell has ended; work that should stop with a channel is made on the cast: cast.Every(0.5f, Pulse).</summary>
+        /// <summary>The full cooldown of the ability at its level now, on this unit, in seconds; 0 when the unit lacks it or is gone. Setting it changes this unit's cooldown at this level only, from its next cast on (a level gained later has its own), and does nothing on a unit without the ability; a development build reports that.</summary>
+        [LocalSafe]
+        public float Cooldown
+        {
+            get => Has() ? Runtime.World.AbilityCooldown(Unit.Handle, Id, Level - 1) : 0.0f;
+            set
+            {
+                if (Usable("Cooldown"))
+                {
+                    Runtime.World.SetAbilityCooldown(Unit.Handle, Id, Level - 1, value);
+                }
+            }
+        }
+
+        /// <summary>The seconds left of the ability's cooldown on this unit; 0 when it is ready, the unit lacks it or is gone.</summary>
+        [LocalSafe]
+        public float CooldownLeft => Has() ? Runtime.World.AbilityCooldownLeft(Unit.Handle, Id) : 0.0f;
+
+        /// <summary>The mana a cast of the ability costs at its level now, on this unit; 0 when the unit lacks it or is gone. Setting it changes this unit's cost at this level only, from its next cast on, and does nothing on a unit without the ability; a development build reports that.</summary>
+        [LocalSafe]
+        public int ManaCost
+        {
+            get => Has() ? Runtime.World.AbilityManaCost(Unit.Handle, Id, Level - 1) : 0;
+            set
+            {
+                if (Usable("ManaCost"))
+                {
+                    Runtime.World.SetAbilityManaCost(Unit.Handle, Id, Level - 1, value);
+                }
+            }
+        }
+
+        /// <summary>Makes the ability ready at once on this unit, ending its cooldown.</summary>
+        public void ResetCooldown()
+        {
+            if (Usable("ResetCooldown"))
+            {
+                Runtime.World.EndAbilityCooldown(Unit.Handle, Id);
+            }
+        }
+
+        /// <summary>Starts the ability's cooldown on this unit for so many seconds, shown on its button, in place of what is left; any length, the full cooldown is not changed. 0 or less makes it ready, as the game does nothing for 0 (seen 11-08).</summary>
+        public void StartCooldown(float seconds)
+        {
+            if (!Usable("StartCooldown"))
+            {
+                return;
+            }
+
+            if (seconds <= 0.0f)
+            {
+                Runtime.World.EndAbilityCooldown(Unit.Handle, Id);
+                return;
+            }
+
+            Runtime.World.StartAbilityCooldown(Unit.Handle, Id, seconds);
+        }
+
+        /// <summary>Whether the unit is in the game and has the ability.</summary>
+        private bool Has()
+        {
+            return !Unit.IsGone && Runtime.World.AbilityLevel(Unit.Handle, Id) > 0;
+        }
+
+        /// <summary>Whether a change can be made: the unit is in the game and has the ability; when it lacks it, a development build reports the member.</summary>
+        private bool Usable(string member)
+        {
+            if (Unit.IsGone)
+            {
+                return false;
+            }
+
+            if (Runtime.World.AbilityLevel(Unit.Handle, Id) > 0)
+            {
+                return true;
+            }
+
+            Dev.Report(Names.NameOf(this) + "." + member, "the unit does not have the ability, so nothing was changed");
+            return false;
+        }
+
+        /// <summary>Runs when the unit begins a cast of the ability, before anything is spent: before its mana, its cooldown and its effect, while the caster starts to cast (the game's channel event). cast.Refuse(text) stops the cast, shows the text to the caster's owner as the game shows its errors, and nothing is spent. The cast passed here is the one OnCast gets when the spell takes effect; a cast stopped before that ends without an OnCast.</summary>
+        public virtual void OnCasting(Cast cast)
+        {
+        }
+
+        /// <summary>Runs when a cast of the ability runs to its end (the game's finish event), before the cast ends: a channel its whole time, another spell its casting animation. A cast stopped early, by a stun, an order or a death, ends without it.</summary>
+        public virtual void OnFinished(Cast cast)
+        {
+        }
+
+        /// <summary>Runs when a cast of the ability takes effect (the game's effect event), after OnCasting let it through. This ability object is a scope that lasts as long as the caster is in the game, so a delayed effect made here with After runs after the spell has ended; work that should stop with a channel is made on the cast: cast.Every(0.5f, Pulse).</summary>
         public virtual void OnCast(Cast cast)
         {
         }
