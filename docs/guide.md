@@ -1566,6 +1566,19 @@ heroes.Picked += (who, hero) => who.Select(hero);
       }
   };
   ```
+
+  `Sell<T>(entry)` makes the window sell an item class itself: a click checks that there is a `Buyer`, that the good is
+  in stock and that the player has its `Cost` in gold and its `Lumber`, takes them and gives the `Buyer` the item; a
+  refusal shows the game's error line. `Stock` is the most the window holds (0, no limit) and `Restock` the seconds until
+  one comes back; a good sold out is greyed, and `Left` says how many are left. The stock is the window's, shared by
+  everyone it is shown to, and `Bought` does not run for such a good. The game gives no item's cost at runtime, so the
+  entry carries it.
+
+  ```csharp
+  var potion = Item.Default<Items.PotionOfHealing>();
+  var shop = Screen.Add(new ShopWindow { Buyer = hero }, this, shownTo: hero.Owner);
+  shop.Sell<Items.PotionOfHealing>(new ShopEntry { Icon = potion.Icon, Name = potion.Name, Cost = potion.GoldCost, Stock = 3, Restock = 30f });
+  ```
 - `SettingsWindow` is a ready settings window, one player's: a line for each setting, `Check(label, on)` a check box,
   `Slider(label, min, max, value, step)` a slider, and `Choice(label, "Slow", "Fast")` a button that steps through
   choices. Each gives a `Setting` with its `Value` and a `Changed` event, synced. The values are kept in the player's
@@ -1849,6 +1862,31 @@ public sealed class Smithy : Human.Units.Blacksmith
 - The building's three reactions run on it and on its components; `upgrade` is the upgrade class's object, or a plain
   `Upgrade` with its `TypeId` for an upgrade with no class.
 - A requirement of the map's own ("needs 10 kills") is `SetMaxAllowed<T>`: 0 hides the button, the level count shows it.
+
+### Shops
+
+A shop of the game's (a unit that sells items) runs reactions on itself and its components:
+
+```csharp
+[ObjectId("n000")]
+public sealed class Goblin : Other.Units.GoblinMerchant
+{
+    public override void OnItemSold(Item item, Unit buyer) { }    // before the buyer's pick-up; the gold is already taken
+    public override void OnItemPawned(Item item, Unit seller) { } // a unit sold it an item: before its drop and its gold
+    public override void OnUnitSold(Unit soldUnit, Unit buyer) { }
+}
+
+market.AddStock<Items.PotionOfMana>(count: 2, max: 3);           // a shop with Sell Items (Asid), as the Marketplace has
+market.RemoveStock<Items.PotionOfMana>();
+```
+
+- The reactions run for a shop Moonwell knows: one of a class of the map's, or one with components.
+- `AddStock` works only on a shop with Sell Items, and only on goods it added: a good of the shop's own data (Items
+  Sold) can't be changed at runtime. A development build reports a shop without Sell Items. A neutral passive shop takes
+  a good sold out of its stock (Blizzard.j does, in every map), so an added good there does not restock.
+- A good is not for sale before its stock start delay, counted from the start of the game, and a shop sells nothing in
+  its first moment. Units can't be put on sale by code: the game sold none in the probes.
+- For prices and stock of the map's own, or a shop window of its own look, use the kit's `ShopWindow`.
 
 The `Natives` class has every native of the game for what Moonwell does not cover yet.
 
