@@ -1514,6 +1514,48 @@ heroes.Picked += (who, hero) => who.Select(hero);
   zoom.Changed += (who, distance) => { /* synced: set that player's camera distance */ };
   Screen.Add(settings, this, shownTo: player);
   ```
+- `Scoreboard` is a ready scoreboard: a row for each player in the game, in their colour, and a column for each
+  `Column(score)` ([scores](#stats-and-scores)), `Column(name, player => number)` or `Column(name, player => text)`.
+  When a team has more than one player, the players go under a line for each team with its totals. Rows are sorted by
+  the first number column, highest first, or the one `SortBy(name)` names. A score's column follows the score by
+  itself; call `Refresh()` once what another column reads has changed. It shows and hides with `Visible`; to show it
+  while a key is held, set `Visible` in `OnKeyPressed` and `OnKeyReleased`.
+
+  ```csharp
+  var board = Screen.Add(new Scoreboard(), Game.Instance);
+  board.Column(Kills);
+  board.Column("Gold", player => player.Gold);
+  ```
+- `TalentWindow` is a ready talent tree, one hero's. A talent is a class inheriting `Talent`, whose constructor sets
+  `Name`, `Icon`, `Text`, `MaxRank`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the hero as a
+  component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with `RankScope`
+  new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns a rank
+  when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are spent
+  and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as in
+  `OnLevelUp`). `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back,
+  running each talent once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the
+  points back.
+
+  ```csharp
+  public sealed class Cleave : Talent
+  {
+      public Cleave()
+      {
+          Name = "Cleave";
+          Icon = @"ReplaceableTextures\CommandButtons\BTNCleavingAttack.blp";
+          MaxRank = 3;
+          Column = 1;
+      }
+
+      protected override void OnRankChanged()
+      {
+          Hero.Modify(Stat.Damage, percent: 5 * Rank, heldBy: RankScope);
+      }
+  }
+
+  var tree = Screen.Add(new TalentWindow(hero), hero, shownTo: hero.Owner);
+  tree.Add(() => new Cleave());
+  ```
 - Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
 ## Boards and dialogs
