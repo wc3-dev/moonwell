@@ -247,6 +247,11 @@ namespace Moonwell.Build
                 installs.Add("global::Moonwell.Runtime.ListenForSelection();");
             }
 
+            if (ReadsSummons(targetPath))
+            {
+                installs.Add("global::Moonwell.Runtime.ListenForSummons();");
+            }
+
             if (day != GameDay.Standard)
             {
                 installs.Add(day.Install());
@@ -399,6 +404,11 @@ namespace Moonwell.Build
         /// for every player's selections from the start fills (decision 203). A library of the map's own counts as its code.
         /// </summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
+        internal static bool ReadsSummons(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Unit", "get_Summoner", "get_Summons"));
+        }
+
         internal static bool ReadsSelection(string assemblyPath)
         {
             return CompiledFiles.MapAssemblies(assemblyPath).Any(path => References(path, "Player", "get_Selection", "get_Selection"));
