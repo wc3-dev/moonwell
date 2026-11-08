@@ -824,6 +824,14 @@ namespace Moonwell.Testing
             PrintedSeconds.Add(seconds);
         }
 
+        /// <summary>Records an error line shown to one player, as "error: " and its text.</summary>
+        public void ErrorTo(player player, string text)
+        {
+            PrintedSlots.Add(SlotOf(player));
+            PrintedTexts.Add("error: " + text);
+            PrintedSeconds.Add(2.0f);
+        }
+
         /// <summary>Records a line printed to everyone.</summary>
         public void PrintToAll(string text, float seconds)
         {

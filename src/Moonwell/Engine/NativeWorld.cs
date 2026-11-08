@@ -349,6 +349,14 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>Shows a line to one player in the game's message text, in the error's colour, at the left edge of the game's error line and as low as a message goes: one line above it (seen 11-08).</summary>
+        public void ErrorTo(player player, string text)
+        {
+            // The offset moves the whole message box; below 0 it stays at 0. Blank lines before the text only move it by
+            // overflowing the box, and a message shown after it pushes it up (seen 11-08).
+            Natives.DisplayTimedTextToPlayer(player, 0.52f, 0.0f, 2.0f, text.Colored(Color.TooltipGold));
+        }
+
         /// <summary>Shows a line to every player: each machine shows it to its own player.</summary>
         public void PrintToAll(string text, float seconds)
         {
@@ -1922,6 +1930,17 @@ namespace Moonwell.Engine
         public void QuestNews(QuestNews kind, string text)
         {
             var local = Natives.GetLocalPlayer();
+            if (kind == Moonwell.QuestNews.Hint || kind == Moonwell.QuestNews.Warning)
+            {
+                // As QuestMessageBJ shows bj_QUESTMESSAGE_HINT and bj_QUESTMESSAGE_WARNING.
+                var hint = kind == Moonwell.QuestNews.Hint;
+                var seconds = hint ? Natives.bj_TEXT_DELAY_HINT : Natives.bj_TEXT_DELAY_WARNING;
+                Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, seconds, " ");
+                Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, seconds, text);
+                Natives.StartSound(hint ? Natives.bj_questHintSound : Natives.bj_questWarningSound);
+                return;
+            }
+
             Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, Natives.bj_TEXT_DELAY_QUEST, " ");
             Natives.DisplayTimedTextToPlayer(local, 0.0f, 0.0f, Natives.bj_TEXT_DELAY_QUEST, text);
             switch (kind)
