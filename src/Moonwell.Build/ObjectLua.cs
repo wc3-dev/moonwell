@@ -75,6 +75,20 @@ namespace Moonwell.Build
                 }
             }
 
+            // A Moonwell package whose classes inherit one of Moonwell.Objects (the spell templates, on Channel) is compiled into the
+            // script whatever the map uses of it, so each of those classes is used: its bases are stubbed, and AddToInit sets it up
+            // after them, as CSharp.lua, which sees no stub's base, cannot.
+            foreach (var package in ObjectPackages(map, assemblyPath))
+            {
+                foreach (var type in package.GetTypes())
+                {
+                    if (Declarations.KindBaseOf(type) != null)
+                    {
+                        starts.Add(type);
+                    }
+                }
+            }
+
             // The names of the members each class of Moonwell.Objects is referenced for, a property by its own name. A library of the
             // map's own is compiled from source with the map, so what it names needs stubs too.
             var members = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
@@ -161,6 +175,21 @@ namespace Moonwell.Build
 
             support = ObjectStubs.Support(enums, ignored, members);
             return used;
+        }
+
+        // The Moonwell packages beside the map's assembly, other than Moonwell.Objects, that reference Moonwell.Objects.
+        private static IEnumerable<Assembly> ObjectPackages(Assembly map, string assemblyPath)
+        {
+            var folder = Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!;
+            var context = System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(map)!;
+            foreach (var path in Directory.GetFiles(folder, "Moonwell.*.dll").OrderBy(path => path, StringComparer.Ordinal))
+            {
+                var name = Path.GetFileNameWithoutExtension(path);
+                if (name != Declarations.ObjectsAssemblyName && CompiledFiles.ReferencedAssemblies(path).Contains(Declarations.ObjectsAssemblyName))
+                {
+                    yield return context.LoadFromAssemblyName(new AssemblyName(name));
+                }
+            }
         }
 
         // A type of Moonwell.Objects the map uses: a class of a kind is stubbed, and the enums and ignored types it names come with it.
@@ -287,6 +316,17 @@ namespace Moonwell.Build
                 after[anchor] = one.FullName;
             }
 
+            // A class outside Moonwell.Objects that inherits one of its classes, a package's above all, may stand before them: CSharp.lua
+            // sees no base for it. Each one before the last of them moves to just after it, keeping their order; one after it stays.
+            var lastStub = names.FindLastIndex(name => byName.TryGetValue(name, out var one) && one.InObjects);
+            var later = new HashSet<string>(used.Where(one => !one.InObjects).Select(one => LuaName(one.FullName)), StringComparer.Ordinal);
+            var moving = names.Take(lastStub + 1).Where(later.Contains).ToList();
+            if (moving.Count > 0)
+            {
+                names.RemoveAll(name => moving.Contains(name));
+                names.InsertRange(names.FindLastIndex(name => byName.TryGetValue(name, out var one) && one.InObjects) + 1, moving);
+            }
+
             var list = new StringBuilder();
             for (var i = 0; i < names.Count; i++)
             {
@@ -299,6 +339,12 @@ namespace Moonwell.Build
 
             list.Append(newline).Append(closing.Success ? closing.Groups[1].Value : string.Empty);
             return script.Substring(0, open) + list + script.Substring(close);
+        }
+
+        // A class's name in System.init: a generic class's arity after an underscore (Summon_1), as CSharp.lua writes it.
+        private static string LuaName(string fullName)
+        {
+            return fullName.Replace('`', '_');
         }
 
         /// <summary>

@@ -12,6 +12,7 @@
     <Project Path="src/Moonwell.Input/Moonwell.Input.csproj" />
     <Project Path="src/Moonwell.Frames/Moonwell.Frames.csproj" />
     <Project Path="src/Moonwell.Kit/Moonwell.Kit.csproj" />
+    <Project Path="src/Moonwell.Spells/Moonwell.Spells.csproj" />
     <Project Path="src/Moonwell.Interactions/Moonwell.Interactions.csproj" />
     <Project Path="src/Moonwell.Json/Moonwell.Json.csproj" />
     <Project Path="src/Moonwell.MapFiles/Moonwell.MapFiles.csproj" />

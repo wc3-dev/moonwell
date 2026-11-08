@@ -28,6 +28,7 @@ namespace Moonwell.Testing
             AddInteractions(list);
             AddAuditInteractions(list);
             AddPhysics(list);
+            AddTemplates(list);
             AddTerrain(list);
             AddAuditMaths(list);
             AddAreas(list);
@@ -687,6 +688,20 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.pair.data-and-since", Run = PairCases.DataAndSince });
             list.Add(new Case { Name = "interactions.pair.pair-owns", Run = PairCases.PairOwns });
             list.Add(new Case { Name = "interactions.tree", Run = TreeCases.Tree });
+        }
+
+        /// <summary>The spell templates' cases (decision 226).</summary>
+        private static void AddTemplates(List<Case> list)
+        {
+            list.Add(new Case { Name = "templates.blast-hits-enemies-near", Run = SpellTemplateCases.BlastHitsEnemiesNear });
+            list.Add(new Case { Name = "templates.blast-around-caster", Run = SpellTemplateCases.BlastAroundCaster });
+            list.Add(new Case { Name = "templates.pulse-until-channel-ends", Run = SpellTemplateCases.PulseUntilChannelEnds });
+            list.Add(new Case { Name = "templates.chain-jumps", Run = SpellTemplateCases.ChainJumps });
+            list.Add(new Case { Name = "templates.summons-to-limit", Run = SpellTemplateCases.SummonsToLimit });
+            list.Add(new Case { Name = "templates.bolt-hits-target", Run = SpellTemplateCases.BoltHitsTarget });
+            list.Add(new Case { Name = "templates.dash-hits-along-the-way", Run = SpellTemplateCases.DashHitsAlongTheWay });
+            list.Add(new Case { Name = "templates.wave-hits-each-once", Run = SpellTemplateCases.WaveHitsEachOnce });
+            list.Add(new Case { Name = "templates.leap-slams-on-landing", Run = SpellTemplateCases.LeapSlamsOnLanding });
         }
 
         /// <summary>Adds the physics package's cases.</summary>
