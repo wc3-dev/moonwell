@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnAllianceChanged" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnAllianceChanged", "OnUnitSummoned" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon });
                 }
 
                 return mapHooks;
@@ -50,6 +50,13 @@ namespace Moonwell
 
         /// <summary>Runs when a unit in the map is given an order, for the game's components, then the components of the unit's player, after the unit and its components heard it; <c>order.Cancel()</c> refuses it.</summary>
         public virtual void OnUnitOrdered(Order order)
+        {
+        }
+
+        /// <summary>Runs when a unit summons another, by Summon or by the game's spell, for the game's components, then the summoner's player's, after the summoner and its components saw it (see Unit.OnSummon).</summary>
+        /// <param name="summoningUnit">The unit that summoned.</param>
+        /// <param name="summonedUnit">The unit summoned.</param>
+        public virtual void OnUnitSummoned(Unit summoningUnit, Unit summonedUnit)
         {
         }
 

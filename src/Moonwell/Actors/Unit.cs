@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon });
                 }
 
                 return unitHooks;
@@ -43,6 +43,12 @@ namespace Moonwell
 
         /// <summary>The effects, texts, sounds, lightning and minimap icons on the unit that have not ended, which end when it ends; null until the first.</summary>
         internal List<Scoped>? attached;
+
+        /// <summary>The units this unit summoned, oldest first, the dead among them until next read; null when it summoned none.</summary>
+        internal List<Unit>? summoned;
+
+        /// <summary>Whether this summon dies when its summoner dies or leaves the game.</summary>
+        internal bool diesWithSummoner;
 
         /// <summary>The ability objects of the unit, one per ability id, in the order they were first asked for.</summary>
         internal readonly OrderedMap<int, Ability> abilities = new OrderedMap<int, Ability>();
@@ -1162,10 +1168,16 @@ namespace Moonwell
         /// <summary>Creates a unit of a type for its owning player at a place, in a scope, which ends it when it ends, and with a facing (270 degrees without one). Throws a MoonwellException naming the id when the game makes no unit of the type.</summary>
         public static Unit Create(int typeId, Player owner, float x, float y, Scope scope, float facing = DefaultFacing)
         {
-            var handle = Runtime.World.SpawnUnit(owner.Handle, typeId, x, y, facing);
+            var handle = UnitPool.Take(typeId, owner, x, y, facing);
             if (handle == null)
             {
-                throw new MoonwellException("Unit.Create: the game made no unit of type " + Names.IdText(typeId));
+                handle = Runtime.World.SpawnUnit(owner.Handle, typeId, x, y, facing);
+                if (handle == null)
+                {
+                    throw new MoonwellException("Unit.Create: the game made no unit of type " + Names.IdText(typeId));
+                }
+
+                UnitPool.Made(typeId, handle);
             }
 
             Unit made;
@@ -1193,6 +1205,27 @@ namespace Moonwell
         {
             return (T)Create(ObjectTypes.IdOf<T>(), owner, x, y, scope, facing);
         }
+
+        /// <summary>Summons a unit of a registered class for this unit's player at a place (decision 227): it has the summoned type, so dispels hurt it, and with seconds above 0 the game's timed life and its bar, which kills it when it runs out; its Summoner is this unit. It dies when the scope ends, and with diesWithSummoner when this unit dies or leaves the game. A limit above 0 keeps at most that many of the class from this unit: the oldest die. Runs OnSummon and OnUnitSummoned. Throws a MoonwellException when this unit has left the game.</summary>
+        public T Summon<T>(float x, float y, float seconds, Scope scope, int limit = 0, bool diesWithSummoner = false, float facing = DefaultFacing)
+            where T : Unit
+        {
+            return (T)Summoning.Make(this, ObjectTypes.IdOf<T>(), x, y, seconds, scope, limit, diesWithSummoner, facing);
+        }
+
+        /// <summary>Summons a unit of a type by id, as Summon of a class does.</summary>
+        public Unit Summon(int typeId, float x, float y, float seconds, Scope scope, int limit = 0, bool diesWithSummoner = false, float facing = DefaultFacing)
+        {
+            return Summoning.Make(this, typeId, x, y, seconds, scope, limit, diesWithSummoner, facing);
+        }
+
+        /// <summary>The unit that summoned this one, by Summon or by the game's spell (a Water Elemental's Archmage, an illusion's maker); null for a unit nobody summoned. Kept after the summoner dies or leaves.</summary>
+        [LocalSafe]
+        public Unit? Summoner { get; internal set; }
+
+        /// <summary>The living units this unit summoned, oldest first.</summary>
+        [LocalSafe]
+        public IReadOnlyList<Unit> Summons => Summoning.LivingOf(this);
 
         /// <summary>The ability of the unit with an id: one object per id, made by the registered maker or as a plain Ability, in the unit's scope.</summary>
         public Ability AbilityOf(int abilityId)
@@ -1471,6 +1504,12 @@ namespace Moonwell
         {
         }
 
+        /// <summary>Runs when this unit summons another, by Summon or by the game's spell, before its components see it; the summon's Summoner is already this unit. A summon whose scope had ended, which dies at once, runs none.</summary>
+        /// <param name="summonedUnit">The unit summoned.</param>
+        public virtual void OnSummon(Unit summonedUnit)
+        {
+        }
+
         /// <summary>Runs when a player selects the unit, before the unit's components see it: a click, a drag, a control group or code, as the game's event says, so a click on a unit already selected runs it again. It comes a moment after Select (0.1 to 0.2 s in single player, the network's delay online), and Selection already holds the unit. A unit the game drops from a selection with no event (it dies, is removed, hidden, gets Locust or changes hands) runs no OnDeselected (decision 203).</summary>
         /// <param name="selectingPlayer">The player who selected it.</param>
         public virtual void OnSelected(Player selectingPlayer)
@@ -1505,6 +1544,7 @@ namespace Moonwell
         /// <summary>Ends the unit's effects, texts, sounds, lightning and minimap icons, removes the unit from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
+            Summoning.SummonerEnds(this);
             if (attached != null)
             {
                 var ending = new List<Scoped>(attached);
@@ -1514,13 +1554,19 @@ namespace Moonwell
                 }
             }
 
+            var kept = false;
             if (!IsGone)
             {
-                Runtime.World.DeleteUnit(Handle);
+                kept = UnitPool.Keep(this);
+                if (!kept)
+                {
+                    Runtime.World.DeleteUnit(Handle);
+                }
+
                 IsGone = true;
             }
 
-            KnownUnits.Forget(this);
+            KnownUnits.Forget(this, kept);
         }
     }
 }

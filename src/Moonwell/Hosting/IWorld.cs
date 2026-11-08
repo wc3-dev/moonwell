@@ -248,6 +248,12 @@ namespace Moonwell.Hosting
         /// <summary>Sets the level of an ability on a unit, kept within the ability's levels, and answers the level it set; 0, and nothing changes, when the unit lacks the ability.</summary>
         int ChangeAbilityLevel(unit unit, int abilityId, int level);
 
+        /// <summary>Gives a unit the summoned type.</summary>
+        void MakeSummoned(unit unit);
+
+        /// <summary>Gives a unit timed life for so many seconds, more than 0, with the game's bar.</summary>
+        void ApplyTimedLife(unit unit, float seconds);
+
         /// <summary>Whether an ability the unit has is a hero skill; false when the unit lacks it.</summary>
         bool IsHeroAbility(unit unit, int abilityId);
 
@@ -406,6 +412,12 @@ namespace Moonwell.Hosting
 
         /// <summary>Whether a unit is hidden (ShowUnit false).</summary>
         bool IsHidden(unit unit);
+
+        /// <summary>Shows a unit or hides it: ShowUnit.</summary>
+        void SetUnitShown(unit unit, bool shown);
+
+        /// <summary>Puts a unit of a pooled class away: its order stopped, its buffs taken off, given to the keeper without changing its colour, and hidden.</summary>
+        void PutAway(unit unit, player keeper);
 
         /// <summary>Selects a unit for a player, or deselects it: only the player's own machine changes its selection, and the game's events tell every machine.</summary>
         void SelectFor(player player, unit unit, bool selected);

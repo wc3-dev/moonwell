@@ -1543,6 +1543,31 @@ namespace Moonwell.Testing
             return given;
         }
 
+        /// <summary>The units given the summoned type.</summary>
+        public HashSet<unit> Summoned = new HashSet<unit>();
+
+        /// <summary>The seconds of timed life given each unit.</summary>
+        public Dictionary<unit, float> TimedLives = new Dictionary<unit, float>();
+
+        /// <summary>Gives a unit the summoned type.</summary>
+        public void MakeSummoned(unit unit)
+        {
+            Summoned.Add(unit);
+        }
+
+        /// <summary>Records a unit's timed life; ExpireTimedLife ends it.</summary>
+        public void ApplyTimedLife(unit unit, float seconds)
+        {
+            TimedLives[unit] = seconds;
+        }
+
+        /// <summary>A unit's timed life runs out: it dies with no killer, as in the game (seen 11-08).</summary>
+        public void ExpireTimedLife(unit unit)
+        {
+            TimedLives.Remove(unit);
+            SlayUnit(unit);
+        }
+
         /// <summary>Whether an ability the unit has was marked a hero skill.</summary>
         public bool IsHeroAbility(unit unit, int abilityId)
         {
@@ -2446,6 +2471,27 @@ namespace Moonwell.Testing
             }
 
             asked.Add(what);
+        }
+
+        /// <summary>Hides a unit (into HiddenUnits) or shows it.</summary>
+        public void SetUnitShown(unit unit, bool shown)
+        {
+            HiddenUnits.Remove(unit);
+            if (!shown)
+            {
+                HiddenUnits.Add(unit);
+            }
+        }
+
+        /// <summary>The units put away for a pool, in order.</summary>
+        public List<unit> PutAwayUnits = new List<unit>();
+
+        /// <summary>Puts a unit away for a pool: recorded, given to the keeper and hidden.</summary>
+        public void PutAway(unit unit, player keeper)
+        {
+            PutAwayUnits.Add(unit);
+            ((IWorld)this).SetOwner(unit, keeper);
+            SetUnitShown(unit, false);
         }
 
         /// <summary>Whether a unit is in HiddenUnits.</summary>
