@@ -24,6 +24,8 @@ namespace Moonwell
 
         private static Drags drags = new Drags();
 
+        private static Tips tips = new Tips();
+
         private static HudFrames? hud;
 
         /// <summary>The frames added to the screen that have not ended, in the order added: the trees made again when a saved game loads.</summary>
@@ -61,6 +63,7 @@ namespace Moonwell
             pool = new FramePool();
             events = new FrameEvents();
             drags = new Drags();
+            tips = new Tips();
             gameUis = new Dictionary<int, GameUi>();
             roots = new List<Frame>();
             host.LoadToc(TocFile);
@@ -91,6 +94,7 @@ namespace Moonwell
             pool = new FramePool();
             events.Forget();
             drags.Loaded();
+            tips.Loaded();
             if (screenRoot != null)
             {
                 // The window check made with the first root goes on, and spans the new one.
@@ -166,8 +170,26 @@ namespace Moonwell
         /// <summary>The game's frame events, sent to the frames that own them.</summary>
         internal static FrameEvents Events => events;
 
+        /// <summary>Where this machine's cursor is, in the game's units, from its pixels from the window's top left (seen 11-07); false for a window with no size, as a minimised one. Differs between machines.</summary>
+        internal static bool CursorAt(out Vector2 at)
+        {
+            float width = World.ClientWidth();
+            float height = World.ClientHeight();
+            if (width <= 0.0f || height <= 0.0f)
+            {
+                at = Vector2.Zero;
+                return false;
+            }
+
+            at = new Vector2(0.4f + (World.MouseScreenX() / width - 0.5f) * 0.6f * width / height, 0.6f * (1.0f - World.MouseScreenY() / height));
+            return true;
+        }
+
         /// <summary>The players' drags: what each holds, and the icon that follows their cursor.</summary>
         internal static Drags Drags => drags;
+
+        /// <summary>The tooltips placed by their frames, moved to the side with room as they show.</summary>
+        internal static Tips Tips => tips;
 
         /// <summary>
         /// The slot a tooltip is made in for a game frame that takes a frame's mouse: a blank frame of no size on the

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>The UI kit for Moonwell maps: windows, tabs, lists, slots and rich tooltips, and ready windows built from them, on Moonwell.Frames.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets none, so that a map that references only Moonwell.Kit still gets Moonwell's analyzer and Moonwell.Frames. -->
+    <ProjectReference Include="..\Moonwell\Moonwell.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.Maths\Moonwell.Maths.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.Frames\Moonwell.Frames.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <!--
+    The package carries its C# source beside its library, like Moonwell (see Moonwell.csproj). A map without it
+    carries none of its code: CSharp.lua compiles only the packages a map references.
+  -->
+  <ItemGroup>
+    <Content Include="**/*.cs" Exclude="obj/**;bin/**" Pack="true" PackagePath="contentFiles/cs/net10.0/Moonwell.Kit/" BuildAction="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Moonwell.Testing" />
+    <InternalsVisibleTo Include="Moonwell.Tests" />
+  </ItemGroup>
+
+</Project>

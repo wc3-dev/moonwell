@@ -23,6 +23,8 @@ namespace Moonwell.Build
         /// <summary>The frames package's assembly: a map that references it gets the package installed, which makes no frame until the map adds one.</summary>
         private const string FramesAssemblyName = "Moonwell.Frames";
 
+        private const string KitAssemblyName = "Moonwell.Kit";
+
         /// <summary>The physics package's assembly: a map that references it gets its placed bridges written from <c>war3map.doo</c> and installed by its Main.</summary>
         private const string PhysicsAssemblyName = "Moonwell.Physics";
 
@@ -81,7 +83,7 @@ namespace Moonwell.Build
 
             if (Declarations.References(targetPath, FramesAssemblyName))
             {
-                StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder));
+                StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder, Declarations.References(targetPath, KitAssemblyName)));
             }
 
             try

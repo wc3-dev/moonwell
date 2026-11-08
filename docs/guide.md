@@ -1224,7 +1224,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
   `Screen.AddOver`), and ends with the frame; taken away, or ended, it shows no more; it is 0.2 by 0.06 unless sized, and placing it (`Anchor`,
-  `Attach`) puts it elsewhere.
+  `Attach`) puts it elsewhere. Unplaced, it opens above the frame, or below it where there is no room above (near the
+  top bar), and kept in at the screen's sides: as it shows, Moonwell judges the room from the cursor on that machine,
+  as a frame's place on the screen cannot be read.
 - `Row`, `Column` and `Grid` draw nothing unless given a `Template`, and place the frames added to them in the order
   added: a row left to right, a column top to bottom, a grid in cells (`Columns`, `CellWidth`, `CellHeight`), with `Gap`
   between and `Padding` around; when one ends the rest close up. Their size, and their frames', are the map's.
@@ -1360,6 +1362,82 @@ Transmission.Play(uther, "Hold the bridge!", voice);              // a line in p
   them from it; a scene that starts with `FadeIn` starts black. A cinematic that ends covered fades back in over 1 s.
 - `cine.Camera()`, with `Moonwell.Input`, changes the camera of every person watching, as a player's `Camera()` does.
   The camera stays where the scene left it: put it back in `Ended`.
+
+## The UI kit
+
+Add the `Moonwell.Kit` package (the template's `.csproj` has the line, commented) for UI made of parts on top of frames:
+windows, tabs, lists, icon slots and rich tooltips. Each part is a frame: set it, listen to its events, add frames to it,
+or inherit it.
+
+```csharp
+var bag = Screen.Add(new Window { Title = "Bag", Width = 0.3f, Height = 0.25f }, this, shownTo: owner);
+var tabs = bag.Add(new Tabs());
+var slots = tabs.Page("Gear").Add(new SlotGrid { Columns = 4, Rows = 3 });
+slots[0].Icon = @"ReplaceableTextures\CommandButtons\BTNSteelMelee.blp";
+slots[0].Tooltip = new RichTooltip { Icon = slots[0].Icon, Title = "Sword", Text = "+10 damage", Cost = "150 gold" };
+slots.Moved += (who, from, to) => from.SwapWith(to); // synced: move the items too
+var heroes = tabs.Page("Heroes").Add(new ScrollList<Unit> { Rows = 6 });
+heroes.Items = party;
+heroes.Show = (row, hero) => row.Text = hero.Name;
+heroes.Picked += (who, hero) => who.Select(hero);
+```
+
+- `Window` is a panel 0.3 square with a `Title`, a close button (`Closable`) that hides it and runs `Closed`, and a
+  title bar: a click on it picks the window up and the next puts it down, following that player's cursor on their
+  screen alone until then; its new place reaches every machine when it is put down, as its `Offset` from the screen's
+  centre. Only a window added to the screen moves, and `Movable = false` keeps it still. A frame added to a window with
+  no place or size of its own covers the body, below the title.
+- `Tabs` has a row of tab buttons over its pages: `Page(title)` adds one and gives its panel. The first shows unless
+  `Selected` is set; the chosen tab's button is turned off. A click on a tab shows its page and runs `Changed`.
+- `ScrollList<T>` shows `Rows` rows (8 unless set) of its `Items`, as frames cannot be clipped: the rows stay and the
+  items move through them, with the wheel or the two buttons at its side. `Show` writes an item onto its row, a button
+  (its text unless set), and `Picked` runs with a clicked row's item. After changing the list itself, call `Refresh()`.
+- `SlotGrid` is `Columns` by `Rows` icon slots (`IconSlot`, with its `Grid` and `Index`), 0.04 square unless
+  `SlotSize` is set, sized by them. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
+  which runs that grid's `Moved` with the two slots; an empty slot only takes drops. The grid keeps nothing but icons,
+  so the map moves what the slots hold. `from.SwapWith(to)` in `Moved` swaps the two slots' icons and tooltips, and
+  the tooltips move and do not end, as one set in place of another does; a handler that does not call it leaves both
+  slots as they were.
+- `RichTooltip` is a tooltip with an `Icon`, a `Title` and a `Cost` (written as the map likes, "150 gold") over its
+  `Text`, 0.24 by 0.12 unless sized.
+- A list, tabs and every other part keeps one set of values for everyone, as frames do: a click on a tab or the wheel
+  over a list changes every player's view of it. Give each player a window of their own with `shownTo:`.
+- `Kit.Theme` sets the look of the windows and rich tooltips made from then on, and a window's `Theme` its own:
+  `Theme.PlayersRace` (unless set) is the game's window, which shows each player their own race's art; `Theme.Human`,
+  `Orc`, `NightElf` and `Undead` show that race's to everyone. A theme is the template windows are made from and the
+  colours of titles and text, so `new Theme { Window = "MyWindow" }` uses a window of the map's own `.fdf`. The build
+  writes the four races' templates into a map that uses the kit, before the map's own `.fdf` files.
+- `ShopWindow` is a ready shop: `Sell(new ShopEntry { Icon, Name, Text, Cost })` puts a good in it (four a line unless
+  `Columns` is set), as an icon button with a rich tooltip, and `Remove` takes one out. A click runs `Bought` with the
+  player and the good; the shop takes no gold and gives nothing, so the map does both there. Inherit `ShopEntry` to
+  carry what is sold.
+
+  ```csharp
+  var shop = Screen.Add(new ShopWindow { Title = "Blacksmith" }, this, shownTo: buyer);
+  shop.Sell(new ShopEntry { Icon = @"ReplaceableTextures\CommandButtons\BTNSteelMelee.blp", Name = "Sword", Text = "+10 damage", Cost = 150 });
+  shop.Bought += (who, entry) =>
+  {
+      if (who.Gold >= entry.Cost)
+      {
+          who.Gold -= entry.Cost; // synced: give the item here too
+      }
+  };
+  ```
+- `SettingsWindow` is a ready settings window, one player's: a line for each setting, `Check(label, on)` a check box,
+  `Slider(label, min, max, value, step)` a slider, and `Choice(label, "Slow", "Fast")` a button that steps through
+  choices. Each gives a `Setting` with its `Value` and a `Changed` event, synced. The values are kept in the player's
+  `kit-settings.txt` (`FileName`) and come back in their next game a moment after the window is added, running
+  `Changed` once, so the map applies a setting in one place; a spoiled file, or a value out of range, is let be.
+  Reading the file needs the `Moonwell.Objects` package, as every file does.
+
+  ```csharp
+  var settings = new SettingsWindow();
+  var damage = settings.Check("Show damage numbers", on: true);
+  var zoom = settings.Slider("Camera distance", 1650f, 3000f);
+  zoom.Changed += (who, distance) => { /* synced: set that player's camera distance */ };
+  Screen.Add(settings, this, shownTo: player);
+  ```
+- Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
 ## Colours and text
 
