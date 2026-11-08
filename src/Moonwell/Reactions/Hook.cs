@@ -86,5 +86,8 @@ namespace Moonwell
 
         /// <summary>A player changes what it gives another: the map components' OnAllianceChanged (decision 198).</summary>
         internal const int OnAllianceChanged = 67108864;
+
+        /// <summary>A unit summons another, by code or by the game's spell: one bit for the summoner's and the map's reactions (decision 227).</summary>
+        internal const int OnSummon = 536870912;
     }
 }

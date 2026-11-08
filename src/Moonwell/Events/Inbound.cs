@@ -356,6 +356,7 @@ namespace Moonwell
             }
 
             Buff.EndOnDeath(buffs, applied);
+            Summoning.SummonerEnds(dead);
         }
 
         /// <summary>A unit's spell takes effect: its previous cast ends, the ability and the caster see the new cast, then the map's and the caster's player's reactions run. A dummy's cast runs none (decision 171); only the spell-buff watch sees it, as the cast of the unit it casts for.</summary>
