@@ -1363,6 +1363,20 @@ namespace Moonwell
         public bool HasAbility<T>()
             where T : Ability => HasAbility(ObjectTypes.IdOf<T>());
 
+        /// <summary>Adds a flat amount to a stat while a scope holds it (decision 221), and returns the modifier, whose End takes it off sooner: Modify(Stat.Armor, 5, heldBy: Item.Carry). A holder that has ended adds nothing, reported in development builds.</summary>
+        public Modifier Modify(Stat stat, float amount, Scope heldBy) => Stats.Add(stat, amount, 0.0f, heldBy, "Unit.Modify");
+
+        /// <summary>Adds a percent to a stat while a scope holds it (decision 221), and returns the modifier: Modify(Stat.Damage, percent: 20, heldBy: this). Percents add up, then multiply the base and the flat amounts.</summary>
+        public Modifier Modify(Stat stat, Scope heldBy, float percent) => Stats.Add(stat, 0.0f, percent, heldBy, "Unit.Modify");
+
+        /// <summary>A stat's value now: (base + flat) × (1 + percents / 100). A game stat reads the unit's number in the game, less what its items and the game's own bonuses add to damage and attack speed; 0 once the unit is gone.</summary>
+        [LocalSafe]
+        public float Get(Stat stat) => Stats.Get(stat);
+
+        internal StatSheet? stats;
+
+        internal StatSheet Stats => stats ??= new StatSheet(this);
+
         /// <summary>Adds a component to the unit, and returns it; held by a scope, it also ends when that scope ends (decision 164).</summary>
         public T Add<T>(T component, Scope? heldBy = null)
             where T : UnitComponent => AddComponent(component, heldBy);
