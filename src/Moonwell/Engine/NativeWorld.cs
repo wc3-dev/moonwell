@@ -183,6 +183,11 @@ namespace Moonwell.Engine
                 case GameEvent.Summon:
                     Register(Natives.EVENT_PLAYER_UNIT_SUMMON, SummonAction);
                     break;
+                case GameEvent.Research:
+                    Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_START, () => ResearchAction(Researching.Started));
+                    Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_CANCEL, () => ResearchAction(Researching.Cancelled));
+                    Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_FINISH, () => ResearchAction(Researching.Finished));
+                    break;
             }
         }
 
@@ -2307,6 +2312,19 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Ordered", error);
+            }
+        }
+
+        /// <summary>Hands a research's start, cancel or finish to Researching.</summary>
+        private static void ResearchAction(int kind)
+        {
+            try
+            {
+                Researching.FromGame(Natives.GetTriggerUnit(), Natives.GetTriggerPlayer(), Natives.GetResearched(), kind);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Research", error);
             }
         }
 

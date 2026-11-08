@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale });
                 }
 
                 return componentHooks;
@@ -74,6 +74,24 @@ namespace Moonwell
         /// <summary>Runs when the unit summons another, after its class has seen it (see Unit.OnSummon).</summary>
         /// <param name="summonedUnit">The unit summoned.</param>
         public virtual void OnSummon(Unit summonedUnit)
+        {
+        }
+
+        /// <summary>Runs when the unit, a building, starts a research, after its class has seen it (see Unit.OnResearchStarted).</summary>
+        /// <param name="upgrade">The upgrade researched.</param>
+        public virtual void OnResearchStarted(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when the unit's research is cancelled, after its class has seen it.</summary>
+        /// <param name="upgrade">The upgrade whose research was cancelled.</param>
+        public virtual void OnResearchCancelled(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when the unit's research finishes, after its class has seen it (see Unit.OnResearchFinished).</summary>
+        /// <param name="upgrade">The upgrade researched.</param>
+        public virtual void OnResearchFinished(Upgrade upgrade)
         {
         }
 

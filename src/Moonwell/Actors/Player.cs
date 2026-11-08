@@ -475,10 +475,24 @@ namespace Moonwell
             return Runtime.World.UpgradeLevel(Handle, ObjectTypes.IdOf<T>());
         }
 
-        /// <summary>Sets the level the player has of an upgrade class.</summary>
+        /// <summary>Sets the level the player has of an upgrade class; each level gained runs the class's OnResearched, in order, inside this call (decision 213). Lowering runs nothing.</summary>
         public void SetLevel<T>(int level) where T : Upgrade
         {
-            Runtime.World.Research(Handle, ObjectTypes.IdOf<T>(), level);
+            var id = ObjectTypes.IdOf<T>();
+            var before = Runtime.World.UpgradeLevel(Handle, id);
+            Runtime.World.Research(Handle, id, level);
+            Researching.Gained(this, ObjectTypes.UpgradeOf(id), before, Runtime.World.UpgradeLevel(Handle, id));
+        }
+
+        /// <summary>Gives the player one more level of an upgrade class, running its OnResearched as SetLevel does; at the top level (MaxAllowed), or with the upgrade forbidden, it does nothing.</summary>
+        public void AddLevel<T>() where T : Upgrade
+        {
+            var id = ObjectTypes.IdOf<T>();
+            var level = Runtime.World.UpgradeLevel(Handle, id);
+            if (level < Runtime.World.TechMaxOf(Handle, id))
+            {
+                SetLevel<T>(level + 1);
+            }
         }
 
         /// <summary>How many units of a unit class the player may have, or the top level of an upgrade class it may research; NoLimit for a unit class without a limit.</summary>
