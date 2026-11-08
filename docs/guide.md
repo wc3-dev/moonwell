@@ -1195,6 +1195,19 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   player's machine, so the hotkeys go on (a clicked button keeps it otherwise, seen); a text box keeps it while typed in.
   Giving it back blinks the clicked frame's tooltip and the cursor once (seen). `KeepsKeyboard = true` leaves the
   keyboard with the frame instead: no blink, but the game's hotkeys stop until the player clicks the world.
+- Drag and drop is two clicks, as a frame gives no mouse down or up (seen): a click picks up a frame with `Draggable =
+  true`, and a click on a frame listened to for `Dropped` drops it there, running `Dropped` with the player and the
+  frame dropped, synced. Right-click, Esc, a click on the frame held, or a left click on anything else puts it back; a
+  click on another draggable frame picks that one up instead. A click that picks up or drops runs nothing else. While a
+  frame is held, its `DragIcon` (unless set, an icon button's `Icon` or an image's `Texture`), the frame's size or
+  0.04 square, follows that player's cursor on their screen alone; a frame with none to draw, as an empty slot, is not
+  picked up, and its click is a click. A load puts every drag back.
+
+  ```csharp
+  var sword = bag.Add(new IconButton { Icon = item.Icon, Draggable = true });
+  var hand = gear.Add(new IconButton());
+  hand.Dropped += (who, dragged) => hand.Icon = ((IconButton)dragged).Icon; // synced: safe to move the item
+  ```
 - `CheckBox` (`Checked`), `Slider` (`Min`, `Max`, `Step`, `Value`) and `TextBox` (`Text`, `MaxLength`) are one player's
   only: add them to a frame made for that player, as the shop above; a development build reports one that is not, so
   the screens never disagree. They read what their last event brought or what the map last set, the same on every

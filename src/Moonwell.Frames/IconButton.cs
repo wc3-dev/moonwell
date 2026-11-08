@@ -88,6 +88,12 @@ namespace Moonwell
             base.Place();
         }
 
+        /// <summary>The icon follows the cursor while the button is held, unless DragIcon is set.</summary>
+        internal override string DragTexture()
+        {
+            return dragIcon != "" ? dragIcon : icon;
+        }
+
         /// <summary>A click gives the keyboard back and runs Clicked.</summary>
         internal override void Receive(int kind, Player who, float value, string text)
         {

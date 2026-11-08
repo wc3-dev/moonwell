@@ -127,5 +127,20 @@ namespace Moonwell.Hosting
 
         /// <summary>A frame's name, as its .fdf gives it; the same on every machine.</summary>
         string NameOf(framehandle frame);
+
+        /// <summary>Listens for every player slot's mouse releases, on one trigger; inside it EventPlayer is the player and EventLeftButton whether it was the left button.</summary>
+        void ListenMouseUp(Action action);
+
+        /// <summary>Listens for every player slot's Esc, on one trigger; inside it EventPlayer is the player.</summary>
+        void ListenEscape(Action action);
+
+        /// <summary>Whether the mouse release being delivered was the left button's.</summary>
+        bool EventLeftButton();
+
+        /// <summary>The cursor's x on this machine's window, in pixels from its left; differs between machines.</summary>
+        int MouseScreenX();
+
+        /// <summary>The cursor's y on this machine's window, in pixels from its top (seen 11-07); differs between machines.</summary>
+        int MouseScreenY();
     }
 }
