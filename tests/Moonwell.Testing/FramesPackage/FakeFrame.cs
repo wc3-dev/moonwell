@@ -65,9 +65,6 @@ namespace Moonwell.Testing
         /// <summary>The frame it was given to as a tooltip; null until given. The game crashes when it is given to a second (seen 11-03).</summary>
         public FakeFrame? TipOf;
 
-        /// <summary>Its text's colour, white until set.</summary>
-        public Color TextColor = Color.White;
-
         /// <summary>Its value, range and step, as a slider's; 0 until set.</summary>
         public float Value, Min, Max, Step;
 

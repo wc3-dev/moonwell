@@ -1177,6 +1177,19 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   lower one) do as named. A side left at 0 keeps the size the frame's template gives, read once, when the frame is made
   (a template's size reads at once, seen), so a button given only a `Width` keeps its height; one made by its type, as
   a label is, has 0 there, and a label given only a `Width` is as tall as its lines.
+- Tweens move a value over time: `MoveTo(offset, seconds)`, `SizeTo(width, height, seconds)`, `ScaleTo`, `FadeTo` (an
+  alpha) and a label's `ColorTo`, each with an ease from `Ease` (linear unless given), and `Tween(seconds, ease, t =>
+  ...)` for anything else, given how far along it is, eased, ending with 1. A tween steps 32 times a second on every
+  machine, as a timer in the frame's scope, so it ends with the frame and goes on after a load; a new tween of a kind
+  stops the frame's last one of that kind, from where it had got to. Each gives a `Tween` with `Stop()`, `IsRunning` and
+  `Finished`, which runs once the end is reached, not when stopped. `SizeTo` grows from the size the map set, so give the
+  frame one first. Not inside `Local.For`.
+
+  ```csharp
+  toast.FadeTo(255, 0.3f).Finished += () => toast.After(2f, () => toast.FadeTo(0, 0.5f, Ease.InQuad));
+  panel.MoveTo(new Vector2(0f, -0.05f), 0.4f, Ease.OutBack);
+  icon.Tween(1f, Ease.InOutSine, t => icon.Scale = 1f + 0.2f * t);
+  ```
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
   `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
@@ -1219,7 +1232,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 - `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
   the share of its width that `Value` is of `Min` to `Max`: the fill is as high as the bar, and its width is the share of
   the bar's `Width`, or of the frame it covers with `Fill` (or that frame covers), whose new size it follows (the game
-  gives a size from points too late to read); a label's `Color` colours its text, white unless set.
+  gives a size from points too late to read); a label's `Color` colours its text, white unless set, as a colour code
+  around it: a label lets clicks through by being turned off, and the game draws a turned-off label's text colour grey
+  (seen). Codes in the text draw over it, and its alpha is not drawn, so fade a label with `Alpha`.
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
