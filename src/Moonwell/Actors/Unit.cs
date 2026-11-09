@@ -1093,6 +1093,9 @@ namespace Moonwell
         /// <summary>The units the transport carries, in load order; null while it carries none yet.</summary>
         internal List<Unit>? cargo;
 
+        /// <summary>Whether the unit let its cargo out as it ended: the game still has it aboard until RemoveUnit returns, so the pool must not keep this unit.</summary>
+        internal bool droppedCargo;
+
         /// <summary>How many of the unit's orders ran their reactions: a count that changes inside an order's reactions means a reaction gave the unit another.</summary>
         internal int OrdersHeard;
 
@@ -1742,7 +1745,7 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Runs when the unit comes out of its transport, before the unit's components see it: unloaded, or let out because the transport died or was removed (the game puts it down alive where the transport was; seen 11-08). A unit that dies or leaves the game inside runs none.</summary>
+        /// <summary>Runs when the unit comes out of its transport, before the unit's components see it: unloaded, or let out because the transport died or was removed (the game puts it down alive where the transport was; seen 11-08). For a transport Moonwell removes (Remove(), or its scope ending) it runs as the transport begins to end, before its OnLeave, while the game still has the unit aboard: the game puts it down just after (seen 11-09). A unit that dies or leaves the game inside runs none.</summary>
         /// <param name="carryingTransport">The transport it was in.</param>
         public virtual void OnUnloaded(Unit carryingTransport)
         {
@@ -1766,6 +1769,11 @@ namespace Moonwell
             if (!entered)
             {
                 return;
+            }
+
+            if (cargo != null && cargo.Count > 0 && !IsGone)
+            {
+                Inbound.DropCargo(this);
             }
 
             Hooks.CallEnding(this);
