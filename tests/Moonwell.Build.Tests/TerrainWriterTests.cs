@@ -75,6 +75,8 @@ namespace Moonwell.Build.Tests
             environment.Left = -2560.5f;
             environment.Bottom = -3072;
             environment.TerrainTiles.Add(new TerrainTile { Height = 0, CliffLevel = 2 });
+            environment.TerrainTypes.Add(TerrainType.L_Dirt);
+            environment.TerrainTypes.Add(TerrainType.L_Grass);
             var previous = CultureInfo.CurrentCulture;
             CultureInfo.CurrentCulture = new CultureInfo("sv-SE");
             string text;
@@ -93,6 +95,7 @@ namespace Moonwell.Build.Tests
             Assert.Contains("public const float Left = -2560.5f;", text);
             Assert.Contains("public const float Bottom = -3072f;", text);
             Assert.Contains("public static string Corners() => \"YAAQ\";", text);
+            Assert.Contains("public static string Tiles() => \"LdrtLgrs\";", text);
 
             TerrainWriter.Delete(project);
             Assert.False(File.Exists(Path.Combine(project.GeneratedFolder, "TerrainData.g.cs")));

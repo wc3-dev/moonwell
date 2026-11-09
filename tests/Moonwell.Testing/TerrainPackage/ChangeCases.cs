@@ -163,7 +163,7 @@ namespace Moonwell.Testing
             Expect.Equal(Tile.LordaeronSummerDirt, Terrain.Tile(1280f, 1280f), "the ground before both");
         }
 
-        /// <summary>A development build reports a tile the map's list lacks, and paints it all the same.</summary>
+        /// <summary>A development build reports a tile the map's list lacks, and every build paints it all the same.</summary>
         public static void TileOutsideList(FakeWorld world)
         {
             Flat();
@@ -172,8 +172,12 @@ namespace Moonwell.Testing
             Terrain.SetTile(1280f, 1280f, Tile.LordaeronSummerGrass, 64f, Game.Instance);
             Expect.Equal(before, world.Printed.Count, "a tile in the list is not reported");
             Terrain.SetTile(1280f, 1280f, Tile.NorthrendSnow, 64f, Game.Instance);
+#if DEBUG
             Expect.Equal(before + 1, world.Printed.Count, "one report");
             Expect.True(world.Printed[before].Contains("Nsnw"), "it names the tile: " + world.Printed[before]);
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports nothing");
+#endif
             Expect.Equal(Tile.NorthrendSnow, Terrain.Tile(1280f, 1280f), "painted all the same");
         }
 
@@ -204,8 +208,12 @@ namespace Moonwell.Testing
             fake.Blighted = (x, y) => true;
             var before = world.Printed.Count;
             Terrain.Cleanse(1280f, 1280f, 300f, Game.Instance);
+#if DEBUG
             Expect.Equal(before + 1, world.Printed.Count, "one report");
             Expect.True(world.Printed[before].Contains("building"), "it says why: " + world.Printed[before]);
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports nothing");
+#endif
         }
 
         /// <summary>The newest water tint held shows, and white when none is.</summary>
