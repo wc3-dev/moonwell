@@ -1372,7 +1372,7 @@ namespace Moonwell
         /// <summary>Adds a percent to a stat while a scope holds it (decision 221), and returns the modifier: Modify(Stat.Damage, percent: 20, heldBy: this). Percents add up, then multiply the base and the flat amounts.</summary>
         public Modifier Modify(Stat stat, Scope heldBy, float percent) => Stats.Add(stat, 0.0f, percent, heldBy, "Unit.Modify");
 
-        /// <summary>A stat's value now: (base + flat) × (1 + percents / 100). A game stat reads the unit's number in the game, less what its items and the game's own bonuses add to damage and attack speed; 0 once the unit is gone.</summary>
+        /// <summary>A stat's value now: (base + flat) × (1 + percents / 100). A game stat reads what the game shows, less what its items and the game's own bonuses add to damage and attack speed: its percents cover the base as it was at the stat's last change, so what the game added since (strength's life, a level) adds unscaled until the stat next changes; 0 once the unit is gone.</summary>
         [LocalSafe]
         public float Get(Stat stat) => Stats.Get(stat);
 

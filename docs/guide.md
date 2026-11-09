@@ -572,7 +572,8 @@ units and players. The game's stats are units' only, and change the unit in the 
 
 A game stat never goes below 0. Its base is the game's number less Moonwell's part, so what the game changes meanwhile (a
 level's life, a tome) stays; a percent of a base the game changed is put again at the stat's next change. `Get` reads
-(base + flat) × (1 + percents / 100), without what items and the game's own abilities add to damage and attack speed.
+what the game shows, without what items and the game's own abilities add to damage and attack speed: a hero's +10% life
+covers the life its strength gave when the life last changed, and 5 strength added after adds its life unscaled.
 Damage, armor and attack speed go through three abilities Moonwell declares, so a map that reads them needs
 Moonwell.Objects.
 
