@@ -25,6 +25,7 @@ namespace Moonwell.Testing
             AddSummons(list);
             AddResearch(list);
             AddShops(list);
+            AddInventory(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -1704,6 +1705,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
             list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
             list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
+        }
+
+        /// <summary>Adds the cases for the 3.0 bag and equipment slots (decision 215).</summary>
+        private static void AddInventory(List<Case> list)
+        {
+            list.Add(new Case { Name = "inventory.equip-and-unequip", Run = InventoryCases.EquipAndUnequip });
+            list.Add(new Case { Name = "inventory.equip-from-slots", Run = InventoryCases.EquipFromSlots });
+            list.Add(new Case { Name = "inventory.no-slots", Run = InventoryCases.NoSlots });
         }
 
         /// <summary>Adds the cases for shops (decision 214).</summary>
