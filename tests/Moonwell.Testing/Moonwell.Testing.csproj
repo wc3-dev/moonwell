@@ -14,7 +14,6 @@
     <ProjectReference Include="..\..\src\Moonwell.Input\Moonwell.Input.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Frames\Moonwell.Frames.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Kit\Moonwell.Kit.csproj" />
-    <ProjectReference Include="..\..\src\Moonwell.Spells\Moonwell.Spells.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Interactions\Moonwell.Interactions.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Json\Moonwell.Json.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Maths\Moonwell.Maths.csproj" />

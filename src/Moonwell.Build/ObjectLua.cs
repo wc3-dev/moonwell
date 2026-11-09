@@ -177,18 +177,13 @@ namespace Moonwell.Build
             return used;
         }
 
-        // The Moonwell packages beside the map's assembly, other than Moonwell.Objects, that reference Moonwell.Objects.
+        // The Moonwell packages whose classes inherit Moonwell.Objects' that the map depends on (Declarations.ObjectPackagePaths), loaded beside it.
         private static IEnumerable<Assembly> ObjectPackages(Assembly map, string assemblyPath)
         {
-            var folder = Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!;
             var context = System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(map)!;
-            foreach (var path in Directory.GetFiles(folder, "Moonwell.*.dll").OrderBy(path => path, StringComparer.Ordinal))
+            foreach (var path in Declarations.ObjectPackagePaths(assemblyPath))
             {
-                var name = Path.GetFileNameWithoutExtension(path);
-                if (name != Declarations.ObjectsAssemblyName && CompiledFiles.ReferencedAssemblies(path).Contains(Declarations.ObjectsAssemblyName))
-                {
-                    yield return context.LoadFromAssemblyName(new AssemblyName(name));
-                }
+                yield return context.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path)));
             }
         }
 

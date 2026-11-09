@@ -8,7 +8,7 @@ namespace Moonwell.Spells
     public abstract class PulseChannel : SpellTemplate
     {
         /// <summary>Whether it pulses around the caster.</summary>
-        private bool aroundCaster;
+        internal bool aroundCaster;
 
         /// <summary>Makes a channel of 5 s cast at a place.</summary>
         protected PulseChannel()

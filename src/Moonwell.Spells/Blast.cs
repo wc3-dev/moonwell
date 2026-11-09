@@ -8,7 +8,7 @@ namespace Moonwell.Spells
     public abstract class Blast : SpellTemplate
     {
         /// <summary>Whether it blasts around the caster.</summary>
-        private bool aroundCaster;
+        internal bool aroundCaster;
 
         /// <summary>Makes a blast cast at a place.</summary>
         protected Blast()

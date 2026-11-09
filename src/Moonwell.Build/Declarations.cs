@@ -25,12 +25,43 @@ namespace Moonwell.Build
             ["Moonwell.Objects.StandardUpgrade"] = "upgrade",
         };
 
-        /// <summary>Tells whether the built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), references <c>Moonwell.Objects</c>, read from their metadata without loading them.</summary>
+        /// <summary>Tells whether the built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), references <c>Moonwell.Objects</c>, read from their metadata without loading them, or the map depends on a Moonwell package whose classes inherit its (<see cref="ObjectPackagePaths"/>).</summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
         /// <returns>True when one of them references the library.</returns>
         public static bool UsesObjects(string assemblyPath)
         {
-            return References(assemblyPath, ObjectsAssemblyName);
+            return References(assemblyPath, ObjectsAssemblyName) || ObjectPackagePaths(assemblyPath).Count > 0;
+        }
+
+        /// <summary>
+        /// The Moonwell packages beside the map's assembly, other than <c>Moonwell.Objects</c>, that reference it (the spell templates,
+        /// on Channel) and that the map depends on, by its <c>deps.json</c>, which <c>dotnet build</c> writes from the project's
+        /// references whatever the code uses of them: CSharp.lua compiles such a package's classes either way.
+        /// </summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <returns>The packages' paths, in name order.</returns>
+        public static List<string> ObjectPackagePaths(string assemblyPath)
+        {
+            var assembly = Path.GetFullPath(assemblyPath);
+            var deps = Path.ChangeExtension(assembly, ".deps.json");
+            var found = new List<string>();
+            if (!File.Exists(deps))
+            {
+                return found;
+            }
+
+            var listed = File.ReadAllText(deps);
+            foreach (var path in Directory.GetFiles(Path.GetDirectoryName(assembly)!, "Moonwell.*.dll").OrderBy(path => path, StringComparer.Ordinal))
+            {
+                var name = Path.GetFileNameWithoutExtension(path);
+                // A library is listed in deps.json as "Name/Version".
+                if (name != ObjectsAssemblyName && listed.Contains("\"" + name + "/", StringComparison.Ordinal) && CompiledFiles.ReferencedAssemblies(path).Contains(ObjectsAssemblyName))
+                {
+                    found.Add(path);
+                }
+            }
+
+            return found;
         }
 
         /// <summary>Whether a map's built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), references an assembly by name; the compiler keeps only the references the code uses.</summary>

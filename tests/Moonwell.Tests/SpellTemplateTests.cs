@@ -1,9 +1,10 @@
 using Moonwell.Spells;
+using Moonwell.Testing;
 
-namespace Moonwell.Testing
+namespace Moonwell.Tests
 {
-    /// <summary>Cases that check the spell templates (decision 226) on the fake worlds: what each hits, when, and for how much.</summary>
-    public static class SpellTemplateCases
+    /// <summary>The spell templates (decision 226) on the fake worlds: what each hits, when, and for how much. In .NET only (see Moonwell.Tests.csproj); the Spells build fixture loads them in Lua.</summary>
+    public class SpellTemplateTests
     {
         private static readonly int Id = ObjectTypes.FourCC("A0SP");
         private static readonly int Wolf = ObjectTypes.FourCC("o0SW");
@@ -136,8 +137,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A blast hits the enemies within its radius of the place, once, at the cast's level, and not allies or the far.</summary>
-        public static void BlastHitsEnemiesNear(FakeWorld world)
+        [Fact]
+        public void BlastHitsEnemiesNear()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestBlast(false));
             var caster = At(world, 0, 0.0f, 0.0f);
@@ -151,8 +154,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A blast around the caster hits near the caster, wherever the cast's place reads.</summary>
-        public static void BlastAroundCaster(FakeWorld world)
+        [Fact]
+        public void BlastAroundCaster()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestBlast(true));
             var caster = At(world, 0, 2000.0f, 0.0f);
@@ -163,8 +168,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A pulsing channel pulses at once and every interval, and stops with the channel.</summary>
-        public static void PulseUntilChannelEnds(FakeWorld world)
+        [Fact]
+        public void PulseUntilChannelEnds()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestPulse());
             var caster = At(world, 0, 0.0f, 0.0f);
@@ -179,8 +186,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A chain hits its target, then jumps to the nearest it has not hit, each jump after its delay and weaker by its falloff, as many jumps as set.</summary>
-        public static void ChainJumps(FakeWorld world)
+        [Fact]
+        public void ChainJumps()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestChain());
             var caster = At(world, 0, 0.0f, 0.0f);
@@ -197,8 +206,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A summon template summons its count for its lifetime, kept to its limit.</summary>
-        public static void SummonsToLimit(FakeWorld world)
+        [Fact]
+        public void SummonsToLimit()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Unit(Wolf, () => new SpiritWolf());
             ObjectTypes.Ability(Id, () => new TestSummon());
@@ -212,8 +223,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A bolt at a unit flies to it and hits it once with its damage.</summary>
-        public static void BoltHitsTarget(FakeWorld world)
+        [Fact]
+        public void BoltHitsTarget()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestBolt());
             var caster = At(world, 0, 100.0f, 500.0f);
@@ -225,8 +238,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A dash pushes the caster towards the place and hits each unit it passes once.</summary>
-        public static void DashHitsAlongTheWay(FakeWorld world)
+        [Fact]
+        public void DashHitsAlongTheWay()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestDash());
             var caster = At(world, 0, 0.0f, 300.0f);
@@ -239,8 +254,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A wave goes its distance and hits each unit it passes once, and none past its end.</summary>
-        public static void WaveHitsEachOnce(FakeWorld world)
+        [Fact]
+        public void WaveHitsEachOnce()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestWave());
             var caster = At(world, 0, 0.0f, 500.0f);
@@ -253,8 +270,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>A leap slams where the caster lands, after its flight, hitting what is near the landing.</summary>
-        public static void LeapSlamsOnLanding(FakeWorld world)
+        [Fact]
+        public void LeapSlamsOnLanding()
         {
+            var world = FakeWorld.Install();
             Packages();
             ObjectTypes.Ability(Id, () => new TestLeap());
             var caster = At(world, 0, 0.0f, 500.0f);
