@@ -1029,6 +1029,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.camera.unknown-camera", Run = CameraCases.UnknownCamera });
             list.Add(new Case { Name = "input.camera.wrong-data", Run = CameraCases.WrongData });
             list.Add(new Case { Name = "input.camera.not-installed", Run = CameraCases.NotInstalled });
+            list.Add(new Case { Name = "input.camera.work-changes", Run = CameraWorkCases.Changes });
+            list.Add(new Case { Name = "input.camera.shake", Run = CameraWorkCases.Shake });
+            list.Add(new Case { Name = "input.camera.cinematic-work", Run = CameraWorkCases.CinematicCamera });
+            list.Add(new Case { Name = "input.camera.created", Run = CameraWorkCases.Created });
+            list.Add(new Case { Name = "input.camera.third-person", Run = CameraWorkCases.ThirdPerson });
+            list.Add(new Case { Name = "input.camera.top-down", Run = CameraWorkCases.TopDown });
+            list.Add(new Case { Name = "input.camera.follow-paused", Run = CameraWorkCases.Paused });
         }
 
         /// <summary>Adds the terrain package's cases.</summary>
