@@ -107,6 +107,39 @@ namespace Moonwell.Engine
             return (Slots.At(Slots.At(blocks, block)!, cell >> 3) >> ((cell & 7) * 4)) & 15;
         }
 
+        /// <summary>The cells across.</summary>
+        internal int Columns => columns;
+
+        /// <summary>The cells up.</summary>
+        internal int Rows => rows;
+
+        /// <summary>The column of the cell that holds an x, kept inside the grid.</summary>
+        internal int ColumnOf(float x) => Cell(x, left, columns);
+
+        /// <summary>The row of the cell that holds a y, kept inside the grid.</summary>
+        internal int RowOf(float y) => Cell(y, bottom, rows);
+
+        /// <summary>The x of a column's centre.</summary>
+        internal float CentreX(int column) => left + column * CellSize + CellSize / 2f;
+
+        /// <summary>The y of a row's centre.</summary>
+        internal float CentreY(int row) => bottom + row * CellSize + CellSize / 2f;
+
+        /// <summary>Keeps a cell's four flags after a change the package made in the game, if its block is read; a block not read yet reads the game's answer later.</summary>
+        internal void Store(int column, int row, int cell)
+        {
+            var block = (row >> SideBits) * blocksAcross + (column >> SideBits);
+            var flags = blocks[block];
+            if (flags == null)
+            {
+                return;
+            }
+
+            var at = (row & (Side - 1)) * Side + (column & (Side - 1));
+            var shift = (at & 7) * 4;
+            flags[at >> 3] = (flags[at >> 3] & ~(15 << shift)) | (cell << shift);
+        }
+
         /// <summary>Drops every block an area touches (the area kept inside the grid), so the next read of one reads it again.</summary>
         internal void Refresh(Bounds area)
         {

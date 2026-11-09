@@ -58,6 +58,48 @@ namespace Moonwell.Testing
             maxX = 3584f;
             maxY = 3584f;
         }
+
+        public void Crater(float x, float y, float radius, float depth)
+        {
+        }
+
+        public void Ripple(float x, float y, float radius, float depth, float seconds)
+        {
+        }
+
+        public void Wave(float fromX, float fromY, float toX, float toY, float radius, float depth, float seconds)
+        {
+        }
+
+        public void Shake(float x, float y, float radius, float by, float seconds)
+        {
+        }
+
+        public int TileAt(float x, float y) => 0;
+
+        public int VariationAt(float x, float y) => 0;
+
+        public void PaintTile(float x, float y, int tile, int variation)
+        {
+        }
+
+        public void SetPathing(float x, float y, int kind, bool on)
+        {
+        }
+
+        public void SetBlight(float x, float y, float radius, bool on)
+        {
+        }
+
+        public void SetBlight(float minX, float minY, float maxX, float maxY, bool on)
+        {
+        }
+
+        public bool IsBlighted(float x, float y) => false;
+
+        public void TintWater(int red, int green, int blue, int alpha)
+        {
+        }
     }
 
     /// <summary>

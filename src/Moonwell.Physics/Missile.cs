@@ -177,6 +177,9 @@ namespace Moonwell
         /// <summary>The terrain's grid the span was read from; null before the first.</summary>
         internal HeightGrid? spanGrid;
 
+        /// <summary>The grid's count of raises when the span was read: a raise or lower since makes it read again.</summary>
+        internal int spanRaises;
+
         /// <summary>The span's box (HeightGrid.Span), where the ground is between spanLow and spanHigh: its left edge.</summary>
         internal float spanMinX;
 

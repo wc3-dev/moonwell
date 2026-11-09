@@ -6,7 +6,7 @@ using Moonwell.Hosting;
 namespace Moonwell
 {
     /// <summary>The map's ground: its height, what units can walk, fly, build and float on, and rays along it. A map's generated Main installs it with the grid the build wrote, when the map uses the package.</summary>
-    public static class Terrain
+    public static partial class Terrain
     {
         /// <summary>The world the package talks to; null until Install.</summary>
         private static ITerrainWorld? world;
@@ -36,6 +36,8 @@ namespace Moonwell
             world = host;
             grid = made;
             pathing = new PathingGrid(host, columns, rows, left, bottom);
+            mapTiles = null;
+            Changes.Reset();
         }
 
         /// <summary>The playable area: the map's bounds less the camera's margins, as the game's own playable area is. Read once, at the start, when the package is installed and before any map code.</summary>
@@ -155,7 +157,7 @@ namespace Moonwell
         [LocalSafe]
         public static bool IsWalkable(float x, float y)
         {
-            return (Pathing.Flags(x, y) & PathingGrid.Walkable) != 0;
+            return (Paths.Flags(x, y) & PathingGrid.Walkable) != 0;
         }
 
         /// <summary>Whether units can walk at a point, as <c>IsWalkable(x, y)</c>.</summary>
@@ -169,7 +171,7 @@ namespace Moonwell
         [LocalSafe]
         public static bool IsFlyable(float x, float y)
         {
-            return (Pathing.Flags(x, y) & PathingGrid.Flyable) != 0;
+            return (Paths.Flags(x, y) & PathingGrid.Flyable) != 0;
         }
 
         /// <summary>Whether flying units can fly at a point, as <c>IsFlyable(x, y)</c>.</summary>
@@ -183,7 +185,7 @@ namespace Moonwell
         [LocalSafe]
         public static bool IsBuildable(float x, float y)
         {
-            return (Pathing.Flags(x, y) & PathingGrid.Buildable) != 0;
+            return (Paths.Flags(x, y) & PathingGrid.Buildable) != 0;
         }
 
         /// <summary>Whether a building can be built at a point, as <c>IsBuildable(x, y)</c>.</summary>
@@ -197,7 +199,7 @@ namespace Moonwell
         [LocalSafe]
         public static bool IsWater(float x, float y)
         {
-            return (Pathing.Flags(x, y) & PathingGrid.Water) != 0;
+            return (Paths.Flags(x, y) & PathingGrid.Water) != 0;
         }
 
         /// <summary>Whether a point is water, as <c>IsWater(x, y)</c>.</summary>
@@ -214,7 +216,7 @@ namespace Moonwell
         [ChangesState]
         public static void Refresh(Bounds area)
         {
-            Pathing.Refresh(area);
+            Paths.Refresh(area);
         }
 
         /// <summary>
@@ -300,7 +302,7 @@ namespace Moonwell
         }
 
         /// <summary>The pathing flags of the ground.</summary>
-        internal static PathingGrid Pathing
+        internal static PathingGrid Paths
         {
             get
             {
@@ -319,6 +321,8 @@ namespace Moonwell
             world = null;
             grid = null;
             pathing = null;
+            mapTiles = null;
+            Changes.Reset();
         }
 
         /// <summary>The error of a read before Install.</summary>

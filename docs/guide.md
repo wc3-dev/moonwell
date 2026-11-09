@@ -1061,6 +1061,31 @@ if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at
 - A `Height` read costs about 9 microseconds in the game, so code that runs every tick on many objects should read it
   sparingly.
 
+### Changing the ground
+
+Every change is held in a scope and taken back when it, or the scope, ends; `Game.Instance` keeps it for the game. Each
+returns a `TerrainChange` to `End()` early.
+
+```csharp
+Terrain.Raise(x, y, 300f, 200f, Game.Instance);                     // a hill; Lower digs
+Terrain.Block(x, y, 128f, Pathing.Walk | Pathing.Build, cast);      // Allow gives pathing
+Terrain.SetTile(x, y, Tile.LordaeronSummerGrass, 256f, cast);      // or a Bounds
+Terrain.Blight(x, y, 400f, Game.Instance);                          // Cleanse takes it off
+Terrain.WaterTint(new Color(120, 255, 120), poison);
+Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and Shake too: look only
+```
+
+- Where changes of a kind overlap, the newest held wins, and ending one shows what is under it. Raises add up, as the
+  game's craters do. `Height`, `Normal`, `Raycast` and physics follow a raise on every machine; ripples, waves and
+  shakes are only for the look.
+- Pathing changes are per 32 cell, and the reads see them at once. A tile is painted per 128 corner; the game draws only
+  the map's own tiles (at most 16), so a development build reports another.
+- The game can't take off blight a building made, and a development build reports a `Cleanse` whose centre stays
+  blighted. Blight the map was made with goes under an ended `Blight` too.
+- The water can't be made, moved or raised at runtime. `WaterTint` multiplies its colour: white leaves it.
+- `Terrain.Spread(radius, speed, (r, scope) => ..., scope)` grows a change from nothing to a radius; `Terrain.Trail(unit,
+  seconds, (x, y, scope) => ..., scope)` lays one behind a moving unit, each piece ending after its seconds.
+
 ## Interactions and finding
 
 Add the `Moonwell.Interactions` package (the template's `.csproj` has the line, commented) for things that react to what
