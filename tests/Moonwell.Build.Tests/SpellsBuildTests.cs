@@ -31,6 +31,15 @@ namespace Moonwell.Build.Tests
             Assert.Contains("Firebolt", script);
         }
 
+        [Fact]
+        public void the_packages_the_templates_use_are_installed()
+        {
+            // The fixture references only Moonwell.Spells and names none of Physics or Terrain, so the compiler keeps no reference to them in its assembly (I55).
+            var main = File.ReadAllText(Path.Combine(fixtures.Of("Spells").Folder, "build", "generated", "MapMain.g.cs"));
+            var terrain = main.IndexOf("global::Moonwell.Terrain.Install(", StringComparison.Ordinal);
+            Assert.True(terrain >= 0 && terrain < main.IndexOf("global::Moonwell.Physics.Install(", StringComparison.Ordinal), main);
+        }
+
         [Theory]
         [InlineData("A0B1", 1)]
         [InlineData("A0B3", 2)]

@@ -69,7 +69,7 @@ namespace Moonwell.Build
         /// <param name="assemblyName">The name of the referenced assembly, such as <c>Moonwell.Damage</c>.</param>
         public static bool References(string assemblyPath, string assemblyName)
         {
-            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => CompiledFiles.ReferencedAssemblies(path).Contains(assemblyName));
+            return CompiledFiles.UsedPackages(assemblyPath).Contains(assemblyName);
         }
 
         /// <summary>

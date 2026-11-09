@@ -272,10 +272,8 @@ namespace Moonwell.Build
                 installs.Add("global::Moonwell.DamageSystem.Install();");
             }
 
-            // The physics package reads the ground through the terrain package, so a map that uses physics but never names Terrain
-            // (its assembly then has no reference to it) needs the grid too.
             var physics = Declarations.References(targetPath, PhysicsAssemblyName);
-            if (Declarations.References(targetPath, TerrainAssemblyName) || physics)
+            if (Declarations.References(targetPath, TerrainAssemblyName))
             {
                 // The fork's W2 fix refuses a map without a war3map.w3e, so there is always one here.
                 TerrainWriter.Write(project, map.Environment!);
