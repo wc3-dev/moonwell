@@ -58,9 +58,40 @@ namespace Moonwell.Build.Tests
             }
         }
 
-        private static War3Net.Build.Object.LevelObjectModification AbilityIn(string project, string id)
+        [Theory]
+        [InlineData("A0B1")]
+        [InlineData("A0B2")]
+        [InlineData("A0B4")]
+        [InlineData("A0B5")]
+        [InlineData("A0B6")]
+        [InlineData("A0B7")]
+        [InlineData("A0B8")]
+        public void instant_templates_end_their_channel_with_the_cast(string id)
         {
-            using var reader = new BinaryReader(File.OpenRead(Path.Combine(project, "build", "Spells", "war3map.w3a")), Encoding.UTF8);
+            var times = AbilityIn(fixtures.Of("Spells").Folder, id).Modifications.Where(one => one.Id == Rawcodes.IdOf("Ncl1")).ToList();
+            Assert.NotEmpty(times);
+            Assert.All(times, one => Assert.Equal(0.0, Convert.ToDouble(one.Value)));
+        }
+
+        [Theory]
+        [InlineData("A0B1")]
+        [InlineData("A0B2")]
+        [InlineData("A0B3")]
+        [InlineData("A0B4")]
+        [InlineData("A0B5")]
+        [InlineData("A0B6")]
+        [InlineData("A0B7")]
+        [InlineData("A0B8")]
+        public void templates_put_their_button_off_hold_positions_place(string id)
+        {
+            var ability = AbilityIn(fixtures.Of("Spells").Folder, id, "war3mapSkin.w3a");
+            Assert.Equal(0, Assert.IsType<int>(Value(ability, "abpx")));
+            Assert.Equal(2, Assert.IsType<int>(Value(ability, "abpy")));
+        }
+
+        private static War3Net.Build.Object.LevelObjectModification AbilityIn(string project, string id, string file = "war3map.w3a")
+        {
+            using var reader = new BinaryReader(File.OpenRead(Path.Combine(project, "build", "Spells", file)), Encoding.UTF8);
             return Assert.Single(reader.ReadAbilityObjectData().NewAbilities, one => one.NewId == Rawcodes.IdOf(id));
         }
 
