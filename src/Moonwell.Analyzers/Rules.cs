@@ -195,6 +195,18 @@ public static class Rules
     /// <summary>The rule for a bare Damage(...) in a unit class.</summary>
     public static ImmutableArray<DiagnosticDescriptor> BareDamages { get; } = ImmutableArray.Create(BareDamage);
 
+    public static readonly DiagnosticDescriptor ItemRemove = new(
+        "MW0055",
+        "Remove<T>() when an item is dropped",
+        "'{0}' in {1} takes the first {2} on the unit, whichever item added it: give it in OnPickedUp with heldBy: Item.Carry, and it ends with this item's carry",
+        "Reactions",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Remove<T>() takes the first component of a class on an actor, whoever added it (the two auras trap). An item that gives its carrier a component in OnPickedUp and removes it in OnDropped or OnUnequipped takes another item's when two items give the same class. A component given with heldBy: Item.Carry ends with this item's own carry, so nothing needs removing (decisions 166 and 216).");
+
+    /// <summary>The rule for Remove&lt;T&gt;() in an item's drop or unequip.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> ItemRemoves { get; } = ImmutableArray.Create(ItemRemove);
+
     public static readonly DiagnosticDescriptor SpellBuff = new(
         "MW0051",
         "A buff a spell lists",

@@ -1953,6 +1953,7 @@ namespace Moonwell.Testing
         public void PutInBag(unit unit, item item)
         {
             bagged.Add(item);
+            ListOf(bags, unit).Add(item);
             if (Listening.Contains(GameEvent.PickUp))
             {
                 Inbound.PickedUp(unit, item);
@@ -1997,12 +1998,120 @@ namespace Moonwell.Testing
                 Inbound.Dropped(unit, item);
             }
 
+            ListOf(bags, unit).Remove(item);
+            ListOf(gear, unit).Add(item);
             bagged.Add(item);
             equipped.Add(item);
             if (Listening.Contains(GameEvent.PickUp))
             {
                 Inbound.PickedUp(unit, item);
             }
+        }
+
+        /// <summary>Each unit's bag and equipment slots, in slot order.</summary>
+        private readonly Dictionary<unit, List<item>> bags = new Dictionary<unit, List<item>>(), gear = new Dictionary<unit, List<item>>();
+
+        /// <summary>The bag size of each unit given one; 0 for the rest.</summary>
+        public Dictionary<unit, int> BagSizes = new Dictionary<unit, int>();
+
+        private static List<item> ListOf(Dictionary<unit, List<item>> lists, unit unit)
+        {
+            if (!lists.TryGetValue(unit, out var list))
+            {
+                list = new List<item>();
+                lists[unit] = list;
+            }
+
+            return list;
+        }
+
+        /// <summary>Whether an item is in a unit's equipment slots.</summary>
+        public bool IsEquipped(item item)
+        {
+            return equipped.Contains(item);
+        }
+
+        /// <summary>UnitEquipItem as the game does it: an item held in the six slots or the bag is dropped first, then picked up into the equipment slots (seen 11-08); the equipment type is not looked at.</summary>
+        public void EquipItem(unit unit, item item)
+        {
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    if (Listening.Contains(GameEvent.Drop))
+                    {
+                        Inbound.Dropped(unit, item);
+                    }
+
+                    slots[i] = null!;
+                    ListOf(gear, unit).Add(item);
+                    bagged.Add(item);
+                    equipped.Add(item);
+                    if (Listening.Contains(GameEvent.PickUp))
+                    {
+                        Inbound.PickedUp(unit, item);
+                    }
+
+                    return;
+                }
+            }
+
+            if (bagged.Contains(item))
+            {
+                Equip(unit, item);
+                return;
+            }
+
+            ListOf(gear, unit).Add(item);
+            bagged.Add(item);
+            equipped.Add(item);
+            if (Listening.Contains(GameEvent.PickUp))
+            {
+                Inbound.PickedUp(unit, item);
+            }
+        }
+
+        /// <summary>UnitUnequipItem as the game does it: a drop, then a pick-up into the bag (seen 11-08).</summary>
+        public void UnequipItem(unit unit, item item)
+        {
+            if (!equipped.Contains(item))
+            {
+                return;
+            }
+
+            if (Listening.Contains(GameEvent.Drop))
+            {
+                Inbound.Dropped(unit, item);
+            }
+
+            equipped.Remove(item);
+            ListOf(gear, unit).Remove(item);
+            ListOf(bags, unit).Add(item);
+            if (Listening.Contains(GameEvent.PickUp))
+            {
+                Inbound.PickedUp(unit, item);
+            }
+        }
+
+        /// <summary>The item in an equipment slot, in the order the unit equipped them.</summary>
+        public item? ItemInEquipmentSlot(unit unit, int slot)
+        {
+            var list = ListOf(gear, unit);
+            return slot < list.Count ? list[slot] : null;
+        }
+
+        /// <summary>The item in a bag slot, in the order it went in.</summary>
+        public item? ItemInBagSlot(unit unit, int slot)
+        {
+            var list = ListOf(bags, unit);
+            return slot < list.Count ? list[slot] : null;
+        }
+
+        /// <summary>A unit's bag size: BagSizes, else 0.</summary>
+        public int BagSizeOf(unit unit)
+        {
+            return BagSizes.TryGetValue(unit, out var size) ? size : 0;
         }
 
         /// <summary>Puts an item in a slot of a unit without the game telling anyone, as when the item was there before the runtime came.</summary>
