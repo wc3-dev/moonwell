@@ -232,6 +232,9 @@ namespace Moonwell.Testing
             board.Column("Hero", who => "Paladin");
             Expect.Equal("Player", board.cells[0].Text, "the header");
             Expect.Equal("Gold", board.cells[2].Text, "a column's name");
+            Expect.Near(Window.Inset + Moonwell.Scoreboard.NameWidth + Moonwell.Scoreboard.ValueWidth, board.cells[2].Offset.X, "a header made before its column sits in that column");
+            Expect.Near(-Moonwell.Scoreboard.Top, board.cells[2].Offset.Y, "on the header's row");
+            Expect.Near(-Moonwell.Scoreboard.Top - Moonwell.Scoreboard.RowHeight, board.cells[4 + 3].Offset.Y, "the team line one row down");
             Expect.Equal(5 * 4, board.cells.Count, "a header, a team line and three players");
             Expect.Equal("0", board.cells[4 + 1].Text, "the team's kills");
             Expect.Equal("30", board.cells[4 + 2].Text, "the team's gold");
