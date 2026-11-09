@@ -74,8 +74,8 @@ namespace Moonwell
             known[handle] = made;
             Live.Add(made);
             scope?.Adopt(made);
-            made.Mask = Hooks.MaskOf(made, Unit.HooksOf(made));
-            Events.Need(made.Mask);
+            made.Mask = Hooks.MaskOf(made, Unit.HooksOf(made), out made.Mask2);
+            Events.Need(made.Mask, made.Mask2);
             if (made is Hero hero)
             {
                 hero.leveledTo = Runtime.World.LevelOf(handle);

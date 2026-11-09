@@ -28,7 +28,7 @@ namespace Moonwell
                 return;
             }
 
-            if ((shop.Mask & Hook.OnResearchOrSale) != 0)
+            if ((shop.Mask2 & Hook2.OnResearchOrSale) != 0)
             {
                 try
                 {
@@ -44,7 +44,7 @@ namespace Moonwell
             for (var i = 0; i < count; i++)
             {
                 var component = shop.ComponentAt(i) as UnitComponent;
-                if (component == null || component.HasEnded || (component.Mask & Hook.OnResearchOrSale) == 0)
+                if (component == null || component.HasEnded || (component.Mask2 & Hook2.OnResearchOrSale) == 0)
                 {
                     continue;
                 }

@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnItemPickedUp, Hook.OnItemDropped });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale });
                 }
 
                 return unitHooks;
@@ -32,6 +32,9 @@ namespace Moonwell
 
         /// <summary>The bit mask of the reactions this class overrides, worked out when the unit is taken in.</summary>
         internal int Mask;
+
+        /// <summary>The Hook2 bit mask of the reactions this class overrides, worked out with Mask.</summary>
+        internal int Mask2;
 
         /// <summary>The cast the unit is making now, which ends when its spell ends or its next cast begins; null when none.</summary>
         internal Cast? ActiveCast;
@@ -1292,8 +1295,8 @@ namespace Moonwell
             made.Unit = this;
             made.Id = abilityId;
             Adopt(made);
-            made.Mask = Hooks.MaskOf(made, Ability.AbilityHooks);
-            Events.Need(made.Mask);
+            made.Mask = Hooks.MaskOf(made, Ability.AbilityHooks, out made.Mask2);
+            Events.Need(made.Mask, made.Mask2);
             abilities[abilityId] = made;
             return made;
         }

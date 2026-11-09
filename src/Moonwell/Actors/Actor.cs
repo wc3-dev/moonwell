@@ -157,8 +157,8 @@ namespace Moonwell
             }
 
             components.Add(component);
-            component.Mask = Hooks.MaskOf(component, component.Table);
-            Events.Need(component.Mask);
+            component.Mask = Hooks.MaskOf(component, component.Table, out component.Mask2);
+            Events.Need(component.Mask, component.Mask2);
             component.added = true;
             if (heldBy != null)
             {

@@ -76,7 +76,7 @@ namespace Moonwell
             Listen(() =>
             {
                 var made = make();
-                Events.Need(Hooks.MaskOf(made, Moonwell.Unit.HooksOf(made)));
+                Events.NeedOf(made, Moonwell.Unit.HooksOf(made));
             });
         }
 
@@ -99,7 +99,7 @@ namespace Moonwell
 
             ids[typeof(T)] = id;
             itemMakers[id] = make;
-            Listen(() => Events.Need(Hooks.MaskOf(make(), Moonwell.Item.ItemHooks)));
+            Listen(() => Events.NeedOf(make(), Moonwell.Item.ItemHooks));
         }
 
         /// <summary>Registers a destructable type with its id and the function that makes its object, and listens for the events its class needs.</summary>
@@ -114,7 +114,7 @@ namespace Moonwell
 
             ids[typeof(T)] = id;
             destructableMakers[id] = make;
-            Listen(() => Events.Need(Hooks.MaskOf(make(), Moonwell.Destructable.DestructableHooks)));
+            Listen(() => Events.NeedOf(make(), Moonwell.Destructable.DestructableHooks));
         }
 
         /// <summary>Registers an ability type with its id and the function that makes its object, and listens for the events its class needs.</summary>
@@ -129,7 +129,7 @@ namespace Moonwell
 
             ids[typeof(T)] = id;
             abilityMakers[id] = make;
-            Listen(() => Events.Need(Hooks.MaskOf(make(), Moonwell.Ability.AbilityHooks)));
+            Listen(() => Events.NeedOf(make(), Moonwell.Ability.AbilityHooks));
         }
 
         /// <summary>Registers an upgrade type with its id and the function that makes its one object, and listens for the events its class needs (decision 213).</summary>
@@ -148,9 +148,9 @@ namespace Moonwell
             {
                 var made = make();
                 made.TypeId = id;
-                made.Mask = Hooks.MaskOf(made, Moonwell.Upgrade.UpgradeHooks);
+                made.Mask = Hooks.MaskOf(made, Moonwell.Upgrade.UpgradeHooks, out made.Mask2);
                 upgrades[id] = made;
-                Events.Need(made.Mask);
+                Events.Need(made.Mask, made.Mask2);
             });
         }
 
