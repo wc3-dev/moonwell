@@ -325,7 +325,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "day.set-in-dawn", Run = DayCases.SetInDawn });
         }
 
-        /// <summary>Adds the cases for colours, coloured text and time as text.</summary>
+        /// <summary>Adds the cases for colours, coloured text, time as text and random numbers.</summary>
         private static void AddText(List<Case> list)
         {
             list.Add(new Case { Name = "color.parts", Run = ColorCases.Parts });
@@ -358,6 +358,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "text.highlight", Run = TextEffectCases.Highlight });
             list.Add(new Case { Name = "text.clock", Run = TextEffectCases.Clock });
             list.Add(new Case { Name = "text.time-of-day", Run = TextEffectCases.TimeOfDay });
+            list.Add(new Case { Name = "dice.seeded-sequence", Run = DiceCases.SeededSequence });
+            list.Add(new Case { Name = "dice.int-bounds", Run = DiceCases.IntBounds });
+            list.Add(new Case { Name = "dice.real-and-chance", Run = DiceCases.RealAndChance });
+            list.Add(new Case { Name = "dice.pick-and-shuffle", Run = DiceCases.PickAndShuffle });
+            list.Add(new Case { Name = "dice.game-generator", Run = DiceCases.GameGenerator });
         }
 
         /// <summary>Adds the cases for explicit scopes: what code makes belongs to the scope named where it is made.</summary>

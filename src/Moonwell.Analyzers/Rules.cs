@@ -71,11 +71,11 @@ public static class Rules
     public static readonly DiagnosticDescriptor UnseededRandom = new(
         "MW0038",
         "Random without a seed",
-        "'{0}' seeds itself from this machine's clock and reseeds the game's random generator with it, which desyncs every random number after it, inside Local.For too; use Natives.GetRandomInt, or new Random(seed) with a seed every machine shares",
+        "'{0}' seeds itself from this machine's clock and reseeds the game's random generator with it, which desyncs every random number after it, inside Local.For too; use Game.Random, or new Dice(seed) with a seed every machine shares",
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "CSharp.lua's Random without a seed calls math.randomseed(os.time()) and then math.random. In the game math.random is the game's own synced generator (seen 2026-10-26), so each machine reseeds it with its own clock, and every GetRandomInt after it differs between machines, wherever the Random was made. new Random(seed) is computed in Lua alone, so it gives the same numbers on every machine when the seed is the same (one from Natives.GetRandomInt is). A class of Random's whose constructor calls base() or leaves the base call out has no seed either." + Silence);
+        description: "CSharp.lua's Random without a seed calls math.randomseed(os.time()) and then math.random. In the game math.random is the game's own synced generator (seen 2026-10-26), so each machine reseeds it with its own clock, and every GetRandomInt after it differs between machines, wherever the Random was made. new Random(seed) is computed in Lua alone, so it gives the same numbers on every machine when the seed is the same (one from Game.Random is); new Dice(seed) gives the same numbers in .NET too. A class of Random's whose constructor calls base() or leaves the base call out has no seed either." + Silence);
 
     public static readonly DiagnosticDescriptor Unfollowed = new(
         "MW0039",
