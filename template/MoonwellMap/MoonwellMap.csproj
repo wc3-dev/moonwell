@@ -28,6 +28,8 @@
     <!-- <PackageReference Include="Moonwell.Frames" Version="MOONWELL_VERSION" /> -->
     <!-- For the UI kit on Frames (windows, tabs, lists, slots, a shop and a settings window), take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Kit" Version="MOONWELL_VERSION" /> -->
+    <!-- For spell templates (a bolt, a wave, a dash, a leap, a blast, a pulsing channel, a chain, a summon), take the comment off the next line. -->
+    <!-- <PackageReference Include="Moonwell.Spells" Version="MOONWELL_VERSION" /> -->
     <!-- For reading and writing JSON, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Json" Version="MOONWELL_VERSION" /> -->
   </ItemGroup>
