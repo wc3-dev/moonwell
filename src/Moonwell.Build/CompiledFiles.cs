@@ -147,6 +147,29 @@ namespace Moonwell.Build
             }
         }
 
+        /// <summary>The names of the Moonwell packages a map's code or a library of its own references, and the packages those reference in turn: a package the map reaches only through another (the terrain through the spell templates) is used too, though the compiler keeps no reference to it in the map's assembly.</summary>
+        /// <param name="assemblyPath">The map's built assembly, with the packages' assemblies beside it.</param>
+        /// <returns>The names, such as <c>Moonwell.Terrain</c>.</returns>
+        public static HashSet<string> UsedPackages(string assemblyPath)
+        {
+            var folder = Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!;
+            var used = new HashSet<string>(StringComparer.Ordinal);
+            var waiting = new Queue<string>(MapAssemblies(assemblyPath).SelectMany(ReferencedAssemblies));
+            while (waiting.TryDequeue(out var name))
+            {
+                var package = Path.Combine(folder, name + ".dll");
+                if (name.StartsWith("Moonwell.", StringComparison.Ordinal) && used.Add(name) && File.Exists(package))
+                {
+                    foreach (var next in ReferencedAssemblies(package))
+                    {
+                        waiting.Enqueue(next);
+                    }
+                }
+            }
+
+            return used;
+        }
+
         /// <summary>The names of the assemblies an assembly references, read from its metadata without loading it; the compiler keeps only the references the code uses.</summary>
         /// <param name="assemblyPath">A built assembly.</param>
         /// <returns>The names, such as <c>Moonwell.Damage</c>.</returns>

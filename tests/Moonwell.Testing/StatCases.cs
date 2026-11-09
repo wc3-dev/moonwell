@@ -35,7 +35,7 @@ namespace Moonwell.Testing
             Expect.Near(13.0f, unit.Get(power), "the unit's untouched");
         }
 
-        /// <summary>A modifier for a game stat on a player is refused, and one held by a scope that has ended adds nothing; each is given back ended, and reported.</summary>
+        /// <summary>A modifier for a game stat on a player is refused and reported, and one held by a scope that has ended adds nothing, reported in a development build only; each is given back ended.</summary>
         public static void Refused(FakeWorld world)
         {
             var holder = Game.Instance.Add(new Holder());
@@ -48,7 +48,11 @@ namespace Moonwell.Testing
             before = world.Printed.Count;
             var late = unit.Modify(new Stat("Crit"), 5.0f, heldBy: holder);
             Expect.True(late.HasEnded, "a modifier held by an ended scope is ended");
-            Expect.True(world.Printed.Count > before, "and reported");
+#if DEBUG
+            Expect.True(world.Printed.Count > before, "and reported in a development build");
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports nothing");
+#endif
         }
 
         /// <summary>Damage, armor and attack speed set Moonwell's bonus abilities, given once and kept through morphs, so the card shows the green bonus; armor is read back from the game less Moonwell's part, and a total never goes below 0.</summary>
@@ -109,6 +113,11 @@ namespace Moonwell.Testing
             hero.Modify(Stat.Strength, 10.0f, heldBy: holder);
             hero.Modify(Stat.Strength, percent: 10.0f, heldBy: holder);
             Expect.Equal(35, world.StrengthOf(handle, false), "(22 + 10) x 1.1, a whole number");
+            world.SetMaxMana(handle, 255.0f);
+            var mana = hero.Modify(Stat.MaxMana, percent: 10.0f, heldBy: holder);
+            world.SetMaxMana(handle, world.MaxManaOf(handle) + 75.0f);
+            Expect.Near(world.MaxManaOf(handle), hero.Get(Stat.MaxMana), "what the game added after the percent (intelligence's mana) read as the game shows it, unscaled (I52)");
+            mana.End();
             holder.End();
             Expect.Near(700.0f, world.MaxLifeOf(handle), "life back");
             Expect.Near(300.0f, world.MoveSpeedOf(handle), "speed back");

@@ -174,6 +174,17 @@ namespace Moonwell.Testing
             Expect.Equal(1, summoner.Summons.Count, "a second event for it links nothing more");
         }
 
+        /// <summary>A summon event with no summoned unit (Mirror Image's image the hero took the place of) links nothing and runs no reaction.</summary>
+        public static void GameSummonOfNoUnit(FakeWorld world)
+        {
+            Moonwell.Runtime.ListenForSummons();
+            Game.Instance.Add(new Watch());
+            var summoner = Summoner(world);
+            Summoning.FromGame(summoner.Handle, null);
+            Expect.Equal(0, summoner.Summons.Count, "no summon");
+            Expect.Equal("", string.Join(",", TestLog.Lines), "no reaction");
+        }
+
         /// <summary>A summon in a scope that has ended dies at once and runs no reaction.</summary>
         public static void EndedScopeDiesAtOnce(FakeWorld world)
         {

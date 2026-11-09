@@ -41,6 +41,31 @@ namespace Moonwell
             }
         }
 
+        /// <summary>A transport Moonwell removes lets its cargo out first, with the reactions, before its OnLeave and its components end (decision 219): the game puts the cargo down where the transport was only after RemoveUnit returns (seen 11-09), too late for them. A unit that died inside comes out with none.</summary>
+        internal static void DropCargo(Unit transport)
+        {
+            transport.droppedCargo = true;
+            var held = new List<Unit>(transport.cargo!);
+            for (var i = 0; i < held.Count; i++)
+            {
+                var cargo = held[i];
+                if (cargo.transport != transport)
+                {
+                    continue;
+                }
+
+                if (cargo.Handle != null && Runtime.World.IsAlive(cargo.Handle))
+                {
+                    Unloaded(cargo);
+                }
+                else
+                {
+                    cargo.transport = null;
+                    transport.cargo?.Remove(cargo);
+                }
+            }
+        }
+
         /// <summary>A unit leaving the game leaves its transport's Cargo with no reaction; a transport leaving lets out the cargo the game no longer has loaded, with its reactions, and forgets the rest.</summary>
         internal static void TransportLeft(Unit unit)
         {

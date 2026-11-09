@@ -30,6 +30,12 @@ namespace Moonwell.Testing
         {
             TestLog.Lines.Add("transport lost, holding " + Cargo.Count);
         }
+
+        /// <summary>Logs the transport leaving the game.</summary>
+        protected override void OnLeave()
+        {
+            TestLog.Lines.Add("transport leaves");
+        }
     }
 
     /// <summary>A unit component that logs "component loaded" or "component unloaded" on cargo, "component got" or "component lost" on a transport.</summary>
@@ -58,6 +64,11 @@ namespace Moonwell.Testing
         {
             TestLog.Lines.Add("component lost");
         }
+    }
+
+    /// <summary>A scope of its own for a transport.</summary>
+    public sealed class TransportScope : GameComponent
+    {
     }
 
     /// <summary>A game component that logs "game loaded" or "game unloaded".</summary>

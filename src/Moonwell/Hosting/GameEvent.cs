@@ -53,5 +53,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A shop sells an item or a unit, or a unit sells an item to a shop.</summary>
         Sale,
+
+        /// <summary>An item goes into or comes out of a unit's 3.0 equipment slots.</summary>
+        Equip,
     }
 }
