@@ -21,6 +21,7 @@ namespace Moonwell.Testing
             AddBoardsAndDialogs(list);
             AddStatsAndScores(list);
             AddUnitAbilities(list);
+            AddSpells(list);
             AddSummons(list);
             AddResearch(list);
             AddShops(list);
@@ -509,6 +510,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.debug-input-is-its-own", Run = InputReviewCases.DebugInputIsItsOwn });
             list.Add(new Case { Name = "debug.abilities.level-out-of-range-reported", Run = UnitAbilityCases.LevelOutOfRangeReported });
             list.Add(new Case { Name = "debug.abilities.level-of-missing-reported", Run = UnitAbilityCases.LevelOfMissingReported });
+            list.Add(new Case { Name = "debug.spells.refuse-late-reported", Run = SpellCases.RefuseLateReported });
+            list.Add(new Case { Name = "debug.spells.cooldown-of-missing-reported", Run = SpellCases.CooldownOfMissingReported });
             list.Add(new Case { Name = "debug.hold.ended-holder-reported", Run = HoldCases.EndedHolderReported });
             list.Add(new Case { Name = "debug.dummy.level-reported", Run = DummyCases.LevelReported });
             list.Add(new Case { Name = "debug.dummy.ended-scope-reported", Run = DummyCases.EndedScopeReported });
@@ -1677,6 +1680,20 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dialogs.click", Run = BoardCases.Dialogs });
             list.Add(new Case { Name = "dialogs.queue", Run = BoardCases.DialogQueue });
             list.Add(new Case { Name = "dialogs.ends", Run = BoardCases.DialogEnds });
+        }
+
+        /// <summary>The spell framework's cases (decision 225).</summary>
+        private static void AddSpells(List<Case> list)
+        {
+            list.Add(new Case { Name = "spells.casting-before-effect", Run = SpellCases.CastingBeforeEffect });
+            list.Add(new Case { Name = "spells.refused-stops-and-shows", Run = SpellCases.RefusedStopsAndShows });
+            list.Add(new Case { Name = "spells.refused-empty-shows-nothing", Run = SpellCases.RefusedEmptyShowsNothing });
+            list.Add(new Case { Name = "spells.stopped-before-effect", Run = SpellCases.StoppedBeforeEffect });
+            list.Add(new Case { Name = "spells.finished-before-end", Run = SpellCases.FinishedBeforeEnd });
+            list.Add(new Case { Name = "spells.stopped-is-not-finished", Run = SpellCases.StoppedIsNotFinished });
+            list.Add(new Case { Name = "spells.finished-listens", Run = SpellCases.FinishedListens });
+            list.Add(new Case { Name = "spells.cooldown-and-mana", Run = SpellCases.CooldownAndMana });
+            list.Add(new Case { Name = "spells.cooldown-of-missing-ability", Run = SpellCases.CooldownOfMissingAbility });
         }
 
         /// <summary>Adds the stat and score cases.</summary>
