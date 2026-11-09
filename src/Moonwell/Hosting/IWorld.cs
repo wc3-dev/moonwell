@@ -242,6 +242,12 @@ namespace Moonwell.Hosting
         /// <summary>The level of an ability on a unit; 0 when the unit has none.</summary>
         int AbilityLevel(unit unit, int abilityId);
 
+        /// <summary>Puts an item type on sale in a shop with a stock count and a most (AddItemToStock).</summary>
+        void AddStock(unit shop, int itemId, int count, int max);
+
+        /// <summary>Takes an item type off sale in a shop (RemoveItemFromStock).</summary>
+        void RemoveStock(unit shop, int itemId);
+
         /// <summary>Gives a unit an ability at level 1; false, and nothing changes, when the unit has it already or there is no such ability.</summary>
         bool AddAbility(unit unit, int abilityId);
 

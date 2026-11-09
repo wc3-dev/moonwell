@@ -47,5 +47,11 @@ namespace Moonwell.Hosting
 
         /// <summary>A unit summons another with the game's spell.</summary>
         Summon,
+
+        /// <summary>A building starts, cancels or finishes a research.</summary>
+        Research,
+
+        /// <summary>A shop sells an item or a unit, or a unit sells an item to a shop.</summary>
+        Sale,
     }
 }

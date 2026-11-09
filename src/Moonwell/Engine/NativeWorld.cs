@@ -183,6 +183,16 @@ namespace Moonwell.Engine
                 case GameEvent.Summon:
                     Register(Natives.EVENT_PLAYER_UNIT_SUMMON, SummonAction);
                     break;
+                case GameEvent.Research:
+                    Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_START, () => ResearchAction(Researching.Started));
+                    Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_CANCEL, () => ResearchAction(Researching.Cancelled));
+                    Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_FINISH, () => ResearchAction(Researching.Finished));
+                    break;
+                case GameEvent.Sale:
+                    Register(Natives.EVENT_PLAYER_UNIT_SELL_ITEM, () => SaleAction(Selling.ItemSold));
+                    Register(Natives.EVENT_PLAYER_UNIT_PAWN_ITEM, () => SaleAction(Selling.ItemPawned));
+                    Register(Natives.EVENT_PLAYER_UNIT_SELL, () => SaleAction(Selling.UnitSold));
+                    break;
             }
         }
 
@@ -2326,6 +2336,44 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Ordered", error);
+            }
+        }
+
+        /// <summary>Hands a sale or a pawn to Selling.</summary>
+        private static void SaleAction(int kind)
+        {
+            try
+            {
+                Selling.FromGame(kind, Natives.GetSellingUnit(), Natives.GetBuyingUnit(), Natives.GetSoldItem(), Natives.GetSoldUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Sale", error);
+            }
+        }
+
+        /// <summary>Puts an item type on sale in a shop with a stock count and a most.</summary>
+        public void AddStock(unit shop, int itemId, int count, int max)
+        {
+            Natives.AddItemToStock(shop, itemId, count, max);
+        }
+
+        /// <summary>Takes an item type off sale in a shop.</summary>
+        public void RemoveStock(unit shop, int itemId)
+        {
+            Natives.RemoveItemFromStock(shop, itemId);
+        }
+
+        /// <summary>Hands a research's start, cancel or finish to Researching.</summary>
+        private static void ResearchAction(int kind)
+        {
+            try
+            {
+                Researching.FromGame(Natives.GetTriggerUnit(), Natives.GetTriggerPlayer(), Natives.GetResearched(), kind);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Research", error);
             }
         }
 
