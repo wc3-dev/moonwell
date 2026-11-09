@@ -122,11 +122,27 @@ namespace Moonwell.Build
                 "        public const float Left = " + Literal(environment.Left) + ";",
                 "        public const float Bottom = " + Literal(environment.Bottom) + ";",
                 "        public static string Corners() => \"" + corners + "\";",
+                "        public static string Tiles() => \"" + Tiles(environment) + "\";",
                 "    }",
                 "}",
                 string.Empty);
             File.WriteAllText(path, text);
             return path;
+        }
+
+        /// <summary>The map's list of ground tiles, their four-letter ids one after another, as the w3e lists them.</summary>
+        /// <param name="environment">The map's ground.</param>
+        /// <returns>The ids, four characters each.</returns>
+        public static string Tiles(MapEnvironment environment)
+        {
+            var text = new System.Text.StringBuilder();
+            foreach (var type in environment.TerrainTypes)
+            {
+                // The w3e keeps an id as its four bytes in order, read as a little-endian number.
+                text.Append(System.Text.Encoding.ASCII.GetString(BitConverter.GetBytes((int)type)));
+            }
+
+            return text.ToString();
         }
 
         /// <summary>Removes the file an earlier build wrote, which a map that no longer references the package would not compile.</summary>

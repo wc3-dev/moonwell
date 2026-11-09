@@ -267,7 +267,7 @@ namespace Moonwell.Engine
                     }
                 }
 
-                if (!along && x >= missile.spanMinX && x <= missile.spanMaxX && y >= missile.spanMinY && y <= missile.spanMaxY && bottom > missile.spanHigh && Decks.count == 0 && missile.spanGrid == Terrain.Grid)
+                if (!along && x >= missile.spanMinX && x <= missile.spanMaxX && y >= missile.spanMinY && y <= missile.spanMaxY && bottom > missile.spanHigh && Decks.count == 0 && missile.spanGrid == Terrain.Grid && missile.spanRaises == Terrain.Grid.Raises)
                 {
                     // Above the highest ground of its span: the read could only find the ground below. It is put off.
                     Ground.reads++;
@@ -290,11 +290,12 @@ namespace Moonwell.Engine
                 if (bottom > ground && !(along && bottom - ground <= OnGround && !Leaving(missile, x, y, fromZ)))
                 {
                     missile.throughGround = false;
-                    if (Decks.count == 0 && (x < missile.spanMinX || x > missile.spanMaxX || y < missile.spanMinY || y > missile.spanMaxY || missile.spanGrid != Terrain.Grid))
+                    if (Decks.count == 0 && (x < missile.spanMinX || x > missile.spanMaxX || y < missile.spanMinY || y > missile.spanMaxY || missile.spanGrid != Terrain.Grid || missile.spanRaises != Terrain.Grid.Raises))
                     {
                         // Out of its span: the span of where it is, for the reads after.
                         var terrain = Terrain.Grid;
                         missile.spanGrid = terrain;
+                        missile.spanRaises = terrain.Raises;
                         terrain.Span(x, y, out missile.spanMinX, out missile.spanMinY, out missile.spanMaxX, out missile.spanMaxY, out missile.spanLow, out missile.spanHigh);
                     }
 

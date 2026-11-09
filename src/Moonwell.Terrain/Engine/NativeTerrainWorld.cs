@@ -64,5 +64,74 @@ namespace Moonwell.Engine
             maxX = Natives.GetCameraBoundMaxX() + Natives.GetCameraMargin(Natives.CAMERA_MARGIN_RIGHT);
             maxY = Natives.GetCameraBoundMaxY() + Natives.GetCameraMargin(Natives.CAMERA_MARGIN_TOP);
         }
+
+        /// <summary>A lasting crater of the game's, made at once (duration 0).</summary>
+        public void Crater(float x, float y, float radius, float depth)
+        {
+            Natives.TerrainDeformCrater(x, y, radius, depth, 0, true);
+        }
+
+        /// <summary>One ripple, as Blizzard.j's TerrainDeformationRippleBJ makes it from the centre out, with waves 128 wide passing twice a second.</summary>
+        public void Ripple(float x, float y, float radius, float depth, float seconds)
+        {
+            Natives.TerrainDeformRipple(x, y, radius, depth, Slots.Whole(seconds * 1000f), 1, 2f * radius / 128f, 2f * seconds / 0.5f, 0f, false);
+        }
+
+        /// <summary>A wave from one point to another, as Blizzard.j's TerrainDeformationWaveBJ, with no trail.</summary>
+        public void Wave(float fromX, float fromY, float toX, float toY, float radius, float depth, float seconds)
+        {
+            var dx = toX - fromX;
+            var dy = toY - fromY;
+            var distance = Maths.Sqrt(dx * dx + dy * dy);
+            Natives.TerrainDeformWave(fromX, fromY, dx, dy, distance, distance / seconds, radius, depth, 0, 1);
+        }
+
+        /// <summary>The game's random deformation, changing every 50 ms.</summary>
+        public void Shake(float x, float y, float radius, float by, float seconds)
+        {
+            Natives.TerrainDeformRandom(x, y, radius, -by, by, Slots.Whole(seconds * 1000f), 50);
+        }
+
+        /// <summary>The tile at the nearest corner.</summary>
+        public int TileAt(float x, float y) => Natives.GetTerrainType(x, y);
+
+        /// <summary>The tile's variation at the nearest corner.</summary>
+        public int VariationAt(float x, float y) => Natives.GetTerrainVariance(x, y);
+
+        /// <summary>Paints the nearest corner alone: area 1, as area 0 paints nothing (probe, 11-09).</summary>
+        public void PaintTile(float x, float y, int tile, int variation)
+        {
+            Natives.SetTerrainType(x, y, tile, variation, 1, 0);
+        }
+
+        /// <summary>Sets one kind of pathing in a cell.</summary>
+        public void SetPathing(float x, float y, int kind, bool on)
+        {
+            var type = kind == 1 ? Natives.PATHING_TYPE_WALKABILITY : kind == 2 ? Natives.PATHING_TYPE_FLYABILITY : kind == 4 ? Natives.PATHING_TYPE_BUILDABILITY : Natives.PATHING_TYPE_FLOATABILITY;
+            Natives.SetTerrainPathable(x, y, type, on);
+        }
+
+        /// <summary>Blight in a circle; the player only says whose blight it is to the game, and changes nothing seen (probe, 11-09).</summary>
+        public void SetBlight(float x, float y, float radius, bool on)
+        {
+            Natives.SetBlight(Natives.Player(0), x, y, radius, on);
+        }
+
+        /// <summary>Blight in a rect, through a rect made for the call.</summary>
+        public void SetBlight(float minX, float minY, float maxX, float maxY, bool on)
+        {
+            var area = Natives.Rect(minX, minY, maxX, maxY);
+            Natives.SetBlightRect(Natives.Player(0), area, on);
+            Natives.RemoveRect(area);
+        }
+
+        /// <summary>Whether a point is blighted.</summary>
+        public bool IsBlighted(float x, float y) => Natives.IsPointBlighted(x, y);
+
+        /// <summary>The game's water tint.</summary>
+        public void TintWater(int red, int green, int blue, int alpha)
+        {
+            Natives.SetWaterBaseColor(red, green, blue, alpha);
+        }
     }
 }

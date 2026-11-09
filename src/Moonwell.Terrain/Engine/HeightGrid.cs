@@ -76,6 +76,9 @@ namespace Moonwell.Engine
         /// <summary>How many blocks have been unpacked; the cases read it to see that a read unpacks one block, once.</summary>
         internal int Unpacked { get; private set; }
 
+        /// <summary>How many times a corner has been raised or lowered: a missile that kept a block's bounds reads them again when it changes.</summary>
+        internal int Raises { get; private set; }
+
         /// <summary>Makes a grid from its text. Throws ArgumentException when the text is not four characters a corner.</summary>
         internal HeightGrid(int columns, int rows, float left, float bottom, string corners)
         {
@@ -129,6 +132,50 @@ namespace Moonwell.Engine
         {
             var block = Unpack(i, j);
             return (flags[block][Slot(i, j)] & 1) != 0;
+        }
+
+        /// <summary>
+        /// Raises a corner inside the grid (a negative amount lowers it), as a lasting crater moves it. Span's bounds of
+        /// the corner's block, and of the blocks to its left and below whose tiles reach it, are widened to hold it.
+        /// </summary>
+        internal void Raise(int i, int j, float by)
+        {
+            var block = Unpack(i, j);
+            var slot = Slot(i, j);
+            Raises++;
+            var z = heights[block][slot] + by;
+            heights[block][slot] = z;
+            Widen(block, z);
+            var left = i > 0 && (i & (Side - 1)) == 0;
+            var below = j > 0 && (j & (Side - 1)) == 0;
+            if (left)
+            {
+                Widen(Unpack(i - 1, j), z);
+            }
+
+            if (below)
+            {
+                Widen(Unpack(i, j - 1), z);
+            }
+
+            if (left && below)
+            {
+                Widen(Unpack(i - 1, j - 1), z);
+            }
+        }
+
+        /// <summary>Widens a block's bounds to hold a height.</summary>
+        private void Widen(int block, float z)
+        {
+            if (z < lows[block])
+            {
+                lows[block] = z;
+            }
+
+            if (z > highs[block])
+            {
+                highs[block] = z;
+            }
         }
 
         /// <summary>

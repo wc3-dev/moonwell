@@ -8,12 +8,13 @@ const string Usage = """
       Moonwell.Generator natives <repository root> --scripts <folder with common.j, blizzard.j, common.ai> <game version>
       Moonwell.Generator objects <repository root> [--install <game folder>]
       Moonwell.Generator objects <repository root> --export <war3.w3mod folder> <game version>
+      Moonwell.Generator tiles <repository root> [--install <game folder>]
 
     Without --install, the install is the folder MOONWELL_WAR3 names, else the usual folder. The game version is the
     install's own.
     """;
 
-if (args.Length < 2 || (args[0] != "natives" && args[0] != "objects"))
+if (args.Length < 2 || (args[0] != "natives" && args[0] != "objects" && args[0] != "tiles"))
 {
     Console.Error.WriteLine(Usage);
     return 2;
@@ -47,6 +48,16 @@ using var files = GameFiles.Open(folder);
 if (command == "natives")
 {
     return Natives(InstallScripts(files), root, files.Build.Version);
+}
+
+if (command == "tiles")
+{
+    var terrain = GameTables.OpenInstall(files).Table("TerrainArt/Terrain.slk") ?? throw new FileNotFoundException("TerrainArt/Terrain.slk is not in the install");
+    var target = Path.Combine(root, "src", "Moonwell.Terrain", "Generated", "Tile.g.cs");
+    Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+    File.WriteAllText(target, TilesWriter.Write(terrain, files.Build.Version));
+    Console.WriteLine($"{terrain.Count} tiles");
+    return 0;
 }
 
 // The API is named from the English text whatever language the install has, so that every contributor generates the same one.
