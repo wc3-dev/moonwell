@@ -1252,6 +1252,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "timers.remaining", Run = TimerCases.Remaining });
             list.Add(new Case { Name = "hooks.overrides", Run = HookCases.Overrides });
             list.Add(new Case { Name = "hooks.cached", Run = HookCases.Cached });
+            list.Add(new Case { Name = "hooks.second-word", Run = HookCases.SecondWord });
             list.Add(new Case { Name = "hooks.damage-listener", Run = HookCases.DamageListener });
             list.Add(new Case { Name = "hooks.seen-once-per-class", Run = HookCases.SeenOncePerClass });
             list.Add(new Case { Name = "hooks.reset-clears", Run = HookCases.ResetClears });

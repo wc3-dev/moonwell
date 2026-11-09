@@ -39,7 +39,7 @@ namespace Moonwell
         /// <summary>Runs the upgrade's OnResearched for each level from before + 1 to reached, while the player still has it: a level a reaction lowers away runs nothing.</summary>
         internal static void Gained(Player player, Upgrade upgrade, int before, int reached)
         {
-            if (reached <= before || (upgrade.Mask & Hook.OnResearchOrSale) == 0)
+            if (reached <= before || (upgrade.Mask2 & Hook2.OnResearchOrSale) == 0)
             {
                 return;
             }
@@ -84,7 +84,7 @@ namespace Moonwell
         /// <summary>Runs a research reaction on a building, then on its components, in add order.</summary>
         private static void Building(Unit unit, Upgrade upgrade, int kind)
         {
-            if ((unit.Mask & Hook.OnResearchOrSale) != 0)
+            if ((unit.Mask2 & Hook2.OnResearchOrSale) != 0)
             {
                 try
                 {
@@ -111,7 +111,7 @@ namespace Moonwell
             for (var i = 0; i < count; i++)
             {
                 var component = unit.ComponentAt(i) as UnitComponent;
-                if (component == null || component.HasEnded || (component.Mask & Hook.OnResearchOrSale) == 0)
+                if (component == null || component.HasEnded || (component.Mask2 & Hook2.OnResearchOrSale) == 0)
                 {
                     continue;
                 }
