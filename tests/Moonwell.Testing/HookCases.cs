@@ -9,19 +9,38 @@ namespace Moonwell.Testing
         public static void Overrides(FakeWorld world)
         {
             var table = Table();
-            Expect.Equal(Hook.OnDamaged, Hooks.MaskOf(new HookSub(), table), "HookSub overrides OnDamaged");
-            Expect.Equal(Hook.OnDamaged, Hooks.MaskOf(new HookSubSub(), table), "HookSubSub inherits the override");
-            Expect.Equal(0, Hooks.MaskOf(new HookOther(), table), "HookOther overrides nothing");
+            Expect.Equal(Hook.OnDamaged, Hooks.MaskOf(new HookSub(), table, out _), "HookSub overrides OnDamaged");
+            Expect.Equal(Hook.OnDamaged, Hooks.MaskOf(new HookSubSub(), table, out _), "HookSubSub inherits the override");
+            Expect.Equal(0, Hooks.MaskOf(new HookOther(), table, out _), "HookOther overrides nothing");
             HookBase seen = new HookSub();
-            Expect.Equal(Hook.OnDamaged, Hooks.MaskOf(seen, table), "HookSub seen through a HookBase variable");
+            Expect.Equal(Hook.OnDamaged, Hooks.MaskOf(seen, table, out _), "HookSub seen through a HookBase variable");
+        }
+
+        /// <summary>A reaction in Hook2 sets its bit in the second mask, not the first, and Need listens for the events of a Hook2 bit.</summary>
+        public static void SecondWord(FakeWorld world)
+        {
+            var table = new HookTable(typeof(HookBase), new string[0], new int[0], names2: new[] { "OnDamaged" }, bits2: new[] { Hook2.OnResearchOrSale });
+            Expect.Equal(0, Hooks.MaskOf(new HookSub(), table, out var mask2), "HookSub's first mask");
+            Expect.Equal(Hook2.OnResearchOrSale, mask2, "HookSub's second mask");
+            Hooks.MaskOf(new HookSub(), table, out var cached2);
+            Expect.Equal(mask2, cached2, "the second mask is cached with the first");
+            Hooks.MaskOf(new HookOther(), table, out var none2);
+            Expect.Equal(0, none2, "HookOther's second mask");
+
+            Events.Reset();
+            world.Listening.Clear();
+            Events.NeedOf(new HookSub(), table);
+            Expect.Equal(2, world.Listening.Count, "two events are listened for");
+            Expect.Equal((int)GameEvent.Research, (int)world.Listening[0], "the first is Research");
+            Expect.Equal((int)GameEvent.Sale, (int)world.Listening[1], "the second is Sale");
         }
 
         /// <summary>A class's mask is worked out once: two objects of one class give the same mask.</summary>
         public static void Cached(FakeWorld world)
         {
             var table = Table();
-            var first = Hooks.MaskOf(new HookSub(), table);
-            var second = Hooks.MaskOf(new HookSub(), table);
+            var first = Hooks.MaskOf(new HookSub(), table, out _);
+            var second = Hooks.MaskOf(new HookSub(), table, out _);
             Expect.Equal(Hook.OnDamaged, first, "the first HookSub");
             Expect.Equal(first, second, "the second HookSub gives the same mask");
         }

@@ -24,8 +24,8 @@ namespace Moonwell
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, Damage?>? DamageDealer;
 
-        /// <summary>Adds the reaction bits to the wanted ones, and listens for the event each bit needs.</summary>
-        internal static void Need(int mask)
+        /// <summary>Adds the reaction bits to the wanted ones, and listens for the event each bit, of Hook and of Hook2 (mask2), needs.</summary>
+        internal static void Need(int mask, int mask2 = 0)
         {
             wanted |= mask;
             if ((mask & (Hook.OnDamaged | Hook.OnDealtDamage | Hook.OnUnitDamaged)) != 0)
@@ -116,7 +116,7 @@ namespace Moonwell
                 Listen(GameEvent.Summon);
             }
 
-            if ((mask & Hook.OnResearchOrSale) != 0)
+            if ((mask2 & Hook2.OnResearchOrSale) != 0)
             {
                 Listen(GameEvent.Research);
                 Listen(GameEvent.Sale);
@@ -131,6 +131,13 @@ namespace Moonwell
 
                 Listen(GameEvent.Alliance);
             }
+        }
+
+        /// <summary>Needs the reactions obj's class overrides, in both words.</summary>
+        internal static void NeedOf(object obj, HookTable table)
+        {
+            var mask = Hooks.MaskOf(obj, table, out var mask2);
+            Need(mask, mask2);
         }
 
         /// <summary>Whether the world delivers a game event.</summary>

@@ -27,6 +27,9 @@ namespace Moonwell
         /// <summary>The bit mask of the reactions this class overrides, worked out when the destructable is taken in.</summary>
         internal int Mask;
 
+        /// <summary>The Hook2 bit mask of the reactions this class overrides, worked out with Mask.</summary>
+        internal int Mask2;
+
         /// <summary>Whether the world has been asked to deliver this destructable's death, once.</summary>
         internal bool watched;
 

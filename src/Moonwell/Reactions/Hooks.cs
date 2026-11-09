@@ -10,6 +10,9 @@ namespace Moonwell
         /// <summary>The mask of each class seen, keyed by the class.</summary>
         private static readonly Dictionary<object, int> masks = new Dictionary<object, int>();
 
+        /// <summary>The Hook2 mask of each class seen, keyed by the class.</summary>
+        private static readonly Dictionary<object, int> masks2 = new Dictionary<object, int>();
+
         /// <summary>Set by a damage package: given the first object of each class whose mask is worked out; null without one.</summary>
         internal static Action<object>? Seen;
 
@@ -50,16 +53,18 @@ namespace Moonwell
             return false;
         }
 
-        /// <summary>The bit mask of the reactions obj's class overrides, worked out once per class.</summary>
-        internal static int MaskOf(object obj, HookTable table)
+        /// <summary>The bit mask of the reactions obj's class overrides, and in mask2 those of Hook2, worked out once per class.</summary>
+        internal static int MaskOf(object obj, HookTable table, out int mask2)
         {
             var key = Names.ClassOf(obj);
             if (masks.TryGetValue(key, out var mask))
             {
+                mask2 = masks2[key];
                 return mask;
             }
 
             mask = 0;
+            mask2 = 0;
             for (var level = table; level != null; level = level.Parent)
             {
                 for (var i = 0; i < level.Names.Length; i++)
@@ -69,9 +74,18 @@ namespace Moonwell
                         mask |= level.Bits[i];
                     }
                 }
+
+                for (var i = 0; i < level.Names2.Length; i++)
+                {
+                    if (Overrides(obj, level.Names2[i], level.Base))
+                    {
+                        mask2 |= level.Bits2[i];
+                    }
+                }
             }
 
             masks[key] = mask;
+            masks2[key] = mask2;
             if (Seen != null)
             {
                 Seen(obj);
@@ -135,6 +149,7 @@ namespace Moonwell
         internal static void Reset()
         {
             masks.Clear();
+            masks2.Clear();
             Seen = null;
             TakenIn = null;
             endings.Clear();
