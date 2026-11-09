@@ -6,8 +6,10 @@ namespace Moonwell
     /// moment late: after a pan or a move, the target reads the old place until the next frame. A read is this machine's
     /// camera whichever player's camera it is read from: inside <c>Local.For(Player.One, ...)</c>,
     /// <c>Player.Two.Camera().Distance</c> reads Player One's. The changes (PanTo, the
-    /// Set methods, Follow, StopFollowing, Apply, Reset, SetBounds) move only that player's camera and run only on that
-    /// player's machine, so they are safe anywhere. Angles are in degrees. No event comes when a camera moves.
+    /// Set methods, Follow, StopFollowing, Apply, Reset, SetBounds, ResetBounds, the locks, AllowHotkeyLock, PlayModel) move
+    /// only that player's camera and run only on that player's machine, so they are safe anywhere. Shake and StopShake keep
+    /// a timer, which is game state, so they stay outside Local.For. Angles are in degrees. No event comes when a camera
+    /// moves. For a camera that follows a unit by itself, see ThirdPersonCamera and TopDownCamera.
     /// </summary>
     public sealed class Camera
     {
@@ -19,6 +21,13 @@ namespace Moonwell
 
         /// <summary>The slot of the camera's player.</summary>
         internal int Slot { get; }
+
+        /// <summary>The player's follow camera running now; null when none.</summary>
+        internal FollowCamera? following;
+
+        private bool zoomLocked;
+        private bool rotationLocked;
+        private Timer? shaking;
 
         /// <summary>The player of this camera.</summary>
         [LocalSafe]
@@ -192,11 +201,11 @@ namespace Moonwell
             InputSystem.World.SetField(Player.Handle, CameraFields.ZOffset, offset, seconds);
         }
 
-        /// <summary>Locks the player's camera on a unit, so it moves with it, until StopFollowing or a pan. It changes only that player's camera, so it is safe anywhere.</summary>
+        /// <summary>Locks the player's camera on a unit, so it moves with it, until StopFollowing or a pan. The offset is in the world's directions (x east, y north), whichever way the unit faces. It changes only that player's camera, so it is safe anywhere.</summary>
         [LocalSafe]
-        public void Follow(Unit unit)
+        public void Follow(Unit unit, Vector2 offset = default)
         {
-            InputSystem.World.FollowUnit(Player.Handle, unit.Handle);
+            InputSystem.World.FollowUnit(Player.Handle, unit.Handle, offset.X, offset.Y);
         }
 
         /// <summary>Ends a lock on a unit by setting the camera's position to where it looks now. It changes only that player's camera, so it is safe anywhere.</summary>
@@ -225,6 +234,95 @@ namespace Moonwell
         public void SetBounds(Bounds bounds)
         {
             InputSystem.World.SetBounds(Player.Handle, bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y);
+        }
+
+        /// <summary>Puts the player's camera bounds back to the map's. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void ResetBounds()
+        {
+            InputSystem.World.ResetBounds(Player.Handle);
+        }
+
+        /// <summary>Stops the player's mouse wheel from zooming, until UnlockZoom. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void LockZoom()
+        {
+            zoomLocked = true;
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.Distance, false);
+        }
+
+        /// <summary>Gives the zoom back to the player's mouse wheel. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void UnlockZoom()
+        {
+            zoomLocked = false;
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.Distance, true);
+        }
+
+        /// <summary>Stops the player's own input from turning the camera, until UnlockRotation. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void LockRotation()
+        {
+            rotationLocked = true;
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.Rotation, false);
+        }
+
+        /// <summary>Gives the rotation back to the player's own input. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void UnlockRotation()
+        {
+            rotationLocked = false;
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.Rotation, true);
+        }
+
+        /// <summary>Lets Ctrl+C lock the player's camera on the selected unit (the game's default), or not. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void AllowHotkeyLock(bool allow)
+        {
+            InputSystem.World.AllowHotkeyLock(Player.Handle, allow);
+        }
+
+        /// <summary>
+        /// Shakes the player's camera with the game's earthquake noise (Blizzard.j's CameraSetEQNoiseForPlayer: 1 is gentle,
+        /// 5 strong), for some seconds, or until StopShake when seconds is 0. A new shake replaces the one before. It keeps a
+        /// timer, which is game state, so it is called outside Local.For.
+        /// </summary>
+        public void Shake(float strength, float seconds = 0f)
+        {
+            shaking?.End();
+            shaking = null;
+            InputSystem.World.Shake(Player.Handle, strength);
+            if (seconds > 0f)
+            {
+                shaking = Game.Instance.OwnAfter(seconds, () =>
+                {
+                    shaking = null;
+                    InputSystem.World.StopShake(Player.Handle);
+                });
+            }
+        }
+
+        /// <summary>Ends the player's camera shake. It ends the shake's timer, which is game state, so it is called outside Local.For.</summary>
+        public void StopShake()
+        {
+            shaking?.End();
+            shaking = null;
+            InputSystem.World.StopShake(Player.Handle);
+        }
+
+        /// <summary>Plays a camera path from a model (one of the game's is <c>Objects\CinematicCameras\CameraZoomInMid.mdx</c>) at where the camera looks, until Reset. It changes only that player's camera, so it is safe anywhere.</summary>
+        [LocalSafe]
+        public void PlayModel(string path)
+        {
+            InputSystem.World.PlayModel(Player.Handle, path);
+        }
+
+        /// <summary>Gives the player's input what a follow camera took, as the camera's own locks say.</summary>
+        internal void GiveInputBack()
+        {
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.Distance, !zoomLocked);
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.Rotation, !rotationLocked);
+            InputSystem.World.SetInputControlled(Player.Handle, CameraFields.AngleOfAttack, true);
         }
     }
 }

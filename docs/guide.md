@@ -503,8 +503,20 @@ comment.
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run; it stays in the game, dead, until it is removed or restored |
 | `Restore()` | brings a dead destructable back at its most life, with `OnRestored` run; `Restore(showBirth: true)` plays its birth animation; does nothing to a living one |
 | `X`, `Y` | read; where the game put it, which is not always where it was asked: a tree asked at 1000 stands at 960 |
+| `Open()`, `Close()`, `IsOpen` | a gate, as World Editor's gate action: `Open` kills it with its "death alternate" animation, `Close` brings it back with its birth; neither runs `OnDeath` or `OnRestored` |
+| `Show()`, `Hide()`, `IsShown` | a hidden destructable keeps its life and is still found |
+| `PlayAnimation(name)`, `QueueAnimation(name)`, `AnimationSpeed` | as on units, by name only |
+| `Tint(red, green, blue, alpha)` | tints its model; nothing to read back |
+| `Invulnerable`, `OccluderHeight` | read and set; `Kill()` and `Life` still kill an invulnerable one |
+| `Name` | its type's name, in each player's language, so read inside `Local.For` |
 
-A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing.
+A destructable brought back by the native `DestructableRestoreLife` runs no `OnRestored`, as the game tells nothing. The
+game sends no damage event for a destructable and names no killer in its death, so there is no `OnDamaged`. A tree that
+regrows is a component of Moonwell.Interactions: `tree.Add(new Regrow(30f))` brings it back 30 seconds after each death.
+
+The game gives no handle to a doodad, so code can only play an animation on the doodads of a type in a place:
+`Doodad.PlayAnimation<T>(x, y, radius, "death")`, with `nearestOnly: true` for the nearest one, and
+`Doodad.PlayAnimationIn<T>(left, bottom, right, top, name)` inside a rect.
 
 ### Transports
 

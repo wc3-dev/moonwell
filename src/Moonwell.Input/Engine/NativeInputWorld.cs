@@ -6,6 +6,12 @@ namespace Moonwell.Engine
     /// <summary>The game as the input package sees it, through the game's natives; the only class of the package that calls them.</summary>
     internal sealed class NativeInputWorld : IInputWorld
     {
+        // The map's camera bounds, read when the package installs, before any change, and used only on one machine's camera.
+        private readonly float boundMinX = Natives.GetCameraBoundMinX();
+        private readonly float boundMinY = Natives.GetCameraBoundMinY();
+        private readonly float boundMaxX = Natives.GetCameraBoundMaxX();
+        private readonly float boundMaxY = Natives.GetCameraBoundMaxY();
+
         /// <summary>One trigger for a player's leave.</summary>
         public void ListenLeave(player p, Action left)
         {
@@ -235,12 +241,12 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Locks a player's camera on a unit on that player's machine only, with no offset and the unit's facing not followed.</summary>
-        public void FollowUnit(player p, unit u)
+        /// <summary>Locks a player's camera on a unit on that player's machine only; inheritOrientation stays false, as the game turns nothing with it (probe 11-09).</summary>
+        public void FollowUnit(player p, unit u, float offsetX, float offsetY)
         {
             if (Natives.GetLocalPlayer() == p)
             {
-                Natives.SetCameraTargetController(u, 0f, 0f, false);
+                Natives.SetCameraTargetController(u, offsetX, offsetY, false);
             }
         }
 
@@ -299,6 +305,52 @@ namespace Moonwell.Engine
             if (Natives.GetLocalPlayer() == p)
             {
                 Natives.CameraSetupApplyForceDuration(setup, true, seconds);
+            }
+        }
+
+        /// <summary>Sets the map's bounds again, which the game reads back unchanged (probe 11-09), on that player's machine only.</summary>
+        public void ResetBounds(player p)
+        {
+            SetBounds(p, boundMinX, boundMinY, boundMaxX, boundMaxY);
+        }
+
+        /// <summary>Gives a field to the player's input or takes it, on that player's machine only.</summary>
+        public void SetInputControlled(player p, int field, bool controlled)
+        {
+            var which = FieldOf(field);
+            if (Natives.GetLocalPlayer() == p)
+            {
+                Natives.SetCameraFieldControlledByInput(which, controlled);
+            }
+        }
+
+        /// <summary>Allows or stops Ctrl+C's lock, on that player's machine only.</summary>
+        public void AllowHotkeyLock(player p, bool allow)
+        {
+            if (Natives.GetLocalPlayer() == p)
+            {
+                Natives.BlzSetCameraAllowsHotkeyTargetLock(allow);
+            }
+        }
+
+        /// <summary>Blizzard.j's earthquake noise, which checks the local player itself.</summary>
+        public void Shake(player p, float strength)
+        {
+            Natives.CameraSetEQNoiseForPlayer(p, strength);
+        }
+
+        /// <summary>Blizzard.j's clearing of the noise, which checks the local player itself.</summary>
+        public void StopShake(player p)
+        {
+            Natives.CameraClearNoiseForPlayer(p);
+        }
+
+        /// <summary>Plays the model's camera path, on that player's machine only.</summary>
+        public void PlayModel(player p, string path)
+        {
+            if (Natives.GetLocalPlayer() == p)
+            {
+                Natives.SetCinematicCamera(path);
             }
         }
     }

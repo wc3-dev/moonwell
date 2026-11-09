@@ -22,6 +22,9 @@ namespace Moonwell
         /// <summary>World Editor's cameras as setups, in the order the build wrote them; null until Install.</summary>
         private static List<CameraSetup>? setups;
 
+        /// <summary>The setups created in code before Install, which Install makes.</summary>
+        private static List<CameraSetup> later = new List<CameraSetup>();
+
         /// <summary>The world the keyboard talks to; null until InstallKeyboard.</summary>
         private static IKeyWorld? keyWorld;
 
@@ -85,6 +88,13 @@ namespace Moonwell
             {
                 setups.Add(new CameraSetup(cameraNames[i], host.MakeSetup(cameras, starts[i])));
             }
+
+            for (var i = 0; i < later.Count; i++)
+            {
+                later[i].Make();
+            }
+
+            later = new List<CameraSetup>();
 
             MouseReactions.Reset();
             if (!mouse)
@@ -227,6 +237,12 @@ namespace Moonwell
             return eachCamera[slot];
         }
 
+        /// <summary>Keeps a setup created in code before Install, for Install to make.</summary>
+        internal static void MakeLater(CameraSetup setup)
+        {
+            later.Add(setup);
+        }
+
         /// <summary>Whether the package has been installed, so that World Editor's cameras can be looked up.</summary>
         internal static bool Installed
         {
@@ -299,6 +315,7 @@ namespace Moonwell
             mice = null;
             eachCamera = null;
             setups = null;
+            later = new List<CameraSetup>();
             MouseReactions.Reset();
             keyWorld = null;
             keyboards = null;

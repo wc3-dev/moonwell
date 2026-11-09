@@ -82,8 +82,8 @@ namespace Moonwell.Hosting
         /// <summary>Pans a player's camera to a place over some seconds, on that player's machine only.</summary>
         void PanCamera(player p, float x, float y, float seconds);
 
-        /// <summary>Locks a player's camera on a unit, on that player's machine only.</summary>
-        void FollowUnit(player p, unit u);
+        /// <summary>Locks a player's camera on a unit with an offset in the world's directions, on that player's machine only.</summary>
+        void FollowUnit(player p, unit u, float offsetX, float offsetY);
 
         /// <summary>Ends a player's lock on a unit by setting the camera's position to its target, on that player's machine only.</summary>
         void StopFollowing(player p);
@@ -99,5 +99,23 @@ namespace Moonwell.Hosting
 
         /// <summary>Applies a camera setup to a player's camera over some seconds, on that player's machine only.</summary>
         void ApplySetup(player p, camerasetup setup, float seconds);
+
+        /// <summary>Puts a player's camera bounds back to the map's, as they read when the world was made, on that player's machine only.</summary>
+        void ResetBounds(player p);
+
+        /// <summary>Lets the player's own input (the mouse wheel, the keys) change a field or not, on that player's machine only. The code is as in CameraField.</summary>
+        void SetInputControlled(player p, int field, bool controlled);
+
+        /// <summary>Lets Ctrl+C lock a player's camera on a selected unit or not, on that player's machine only.</summary>
+        void AllowHotkeyLock(player p, bool allow);
+
+        /// <summary>Shakes a player's camera with the game's earthquake noise at a strength, on that player's machine only, until StopShake.</summary>
+        void Shake(player p, float strength);
+
+        /// <summary>Ends a player's camera shake, on that player's machine only.</summary>
+        void StopShake(player p);
+
+        /// <summary>Plays a camera path from a model on a player's camera, at its target, on that player's machine only, until a reset.</summary>
+        void PlayModel(player p, string path);
     }
 }
