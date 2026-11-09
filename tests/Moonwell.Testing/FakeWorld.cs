@@ -2053,6 +2053,7 @@ namespace Moonwell.Testing
                         Inbound.PickedUp(unit, item);
                     }
 
+                    FireEquip(unit, item);
                     return;
                 }
             }
@@ -2060,6 +2061,7 @@ namespace Moonwell.Testing
             if (bagged.Contains(item))
             {
                 Equip(unit, item);
+                FireEquip(unit, item);
                 return;
             }
 
@@ -2069,6 +2071,38 @@ namespace Moonwell.Testing
             if (Listening.Contains(GameEvent.PickUp))
             {
                 Inbound.PickedUp(unit, item);
+            }
+
+            FireEquip(unit, item);
+        }
+
+        /// <summary>The equip event the game fires after a move into the equipment slots, by code or by hand (seen 11-08 and 11-09).</summary>
+        private void FireEquip(unit unit, item item)
+        {
+            if (Listening.Contains(GameEvent.Equip))
+            {
+                Inbound.EquipEvent(unit, item);
+            }
+        }
+
+        /// <summary>The player drags an item from the bag into the equipment slots in the 3.0 panel: only the equip event, no drop or pick-up (probe 11-09).</summary>
+        public void EquipByHand(unit unit, item item)
+        {
+            ListOf(bags, unit).Remove(item);
+            ListOf(gear, unit).Add(item);
+            equipped.Add(item);
+            FireEquip(unit, item);
+        }
+
+        /// <summary>The player drags an equipped item back into the bag in the 3.0 panel: only the unequip event, which names no item (probe 11-09).</summary>
+        public void UnequipByHand(unit unit, item item)
+        {
+            equipped.Remove(item);
+            ListOf(gear, unit).Remove(item);
+            ListOf(bags, unit).Add(item);
+            if (Listening.Contains(GameEvent.Equip))
+            {
+                Inbound.UnequipEvent(unit);
             }
         }
 
@@ -2091,6 +2125,11 @@ namespace Moonwell.Testing
             if (Listening.Contains(GameEvent.PickUp))
             {
                 Inbound.PickedUp(unit, item);
+            }
+
+            if (Listening.Contains(GameEvent.Equip))
+            {
+                Inbound.UnequipEvent(unit);
             }
         }
 

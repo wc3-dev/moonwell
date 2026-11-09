@@ -1713,6 +1713,7 @@ namespace Moonwell.Testing
         {
             list.Add(new Case { Name = "inventory.equip-and-unequip", Run = InventoryCases.EquipAndUnequip });
             list.Add(new Case { Name = "inventory.equip-from-slots", Run = InventoryCases.EquipFromSlots });
+            list.Add(new Case { Name = "inventory.by-hand", Run = InventoryCases.ByHand });
             list.Add(new Case { Name = "inventory.no-slots", Run = InventoryCases.NoSlots });
         }
 
