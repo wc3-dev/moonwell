@@ -112,6 +112,88 @@ namespace Moonwell.Testing
             maxY = AreaMaxY;
         }
 
+        /// <summary>The lasting craters made, in order: x, y, radius, depth.</summary>
+        public readonly List<float[]> Craters = new List<float[]>();
+
+        /// <summary>The look-only deformations played, in order, by name.</summary>
+        public readonly List<string> Played = new List<string>();
+
+        /// <summary>The tiles painted at corners, by the corner's key; a corner not in it is Ldrt with variation 3.</summary>
+        public readonly Dictionary<string, int> Tiles = new Dictionary<string, int>();
+
+        /// <summary>The variations painted at corners, by the corner's key.</summary>
+        public readonly Dictionary<string, int> Variations = new Dictionary<string, int>();
+
+        /// <summary>How many corners were painted.</summary>
+        public int Paints;
+
+        /// <summary>How many pathing kinds were set in cells.</summary>
+        public int PathSets;
+
+        /// <summary>The blight calls, in order, as "on x y radius" or "off minX minY maxX maxY", in whole numbers.</summary>
+        public readonly List<string> Blights = new List<string>();
+
+        /// <summary>Where the ground reads blighted; nowhere until a case sets it.</summary>
+        public Func<float, float, bool> Blighted = (x, y) => false;
+
+        /// <summary>The water tints, in order, as "r g b a".</summary>
+        public readonly List<string> Tints = new List<string>();
+
+        /// <summary>Records a lasting crater.</summary>
+        public void Crater(float x, float y, float radius, float depth)
+        {
+            Craters.Add(new[] { x, y, radius, depth });
+        }
+
+        /// <summary>Records a ripple.</summary>
+        public void Ripple(float x, float y, float radius, float depth, float seconds) => Played.Add("ripple");
+
+        /// <summary>Records a wave.</summary>
+        public void Wave(float fromX, float fromY, float toX, float toY, float radius, float depth, float seconds) => Played.Add("wave");
+
+        /// <summary>Records a shake.</summary>
+        public void Shake(float x, float y, float radius, float by, float seconds) => Played.Add("shake");
+
+        /// <summary>The tile at the nearest corner.</summary>
+        public int TileAt(float x, float y) => Tiles.TryGetValue(CornerKey(x, y), out var tile) ? tile : Tile.LordaeronSummerDirt;
+
+        /// <summary>The variation at the nearest corner.</summary>
+        public int VariationAt(float x, float y) => Variations.TryGetValue(CornerKey(x, y), out var variation) ? variation : 3;
+
+        /// <summary>Paints the nearest corner.</summary>
+        public void PaintTile(float x, float y, int tile, int variation)
+        {
+            Paints++;
+            Tiles[CornerKey(x, y)] = tile;
+            Variations[CornerKey(x, y)] = variation;
+        }
+
+        /// <summary>Turns a kind of pathing on or off in a cell: the No flags are the kinds' bits.</summary>
+        public void SetPathing(float x, float y, int kind, bool on)
+        {
+            PathSets++;
+            cells.TryGetValue(Key(x, y), out var flags);
+            cells[Key(x, y)] = on ? flags & ~kind : flags | kind;
+        }
+
+        /// <summary>Records blight in a circle.</summary>
+        public void SetBlight(float x, float y, float radius, bool on) => Blights.Add((on ? "on " : "off ") + (int)x + " " + (int)y + " " + (int)radius);
+
+        /// <summary>Records blight in a rect.</summary>
+        public void SetBlight(float minX, float minY, float maxX, float maxY, bool on) => Blights.Add((on ? "on " : "off ") + (int)minX + " " + (int)minY + " " + (int)maxX + " " + (int)maxY);
+
+        /// <summary>Whether a point reads blighted.</summary>
+        public bool IsBlighted(float x, float y) => Blighted(x, y);
+
+        /// <summary>Records a water tint.</summary>
+        public void TintWater(int red, int green, int blue, int alpha) => Tints.Add(red + " " + green + " " + blue + " " + alpha);
+
+        /// <summary>The key of the corner nearest a point.</summary>
+        public static string CornerKey(float x, float y)
+        {
+            return (int)MathF.Round(x / 128f) + "," + (int)MathF.Round(y / 128f);
+        }
+
         private bool Allowed(float x, float y, int flag)
         {
             PathCalls++;
