@@ -695,6 +695,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.pair.data-and-since", Run = PairCases.DataAndSince });
             list.Add(new Case { Name = "interactions.pair.pair-owns", Run = PairCases.PairOwns });
             list.Add(new Case { Name = "interactions.tree", Run = TreeCases.Tree });
+            list.Add(new Case { Name = "interactions.regrow", Run = TreeCases.Regrows });
+            list.Add(new Case { Name = "interactions.regrow-restored-early", Run = TreeCases.RegrowRestoredEarly });
         }
 
         /// <summary>Adds the physics package's cases.</summary>
@@ -1878,6 +1880,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "destructable.position", Run = DestructableCases.Position });
             list.Add(new Case { Name = "destructables.watch", Run = DestructableCases.Watch });
             list.Add(new Case { Name = "destructables.sweep", Run = DestructableCases.SweepDetectsRemoval });
+            list.Add(new Case { Name = "destructables.gate-open-close", Run = DestructableLiveCases.GateOpenClose });
+            list.Add(new Case { Name = "destructables.gate-restore", Run = DestructableLiveCases.GateRestore });
+            list.Add(new Case { Name = "destructables.looks", Run = DestructableLiveCases.Looks });
+            list.Add(new Case { Name = "destructables.doodad-animations", Run = DestructableLiveCases.DoodadAnimations });
             list.Add(new Case { Name = "destructables.sweep-capped", Run = DestructableCases.SweepCapped });
             list.Add(new Case { Name = "destructables.sweep-takes-turns", Run = DestructableCases.SweepTakesTurns });
             list.Add(new Case { Name = "destructables.sweep-at-the-cap", Run = DestructableCases.SweepAtTheCap });

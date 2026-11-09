@@ -756,6 +756,81 @@ namespace Moonwell.Engine
             Natives.RemoveDestructable(destructable);
         }
 
+        /// <summary>Shows or hides a destructable: ShowDestructable.</summary>
+        public void DisplayDestructable(destructable destructable, bool shown)
+        {
+            Natives.ShowDestructable(destructable, shown);
+        }
+
+        /// <summary>Plays an animation of a destructable by name (SetDestructableAnimation), or queues it (QueueDestructableAnimation).</summary>
+        public void AnimateDestructable(destructable destructable, string name, bool queued)
+        {
+            if (queued)
+            {
+                Natives.QueueDestructableAnimation(destructable, name);
+            }
+            else
+            {
+                Natives.SetDestructableAnimation(destructable, name);
+            }
+        }
+
+        /// <summary>Sets the speed of a destructable's animations: SetDestructableAnimationSpeed.</summary>
+        public void PaceDestructableAnimations(destructable destructable, float speed)
+        {
+            Natives.SetDestructableAnimationSpeed(destructable, speed);
+        }
+
+        /// <summary>Tints a destructable: SetDestructableVertexColor.</summary>
+        public void TintDestructable(destructable destructable, int red, int green, int blue, int alpha)
+        {
+            Natives.SetDestructableVertexColor(destructable, red, green, blue, alpha);
+        }
+
+        /// <summary>Whether a destructable is invulnerable: IsDestructableInvulnerable.</summary>
+        public bool DestructableInvulnerableOf(destructable destructable)
+        {
+            return Natives.IsDestructableInvulnerable(destructable);
+        }
+
+        /// <summary>Makes a destructable invulnerable or not: SetDestructableInvulnerable.</summary>
+        public void PutDestructableInvulnerable(destructable destructable, bool invulnerable)
+        {
+            Natives.SetDestructableInvulnerable(destructable, invulnerable);
+        }
+
+        /// <summary>The name of a destructable's type, in this machine's language: GetDestructableName.</summary>
+        public string DestructableNameOf(destructable destructable)
+        {
+            return Natives.GetDestructableName(destructable);
+        }
+
+        /// <summary>A destructable's occluder height: GetDestructableOccluderHeight.</summary>
+        public float DestructableOccluderHeightOf(destructable destructable)
+        {
+            return Natives.GetDestructableOccluderHeight(destructable);
+        }
+
+        /// <summary>Sets a destructable's occluder height: SetDestructableOccluderHeight.</summary>
+        public void PutDestructableOccluderHeight(destructable destructable, float height)
+        {
+            Natives.SetDestructableOccluderHeight(destructable, height);
+        }
+
+        /// <summary>Plays an animation on doodads near a place: SetDoodadAnimation, with no random variation.</summary>
+        public void AnimateDoodads(int typeId, float x, float y, float radius, bool nearestOnly, string name)
+        {
+            Natives.SetDoodadAnimation(x, y, radius, typeId, nearestOnly, name, false);
+        }
+
+        /// <summary>Plays an animation on doodads inside a rect: SetDoodadAnimationRect on a rect made for the call and removed after it.</summary>
+        public void AnimateDoodadsIn(int typeId, float left, float bottom, float right, float top, string name)
+        {
+            var area = Natives.Rect(left, bottom, right, top);
+            Natives.SetDoodadAnimationRect(area, typeId, name, false);
+            Natives.RemoveRect(area);
+        }
+
         /// <summary>Whether a unit is a hero.</summary>
         public bool IsHero(unit unit)
         {

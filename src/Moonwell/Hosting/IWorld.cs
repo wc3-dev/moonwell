@@ -161,6 +161,39 @@ namespace Moonwell.Hosting
         /// <summary>Removes a destructable from the world.</summary>
         void DeleteDestructable(destructable destructable);
 
+        /// <summary>Shows or hides a destructable (ShowDestructable).</summary>
+        void DisplayDestructable(destructable destructable, bool shown);
+
+        /// <summary>Plays an animation of a destructable by name (SetDestructableAnimation), or queues it (QueueDestructableAnimation).</summary>
+        void AnimateDestructable(destructable destructable, string name, bool queued);
+
+        /// <summary>Sets the speed of a destructable's animations (SetDestructableAnimationSpeed).</summary>
+        void PaceDestructableAnimations(destructable destructable, float speed);
+
+        /// <summary>Tints a destructable (SetDestructableVertexColor).</summary>
+        void TintDestructable(destructable destructable, int red, int green, int blue, int alpha);
+
+        /// <summary>Whether a destructable is invulnerable.</summary>
+        bool DestructableInvulnerableOf(destructable destructable);
+
+        /// <summary>Makes a destructable invulnerable or not.</summary>
+        void PutDestructableInvulnerable(destructable destructable, bool invulnerable);
+
+        /// <summary>The name of a destructable's type, in this machine's language.</summary>
+        string DestructableNameOf(destructable destructable);
+
+        /// <summary>The height up to which a destructable hides what is behind it from sight.</summary>
+        float DestructableOccluderHeightOf(destructable destructable);
+
+        /// <summary>Sets the height up to which a destructable hides what is behind it from sight.</summary>
+        void PutDestructableOccluderHeight(destructable destructable, float height);
+
+        /// <summary>Plays an animation on the doodads of a type within a radius of a place, or on the nearest one only (SetDoodadAnimation).</summary>
+        void AnimateDoodads(int typeId, float x, float y, float radius, bool nearestOnly, string name);
+
+        /// <summary>Plays an animation on the doodads of a type inside a rect (SetDoodadAnimationRect).</summary>
+        void AnimateDoodadsIn(int typeId, float left, float bottom, float right, float top, string name);
+
         /// <summary>Whether a unit is a hero.</summary>
         bool IsHero(unit unit);
 
