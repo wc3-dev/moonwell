@@ -24,7 +24,7 @@ public class ClockTests
     public void random_without_a_seed_says_what_to_write()
     {
         Assert.Equal(
-            "'Random' seeds itself from this machine's clock and reseeds the game's random generator with it, which desyncs every random number after it, inside Local.For too; use Natives.GetRandomInt, or new Random(seed) with a seed every machine shares",
+            "'Random' seeds itself from this machine's clock and reseeds the game's random generator with it, which desyncs every random number after it, inside Local.For too; use Game.Random, or new Dice(seed) with a seed every machine shares",
             MapCode.Message("var r = new Random();"));
     }
 

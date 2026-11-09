@@ -54,13 +54,7 @@ namespace Moonwell
             if (shuffle)
             {
                 // Run on every machine, as the random numbers are shared.
-                for (var i = order.Length - 1; i > 0; i--)
-                {
-                    var j = Runtime.World.RandomBetween(0, i);
-                    var swapped = order[i];
-                    order[i] = order[j];
-                    order[j] = swapped;
-                }
+                Game.Random.Shuffle(order);
             }
 
             Start(order, heardBy);
