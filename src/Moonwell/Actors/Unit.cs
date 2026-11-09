@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport });
                 }
 
                 return unitHooks;
@@ -897,6 +897,46 @@ namespace Moonwell
             }
         }
 
+        /// <summary>The transport carrying the unit (a zeppelin, a ship, a burrow), or null. Kept from the game's load event and the order the game gives a unit on every way out, so it is the same on every machine (decision 219).</summary>
+        [LocalSafe]
+        public Unit? Transport => transport;
+
+        /// <summary>The units the transport carries, in the order they were loaded: a new list each time it is read. The game finds no loaded unit around a transport, so this is the way to them.</summary>
+        [LocalSafe]
+        public List<Unit> Cargo => cargo == null ? new List<Unit>() : new List<Unit>(cargo);
+
+        /// <summary>How much the transport's cargo hold holds (its Cargo Capacity); 0 for a unit without one, or once the unit is gone. Setting it changes this unit's alone.</summary>
+        [LocalSafe]
+        public int CargoCapacity
+        {
+            get { return IsGone ? 0 : Runtime.World.CargoCapacity(Handle); }
+            set
+            {
+                if (!IsGone)
+                {
+                    Runtime.World.SetCargoCapacity(Handle, value);
+                }
+            }
+        }
+
+        /// <summary>Orders the transport to load a unit: it goes to the unit, or the unit to it, as the game's load order does; OnCargoLoaded runs once it is aboard.</summary>
+        public bool Load(Unit cargoUnit)
+        {
+            return OrderOn("load", cargoUnit);
+        }
+
+        /// <summary>Orders the transport to let one unit out where it is.</summary>
+        public bool Unload(Unit cargoUnit)
+        {
+            return OrderOn("unload", cargoUnit);
+        }
+
+        /// <summary>Orders the transport to go to a place and let every unit out there.</summary>
+        public bool UnloadAll(float x, float y)
+        {
+            return OrderAt("unloadall", x, y);
+        }
+
         /// <summary>Gives the unit an order with no place and no target, by the game's order string ("stop", "holdposition"), and returns the game's answer. False, and no call to the game, once the unit is gone.</summary>
         public bool Order(string order)
         {
@@ -1043,6 +1083,12 @@ namespace Moonwell
 
         /// <summary>Whether the game's stunned order came while the unit carried out an order, so that the unit's next order may be the one a stun's end gives back.</summary>
         internal bool StunnedOrderCame;
+
+        /// <summary>The transport carrying the unit, as the load and unload events left it.</summary>
+        internal Unit? transport;
+
+        /// <summary>The units the transport carries, in load order; null while it carries none yet.</summary>
+        internal List<Unit>? cargo;
 
         /// <summary>How many of the unit's orders ran their reactions: a count that changes inside an order's reactions means a reaction gave the unit another.</summary>
         internal int OrdersHeard;
@@ -1536,6 +1582,30 @@ namespace Moonwell
         {
         }
 
+        /// <summary>Runs when the unit is loaded into a transport, before the unit's components see it, then the transport's OnCargoLoaded. The unit's place reads where it was loaded until it comes out (seen 11-08).</summary>
+        /// <param name="carryingTransport">The transport it is in.</param>
+        public virtual void OnLoaded(Unit carryingTransport)
+        {
+        }
+
+        /// <summary>Runs when the unit comes out of its transport, before the unit's components see it: unloaded, or let out because the transport died or was removed (the game puts it down alive where the transport was; seen 11-08). A unit that dies or leaves the game inside runs none.</summary>
+        /// <param name="carryingTransport">The transport it was in.</param>
+        public virtual void OnUnloaded(Unit carryingTransport)
+        {
+        }
+
+        /// <summary>Runs when a unit is loaded into this transport, after the unit and its components saw it, before this unit's components see it.</summary>
+        /// <param name="loadedUnit">The unit loaded.</param>
+        public virtual void OnCargoLoaded(Unit loadedUnit)
+        {
+        }
+
+        /// <summary>Runs when a unit comes out of this transport, after the unit and its components saw it, before this unit's components see it; Cargo no longer holds it.</summary>
+        /// <param name="unloadedUnit">The unit that came out.</param>
+        public virtual void OnCargoUnloaded(Unit unloadedUnit)
+        {
+        }
+
         /// <summary>Tells the interactions package, if there is one; runs OnLeave; the components then end, and the unit leaves the game. One that never came in, as one made in a scope that had ended, runs neither, as it ran no OnCreated.</summary>
         protected sealed override void OnEnd()
         {
@@ -1578,6 +1648,11 @@ namespace Moonwell
                 }
 
                 IsGone = true;
+            }
+
+            if (transport != null || cargo != null)
+            {
+                Inbound.TransportLeft(this);
             }
 
             KnownUnits.Forget(this, kept);
