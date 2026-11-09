@@ -397,6 +397,43 @@ namespace Moonwell
             Runtime.World.PrintTo(Handle, text, seconds);
         }
 
+        /// <summary>Shows the player a line like the game's errors ("Not enough gold."): the game's message text in the error's colour, one line above the game's own error line, with the error sound; it changes nothing in the game. It is also kept in the message log (F12). Not inside Local.For, as the sound is made on every machine.</summary>
+        public void Error(string text)
+        {
+            Runtime.World.ErrorTo(Handle, text);
+            Sound.Play("Sound\\Interface\\Error.wav", this);
+        }
+
+        /// <summary>Shows the player a hint as the game does, with its sound, for 12 seconds; it changes nothing in the game.</summary>
+        [LocalSafe]
+        public void Hint(string text)
+        {
+            if (Runtime.World.IsLocal(Handle))
+            {
+                Runtime.World.QuestNews(QuestNews.Hint, text);
+            }
+        }
+
+        /// <summary>Shows the player a warning as the game does, with its sound, for 12 seconds; it changes nothing in the game.</summary>
+        [LocalSafe]
+        public void Warning(string text)
+        {
+            if (Runtime.World.IsLocal(Handle))
+            {
+                Runtime.World.QuestNews(QuestNews.Warning, text);
+            }
+        }
+
+        /// <summary>Clears the lines shown on the player's screen; it changes nothing in the game.</summary>
+        [LocalSafe]
+        public void ClearMessages()
+        {
+            if (Runtime.World.IsLocal(Handle))
+            {
+                Runtime.World.ClearMessages();
+            }
+        }
+
         /// <summary>Pings the minimap for the player alone, in white unless a colour is given, for the seconds; it changes nothing in the game. PingStyle.Attack is the game's red warning ping, whatever the colour.</summary>
         [LocalSafe]
         public void Ping(float x, float y, float seconds = 3.0f, PingStyle style = PingStyle.Simple)
