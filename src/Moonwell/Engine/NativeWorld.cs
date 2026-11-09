@@ -195,6 +195,10 @@ namespace Moonwell.Engine
                     Register(Natives.EVENT_PLAYER_UNIT_PAWN_ITEM, () => SaleAction(Selling.ItemPawned));
                     Register(Natives.EVENT_PLAYER_UNIT_SELL, () => SaleAction(Selling.UnitSold));
                     break;
+                case GameEvent.Equip:
+                    Register(Natives.EVENT_PLAYER_UNIT_EQUIP_ITEM, EquipAction);
+                    Register(Natives.EVENT_PLAYER_UNIT_UNEQUIP_ITEM, UnequipAction);
+                    break;
             }
         }
 
@@ -2594,6 +2598,32 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Leave", error);
+            }
+        }
+
+        /// <summary>Hands an equip to Inbound: the game names the item with GetEquippedItem (seen 11-08).</summary>
+        private static void EquipAction()
+        {
+            try
+            {
+                Inbound.EquipEvent(Natives.GetTriggerUnit(), Natives.GetEquippedItem());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Equip", error);
+            }
+        }
+
+        /// <summary>Hands an unequip to Inbound, which names no item (seen 11-09).</summary>
+        private static void UnequipAction()
+        {
+            try
+            {
+                Inbound.UnequipEvent(Natives.GetTriggerUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Unequip", error);
             }
         }
 

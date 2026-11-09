@@ -1974,7 +1974,9 @@ public sealed class Helm : Items.AncientBronzeHelmet
 ```
 
 - Equipping and unequipping are a drop and a pick-up in the game; `OnEquipped` runs after the pick-up into the slots,
-  `OnUnequipped` after the drop of an item Moonwell saw equipped. `Item.Carry` runs in the equipment slots, so a gift
+  `OnUnequipped` after the drop of an item Moonwell saw equipped. A player's own move in the game's panel fires neither,
+  so Moonwell runs the same drop, pick-up and equip reactions for it, just after the move: there `Place` already reads
+  where the item went, in `OnDropped` too. `Item.Carry` runs in the equipment slots, so a gift
   `heldBy: Item.Carry` holds while the item is worn and ends when it goes to the bag, where an item's abilities do
   nothing.
 - `Equipped` and `Bag` take in items Moonwell has not seen, so they are not for `Local.For`. Items do not stack: the game
