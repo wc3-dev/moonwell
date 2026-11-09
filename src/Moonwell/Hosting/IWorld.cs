@@ -245,6 +245,12 @@ namespace Moonwell.Hosting
         /// <summary>Sets the level of an ability on a unit, kept within the ability's levels, and answers the level it set; 0, and nothing changes, when the unit lacks the ability.</summary>
         int ChangeAbilityLevel(unit unit, int abilityId, int level);
 
+        /// <summary>Gives a unit the summoned type.</summary>
+        void MakeSummoned(unit unit);
+
+        /// <summary>Gives a unit timed life for so many seconds, more than 0, with the game's bar.</summary>
+        void ApplyTimedLife(unit unit, float seconds);
+
         /// <summary>Whether an ability the unit has is a hero skill; false when the unit lacks it.</summary>
         bool IsHeroAbility(unit unit, int abilityId);
 
