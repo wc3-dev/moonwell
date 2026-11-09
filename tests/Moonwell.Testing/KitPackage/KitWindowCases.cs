@@ -51,7 +51,7 @@ namespace Moonwell.Testing
             ObjectTypes.Item(ObjectTypes.FourCC("pman"), () => new ShopPotion());
             var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), slot: 0))!;
             var shop = Screen.Add(new ShopWindow { Buyer = hero }, Game.Instance, shownTo: Player.One);
-            var potion = shop.Sell<ShopPotion>(new ShopEntry { Name = "Potion", Cost = 100, Lumber = 10, Stock = 1, Restock = 5.0f });
+            var potion = shop.Sell<ShopPotion>(new ShopEntry { Name = "Potion", Icon = @"ReplaceableTextures\CommandButtons\BTNPotionGreenSmall.blp", Cost = 100, Lumber = 10, Stock = 1, Restock = 5.0f });
             var bought = 0;
             shop.Bought += (who, entry) => bought++;
             Expect.Equal("100 gold, 10 lumber", ((RichTooltip)shop.buttons[0].Tooltip!).Cost, "the tooltip's cost");
@@ -63,11 +63,14 @@ namespace Moonwell.Testing
             Expect.True(hero.ItemIn(0) is ShopPotion, "the item given to the buyer");
             Expect.Equal(0, potion.Left, "none left");
             Expect.True(!shop.buttons[0].Enabled, "sold out is greyed");
+            var icon = frames.FrameOf(shop.buttons[0].iconFrame!);
+            Expect.Equal(@"ReplaceableTextures\CommandButtonsDisabled\DISBTNPotionGreenSmall.blp", icon.Texture, "drawn with the game's grey icon");
             ClickOn(frames, shop.buttons[0], 0);
             Expect.Equal(150, Player.One.Gold, "sold out takes nothing");
             world.Advance(5.1f);
             Expect.Equal(1, potion.Left, "one back after Restock");
             Expect.True(shop.buttons[0].Enabled, "and shown again");
+            Expect.Equal(@"ReplaceableTextures\CommandButtons\BTNPotionGreenSmall.blp", icon.Texture, "drawn bright again");
             Player.One.Gold = 50;
             ClickOn(frames, shop.buttons[0], 0);
             Expect.Equal(50, Player.One.Gold, "without the gold nothing is taken");
