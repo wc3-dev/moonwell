@@ -1247,7 +1247,8 @@ public sealed class Firebolt : Bolt
   chooses whom it hits: living enemies of the caster's player unless overridden.
 - The map's class adds what the game needs: its name, icon, hotkey and levels, an Area of Effect for the targeting
   circle, and a Base Order ID of its own when one unit has two Channel abilities. A channel's length is its Follow
-  Through Time.
+  Through Time: 0 for every template but `PulseChannel`, so the cast ends at once. Each template's button sits at
+  (0, 2), the bottom row's left: two on one unit need a Button Position of their own.
 - What a template sends out (a missile, a jump, the next link of a chain) belongs to the ability, so it goes on after
   an instant cast has ended; `PulseChannel`'s pulses belong to the cast, and stop with the channel.
 - `Dash` and `Leap` move the caster as a knockback does, so trees, buildings, cliffs and walls stop them short, and

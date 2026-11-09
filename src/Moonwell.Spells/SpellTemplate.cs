@@ -12,11 +12,14 @@ namespace Moonwell.Spells
     /// </summary>
     public abstract class SpellTemplate : Objects.Creeps.Abilities.Channel
     {
-        /// <summary>Makes a template whose button shows. The object data is set only when the map is built: the game's script has no object fields.</summary>
+        /// <summary>Makes a template whose button shows, at (0, 2) rather than Channel's (2, 0), Hold Position's place, and whose channel ends with the cast rather than after Channel's 180 s. The object data is set only when the map is built: the game's script has no object fields.</summary>
         protected SpellTemplate()
         {
 #if !MOONWELL_LUA
             Options = ChannelFlags.Visible;
+            FollowThroughTime = 0.0f;
+            ButtonPositionNormalX = 0;
+            ButtonPositionNormalY = 2;
 #endif
         }
 
