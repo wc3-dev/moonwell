@@ -31,7 +31,7 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
         ["Unit"] = new HashSet<string> { "MaxLife", "MaxMana", "Mana", "Level", "Scale", "FlyHeight", "Name" },
         ["Hero"] = new HashSet<string> { "Strength", "Agility", "Intelligence" },
         ["Item"] = new HashSet<string> { "Charges" },
-        ["Destructable"] = new HashSet<string> { "MaxLife" },
+        ["Destructable"] = new HashSet<string> { "MaxLife", "Name" },
     };
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Rules.Declared;

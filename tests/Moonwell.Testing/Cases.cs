@@ -27,6 +27,7 @@ namespace Moonwell.Testing
             AddShops(list);
             AddInventory(list);
             AddLast(list);
+            AddLiveDestructables(list);
             AddCompiler(list);
             AddMaths(list);
             AddInteractions(list);
@@ -1881,10 +1882,6 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "destructable.position", Run = DestructableCases.Position });
             list.Add(new Case { Name = "destructables.watch", Run = DestructableCases.Watch });
             list.Add(new Case { Name = "destructables.sweep", Run = DestructableCases.SweepDetectsRemoval });
-            list.Add(new Case { Name = "destructables.gate-open-close", Run = DestructableLiveCases.GateOpenClose });
-            list.Add(new Case { Name = "destructables.gate-restore", Run = DestructableLiveCases.GateRestore });
-            list.Add(new Case { Name = "destructables.looks", Run = DestructableLiveCases.Looks });
-            list.Add(new Case { Name = "destructables.doodad-animations", Run = DestructableLiveCases.DoodadAnimations });
             list.Add(new Case { Name = "destructables.sweep-capped", Run = DestructableCases.SweepCapped });
             list.Add(new Case { Name = "destructables.sweep-takes-turns", Run = DestructableCases.SweepTakesTurns });
             list.Add(new Case { Name = "destructables.sweep-at-the-cap", Run = DestructableCases.SweepAtTheCap });
@@ -2027,6 +2024,15 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "conditionals.nullable-bool-first-branch", Run = ConditionalCases.NullableBoolFirstBranch });
             list.Add(new Case { Name = "conditionals.struct-type-parameter", Run = ConditionalCases.StructTypeParameter });
             list.Add(new Case { Name = "conditionals.still-right", Run = ConditionalCases.StillRight });
+        }
+
+        /// <summary>Adds the cases for 0.10's live destructables and doodads, apart from AddLast, which is at Lua's 200 locals.</summary>
+        private static void AddLiveDestructables(List<Case> list)
+        {
+            list.Add(new Case { Name = "destructables.gate-open-close", Run = DestructableLiveCases.GateOpenClose });
+            list.Add(new Case { Name = "destructables.gate-restore", Run = DestructableLiveCases.GateRestore });
+            list.Add(new Case { Name = "destructables.looks", Run = DestructableLiveCases.Looks });
+            list.Add(new Case { Name = "destructables.doodad-animations", Run = DestructableLiveCases.DoodadAnimations });
         }
 
         /// <summary>Adds the cases for what the compiler writes. A function of more than 200 cases does not load: each is a local in its Lua.</summary>
