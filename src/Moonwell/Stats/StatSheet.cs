@@ -69,7 +69,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A stat's value: (base + flat) × (1 + percents / 100); a game stat is never below 0, the most life never below 1.</summary>
+        /// <summary>A map's own stat's value: (base + flat) × (1 + percents / 100). A game stat's is what the game shows: the base as it is now and Moonwell's part as last put, so what the game added since (strength's life, a level) is outside the percents until the stat next changes (I52).</summary>
         internal float Get(Stat stat)
         {
             var kind = stat.Kind;
@@ -84,7 +84,7 @@ namespace Moonwell
                 return 0.0f;
             }
 
-            return Total(stat, BaseOf(unit.Handle, stat));
+            return BaseOf(unit.Handle, stat) + (applied.TryGetValue(stat, out var part) ? part : 0.0f);
         }
 
         private float Total(Stat stat, float baseValue)

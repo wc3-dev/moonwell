@@ -224,18 +224,14 @@ namespace Moonwell
             return line;
         }
 
-        // Keeps a label for each cell, placed by row and column, and sizes the window to the rows.
+        // Keeps a label for each cell, placed again by row and column on every write, as a column added moves the cells after it, and sizes the window to the rows.
         private void Write(List<string[]> lines, List<int> teamLines)
         {
             var width = columns.Count + 1;
             var count = lines.Count * width;
             while (cells.Count < count)
             {
-                var at = cells.Count;
-                var column = at % width;
-                var x = Inset + (column == 0 ? 0.0f : NameWidth + (column - 1) * ValueWidth);
-                var cell = Add(new Label { Anchor = FramePoint.TopLeft, Offset = new Vector2(x, -Top - at / width * RowHeight) });
-                cells.Add(cell);
+                cells.Add(Add(new Label { Anchor = FramePoint.TopLeft }));
             }
 
             while (cells.Count > count)
@@ -250,6 +246,7 @@ namespace Moonwell
                 for (var column = 0; column < width; column++)
                 {
                     var cell = cells[row * width + column];
+                    cell.Offset = new Vector2(Inset + (column == 0 ? 0.0f : NameWidth + (column - 1) * ValueWidth), -Top - row * RowHeight);
                     cell.Text = lines[row][column];
                     cell.Color = title ? theme.Title : theme.Text;
                 }

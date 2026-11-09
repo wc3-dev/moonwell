@@ -113,6 +113,11 @@ namespace Moonwell.Testing
             hero.Modify(Stat.Strength, 10.0f, heldBy: holder);
             hero.Modify(Stat.Strength, percent: 10.0f, heldBy: holder);
             Expect.Equal(35, world.StrengthOf(handle, false), "(22 + 10) x 1.1, a whole number");
+            world.SetMaxMana(handle, 255.0f);
+            var mana = hero.Modify(Stat.MaxMana, percent: 10.0f, heldBy: holder);
+            world.SetMaxMana(handle, world.MaxManaOf(handle) + 75.0f);
+            Expect.Near(world.MaxManaOf(handle), hero.Get(Stat.MaxMana), "what the game added after the percent (intelligence's mana) read as the game shows it, unscaled (I52)");
+            mana.End();
             holder.End();
             Expect.Near(700.0f, world.MaxLifeOf(handle), "life back");
             Expect.Near(300.0f, world.MoveSpeedOf(handle), "speed back");

@@ -572,7 +572,8 @@ units and players. The game's stats are units' only, and change the unit in the 
 
 A game stat never goes below 0. Its base is the game's number less Moonwell's part, so what the game changes meanwhile (a
 level's life, a tome) stays; a percent of a base the game changed is put again at the stat's next change. `Get` reads
-(base + flat) × (1 + percents / 100), without what items and the game's own abilities add to damage and attack speed.
+what the game shows, without what items and the game's own abilities add to damage and attack speed: a hero's +10% life
+covers the life its strength gave when the life last changed, and 5 strength added after adds its life unscaled.
 Damage, armor and attack speed go through three abilities Moonwell declares, so a map that reads them needs
 Moonwell.Objects.
 
@@ -1695,14 +1696,15 @@ heroes.Picked += (who, hero) => who.Select(hero);
   board.Column("Gold", player => player.Gold);
   ```
 - `TalentWindow` is a ready talent tree, one hero's. A talent is a class inheriting `Talent`, whose constructor sets
-  `Name`, `Icon`, `Text`, `MaxRank`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the hero as a
-  component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with `RankScope`
-  new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns a rank
-  when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are spent
-  and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as in
-  `OnLevelUp`). `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back,
-  running each talent once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the
-  points back.
+  `Name`, `Icon`, `Text`, `MaxRank`, `Tree`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the
+  hero as a component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with
+  `RankScope` new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns
+  a rank when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are
+  spent and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as
+  in `OnLevelUp`), shown under the grid. Talents that set `Tree = "Arms"` go on a tab of that name: the trees share the
+  points, and a row opens by the points spent in its own tree; every talent of a window names a tree, or none does.
+  `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back, running each talent
+  once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the points back.
 
   ```csharp
   public sealed class Cleave : Talent

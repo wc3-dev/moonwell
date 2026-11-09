@@ -7,8 +7,9 @@ namespace Moonwell
     /// A ready talent tree of the UI kit (decision 224), one hero's: talents as icons on a grid by row and column, each showing
     /// its rank, with a rich tooltip of its name, text, rank and needs. A click by the hero's owner learns one rank when the
     /// hero has a point, the talent is below its most rank, enough points are spent for its row and the talent it needs is
-    /// at its rank. The map gives the points (Points += 1, as in OnLevelUp); Ranks and Restore keep the ranks in a save, and
-    /// Reset gives every point back.
+    /// at its rank. The map gives the points (Points += 1, as in OnLevelUp), shown under the grid; Ranks and Restore keep
+    /// the ranks in a save, and Reset gives every point back. Talents that name a Tree go on a tab of that name, the trees
+    /// sharing the points and each row opening by the points spent in its own tree.
     /// </summary>
     public class TalentWindow : Window
     {
@@ -27,6 +28,14 @@ namespace Moonwell
 
         internal readonly List<Label> rankLabels = new List<Label>();
 
+        /// <summary>The unspent points, at the bottom left.</summary>
+        internal readonly Label pointsLabel;
+
+        /// <summary>The trees' tabs, made with the first talent that names a tree; null for a window of one tree.</summary>
+        internal Tabs? tabs;
+
+        internal readonly List<string> trees = new List<string>();
+
         internal int points;
 
         internal int pointsPerRow = 5;
@@ -38,6 +47,8 @@ namespace Moonwell
         {
             Hero = hero;
             Title = "Talents";
+            pointsLabel = Add(new Label { Anchor = FramePoint.BottomLeft, Offset = new Vector2(Inset, Inset) });
+            Refresh();
         }
 
         /// <summary>The hero the tree is for.</summary>
@@ -107,17 +118,34 @@ namespace Moonwell
             }
 
             var kind = make();
+            if (kinds.Count > 0 && (kind.Tree.Length == 0) != (kinds[0].Tree.Length == 0))
+            {
+                Errors.Refuse(Names.NameOf(this) + ".Add", kind.Name + (kind.Tree.Length == 0 ? " names no tree where the talents before it do" : " names a tree where the talents before it don't") + ": every talent of a window names one, or none does");
+                return;
+            }
+
             var at = kinds.Count;
             makers.Add(make);
             kinds.Add(kind);
             learned.Add(null);
-            var x = Inset + kind.Column * (TalentSize + TalentGap);
-            var y = -Scoreboard.Top - kind.Row * (TalentSize + TalentGap);
-            var button = Add(new IconButton { Icon = kind.Icon, Width = TalentSize, Height = TalentSize, Anchor = FramePoint.TopLeft, Offset = new Vector2(x, y) });
+            Panel parent = this;
+            var x = kind.Column * (TalentSize + TalentGap);
+            var y = -kind.Row * (TalentSize + TalentGap);
+            if (kind.Tree.Length > 0)
+            {
+                parent = Page(kind.Tree);
+            }
+            else
+            {
+                x += Inset;
+                y -= Scoreboard.Top;
+            }
+
+            var button = parent.Add(new IconButton { Icon = kind.Icon, Width = TalentSize, Height = TalentSize, Anchor = FramePoint.TopLeft, Offset = new Vector2(x, y) });
             button.Tooltip = new RichTooltip { Icon = kind.Icon, Title = kind.Name };
             button.Clicked += who => Clicked(who, at);
             buttons.Add(button);
-            rankLabels.Add(Add(new Label { Anchor = FramePoint.TopLeft, Offset = new Vector2(x + TalentSize - 0.012f, y - TalentSize + 0.008f) }));
+            rankLabels.Add(parent.Add(new Label { Anchor = FramePoint.TopLeft, Offset = new Vector2(x + TalentSize - 0.012f, y - TalentSize + 0.008f) }));
             Refresh();
         }
 
@@ -162,7 +190,32 @@ namespace Moonwell
         {
             var kind = kinds[at];
             var rank = learned[at]?.Rank ?? 0;
-            return points > 0 && rank < kind.MaxRank && Spent >= kind.Row * pointsPerRow && Met(kind);
+            return points > 0 && rank < kind.MaxRank && SpentIn(kind.Tree) >= kind.Row * pointsPerRow && Met(kind);
+        }
+
+        private int SpentIn(string tree)
+        {
+            var spent = 0;
+            for (var i = 0; i < learned.Count; i++)
+            {
+                spent += kinds[i].Tree == tree ? learned[i]?.Rank ?? 0 : 0;
+            }
+
+            return spent;
+        }
+
+        // The tree's page, with its tab made the first time; the tabs cover the body.
+        private Panel Page(string tree)
+        {
+            tabs ??= Add(new Tabs());
+            var at = trees.IndexOf(tree);
+            if (at < 0)
+            {
+                trees.Add(tree);
+                return tabs.Page(tree);
+            }
+
+            return tabs.pages[at];
         }
 
         private bool Met(Talent kind)
@@ -231,7 +284,7 @@ namespace Moonwell
             }
         }
 
-        // Writes each talent's rank and tooltip, and sizes the window to the grid.
+        // Writes each talent's rank and tooltip and the points, and sizes the window to the grid, the tabs and the points' line.
         private void Refresh()
         {
             if (HasEnded)
@@ -253,14 +306,18 @@ namespace Moonwell
                 tip.Text = TipText(kind, rank);
             }
 
-            Width = 2.0f * Inset + columns * TalentSize + (columns - 1) * TalentGap;
-            Height = Scoreboard.Top + rows * TalentSize + (rows - 1) * TalentGap + Inset;
+            pointsLabel.Text = "Points: " + points;
+            pointsLabel.Color = theme.Title;
+            var grid = columns * TalentSize + (columns - 1) * TalentGap;
+            var bar = tabs == null ? 0.0f : trees.Count * tabs.TabWidth + (trees.Count - 1) * Tabs.Gap;
+            Width = 2.0f * Inset + Math.Max(grid, bar);
+            Height = Scoreboard.Top + (tabs == null ? 0.0f : Tabs.TabHeight + Tabs.Gap) + rows * TalentSize + (rows - 1) * TalentGap + TalentGap + Scoreboard.RowHeight + Inset;
         }
 
         private string TipText(Talent kind, int rank)
         {
             var text = kind.Text + "\n\nRank " + rank + "/" + kind.MaxRank;
-            if (kind.Row > 0 && Spent < kind.Row * pointsPerRow)
+            if (kind.Row > 0 && SpentIn(kind.Tree) < kind.Row * pointsPerRow)
             {
                 text += "\nNeeds " + kind.Row * pointsPerRow + " points in the tree";
             }

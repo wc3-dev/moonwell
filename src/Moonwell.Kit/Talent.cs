@@ -5,7 +5,7 @@ namespace Moonwell
     /// <summary>
     /// A talent of a TalentWindow (decision 224): a class the map writes, which the window adds to its hero as a component at
     /// the first rank and removes at a Reset, so it can hold modifiers and override reactions while learned. Its constructor
-    /// sets what the window shows and needs: Name, Icon, Text, MaxRank, Row, Column and Needs. OnRankChanged runs at each
+    /// sets what the window shows and needs: Name, Icon, Text, MaxRank, Tree, Row, Column and Needs. OnRankChanged runs at each
     /// rank, with RankScope new: what it holds lasts until the next rank or the reset.
     /// </summary>
     public abstract class Talent : UnitComponent
@@ -28,13 +28,17 @@ namespace Moonwell
         [LocalSafe]
         public int MaxRank { get; protected set; } = 1;
 
-        /// <summary>Its row in the tree, from 0 at the top: row r opens once r × the window's PointsPerRow points are spent.</summary>
+        /// <summary>Its row in the tree, from 0 at the top: row r opens once r × the window's PointsPerRow points are spent in its tree.</summary>
         [LocalSafe]
         public int Row { get; protected set; }
 
         /// <summary>Its column in the tree, from 0 at the left.</summary>
         [LocalSafe]
         public int Column { get; protected set; }
+
+        /// <summary>The tree it is in, a tab of the window named so; none unless set, for a window of one tree. Every talent of a window names one, or none does.</summary>
+        [LocalSafe]
+        public string Tree { get; protected set; } = "";
 
         /// <summary>The rank learned, 0 to MaxRank; on the component the window added, the hero's.</summary>
         [LocalSafe]
@@ -51,7 +55,7 @@ namespace Moonwell
 
         internal int needsRank;
 
-        /// <summary>Needs a talent of another class in the same tree at a rank before this one can be learned.</summary>
+        /// <summary>Needs a talent of another class in the same window, in any of its trees, at a rank before this one can be learned.</summary>
         protected void Needs<T>(int rank = 1)
             where T : Talent
         {
