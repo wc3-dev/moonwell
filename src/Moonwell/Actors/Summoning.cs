@@ -63,9 +63,14 @@ namespace Moonwell
             return made;
         }
 
-        /// <summary>The game summoned a unit (its summon event): the unit is taken in as it comes into the game, linked to its summoner (for a dummy's spell, the unit the dummy cast for), and the summon reactions run.</summary>
-        internal static void FromGame(unit summoning, unit summonedHandle)
+        /// <summary>The game summoned a unit (its summon event): the unit is taken in as it comes into the game, linked to its summoner (for a dummy's spell, the unit the dummy cast for), and the summon reactions run. An event with no summoned unit is let go: Mirror Image puts the hero in one image's place and removes that image, and its event names none (probe, 11-09).</summary>
+        internal static void FromGame(unit? summoning, unit? summonedHandle)
         {
+            if (summoning == null || summonedHandle == null)
+            {
+                return;
+            }
+
             var summoner = Dummies.IsDummy(summoning) ? Dummies.CastFor(summoning) : Unit.Of(summoning);
             if (summoner == null)
             {
