@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (upgradeHooks == null)
                 {
-                    upgradeHooks = new HookTable(typeof(Upgrade), new string[] { "OnResearched" }, new int[] { Hook.OnResearchOrSale });
+                    upgradeHooks = new HookTable(typeof(Upgrade), new string[0], new int[0], names2: new string[] { "OnResearched" }, bits2: new int[] { Hook2.OnResearchOrSale });
                 }
 
                 return upgradeHooks;
@@ -22,6 +22,9 @@ namespace Moonwell
 
         /// <summary>The bit mask of the reactions this class overrides, worked out when the object is made.</summary>
         internal int Mask;
+
+        /// <summary>The Hook2 bit mask of the reactions this class overrides, worked out with Mask.</summary>
+        internal int Mask2;
 
         /// <summary>The upgrade's object id.</summary>
         [LocalSafe]

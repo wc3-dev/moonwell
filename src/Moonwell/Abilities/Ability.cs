@@ -23,6 +23,9 @@ namespace Moonwell
         /// <summary>The bit mask of the reactions this class overrides, worked out when the ability is made for its unit.</summary>
         internal int Mask;
 
+        /// <summary>The Hook2 bit mask of the reactions this class overrides, worked out with Mask.</summary>
+        internal int Mask2;
+
         /// <summary>The unit that has the ability.</summary>
         [LocalSafe]
         public Unit Unit { get; internal set; } = null!;

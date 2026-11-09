@@ -27,6 +27,9 @@ namespace Moonwell
         /// <summary>The bit mask of the reactions this class overrides, worked out when the item is taken in.</summary>
         internal int Mask;
 
+        /// <summary>The Hook2 bit mask of the reactions this class overrides, worked out with Mask.</summary>
+        internal int Mask2;
+
         /// <summary>The components the class starts with, added in order when the item is taken in. Assigning a new list drops what a parent class listed.</summary>
         protected List<ItemComponent> Components { get; set; } = new List<ItemComponent>();
 

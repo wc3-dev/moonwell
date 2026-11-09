@@ -59,8 +59,8 @@ namespace Moonwell
             known[handle] = made;
             Live.Add(made);
             scope?.Adopt(made);
-            made.Mask = Hooks.MaskOf(made, Destructable.DestructableHooks);
-            Events.Need(made.Mask);
+            made.Mask = Hooks.MaskOf(made, Destructable.DestructableHooks, out made.Mask2);
+            Events.Need(made.Mask, made.Mask2);
             made.WatchIfWanted(made.Mask);
             for (var i = 0; i < made.StartComponents.Count; i++)
             {

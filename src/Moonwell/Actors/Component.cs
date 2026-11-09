@@ -15,6 +15,9 @@ namespace Moonwell
         /// <summary>The bit mask of the reactions this class overrides, worked out when the component is added.</summary>
         internal int Mask;
 
+        /// <summary>The Hook2 bit mask of the reactions this class overrides, worked out with Mask.</summary>
+        internal int Mask2;
+
         /// <summary>The holds of the scopes that hold the component; null when nothing has held it.</summary>
         internal List<Hold>? holds;
 
