@@ -5,7 +5,7 @@ namespace Moonwell
     /// <summary>
     /// The units of [Pooled] classes that have ended, kept hidden to be made again: making a unit costs the game about ten
     /// times what hiding, moving and showing one does (measured 11-08). Unit.Create takes a kept one of its type; the end of
-    /// a living unit of a pooled type, not a hero or an illusion, keeps it (decision 220).
+    /// a living unit of a pooled type, not a hero or an illusion, keeps it (decision 220), unless it is in a transport or carries units (decision 219).
     /// </summary>
     internal static class UnitPool
     {
@@ -72,7 +72,7 @@ namespace Moonwell
 
             var world = Runtime.World;
             var handle = unit.Handle;
-            if (!world.IsAlive(handle))
+            if (!world.IsAlive(handle) || world.IsLoaded(handle) || (unit.cargo != null && unit.cargo.Count > 0))
             {
                 return false;
             }

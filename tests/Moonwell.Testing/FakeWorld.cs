@@ -3374,6 +3374,48 @@ namespace Moonwell.Testing
             MusicCalls.Add("volume " + volume);
         }
 
+        /// <summary>The units in a transport, each with the transport it is in; Load and LetOut change it as the game would.</summary>
+        public Dictionary<unit, unit> LoadedIn = new Dictionary<unit, unit>();
+
+        private readonly Dictionary<unit, int> cargoCapacities = new Dictionary<unit, int>();
+
+        /// <summary>Whether a unit is in a transport.</summary>
+        public bool IsLoaded(unit unit)
+        {
+            return LoadedIn.ContainsKey(unit);
+        }
+
+        /// <summary>A unit's cargo capacity: 0 until it is set.</summary>
+        public int CargoCapacity(unit unit)
+        {
+            return cargoCapacities.TryGetValue(unit, out var capacity) ? capacity : 0;
+        }
+
+        /// <summary>Sets a unit's cargo capacity.</summary>
+        public void SetCargoCapacity(unit unit, int capacity)
+        {
+            cargoCapacities[unit] = capacity;
+        }
+
+        /// <summary>The game's load: the stop order the cargo is given, the cargo in the transport, its undefend order, then, when the runtime listens, the load event (seen 11-08).</summary>
+        public void Load(unit cargo, unit transport)
+        {
+            PlayerOrdersId(cargo, 851972, OrderKind.None);
+            LoadedIn[cargo] = transport;
+            PlayerOrdersId(cargo, 852056, OrderKind.None);
+            if (Listening.Contains(GameEvent.Cargo))
+            {
+                Inbound.Loaded(cargo, transport);
+            }
+        }
+
+        /// <summary>The game lets a unit out of its transport: it is no longer loaded, then it is given the stop order (seen 11-08).</summary>
+        public void LetOut(unit cargo)
+        {
+            LoadedIn.Remove(cargo);
+            PlayerOrdersId(cargo, 851972, OrderKind.None);
+        }
+
         /// <summary>The game's random numbers: low, the first allowed, unless a case sets another way to pick.</summary>
         public System.Func<int, int, int> Pick = (low, high) => low;
 
