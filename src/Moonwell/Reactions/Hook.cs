@@ -1,6 +1,9 @@
 namespace Moonwell
 {
-    /// <summary>The bit of each reaction a class can override; a class's mask holds the bits of the ones it overrides.</summary>
+    /// <summary>
+    /// The bit of each reaction a class can override; a class's mask holds the bits of the ones it overrides. Closed with
+    /// bits 30 and 31 free, as a spare: new reactions go in Hook2.
+    /// </summary>
     internal static class Hook
     {
         /// <summary>A unit takes damage.</summary>
@@ -92,8 +95,5 @@ namespace Moonwell
 
         /// <summary>A unit summons another, by code or by the game's spell: one bit for the summoner's and the map's reactions (decision 227).</summary>
         internal const int OnSummon = 536870912;
-
-        /// <summary>A research starts, is cancelled or finishes, or a shop sells: one bit for the upgrade classes', the units' and their components' reactions (decisions 213 and 214).</summary>
-        internal const int OnResearchOrSale = 1073741824;
     }
 }

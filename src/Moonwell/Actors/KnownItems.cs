@@ -60,8 +60,8 @@ namespace Moonwell
             known[handle] = made;
             Live.Add(made);
             scope?.Adopt(made);
-            made.Mask = Hooks.MaskOf(made, Item.ItemHooks);
-            Events.Need(made.Mask);
+            made.Mask = Hooks.MaskOf(made, Item.ItemHooks, out made.Mask2);
+            Events.Need(made.Mask, made.Mask2);
             for (var i = 0; i < made.StartComponents.Count; i++)
             {
                 made.Add(made.StartComponents[i]);
