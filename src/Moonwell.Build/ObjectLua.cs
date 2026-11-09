@@ -710,7 +710,8 @@ namespace Moonwell.Build
                 inObjects ? FieldsOf(type, names) : Array.Empty<UsedField>(),
                 inObjects ? ObjectStubs.Methods(type, names) : Array.Empty<UsedMethod>(),
                 inObjects ? ObjectStubs.Class(type, stubbed) : string.Empty,
-                shared));
+                shared,
+                !inObjects && type.GetCustomAttributesData().Any(data => data.AttributeType.FullName == "Moonwell.PooledAttribute")));
         }
 
         // The shared fields a class itself carries ([SharedField] on a kind base), each by its live member, in id order.
