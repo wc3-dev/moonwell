@@ -710,8 +710,14 @@ namespace Moonwell.Testing
             frames.Fire(fake, Click, 0);
             Expect.Equal(1, clicks, "clicked");
             Expect.Equal(1, fake.KeyboardReleases, "the keyboard given back");
+            button.Enabled = false;
+            Expect.Equal(@"ReplaceableTextures\CommandButtonsDisabled\DISBTNFootman.blp", icon.Texture, "turned off, the game's grey copy");
+            Expect.Equal(255, icon.Alpha, "not faded");
             button.Icon = "x.blp";
             Expect.Equal("x.blp", icon.Texture, "a new icon");
+            Expect.Equal(Moonwell.IconButton.DisabledAlpha, icon.Alpha, "one the game has no grey copy of is faded");
+            button.Enabled = true;
+            Expect.Equal(255, icon.Alpha, "turned on, bright again");
             button.Icon = "";
             Expect.Equal(Moonwell.Image.Blank, icon.Texture, "no icon draws nothing, not the game's missing texture");
             var empty = Screen.Add(new IconButton(), Game.Instance);
