@@ -144,7 +144,7 @@ namespace Moonwell
         internal static void DestructableDied(destructable d)
         {
             var dead = Destructable.Of(d);
-            if (dead == null || dead.ending)
+            if (dead == null || dead.ending || dead.opening)
             {
                 return;
             }
