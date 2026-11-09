@@ -22,6 +22,8 @@ namespace Moonwell.Testing
             AddStatsAndScores(list);
             AddUnitAbilities(list);
             AddSummons(list);
+            AddResearch(list);
+            AddShops(list);
             AddLast(list);
             AddCompiler(list);
             AddMaths(list);
@@ -1549,6 +1551,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.tooltip", Run = KitCases.RichTip });
             list.Add(new Case { Name = "kit.moved-throws", Run = KitCases.MovedThrows });
             list.Add(new Case { Name = "kit.shop", Run = KitWindowCases.Shop });
+            list.Add(new Case { Name = "kit.shop-sells", Run = KitWindowCases.ShopSells });
             list.Add(new Case { Name = "kit.settings", Run = KitWindowCases.Settings });
             list.Add(new Case { Name = "kit.settings-spoiled", Run = KitWindowCases.SettingsSpoiled });
             list.Add(new Case { Name = "kit.scoreboard", Run = KitWindowCases.Scoreboard });
@@ -1684,6 +1687,24 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
             list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
             list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
+        }
+
+        /// <summary>Adds the cases for shops (decision 214).</summary>
+        private static void AddShops(List<Case> list)
+        {
+            list.Add(new Case { Name = "shops.sale-reactions", Run = ShopCases.SaleReactions });
+            list.Add(new Case { Name = "shops.unknown-shop", Run = ShopCases.UnknownShop });
+            list.Add(new Case { Name = "shops.stock", Run = ShopCases.Stock });
+        }
+
+        /// <summary>Adds the cases for research (decision 213).</summary>
+        private static void AddResearch(List<Case> list)
+        {
+            list.Add(new Case { Name = "research.levels-in-order", Run = ResearchCases.LevelsInOrder });
+            list.Add(new Case { Name = "research.set-inside-runs-in-order", Run = ResearchCases.SetInsideRunsInOrder });
+            list.Add(new Case { Name = "research.lowered-inside-stops", Run = ResearchCases.LoweredInsideStops });
+            list.Add(new Case { Name = "research.game-research", Run = ResearchCases.GameResearch });
+            list.Add(new Case { Name = "research.plain-upgrade", Run = ResearchCases.PlainUpgrade });
         }
 
         /// <summary>The summons' cases (decision 227).</summary>

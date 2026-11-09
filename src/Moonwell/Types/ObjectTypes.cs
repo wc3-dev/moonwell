@@ -19,6 +19,12 @@ namespace Moonwell
         /// <summary>The function that makes the object of each registered ability type, keyed by its id; a lookup only.</summary>
         private static Dictionary<int, Func<Moonwell.Ability>> abilityMakers = new Dictionary<int, Func<Moonwell.Ability>>();
 
+        /// <summary>The function that makes the object of each registered upgrade type, keyed by its id; a lookup only.</summary>
+        private static Dictionary<int, Func<Moonwell.Upgrade>> upgradeMakers = new Dictionary<int, Func<Moonwell.Upgrade>>();
+
+        /// <summary>The one object of each upgrade type, keyed by its id: a registered class's, made once every maker is registered, or a plain Upgrade made on first use.</summary>
+        private static Dictionary<int, Moonwell.Upgrade> upgrades = new Dictionary<int, Moonwell.Upgrade>();
+
         /// <summary>The id each registered class is registered with, keyed by the class; a lookup only.</summary>
         private static Dictionary<Type, int> ids = new Dictionary<Type, int>();
 
@@ -124,6 +130,40 @@ namespace Moonwell
             ids[typeof(T)] = id;
             abilityMakers[id] = make;
             Listen(() => Events.Need(Hooks.MaskOf(make(), Moonwell.Ability.AbilityHooks)));
+        }
+
+        /// <summary>Registers an upgrade type with its id and the function that makes its one object, and listens for the events its class needs (decision 213).</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Upgrade<T>(int id, Func<T> make)
+            where T : Moonwell.Upgrade
+        {
+            if (upgradeMakers.ContainsKey(id))
+            {
+                throw new MoonwellException("ObjectTypes.Upgrade: " + id + " is registered twice");
+            }
+
+            ids[typeof(T)] = id;
+            upgradeMakers[id] = make;
+            Listen(() =>
+            {
+                var made = make();
+                made.TypeId = id;
+                made.Mask = Hooks.MaskOf(made, Moonwell.Upgrade.UpgradeHooks);
+                upgrades[id] = made;
+                Events.Need(made.Mask);
+            });
+        }
+
+        /// <summary>The one object of an upgrade type: its registered class's, else a plain Upgrade of the id, made once.</summary>
+        internal static Moonwell.Upgrade UpgradeOf(int id)
+        {
+            if (!upgrades.TryGetValue(id, out var upgrade))
+            {
+                upgrade = new Moonwell.Upgrade { TypeId = id };
+                upgrades[id] = upgrade;
+            }
+
+            return upgrade;
         }
 
         /// <summary>
@@ -583,6 +623,8 @@ namespace Moonwell
             itemMakers = new Dictionary<int, Func<Item>>();
             destructableMakers = new Dictionary<int, Func<Destructable>>();
             abilityMakers = new Dictionary<int, Func<Moonwell.Ability>>();
+            upgradeMakers = new Dictionary<int, Func<Moonwell.Upgrade>>();
+            upgrades = new Dictionary<int, Moonwell.Upgrade>();
             ids = new Dictionary<Type, int>();
             buffIds = new Dictionary<object, int>();
             carriers = new Dictionary<object, int>();

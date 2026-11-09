@@ -39,6 +39,42 @@ namespace Moonwell.Testing
             Expect.Near(ShopWindow.GoodSize, shop.goods.Height, "one line left");
         }
 
+        /// <summary>An item class the shop sells.</summary>
+        private sealed class ShopPotion : Item
+        {
+        }
+
+        /// <summary>A good put in with Sell&lt;T&gt; is sold by the window: checked, paid in gold and lumber and given to the Buyer; sold out it is greyed and refused, and comes back after Restock; without the gold it is refused; Bought does not run.</summary>
+        public static void ShopSells(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            ObjectTypes.Item(ObjectTypes.FourCC("pman"), () => new ShopPotion());
+            var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), slot: 0))!;
+            var shop = Screen.Add(new ShopWindow { Buyer = hero }, Game.Instance, shownTo: Player.One);
+            var potion = shop.Sell<ShopPotion>(new ShopEntry { Name = "Potion", Cost = 100, Lumber = 10, Stock = 1, Restock = 5.0f });
+            var bought = 0;
+            shop.Bought += (who, entry) => bought++;
+            Expect.Equal("100 gold, 10 lumber", ((RichTooltip)shop.buttons[0].Tooltip!).Cost, "the tooltip's cost");
+            Player.One.Gold = 250;
+            Player.One.Lumber = 100;
+            ClickOn(frames, shop.buttons[0], 0);
+            Expect.Equal(150, Player.One.Gold, "the gold taken");
+            Expect.Equal(90, Player.One.Lumber, "the lumber taken");
+            Expect.True(hero.ItemIn(0) is ShopPotion, "the item given to the buyer");
+            Expect.Equal(0, potion.Left, "none left");
+            Expect.True(!shop.buttons[0].Enabled, "sold out is greyed");
+            ClickOn(frames, shop.buttons[0], 0);
+            Expect.Equal(150, Player.One.Gold, "sold out takes nothing");
+            world.Advance(5.1f);
+            Expect.Equal(1, potion.Left, "one back after Restock");
+            Expect.True(shop.buttons[0].Enabled, "and shown again");
+            Player.One.Gold = 50;
+            ClickOn(frames, shop.buttons[0], 0);
+            Expect.Equal(50, Player.One.Gold, "without the gold nothing is taken");
+            Expect.Equal(1, potion.Left, "nor sold");
+            Expect.Equal(0, bought, "Bought does not run");
+        }
+
         /// <summary>A settings window shows a line for each setting; the player's changes run Changed and are written to their file, and the next game's window brings them back, running Changed.</summary>
         public static void Settings(FakeWorld world)
         {
