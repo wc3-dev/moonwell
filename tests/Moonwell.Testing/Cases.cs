@@ -1747,6 +1747,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "summons.dies-with-summoner", Run = SummonCases.DiesWithSummoner });
             list.Add(new Case { Name = "summons.reaction-order", Run = SummonCases.ReactionOrder });
             list.Add(new Case { Name = "summons.game-summon-links", Run = SummonCases.GameSummonLinks });
+            list.Add(new Case { Name = "summons.game-summon-of-no-unit", Run = SummonCases.GameSummonOfNoUnit });
             list.Add(new Case { Name = "summons.ended-scope-dies-at-once", Run = SummonCases.EndedScopeDiesAtOnce });
         }
 
