@@ -81,9 +81,9 @@ namespace Moonwell.Build
                 BuildWithoutObjects(project, settings, map, targetPath, options, log);
             }
 
-            if (Declarations.References(targetPath, FramesAssemblyName))
+            if (Declarations.Needs(targetPath, FramesAssemblyName))
             {
-                StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder, Declarations.References(targetPath, KitAssemblyName)));
+                StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder, Declarations.Needs(targetPath, KitAssemblyName)));
             }
 
             try
@@ -204,7 +204,7 @@ namespace Moonwell.Build
         private static List<string> Loading(string targetPath)
         {
             var loading = new List<string>();
-            if (Declarations.References(targetPath, InputAssemblyName) && NamesKeyboard(targetPath))
+            if (Declarations.Needs(targetPath, InputAssemblyName) && NamesKeyboard(targetPath))
             {
                 loading.Add("global::Moonwell.InputSystem.RegisterKeys();");
             }
@@ -267,13 +267,13 @@ namespace Moonwell.Build
                 log.WriteLine(day.Warning);
             }
 
-            if (Declarations.References(targetPath, DamageAssemblyName))
+            if (Declarations.Needs(targetPath, DamageAssemblyName))
             {
                 installs.Add("global::Moonwell.DamageSystem.Install();");
             }
 
-            var physics = Declarations.References(targetPath, PhysicsAssemblyName);
-            if (Declarations.References(targetPath, TerrainAssemblyName))
+            var physics = Declarations.Needs(targetPath, PhysicsAssemblyName);
+            if (Declarations.Needs(targetPath, TerrainAssemblyName))
             {
                 // The fork's W2 fix refuses a map without a war3map.w3e, so there is always one here.
                 TerrainWriter.Write(project, map.Environment!);
@@ -285,7 +285,7 @@ namespace Moonwell.Build
                 TerrainWriter.Delete(project);
             }
 
-            if (Declarations.References(targetPath, AreasAssemblyName))
+            if (Declarations.Needs(targetPath, AreasAssemblyName))
             {
                 // A map with no war3map.w3r has no regions: Regions is null, and the arrays are empty.
                 PlaceWriter.WriteAreas(project, map.Regions);
@@ -297,7 +297,7 @@ namespace Moonwell.Build
                 PlaceWriter.DeleteAreas(project);
             }
 
-            if (Declarations.References(targetPath, InputAssemblyName))
+            if (Declarations.Needs(targetPath, InputAssemblyName))
             {
                 // A map that references the package but never names Mouse or IMouseWatch registers no mouse event: the package listens
                 // only when asked. One that names them listens to presses and releases, and to the moves, synced events 120 to 240 a
@@ -320,7 +320,7 @@ namespace Moonwell.Build
                 PlaceWriter.DeleteInput(project);
             }
 
-            if (Declarations.References(targetPath, FramesAssemblyName))
+            if (Declarations.Needs(targetPath, FramesAssemblyName))
             {
                 installs.Add("global::Moonwell.FramesSystem.Install();");
             }
