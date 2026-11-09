@@ -96,7 +96,7 @@ namespace Moonwell.Build.Tests
 
         public void PanCamera(player p, float x, float y, float seconds) => throw Unused();
 
-        public void FollowUnit(player p, unit u) => throw Unused();
+        public void FollowUnit(player p, unit u, float offsetX, float offsetY) => throw Unused();
 
         public void StopFollowing(player p) => throw Unused();
 
@@ -105,6 +105,18 @@ namespace Moonwell.Build.Tests
         public void SetBounds(player p, float minX, float minY, float maxX, float maxY) => throw Unused();
 
         public void ApplySetup(player p, camerasetup setup, float seconds) => throw Unused();
+
+        public void ResetBounds(player p) => throw Unused();
+
+        public void SetInputControlled(player p, int field, bool controlled) => throw Unused();
+
+        public void AllowHotkeyLock(player p, bool allow) => throw Unused();
+
+        public void Shake(player p, float strength) => throw Unused();
+
+        public void StopShake(player p) => throw Unused();
+
+        public void PlayModel(player p, string path) => throw Unused();
 
         private static NotSupportedException Unused() => new NotSupportedException("This world only makes camera setups.");
     }
