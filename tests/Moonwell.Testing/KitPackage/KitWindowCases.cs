@@ -191,6 +191,35 @@ namespace Moonwell.Testing
             return kids;
         }
 
+        private sealed class Strike : Talent
+        {
+            public Strike()
+            {
+                Name = "Strike";
+                Tree = "Arms";
+            }
+        }
+
+        private sealed class Rend : Talent
+        {
+            public Rend()
+            {
+                Name = "Rend";
+                Tree = "Arms";
+                Row = 1;
+            }
+        }
+
+        private sealed class Guard : Talent
+        {
+            public Guard()
+            {
+                Name = "Guard";
+                Tree = "Guard";
+                Column = 2;
+            }
+        }
+
         private sealed class Toughness : Talent
         {
             public Toughness()
@@ -292,6 +321,35 @@ namespace Moonwell.Testing
             Expect.Equal("2 1", string.Join(" ", tree.Ranks()), "the ranks back");
             Expect.Near(8.0f, world.ArmorOf(handle), "and their modifiers");
             Expect.Equal(3, tree.Points, "points as they were");
+            Expect.Equal("Points: 3", tree.pointsLabel.Text, "the unspent points shown");
+        }
+
+        /// <summary>Talents that name a tree go on its tab, sharing the points, and a row opens by the points spent in its own tree; a talent naming no tree among ones that do is refused.</summary>
+        public static void TalentTabs(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var hero = (Hero)Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), hero: true))!;
+            var tree = Screen.Add(new TalentWindow(hero), Game.Instance, shownTo: Player.One);
+            tree.PointsPerRow = 1;
+            tree.Add(() => new Strike());
+            tree.Add(() => new Rend());
+            tree.Add(() => new Guard());
+            Expect.Equal("Arms Guard", string.Join(" ", tree.trees), "a tab a tree, in the order named");
+            Expect.Equal(2, tree.tabs!.Count, "two pages");
+            Expect.True(frames.FrameOf(tree.buttons[2].Handle!).Parent == frames.FrameOf(tree.tabs.pages[1].Handle!), "a talent on its tree's page");
+            Expect.True(tree.Width >= 2.0f * Window.Inset + 2 * tree.tabs.TabWidth, "wide enough for the tabs");
+            tree.Points = 3;
+            ClickOn(frames, tree.buttons[2], 0);
+            ClickOn(frames, tree.buttons[1], 0);
+            Expect.Equal("0 0 1", string.Join(" ", tree.Ranks()), "a point in Guard opens no row of Arms");
+            ClickOn(frames, tree.buttons[0], 0);
+            ClickOn(frames, tree.buttons[1], 0);
+            Expect.Equal("1 1 1", string.Join(" ", tree.Ranks()), "a point in Arms opens its second row");
+            Expect.Equal("Points: 0", tree.pointsLabel.Text, "one pool of points");
+            var before = world.Printed.Count;
+            tree.Add(() => new Toughness());
+            Expect.Equal(3, tree.kinds.Count, "a talent of no tree refused");
+            Expect.True(world.Printed.Count > before, "and reported");
         }
     }
 }
