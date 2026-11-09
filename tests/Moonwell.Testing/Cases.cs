@@ -27,6 +27,7 @@ namespace Moonwell.Testing
             AddShops(list);
             AddInventory(list);
             AddLast(list);
+            AddLiveDestructables(list);
             AddCompiler(list);
             AddMaths(list);
             AddInteractions(list);
@@ -695,6 +696,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.pair.data-and-since", Run = PairCases.DataAndSince });
             list.Add(new Case { Name = "interactions.pair.pair-owns", Run = PairCases.PairOwns });
             list.Add(new Case { Name = "interactions.tree", Run = TreeCases.Tree });
+            list.Add(new Case { Name = "interactions.regrow", Run = TreeCases.Regrows });
+            list.Add(new Case { Name = "interactions.regrow-restored-early", Run = TreeCases.RegrowRestoredEarly });
         }
 
         /// <summary>Adds the physics package's cases.</summary>
@@ -1026,6 +1029,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "input.camera.unknown-camera", Run = CameraCases.UnknownCamera });
             list.Add(new Case { Name = "input.camera.wrong-data", Run = CameraCases.WrongData });
             list.Add(new Case { Name = "input.camera.not-installed", Run = CameraCases.NotInstalled });
+            list.Add(new Case { Name = "input.camera.work-changes", Run = CameraWorkCases.Changes });
+            list.Add(new Case { Name = "input.camera.shake", Run = CameraWorkCases.Shake });
+            list.Add(new Case { Name = "input.camera.cinematic-work", Run = CameraWorkCases.CinematicCamera });
+            list.Add(new Case { Name = "input.camera.created", Run = CameraWorkCases.Created });
+            list.Add(new Case { Name = "input.camera.third-person", Run = CameraWorkCases.ThirdPerson });
+            list.Add(new Case { Name = "input.camera.top-down", Run = CameraWorkCases.TopDown });
+            list.Add(new Case { Name = "input.camera.follow-paused", Run = CameraWorkCases.Paused });
         }
 
         /// <summary>Adds the terrain package's cases.</summary>
@@ -2036,6 +2046,15 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "conditionals.nullable-bool-first-branch", Run = ConditionalCases.NullableBoolFirstBranch });
             list.Add(new Case { Name = "conditionals.struct-type-parameter", Run = ConditionalCases.StructTypeParameter });
             list.Add(new Case { Name = "conditionals.still-right", Run = ConditionalCases.StillRight });
+        }
+
+        /// <summary>Adds the cases for 0.10's live destructables and doodads, apart from AddLast, which is at Lua's 200 locals.</summary>
+        private static void AddLiveDestructables(List<Case> list)
+        {
+            list.Add(new Case { Name = "destructables.gate-open-close", Run = DestructableLiveCases.GateOpenClose });
+            list.Add(new Case { Name = "destructables.gate-restore", Run = DestructableLiveCases.GateRestore });
+            list.Add(new Case { Name = "destructables.looks", Run = DestructableLiveCases.Looks });
+            list.Add(new Case { Name = "destructables.doodad-animations", Run = DestructableLiveCases.DoodadAnimations });
         }
 
         /// <summary>Adds the cases for what the compiler writes. A function of more than 200 cases does not load: each is a local in its Lua.</summary>

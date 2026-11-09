@@ -39,6 +39,15 @@ namespace Moonwell
         /// <summary>The most life last read or set.</summary>
         internal float lastMaxLife;
 
+        /// <summary>Whether Open is killing the destructable, so that its death runs no OnDeath.</summary>
+        internal bool opening;
+
+        /// <summary>Whether Hide was called last, not Show.</summary>
+        internal bool hidden;
+
+        /// <summary>The animation speed last set.</summary>
+        internal float animationSpeed = 1.0f;
+
         /// <summary>The components the class starts with, added in order when the destructable is taken in. Assigning a new list drops what a parent class listed.</summary>
         protected List<DestructableComponent> Components { get; set; } = new List<DestructableComponent>();
 
@@ -224,6 +233,7 @@ namespace Moonwell
 
             Runtime.World.RestoreDestructable(Handle, MaxLife, showBirth);
             lastLife = Runtime.World.DestructableLifeOf(Handle);
+            IsOpen = false;
             if (!HasEnded && (Mask & Hook.OnRestored) != 0)
             {
                 try
@@ -256,6 +266,188 @@ namespace Moonwell
             }
 
             EndDispatch();
+        }
+
+        /// <summary>Whether Open opened the destructable, a gate, and nothing has closed or restored it since.</summary>
+        [LocalSafe]
+        public bool IsOpen { get; private set; }
+
+        /// <summary>Opens a gate as World Editor's gate action does: kills it, which takes its pathing away, and plays its "death alternate" animation. No OnDeath runs, as the code opening it knows. A gate destroyed earlier shows as opened. Does nothing to an open gate, and once it is gone.</summary>
+        public void Open()
+        {
+            if (IsGone || IsOpen)
+            {
+                return;
+            }
+
+            if (IsAlive)
+            {
+                opening = true;
+                Runtime.World.SlayDestructable(Handle);
+                opening = false;
+                lastLife = 0.0f;
+            }
+
+            Runtime.World.AnimateDestructable(Handle, "death alternate", false);
+            IsOpen = true;
+        }
+
+        /// <summary>Closes a gate as World Editor's gate action does: one that is open or destroyed comes back at its most life with its birth animation, then stands. No OnRestored runs. Does nothing once it is gone.</summary>
+        public void Close()
+        {
+            if (IsGone)
+            {
+                return;
+            }
+
+            if (!IsAlive)
+            {
+                Runtime.World.RestoreDestructable(Handle, MaxLife, true);
+                lastLife = Runtime.World.DestructableLifeOf(Handle);
+            }
+
+            Runtime.World.AnimateDestructable(Handle, "stand", false);
+            IsOpen = false;
+        }
+
+        /// <summary>Whether the destructable is shown: true until Hide. A hidden destructable keeps its life and is still found (seen 11-08).</summary>
+        [LocalSafe]
+        public bool IsShown => !hidden;
+
+        /// <summary>Shows a destructable that Hide hid. Does nothing once it is gone.</summary>
+        public void Show()
+        {
+            if (!IsGone)
+            {
+                Runtime.World.DisplayDestructable(Handle, true);
+                hidden = false;
+            }
+        }
+
+        /// <summary>Hides the destructable from sight (ShowDestructable). It keeps its life and is still found (seen 11-08). Does nothing once it is gone.</summary>
+        public void Hide()
+        {
+            if (!IsGone)
+            {
+                Runtime.World.DisplayDestructable(Handle, false);
+                hidden = true;
+            }
+        }
+
+        /// <summary>Plays an animation of the destructable's model by name (SetDestructableAnimation): "death", "birth", "stand hit", or any name the model has. Does nothing once it is gone.</summary>
+        public void PlayAnimation(string name)
+        {
+            if (!IsGone)
+            {
+                Runtime.World.AnimateDestructable(Handle, name, false);
+            }
+        }
+
+        /// <summary>Queues an animation of the destructable's model by name, to play after the one playing (QueueDestructableAnimation). Does nothing once it is gone.</summary>
+        public void QueueAnimation(string name)
+        {
+            if (!IsGone)
+            {
+                Runtime.World.AnimateDestructable(Handle, name, true);
+            }
+        }
+
+        /// <summary>The speed of the destructable's animations as a factor of the model's own (SetDestructableAnimationSpeed). It reads what was set, 1 unless set, as the game keeps none to read. Once it is gone, setting does nothing.</summary>
+        [LocalSafe]
+        public float AnimationSpeed
+        {
+            get
+            {
+                return animationSpeed;
+            }
+
+            set
+            {
+                if (!IsGone)
+                {
+                    animationSpeed = value;
+                    Runtime.World.PaceDestructableAnimations(Handle, value);
+                }
+            }
+        }
+
+        /// <summary>Tints the destructable's model (SetDestructableVertexColor); each value is clamped to 0-255, and an alpha of 0 makes it see-through. The game keeps no tint to read back. Does nothing once it is gone.</summary>
+        public void Tint(int red, int green, int blue, int alpha = 255)
+        {
+            if (!IsGone)
+            {
+                Runtime.World.TintDestructable(Handle, Clamp(red), Clamp(green), Clamp(blue), Clamp(alpha));
+            }
+        }
+
+        /// <summary>Tints the destructable's model in a colour, its alpha included; as Tint(red, green, blue, alpha).</summary>
+        public void Tint(Color color)
+        {
+            Tint(color.R, color.G, color.B, color.A);
+        }
+
+        private static int Clamp(int value)
+        {
+            return value < 0 ? 0 : value > 255 ? 255 : value;
+        }
+
+        /// <summary>Whether attacks and spells leave the destructable whole. Setting its Life or Kill still kills an invulnerable one (seen 11-08). False once it is gone, and setting does nothing.</summary>
+        [LocalSafe]
+        public bool Invulnerable
+        {
+            get
+            {
+                return !IsGone && Runtime.World.DestructableInvulnerableOf(Handle);
+            }
+
+            set
+            {
+                if (!IsGone)
+                {
+                    Runtime.World.PutDestructableInvulnerable(Handle, value);
+                }
+            }
+        }
+
+        /// <summary>The name of the destructable's type, without World Editor's suffix ("Long Stone Bridge"). The game gives it in each player's language, so it is read only inside Local.For. Empty once it is gone. In a declared class's constructor, the name of the class's type (bnam), the same on every machine; the game has no way to rename one destructable.</summary>
+        public string Name
+        {
+            [MachineLocal]
+            get
+            {
+                if (Handle == null)
+                {
+                    return DeclaredValue<string>("bnam") ?? string.Empty;
+                }
+
+                return IsGone ? string.Empty : Runtime.World.DestructableNameOf(Handle);
+            }
+
+            protected set
+            {
+                if (Handle == null)
+                {
+                    Declare("bnam", value);
+                }
+            }
+        }
+
+        /// <summary>The height up to which the destructable hides what is behind it from units' sight: its type's value (a tree 230, a barrel 0) until set. 0 once it is gone, and setting does nothing.</summary>
+        [LocalSafe]
+        public float OccluderHeight
+        {
+            get
+            {
+                return IsGone ? 0.0f : Runtime.World.DestructableOccluderHeightOf(Handle);
+            }
+
+            set
+            {
+                if (!IsGone)
+                {
+                    Runtime.World.PutDestructableOccluderHeight(Handle, value);
+                }
+            }
         }
 
         /// <summary>The object of a game destructable: made when it is first seen; null for null or for one the game has removed.</summary>

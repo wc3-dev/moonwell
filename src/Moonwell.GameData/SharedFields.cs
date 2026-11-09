@@ -30,6 +30,7 @@ public static class SharedFields
         [Kind.Destructable] = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["bhps"] = "MaxLife",
+            ["bnam"] = "Name",
         },
     };
 

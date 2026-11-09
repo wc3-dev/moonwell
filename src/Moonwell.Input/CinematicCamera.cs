@@ -51,9 +51,9 @@ namespace Moonwell
         [LocalSafe]
         public void SetZOffset(float offset, float seconds = 0f) => Each(camera => camera.SetZOffset(offset, seconds));
 
-        /// <summary>Locks the watchers' cameras on a unit, until StopFollowing or a pan.</summary>
+        /// <summary>Locks the watchers' cameras on a unit, with an offset in the world's directions, until StopFollowing or a pan.</summary>
         [LocalSafe]
-        public void Follow(Unit unit) => Each(camera => camera.Follow(unit));
+        public void Follow(Unit unit, Vector2 offset = default) => Each(camera => camera.Follow(unit, offset));
 
         /// <summary>Ends a lock on a unit.</summary>
         [LocalSafe]
@@ -70,6 +70,16 @@ namespace Moonwell
         /// <summary>Limits where the watchers' cameras can go to these bounds.</summary>
         [LocalSafe]
         public void SetBounds(Bounds bounds) => Each(camera => camera.SetBounds(bounds));
+
+        /// <summary>Shakes the watchers' cameras for some seconds, or until StopShake when seconds is 0 (see Camera.Shake).</summary>
+        public void Shake(float strength, float seconds = 0f) => Each(camera => camera.Shake(strength, seconds));
+
+        /// <summary>Ends the watchers' camera shake.</summary>
+        public void StopShake() => Each(camera => camera.StopShake());
+
+        /// <summary>Plays a camera path from a model on the watchers' cameras, until Reset (see Camera.PlayModel).</summary>
+        [LocalSafe]
+        public void PlayModel(string path) => Each(camera => camera.PlayModel(path));
 
         private void Each(Action<Camera> change)
         {

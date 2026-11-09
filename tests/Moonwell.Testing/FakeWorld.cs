@@ -1323,6 +1323,67 @@ namespace Moonwell.Testing
             destructableTypes[destructable] = 0;
         }
 
+        /// <summary>The calls that changed how a destructable looks or what it takes, in turn: "show True", "animate death", "queue stand", "speed 0.5", "tint 1 2 3 4", "invulnerable True", "occluder 5".</summary>
+        public List<string> DestructableCalls = new List<string>();
+
+        /// <summary>The doodad animations played, in turn: "near typeId x y radius nearestOnly name" or "in typeId left bottom right top name".</summary>
+        public List<string> DoodadAnimations = new List<string>();
+
+        /// <summary>The name every destructable's type reads.</summary>
+        public string DestructableName = "Summer Tree Wall";
+
+        private readonly HashSet<destructable> invulnerableDestructables = new HashSet<destructable>();
+
+        private readonly Dictionary<destructable, float> occluderHeights = new Dictionary<destructable, float>();
+
+        /// <summary>Records a show or a hide.</summary>
+        public void DisplayDestructable(destructable destructable, bool shown) => DestructableCalls.Add("show " + shown);
+
+        /// <summary>Records an animation played or queued.</summary>
+        public void AnimateDestructable(destructable destructable, string name, bool queued) => DestructableCalls.Add((queued ? "queue " : "animate ") + name);
+
+        /// <summary>Records an animation speed.</summary>
+        public void PaceDestructableAnimations(destructable destructable, float speed) => DestructableCalls.Add("speed " + speed);
+
+        /// <summary>Records a tint.</summary>
+        public void TintDestructable(destructable destructable, int red, int green, int blue, int alpha) => DestructableCalls.Add("tint " + red + " " + green + " " + blue + " " + alpha);
+
+        /// <summary>Whether a destructable was made invulnerable.</summary>
+        public bool DestructableInvulnerableOf(destructable destructable) => invulnerableDestructables.Contains(destructable);
+
+        /// <summary>Records and keeps whether a destructable is invulnerable.</summary>
+        public void PutDestructableInvulnerable(destructable destructable, bool invulnerable)
+        {
+            DestructableCalls.Add("invulnerable " + invulnerable);
+            if (invulnerable)
+            {
+                invulnerableDestructables.Add(destructable);
+            }
+            else
+            {
+                invulnerableDestructables.Remove(destructable);
+            }
+        }
+
+        /// <summary>DestructableName.</summary>
+        public string DestructableNameOf(destructable destructable) => DestructableName;
+
+        /// <summary>The occluder height set, 0 until set.</summary>
+        public float DestructableOccluderHeightOf(destructable destructable) => occluderHeights.TryGetValue(destructable, out var height) ? height : 0f;
+
+        /// <summary>Records and keeps an occluder height.</summary>
+        public void PutDestructableOccluderHeight(destructable destructable, float height)
+        {
+            DestructableCalls.Add("occluder " + height);
+            occluderHeights[destructable] = height;
+        }
+
+        /// <summary>Records a doodad animation near a place.</summary>
+        public void AnimateDoodads(int typeId, float x, float y, float radius, bool nearestOnly, string name) => DoodadAnimations.Add("near " + typeId + " " + x + " " + y + " " + radius + " " + nearestOnly + " " + name);
+
+        /// <summary>Records a doodad animation inside a rect.</summary>
+        public void AnimateDoodadsIn(int typeId, float left, float bottom, float right, float top, string name) => DoodadAnimations.Add("in " + typeId + " " + left + " " + bottom + " " + right + " " + top + " " + name);
+
         /// <summary>Whether a unit was made as a hero.</summary>
         public bool IsHero(unit unit)
         {
