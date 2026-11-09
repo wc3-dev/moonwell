@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(ItemComponent), new string[] { "OnPickedUp", "OnDropped" }, new int[] { Hook.OnPickedUp, Hook.OnDropped });
+                    componentHooks = new HookTable(typeof(ItemComponent), new string[] { "OnPickedUp", "OnDropped", "OnEquipped", "OnUnequipped" }, new int[] { Hook.OnPickedUp, Hook.OnDropped, Hook.OnPickedUp, Hook.OnDropped });
                 }
 
                 return componentHooks;
@@ -36,6 +36,18 @@ namespace Moonwell
         /// <summary>Runs when the item is dropped by a unit.</summary>
         /// <param name="carrierUnit">The unit that dropped the item.</param>
         public virtual void OnDropped(Unit carrierUnit)
+        {
+        }
+
+        /// <summary>Runs when the item goes into a unit's equipment slots, after the item's class has seen it (see Item.OnEquipped).</summary>
+        /// <param name="carrierUnit">The unit that equipped it.</param>
+        public virtual void OnEquipped(Unit carrierUnit)
+        {
+        }
+
+        /// <summary>Runs when the item leaves a unit's equipment slots, after the item's class has seen it (see Item.OnUnequipped).</summary>
+        /// <param name="carrierUnit">The unit that had it equipped.</param>
+        public virtual void OnUnequipped(Unit carrierUnit)
         {
         }
     }

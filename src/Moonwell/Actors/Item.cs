@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (itemHooks == null)
                 {
-                    itemHooks = new HookTable(typeof(Item), new string[] { "OnPickedUp", "OnDropped" }, new int[] { Hook.OnPickedUp, Hook.OnDropped });
+                    itemHooks = new HookTable(typeof(Item), new string[] { "OnPickedUp", "OnDropped", "OnEquipped", "OnUnequipped" }, new int[] { Hook.OnPickedUp, Hook.OnDropped, Hook.OnPickedUp, Hook.OnDropped });
                 }
 
                 return itemHooks;
@@ -87,6 +87,29 @@ namespace Moonwell
 
         /// <summary>The live carry, from a pick-up Moonwell saw to the drop; null outside one.</summary>
         internal Carrying? carry;
+
+        /// <summary>The unit Moonwell last saw equip the item, until it saw the item leave the equipment slots; null otherwise.</summary>
+        internal Unit? equippedOn;
+
+        /// <summary>Where the item is: on the ground (or gone), in a unit's six slots, its 3.0 bag or its equipment slots (decision 215).</summary>
+        [LocalSafe]
+        public ItemPlace Place
+        {
+            get
+            {
+                if (IsGone || !Runtime.World.IsItemHeld(Handle))
+                {
+                    return ItemPlace.Ground;
+                }
+
+                if (Runtime.World.IsEquipped(Handle))
+                {
+                    return ItemPlace.Equipped;
+                }
+
+                return Runtime.World.IsInBag(Handle) ? ItemPlace.Bag : ItemPlace.Inventory;
+            }
+        }
 
         /// <summary>Ends a carry of the item, and forgets it when it is still the item's.</summary>
         internal void EndCarry(Carrying ending)
@@ -428,6 +451,18 @@ namespace Moonwell
         /// <summary>Runs when the item is dropped by a unit, before the components see it. Inside the call that drops it (Drop, UnitRemoveItem) Carrier is still the unit; for the drops the game fires after RemoveUnit it is already null (see Unit.Drop). Also run when a unit whose inventory drops its items at death dies (a footman's; a hero's keeps them), inside the kill and before the unit's OnDeath, with the unit already dead and Carrier already null.</summary>
         /// <param name="carrierUnit">The unit that dropped the item.</param>
         public virtual void OnDropped(Unit carrierUnit)
+        {
+        }
+
+        /// <summary>Runs when the item goes into a unit's 3.0 equipment slots (Unit.Equip, or a player's own), after its OnPickedUp and the unit's OnItemPickedUp, before its components see it (decision 215).</summary>
+        /// <param name="carrierUnit">The unit that equipped it.</param>
+        public virtual void OnEquipped(Unit carrierUnit)
+        {
+        }
+
+        /// <summary>Runs when the item leaves the equipment slots it was seen going into (Unit.Unequip, a player's own, or a drop), after its OnDropped and the unit's OnItemDropped, before its components see it.</summary>
+        /// <param name="carrierUnit">The unit that had it equipped.</param>
+        public virtual void OnUnequipped(Unit carrierUnit)
         {
         }
 

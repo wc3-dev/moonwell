@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnItemPickedUp, Hook.OnItemDropped });
                 }
 
                 return unitHooks;
@@ -1610,6 +1610,87 @@ namespace Moonwell
         /// <param name="buyer">The unit that bought it.</param>
         public virtual void OnUnitSold(Unit soldUnit, Unit buyer)
         {
+        }
+
+        /// <summary>Runs when the unit puts an item into its 3.0 equipment slots, after the item's OnEquipped, before its components see it (decision 215).</summary>
+        /// <param name="equippedItem">The item equipped.</param>
+        public virtual void OnItemEquipped(Item equippedItem)
+        {
+        }
+
+        /// <summary>Runs when an item the unit had equipped leaves its equipment slots, after the item's OnUnequipped, before its components see it.</summary>
+        /// <param name="unequippedItem">The item unequipped.</param>
+        public virtual void OnItemUnequipped(Item unequippedItem)
+        {
+        }
+
+        /// <summary>Puts an item into the unit's 3.0 equipment slots (UnitEquipItem), from the ground, its six slots or its bag, and answers whether it is equipped. The game fires a pick-up, after a drop when the item was held, so OnPickedUp and then OnEquipped run inside this call (seen 11-08). An item whose slots are full (a third ring) goes to the bag: false. False, and no call, for a unit without the equipment slots (AEqu), and once the unit or the item is gone.</summary>
+        public bool Equip(Item item)
+        {
+            if (IsGone || item.IsGone || BagSizeOrZero() == 0)
+            {
+                return false;
+            }
+
+            Runtime.World.EquipItem(Handle, item.Handle);
+            return !item.IsGone && Runtime.World.IsEquipped(item.Handle);
+        }
+
+        /// <summary>Takes an item out of the unit's equipment slots into its bag (UnitUnequipItem): a drop, then a pick-up into the bag, so OnDropped, OnUnequipped and OnPickedUp run inside this call (seen 11-08). Does nothing for an item not equipped, and once the unit or the item is gone.</summary>
+        public void Unequip(Item item)
+        {
+            if (!IsGone && !item.IsGone && Runtime.World.IsEquipped(item.Handle))
+            {
+                Runtime.World.UnequipItem(Handle, item.Handle);
+            }
+        }
+
+        /// <summary>The items in the unit's 3.0 equipment slots, in slot order (head, chest, gloves, boots, two rings, primary, offhand, trinket; seen 11-08): a new list each read, empty for a unit without them and once the unit is gone. Not for Local.For code: an item Moonwell has not seen is taken in, which must happen on every machine.</summary>
+        public List<Item> Equipped
+        {
+            get
+            {
+                var list = new List<Item>();
+                for (var slot = 0; slot < EquipmentSlots && !IsGone; slot++)
+                {
+                    var item = Item.Of(Runtime.World.ItemInEquipmentSlot(Handle, slot));
+                    if (item != null)
+                    {
+                        list.Add(item);
+                    }
+                }
+
+                return list;
+            }
+        }
+
+        /// <summary>The items in the unit's 3.0 bag, in slot order: a new list each read, empty for a unit without one and once the unit is gone. An item's abilities do nothing from the bag (seen 11-03). Not for Local.For code, as Equipped.</summary>
+        public List<Item> Bag
+        {
+            get
+            {
+                var list = new List<Item>();
+                var size = BagSizeOrZero();
+                for (var slot = 0; slot < size; slot++)
+                {
+                    var item = Item.Of(Runtime.World.ItemInBagSlot(Handle, slot));
+                    if (item != null)
+                    {
+                        list.Add(item);
+                    }
+                }
+
+                return list;
+            }
+        }
+
+        /// <summary>The 3.0 equipment slots a unit with them has (seen 11-08).</summary>
+        private const int EquipmentSlots = 9;
+
+        /// <summary>The size of the unit's 3.0 bag: 30 with AIni (seen 11-08), 0 without one or once the unit is gone.</summary>
+        private int BagSizeOrZero()
+        {
+            return IsGone ? 0 : Runtime.World.BagSizeOf(Handle);
         }
 
         /// <summary>

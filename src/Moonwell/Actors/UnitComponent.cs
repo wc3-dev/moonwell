@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnResearchOrSale, Hook.OnItemPickedUp, Hook.OnItemDropped });
                 }
 
                 return componentHooks;
@@ -113,6 +113,18 @@ namespace Moonwell
         /// <param name="soldUnit">The unit sold.</param>
         /// <param name="buyer">The unit that bought it.</param>
         public virtual void OnUnitSold(Unit soldUnit, Unit buyer)
+        {
+        }
+
+        /// <summary>Runs when the unit equips an item, after its class has seen it (see Unit.OnItemEquipped).</summary>
+        /// <param name="equippedItem">The item equipped.</param>
+        public virtual void OnItemEquipped(Item equippedItem)
+        {
+        }
+
+        /// <summary>Runs when an item the unit had equipped leaves its equipment slots, after its class has seen it.</summary>
+        /// <param name="unequippedItem">The item unequipped.</param>
+        public virtual void OnItemUnequipped(Item unequippedItem)
         {
         }
 

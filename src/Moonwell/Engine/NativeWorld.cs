@@ -2383,6 +2383,42 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>Whether an item is in a unit's 3.0 equipment slots: IsItemEquipped.</summary>
+        public bool IsEquipped(item item)
+        {
+            return Natives.IsItemEquipped(item);
+        }
+
+        /// <summary>Puts an item into a unit's equipment slots.</summary>
+        public void EquipItem(unit unit, item item)
+        {
+            Natives.UnitEquipItem(unit, item);
+        }
+
+        /// <summary>Takes an item out of a unit's equipment slots into its bag.</summary>
+        public void UnequipItem(unit unit, item item)
+        {
+            Natives.UnitUnequipItem(unit, item);
+        }
+
+        /// <summary>The item in an equipment slot of a unit: UnitItemInEquipmentSlot.</summary>
+        public item? ItemInEquipmentSlot(unit unit, int slot)
+        {
+            return Natives.UnitItemInEquipmentSlot(unit, Natives.ConvertLoadoutSlot(slot));
+        }
+
+        /// <summary>The item in a slot of a unit's bag: UnitItemInBagSlot.</summary>
+        public item? ItemInBagSlot(unit unit, int slot)
+        {
+            return Natives.UnitItemInBagSlot(unit, slot);
+        }
+
+        /// <summary>The size of a unit's 3.0 bag: UnitExtendedInventorySize.</summary>
+        public int BagSizeOf(unit unit)
+        {
+            return Natives.UnitExtendedInventorySize(unit);
+        }
+
         /// <summary>Hands the start of a spell's cast to Inbound.</summary>
         private static void SpellChannelAction()
         {
