@@ -572,7 +572,8 @@ units and players. The game's stats are units' only, and change the unit in the 
 
 A game stat never goes below 0. Its base is the game's number less Moonwell's part, so what the game changes meanwhile (a
 level's life, a tome) stays; a percent of a base the game changed is put again at the stat's next change. `Get` reads
-(base + flat) × (1 + percents / 100), without what items and the game's own abilities add to damage and attack speed.
+what the game shows, without what items and the game's own abilities add to damage and attack speed: a hero's +10% life
+covers the life its strength gave when the life last changed, and 5 strength added after adds its life unscaled.
 Damage, armor and attack speed go through three abilities Moonwell declares, so a map that reads them needs
 Moonwell.Objects.
 
@@ -1247,7 +1248,8 @@ public sealed class Firebolt : Bolt
   chooses whom it hits: living enemies of the caster's player unless overridden.
 - The map's class adds what the game needs: its name, icon, hotkey and levels, an Area of Effect for the targeting
   circle, and a Base Order ID of its own when one unit has two Channel abilities. A channel's length is its Follow
-  Through Time.
+  Through Time: 0 for every template but `PulseChannel`, so the cast ends at once. Each template's button sits at
+  (0, 2), the bottom row's left: two on one unit need a Button Position of their own.
 - What a template sends out (a missile, a jump, the next link of a chain) belongs to the ability, so it goes on after
   an instant cast has ended; `PulseChannel`'s pulses belong to the cast, and stop with the channel.
 - `Dash` and `Leap` move the caster as a knockback does, so trees, buildings, cliffs and walls stop them short, and
@@ -1694,14 +1696,15 @@ heroes.Picked += (who, hero) => who.Select(hero);
   board.Column("Gold", player => player.Gold);
   ```
 - `TalentWindow` is a ready talent tree, one hero's. A talent is a class inheriting `Talent`, whose constructor sets
-  `Name`, `Icon`, `Text`, `MaxRank`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the hero as a
-  component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with `RankScope`
-  new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns a rank
-  when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are spent
-  and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as in
-  `OnLevelUp`). `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back,
-  running each talent once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the
-  points back.
+  `Name`, `Icon`, `Text`, `MaxRank`, `Tree`, `Row`, `Column` and `Needs<OtherTalent>(rank)`. The window adds it to the
+  hero as a component at its first rank, so it can override reactions, and `OnRankChanged` runs at each rank with
+  `RankScope` new, which ends at the next rank: a modifier held by it is that rank's. A click by the hero's owner learns
+  a rank when the hero has a point, the talent is below its most rank, `Row × PointsPerRow` points (5 unless set) are
+  spent and the talent it needs is at its rank; `Learned` runs after. The map gives the points (`tree.Points += 1`, as
+  in `OnLevelUp`), shown under the grid. Talents that set `Tree = "Arms"` go on a tab of that name: the trees share the
+  points, and a row opens by the points spent in its own tree; every talent of a window names a tree, or none does.
+  `Ranks()` gives a list for a `[Saved]` field of a save class and `Restore(ranks)` brings it back, running each talent
+  once at its rank; the save keeps `Points` itself. `Reset()` takes every rank back and gives the points back.
 
   ```csharp
   public sealed class Cleave : Talent
@@ -1971,7 +1974,9 @@ public sealed class Helm : Items.AncientBronzeHelmet
 ```
 
 - Equipping and unequipping are a drop and a pick-up in the game; `OnEquipped` runs after the pick-up into the slots,
-  `OnUnequipped` after the drop of an item Moonwell saw equipped. `Item.Carry` runs in the equipment slots, so a gift
+  `OnUnequipped` after the drop of an item Moonwell saw equipped. A player's own move in the game's panel fires neither,
+  so Moonwell runs the same drop, pick-up and equip reactions for it, just after the move: there `Place` already reads
+  where the item went, in `OnDropped` too. `Item.Carry` runs in the equipment slots, so a gift
   `heldBy: Item.Carry` holds while the item is worn and ends when it goes to the bag, where an item's abilities do
   nothing.
 - `Equipped` and `Bag` take in items Moonwell has not seen, so they are not for `Local.For`. Items do not stack: the game

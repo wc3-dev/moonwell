@@ -51,7 +51,7 @@ namespace Moonwell.Testing
             ObjectTypes.Item(ObjectTypes.FourCC("pman"), () => new ShopPotion());
             var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), slot: 0))!;
             var shop = Screen.Add(new ShopWindow { Buyer = hero }, Game.Instance, shownTo: Player.One);
-            var potion = shop.Sell<ShopPotion>(new ShopEntry { Name = "Potion", Cost = 100, Lumber = 10, Stock = 1, Restock = 5.0f });
+            var potion = shop.Sell<ShopPotion>(new ShopEntry { Name = "Potion", Icon = @"ReplaceableTextures\CommandButtons\BTNPotionGreenSmall.blp", Cost = 100, Lumber = 10, Stock = 1, Restock = 5.0f });
             var bought = 0;
             shop.Bought += (who, entry) => bought++;
             Expect.Equal("100 gold, 10 lumber", ((RichTooltip)shop.buttons[0].Tooltip!).Cost, "the tooltip's cost");
@@ -63,11 +63,14 @@ namespace Moonwell.Testing
             Expect.True(hero.ItemIn(0) is ShopPotion, "the item given to the buyer");
             Expect.Equal(0, potion.Left, "none left");
             Expect.True(!shop.buttons[0].Enabled, "sold out is greyed");
+            var icon = frames.FrameOf(shop.buttons[0].iconFrame!);
+            Expect.Equal(@"ReplaceableTextures\CommandButtonsDisabled\DISBTNPotionGreenSmall.blp", icon.Texture, "drawn with the game's grey icon");
             ClickOn(frames, shop.buttons[0], 0);
             Expect.Equal(150, Player.One.Gold, "sold out takes nothing");
             world.Advance(5.1f);
             Expect.Equal(1, potion.Left, "one back after Restock");
             Expect.True(shop.buttons[0].Enabled, "and shown again");
+            Expect.Equal(@"ReplaceableTextures\CommandButtons\BTNPotionGreenSmall.blp", icon.Texture, "drawn bright again");
             Player.One.Gold = 50;
             ClickOn(frames, shop.buttons[0], 0);
             Expect.Equal(50, Player.One.Gold, "without the gold nothing is taken");
@@ -191,6 +194,35 @@ namespace Moonwell.Testing
             return kids;
         }
 
+        private sealed class Strike : Talent
+        {
+            public Strike()
+            {
+                Name = "Strike";
+                Tree = "Arms";
+            }
+        }
+
+        private sealed class Rend : Talent
+        {
+            public Rend()
+            {
+                Name = "Rend";
+                Tree = "Arms";
+                Row = 1;
+            }
+        }
+
+        private sealed class Guard : Talent
+        {
+            public Guard()
+            {
+                Name = "Guard";
+                Tree = "Guard";
+                Column = 2;
+            }
+        }
+
         private sealed class Toughness : Talent
         {
             public Toughness()
@@ -232,6 +264,9 @@ namespace Moonwell.Testing
             board.Column("Hero", who => "Paladin");
             Expect.Equal("Player", board.cells[0].Text, "the header");
             Expect.Equal("Gold", board.cells[2].Text, "a column's name");
+            Expect.Near(Window.Inset + Moonwell.Scoreboard.NameWidth + Moonwell.Scoreboard.ValueWidth, board.cells[2].Offset.X, "a header made before its column sits in that column");
+            Expect.Near(-Moonwell.Scoreboard.Top, board.cells[2].Offset.Y, "on the header's row");
+            Expect.Near(-Moonwell.Scoreboard.Top - Moonwell.Scoreboard.RowHeight, board.cells[4 + 3].Offset.Y, "the team line one row down");
             Expect.Equal(5 * 4, board.cells.Count, "a header, a team line and three players");
             Expect.Equal("0", board.cells[4 + 1].Text, "the team's kills");
             Expect.Equal("30", board.cells[4 + 2].Text, "the team's gold");
@@ -292,6 +327,35 @@ namespace Moonwell.Testing
             Expect.Equal("2 1", string.Join(" ", tree.Ranks()), "the ranks back");
             Expect.Near(8.0f, world.ArmorOf(handle), "and their modifiers");
             Expect.Equal(3, tree.Points, "points as they were");
+            Expect.Equal("Points: 3", tree.pointsLabel.Text, "the unspent points shown");
+        }
+
+        /// <summary>Talents that name a tree go on its tab, sharing the points, and a row opens by the points spent in its own tree; a talent naming no tree among ones that do is refused.</summary>
+        public static void TalentTabs(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var hero = (Hero)Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), hero: true))!;
+            var tree = Screen.Add(new TalentWindow(hero), Game.Instance, shownTo: Player.One);
+            tree.PointsPerRow = 1;
+            tree.Add(() => new Strike());
+            tree.Add(() => new Rend());
+            tree.Add(() => new Guard());
+            Expect.Equal("Arms Guard", string.Join(" ", tree.trees), "a tab a tree, in the order named");
+            Expect.Equal(2, tree.tabs!.Count, "two pages");
+            Expect.True(frames.FrameOf(tree.buttons[2].Handle!).Parent == frames.FrameOf(tree.tabs.pages[1].Handle!), "a talent on its tree's page");
+            Expect.True(tree.Width >= 2.0f * Window.Inset + 2 * tree.tabs.TabWidth, "wide enough for the tabs");
+            tree.Points = 3;
+            ClickOn(frames, tree.buttons[2], 0);
+            ClickOn(frames, tree.buttons[1], 0);
+            Expect.Equal("0 0 1", string.Join(" ", tree.Ranks()), "a point in Guard opens no row of Arms");
+            ClickOn(frames, tree.buttons[0], 0);
+            ClickOn(frames, tree.buttons[1], 0);
+            Expect.Equal("1 1 1", string.Join(" ", tree.Ranks()), "a point in Arms opens its second row");
+            Expect.Equal("Points: 0", tree.pointsLabel.Text, "one pool of points");
+            var before = world.Printed.Count;
+            tree.Add(() => new Toughness());
+            Expect.Equal(3, tree.kinds.Count, "a talent of no tree refused");
+            Expect.True(world.Printed.Count > before, "and reported");
         }
     }
 }

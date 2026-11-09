@@ -87,6 +87,24 @@ namespace Moonwell.Testing
             Expect.True(hero.ItemIn(0) == null, "out of the slot");
         }
 
+        /// <summary>A player's equip and unequip by hand in the 3.0 panel fire only the game's equip and unequip events (probe 11-09): the same reactions run as for Equip and Unequip from the bag, once each.</summary>
+        public static void ByHand(FakeWorld world)
+        {
+            var (hero, ring) = Setup(world);
+            world.PutInBag(hero.Handle, ring.Handle);
+            TestLog.Lines.Clear();
+            world.EquipByHand(hero.Handle, ring.Handle);
+            Expect.Equal("dropped,picked 3,equipped,unit equipped", string.Join(",", TestLog.Lines), "the equip reactions");
+            Expect.Same(ring, hero.Equipped[0], "in Equipped");
+            TestLog.Lines.Clear();
+            world.UnequipByHand(hero.Handle, ring.Handle);
+            Expect.Equal("dropped,unequipped,unit unequipped,picked 2", string.Join(",", TestLog.Lines), "the unequip reactions");
+            Expect.Same(ring, hero.Bag[0], "in Bag");
+            TestLog.Lines.Clear();
+            Expect.True(hero.Equip(ring), "equipped by code from the bag");
+            Expect.Equal("dropped,picked 3,equipped,unit equipped", string.Join(",", TestLog.Lines), "by code, the game's equip event runs nothing more");
+        }
+
         /// <summary>A unit without the 3.0 slots equips nothing and has an empty bag.</summary>
         public static void NoSlots(FakeWorld world)
         {

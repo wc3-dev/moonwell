@@ -72,6 +72,14 @@ namespace Moonwell.Build
             return CompiledFiles.MapAssemblies(assemblyPath).Any(path => CompiledFiles.ReferencedAssemblies(path).Contains(assemblyName));
         }
 
+        /// <summary>Whether a package must be installed for a map: its code or a library of its own references it, or another package it uses does (the terrain under the spell templates), which the map's assembly does not show.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <param name="assemblyName">The package's assembly name, such as <c>Moonwell.Terrain</c>.</param>
+        public static bool Needs(string assemblyPath, string assemblyName)
+        {
+            return CompiledFiles.UsedPackages(assemblyPath).Contains(assemblyName);
+        }
+
         /// <summary>
         /// Whether a map's built assembly, or a library of its own (<see cref="CompiledFiles.MapAssemblies"/>), has a type reference
         /// to a type, read from its metadata without loading it. The compiler keeps a reference for each type the code names, calls a

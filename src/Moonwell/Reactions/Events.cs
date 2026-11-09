@@ -7,7 +7,10 @@ namespace Moonwell
     internal static class Events
     {
         /// <summary>Whether the world already listens for each game event, indexed by GameEvent.</summary>
-        private static bool[] listening = new bool[17];
+        private static bool[] listening = new bool[EventCount];
+
+        /// <summary>How many GameEvents there are.</summary>
+        private const int EventCount = 18;
 
         /// <summary>The reaction bits that some class overrides, once any has been needed.</summary>
         private static int wanted;
@@ -47,14 +50,17 @@ namespace Moonwell
                 Listen(GameEvent.Spell);
             }
 
+            // The equip event too: an equip or unequip by hand in the 3.0 panel fires neither a pick-up nor a drop (I54).
             if ((mask & (Hook.OnItemPickedUp | Hook.OnPickedUp)) != 0)
             {
                 Listen(GameEvent.PickUp);
+                Listen(GameEvent.Equip);
             }
 
             if ((mask & (Hook.OnItemDropped | Hook.OnDropped)) != 0)
             {
                 Listen(GameEvent.Drop);
+                Listen(GameEvent.Equip);
             }
 
             if ((mask & Hook.OnLeave) != 0)
@@ -142,7 +148,7 @@ namespace Moonwell
         /// <summary>Forgets every registration and need; Runtime.Reset calls it.</summary>
         internal static void Reset()
         {
-            listening = new bool[17];
+            listening = new bool[EventCount];
             wanted = 0;
             DamageListener = null;
             LoadListener = null;

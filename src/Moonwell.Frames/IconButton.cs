@@ -38,7 +38,7 @@ namespace Moonwell
                 icon = value;
                 if (iconFrame != null)
                 {
-                    FramesSystem.World.PaintFrame(iconFrame, Look());
+                    Paint();
                 }
             }
         }
@@ -75,16 +75,43 @@ namespace Moonwell
         /// <summary>Gives the game the icon, or the empty look (an unpainted image draws the game's green missing texture), then the points and looks.</summary>
         internal override void Place()
         {
-            FramesSystem.World.PaintFrame(iconFrame!, Look());
+            Paint();
             base.Place();
+        }
+
+        /// <summary>Turned off, the button draws its icon greyed (I53): the game's own grey copy of one of its command icons, or the icon faded.</summary>
+        internal override void TakeMouse(bool on)
+        {
+            base.TakeMouse(on);
+            if (iconFrame != null)
+            {
+                Paint();
+            }
+        }
+
+        private void Paint()
+        {
+            var look = Look();
+            FramesSystem.World.PaintFrame(iconFrame!, look);
+            FramesSystem.World.FadeFrame(iconFrame!, enabled || look != icon ? 255 : DisabledAlpha);
         }
 
         /// <summary>What an empty button draws: nothing.</summary>
         internal virtual string EmptyLook => Image.Blank;
 
+        /// <summary>A turned-off icon's opacity when the game has no grey copy of it.</summary>
+        internal const int DisabledAlpha = 110;
+
+        private const string GameIcons = @"ReplaceableTextures\CommandButtons\BTN";
+
         private string Look()
         {
-            return icon.Length > 0 ? icon : EmptyLook;
+            if (icon.Length == 0)
+            {
+                return EmptyLook;
+            }
+
+            return enabled || !icon.StartsWith(GameIcons) ? icon : @"ReplaceableTextures\CommandButtonsDisabled\DISBTN" + icon.Substring(GameIcons.Length);
         }
 
         /// <summary>The icon follows the cursor while the button is held, unless DragIcon is set.</summary>

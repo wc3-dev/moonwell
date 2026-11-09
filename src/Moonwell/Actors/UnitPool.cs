@@ -72,7 +72,7 @@ namespace Moonwell
 
             var world = Runtime.World;
             var handle = unit.Handle;
-            if (!world.IsAlive(handle) || world.IsLoaded(handle) || (unit.cargo != null && unit.cargo.Count > 0))
+            if (!world.IsAlive(handle) || world.IsLoaded(handle) || (unit.cargo != null && unit.cargo.Count > 0) || unit.droppedCargo)
             {
                 return false;
             }

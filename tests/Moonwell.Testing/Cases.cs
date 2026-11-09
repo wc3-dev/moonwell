@@ -87,6 +87,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "transports.reactions-order", Run = TransportCases.ReactionsOrder });
             list.Add(new Case { Name = "transports.reads-follow", Run = TransportCases.ReadsFollow });
             list.Add(new Case { Name = "transports.leaving-the-game", Run = TransportCases.LeavingTheGame });
+            list.Add(new Case { Name = "transports.scope-drops-cargo", Run = TransportCases.ScopeDropsCargo });
+            list.Add(new Case { Name = "transports.burrow-in-and-out", Run = TransportCases.BurrowInAndOut });
             list.Add(new Case { Name = "transports.capacity-and-orders", Run = TransportCases.CapacityAndOrders });
             list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
@@ -1560,6 +1562,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.settings-spoiled", Run = KitWindowCases.SettingsSpoiled });
             list.Add(new Case { Name = "kit.scoreboard", Run = KitWindowCases.Scoreboard });
             list.Add(new Case { Name = "kit.talents", Run = KitWindowCases.Talents });
+            list.Add(new Case { Name = "kit.talent-tabs", Run = KitWindowCases.TalentTabs });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });
@@ -1712,6 +1715,7 @@ namespace Moonwell.Testing
         {
             list.Add(new Case { Name = "inventory.equip-and-unequip", Run = InventoryCases.EquipAndUnequip });
             list.Add(new Case { Name = "inventory.equip-from-slots", Run = InventoryCases.EquipFromSlots });
+            list.Add(new Case { Name = "inventory.by-hand", Run = InventoryCases.ByHand });
             list.Add(new Case { Name = "inventory.no-slots", Run = InventoryCases.NoSlots });
         }
 
@@ -1745,6 +1749,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "summons.dies-with-summoner", Run = SummonCases.DiesWithSummoner });
             list.Add(new Case { Name = "summons.reaction-order", Run = SummonCases.ReactionOrder });
             list.Add(new Case { Name = "summons.game-summon-links", Run = SummonCases.GameSummonLinks });
+            list.Add(new Case { Name = "summons.game-summon-of-no-unit", Run = SummonCases.GameSummonOfNoUnit });
             list.Add(new Case { Name = "summons.ended-scope-dies-at-once", Run = SummonCases.EndedScopeDiesAtOnce });
         }
 
