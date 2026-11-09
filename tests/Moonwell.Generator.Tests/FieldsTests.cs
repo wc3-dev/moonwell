@@ -91,7 +91,7 @@ public class FieldsTests
             new[] { "uagi Agility", "uhpm MaxLife", "uint Intelligence", "ulev Level", "umpi Mana", "umpm MaxMana", "umvh FlyHeight", "unam Name", "usca Scale", "ustr Strength" },
             SharedFields.Of(Kind.Unit).OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + " " + p.Value));
         Assert.Equal(new[] { "iuse Charges" }, SharedFields.Of(Kind.Item).Select(p => p.Key + " " + p.Value));
-        Assert.Equal(new[] { "bhps MaxLife" }, SharedFields.Of(Kind.Destructable).Select(p => p.Key + " " + p.Value));
+        Assert.Equal(new[] { "bhps MaxLife", "bnam Name" }, SharedFields.Of(Kind.Destructable).Select(p => p.Key + " " + p.Value));
         Assert.Null(SharedFields.MemberOf(Kind.Item, "unam"));
     }
 

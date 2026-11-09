@@ -9,6 +9,7 @@ namespace Moonwell.Objects
     /// <summary>The fields of a destructable, which every standard destructable class has.</summary>
     /// @CSharpLua.Ignore
     [global::Moonwell.Objects.SharedField("bhps", "MaxLife", Label = "Hit Points", Min = 0, Max = 99999, HasLimits = true, NonNegative = true, Holds = typeof(float))]
+    [global::Moonwell.Objects.SharedField("bnam", "Name", Label = "Name", Required = true, Holds = typeof(string))]
     public abstract class StandardDestructable : global::Moonwell.Destructable
     {
         private static readonly global::System.Collections.Generic.Dictionary<string, global::System.Type> fieldTypes =
@@ -302,15 +303,6 @@ namespace Moonwell.Objects
         {
             get { return Fields.Get<int>(this, "bmmr"); }
             protected set { Fields.Put("bmmr", value); }
-        }
-
-        /// <summary>Name (bnam), not empty.</summary>
-        [global::Moonwell.Objects.Field("bnam", Label = "Name")]
-        [global::Moonwell.Objects.Required]
-        public string Name
-        {
-            get { return Fields.Get<string>(this, "bnam"); }
-            protected set { Fields.Put("bnam", value); }
         }
 
         /// <summary>Hidden In Game (bnrn).</summary>
