@@ -50,7 +50,7 @@ namespace Moonwell.Testing
         /// <summary>The changes for a screen, as "screen slot x y" and "cursor slot show" or "cursor slot hide", in order.</summary>
         public List<string> Calls = new List<string>();
 
-        /// <summary>One change the package made to a player's camera: its kind ("field", "pan", "follow", "stop", "reset", "bounds" or "apply"), the slot, and what the kind uses of the rest.</summary>
+        /// <summary>One change the package made to a player's camera: its kind ("field", "pan", "follow", "stop", "reset", "bounds", "apply", "map-bounds", "input", "hotkey", "shake", "unshake" or "model"), the slot, and what the kind uses of the rest.</summary>
         public sealed class CameraCall
         {
             /// <summary>What changed.</summary>
@@ -82,6 +82,12 @@ namespace Moonwell.Testing
 
             /// <summary>The setup an "apply" change used.</summary>
             public camerasetup? Setup;
+
+            /// <summary>Whether an "input" change gives the field to the player, and whether a "hotkey" change allows the lock.</summary>
+            public bool On;
+
+            /// <summary>A "model" change's path.</summary>
+            public string Path = "";
         }
 
         /// <summary>One setup the package made: what the game's own script would have set on it.</summary>
@@ -329,10 +335,13 @@ namespace Moonwell.Testing
             call.Seconds = seconds;
         }
 
-        /// <summary>Remembers the follow.</summary>
-        public void FollowUnit(player p, unit u)
+        /// <summary>Remembers the follow and its offset.</summary>
+        public void FollowUnit(player p, unit u, float offsetX, float offsetY)
         {
-            Record("follow", p).Unit = u;
+            var call = Record("follow", p);
+            call.Unit = u;
+            call.A = offsetX;
+            call.B = offsetY;
         }
 
         /// <summary>Remembers the end of the follow.</summary>
@@ -383,6 +392,44 @@ namespace Moonwell.Testing
             var call = Record("apply", p);
             call.Setup = setup;
             call.Seconds = seconds;
+        }
+
+        /// <summary>Remembers the bounds put back to the map's.</summary>
+        public void ResetBounds(player p)
+        {
+            Record("map-bounds", p);
+        }
+
+        /// <summary>Remembers a field given to or taken from the player's input.</summary>
+        public void SetInputControlled(player p, int field, bool controlled)
+        {
+            var call = Record("input", p);
+            call.Field = field;
+            call.On = controlled;
+        }
+
+        /// <summary>Remembers Ctrl+C's lock allowed or stopped.</summary>
+        public void AllowHotkeyLock(player p, bool allow)
+        {
+            Record("hotkey", p).On = allow;
+        }
+
+        /// <summary>Remembers the shake and its strength.</summary>
+        public void Shake(player p, float strength)
+        {
+            Record("shake", p).A = strength;
+        }
+
+        /// <summary>Remembers the end of a shake.</summary>
+        public void StopShake(player p)
+        {
+            Record("unshake", p);
+        }
+
+        /// <summary>Remembers the model camera.</summary>
+        public void PlayModel(player p, string path)
+        {
+            Record("model", p).Path = path;
         }
     }
 }

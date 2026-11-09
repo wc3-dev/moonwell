@@ -429,6 +429,41 @@ public class LocalTests
     }
 
     [Fact]
+    public void camera_locks_and_model_are_allowed_inside()
+    {
+        Assert.Empty(MapCode.Check("""
+            Local.For(p, () =>
+            {
+                p.Camera().LockZoom();
+                p.Camera().AllowHotkeyLock(false);
+                p.Camera().PlayModel("x.mdx");
+                p.Camera().ResetBounds();
+            });
+            """));
+    }
+
+    [Fact]
+    public void camera_shake_and_follow_cameras_are_rejected_inside()
+    {
+        // Each keeps a timer or a scope, which is game state.
+        var found = MapCode.Check("""
+            Local.For(p, () =>
+            {
+                p.Camera().Shake(3f, 1f);
+                ThirdPersonCamera.Start(p, null!, Game.Instance);
+                CameraSetup.Create(0f, 0f);
+            });
+            """);
+
+        Assert.Equal(new[]
+        {
+            "MW0001: p.Camera().Shake(3f, 1f)",
+            "MW0001: ThirdPersonCamera.Start(p, null!, Game.Instance)",
+            "MW0001: CameraSetup.Create(0f, 0f)",
+        }, found);
+    }
+
+    [Fact]
     public void area_reaction_is_rejected_inside()
     {
         var found = MapCode.Check("""
