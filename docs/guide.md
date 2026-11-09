@@ -1208,6 +1208,51 @@ target.Knockback(caster.AngleToPoint(target), 300f, 0.5f); // 300 away over half
     where the rail begins.
   - A unit pushed on a bridge's deck costs about half again as much a step as one pushed on the ground.
 
+## Spell templates
+
+Add the `Moonwell.Spells` package (the template's `.csproj` has the line, commented) for ready spells: each is an
+ability class to inherit and set numbers on, on a Channel ability whose targeting the template sets. It brings
+`Moonwell.Objects` and `Moonwell.Physics`.
+
+```csharp
+using Moonwell.Spells;
+
+[ObjectId("A0F1")]
+public sealed class Firebolt : Bolt
+{
+    public Firebolt()
+    {
+        Name = "Firebolt";
+        Model = @"Abilities\Weapons\RedDragonBreath\RedDragonMissile.mdl";
+        Damage = new PerLevel(75f, 150f, 225f); // or Damage = 75f at every level
+    }
+
+    public override void OnHit(Cast cast, Unit target) => target.Apply(new Burn(), cast.Caster);
+}
+```
+
+| Template | What it does | Its numbers |
+|---|---|---|
+| `Bolt` | a missile at a unit, which it follows, or at a place; hits the first unit | `Model`, `Speed`, `Arc`, `TurnRate` |
+| `Wave` | goes out along the ground and hits each unit it passes once | `Model`, `Speed`, `Distance`, `Radius` |
+| `Dash` | the caster rushes towards the place, hitting each unit it passes once | `Distance`, `Seconds`, `Radius` |
+| `Leap` | the caster jumps in an arc and slams where it lands | `Speed`, `Radius`, `Model` |
+| `Blast` | hits everything near the place once; `AroundCaster` for no target | `Radius`, `Model`, `AroundCaster` |
+| `PulseChannel` | hits near the place at once and every `Interval` while it channels (5 s) | `Interval`, `Radius`, `Model`, `AroundCaster` |
+| `Chain` | hits the target, then jumps to the nearest unit not hit yet | `Jumps`, `JumpRange`, `Falloff`, `Delay`, `Look` |
+| `Summon<T>` | summons units of class `T` in front of the caster ([Summons](#summons)) | `Count`, `Lifetime`, `Limit`, `DiesWithSummoner` |
+
+- Every template but `Summon<T>` deals `Damage` (by the cast's level, magic unless `DamageKind` says otherwise) to
+  each unit it hits, from the caster, with the ability as the hit's tag, then runs `OnHit`. `CanHit(cast, target)`
+  chooses whom it hits: living enemies of the caster's player unless overridden.
+- The map's class adds what the game needs: its name, icon, hotkey and levels, an Area of Effect for the targeting
+  circle, and a Base Order ID of its own when one unit has two Channel abilities. A channel's length is its Follow
+  Through Time.
+- What a template sends out (a missile, a jump, the next link of a chain) belongs to the ability, so it goes on after
+  an instant cast has ended; `PulseChannel`'s pulses belong to the cast, and stop with the channel.
+- `Dash` and `Leap` move the caster as a knockback does, so trees, buildings, cliffs and walls stop them short, and
+  they land where Physics leaves the caster, with no search for a free spot.
+
 ## Areas
 
 Add the `Moonwell.Areas` package (the template's `.csproj` has the line, commented) for parts of the map that units enter,

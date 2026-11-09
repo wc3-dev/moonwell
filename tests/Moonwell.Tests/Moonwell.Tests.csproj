@@ -21,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Moonwell.Testing\Moonwell.Testing.csproj" />
+    <!-- Not in Moonwell.Testing: its cases also run in Lua, which compiles a package on Moonwell.Objects only with a map's stubs. -->
+    <ProjectReference Include="..\..\src\Moonwell.Spells\Moonwell.Spells.csproj" />
   </ItemGroup>
 
 </Project>
