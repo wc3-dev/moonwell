@@ -1018,6 +1018,56 @@ namespace Moonwell.Engine
             Natives.BlzSetUnitMaxMana(unit, (int)mana);
         }
 
+        /// <summary>The armor of a unit, with every bonus: BlzGetUnitArmor.</summary>
+        public float ArmorOf(unit unit)
+        {
+            return Natives.BlzGetUnitArmor(unit);
+        }
+
+        /// <summary>The middle of a unit's white damage: BlzGetUnitBaseDamage and the middle of its dice, of the first weapon.</summary>
+        public float AverageDamageOf(unit unit)
+        {
+            return Natives.BlzGetUnitBaseDamage(unit, 0) + Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
+        }
+
+        /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>
+        public float MoveSpeedOf(unit unit)
+        {
+            return Natives.GetUnitMoveSpeed(unit);
+        }
+
+        /// <summary>Sets the move speed of a unit: SetUnitMoveSpeed, held to the map's least and most speed (seen 10-21).</summary>
+        public void SetMoveSpeed(unit unit, float speed)
+        {
+            Natives.SetUnitMoveSpeed(unit, speed);
+        }
+
+        /// <summary>A unit's own regeneration a second: its UNIT_RF_HIT_POINTS_REGENERATION_RATE or UNIT_RF_MANA_REGENERATION, to which a hero's attributes add (seen 11-08).</summary>
+        public float RegenOf(unit unit, bool mana)
+        {
+            return Natives.BlzGetUnitRealField(unit, mana ? Natives.UNIT_RF_MANA_REGENERATION : Natives.UNIT_RF_HIT_POINTS_REGENERATION_RATE);
+        }
+
+        /// <summary>Sets a unit's own regeneration a second, which the game takes at once (seen 11-08).</summary>
+        public void SetRegen(unit unit, bool mana, float perSecond)
+        {
+            Natives.BlzSetUnitRealField(unit, mana ? Natives.UNIT_RF_MANA_REGENERATION : Natives.UNIT_RF_HIT_POINTS_REGENERATION_RATE, perSecond);
+        }
+
+        /// <summary>Sets the level-1 field of an ability on a unit: BlzSetAbilityIntegerLevelField or BlzSetAbilityRealLevelField of the unit's copy.</summary>
+        public void PutBonus(unit unit, int abilityId, int fieldId, bool real, float value)
+        {
+            var ability = Natives.BlzGetUnitAbility(unit, abilityId);
+            if (real)
+            {
+                Natives.BlzSetAbilityRealLevelField(ability, Natives.ConvertAbilityRealLevelField(fieldId), 0, value);
+            }
+            else
+            {
+                Natives.BlzSetAbilityIntegerLevelField(ability, Natives.ConvertAbilityIntegerLevelField(fieldId), 0, (int)value);
+            }
+        }
+
         /// <summary>The x of a unit, from the game.</summary>
         public float UnitX(unit unit)
         {
