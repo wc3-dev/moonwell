@@ -1102,6 +1102,17 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.raycast.flat-under-start", Run = GroundClipCases.FlatUnderStart });
             list.Add(new Case { Name = "terrain.pathing.every-cell", Run = PackedPathingCases.EveryCell });
             list.Add(new Case { Name = "terrain.pathing.full-grid-memory", Run = PackedPathingCases.FullGridMemory });
+            list.Add(new Case { Name = "pathing.squares", Run = PathCases.Squares });
+            list.Add(new Case { Name = "pathing.fit-asks-the-game", Run = PathCases.FitAsksTheGame });
+            list.Add(new Case { Name = "pathing.open", Run = PathCases.Open });
+            list.Add(new Case { Name = "pathing.gap-by-size", Run = PathCases.GapBySize });
+            list.Add(new Case { Name = "pathing.around-a-wall", Run = PathCases.AroundAWall });
+            list.Add(new Case { Name = "pathing.no-corner-cutting", Run = PathCases.NoCornerCutting });
+            list.Add(new Case { Name = "pathing.target-blocked", Run = PathCases.TargetBlocked });
+            list.Add(new Case { Name = "pathing.items-and-refresh", Run = PathCases.ItemsAndRefresh });
+            list.Add(new Case { Name = "pathing.movements", Run = PathCases.Movements });
+            list.Add(new Case { Name = "pathing.spots", Run = PathCases.Spots });
+            list.Add(new Case { Name = "pathing.unit-calls", Run = PathCases.UnitCalls });
             list.Add(new Case { Name = "maths.actors.face-own-place", Run = FaceOwnPlaceCases.KeepsFacing });
             list.Add(new Case { Name = "terrain.bounce.flat", Run = GroundBounceCases.BounceFlat });
             list.Add(new Case { Name = "terrain.bounce.slope", Run = GroundBounceCases.BounceSlope });

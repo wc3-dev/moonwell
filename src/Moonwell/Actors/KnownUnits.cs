@@ -47,9 +47,9 @@ namespace Moonwell
                 return null;
             }
 
-            // A dummy is never a map's unit (B13): map code never meets one.
+            // A dummy or a package's helper is never a map's unit (B13): map code never meets one.
             var typeId = Runtime.World.UnitTypeId(handle);
-            if (typeId == 0 || typeId == ObjectTypes.DummyTypeId)
+            if (typeId == 0 || ObjectTypes.IsHelper(typeId))
             {
                 return null;
             }

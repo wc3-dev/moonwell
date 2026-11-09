@@ -12,6 +12,7 @@ internal static class Packages
         typeof(Moonwell.Gizmo).Assembly,
         typeof(Moonwell.Maths).Assembly,
         typeof(Moonwell.Terrain).Assembly,
+        typeof(Moonwell.Pathing).Assembly,
         typeof(Moonwell.Area).Assembly,
         typeof(Moonwell.Mouse).Assembly,
         typeof(Moonwell.Physics).Assembly,
