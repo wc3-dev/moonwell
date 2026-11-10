@@ -66,6 +66,14 @@ namespace Moonwell.Build
             var project = MapProject.Find(path);
             log.WriteLine($"moonwell: {project.Name} ({(options.Release ? "release" : "development")} build)");
 
+            // Placed is written before the compile, as the map's code names its members; the literal names are checked first.
+            var placed = PlacedWriter.Read(project);
+            PlacedWriter.Write(project, placed, options.Release);
+            PlaceNames.Check(project, "Unit.Named", PlacedWriter.UnitNames(placed), "placed unit");
+            PlaceNames.Check(project, "Item.Named", PlacedWriter.ItemNames(placed), "placed item");
+            PlaceNames.Check(project, "Destructable.Named", PlacedWriter.DestructableNames(project, placed), "placed destructable");
+            PlaceNames.Check(project, "PlacedSound.Named", PlacedWriter.SoundNames(placed), "sound");
+
             var targetPath = DotnetBuild.Run(project, options.Release, log);
             PackageSources.Check(project, options.PackageVersion ?? PackageSources.ToolVersion);
             var settings = MapSettingsReader.Read(targetPath, project);

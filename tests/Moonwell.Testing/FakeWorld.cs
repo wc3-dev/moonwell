@@ -3681,7 +3681,9 @@ namespace Moonwell.Testing
         /// <summary>Starts a sound.</summary>
         public void StartPlaying(sound sound)
         {
-            LiveSound(sound).Started = true;
+            var fake = LiveSound(sound);
+            fake.Started = true;
+            fake.Starts++;
         }
 
         /// <summary>Leaves a sound to the game to free.</summary>

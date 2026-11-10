@@ -5,4 +5,9 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\src\Moonwell.Analyzers\Moonwell.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <!-- And they compile Placed, as the package's Moonwell.targets has them do. -->
+  <ItemGroup>
+    <Compile Include="build/generated/Placed.g.cs" Condition="Exists('build/generated/Placed.g.cs')" />
+  </ItemGroup>
+
 </Project>
