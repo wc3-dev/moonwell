@@ -67,6 +67,8 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         private readonly IAssemblySymbol[] packages;
         private readonly INamedTypeSymbol? createsHandle;
         private readonly INamedTypeSymbol? changesState;
+
+        private readonly INamedTypeSymbol? luaLibrary;
         private readonly INamedTypeSymbol? machineLocal;
         private readonly INamedTypeSymbol? desyncs;
         private readonly INamedTypeSymbol? localSafe;
@@ -111,6 +113,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 .ToArray();
             createsHandle = compilation.GetTypeByMetadataName("Moonwell.CreatesHandleAttribute");
             changesState = compilation.GetTypeByMetadataName("Moonwell.ChangesStateAttribute");
+            luaLibrary = compilation.GetTypeByMetadataName("Moonwell.LuaLibraryAttribute");
             machineLocal = compilation.GetTypeByMetadataName("Moonwell.MachineLocalAttribute");
             desyncs = compilation.GetTypeByMetadataName("Moonwell.DesyncsAttribute");
             localSafe = compilation.GetTypeByMetadataName("Moonwell.LocalSafeAttribute");

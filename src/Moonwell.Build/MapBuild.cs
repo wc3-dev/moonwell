@@ -66,7 +66,8 @@ namespace Moonwell.Build
             var project = MapProject.Find(path);
             log.WriteLine($"moonwell: {project.Name} ({(options.Release ? "release" : "development")} build)");
 
-            // Placed is written before the compile, as the map's code names its members; the literal names are checked first.
+            // Placed and the Lua libraries' bindings are written before the compile, as the map's code names their members; the literal
+            // names are checked first.
             var placed = PlacedWriter.Read(project);
             PlacedWriter.Write(project, placed, options.Release);
             PlaceNames.Check(project, "Unit.Named", PlacedWriter.UnitNames(placed), "placed unit");
@@ -76,6 +77,7 @@ namespace Moonwell.Build
 
             // Data is written before the compile too, from the CSV and JSON files in data\.
             DataWriter.Write(project);
+            LuaLibraries.WriteBindings(project);
 
             var targetPath = DotnetBuild.Run(project, options.Release, log);
             PackageSources.Check(project, options.PackageVersion ?? PackageSources.ToolVersion);
