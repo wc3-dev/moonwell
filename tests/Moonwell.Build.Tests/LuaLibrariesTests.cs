@@ -31,6 +31,14 @@ namespace Moonwell.Build.Tests
             function SpawnShadow(x, y)
             end
 
+            ---@private
+            function Secret() end
+
+            ---@type integer
+            udg_Gold = 0
+
+            udg_Untyped = 0
+
             local function hidden() end
 
             function Knockback:method() end
@@ -71,6 +79,17 @@ namespace Moonwell.Build.Tests
             var text = Text();
 
             Assert.Contains("public static void onLand(global::System.Func<global::Moonwell.Unit, float, bool> onLand) => onLand__lua((global::System.Func<global::Moonwell.unit?, float, bool>)((global::Moonwell.unit? a0, float a1) => onLand(global::Moonwell.Unit.Of(a0)!, a1)));", text);
+        }
+
+        [Fact]
+        public void a_typed_global_is_a_property_whose_set_is_refused_in_local_for_and_a_private_function_is_left_out()
+        {
+            var text = Text();
+
+            Assert.Contains("public static int udg_Gold { get => udg_Gold__get(); set => udg_Gold__set(value); }", text);
+            Assert.Contains("/// @CSharpLua.Template = \"udg_Gold = {0}\"\n        [global::Moonwell.LuaLibrary]\n        private static void udg_Gold__set(int value)", text);
+            Assert.DoesNotContain("udg_Untyped", text);
+            Assert.DoesNotContain("Secret", text);
         }
 
         [Fact]
