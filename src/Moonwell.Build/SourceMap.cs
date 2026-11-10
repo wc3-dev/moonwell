@@ -10,7 +10,7 @@ namespace Moonwell.Build
     public static class SourceMap
     {
         // Only what War3Net's script builder reads and the info file; the other files are copied as they are.
-        private const MapFiles ScriptFiles = MapFiles.Info | MapFiles.Units | MapFiles.UnitObjectData | MapFiles.Doodads
+        internal const MapFiles ScriptFiles = MapFiles.Info | MapFiles.Units | MapFiles.UnitObjectData | MapFiles.Doodads
             | MapFiles.Regions | MapFiles.Cameras | MapFiles.Sounds | MapFiles.Environment | MapFiles.TriggerStrings;
 
         /// <summary>Opens the project's map without its GUI triggers and applies the map class's settings, its game data option and its slots among them.</summary>

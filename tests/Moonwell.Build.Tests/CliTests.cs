@@ -13,6 +13,7 @@ namespace Moonwell.Build.Tests
             "       moonwell run [folder] [--release] [--game <exe>]\n" +
             "       moonwell watch [folder] [--release] [--run] [--game <exe>]\n" +
             "       moonwell new <name>\n" +
+            "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
             "       moonwell objects [folder]";
 
@@ -104,6 +105,9 @@ namespace Moonwell.Build.Tests
         [InlineData("new")]
         [InlineData("new", "One", "Two")]
         [InlineData("new", "One", "--release")]
+        [InlineData("import")]
+        [InlineData("import", "old.w3x")]
+        [InlineData("import", "old.w3x", "One", "Two")]
         [InlineData("clean", "--release")]
         [InlineData("objects", "--run")]
         [InlineData("watch", "--game", "game.exe")]

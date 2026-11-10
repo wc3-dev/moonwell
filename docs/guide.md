@@ -2365,10 +2365,31 @@ Lua.Knockback.push(hero, 300f);   // the class is the table's, or the file's (kn
 | `name?`, `type?` or `type\|nil` | optional, `null` for nil |
 | anything else, or no comment | `object` |
 
-- A method (`function T:f()`), a local function and a function's `...` are left out; the library can still use them.
+- A method (`function T:f()`), a local function, a function marked `---@private` and a function's `...` are left out; the
+  library can still use them.
+- A global typed with `---@type` on the line above (`---@type integer` above `udg_Gold = 0`) is a property of the file's
+  class, `Lua.OldMap.udg_Gold`, read and set; setting it inside `Local.For` is an error, as calling a function is.
 - The analyzer cannot see into Lua, so a library function inside `Local.For` is an error (MW0001), unless its comments
   hold `---@localsafe`: add that line to the library when the function changes nothing in the game.
 - A library runs only in the game, so the tests' fake world cannot call one.
+
+## Old maps
+
+`moonwell import <map> <name>` makes a project from an existing map, JASS or Lua, a `.w3x`, `.w3m` or a map saved as a
+folder, so it plays as it did and its triggers move to C# one at a time:
+
+- The map's files go into `map`, all but its script, and its settings stay World Editor's, as `Map.cs` sets none. Its
+  object data stays in its object files there, which the build keeps.
+- The script becomes the Lua library `lua/old_map.lua`, a JASS script turned into Lua once. What Moonwell's own script
+  makes is taken out: `main`, `config`, the placed units, items, regions, cameras and sounds, and the map's setup.
+- `OldScript.cs` starts it when the game starts, as World Editor's `main` did: `InitGlobals`, `InitCustomTriggers`, then
+  `RunInitializationTriggers`, so map initialization triggers run at the game's start, not while it loads.
+- A JASS map's variables are typed properties (`Lua.OldMap.udg_Gold`), and its own functions outside triggers typed
+  methods; a trigger's functions, and every function of a Lua map but the three above, are `---@private`.
+
+To move a trigger, write it in C#, then delete its `Trig_` and `InitTrig_` functions and its line in
+`InitCustomTriggers` from `old_map.lua`. A protected map, whose script is obfuscated or hidden, cannot be taken apart;
+`import` says so. A map's own `Blizzard.j` or `common.j` does nothing in a Lua map.
 
 ## C# the game's Lua cannot run
 
