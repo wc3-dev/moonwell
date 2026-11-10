@@ -34,7 +34,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Start.cs` | The game's start: makes the Champion and the footmen |
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
 | `map/` | The World Editor map, saved as a folder |
-| `assets/` | Files copied into the map at the same paths (models, icons, sounds), named with ASCII characters only; make it when you need it |
+| `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
 Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
@@ -858,8 +858,8 @@ Music.SetVolume(60);
   did not hold (seen). `Stop()` fades the music out, the file played once included; `Stop(fadeOut: false)` stops it at
   once. After a stop the map has no music until the next `Play`, its own included.
 - Every `Music` call takes `heardBy:` too, which changes the music for that player only; the others' stays as it is.
-- A file of the map's own goes in `assets/`. A path to one of the game's sounds works with `.wav`, `.flac` or `.ogg`
-  alike.
+- A file of the map's own goes in `assets/` ([Assets](#assets)). A path to one of the game's sounds works with `.wav`,
+  `.flac` or `.ogg` alike.
 
 ## Weather, lightning, vision and the minimap
 
@@ -2313,6 +2313,27 @@ and closures, `ref`/`out`/`in` parameters and ref locals, `params`, `checked`, `
 `Dictionary`, `HashSet`, `Queue`, `Stack`, arrays and most of LINQ. `float` and `int` arithmetic is the game's, see
 MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF.Sqrt` is off by up to 2 parts in
 100,000 (Maths).
+
+## Assets
+
+A file in `assets/` goes into the map at the same path: `assets\war3mapImported\Fire.mdx` is
+`war3mapImported\Fire.mdx` to object data and code. A file at one of the game's own paths replaces the game's.
+
+- A PNG goes in as a BLP, the game's texture format, at the same path: code and object data name
+  `war3mapImported\BTNFire.blp` for `assets\war3mapImported\BTNFire.png`. Each side must be a power of two (64 by 64
+  for an icon), and a see-through part stays see-through. A PNG and a BLP of the same name are refused.
+- An icon whose name starts with `BTN` or `PASBTN`, a PNG or a BLP, gets the grey copy a disabled button shows: the
+  game reads it from `ReplaceableTextures\CommandButtonsDisabled\DIS` and the icon's file name, wherever the icon is,
+  and without one shows the icon in colour (seen). The build makes it the way the game's HD copies are, unless
+  `assets/` or the map has one there. Two icons with one file name in different folders share one copy, and the build
+  warns of it.
+- The build warns of a path that object data or the map's code names (a texture, model or sound) that neither the game
+  nor the map has, naming the class and field (`Sample.Arthas: uico`) or the type whose code has it. As in the game, a file
+  under another extension of its kind counts: `.mdl` and `.mdx`; `.blp`, `.dds` and `.tga`; `.wav`, `.flac` and `.ogg`.
+- The build also lists the textures, models and sounds in `assets/` that nothing in the built map names: not the
+  code, object data, a model or a frame file. It leaves them in the map, as a path the code puts together while the
+  game runs (`"BTN" + name + ".blp"`) is not seen. A file at one of the game's paths, a grey copy and a model's
+  `_portrait` are not listed.
 
 ## The build
 

@@ -73,10 +73,11 @@ namespace Moonwell.Build
 
             // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly. The pathing package's
             // helper units are object data, so a map that uses it takes this path too.
+            IReadOnlyList<DeclaredObject> objects = Array.Empty<DeclaredObject>();
             if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath) || Declarations.Needs(targetPath, PathingAssemblyName))
             {
                 var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
-                BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
+                objects = BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
             }
             else
             {
@@ -87,6 +88,8 @@ namespace Moonwell.Build
             {
                 StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder, Declarations.Needs(targetPath, KitAssemblyName)));
             }
+
+            AssetChecks.Run(project, targetPath, objects, log);
 
             try
             {
@@ -101,8 +104,8 @@ namespace Moonwell.Build
             return project.ArchivePath;
         }
 
-        // The map uses Moonwell.Objects: its declarations, ids, Lua, registry and object files are part of the build.
-        private static void BuildWithObjects(
+        // The map uses Moonwell.Objects: its declarations, ids, Lua, registry and object files are part of the build; gives the declared objects.
+        private static IReadOnlyList<DeclaredObject> BuildWithObjects(
             MapProject project,
             MapSettings settings,
             War3Net.Build.Map map,
@@ -183,6 +186,7 @@ namespace Moonwell.Build
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
             StageWith(project, () => Stage.Write(project, map, written, writtenIds, declarations.StandardClassIds, standard, log));
+            return declarations.Objects;
         }
 
         // The map does not reference Moonwell.Objects: its own object files are used as they are.
