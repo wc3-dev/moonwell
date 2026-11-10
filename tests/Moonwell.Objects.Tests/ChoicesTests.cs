@@ -28,7 +28,8 @@ namespace Moonwell.Objects.Tests
 
         private static IEnumerable<Type> Enums()
         {
-            return Objects.GetTypes().Where(type => type.IsEnum && type.Namespace == "Moonwell.Objects" && type.IsPublic);
+            // TipLines is Describe's, not a field's choice.
+            return Objects.GetTypes().Where(type => type.IsEnum && type.Namespace == "Moonwell.Objects" && type.IsPublic && type != typeof(TipLines));
         }
 
         [Fact]

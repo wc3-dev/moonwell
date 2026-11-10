@@ -1605,6 +1605,28 @@ namespace Moonwell.Objects
         {
             Fields.PutLevel(field, level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardAbility", fieldTypes, this, field, level, value));
         }
+
+        /// <summary>
+        /// Writes the four tooltips from one text: each level's title (<c>Smite - [Level 2]</c>, or the name alone for a unit's
+        /// ability of one level), each level's text with <c>tip[Damage]</c> as that level's value in gold, the learn title, and the
+        /// learn text with every level's values (<c>75/150/225</c>). It reads the fields as they are when it is called, so it
+        /// comes after the values it shows; a tooltip set after it wins.
+        /// </summary>
+        protected void Describe(string name, global::System.Func<global::Moonwell.Objects.Tip, string> text)
+        {
+            Describe(name, text, global::Moonwell.Objects.TipLines.None);
+        }
+
+        /// <summary>Writes the four tooltips from one text, with lines under it from the ability's own fields (<c>Cooldown: 8 seconds</c>).</summary>
+        protected void Describe(string name, global::System.Func<global::Moonwell.Objects.Tip, string> text, global::Moonwell.Objects.TipLines lines)
+        {
+            var count = global::System.Math.Max(1, LevelCount);
+            global::System.Func<global::Moonwell.Objects.Tip, string> linesOf = tip => global::Moonwell.Objects.Tip.AbilityLines(tip, lines, ManaCost, Cooldown, Range, Area, Duration);
+            Tooltip = Levels(global::Moonwell.Objects.Tip.AbilityTitles(name, count, HeroAbility || count > 1));
+            TooltipExtended = Levels(global::Moonwell.Objects.Tip.Texts(count, text, lines, linesOf));
+            TooltipLearn = global::Moonwell.Objects.Tip.LearnTitle(name);
+            TooltipLearnExtended = global::Moonwell.Objects.Tip.Learn(count, text, lines, linesOf);
+        }
     }
 }
 
