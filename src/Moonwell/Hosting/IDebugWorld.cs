@@ -1,5 +1,6 @@
 #if DEBUG
 using System;
+using System.Collections.Generic;
 
 namespace Moonwell.Hosting
 {
@@ -58,6 +59,12 @@ namespace Moonwell.Hosting
 
         /// <summary>Appends a line to the log, as the world's Log does.</summary>
         void Log(string text);
+
+        /// <summary>Writes a text file in CustomMapData, a line each, anew; nothing in a replay.</summary>
+        void WriteFile(string path, List<string> lines);
+
+        /// <summary>Makes a unit invulnerable, or not.</summary>
+        void SetInvulnerable(unit unit, bool invulnerable);
     }
 
     /// <summary>The debug keys as the debug world hands them to the session.</summary>

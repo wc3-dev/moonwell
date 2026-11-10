@@ -197,6 +197,7 @@ namespace Moonwell
             due.ArmFirst();
 #if DEBUG
             debugStats = InteractionsView.Started(this);
+            Profiler.Seen(this);
 #endif
         }
 

@@ -45,6 +45,12 @@ namespace Moonwell
             {
                 Dev.Report(Names.NameOf(scope) + ".Command", "-" + command.Name + " is also a debug command, so in a development build both run");
             }
+#if DEBUG
+            else if (DebugTools.IsBuiltIn(command.Name))
+            {
+                Dev.Report(Names.NameOf(scope) + ".Command", "-" + command.Name + " is also a debug command: in a development build this one runs and the debug one steps aside");
+            }
+#endif
 
             if (made == null)
             {
@@ -127,6 +133,45 @@ namespace Moonwell
             {
                 made?.Remove(this);
             }
+        }
+
+        /// <summary>Whether a command of that word, in lower case, is live.</summary>
+        internal static bool Has(string word)
+        {
+            if (made == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < made.Count; i++)
+            {
+                if (made[i].Name == word && !made[i].HasEnded)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>The words of the live commands, each once, in the order first made.</summary>
+        internal static List<string> LiveNames()
+        {
+            var names = new List<string>();
+            if (made == null)
+            {
+                return names;
+            }
+
+            for (var i = 0; i < made.Count; i++)
+            {
+                if (!made[i].HasEnded && !names.Contains(made[i].Name))
+                {
+                    names.Add(made[i].Name);
+                }
+            }
+
+            return names;
         }
 
         /// <summary>Forgets the commands; Runtime.Reset calls it.</summary>

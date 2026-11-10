@@ -84,6 +84,12 @@ namespace Moonwell
 #if DEBUG
         /// <summary>The game time the timer was made at, as Moonwell's clock last read it; start is Moonwell's time, which a halt holds still.</summary>
         internal readonly float madeAt;
+
+        /// <summary>The script line of the code that called After or Every to make it, 0 for none; the profiler and -timers name it by its C# line.</summary>
+        internal int madeLine;
+
+        /// <summary>The profiler's label for the timer, worked out at its first timed run.</summary>
+        internal string? profileLabel;
 #endif
 
         /// <summary>

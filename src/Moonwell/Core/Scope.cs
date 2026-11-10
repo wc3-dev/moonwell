@@ -23,6 +23,11 @@ namespace Moonwell
         /// <summary>How many children are linked to this scope.</summary>
         internal int count;
 
+#if DEBUG
+        /// <summary>The children at which a development build next reports this scope as growing (decision 262).</summary>
+        internal int leakAt = Leaks.ScopeReportAt;
+#endif
+
         /// <summary>How many children this scope holds that have not ended.</summary>
         [LocalSafe]
         public int ChildCount
@@ -37,7 +42,11 @@ namespace Moonwell
         public Timer After(float seconds, Action action)
         {
             Dev.Check(seconds >= 0.0f, Names.NameOf(this) + ".After: seconds must be 0 or more");
-            return Timer.Start(new Timer(Runtime.World.Now(), seconds, false, action), this);
+            var timer = new Timer(Runtime.World.Now(), seconds, false, action);
+#if DEBUG
+            timer.madeLine = Profiler.MadeLine();
+#endif
+            return Timer.Start(timer, this);
         }
 
         /// <summary>
@@ -53,7 +62,11 @@ namespace Moonwell
                 return Timer.Refuse(Names.NameOf(this) + ".Every", seconds, action);
             }
 
-            return Timer.Start(new Timer(Runtime.World.Now(), seconds, true, action), this);
+            var timer = new Timer(Runtime.World.Now(), seconds, true, action);
+#if DEBUG
+            timer.madeLine = Profiler.MadeLine();
+#endif
+            return Timer.Start(timer, this);
         }
 
         /// <summary>
@@ -173,6 +186,12 @@ namespace Moonwell
             newest = child;
             child.linked = true;
             count++;
+#if DEBUG
+            if (count >= leakAt)
+            {
+                Leaks.ScopeGrew(this);
+            }
+#endif
         }
 
         /// <summary>Takes a child out of the list of children, so it does not end with this scope.</summary>

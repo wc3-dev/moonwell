@@ -41,6 +41,9 @@ namespace Moonwell
         /// <summary>Whether -stats shows the statistics.</summary>
         private static bool statsShown;
 
+        /// <summary>The section shown below the statistics (-leaks, -profile, -scopes, -timers, -help), or empty for none.</summary>
+        private static string section = string.Empty;
+
         /// <summary>The objects the panel has named, in the order it first named them; searched by reference, as a map's class may hold static fields.</summary>
         private static List<Scope> named = new List<Scope>();
 
@@ -56,6 +59,7 @@ namespace Moonwell
             runs = 0;
             endedLine = null;
             statsShown = false;
+            section = string.Empty;
             named = new List<Scope>();
             numbers = new List<int>();
         }
@@ -118,6 +122,19 @@ namespace Moonwell
                 }
             }
 
+            Refresh();
+        }
+
+        /// <summary>Shows a section, or hides it when it is the one shown.</summary>
+        internal static void ToggleSection(string name)
+        {
+            ShowSection(section == name ? string.Empty : name);
+        }
+
+        /// <summary>Shows a section in place of the one shown, or none for empty.</summary>
+        internal static void ShowSection(string name)
+        {
+            section = name;
             Refresh();
         }
 
@@ -302,6 +319,18 @@ namespace Moonwell
                 AddStats(lines);
             }
 
+            if (section.Length > 0)
+            {
+                try
+                {
+                    DebugTools.AddSection(section, lines);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report("Moonwell.Debug", error);
+                }
+            }
+
             if (lines.Count <= MostLines)
             {
                 return lines.Text;
@@ -410,6 +439,11 @@ namespace Moonwell
             }
 
             lines.Add(DebugStats.TimersLine());
+            var handles = Leaks.HandlesLine();
+            if (handles.Length > 0)
+            {
+                lines.Add("handles alive: " + handles);
+            }
         }
 
         /// <summary>The number of an object within its class: the one it was given, or the next of its class, given now.</summary>
