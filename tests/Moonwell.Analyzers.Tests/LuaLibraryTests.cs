@@ -32,6 +32,25 @@ public class LuaLibraryTests
     }
 
     [Fact]
+    public void setting_a_library_global_inside_local_for_is_reported_and_reading_it_is_not()
+    {
+        const string Global = """
+                public static class OldMap
+                {
+                    public static int udg_Gold { get => udg_Gold__get(); set => udg_Gold__set(value); }
+
+                    private static int udg_Gold__get() => 0;
+
+                    [LuaLibrary]
+                    private static void udg_Gold__set(int value) { }
+                }
+            """;
+
+        Assert.Single(MapCode.Check("Local.For(p, () => OldMap.udg_Gold = 5);", Global));
+        Assert.Empty(MapCode.Check("Local.For(p, () => { var gold = OldMap.udg_Gold; });", Global));
+    }
+
+    [Fact]
     public void a_library_function_outside_local_for_is_not()
     {
         Assert.Empty(MapCode.Check("Knockback.push(1f);", Bindings));
