@@ -118,6 +118,7 @@ namespace Moonwell.Build
 
             var sourceMapIds = MapObjectIds.Defined(project);
             var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), sourceMapIds);
+            ObjectChecks.Run(declarations, ids, standard, data.ValueSet, sourceMapIds, PlacedIds(map), ObjectChecks.Read(targetPath), log);
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
             var installs = Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log);
@@ -183,6 +184,14 @@ namespace Moonwell.Build
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
             StageWith(project, () => Stage.Write(project, map, written, writtenIds, declarations.StandardClassIds, standard, log));
+        }
+
+        // The ids of the units, items, destructables and doodads placed on the map in World Editor.
+        private static IReadOnlySet<string> PlacedIds(War3Net.Build.Map map)
+        {
+            var units = map.Units?.Units.Select(placed => placed.TypeId) ?? Enumerable.Empty<int>();
+            var doodads = map.Doodads?.Doodads.Select(placed => placed.TypeId) ?? Enumerable.Empty<int>();
+            return units.Concat(doodads).Select(Moonwell.MapFiles.Rawcodes.TextOf).ToHashSet(StringComparer.Ordinal);
         }
 
         // The map does not reference Moonwell.Objects: its own object files are used as they are.
