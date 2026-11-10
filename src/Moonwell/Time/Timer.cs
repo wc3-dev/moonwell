@@ -106,7 +106,7 @@ namespace Moonwell
                 var now = Runtime.World.Now();
                 if (start == now && madeAt == Runtime.Clock.LastGame)
                 {
-                    Errors.Report(Names.NameOf(Parent) + ".Timer", new MoonwellException("ended with its scope in the instant it was made, before it ran; name a scope that lasts"));
+                    Errors.Report(Parent, ".Timer", new MoonwellException("ended with its scope in the instant it was made, before it ran; name a scope that lasts"));
                 }
             }
 #endif

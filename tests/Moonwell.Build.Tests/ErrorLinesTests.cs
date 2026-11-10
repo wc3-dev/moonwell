@@ -61,6 +61,8 @@ namespace Moonwell.Build.Tests
             };
             Assert.Equal(expected, builds.Development.Log);
             Assert.Equal(expected, builds.Release.Log);
+            Assert.Matches(@"^Moonwell log: Fails, started \d{4}-\d\d-\d\d \d\d:\d\d:\d\d$", builds.Development.Header);
+            Assert.Matches(@"^Moonwell log: Fails, started ", builds.Release.Header);
         }
 
         [Fact]
@@ -92,7 +94,8 @@ namespace Moonwell.Build.Tests
         }
 
         /// <summary>What a run of a built script showed on the screen and wrote to the log.</summary>
-        public sealed record Run(IReadOnlyList<string> Screen, IReadOnlyList<string> Log);
+        /// <summary>What a run showed, the log file's opening line (empty when it has none) and its lines after that one.</summary>
+        public sealed record Run(IReadOnlyList<string> Screen, string Header, IReadOnlyList<string> Log);
 
         /// <summary>The Fails fixture, copied, built as a development and a release build, and each run once.</summary>
         public sealed class FailsBuilds : IDisposable
@@ -132,6 +135,7 @@ namespace Moonwell.Build.Tests
                 lua.DoString("setmetatable(_G, { __index = function(_, name) return function() return nil end end })");
                 lua.DoString("bj_MAX_PLAYER_SLOTS = 0");
                 lua.DoString("TimerGetElapsed = function() return 0 end");
+                lua.DoString("GetStoredInteger = function() return 0 end");
                 lua.DoString("TimerStart = function(timer, timeout, periodic, callback) pending[#pending + 1] = callback; if periodic then repeating[#repeating + 1] = callback end end");
                 lua.DoString("DisplayTimedTextToPlayer = function(p, x, y, duration, text) screen[#screen + 1] = text end");
                 lua.DoString("PreloadGenClear = function() log = {} end");
@@ -141,7 +145,9 @@ namespace Moonwell.Build.Tests
                 lua.DoString("main()");
                 // A periodic timer runs again each round, as in the game; the log file waits for its check timer.
                 lua.DoString("for round = 1, 10 do local due = pending; pending = {}; for i = 1, #due do due[i]() end; for i = 1, #repeating do pending[#pending + 1] = repeating[i] end end");
-                return new Run(Strings(lua, "screen"), Strings(lua, "log"));
+                var log = Strings(lua, "log");
+                var header = log.Count > 0 && log[0].StartsWith("Moonwell log: ", StringComparison.Ordinal) ? log[0] : string.Empty;
+                return new Run(Strings(lua, "screen"), header, header.Length > 0 ? log.Skip(1).ToList() : log);
             }
 
             private string Build(bool release)

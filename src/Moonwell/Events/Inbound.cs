@@ -157,7 +157,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(dead) + ".OnDeath", error);
+                    Errors.Report(dead, ".OnDeath", error);
                 }
             }
 
@@ -176,7 +176,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnDeath", error);
+                    Errors.Report(component, ".OnDeath", error);
                 }
             }
 
@@ -455,7 +455,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(ability) + ".OnCasting", error);
+                Errors.Report(ability, ".OnCasting", error);
             }
 
             var refusal = cast.Refusal;
@@ -502,7 +502,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(ability) + ".OnFinished", error);
+                Errors.Report(ability, ".OnFinished", error);
             }
         }
 
@@ -552,7 +552,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(item) + ".OnPickedUp", error);
+                    Errors.Report(item, ".OnPickedUp", error);
                 }
             }
 
@@ -571,7 +571,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnPickedUp", error);
+                    Errors.Report(component, ".OnPickedUp", error);
                 }
             }
 
@@ -594,7 +594,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(unit) + ".OnItemPickedUp", error);
+                    Errors.Report(unit, ".OnItemPickedUp", error);
                 }
             }
 
@@ -613,7 +613,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnItemPickedUp", error);
+                    Errors.Report(component, ".OnItemPickedUp", error);
                 }
             }
 
@@ -631,7 +631,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(item) + ".OnDropped", error);
+                    Errors.Report(item, ".OnDropped", error);
                 }
             }
 
@@ -650,7 +650,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnDropped", error);
+                    Errors.Report(component, ".OnDropped", error);
                 }
             }
 
@@ -668,7 +668,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(unit) + ".OnItemDropped", error);
+                    Errors.Report(unit, ".OnItemDropped", error);
                 }
             }
 
@@ -687,7 +687,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnItemDropped", error);
+                    Errors.Report(component, ".OnItemDropped", error);
                 }
             }
 
@@ -705,7 +705,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(from) + ".OnDealtDamage", error);
+                    Errors.Report(from, ".OnDealtDamage", error);
                 }
             }
 
@@ -724,7 +724,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnDealtDamage", error);
+                    Errors.Report(component, ".OnDealtDamage", error);
                 }
             }
 
@@ -742,7 +742,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(hit) + ".OnDamaged", error);
+                    Errors.Report(hit, ".OnDamaged", error);
                 }
             }
 
@@ -761,7 +761,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnDamaged", error);
+                    Errors.Report(component, ".OnDamaged", error);
                 }
             }
 
@@ -779,7 +779,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(dead) + ".OnDeath", error);
+                    Errors.Report(dead, ".OnDeath", error);
                 }
             }
 
@@ -798,7 +798,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnDeath", error);
+                    Errors.Report(component, ".OnDeath", error);
                 }
             }
 
@@ -816,7 +816,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(slayer) + ".OnKill", error);
+                    Errors.Report(slayer, ".OnKill", error);
                 }
             }
 
@@ -835,7 +835,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnKill", error);
+                    Errors.Report(component, ".OnKill", error);
                 }
             }
 
@@ -860,7 +860,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnUnitDamaged", error);
+                    Errors.Report(component, ".OnUnitDamaged", error);
                 }
             }
 
@@ -885,7 +885,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnUnitDied", error);
+                    Errors.Report(component, ".OnUnitDied", error);
                 }
             }
 
@@ -903,7 +903,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(ability) + ".OnCast", error);
+                    Errors.Report(ability, ".OnCast", error);
                 }
             }
         }
@@ -919,7 +919,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(caster) + ".OnCast", error);
+                    Errors.Report(caster, ".OnCast", error);
                 }
             }
 
@@ -938,7 +938,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnCast", error);
+                    Errors.Report(component, ".OnCast", error);
                 }
             }
 
@@ -1032,7 +1032,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(ability) + ".OnLost", error);
+                    Errors.Report(ability, ".OnLost", error);
                 }
             }
         }
@@ -1048,7 +1048,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(hero) + ".OnLevelUp", error);
+                    Errors.Report(hero, ".OnLevelUp", error);
                 }
             }
 
@@ -1067,7 +1067,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnLevelUp", error);
+                    Errors.Report(component, ".OnLevelUp", error);
                 }
             }
 
@@ -1092,7 +1092,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnHeroLevelUp", error);
+                    Errors.Report(component, ".OnHeroLevelUp", error);
                 }
             }
 
@@ -1110,7 +1110,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(ability) + ".OnLearned", error);
+                    Errors.Report(ability, ".OnLearned", error);
                 }
             }
         }
@@ -1126,7 +1126,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(hero) + ".OnSkillLearned", error);
+                    Errors.Report(hero, ".OnSkillLearned", error);
                 }
             }
 
@@ -1145,7 +1145,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnSkillLearned", error);
+                    Errors.Report(component, ".OnSkillLearned", error);
                 }
             }
 
@@ -1170,7 +1170,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnHeroSkillLearned", error);
+                    Errors.Report(component, ".OnHeroSkillLearned", error);
                 }
             }
 
@@ -1231,7 +1231,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnGameLoaded", error);
+                    Errors.Report(component, ".OnGameLoaded", error);
                 }
             }
 
@@ -1286,7 +1286,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnLeave", error);
+                    Errors.Report(component, ".OnLeave", error);
                 }
             }
 
@@ -1311,7 +1311,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnUnitCast", error);
+                    Errors.Report(component, ".OnUnitCast", error);
                 }
             }
 
@@ -1336,7 +1336,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnGameStart", error);
+                    Errors.Report(component, ".OnGameStart", error);
                 }
             }
 

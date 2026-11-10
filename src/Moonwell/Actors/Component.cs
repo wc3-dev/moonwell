@@ -107,7 +107,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnRemoved", error);
+                Errors.Report(this, ".OnRemoved", error);
             }
 
             actor!.Detach(this);

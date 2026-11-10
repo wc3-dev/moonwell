@@ -180,7 +180,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnLeave", error);
+                Errors.Report(this, ".OnLeave", error);
             }
 
             if (entry != null)
@@ -195,7 +195,7 @@ namespace Moonwell
             var failure = Guard.Tick(this);
             if (failure != null)
             {
-                Errors.Report(Names.NameOf(this) + ".OnTick", failure);
+                Errors.Report(this, ".OnTick", failure);
             }
         }
 
@@ -208,7 +208,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnCreated", error);
+                Errors.Report(this, ".OnCreated", error);
             }
         }
 

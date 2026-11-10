@@ -44,7 +44,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(unit) + (selected ? ".OnSelected" : ".OnDeselected"), error);
+                    Errors.Report(unit, (selected ? ".OnSelected" : ".OnDeselected"), error);
                 }
             }
 
@@ -70,7 +70,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + (selected ? ".OnSelected" : ".OnDeselected"), error);
+                    Errors.Report(component, (selected ? ".OnSelected" : ".OnDeselected"), error);
                 }
             }
 
@@ -102,7 +102,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + (selected ? ".OnUnitSelected" : ".OnUnitDeselected"), error);
+                    Errors.Report(component, (selected ? ".OnUnitSelected" : ".OnUnitDeselected"), error);
                 }
             }
 

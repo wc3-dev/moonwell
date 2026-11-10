@@ -412,14 +412,56 @@ namespace Moonwell.Engine
         private void WriteLog()
         {
             log.Written(GameNow());
+            if (log.IndexDue)
+            {
+                Natives.PreloadGenClear();
+                Natives.PreloadGenStart();
+                Natives.Preload(log.IndexLine());
+                Natives.PreloadGenEnd(LogFile.IndexPath);
+                log.IndexWritten();
+            }
+
             Natives.PreloadGenClear();
             Natives.PreloadGenStart();
+            foreach (var line in log.Header)
+            {
+                Natives.Preload("\")\n" + line + "\n//");
+            }
+
             foreach (var line in log.Lines)
             {
                 Natives.Preload("\")\n" + line + "\n//");
             }
 
             Natives.PreloadGenEnd("Moonwell\\log.txt");
+            if (log.Slot > 0)
+            {
+                // The texts stay until PreloadGenClear (game facts), so the ring's file gets the same lines.
+                Natives.PreloadGenEnd(log.RingPath);
+            }
+        }
+
+        /// <summary>
+        /// Opens the log's ring of past games (decision 264), while the map loads: Preloader runs the index file, which stores
+        /// the slot in a game cache, and the log opens with the map's name and this machine's date. A machine with no index
+        /// makes the cache once more, so every machine makes as many handles.
+        /// </summary>
+        public void OpenLog(string mapName)
+        {
+            Natives.Preloader(LogFile.IndexPath);
+            var stored = Natives.GetStoredInteger(Natives.InitGameCache(LogFile.CacheName), "log", "next");
+            if (stored == 0)
+            {
+                Natives.InitGameCache(LogFile.CacheName);
+            }
+
+            log.Open(stored, "Moonwell log: " + (mapName.Length > 0 ? mapName + ", " : string.Empty) + "started " + OsDate());
+        }
+
+        /// @CSharpLua.Template = "os.date('%Y-%m-%d %H:%M:%S')"
+        private static string OsDate()
+        {
+            return string.Empty;
         }
 
         /// <summary>Sends a sharing message from this machine.</summary>
