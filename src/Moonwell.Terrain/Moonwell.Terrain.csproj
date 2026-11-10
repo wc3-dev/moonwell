@@ -23,6 +23,8 @@
     <InternalsVisibleTo Include="Moonwell.Tests" />
     <!-- The physics package reads the grid's slope and cliffs in floats, with no vector a read. -->
     <InternalsVisibleTo Include="Moonwell.Physics" />
+    <!-- The pathing package asks the item trick of every cell its search looks at. -->
+    <InternalsVisibleTo Include="Moonwell.Pathing" />
   </ItemGroup>
 
 </Project>

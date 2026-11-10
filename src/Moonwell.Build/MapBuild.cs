@@ -27,6 +27,7 @@ namespace Moonwell.Build
 
         /// <summary>The physics package's assembly: a map that references it gets its placed bridges written from <c>war3map.doo</c> and installed by its Main.</summary>
         private const string PhysicsAssemblyName = "Moonwell.Physics";
+        private const string PathingAssemblyName = "Moonwell.Pathing";
 
         /// <summary>Runs every step of the build, in order.</summary>
         /// <param name="path">A project folder, or the path of its <c>.csproj</c> file.</param>
@@ -70,8 +71,9 @@ namespace Moonwell.Build
             var settings = MapSettingsReader.Read(targetPath, project);
             var map = SourceMap.Open(project, settings, log);
 
-            // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly.
-            if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath))
+            // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly. The pathing package's
+            // helper units are object data, so a map that uses it takes this path too.
+            if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath) || Declarations.Needs(targetPath, PathingAssemblyName))
             {
                 var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
                 BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
@@ -121,6 +123,12 @@ namespace Moonwell.Build
             var installs = Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log);
             installs.AddRange(FileStore.Installs(targetPath, settings, project));
             installs.AddRange(SaveCodecWriter.Write(targetPath, project, settings));
+            var pathing = Declarations.Needs(targetPath, PathingAssemblyName);
+            if (pathing)
+            {
+                installs.Add(PathingTypes.Install);
+            }
+
             EntryWriter.Write(project, settings, true, installs, Loading(targetPath));
 
             // A map whose code casts with a dummy gets the dummy's type in its object files, kept free of its own ids; one whose
@@ -140,6 +148,20 @@ namespace Moonwell.Build
                 FileStore.Check(ids, sourceMapIds);
                 written = written.Append(FileStore.Object).ToList();
                 writtenIds = new Dictionary<string, string>(writtenIds) { [FileStore.ClassName] = FileStore.Id };
+            }
+
+            // A map that uses the pathing package gets its hidden helper units, one type for each square and movement.
+            if (pathing)
+            {
+                PathingTypes.Check(ids, sourceMapIds);
+                written = written.Concat(PathingTypes.Objects).ToList();
+                var withHelpers = new Dictionary<string, string>(writtenIds);
+                foreach (var helper in PathingTypes.Objects)
+                {
+                    withHelpers[helper.ClassName] = helper.PinnedId!;
+                }
+
+                writtenIds = withHelpers;
             }
 
             if (BonusAbilities.UsedBy(targetPath))
