@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 namespace Moonwell.Build
 {
     // Finds a change to a declared field from a method that is not a constructor (design call 5): a call to its setter,
-    // to Add or Remove of its list, to Set of its reference, or to a kind base's Set. Declared fields are class defaults,
+    // to Add or Remove of its list, to Set of its reference, or to a kind base's Set or Describe. Declared fields are class defaults,
     // set once while the class is declared. A lambda inside a constructor is compiled to a method whose name holds
     // <.ctor>, and counts as the constructor. A shared field's live member (MaxLife) is this object's value outside the
     // constructor, set anywhere; but a unit's Level has no live setter (the game has none), so it is set only in a
@@ -121,6 +121,10 @@ namespace Moonwell.Build
                         else if (target.Name == "Set" && Declarations.KindOfBase.ContainsKey(target.DeclaringType!.FullName ?? string.Empty))
                         {
                             return ("changes", lastString ?? "a field");
+                        }
+                        else if (target.Name == "Describe" && Declarations.KindOfBase.ContainsKey(target.DeclaringType!.FullName ?? string.Empty))
+                        {
+                            return ("changes", "the tooltips");
                         }
                     }
                 }
