@@ -304,5 +304,20 @@ namespace Moonwell.Testing
             Expect.True(!unit.CanStand(32f, 100f), "not in the wall");
             Expect.True(unit.NearestSpot(-200f, 40f) == new Vector2(-200f, 40f), "where it stands is free: units are not in the helper's fake");
         }
+
+        /// <summary>A unit's own fit and nearest spot leave the unit itself out; another unit, and fit by size, still count it.</summary>
+        public static void UnitLeavesItselfOut(FakeWorld world)
+        {
+            var fake = Setup(new FakeTerrainWorld());
+            var unit = Unit.Create(Footman, Player.Get(0), -200f, 40f, Game.Instance);
+            fake.Stand(31f, -200f, 40f, unit.Handle);
+            fake.Stand(31f, -136f, 40f);
+            Expect.True(unit.CanStand(-200f, 40f), "its own place");
+            Expect.True(unit.NearestSpot(-200f, 40f) == new Vector2(-200f, 40f), "its own place is its nearest spot");
+            Expect.True(unit.CanStand(-232f, 40f), "a step aside, half over its own square");
+            Expect.True(!Paths.CanStand(31f, -200f, 40f), "by size the unit is in the way");
+            Expect.True(!unit.CanStand(-136f, 40f), "another unit is in the way");
+            Expect.True(unit.NearestSpot(-136f, 40f) != new Vector2(-136f, 40f), "another unit moves its nearest spot");
+        }
     }
 }

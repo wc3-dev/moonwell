@@ -48,12 +48,18 @@ namespace Moonwell
         [ChangesState]
         public static bool CanStand(float size, float x, float y, Movement movement = Movement.Ground)
         {
+            return CanStand(size, x, y, movement, null);
+        }
+
+        // As the public CanStand, with a unit whose own square does not count: a unit's own call.
+        internal static bool CanStand(float size, float x, float y, Movement movement, unit? leftOut)
+        {
             if (movement == Movement.Fly)
             {
                 return Terrain.IsFlyable(x, y);
             }
 
-            World.Try(Cells.Across(size), movement, x, y, out var landedX, out var landedY);
+            World.Try(Cells.Across(size), movement, x, y, leftOut, out var landedX, out var landedY);
             return Math.Abs(landedX - x) < 0.01f && Math.Abs(landedY - y) < 0.01f;
         }
 
@@ -61,12 +67,18 @@ namespace Moonwell
         [ChangesState]
         public static Vector2 NearestSpot(float size, float x, float y, Movement movement = Movement.Ground)
         {
+            return NearestSpot(size, x, y, movement, null);
+        }
+
+        // As the public NearestSpot, with a unit whose own square does not count.
+        internal static Vector2 NearestSpot(float size, float x, float y, Movement movement, unit? leftOut)
+        {
             if (movement == Movement.Fly)
             {
                 return new Vector2(x, y);
             }
 
-            World.Try(Cells.Across(size), movement, x, y, out var landedX, out var landedY);
+            World.Try(Cells.Across(size), movement, x, y, leftOut, out var landedX, out var landedY);
             return new Vector2(landedX, landedY);
         }
 
