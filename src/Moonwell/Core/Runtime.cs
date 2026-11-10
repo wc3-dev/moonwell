@@ -160,6 +160,7 @@ namespace Moonwell
         public static void Start(Map map, Action register)
         {
             Start(() => Install(map, register));
+            ((NativeWorld)World).OpenLog(map.Name);
         }
 
         /// <summary>Runs the register step, with every maker registered before any class's constructor runs (ObjectTypes.Registering), then adds the map's starting components to the game, in list order, and its player components to each player in the game; Start runs it as the setup.</summary>

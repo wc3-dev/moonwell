@@ -495,7 +495,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnLeave", error);
+                Errors.Report(this, ".OnLeave", error);
             }
         }
 

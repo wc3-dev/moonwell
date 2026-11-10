@@ -142,7 +142,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(cargo) + name, error);
+                    Errors.Report(cargo, name, error);
                 }
             }
 
@@ -168,7 +168,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + name, error);
+                    Errors.Report(component, name, error);
                 }
             }
 
@@ -199,7 +199,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(transport) + name, error);
+                    Errors.Report(transport, name, error);
                 }
             }
 
@@ -225,7 +225,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + name, error);
+                    Errors.Report(component, name, error);
                 }
             }
 
@@ -257,7 +257,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + (loaded ? ".OnUnitLoaded" : ".OnUnitUnloaded"), error);
+                    Errors.Report(component, (loaded ? ".OnUnitLoaded" : ".OnUnitUnloaded"), error);
                 }
             }
 

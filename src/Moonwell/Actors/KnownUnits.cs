@@ -104,7 +104,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(made) + ".OnCreated", error);
+                    Errors.Report(made, ".OnCreated", error);
                 }
             }
 
@@ -237,7 +237,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnUnitCreated", error);
+                    Errors.Report(component, ".OnUnitCreated", error);
                 }
             }
 

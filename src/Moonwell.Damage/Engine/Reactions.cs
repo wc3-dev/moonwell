@@ -193,7 +193,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(obj) + "." + names[slot], error);
+                Errors.Report(obj, "." + names[slot], error);
             }
 
             Running.RemoveAt(Running.Count - 1);

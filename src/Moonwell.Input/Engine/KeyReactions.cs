@@ -236,7 +236,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(obj) + "." + (bit == Pressed ? "OnKeyPressed" : "OnKeyReleased"), error);
+                Errors.Report(obj, "." + (bit == Pressed ? "OnKeyPressed" : "OnKeyReleased"), error);
             }
         }
 

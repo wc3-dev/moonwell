@@ -170,7 +170,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(summoner) + ".OnSummon", error);
+                    Errors.Report(summoner, ".OnSummon", error);
                 }
             }
 
@@ -189,7 +189,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnSummon", error);
+                    Errors.Report(component, ".OnSummon", error);
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnUnitSummoned", error);
+                    Errors.Report(component, ".OnUnitSummoned", error);
                 }
             }
 

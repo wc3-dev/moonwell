@@ -118,7 +118,7 @@ namespace Moonwell
                 if (runs == RunawayRuns)
                 {
                     runaway = true;
-                    Errors.Report(Names.NameOf(timer.Parent!) + ".Timer", new MoonwellException("more than 10000 timer runs in one instant; the rest wait 1/32 s"));
+                    Errors.Report(timer.Parent!, ".Timer", new MoonwellException("more than 10000 timer runs in one instant; the rest wait 1/32 s"));
                     break;
                 }
 
@@ -201,7 +201,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(reactor) + ".Timer", error);
+                Errors.Report(reactor, ".Timer", error);
             }
         }
 

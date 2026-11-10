@@ -347,7 +347,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(ordered) + ".OnOrdered", error);
+                    Errors.Report(ordered, ".OnOrdered", error);
                 }
             }
 
@@ -371,7 +371,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnOrdered", error);
+                    Errors.Report(component, ".OnOrdered", error);
                 }
             }
 
@@ -407,7 +407,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnUnitOrdered", error);
+                    Errors.Report(component, ".OnUnitOrdered", error);
                 }
             }
 

@@ -933,7 +933,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(this) + "." + name, error);
+                    Errors.Report(this, "." + name, error);
                 }
             }
         }
@@ -955,7 +955,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(this) + "." + name, error);
+                    Errors.Report(this, "." + name, error);
                 }
             }
         }
