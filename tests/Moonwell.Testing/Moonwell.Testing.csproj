@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\Moonwell.Json\Moonwell.Json.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Maths\Moonwell.Maths.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Physics\Moonwell.Physics.csproj" />
+    <ProjectReference Include="..\..\src\Moonwell.Pathing\Moonwell.Pathing.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Terrain\Moonwell.Terrain.csproj" />
   </ItemGroup>
 
