@@ -2346,6 +2346,18 @@ Lua refuses it. Lua allows 200 locals in a function: each parameter, local varia
 initializer is one, and so are some values the compiler keeps (`?.`, a switch expression), so a method that adds 200
 `new Wave { ... }` to a list is too long. Split it into several methods.
 
+The build checks the objects the map declares. A tooltip placeholder that names no object (`<A0O1,DataA1>`; ids are
+case-sensitive) or a level its ability doesn't have (`<A001,DataA4>` of 3 levels) fails it, as the game shows 0
+there; the key itself is not checked. Two warnings point at mistakes that can be meant:
+
+- On a declared unit's command card, two abilities at one button place, with one hotkey, or taking one order (two
+  Storm Bolts: only one of them casts; a Channel's order is its Base Order ID). Only abilities with an icon count,
+  and only castable ones, with a hotkey, for hotkeys and orders. A pair of the game's own abilities is warned only
+  when the map changed the unit's list. `[AllowClash]` on the unit keeps it quiet.
+- A declared object nothing uses: no other object lists it, no code of another class names it, and the map places
+  none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
+  Editor's own objects, item tables).
+
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
 the file and line. An error that repeats shows and goes to the log at its 1st, 10th, 100th time and so on, with its
