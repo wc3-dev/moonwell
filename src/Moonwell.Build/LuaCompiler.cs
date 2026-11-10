@@ -136,7 +136,7 @@ namespace Moonwell.Build
 
             var script = ScriptLibraries.Trim(map.Script ?? throw new BuildException("CSharp.lua wrote no script"));
 
-            return script;
+            return script + PlacedWriter.DestructableTable(project, map);
         }
 
         private static bool IsInNameof(Diagnostic diagnostic)

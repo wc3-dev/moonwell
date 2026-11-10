@@ -458,6 +458,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>A destructable an editor placed in the map, trees among them, by World Editor's name for it without <c>gg_dest_</c>: its type's id and its number, <c>LTlt_0012</c>. Found nearest its place among those of its type; null when the map has no such destructable or it is gone. The build checks a name written as a literal; <c>Placed.Destructables</c> lists every one but the trees.</summary>
+        public static Destructable? Named(string name)
+        {
+            return Of(Runtime.World.PlacedDestructable(name));
+        }
+
         /// <summary>The object of a game destructable: made when it is first seen; null for null or for one the game has removed.</summary>
         public static Destructable? Of(destructable? handle)
         {

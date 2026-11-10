@@ -554,6 +554,35 @@ public sealed class Ferry : Unit
 }
 ```
 
+## Placed things
+
+What any editor placed in the map is in the class `Placed`, which the build writes from the map's files before it
+compiles. Each member is named as World Editor names its variable, without `gg_`: a unit, item or destructable by its
+type's id and number, a region, camera or sound by its name with `_` for spaces. A name that is gone from the map is a
+compile error.
+
+```csharp
+Placed.Units.Hpal_0002?.Kill();                       // null once the unit has left the game
+var spawn = Placed.Regions.Spawn_Left;                // a PlacedRegion: Name, Left, Bottom, Right, Top, CenterX, CenterY
+Unit.Create<Footman>(player, spawn.CenterX, spawn.CenterY, Game.Instance);
+Placed.Sounds.Intro?.Play();                          // with the Sound Editor's volume, pitch, 3D and fades
+```
+
+| Kind | In `Placed` | By a name built in code |
+|---|---|---|
+| Unit | `Placed.Units.hfoo_0001`, typed as the map's class when its `[ObjectId]` is the unit's type | `Unit.Named("hfoo_0001")` |
+| Item | `Placed.Items.ratc_0005`, typed the same way | `Item.Named("ratc_0005")` |
+| Destructable | `Placed.Destructables.LTg1_0002`, trees left out | `Destructable.Named("LTlt_0012")`, trees too |
+| Region | `Placed.Regions.Spawn_Left`, a `PlacedRegion`; goes where `Bounds` does | `AreaShape.Region("Spawn Left")` |
+| Camera | `Placed.Cameras.Intro`, a `PlacedCamera`; goes where `CameraSetup` does | `CameraSetup.Named("Intro")` |
+| Sound | `Placed.Sounds.Intro`, a `PlacedSound` with `Play()`, `PlayAt(x, y)`, `PlayOn(unit)`, `Stop()` | `PlacedSound.Named("Intro")` |
+
+- A lookup gives null for a name the map does not have, and once the thing has left the game; the build fails at the
+  line of a name written as text that the map does not have.
+- A unit or item placed of the map's own class comes back as that class, as `Unit.Of` gives it.
+- A destructable is found nearest its place among those of its type, as the game makes most of them itself.
+- `Placed` changes when the map does: after placing something in an editor, build once before naming it.
+
 ## Stats and scores
 
 A stat is a number a unit or a player has: a base, then modifiers, flat or percent, each held by a scope, which takes it
