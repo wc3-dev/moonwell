@@ -146,6 +146,11 @@ local function locationOf(line)
   return file .. ":" .. lineNumbers[found]
 end
 
+-- The C# location of a script line, "Spells/Rage.cs:12", or nil; the debug tools' Lua names timers with it.
+function MoonwellLocationOf(line)
+  return locationOf(line)
+end
+
 local maxLevels = 32
 local maxLocations = 8
 

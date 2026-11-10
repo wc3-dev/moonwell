@@ -333,6 +333,33 @@ namespace Moonwell.Engine
             native.Log(text);
         }
 
+        /// <summary>Writes a text file in CustomMapData with Preload, as the log is written: each line its own, a long one in pieces; nothing in a replay.</summary>
+        public void WriteFile(string path, List<string> lines)
+        {
+            if (!ReplayGuard.MayWrite)
+            {
+                return;
+            }
+
+            Natives.PreloadGenClear();
+            Natives.PreloadGenStart();
+            foreach (var line in lines)
+            {
+                foreach (var piece in Utf8.Pieces(line, LogFile.PieceLength))
+                {
+                    Natives.Preload("\")\n" + piece + "\n//");
+                }
+            }
+
+            Natives.PreloadGenEnd(path);
+        }
+
+        /// <summary>Makes a unit invulnerable, or not.</summary>
+        public void SetInvulnerable(unit unit, bool invulnerable)
+        {
+            Natives.SetUnitInvulnerable(unit, invulnerable);
+        }
+
         /// <summary>The lightning code of a DebugDraw style: three codes last when moved (game facts), so Paused draws as Waiting does.</summary>
         private static string CodeOf(int style)
         {

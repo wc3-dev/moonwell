@@ -46,6 +46,7 @@ namespace Moonwell.Build.Tests
 
             Assert.Contains("sample: started (development)", script);
             Assert.DoesNotContain("sample: started (release)", script);
+            Assert.Contains("function MoonwellHeldAdd(", script);
         }
 
         [Fact]
@@ -55,6 +56,8 @@ namespace Moonwell.Build.Tests
 
             Assert.Contains("sample: started (release)", script);
             Assert.DoesNotContain("sample: started (development)", script);
+            Assert.DoesNotContain("MoonwellHeld", script);
+            Assert.DoesNotContain("MoonwellProfile", script);
         }
 
         [Fact]

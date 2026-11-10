@@ -63,6 +63,9 @@ namespace Moonwell
                 return mask;
             }
 
+#if DEBUG
+            Profiler.Seen(obj);
+#endif
             mask = 0;
             mask2 = 0;
             for (var level = table; level != null; level = level.Parent)

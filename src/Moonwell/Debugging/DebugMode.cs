@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 
 namespace Moonwell
@@ -55,6 +56,33 @@ namespace Moonwell
         {
 #if DEBUG
             DebugSession.Select(actor);
+#endif
+        }
+
+        /// <summary>A chat command for development builds only (decision 265), as a scope's Command on the game: heard all game, whether the debug mode is on or not, and listed by -help with its text. A release build leaves the call out, lambda and all.</summary>
+        [Conditional("DEBUG")]
+        public static void Command(string name, string help, Action<Player, string> heard)
+        {
+#if DEBUG
+            DebugTools.MapCommand(name, help, heard);
+#endif
+        }
+
+        /// <summary>Starts timing a section of the map's own code under a name, for the profiler (-profile; decision 263); StopTiming adds the time since as one call. Nothing while the profiler is stopped. A release build leaves the call out.</summary>
+        [Conditional("DEBUG")]
+        public static void StartTiming(string name)
+        {
+#if DEBUG
+            Profiler.StartTiming(name);
+#endif
+        }
+
+        /// <summary>Stops timing a section StartTiming started, adding the time since as one call of it; nothing without a start. A release build leaves the call out.</summary>
+        [Conditional("DEBUG")]
+        public static void StopTiming(string name)
+        {
+#if DEBUG
+            Profiler.StopTiming(name);
 #endif
         }
 

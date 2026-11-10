@@ -80,6 +80,9 @@ namespace Moonwell
             {
                 Parent.Unlink(this);
             }
+#if DEBUG
+            Leaks.Ended(this);
+#endif
         }
 
         /// <summary>Runs when the object ends, before its children end.</summary>

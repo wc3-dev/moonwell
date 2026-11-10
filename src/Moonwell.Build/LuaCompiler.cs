@@ -77,7 +77,7 @@ namespace Moonwell.Build
             var (commonJ, blizzardJ) = GameScripts.Find(null, GameScripts.CacheRoot);
 
             var luaFolder = Path.Combine(project.GeneratedFolder, "lua");
-            var libraries = ScriptLibraries.Extract(targetPath, luaFolder);
+            var libraries = ScriptLibraries.Extract(targetPath, luaFolder, !release);
             if (objects != null)
             {
                 var path = Path.Combine(luaFolder, "objects.lua");
