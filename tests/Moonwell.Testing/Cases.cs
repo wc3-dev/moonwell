@@ -56,10 +56,21 @@ namespace Moonwell.Testing
             AddPlayerFiles(list);
             AddJson(list);
             AddDebug(list);
+            AddPlaced(list);
             return list;
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>
+        private static void AddPlaced(List<Case> list)
+        {
+            list.Add(new Case { Name = "placed.unit-by-name", Run = PlacedCases.UnitByName });
+            list.Add(new Case { Name = "placed.unit-gone", Run = PlacedCases.UnitGone });
+            list.Add(new Case { Name = "placed.item-by-name", Run = PlacedCases.ItemByName });
+            list.Add(new Case { Name = "placed.destructable-by-name", Run = PlacedCases.DestructableByName });
+            list.Add(new Case { Name = "placed.sound", Run = PlacedCases.Sound });
+            list.Add(new Case { Name = "placed.region-centre", Run = PlacedCases.RegionCentre });
+        }
+
         private static void AddSelection(List<Case> list)
         {
             list.Add(new Case { Name = "animation.calls", Run = SelectionCases.AnimationCalls });
@@ -1917,12 +1928,6 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "items.gone-reads-last", Run = ItemCases.ItemGoneReadsLast });
             list.Add(new Case { Name = "items.gone-before-sweep", Run = ItemCases.GoneBeforeSweep });
             list.Add(new Case { Name = "items.shared-without-handle", Run = ItemCases.SharedWithoutHandle });
-            list.Add(new Case { Name = "placed.unit-by-name", Run = PlacedCases.UnitByName });
-            list.Add(new Case { Name = "placed.unit-gone", Run = PlacedCases.UnitGone });
-            list.Add(new Case { Name = "placed.item-by-name", Run = PlacedCases.ItemByName });
-            list.Add(new Case { Name = "placed.destructable-by-name", Run = PlacedCases.DestructableByName });
-            list.Add(new Case { Name = "placed.sound", Run = PlacedCases.Sound });
-            list.Add(new Case { Name = "placed.region-centre", Run = PlacedCases.RegionCentre });
             list.Add(new Case { Name = "destructable.position", Run = DestructableCases.Position });
             list.Add(new Case { Name = "destructables.watch", Run = DestructableCases.Watch });
             list.Add(new Case { Name = "destructables.sweep", Run = DestructableCases.SweepDetectsRemoval });
