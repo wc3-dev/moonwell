@@ -11,6 +11,7 @@
   <ItemGroup>
     <!-- The deck shapes of the game's walkable destructables, measured on 3.0.1 by wc3-cs docs/tools/deck-probe; read by the physics package's bridges. -->
     <EmbeddedResource Include="Data/Decks.txt" LogicalName="Moonwell.Build.Data.Decks.txt" />
+    <EmbeddedResource Include="Data/Destructables.txt" LogicalName="Moonwell.Build.Data.Destructables.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +26,8 @@
     <PackageReference Include="Moonwell.CSharpLua" Version="2.0.4-moonwell.21" />
     <PackageReference Include="Moonwell.CSharpLua.CoreSystem" Version="2.0.3-moonwell.12" />
     <PackageReference Include="KeraLua" Version="1.4.9" />
+    <PackageReference Include="War3Net.Drawing.Blp" Version="6.0.2" />
+    <PackageReference Include="StbImageSharp" Version="2.30.16" />
   </ItemGroup>
 
 </Project>

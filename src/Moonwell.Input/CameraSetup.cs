@@ -41,6 +41,13 @@ namespace Moonwell
             get { return handle ?? InputSystem.SetupNamed(Name).Handle; }
         }
 
+        /// <summary>A placed camera, as <see cref="Named"/> gives it, so <c>Placed.Cameras.Intro</c> goes where a setup does.</summary>
+        [LocalSafe]
+        public static implicit operator CameraSetup(PlacedCamera camera)
+        {
+            return Named(camera.Name);
+        }
+
         /// <summary>
         /// The camera World Editor has under this name. Once the package has started it is the same object each time, and a
         /// name the map has no camera of throws ArgumentException. Named before the package starts (in a field of a component

@@ -26,5 +26,8 @@ namespace Moonwell.Testing
 
         /// <summary>Whether it was started, stopped, and left to the game to free when done.</summary>
         public bool Started, Stopped, FreedWhenDone;
+
+        /// <summary>How many times it was started, and stopped without being freed, as a sound of the Sound Editor is.</summary>
+        public int Starts, Halts;
     }
 }

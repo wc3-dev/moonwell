@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 namespace Moonwell.Build
 {
     // Finds a change to a declared field from a method that is not a constructor (design call 5): a call to its setter,
-    // to Add or Remove of its list, to Set of its reference, or to a kind base's Set. Declared fields are class defaults,
+    // to Add or Remove of its list, to Set of its reference, or to a kind base's Set or Describe. Declared fields are class defaults,
     // set once while the class is declared. A lambda inside a constructor is compiled to a method whose name holds
     // <.ctor>, and counts as the constructor. A shared field's live member (MaxLife) is this object's value outside the
     // constructor, set anywhere; but a unit's Level has no live setter (the game has none), so it is set only in a
@@ -16,7 +16,7 @@ namespace Moonwell.Build
         // The name a set of a unit's Level is reported with.
         private const string UnitLevel = "Level";
 
-        private static readonly Dictionary<short, OpCode> OpCodesByValue = ReadOpCodes();
+        internal static readonly Dictionary<short, OpCode> OpCodesByValue = ReadOpCodes();
 
         /// <summary>Throws for the first call to a declared field's setter outside a constructor, or to a unit's Level setter outside a declared class's constructor.</summary>
         public static void Check(Assembly map)
@@ -122,6 +122,10 @@ namespace Moonwell.Build
                         {
                             return ("changes", lastString ?? "a field");
                         }
+                        else if (target.Name == "Describe" && Declarations.KindOfBase.ContainsKey(target.DeclaringType!.FullName ?? string.Empty))
+                        {
+                            return ("changes", "the tooltips");
+                        }
                     }
                 }
 
@@ -176,7 +180,7 @@ namespace Moonwell.Build
             return null;
         }
 
-        private static int OperandSize(OperandType type, byte[] il, int position)
+        internal static int OperandSize(OperandType type, byte[] il, int position)
         {
             switch (type)
             {

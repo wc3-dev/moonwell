@@ -85,6 +85,9 @@ namespace Moonwell.Build
                 libraries.Add(path);
             }
 
+            // The map's own Lua libraries come last, so the map's code finds what they define.
+            libraries.AddRange(LuaLibraries.Files(project));
+
             // The symbols dotnet build compiled with, so the Lua runs the code the map's assembly has, and the line marks see it too.
             var symbols = CompiledFiles.LuaSymbols(project, release);
             var marked = MarkedProject.Stage(project, symbols);
@@ -136,7 +139,7 @@ namespace Moonwell.Build
 
             var script = ScriptLibraries.Trim(map.Script ?? throw new BuildException("CSharp.lua wrote no script"));
 
-            return script;
+            return script + PlacedWriter.DestructableTable(project, map);
         }
 
         private static bool IsInNameof(Diagnostic diagnostic)

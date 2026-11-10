@@ -408,6 +408,7 @@ namespace Moonwell.Build.Tests
             Assert.Equal(Path.Combine(map, "build", "Keep.w3x"), archive);
             Assert.True(File.Exists(archive), log.ToString());
             Assert.DoesNotContain("note:", log.ToString());
+            Assert.DoesNotContain("warning:", log.ToString());
             Assert.Contains("Name = \"Keep\";", File.ReadAllText(Path.Combine(map, "Map.cs")));
             var script = File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua"));
             Assert.Contains("[\"Keep.Heroes.Champion\"]", script);
@@ -431,6 +432,24 @@ namespace Moonwell.Build.Tests
             var script = File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua"));
             Assert.Contains("MoonwellObjectValues = {", script);
             Assert.DoesNotContain("MoonwellTypeValues = {", script);
+        }
+
+        [Fact]
+        public void template_map_reads_its_data_files()
+        {
+            // The package's Moonwell.targets has dotnet build compile Data, which the build writes from data\ before the compile.
+            var parent = folders.TemporaryFolderOutsideRepository();
+            var map = packed.TemplateMap(parent);
+            WriteFeedConfig(map);
+            Directory.CreateDirectory(Path.Combine(map, "data"));
+            File.WriteAllText(Path.Combine(map, "data", "waves.csv"), "Wave,Count\n1,10\n");
+            File.WriteAllText(
+                Path.Combine(map, "Spawns.cs"),
+                "namespace Keep\n{\n    public static class Spawns\n    {\n        public static int First() { return Moonwell.Data.Waves.All[0].Count; }\n    }\n}\n");
+
+            MapBuild.Run(map, Packed(), new StringWriter());
+
+            Assert.Contains("Waves", File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua")));
         }
 
         [Fact]

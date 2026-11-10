@@ -125,8 +125,55 @@ public static class ObjectsWriter
         text.Append("        /// <summary>Puts the value of one level of a field by its field id; a value of another type is an error naming the field.</summary>\n");
         text.Append("        protected void Set(string field, int level, object value)\n        {\n");
         text.Append($"            Fields.PutLevel(field, level, {Root}.FieldChecks.LevelValue({Literal(name)}, fieldTypes, this, field, level, value));\n        }}\n");
+        text.Append(Describe(kind));
         text.Append("    }\n}\n");
         return text.ToString();
+    }
+
+    /// <summary>
+    /// The tooltip builder of an ability, an item or an upgrade (decision 258): <c>Describe</c>, which writes the kind's
+    /// tooltips from one text through <c>Tip</c>; empty for the other kinds. Two overloads in place of an optional
+    /// parameter, as the build's stubs of the kind bases for CSharp.lua carry no default values.
+    /// </summary>
+    private static string Describe(ObjectKind kind)
+    {
+        var text = $"global::System.Func<{Root}.Tip, string> text";
+        switch (kind)
+        {
+            case ObjectKind.Ability:
+                return "\n"
+                    + "        /// <summary>\n"
+                    + "        /// Writes the four tooltips from one text: each level's title (<c>Smite - [Level 2]</c>, or the name alone for a unit's\n"
+                    + "        /// ability of one level), each level's text with <c>tip[Damage]</c> as that level's value in gold, the learn title, and the\n"
+                    + "        /// learn text with every level's values (<c>75/150/225</c>). It reads the fields as they are when it is called, so it\n"
+                    + "        /// comes after the values it shows; a tooltip set after it wins.\n"
+                    + "        /// </summary>\n"
+                    + $"        protected void Describe(string name, {text})\n        {{\n"
+                    + $"            Describe(name, text, {Root}.TipLines.None);\n        }}\n\n"
+                    + "        /// <summary>Writes the four tooltips from one text, with lines under it from the ability's own fields (<c>Cooldown: 8 seconds</c>).</summary>\n"
+                    + $"        protected void Describe(string name, {text}, {Root}.TipLines lines)\n        {{\n"
+                    + "            var count = global::System.Math.Max(1, LevelCount);\n"
+                    + $"            global::System.Func<{Root}.Tip, string> linesOf = tip => {Root}.Tip.AbilityLines(tip, lines, ManaCost, Cooldown, Range, Area, Duration);\n"
+                    + $"            Tooltip = Levels({Root}.Tip.AbilityTitles(name, count, HeroAbility || count > 1));\n"
+                    + $"            TooltipExtended = Levels({Root}.Tip.Texts(count, text, lines, linesOf));\n"
+                    + $"            TooltipLearn = {Root}.Tip.LearnTitle(name);\n"
+                    + $"            TooltipLearnExtended = {Root}.Tip.Learn(count, text, lines, linesOf);\n        }}\n";
+            case ObjectKind.Item:
+                return "\n"
+                    + "        /// <summary>Writes the tooltips from one text: <c>Purchase Potion of Healing</c> as the title, and the text, with <c>tip.Number(250)</c> a number in gold.</summary>\n"
+                    + $"        protected void Describe(string name, {text})\n        {{\n"
+                    + "            Tooltip = \"Purchase \" + name;\n"
+                    + $"            TooltipExtended = {Root}.Tip.Texts(1, text)[0];\n        }}\n";
+            case ObjectKind.Upgrade:
+                return "\n"
+                    + "        /// <summary>Writes the tooltips from one text: each level's title, <c>Upgrade to Steel Forged Swords</c> from that level's name, and each level's text.</summary>\n"
+                    + $"        protected void Describe({Root}.Levels<string> name, {text})\n        {{\n"
+                    + "            var count = global::System.Math.Max(1, LevelCount);\n"
+                    + $"            Tooltip = Levels({Root}.Tip.UpgradeTitles(name, count));\n"
+                    + $"            TooltipExtended = Levels({Root}.Tip.Texts(count, text));\n        }}\n";
+            default:
+                return string.Empty;
+        }
     }
 
     /// <summary>

@@ -393,6 +393,11 @@ public sealed partial class SyncAnalyzer
                 return null;
             }
 
+            if (Has(member, luaLibrary))
+            {
+                return new Finding(name, "is a Lua library's, which may change game state (its .lua marks it ---@localsafe when it does not)");
+            }
+
             if (IsMoonwell(member))
             {
                 // Making a Moonwell object changes nothing in the game until it is added or started.

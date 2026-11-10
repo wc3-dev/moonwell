@@ -35,7 +35,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Start.cs` | The game's start: makes the Champion and the footmen |
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
 | `map/` | The World Editor map, saved as a folder |
-| `assets/` | Files copied into the map at the same paths (models, icons, sounds), named with ASCII characters only; make it when you need it |
+| `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
 Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
@@ -179,6 +179,17 @@ public sealed class Champion : Human.Units.Paladin
   first comma, quoted or not, so a comma in it fails the build, and placeholders, which hold one, cannot go in it. A new
   buff that keeps a standard text with a comma (Flame Strike's) fails too: set `TooltipExtended`. Write `‚` (U+201A)
   for a comma there: the game draws it as one and does not cut the text at it.
+- `Describe` writes an ability's, an item's or an upgrade's tooltips from one text, so they show its own numbers:
+  `Describe("Smite", tip => $"Deals {tip[Damage]} damage.", TipLines.Cooldown)`. In a level's text `tip[Damage]` is
+  that level's value in the game's tooltip gold; in the learn tooltip, which tells of every level, it is `75/150/225`,
+  or one number when every level has the same. `tip.Percent(...)` shows 0.25 as 25%, `tip.Number(250)` a number that
+  doesn't change by level, and `tip.Level` the level (0 in the learn tooltip). An ability gets its four tooltips,
+  titled as the game's own (`Smite - [Level 2]`, the name alone for a unit's ability of one level, and
+  `Learn Smite - [Level %d]`); `TipLines` adds mana, cooldown, range, area and duration lines from its fields, each
+  left out where it is 0. An item gets `Purchase Tonic` and its extended tooltip. An upgrade gets `Upgrade to` each
+  level's name, as in `Describe(Levels("Iron Swords", "Steel Swords", "Mithril Swords"), ...)`, and each level's
+  text. `Describe` reads the fields when it is called, so it goes after the values it shows, and a tooltip set after
+  it wins. Like a set, it belongs in the constructor: anywhere else fails the build.
 - A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`, or `Set("ua1w", WeaponType.Missile)` for a
   choice. The value has exactly the type the field holds, so `1.5f` or `5` in the wrong field, a choice's number and an
   id the class doesn't have are error MW0049. A list of numbers held as text (`RequirementsLevels = "1,2"`) is only
@@ -544,6 +555,35 @@ public sealed class Ferry : Unit
 }
 ```
 
+## Placed things
+
+What any editor placed in the map is in the class `Placed`, which the build writes from the map's files before it
+compiles. Each member is named as World Editor names its variable, without `gg_`: a unit, item or destructable by its
+type's id and number, a region, camera or sound by its name with `_` for spaces. A name that is gone from the map is a
+compile error.
+
+```csharp
+Placed.Units.Hpal_0002?.Kill();                       // null once the unit has left the game
+var spawn = Placed.Regions.Spawn_Left;                // a PlacedRegion: Name, Left, Bottom, Right, Top, CenterX, CenterY
+Unit.Create<Footman>(player, spawn.CenterX, spawn.CenterY, Game.Instance);
+Placed.Sounds.Intro?.Play();                          // with the Sound Editor's volume, pitch, 3D and fades
+```
+
+| Kind | In `Placed` | By a name built in code |
+|---|---|---|
+| Unit | `Placed.Units.hfoo_0001`, typed as the map's class when its `[ObjectId]` is the unit's type | `Unit.Named("hfoo_0001")` |
+| Item | `Placed.Items.ratc_0005`, typed the same way | `Item.Named("ratc_0005")` |
+| Destructable | `Placed.Destructables.LTg1_0002`, trees left out | `Destructable.Named("LTlt_0012")`, trees too |
+| Region | `Placed.Regions.Spawn_Left`, a `PlacedRegion`; goes where `Bounds` does | `AreaShape.Region("Spawn Left")` |
+| Camera | `Placed.Cameras.Intro`, a `PlacedCamera`; goes where `CameraSetup` does | `CameraSetup.Named("Intro")` |
+| Sound | `Placed.Sounds.Intro`, a `PlacedSound` with `Play()`, `PlayAt(x, y)`, `PlayOn(unit)`, `Stop()` | `PlacedSound.Named("Intro")` |
+
+- A lookup gives null for a name the map does not have, and once the thing has left the game; the build fails at the
+  line of a name written as text that the map does not have.
+- A unit or item placed of the map's own class comes back as that class, as `Unit.Of` gives it.
+- A destructable is found nearest its place among those of its type, as the game makes most of them itself.
+- `Placed` changes when the map does: after placing something in an editor, build once before naming it.
+
 ## Stats and scores
 
 A stat is a number a unit or a player has: a base, then modifiers, flat or percent, each held by a scope, which takes it
@@ -859,8 +899,8 @@ Music.SetVolume(60);
   did not hold (seen). `Stop()` fades the music out, the file played once included; `Stop(fadeOut: false)` stops it at
   once. After a stop the map has no music until the next `Play`, its own included.
 - Every `Music` call takes `heardBy:` too, which changes the music for that player only; the others' stays as it is.
-- A file of the map's own goes in `assets/`. A path to one of the game's sounds works with `.wav`, `.flac` or `.ogg`
-  alike.
+- A file of the map's own goes in `assets/` ([Assets](#assets)). A path to one of the game's sounds works with `.wav`,
+  `.flac` or `.ogg` alike.
 
 ## Weather, lightning, vision and the minimap
 
@@ -1103,7 +1143,9 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
 - A unit takes a square of the game's 32 cells by its collision size: below 16 one cell, 16 to 31 two, 32 to 47 three,
   48 and up four. A gap of 64 lets sizes up to 31 through; 128 lets every size through.
 - `CanStand`, `NearestSpot` and `Spots` are the game's own answer: a hidden helper of the unit's square is put there,
-  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there.
+  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there. A unit's own
+  `CanStand` and `NearestSpot` leave the unit itself out, so its own place reads free: it gets Ghost (Visible) for the
+  moment of the try, which fires no event and keeps its orders and selection.
 - `FindPath` and `CanReach` are Moonwell's own search on the same cells. They see terrain, destructables, buildings and
   pathing set by code, never units. A target that can't be reached gives the route to the reachable spot nearest it,
   where the game's own walker would stop, with `Reaches` false. The game's walkers also go round units that stand in
@@ -2264,6 +2306,70 @@ they are. A node is in one object or array at most, as in .NET.
 `JsonNode.Parse` throws a `JsonException`, whose `Position` says where, for text that is no JSON or nests deeper than 64,
 and a file a player edited can be either: catch it where you read one.
 
+## Data files
+
+CSV and JSON files in the project's `data` folder become typed C# the build writes before it compiles, so object
+constructors and game code read them by name, and a wrong name is a compile error. The class is `Data`, with a class
+for each file (`data\abilities.csv` is `Data.Abilities`). Run a build once after adding a file, so the editor sees it.
+
+```
+data\abilities.csv            data\waves.csv
+Id,Damage:float,Cooldown      Wave,Unit,Count
+Smite,75;150;225,9            1,Footman,10
+                              2,Knight,4
+```
+
+```csharp
+Damage = Levels(Data.Abilities.Smite.Damage);          // in Smite's constructor
+foreach (var wave in Data.Waves.All) { ... }            // in game code: wave.Unit, wave.Count
+```
+
+- A CSV file's first line names its columns, and each line after it is a `Row`, in `All` in the file's order. When the
+  first column holds names, not numbers, each row is also a member named by it, its words run together
+  (`Big Bash` is `BigBash`). Values are separated by commas, decimals by points, and a value with a comma is quoted.
+- A column is `int` when every value is a whole number, else `float` when every value is a number, else text. A value
+  with a `;` makes the column a list: `75;150;225`. `Damage:float`, `:int` or `:text` in the header gives the type,
+  as `Levels(...)` for a `float` field takes only `float`s. An empty value is 0, or the empty text or list.
+- A JSON file is typed from its shape: an object is a class of its keys (`Data.Quests.Intro.Title`), the objects in a
+  list share a class with every key they have (`StepsItem` for `Steps`), and a whole number is an `int`. A list at
+  the top of the file is `All`.
+- Names are made of the letters a to z, digits and `_`, starting with a letter: the build stops at a file, column,
+  key or row name it can't make one from, at two that make the same, and at a CSV line with more values than columns.
+  Only the files directly in `data` are read.
+
+## Lua libraries
+
+A Lua library from Hive or elsewhere goes in the project's `lua` folder as a `.lua` file. The build links every one
+into the script before the map's code, in the order of their paths, and writes C# to call each global function and each
+function of a global table, typed from the library's LuaLS comments:
+
+```lua
+---Pushes a unit away.
+---@param target unit
+---@param distance number
+---@param angle? number
+---@return boolean
+function Knockback.push(target, distance, angle) ... end
+```
+
+```csharp
+Lua.Knockback.push(hero, 300f);   // the class is the table's, or the file's (knock_back.lua is KnockBack) for a global function
+```
+
+| Comment | C# |
+|---|---|
+| `number`, `integer`, `string`, `boolean` | `float`, `int`, `string`, `bool` |
+| `unit`, `item`, `destructable`, `player` | Moonwell's `Unit`, `Item`, `Destructable`, `Player`, turned into the game's handle and back |
+| another of the game's types (`timer`, `effect`, `rect`) | that handle |
+| `fun(u: unit, x: number): boolean` | `Func<Unit, float, bool>`: a lambda, given Moonwell's objects |
+| `name?`, `type?` or `type\|nil` | optional, `null` for nil |
+| anything else, or no comment | `object` |
+
+- A method (`function T:f()`), a local function and a function's `...` are left out; the library can still use them.
+- The analyzer cannot see into Lua, so a library function inside `Local.For` is an error (MW0001), unless its comments
+  hold `---@localsafe`: add that line to the library when the function changes nothing in the game.
+- A library runs only in the game, so the tests' fake world cannot call one.
+
 ## C# the game's Lua cannot run
 
 Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A few C# forms stop the compiler, write
@@ -2315,6 +2421,27 @@ and closures, `ref`/`out`/`in` parameters and ref locals, `params`, `checked`, `
 MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF.Sqrt` is off by up to 2 parts in
 100,000 (Maths).
 
+## Assets
+
+A file in `assets/` goes into the map at the same path: `assets\war3mapImported\Fire.mdx` is
+`war3mapImported\Fire.mdx` to object data and code. A file at one of the game's own paths replaces the game's.
+
+- A PNG goes in as a BLP, the game's texture format, at the same path: code and object data name
+  `war3mapImported\BTNFire.blp` for `assets\war3mapImported\BTNFire.png`. Each side must be a power of two (64 by 64
+  for an icon), and a see-through part stays see-through. A PNG and a BLP of the same name are refused.
+- An icon whose name starts with `BTN` or `PASBTN`, a PNG or a BLP, gets the grey copy a disabled button shows: the
+  game reads it from `ReplaceableTextures\CommandButtonsDisabled\DIS` and the icon's file name, wherever the icon is,
+  and without one shows the icon in colour (seen). The build makes it the way the game's HD copies are, unless
+  `assets/` or the map has one there. Two icons with one file name in different folders share one copy, and the build
+  warns of it.
+- The build warns of a path that object data or the map's code names (a texture, model or sound) that neither the game
+  nor the map has, naming the class and field (`Sample.Arthas: uico`) or the type whose code has it. As in the game, a file
+  under another extension of its kind counts: `.mdl` and `.mdx`; `.blp`, `.dds` and `.tga`; `.wav`, `.flac` and `.ogg`.
+- The build also lists the textures, models and sounds in `assets/` that nothing in the built map names: not the
+  code, object data, a model or a frame file. It leaves them in the map, as a path the code puts together while the
+  game runs (`"BTN" + name + ".blp"`) is not seen. A file at one of the game's paths, a grey copy and a model's
+  `_portrait` are not listed.
+
 ## The build
 
 `moonwell build` builds the map in the current folder into `build\MyMap.w3x`; `moonwell run` builds it and starts the
@@ -2343,6 +2470,18 @@ The build loads the script in Lua without running it, as the game does first, an
 Lua refuses it. Lua allows 200 locals in a function: each parameter, local variable and object or collection
 initializer is one, and so are some values the compiler keeps (`?.`, a switch expression), so a method that adds 200
 `new Wave { ... }` to a list is too long. Split it into several methods.
+
+The build checks the objects the map declares. A tooltip placeholder that names no object (`<A0O1,DataA1>`; ids are
+case-sensitive) or a level its ability doesn't have (`<A001,DataA4>` of 3 levels) fails it, as the game shows 0
+there; the key itself is not checked. Two warnings point at mistakes that can be meant:
+
+- On a declared unit's command card, two abilities at one button place, with one hotkey, or taking one order (two
+  Storm Bolts: only one of them casts; a Channel's order is its Base Order ID). Only abilities with an icon count,
+  and only castable ones, with a hotkey, for hotkeys and orders. A pair of the game's own abilities is warned only
+  when the map changed the unit's list. `[AllowClash]` on the unit keeps it quiet.
+- A declared object nothing uses: no other object lists it, no code of another class names it, and the map places
+  none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
+  Editor's own objects, item tables).
 
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
