@@ -96,14 +96,29 @@ namespace Moonwell.Build
 
             if (Directory.Exists(project.AssetsFolder))
             {
+                var packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var file in RelativeFiles(project.AssetsFolder))
                 {
-                    if (File.Exists(Path.Combine(project.StagedFolder, file)))
+                    var name = Images.PackedName(file);
+                    if (packed.TryGetValue(name, out var other))
+                    {
+                        throw new BuildException($@"assets\{other} and assets\{file} are both {name} in the map; keep one");
+                    }
+
+                    packed[name] = file;
+                    if (File.Exists(Path.Combine(project.StagedFolder, name)))
                     {
                         log.WriteLine($@"note: assets\{file} replaces the map's file");
                     }
 
-                    Copy(project.AssetsFolder, file, project.StagedFolder);
+                    if (Images.IsPng(file))
+                    {
+                        Images.WriteBlp(Path.Combine(project.AssetsFolder, file), Path.Combine(project.StagedFolder, name), $@"assets\{file}");
+                    }
+                    else
+                    {
+                        Copy(project.AssetsFolder, file, project.StagedFolder);
+                    }
                 }
             }
         }
