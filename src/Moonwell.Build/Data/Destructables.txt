@@ -1,0 +1,347 @@
+# The game's destructable types, one id per line, and "tree" after each whose "Targeted As" (btar) holds tree, from
+# Moonwell.Objects' standard data (3.0.1). The build reads it before the compile, to tell a placed destructable from a
+# doodad in war3map.doo and to leave the trees out of Placed.Destructables.
+ATg1
+ATg2
+ATg3
+ATg4
+ATt0
+ATt1
+ATtc tree
+ATtr tree
+ATwf
+BTrs
+BTrx
+BTs1
+BTs2
+BTs3
+BTs4
+BTs5
+BTsc
+BTsk
+BTtc tree
+BTtw tree
+CTtc tree
+CTtr tree
+DTc1
+DTc2
+DTep
+DTes
+DTfp
+DTfx
+DTg1
+DTg2
+DTg3
+DTg4
+DTg5
+DTg6
+DTg7
+DTg8
+DTlv
+DTrc
+DTrf
+DTrx
+DTs0
+DTs1
+DTs2
+DTs3
+DTsh tree
+DTsp
+Dofv
+Dofw
+Dogv
+Dogw
+EB00
+EB01
+EB02
+EB03
+EB04
+EB05
+EB06
+EB07
+EB08
+EB09
+EB10
+EB11
+FTtw tree
+GTsh tree
+IOt0
+IOt1
+IOt2
+ITag
+ITcr
+ITd1
+ITd2
+ITd3
+ITd4
+ITf1
+ITf2
+ITf3
+ITf4
+ITg1
+ITg2
+ITg3
+ITg4
+ITi2
+ITi3
+ITi4
+ITib
+ITig
+ITtc tree
+ITtg
+ITtw tree
+ITw0
+ITw1
+ITw2
+ITw3
+ITx1
+ITx2
+ITx3
+ITx4
+JTct tree
+JTtw tree
+KTtw tree
+LOcg
+LT00
+LT01
+LT02
+LT03
+LT04
+LT05
+LT06
+LT07
+LT08
+LT09
+LT10
+LT11
+LTba
+LTbr
+LTbs
+LTbx
+LTcr
+LTe1
+LTe2
+LTe3
+LTe4
+LTex
+LTg1
+LTg2
+LTg3
+LTg4
+LTlt tree
+LTr1
+LTr2
+LTr3
+LTr4
+LTr5
+LTr6
+LTr7
+LTr8
+LTrc
+LTrt
+LTs1
+LTs2
+LTs3
+LTs4
+LTs5
+LTs6
+LTs7
+LTs8
+LTt0
+LTt1
+LTt2
+LTt3
+LTt4
+LTt5
+LTtc
+LTtx
+LTw0
+LTw1
+LTw2
+LTw3
+NB00
+NB01
+NB02
+NB03
+NB04
+NB05
+NB06
+NB07
+NB08
+NB09
+NB10
+NB11
+NTbd
+NTiw tree
+NTtc tree
+NTtw tree
+OG00
+OG01
+OG02
+OG03
+OG04
+OG05
+OG06
+OG07
+OG08
+OG09
+OG10
+OG11
+OTds
+OTip
+OTis
+OTsp
+OTtw tree
+RW00
+RW01
+RW02
+RW03
+RW04
+RW05
+RW06
+RW07
+RW08
+RW09
+RW10
+RW11
+UB01
+UB02
+UB03
+UB04
+VTlt tree
+Volc
+WGTR
+WTst tree
+WTtw tree
+XOk1
+XOk2
+XOkt
+XTbd
+XTm5
+XTmp
+XTmx
+XTv1
+XTv2
+XTv3
+XTv4
+XTv5
+XTv6
+XTv7
+XTv8
+XTvt
+XTx5
+YSdb
+YSdc
+YT00
+YT01
+YT02
+YT03
+YT04
+YT05
+YT06
+YT07
+YT08
+YT09
+YT10
+YT11
+YT12
+YT13
+YT14
+YT15
+YT16
+YT17
+YT18
+YT19
+YT20
+YT21
+YT22
+YT23
+YT24
+YT25
+YT26
+YT27
+YT28
+YT29
+YT30
+YT31
+YT32
+YT33
+YT34
+YT35
+YT36
+YT37
+YT38
+YT39
+YT40
+YT41
+YT42
+YT43
+YT44
+YT45
+YT46
+YT47
+YT48
+YT49
+YT50
+YT51
+YT66
+YT67
+YTab
+YTac
+YTc1
+YTc2
+YTc4
+YTce
+YTcn
+YTct tree
+YTcx
+YTfb
+YTfc
+YTft tree
+YTlb
+YTpb
+YTpc
+YTpl
+YTps
+YTst tree
+YTwt tree
+YY12
+YY13
+YY14
+YY15
+YY16
+YY17
+YY18
+YY19
+YY20
+YY21
+YY22
+YY23
+Ytlc
+Yts1 tree
+Ytsc tree
+ZTd1
+ZTd2
+ZTd3
+ZTd4
+ZTd5
+ZTd6
+ZTd7
+ZTd8
+ZTg1
+ZTg2
+ZTg3
+ZTg4
+ZTnc
+ZTr0
+ZTr1
+ZTr2
+ZTr3
+ZTsg
+ZTsx
+ZTtc tree
+ZTtw tree
+ZTw0
+ZTw1
+ZTw2
+ZTw3

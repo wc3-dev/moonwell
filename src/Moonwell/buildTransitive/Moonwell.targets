@@ -8,4 +8,9 @@
     <Compile Remove="build/**" />
   </ItemGroup>
 
+  <!-- But for Placed, which the build writes from the map's placed things before the compile, as the map's code names it. -->
+  <ItemGroup>
+    <Compile Include="build/generated/Placed.g.cs" Condition="Exists('build/generated/Placed.g.cs')" />
+  </ItemGroup>
+
 </Project>

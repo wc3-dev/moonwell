@@ -52,7 +52,8 @@ namespace Moonwell.Build
                 if (wrong.Count > 0)
                 {
                     var (line, name) = wrong.Min;
-                    var has = known.Count == 0 ? "none" : string.Join(", ", names);
+                    // A map's trees run to thousands, so the list stops at twenty.
+                    var has = known.Count == 0 ? "none" : names.Count <= 20 ? string.Join(", ", names) : string.Join(", ", names.Take(20)) + $" and {names.Count - 20} more";
                     throw new BuildException($"{file.Relative}:{line}: the map has no World Editor {kind} named '{name}'. Its {kind}s: {has}.");
                 }
             }
