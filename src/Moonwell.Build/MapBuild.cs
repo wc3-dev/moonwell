@@ -301,6 +301,7 @@ namespace Moonwell.Build
                 TerrainWriter.Write(project, map.Environment!);
                 const string Data = "global::Moonwell.Generated.TerrainData";
                 installs.Add($"global::Moonwell.Terrain.Install({Data}.Columns, {Data}.Rows, {Data}.Left, {Data}.Bottom, {Data}.Corners());");
+                installs.Add($"global::Moonwell.Terrain.InstallTiles({Data}.Tiles());");
             }
             else
             {

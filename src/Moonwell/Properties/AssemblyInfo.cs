@@ -9,5 +9,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Moonwell.Pathing")]
 [assembly: InternalsVisibleTo("Moonwell.Interactions")]
 [assembly: InternalsVisibleTo("Moonwell.Physics")]
+[assembly: InternalsVisibleTo("Moonwell.Terrain")]
 [assembly: InternalsVisibleTo("Moonwell.Testing")]
 [assembly: InternalsVisibleTo("Moonwell.Tests")]

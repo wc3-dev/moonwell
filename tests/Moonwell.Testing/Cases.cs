@@ -1083,6 +1083,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.raycast.long-ray", Run = GroundRayCases.LongRay });
             list.Add(new Case { Name = "terrain.raycast.not-finite", Run = GroundRayCases.NotFinite });
             list.Add(new Case { Name = "terrain.raycast.hit-values", Run = GroundRayCases.HitValues });
+            list.Add(new Case { Name = "terrain.change.raise-height", Run = ChangeCases.RaiseHeight });
+            list.Add(new Case { Name = "terrain.change.raises-add", Run = ChangeCases.RaisesAdd });
+            list.Add(new Case { Name = "terrain.change.raise-raycast", Run = ChangeCases.RaiseRaycast });
+            list.Add(new Case { Name = "terrain.change.raise-refused", Run = ChangeCases.RaiseRefused });
+            list.Add(new Case { Name = "terrain.change.look-only", Run = ChangeCases.LookOnly });
+            list.Add(new Case { Name = "terrain.change.block", Run = ChangeCases.Block });
+            list.Add(new Case { Name = "terrain.change.pathing-newest-wins", Run = ChangeCases.PathingNewestWins });
+            list.Add(new Case { Name = "terrain.change.pathing-before", Run = ChangeCases.PathingBefore });
+            list.Add(new Case { Name = "terrain.change.tiles", Run = ChangeCases.Tiles });
+            list.Add(new Case { Name = "terrain.change.tile-outside-list", Run = ChangeCases.TileOutsideList });
+            list.Add(new Case { Name = "terrain.change.blight", Run = ChangeCases.Blight });
+            list.Add(new Case { Name = "terrain.change.cleanse-reported", Run = ChangeCases.CleanseReported });
+            list.Add(new Case { Name = "terrain.change.water-tint", Run = ChangeCases.WaterTint });
+            list.Add(new Case { Name = "terrain.change.spread", Run = ChangeCases.Spread });
+            list.Add(new Case { Name = "terrain.change.trail", Run = ChangeCases.Trail });
             list.Add(new Case { Name = "terrain.raycast.not-installed", Run = GroundRayCases.NotInstalled });
             list.Add(new Case { Name = "terrain.raycast.miss-makes-nothing", Run = MissCases.GroundMissMakesNothing });
         }

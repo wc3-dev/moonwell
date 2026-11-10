@@ -45,6 +45,8 @@ namespace Moonwell.Build.Tests
 
             var main = File.ReadAllText(Path.Combine(generated, "MapMain.g.cs"));
             Assert.Contains("global::Moonwell.Terrain.Install(", main);
+            Assert.Contains("global::Moonwell.Terrain.InstallTiles(global::Moonwell.Generated.TerrainData.Tiles());", main);
+            Assert.Matches(@"public static string Tiles\(\) => ""([A-Za-z]{4})+"";", data);
 
             var script = File.ReadAllText(Path.Combine(project, "build", "Terrain", "war3map.lua"));
             using var lua = new NLua.Lua();
