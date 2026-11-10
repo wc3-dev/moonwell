@@ -12,6 +12,7 @@ namespace Moonwell.Tool
             "       moonwell run [folder] [--release] [--game <exe>]\n" +
             "       moonwell watch [folder] [--release] [--run] [--game <exe>]\n" +
             "       moonwell new <name>\n" +
+            "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
             "       moonwell objects [folder]";
 
@@ -47,6 +48,11 @@ namespace Moonwell.Tool
                     case "new":
                         var folder = NewMap.Write(options.Name, ".", Version());
                         output.WriteLine($"moonwell: made {folder}; cd {options.Name}, then moonwell run");
+                        break;
+                    case "import":
+                        var imported = NewMap.Write(options.Name, ".", Version());
+                        OldMapImport.Run(options.Source, imported, output);
+                        output.WriteLine($"moonwell: made {imported}; cd {options.Name}, then moonwell run");
                         break;
                     case "clean":
                         Clean(options.Folder, output);
@@ -206,7 +212,7 @@ namespace Moonwell.Tool
         private static bool TryParse(string[] args, out Options options)
         {
             options = new Options();
-            if (args.Length == 0 || !new[] { "build", "run", "watch", "new", "clean", "objects" }.Contains(args[0]))
+            if (args.Length == 0 || !new[] { "build", "run", "watch", "new", "import", "clean", "objects" }.Contains(args[0]))
             {
                 return false;
             }
@@ -215,7 +221,7 @@ namespace Moonwell.Tool
             options.Launch = args[0] == "run";
             var builds = args[0] is "build" or "run" or "watch";
             var gameGiven = false;
-            var positionalGiven = false;
+            var positionals = new List<string>();
             for (var i = 1; i < args.Length; i++)
             {
                 var argument = args[i];
@@ -232,20 +238,30 @@ namespace Moonwell.Tool
                     options.Game = args[++i];
                     gameGiven = true;
                 }
-                else if (argument.StartsWith("--", StringComparison.Ordinal) || positionalGiven)
+                else if (argument.StartsWith("--", StringComparison.Ordinal) || positionals.Count == (options.Command == "import" ? 2 : 1))
                 {
                     return false;
                 }
                 else
                 {
-                    options.Folder = argument;
-                    options.Name = argument;
-                    positionalGiven = true;
+                    positionals.Add(argument);
                 }
             }
 
-            // A game is named only for a command that starts one; new needs its name.
-            return (!gameGiven || options.Launch) && (options.Command != "new" || positionalGiven);
+            // import takes the map, then the name; the others take one folder or name.
+            if (options.Command == "import")
+            {
+                options.Source = positionals.Count == 2 ? positionals[0] : string.Empty;
+                options.Name = positionals.Count == 2 ? positionals[1] : string.Empty;
+            }
+            else if (positionals.Count == 1)
+            {
+                options.Folder = positionals[0];
+                options.Name = positionals[0];
+            }
+
+            // A game is named only for a command that starts one; new needs its name, import its map and name.
+            return (!gameGiven || options.Launch) && (options.Command != "new" || positionals.Count == 1) && (options.Command != "import" || positionals.Count == 2);
         }
 
         private sealed class Options
@@ -255,6 +271,9 @@ namespace Moonwell.Tool
             public string Folder { get; set; } = ".";
 
             public string Name { get; set; } = string.Empty;
+
+            // import: the map the project is made from.
+            public string Source { get; set; } = string.Empty;
 
             public bool Release { get; set; }
 
