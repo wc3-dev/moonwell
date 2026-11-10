@@ -33,7 +33,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(frame) + "." + name, error);
+                    Errors.Report(frame, "." + name, error);
                 }
             }
         }

@@ -181,6 +181,28 @@ namespace Moonwell
             DebugPanel.SelectionChanged();
         }
 
+        /// <summary>An error's first showing while the mode is on: halts with every unit held, as Ctrl + H, and selects the object whose member failed when it is an actor or on one (decision 265); nothing while off or already halted.</summary>
+        internal static void ErrorShown(object? subject)
+        {
+            if (!IsOn || Runtime.Clock.IsHalted)
+            {
+                return;
+            }
+
+            Halt(true);
+            var actor = subject switch
+            {
+                Actor a => a,
+                Component c => c.actor,
+                Ability ability => ability.Unit,
+                _ => null,
+            };
+            if (actor != null && !actor.HasEnded)
+            {
+                Select(actor);
+            }
+        }
+
         /// <summary>Lets go of the selected object once it has ended; the panel calls it, and shows the object's line instead.</summary>
         internal static void SelectedEnded()
         {

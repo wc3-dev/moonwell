@@ -718,7 +718,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(missile) + ".OnImpact", error);
+                Errors.Report(missile, ".OnImpact", error);
             }
 
             var count = missile.BeginDispatch();
@@ -736,7 +736,7 @@ namespace Moonwell.Engine
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnImpact", error);
+                    Errors.Report(component, ".OnImpact", error);
                 }
             }
 
@@ -762,7 +762,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(missile) + ".OnRest", error);
+                Errors.Report(missile, ".OnRest", error);
             }
 
             var count = missile.BeginDispatch();
@@ -780,7 +780,7 @@ namespace Moonwell.Engine
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnRest", error);
+                    Errors.Report(component, ".OnRest", error);
                 }
             }
 
@@ -831,7 +831,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(missile) + ".OnExpire", error);
+                Errors.Report(missile, ".OnExpire", error);
             }
 
             missile.End();

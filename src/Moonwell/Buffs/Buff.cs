@@ -421,7 +421,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnApply", error);
+                Errors.Report(this, ".OnApply", error);
             }
         }
 
@@ -439,7 +439,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnTick", error);
+                Errors.Report(this, ".OnTick", error);
             }
         }
 
@@ -457,7 +457,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnExpire", error);
+                Errors.Report(this, ".OnExpire", error);
             }
         }
     }

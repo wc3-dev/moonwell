@@ -69,7 +69,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + (isDay ? ".OnDawn" : ".OnDusk"), error);
+                    Errors.Report(component, (isDay ? ".OnDawn" : ".OnDusk"), error);
                 }
             }
 

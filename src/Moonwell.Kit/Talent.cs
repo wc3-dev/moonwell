@@ -81,7 +81,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnRankChanged", error);
+                Errors.Report(this, ".OnRankChanged", error);
             }
         }
     }

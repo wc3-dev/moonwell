@@ -248,7 +248,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(this) + ".OnRestored", error);
+                    Errors.Report(this, ".OnRestored", error);
                 }
             }
 
@@ -267,7 +267,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + ".OnRestored", error);
+                    Errors.Report(component, ".OnRestored", error);
                 }
             }
 
@@ -532,7 +532,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnLeave", error);
+                Errors.Report(this, ".OnLeave", error);
             }
         }
 

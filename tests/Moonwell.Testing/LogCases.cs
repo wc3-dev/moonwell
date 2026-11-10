@@ -124,6 +124,31 @@ namespace Moonwell.Testing
             Expect.Equal(false, file.Due(9.0f), "never due");
         }
 
+        /// <summary>The ring takes the slot the index stored, the first for none or one out of range, and stores the one after it, round to the first after the tenth (decision 264).</summary>
+        public static void RingSlots(FakeWorld world)
+        {
+            var file = new LogFile();
+            Expect.Equal(0, file.Slot, "the slot before the ring opens");
+            Expect.Equal(false, file.IndexDue, "the index before the ring opens");
+            file.Open(4, "Moonwell log: Arena, started 2026-11-10 15:00:00");
+            Expect.Equal(4, file.Slot, "the stored slot");
+            Expect.Equal("Moonwell\\logs\\4.txt", file.RingPath, "the ring's file");
+            Expect.Equal("\")\ncall StoreInteger(InitGameCache(\"Moonwell.w3v\"), \"log\", \"next\", 5)\n//", file.IndexLine(), "the index line");
+            Expect.Equal(1, file.Header.Count, "the header's pieces");
+            Expect.Equal(true, file.IndexDue, "the index once the ring opens");
+            file.IndexWritten();
+            Expect.Equal(false, file.IndexDue, "the index once written");
+            var last = new LogFile();
+            last.Open(10, "h");
+            Expect.Equal(1, last.NextSlot, "the slot after the tenth");
+            var none = new LogFile();
+            none.Open(0, "h");
+            Expect.Equal(1, none.Slot, "the slot with no index");
+            var wrong = new LogFile();
+            wrong.Open(11, "h");
+            Expect.Equal(1, wrong.Slot, "the slot for one out of range");
+        }
+
         private static string Joined(LogFile file)
         {
             var joined = "";

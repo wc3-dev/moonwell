@@ -748,7 +748,7 @@ namespace Moonwell
             var accepted = Guard.answer;
             if (failure != null)
             {
-                Errors.Report(Names.NameOf(this) + ".Accepts", failure);
+                Errors.Report(this, ".Accepts", failure);
             }
 
             return accepted;
@@ -760,7 +760,7 @@ namespace Moonwell
             var failure = Guard.Meet(this, pair);
             if (failure != null)
             {
-                Errors.Report(Names.NameOf(this) + ".OnMeet", failure);
+                Errors.Report(this, ".OnMeet", failure);
             }
         }
 
@@ -778,7 +778,7 @@ namespace Moonwell
             var failure = Guard.Tick(this, pair);
             if (failure != null)
             {
-                Errors.Report(Names.NameOf(this) + ".OnTick", failure);
+                Errors.Report(this, ".OnTick", failure);
             }
         }
 
@@ -788,7 +788,7 @@ namespace Moonwell
             var failure = Guard.Part(this, pair);
             if (failure != null)
             {
-                Errors.Report(Names.NameOf(this) + ".OnPart", failure);
+                Errors.Report(this, ".OnPart", failure);
             }
         }
 

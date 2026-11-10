@@ -78,7 +78,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(made) + ".OnCreated", error);
+                    Errors.Report(made, ".OnCreated", error);
                 }
             }
 

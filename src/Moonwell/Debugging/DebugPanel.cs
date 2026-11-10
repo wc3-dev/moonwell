@@ -389,7 +389,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(obj) + ".ShowDebug", error);
+                Errors.Report(obj, ".ShowDebug", error);
             }
         }
 

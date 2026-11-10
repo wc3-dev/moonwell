@@ -64,7 +64,7 @@ namespace Moonwell
                     }
                     catch (Exception error)
                     {
-                        Errors.Report(Names.NameOf(upgrade) + ".OnResearched", error);
+                        Errors.Report(upgrade, ".OnResearched", error);
                     }
 
                     // A level set inside the reaction ran its own levels: go on after them.
@@ -103,7 +103,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(unit) + "." + NameOf(kind), error);
+                    Errors.Report(unit, "." + NameOf(kind), error);
                 }
             }
 
@@ -133,7 +133,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + "." + NameOf(kind), error);
+                    Errors.Report(component, "." + NameOf(kind), error);
                 }
             }
 

@@ -18,6 +18,17 @@ namespace Moonwell
         /// <summary>Reports an error from a hook, shown at its first time and then at every power of ten. An error past the hundred remembered is shown, with no count, at the first time and every power of ten of the count of all such errors.</summary>
         internal static void Report(string label, Exception error)
         {
+            Report(label, error, null);
+        }
+
+        /// <summary>Reports an error from a member of an object, labelled with the object's class and the member (".OnTick"). In a development build with the debug mode on, its first showing halts and selects the object (decision 265).</summary>
+        internal static void Report(object subject, string member, Exception error)
+        {
+            Report(Names.NameOf(subject) + member, error, subject);
+        }
+
+        private static void Report(string label, Exception error, object? subject)
+        {
 #if DEBUG
             const bool release = false;
 #else
@@ -26,6 +37,7 @@ namespace Moonwell
             var where = Where(error);
             var key = label + "\n" + error.Message + "\n" + First(where);
             var times = 1;
+            var first = false;
             bool shows;
             if (counts.TryGetValue(key, out var seen))
             {
@@ -37,6 +49,7 @@ namespace Moonwell
             {
                 counts[key] = 1;
                 shows = true;
+                first = true;
             }
             else
             {
@@ -49,6 +62,12 @@ namespace Moonwell
                 Runtime.World.Print(ScreenLine(label, error.Message, times, release, where));
                 Runtime.World.Log(LogLine(label, error.Message, times, where));
             }
+#if DEBUG
+            if (first)
+            {
+                DebugSession.ErrorShown(subject);
+            }
+#endif
         }
 
         /// <summary>Reports a call the runtime refuses, in every build, as an error raised at the call, so the log names the map's line: one of the few checks whose failure would freeze the game or break Moonwell's own lists (decision 74). The caller then leaves things as they were.</summary>
