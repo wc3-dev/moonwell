@@ -2378,8 +2378,12 @@ Lua.Knockback.push(hero, 300f);   // the class is the table's, or the file's (kn
 `moonwell import <map> <name>` makes a project from an existing map, JASS or Lua, a `.w3x`, `.w3m` or a map saved as a
 folder, so it plays as it did and its triggers move to C# one at a time:
 
-- The map's files go into `map`, all but its script, and its settings stay World Editor's, as `Map.cs` sets none. Its
-  object data stays in its object files there, which the build keeps.
+- The map's files go into `map`, all but its script, and its settings stay World Editor's, as `Map.cs` sets none.
+- Its object data becomes declared classes in `Objects/`, one file per tab: a new object with its `[ObjectId]`, a changed
+  standard one `[Replaces]`, each named from its name in the editor, each field set as the standard classes have it, a
+  value past World Editor's limits under `[BeyondLimits]`, a buff given a free carrier id. An object with a field the
+  classes cannot say (a field Moonwell has no table of, an emptied reference, an empty choice) stays whole in the object
+  files, which the build keeps beside the classes, as does one naming such an object; `import` lists each with why.
 - The script becomes the Lua library `lua/old_map.lua`, a JASS script turned into Lua once. What Moonwell's own script
   makes is taken out: `main`, `config`, the placed units, items, regions, cameras and sounds, and the map's setup.
 - `OldScript.cs` starts it when the game starts, as World Editor's `main` did: `InitGlobals`, `InitCustomTriggers`, then
