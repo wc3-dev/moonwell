@@ -1,7 +1,7 @@
 # Upstream workarounds
 
 The released Moonwell 0.10.0 and main build with `Moonwell.CSharpLua` 2.0.4-moonwell.21,
-`Moonwell.CSharpLua.CoreSystem` 2.0.3-moonwell.12 and `Moonwell.War3Net.Build` 6.1.2-moonwell.6 (0.6.0 with
+`Moonwell.CSharpLua.CoreSystem` 2.0.3-moonwell.13 and `Moonwell.War3Net.Build` 6.1.2-moonwell.6 (0.6.0 with
 6.1.2-moonwell.4).
 
 What Moonwell does because War3Net or CSharp.lua (War3Net.CSharpLua 2.0.4) behaves in a way it has to work around.
