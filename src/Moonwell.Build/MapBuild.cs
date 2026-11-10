@@ -74,6 +74,9 @@ namespace Moonwell.Build
             PlaceNames.Check(project, "Destructable.Named", PlacedWriter.DestructableNames(project, placed), "placed destructable");
             PlaceNames.Check(project, "PlacedSound.Named", PlacedWriter.SoundNames(placed), "sound");
 
+            // Data is written before the compile too, from the CSV and JSON files in data\.
+            DataWriter.Write(project);
+
             var targetPath = DotnetBuild.Run(project, options.Release, log);
             PackageSources.Check(project, options.PackageVersion ?? PackageSources.ToolVersion);
             var settings = MapSettingsReader.Read(targetPath, project);
