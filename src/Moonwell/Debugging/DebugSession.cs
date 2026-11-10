@@ -187,10 +187,10 @@ namespace Moonwell
             DebugPanel.SelectionChanged();
         }
 
-        /// <summary>An error's first showing while the mode is on: halts with every unit held, as Ctrl + H, and selects the object whose member failed when it is an actor or on one (decision 265); nothing while off or already halted.</summary>
+        /// <summary>An error's first showing while the mode is on: halts with every unit held, as Ctrl + H, unless already halted, and selects the object whose member failed when it is an actor or on one (decision 265); nothing while off.</summary>
         internal static void ErrorShown(object? subject)
         {
-            if (!IsOn || Runtime.Clock.IsHalted)
+            if (!IsOn)
             {
                 return;
             }

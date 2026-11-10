@@ -25,7 +25,7 @@ namespace Moonwell
             }
             catch (MoonwellException error)
             {
-                Errors.Report(label, error);
+                Errors.Warn(label, error);
             }
         }
     }

@@ -190,7 +190,7 @@ namespace Moonwell
             hit.Amount = 0.0f;
             World.SetEventAmount(0.0f);
             var from = hit.Source == null ? "no unit" : Names.NameOf(hit.Source);
-            Errors.Report("Moonwell.Damage", new MoonwellException(from + " to " + Names.NameOf(hit.Target) + ": set to 0, a chain of " + MaxChain + " hits made while reactions ran ends here"));
+            Errors.Warn("Moonwell.Damage", new MoonwellException(from + " to " + Names.NameOf(hit.Target) + ": set to 0, a chain of " + MaxChain + " hits made while reactions ran ends here"));
         }
 
         /// <summary>The game's damaging event: the before-armor stage, then what it changed written back to the game.</summary>
