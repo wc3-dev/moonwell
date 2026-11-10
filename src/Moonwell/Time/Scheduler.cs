@@ -158,6 +158,45 @@ namespace Moonwell
             }
         }
 
+#if DEBUG
+        /// <summary>The live timers due soonest, at most so many, the soonest first, in the order they run: -timers.</summary>
+        internal List<Timer> Next(int most)
+        {
+            var next = new List<TimerEntry>();
+            for (var i = 0; i < heap.Count; i++)
+            {
+                var entry = heap[i];
+                if (entry.timer.HasEnded)
+                {
+                    continue;
+                }
+
+                var at = next.Count;
+                while (at > 0 && Before(entry, next[at - 1]))
+                {
+                    at--;
+                }
+
+                if (at < most)
+                {
+                    next.Insert(at, entry);
+                    if (next.Count > most)
+                    {
+                        next.RemoveAt(most);
+                    }
+                }
+            }
+
+            var timers = new List<Timer>();
+            for (var i = 0; i < next.Count; i++)
+            {
+                timers.Add(next[i].timer);
+            }
+
+            return timers;
+        }
+#endif
+
         /// <summary>Drops the ended timers from the top, and asks the world to wake for the next one, if any is left.</summary>
         internal void Rearm()
         {
@@ -197,7 +236,11 @@ namespace Moonwell
             timer.ran = true;
             try
             {
+#if DEBUG
+                Profiler.RunTimer(timer);
+#else
                 timer.action();
+#endif
             }
             catch (Exception error)
             {

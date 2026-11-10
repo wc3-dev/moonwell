@@ -256,6 +256,28 @@ namespace Moonwell.Testing
             Logged.Add(text);
         }
 
+        /// <summary>The files written, by path, each its lines as last written.</summary>
+        public Dictionary<string, List<string>> Files = new Dictionary<string, List<string>>();
+
+        /// <summary>Records a file written.</summary>
+        public void WriteFile(string path, List<string> lines)
+        {
+            Files[path] = new List<string>(lines);
+        }
+
+        /// <summary>The units made invulnerable and not made vulnerable again.</summary>
+        public List<unit> Invulnerable = new List<unit>();
+
+        /// <summary>Records a unit made invulnerable or vulnerable.</summary>
+        public void SetInvulnerable(unit unit, bool invulnerable)
+        {
+            Invulnerable.Remove(unit);
+            if (invulnerable)
+            {
+                Invulnerable.Add(unit);
+            }
+        }
+
         /// <summary>The panel's text split into its lines.</summary>
         public List<string> PanelLines()
         {

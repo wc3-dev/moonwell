@@ -65,6 +65,9 @@ namespace Moonwell
             DebugViews.Reset();
             DebugPanel.Reset();
             DebugStats.Reset();
+            Leaks.Reset();
+            Profiler.Reset();
+            DebugTools.Reset();
 #endif
             Game.Instance.Every(0.25f, Sweep.Run);
         }
@@ -78,6 +81,9 @@ namespace Moonwell
         /// <summary>Starts the runtime on the game; the map's Main calls it once, with the setup that registers its types and components.</summary>
         internal static void Start(Action setup)
         {
+#if DEBUG
+            Leaks.CountHandles();
+#endif
             Reset(new NativeWorld());
 #if DEBUG
             DebugSession.Install(new NativeDebugWorld((NativeWorld)World));

@@ -35,6 +35,9 @@ namespace Moonwell
             }
 
             CheckDestructables();
+#if DEBUG
+            Leaks.Swept();
+#endif
         }
 
         /// <summary>Checks the destructables after the last one checked, at most MostDestructables, going round to the first: up to that many, every run checks them all, from the first. The run's destructables are picked before any ends, so one whose OnLeave removes others makes it miss none.</summary>
