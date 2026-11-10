@@ -171,7 +171,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(component) + ".OnAdded", error);
+                Errors.Report(component, ".OnAdded", error);
             }
 
             return component;

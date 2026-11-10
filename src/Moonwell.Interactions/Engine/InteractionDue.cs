@@ -86,7 +86,7 @@ namespace Moonwell.Engine
             Arm();
             if (failure != null)
             {
-                Errors.Report(Names.NameOf(interaction) + ".Check", failure);
+                Errors.Report(interaction, ".Check", failure);
             }
         }
     }

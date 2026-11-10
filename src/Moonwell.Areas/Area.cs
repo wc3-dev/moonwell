@@ -602,7 +602,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".Accepts", error);
+                Errors.Report(this, ".Accepts", error);
             }
 
             return answer;
@@ -617,7 +617,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnUnitEntered", error);
+                Errors.Report(this, ".OnUnitEntered", error);
             }
         }
 
@@ -630,7 +630,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnUnitStays", error);
+                Errors.Report(this, ".OnUnitStays", error);
             }
         }
 
@@ -643,7 +643,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnUnitLeft", error);
+                Errors.Report(this, ".OnUnitLeft", error);
             }
         }
     }

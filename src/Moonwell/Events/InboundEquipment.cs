@@ -71,7 +71,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(item) + name, error);
+                    Errors.Report(item, name, error);
                 }
             }
 
@@ -97,7 +97,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + name, error);
+                    Errors.Report(component, name, error);
                 }
             }
 
@@ -124,7 +124,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(by) + unitName, error);
+                    Errors.Report(by, unitName, error);
                 }
             }
 
@@ -150,7 +150,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + unitName, error);
+                    Errors.Report(component, unitName, error);
                 }
             }
 

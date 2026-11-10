@@ -336,6 +336,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "log.file-splits-letters-of-two-bytes", Run = LogCases.SplitsLettersOfTwoBytes });
             list.Add(new Case { Name = "log.file-splits-with-no-letter-start", Run = LogCases.SplitsWithNoLetterStart });
             list.Add(new Case { Name = "log.file-writes-at-most-once-a-second", Run = LogCases.WritesAtMostOnceASecond });
+            list.Add(new Case { Name = "log.ring-slots", Run = LogCases.RingSlots });
         }
 
         /// <summary>Adds the cases for the game clock and the time of day.</summary>
@@ -518,6 +519,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.off-at-start", Run = SessionCases.OffAtStart });
             list.Add(new Case { Name = "debug.actors.actor-before-added", Run = ActorCases.ActorBeforeAdded });
             list.Add(new Case { Name = "debug.session.toggle", Run = SessionCases.Toggle });
+            list.Add(new Case { Name = "debug.session.error-halts", Run = SessionCases.ErrorHalts });
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
             list.Add(new Case { Name = "debug.session.halt-holds-unknown-units", Run = InputReviewCases.HaltHoldsUnknownUnits });
             list.Add(new Case { Name = "debug.session.map-pause-during-halt", Run = InputReviewCases.MapPauseDuringHalt });

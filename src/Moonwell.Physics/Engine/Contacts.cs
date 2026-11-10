@@ -1035,7 +1035,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(missile) + ".CanHit", error);
+                Errors.Report(missile, ".CanHit", error);
                 answer = false;
             }
 
@@ -1072,7 +1072,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(obj) + ".OnStruck", error);
+                Errors.Report(obj, ".OnStruck", error);
             }
         }
 
@@ -1149,7 +1149,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(missile) + ".ImpactDamage", error);
+                Errors.Report(missile, ".ImpactDamage", error);
             }
         }
 
