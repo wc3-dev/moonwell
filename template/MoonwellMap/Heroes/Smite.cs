@@ -11,10 +11,7 @@ namespace MoonwellMap.Heroes
         {
             Name = "Smite";
             Damage = Levels(75f, 150f, 225f);
-            Tooltip = PerLevel(level => $"Smite - [Level {level}]");
-            TooltipExtended = PerLevel(level => $"Deals {Damage[level]} damage and stuns the target.");
-            TooltipLearn = "Learn Smite - [Level %d]";
-            TooltipLearnExtended = "Throws a hammer at an enemy, which deals more damage at each level and stuns the target.";
+            Describe("Smite", tip => $"Deals {tip[Damage]} damage and stuns the target.");
         }
 
         public override void OnCast(Cast cast)
