@@ -190,7 +190,8 @@ namespace Moonwell.Build
             }
 
             var call = Identifier(name) + "__lua(" + string.Join(", ", passed) + ")";
-            var template = lua + "(" + string.Join(", ", Enumerable.Range(0, passed.Count).Select(n => "{" + n + "}")) + ")";
+            // Through _G: CSharp.lua makes each method a local of its class, which a bare name would reach instead (I65).
+            var template = "_G." + lua + "(" + string.Join(", ", Enumerable.Range(0, passed.Count).Select(n => "{" + n + "}")) + ")";
             string result, rawResult, body;
             if (returns == null)
             {
@@ -231,9 +232,9 @@ namespace Moonwell.Build
             var text = new StringBuilder();
             text.Append($"        /// <summary>{Escape(name)} of {Escape(relative)}.</summary>\n");
             text.Append($"        public static {csharp} {id} {{ get => {type.FromRaw(id + "__get()", false)}; set => {id}__set({type.ToRaw("value", nullable)}); }}\n\n");
-            text.Append($"        /// @CSharpLua.Template = \"{name}\"\n");
+            text.Append($"        /// @CSharpLua.Template = \"_G.{name}\"\n");
             text.Append($"        private static {raw} {id}__get() => throw new global::System.InvalidOperationException(\"{name} is Lua, which runs only in the game\");\n\n");
-            text.Append($"        /// @CSharpLua.Template = \"{name} = {{0}}\"\n");
+            text.Append($"        /// @CSharpLua.Template = \"_G.{name} = {{0}}\"\n");
             text.Append("        [global::Moonwell.LuaLibrary]\n");
             text.Append($"        private static void {id}__set({raw} value) => throw new global::System.InvalidOperationException(\"{name} is Lua, which runs only in the game\");\n");
             return text.ToString();
