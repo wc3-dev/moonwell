@@ -276,7 +276,7 @@ namespace Moonwell
             for (var i = 0; i < timers.Count; i++)
             {
                 var timer = timers[i];
-                var line = "in " + DebugPanel.Tenths(timer.Remaining) + " s · " + (timer.IsPeriodic ? "every " + DebugPanel.Tenths(timer.Interval) + " s" : "once");
+                var line = "in " + DebugPanel.Tenths(timer.Remaining) + " s · " + (timer.IsPeriodic ? "every " + Profiler.Seconds(timer.Interval) + " s" : "once");
                 var made = Profiler.LineName(timer.madeLine);
                 if (made.Length > 0)
                 {

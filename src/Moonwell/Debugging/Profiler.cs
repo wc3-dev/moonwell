@@ -138,7 +138,7 @@ namespace Moonwell
         /// <summary>"Every 0.5 s at Spells/Rage.cs:12", or by its scope for a timer no line of the map made: "Moonwell: Game, every 0.25 s".</summary>
         internal static string LabelOf(Timer timer)
         {
-            var kind = timer.IsPeriodic ? "Every " + DebugPanel.Tenths(timer.Interval) + " s" : "After";
+            var kind = timer.IsPeriodic ? "Every " + Seconds(timer.Interval) + " s" : "After";
             var line = LineName(timer.madeLine);
             if (line.Length > 0)
             {
@@ -274,6 +274,18 @@ namespace Moonwell
             }
 
             return sorted;
+        }
+
+        /// <summary>Seconds in tenths, or in hundredths below a tenth, so 1/32 s reads 0.03, not 0.0.</summary>
+        internal static string Seconds(float seconds)
+        {
+            if (seconds >= 0.095f)
+            {
+                return DebugPanel.Tenths(seconds);
+            }
+
+            var hundredths = (int)(seconds * 100.0f + 0.5f);
+            return "0.0" + hundredths;
         }
 
         private static float Clamp(float value, float low, float high)

@@ -17,7 +17,7 @@ internal static class LuaScript
 
     /// <summary>
     /// Compiles a project as a map build compiles a map without Moonwell.Objects (LuaCompiler.Compile, as MapBuild calls it): a
-    /// copy of the project with the test map is a map project, whose files are marked for the line table (MarkedProject,
+    /// copy of the project with the test map is a map project, its lua folder's libraries given bindings as a map build gives them, whose files are marked for the line table (MarkedProject,
     /// LineMarks) and compiled by CSharp.lua with DEBUG and MOONWELL_LUA for a development build, MOONWELL_LUA alone and no
     /// comments for a release build; the script is linked with CSharp.lua's core and the Lua that Moonwell.Natives.dll and
     /// Moonwell.dll carry (ScriptLibraries), trimmed, and given its line table. What a map build adds besides (the map's entry,
@@ -37,6 +37,7 @@ internal static class LuaScript
             }
 
             var project = MapProject.Find(folder);
+            LuaLibraries.WriteBindings(project);
             var map = War3Net.Build.Map.Open(project.MapFolder, War3Net.Build.MapFiles.All & ~War3Net.Build.MapFiles.Triggers & ~War3Net.Build.MapFiles.CustomTextTriggers);
 
             // The libraries the script is linked with are read from beside the project's assembly, as a map build reads them from
@@ -61,11 +62,13 @@ internal static class LuaScript
     {
         var source = Path.GetDirectoryName(Path.GetFullPath(csproj));
         var files = new List<string>();
-        foreach (var file in Directory.EnumerateFiles(source, "*.cs", SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
         {
             var relative = Path.GetRelativePath(source, file);
             var top = relative.Split(Path.DirectorySeparatorChar)[0];
-            if (top.Equals("bin", StringComparison.OrdinalIgnoreCase) || top.Equals("obj", StringComparison.OrdinalIgnoreCase))
+            // The C# and the map's Lua libraries in its lua folder.
+            var kept = file.EndsWith(".cs", StringComparison.Ordinal) || (top == "lua" && file.EndsWith(".lua", StringComparison.Ordinal));
+            if (!kept || top.Equals("bin", StringComparison.OrdinalIgnoreCase) || top.Equals("obj", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

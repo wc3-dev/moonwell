@@ -19,16 +19,28 @@ namespace Moonwell
         /// <summary>Reports an error from a hook, shown at its first time and then at every power of ten. An error past the hundred remembered is shown, with no count, at the first time and every power of ten of the count of all such errors.</summary>
         internal static void Report(string label, Exception error)
         {
-            Report(label, error, null);
+            Report(label, error, null, true);
         }
 
         /// <summary>Reports an error from a member of an object, labelled with the object's class and the member (".OnTick"). In a development build with the debug mode on, its first showing halts and selects the object (decision 265).</summary>
         internal static void Report(object subject, string member, Exception error)
         {
-            Report(Names.NameOf(subject) + member, error, subject);
+            Report(Names.NameOf(subject) + member, error, subject, true);
         }
 
-        private static void Report(string label, Exception error, object? subject)
+        /// <summary>Reports a mistake Moonwell itself saw, as Report does, but never halts the debug mode: only code that threw does (the gate of 11-10, where a leak report halted the game).</summary>
+        internal static void Warn(string label, Exception error)
+        {
+            Report(label, error, null, false);
+        }
+
+        /// <summary>Reports a mistake Moonwell itself saw in a member of an object, as Report does, but never halts the debug mode.</summary>
+        internal static void Warn(object subject, string member, Exception error)
+        {
+            Report(Names.NameOf(subject) + member, error, subject, false);
+        }
+
+        private static void Report(string label, Exception error, object? subject, bool halts)
         {
 #if DEBUG
             const bool release = false;
@@ -63,7 +75,7 @@ namespace Moonwell
                 Runtime.World.Print(ScreenLine(label, error.Message, times, release, where));
                 Runtime.World.Log(LogLine(label, error.Message, times, where));
             }
-            if (first)
+            if (first && halts)
             {
                 FirstShown(subject);
             }
@@ -87,7 +99,7 @@ namespace Moonwell
             }
             catch (MoonwellException error)
             {
-                Report(label, error);
+                Warn(label, error);
             }
         }
 

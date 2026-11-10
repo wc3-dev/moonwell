@@ -395,6 +395,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dice.real-and-chance", Run = DiceCases.RealAndChance });
             list.Add(new Case { Name = "dice.pick-and-shuffle", Run = DiceCases.PickAndShuffle });
             list.Add(new Case { Name = "dice.game-generator", Run = DiceCases.GameGenerator });
+            list.Add(new Case { Name = "lua-library.call-through-binding", Run = LuaLibraryCases.CallThroughBinding });
         }
 
         /// <summary>Adds the cases for explicit scopes: what code makes belongs to the scope named where it is made.</summary>

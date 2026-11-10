@@ -52,7 +52,7 @@ namespace Moonwell.Build.Tests
 
             Assert.True(exitCode == 0, output);
             var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
-            Assert.Contains("MoonwellPlacedDestructables = {\n[\"LTlt_0012\"] = { " + "LTlt".FromRawcode() + ", 256, -128 },", script);
+            Assert.Contains("MoonwellPlacedDestructables = {\n[\"LTlt_0012\"] = { 1280601204, 256, -128 },", script);
         }
 
         [Fact]
