@@ -7,20 +7,21 @@ This guide describes Moonwell 0.10.0; the guide for 0.9.0 is at the
 
 Moonwell needs the .NET 10 SDK and Warcraft III 3.0, whose `common.j` and `Blizzard.j` the build reads from the
 install. Name an install outside `C:\Program Files (x86)\Warcraft III` with the `MOONWELL_WAR3` environment variable.
-Install the template and the `moonwell` command once:
+Install the `moonwell` command once:
 
 ```
-dotnet new install Moonwell.Templates
 dotnet tool install --global Moonwell.Cli
 ```
 
 Then make a map and play it:
 
 ```
-dotnet new moonwell -n MyMap
+moonwell new MyMap
 cd MyMap
 moonwell run
 ```
+
+`dotnet new moonwell -n MyMap` makes the same project, after `dotnet new install Moonwell.Templates`.
 
 The game opens the map and shows the Moonwell version. Player 1 has a Champion, a Paladin of the map's own, with
 three footmen to fight. Learn Smite and cast it: the screen names the target. Each kill shows the Champion's count and heals it a tenth of its life.
@@ -2319,6 +2320,16 @@ MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF
 `moonwell build` builds the map in the current folder into `build\MyMap.w3x`; `moonwell run` builds it and starts the
 game with it. Both make a development build: it checks the values Moonwell receives and keeps the Lua readable.
 `--release` makes the release build. `moonwell run --game <exe>` names the game when it is not in its usual place.
+
+| Command | What it does |
+|---|---|
+| `moonwell new <name>` | Makes a map project in a new folder of that name, the name being its namespace too |
+| `moonwell watch` | Builds, then builds again each time a file of the project changes (the code, `assets/`, `map/`), until Ctrl+C; a failed build is shown and the watch goes on |
+| `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
+| `moonwell clean` | Deletes `build/` |
+| `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
+
+Each takes the project's folder after the command, as `build` does; `new` takes the name.
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
