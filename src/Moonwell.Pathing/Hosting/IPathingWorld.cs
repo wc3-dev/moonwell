@@ -3,8 +3,8 @@ namespace Moonwell.Hosting
     /// <summary>The game as the pathing package sees it: a hidden helper unit of a square size and movement put at a place, what a unit's size and movement are, and the deaths of buildings and destructables that change what blocks paths.</summary>
     internal interface IPathingWorld
     {
-        /// <summary>Puts a hidden helper at a point with SetUnitPosition and reads where the game left it. The helper is one of 1 to 4 cells across (cells) that moves on the ground, floats or is amphibious.</summary>
-        void Try(int cells, Movement movement, float x, float y, out float landedX, out float landedY);
+        /// <summary>Puts a hidden helper at a point with SetUnitPosition and reads where the game left it. The helper is one of 1 to 4 cells across (cells) that moves on the ground, floats or is amphibious. A unit given as leftOut does not count against it.</summary>
+        void Try(int cells, Movement movement, float x, float y, unit? leftOut, out float landedX, out float landedY);
 
         /// <summary>A unit's collision size.</summary>
         float CollisionOf(unit handle);

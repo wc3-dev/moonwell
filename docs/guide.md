@@ -1102,7 +1102,9 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
 - A unit takes a square of the game's 32 cells by its collision size: below 16 one cell, 16 to 31 two, 32 to 47 three,
   48 and up four. A gap of 64 lets sizes up to 31 through; 128 lets every size through.
 - `CanStand`, `NearestSpot` and `Spots` are the game's own answer: a hidden helper of the unit's square is put there,
-  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there.
+  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there. A unit's own
+  `CanStand` and `NearestSpot` leave the unit itself out, so its own place reads free: it gets Ghost (Visible) for the
+  moment of the try, which fires no event and keeps its orders and selection.
 - `FindPath` and `CanReach` are Moonwell's own search on the same cells. They see terrain, destructables, buildings and
   pathing set by code, never units. A target that can't be reached gives the route to the reachable spot nearest it,
   where the game's own walker would stop, with `Reaches` false. The game's walkers also go round units that stand in
