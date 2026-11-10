@@ -13,15 +13,16 @@ namespace Moonwell.Testing
     {
         private static readonly int Footman = ObjectTypes.FourCC("hfoo");
 
-        private static FakePathingWorld Setup(FakeTerrainWorld terrain)
+        // A flat grid of corners by corners from (left, left): 10 by 10 from -576 unless a case needs more.
+        private static FakePathingWorld Setup(FakeTerrainWorld terrain, int corners = 10, float left = -576f)
         {
             var text = new StringBuilder();
-            for (var k = 0; k < 10 * 10; k++)
+            for (var k = 0; k < corners * corners; k++)
             {
                 text.Append(GridText.Corner(0f, 2));
             }
 
-            Terrain.Install(terrain, 10, 10, -576f, -576f, text.ToString());
+            Terrain.Install(terrain, corners, corners, left, left, text.ToString());
             var fake = new FakePathingWorld(terrain);
             Paths.Install(fake);
             return fake;
@@ -270,6 +271,23 @@ namespace Moonwell.Testing
             var across = new TestScope("across", new List<string>());
             Paths.Wall(-520f, -100f, 520f, 50f, across);
             Expect.True(!Paths.FindPath(8f, 0f, -200f, 0f, 200f).Reaches, "the same slant across the area has no gap");
+        }
+
+        /// <summary>A target closed in a box far across a large area is found cut off by the flood from it, without the search going over the whole area, and the route ends outside the box (decision 248).</summary>
+        public static void CutOffIsQuick(FakeWorld world)
+        {
+            var terrain = new FakeTerrainWorld { AreaMinX = -2048f, AreaMinY = -2048f, AreaMaxX = 2048f, AreaMaxY = 2048f };
+            Setup(terrain, 33, -2048f);
+            Wall(terrain, 40, 49, 40, 40, FakeTerrainWorld.NoWalk);
+            Wall(terrain, 40, 49, 49, 49, FakeTerrainWorld.NoWalk);
+            Wall(terrain, 40, 40, 41, 48, FakeTerrainWorld.NoWalk);
+            Wall(terrain, 49, 49, 41, 48, FakeTerrainWorld.NoWalk);
+            var route = Paths.FindPath(31f, -1900f, -1900f, 1424f, 1424f);
+            Expect.True(!route.Reaches, "the box is closed");
+            Expect.True(terrain.PlaceCalls < 4000, "far fewer cells asked than the area's 16,384: " + terrain.PlaceCalls);
+            var end = route.Points[route.Points.Count - 1];
+            Expect.True(end.DistanceTo(new Vector2(1424f, 1424f)) < 300f, "it ends by the box: " + end);
+            Expect.True(Paths.FindPath(31f, -1900f, -1900f, 1900f, 1900f).Reaches, "a target outside the box is reached");
         }
 
         /// <summary>A unit's own calls go by its collision size and place.</summary>

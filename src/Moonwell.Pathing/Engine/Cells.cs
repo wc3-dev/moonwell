@@ -65,24 +65,6 @@ namespace Moonwell.Engine
             return key % (Offset * 2) - Offset;
         }
 
-        /// <summary>Whether a square of so many cells, placed by the cell (col, row) its centre is in, is open for a movement: every cell under it is.</summary>
-        internal static bool Fits(int col, int row, int cells, Movement movement)
-        {
-            var first = cells / 2;
-            for (var i = col - first; i < col - first + cells; i++)
-            {
-                for (var j = row - first; j < row - first + cells; j++)
-                {
-                    if (!Open(i, j, movement))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
         /// <summary>Whether one cell is open for a movement, inside the playable area.</summary>
         internal static bool Open(int col, int row, Movement movement)
         {

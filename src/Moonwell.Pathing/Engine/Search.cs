@@ -13,8 +13,12 @@ namespace Moonwell.Engine
         private const float Straight = 32f;
         private const float Diagonal = 45.254834f;
 
-        // shortcut: no limit on the cells searched, so a target cut off on a large open map searches all the ground it can reach; add a reach map per square size if that is ever slow.
+        /// <summary>The most cells the A* takes after the goal is found cut off, looking for the nearest spot.</summary>
+        // shortcut: when both ends lie in large separate areas (a river across the map), the flood and the A* each still go over most of the smaller one; a reach map per square size would answer at once.
+        private const int NearestCap = 2048;
+
         private readonly Dictionary<int, bool> fits = new Dictionary<int, bool>();
+        private readonly Dictionary<int, bool> open = new Dictionary<int, bool>();
         private readonly int cells;
         private readonly Movement movement;
         private readonly int startKey;
@@ -76,6 +80,8 @@ namespace Moonwell.Engine
 
         private readonly Dictionary<int, int> came = new Dictionary<int, int>();
 
+        // A* from the start, with a flood from the goal a step for each of its steps (decision 248): when the flood runs out
+        // before the two meet, the goal is cut off, and the A* goes on only to NearestCap cells for the nearest spot it finds.
         private int Run(int goal, float toX, float toY, out bool reached)
         {
             var cost = new Dictionary<int, float> { [startKey] = 0f };
@@ -85,6 +91,12 @@ namespace Moonwell.Engine
             var best = startKey;
             var bestDistance = float.MaxValue;
             reached = false;
+            var flooded = new HashSet<int> { goal };
+            var flood = new List<int> { goal };
+            var floodNext = 0;
+            var cutOff = !Fits(goal);
+            var settled = cutOff;
+            var afterCutOff = 0;
             while (heap.Count > 0)
             {
                 var key = heap.Pop();
@@ -97,6 +109,36 @@ namespace Moonwell.Engine
                 {
                     reached = true;
                     return key;
+                }
+
+                if (!settled)
+                {
+                    if (flooded.Contains(key))
+                    {
+                        settled = true;
+                    }
+                    else if (floodNext < flood.Count)
+                    {
+                        var floodKey = flood[floodNext++];
+                        if (closed.Contains(floodKey))
+                        {
+                            settled = true;
+                        }
+                        else
+                        {
+                            Spread(floodKey, flooded, flood);
+                        }
+                    }
+                    else
+                    {
+                        settled = true;
+                        cutOff = true;
+                    }
+                }
+
+                if (cutOff && ++afterCutOff > NearestCap)
+                {
+                    break;
                 }
 
                 var col = Cells.ColOf(key);
@@ -145,6 +187,32 @@ namespace Moonwell.Engine
             return best;
         }
 
+        // Adds the cells a square can step to from a cell, by the same rules as the A*, to the flood.
+        private void Spread(int key, HashSet<int> flooded, List<int> flood)
+        {
+            var col = Cells.ColOf(key);
+            var row = Cells.RowOf(key);
+            for (var i = -1; i <= 1; i++)
+            {
+                for (var j = -1; j <= 1; j++)
+                {
+                    var next = Cells.Key(col + i, row + j);
+                    if ((i == 0 && j == 0) || flooded.Contains(next) || !Fits(next))
+                    {
+                        continue;
+                    }
+
+                    if (i != 0 && j != 0 && (!Fits(Cells.Key(col + i, row)) || !Fits(Cells.Key(col, row + j))))
+                    {
+                        continue;
+                    }
+
+                    flooded.Add(next);
+                    flood.Add(next);
+                }
+            }
+        }
+
         /// <summary>Whether the square fits with its centre in a cell; the start's cell always does, as the unit is there.</summary>
         private bool Fits(int key)
         {
@@ -153,13 +221,35 @@ namespace Moonwell.Engine
                 return true;
             }
 
-            if (!fits.TryGetValue(key, out var open))
+            if (!fits.TryGetValue(key, out var fit))
             {
-                open = Cells.Fits(Cells.ColOf(key), Cells.RowOf(key), cells, movement);
-                fits[key] = open;
+                fit = true;
+                var col = Cells.ColOf(key) - cells / 2;
+                var row = Cells.RowOf(key) - cells / 2;
+                for (var i = col; i < col + cells && fit; i++)
+                {
+                    for (var j = row; j < row + cells && fit; j++)
+                    {
+                        fit = Open(Cells.Key(i, j));
+                    }
+                }
+
+                fits[key] = fit;
             }
 
-            return open;
+            return fit;
+        }
+
+        // Whether one cell is open, asked once a search: neighbouring squares share most of their cells.
+        private bool Open(int key)
+        {
+            if (!open.TryGetValue(key, out var answer))
+            {
+                answer = Cells.Open(Cells.ColOf(key), Cells.RowOf(key), movement);
+                open[key] = answer;
+            }
+
+            return answer;
         }
 
         /// <summary>Whether the square can go straight from one point to another: every cell its centre passes fits, checked every 8, and a step across a corner needs both cells beside it.</summary>
