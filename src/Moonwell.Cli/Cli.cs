@@ -52,6 +52,14 @@ namespace Moonwell.Tool
                     case "import":
                         var imported = NewMap.Write(options.Name, ".", Version());
                         OldMapImport.Run(options.Source, imported, output);
+                        try
+                        {
+                            ObjectImport.Run(imported, output);
+                        }
+                        catch (BuildException failure)
+                        {
+                            output.WriteLine($"moonwell: the object data stays in the map's object files, which the build keeps: {failure.Message}");
+                        }
                         output.WriteLine($"moonwell: made {imported}; cd {options.Name}, then moonwell run");
                         break;
                     case "clean":
