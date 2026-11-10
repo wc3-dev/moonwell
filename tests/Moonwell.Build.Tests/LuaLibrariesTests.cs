@@ -62,7 +62,7 @@ namespace Moonwell.Build.Tests
             var text = Text();
 
             Assert.Contains("/// <summary>Pushes a unit away.</summary>\n        [global::Moonwell.LuaLibrary]\n        public static bool push(global::Moonwell.Unit target, float distance, float? angle = null) => push__lua(target.Handle, distance, angle);", text);
-            Assert.Contains("/// @CSharpLua.Template = \"Knockback.push({0}, {1}, {2})\"\n        private static bool push__lua(global::Moonwell.unit? target, float distance, float? angle)", text);
+            Assert.Contains("/// @CSharpLua.Template = \"_G.Knockback.push({0}, {1}, {2})\"\n        private static bool push__lua(global::Moonwell.unit? target, float distance, float? angle)", text);
         }
 
         [Fact]
@@ -87,7 +87,7 @@ namespace Moonwell.Build.Tests
             var text = Text();
 
             Assert.Contains("public static int udg_Gold { get => udg_Gold__get(); set => udg_Gold__set(value); }", text);
-            Assert.Contains("/// @CSharpLua.Template = \"udg_Gold = {0}\"\n        [global::Moonwell.LuaLibrary]\n        private static void udg_Gold__set(int value)", text);
+            Assert.Contains("/// @CSharpLua.Template = \"_G.udg_Gold = {0}\"\n        [global::Moonwell.LuaLibrary]\n        private static void udg_Gold__set(int value)", text);
             Assert.DoesNotContain("udg_Untyped", text);
             Assert.DoesNotContain("Secret", text);
         }
@@ -99,6 +99,8 @@ namespace Moonwell.Build.Tests
 
             Assert.Contains("public static partial class KnockBack", text);
             Assert.Contains("public static void SpawnShadow(object x, object y) => SpawnShadow__lua(x, y);", text);
+            // Through _G, or CSharp.lua's local SpawnShadow, the binding itself, would be called (I65).
+            Assert.Contains("/// @CSharpLua.Template = \"_G.SpawnShadow({0}, {1})\"", text);
             Assert.DoesNotContain("hidden", text);
             Assert.DoesNotContain("method", text);
             Assert.Empty(CSharpSyntaxTree.ParseText(Wrapped(Classes())).GetDiagnostics());

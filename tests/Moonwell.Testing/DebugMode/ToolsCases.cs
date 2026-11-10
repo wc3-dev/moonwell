@@ -175,6 +175,8 @@ namespace Moonwell.Testing
             Expect.True(lines[2].StartsWith("Every 1.0 s at ") || lines[2].StartsWith("Moonwell: Game, every 1.0 s"), "the timer's line names it: " + lines[2]);
             Expect.True(lines[2].IndexOf(" | 3 | 6.0 | ") >= 0, "three runs, 6 ms: " + lines[2]);
             Expect.True(lines[3].StartsWith("Pathing | 1 | 5.0 | "), "the section, once, 5 ms: " + lines[3]);
+            Expect.Equal("0.03", Profiler.Seconds(1.0f / 32.0f), "1/32 s in hundredths");
+            Expect.Equal("0.1", Profiler.Seconds(0.1f), "0.1 s in tenths");
             Expect.True(lines[4].StartsWith("Moonwell: Game, every ") && lines[4].IndexOf(" | 0.0 | ") >= 0, "the sweep: " + lines[4]);
         }
 

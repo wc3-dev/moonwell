@@ -73,7 +73,7 @@ namespace Moonwell
             }
             catch (MoonwellException error)
             {
-                Errors.Report(label, error);
+                Errors.Warn(label, error);
             }
 
             var timer = new Timer(Runtime.World.Now(), seconds, true, action);
@@ -112,7 +112,7 @@ namespace Moonwell
                 var now = Runtime.World.Now();
                 if (start == now && madeAt == Runtime.Clock.LastGame)
                 {
-                    Errors.Report(Parent, ".Timer", new MoonwellException("ended with its scope in the instant it was made, before it ran; name a scope that lasts"));
+                    Errors.Warn(Parent, ".Timer", new MoonwellException("ended with its scope in the instant it was made, before it ran; name a scope that lasts"));
                 }
             }
 #endif

@@ -64,7 +64,7 @@ namespace Moonwell
 
             if (orderDepth >= MaxOrderDepth)
             {
-                Errors.Report("Moonwell.Orders", new MoonwellException("orders given inside order reactions nested more than " + MaxOrderDepth + " deep, at " + Names.NameOf(ordered) + "; that order runs no reaction"));
+                Errors.Warn("Moonwell.Orders", new MoonwellException("orders given inside order reactions nested more than " + MaxOrderDepth + " deep, at " + Names.NameOf(ordered) + "; that order runs no reaction"));
                 return;
             }
 
