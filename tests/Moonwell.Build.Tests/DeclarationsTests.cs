@@ -493,6 +493,14 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void describe_outside_ctor()
+        {
+            AssertFails(
+                "DescribeOutsideCtor",
+                "DescribeOutsideCtor.Bolt.Retell changes the tooltips; declared fields are set only in the constructor");
+        }
+
+        [Fact]
         public void set_of_another_abilitys_field_names_line()
         {
             AssertFails(

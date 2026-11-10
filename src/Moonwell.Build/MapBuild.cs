@@ -81,10 +81,11 @@ namespace Moonwell.Build
 
             // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly. The pathing package's
             // helper units are object data, so a map that uses it takes this path too.
+            IReadOnlyList<DeclaredObject> objects = Array.Empty<DeclaredObject>();
             if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath) || Declarations.Needs(targetPath, PathingAssemblyName))
             {
                 var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
-                BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
+                objects = BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);
             }
             else
             {
@@ -95,6 +96,8 @@ namespace Moonwell.Build
             {
                 StageWith(project, () => FramesToc.Write(project.StagedFolder, project.AssetsFolder, Declarations.Needs(targetPath, KitAssemblyName)));
             }
+
+            AssetChecks.Run(project, targetPath, objects, log);
 
             try
             {
@@ -109,8 +112,8 @@ namespace Moonwell.Build
             return project.ArchivePath;
         }
 
-        // The map uses Moonwell.Objects: its declarations, ids, Lua, registry and object files are part of the build.
-        private static void BuildWithObjects(
+        // The map uses Moonwell.Objects: its declarations, ids, Lua, registry and object files are part of the build; gives the declared objects.
+        private static IReadOnlyList<DeclaredObject> BuildWithObjects(
             MapProject project,
             MapSettings settings,
             War3Net.Build.Map map,
@@ -126,6 +129,7 @@ namespace Moonwell.Build
 
             var sourceMapIds = MapObjectIds.Defined(project);
             var ids = ObjectIds.Assign(declarations.Objects, standard.AllIds(), sourceMapIds);
+            ObjectChecks.Run(declarations, ids, standard, data.ValueSet, sourceMapIds, PlacedIds(map), ObjectChecks.Read(targetPath), log);
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), ReferenceEquals(standard, StandardData.Empty) ? HeroExperience.Standard : standard.Experience(data.ValueSet));
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
             var installs = Installs(project, map, targetPath, BridgeWriter.Declared(declarations.Objects, ids), standard.AllIds(), experience, day, log);
@@ -191,6 +195,15 @@ namespace Moonwell.Build
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
             StageWith(project, () => Stage.Write(project, map, written, writtenIds, declarations.StandardClassIds, standard, log));
+            return declarations.Objects;
+        }
+
+        // The ids of the units, items, destructables and doodads placed on the map in World Editor.
+        private static IReadOnlySet<string> PlacedIds(War3Net.Build.Map map)
+        {
+            var units = map.Units?.Units.Select(placed => placed.TypeId) ?? Enumerable.Empty<int>();
+            var doodads = map.Doodads?.Doodads.Select(placed => placed.TypeId) ?? Enumerable.Empty<int>();
+            return units.Concat(doodads).Select(Moonwell.MapFiles.Rawcodes.TextOf).ToHashSet(StringComparer.Ordinal);
         }
 
         // The map does not reference Moonwell.Objects: its own object files are used as they are.

@@ -34,7 +34,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Start.cs` | The game's start: makes the Champion and the footmen |
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
 | `map/` | The World Editor map, saved as a folder |
-| `assets/` | Files copied into the map at the same paths (models, icons, sounds), named with ASCII characters only; make it when you need it |
+| `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
 Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
@@ -178,6 +178,17 @@ public sealed class Champion : Human.Units.Paladin
   first comma, quoted or not, so a comma in it fails the build, and placeholders, which hold one, cannot go in it. A new
   buff that keeps a standard text with a comma (Flame Strike's) fails too: set `TooltipExtended`. Write `‚` (U+201A)
   for a comma there: the game draws it as one and does not cut the text at it.
+- `Describe` writes an ability's, an item's or an upgrade's tooltips from one text, so they show its own numbers:
+  `Describe("Smite", tip => $"Deals {tip[Damage]} damage.", TipLines.Cooldown)`. In a level's text `tip[Damage]` is
+  that level's value in the game's tooltip gold; in the learn tooltip, which tells of every level, it is `75/150/225`,
+  or one number when every level has the same. `tip.Percent(...)` shows 0.25 as 25%, `tip.Number(250)` a number that
+  doesn't change by level, and `tip.Level` the level (0 in the learn tooltip). An ability gets its four tooltips,
+  titled as the game's own (`Smite - [Level 2]`, the name alone for a unit's ability of one level, and
+  `Learn Smite - [Level %d]`); `TipLines` adds mana, cooldown, range, area and duration lines from its fields, each
+  left out where it is 0. An item gets `Purchase Tonic` and its extended tooltip. An upgrade gets `Upgrade to` each
+  level's name, as in `Describe(Levels("Iron Swords", "Steel Swords", "Mithril Swords"), ...)`, and each level's
+  text. `Describe` reads the fields when it is called, so it goes after the values it shows, and a tooltip set after
+  it wins. Like a set, it belongs in the constructor: anywhere else fails the build.
 - A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`, or `Set("ua1w", WeaponType.Missile)` for a
   choice. The value has exactly the type the field holds, so `1.5f` or `5` in the wrong field, a choice's number and an
   id the class doesn't have are error MW0049. A list of numbers held as text (`RequirementsLevels = "1,2"`) is only
@@ -887,8 +898,8 @@ Music.SetVolume(60);
   did not hold (seen). `Stop()` fades the music out, the file played once included; `Stop(fadeOut: false)` stops it at
   once. After a stop the map has no music until the next `Play`, its own included.
 - Every `Music` call takes `heardBy:` too, which changes the music for that player only; the others' stays as it is.
-- A file of the map's own goes in `assets/`. A path to one of the game's sounds works with `.wav`, `.flac` or `.ogg`
-  alike.
+- A file of the map's own goes in `assets/` ([Assets](#assets)). A path to one of the game's sounds works with `.wav`,
+  `.flac` or `.ogg` alike.
 
 ## Weather, lightning, vision and the minimap
 
@@ -1131,7 +1142,9 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
 - A unit takes a square of the game's 32 cells by its collision size: below 16 one cell, 16 to 31 two, 32 to 47 three,
   48 and up four. A gap of 64 lets sizes up to 31 through; 128 lets every size through.
 - `CanStand`, `NearestSpot` and `Spots` are the game's own answer: a hidden helper of the unit's square is put there,
-  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there.
+  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there. A unit's own
+  `CanStand` and `NearestSpot` leave the unit itself out, so its own place reads free: it gets Ghost (Visible) for the
+  moment of the try, which fires no event and keeps its orders and selection.
 - `FindPath` and `CanReach` are Moonwell's own search on the same cells. They see terrain, destructables, buildings and
   pathing set by code, never units. A target that can't be reached gives the route to the reachable spot nearest it,
   where the game's own walker would stop, with `Reaches` false. The game's walkers also go round units that stand in
@@ -2343,6 +2356,27 @@ and closures, `ref`/`out`/`in` parameters and ref locals, `params`, `checked`, `
 MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF.Sqrt` is off by up to 2 parts in
 100,000 (Maths).
 
+## Assets
+
+A file in `assets/` goes into the map at the same path: `assets\war3mapImported\Fire.mdx` is
+`war3mapImported\Fire.mdx` to object data and code. A file at one of the game's own paths replaces the game's.
+
+- A PNG goes in as a BLP, the game's texture format, at the same path: code and object data name
+  `war3mapImported\BTNFire.blp` for `assets\war3mapImported\BTNFire.png`. Each side must be a power of two (64 by 64
+  for an icon), and a see-through part stays see-through. A PNG and a BLP of the same name are refused.
+- An icon whose name starts with `BTN` or `PASBTN`, a PNG or a BLP, gets the grey copy a disabled button shows: the
+  game reads it from `ReplaceableTextures\CommandButtonsDisabled\DIS` and the icon's file name, wherever the icon is,
+  and without one shows the icon in colour (seen). The build makes it the way the game's HD copies are, unless
+  `assets/` or the map has one there. Two icons with one file name in different folders share one copy, and the build
+  warns of it.
+- The build warns of a path that object data or the map's code names (a texture, model or sound) that neither the game
+  nor the map has, naming the class and field (`Sample.Arthas: uico`) or the type whose code has it. As in the game, a file
+  under another extension of its kind counts: `.mdl` and `.mdx`; `.blp`, `.dds` and `.tga`; `.wav`, `.flac` and `.ogg`.
+- The build also lists the textures, models and sounds in `assets/` that nothing in the built map names: not the
+  code, object data, a model or a frame file. It leaves them in the map, as a path the code puts together while the
+  game runs (`"BTN" + name + ".blp"`) is not seen. A file at one of the game's paths, a grey copy and a model's
+  `_portrait` are not listed.
+
 ## The build
 
 `moonwell build` builds the map in the current folder into `build\MyMap.w3x`; `moonwell run` builds it and starts the
@@ -2361,6 +2395,18 @@ The build loads the script in Lua without running it, as the game does first, an
 Lua refuses it. Lua allows 200 locals in a function: each parameter, local variable and object or collection
 initializer is one, and so are some values the compiler keeps (`?.`, a switch expression), so a method that adds 200
 `new Wave { ... }` to a list is too long. Split it into several methods.
+
+The build checks the objects the map declares. A tooltip placeholder that names no object (`<A0O1,DataA1>`; ids are
+case-sensitive) or a level its ability doesn't have (`<A001,DataA4>` of 3 levels) fails it, as the game shows 0
+there; the key itself is not checked. Two warnings point at mistakes that can be meant:
+
+- On a declared unit's command card, two abilities at one button place, with one hotkey, or taking one order (two
+  Storm Bolts: only one of them casts; a Channel's order is its Base Order ID). Only abilities with an icon count,
+  and only castable ones, with a hotkey, for hotkeys and orders. A pair of the game's own abilities is warned only
+  when the map changed the unit's list. `[AllowClash]` on the unit keeps it quiet.
+- A declared object nothing uses: no other object lists it, no code of another class names it, and the map places
+  none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
+  Editor's own objects, item tables).
 
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
