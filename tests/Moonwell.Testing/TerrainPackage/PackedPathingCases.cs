@@ -87,11 +87,11 @@ namespace Moonwell.Testing
         {
         }
 
-        public void SetBlight(float x, float y, float radius, bool on)
+        public void Blight(float x, float y, float radius, bool on)
         {
         }
 
-        public void SetBlight(float minX, float minY, float maxX, float maxY, bool on)
+        public void Blight(float minX, float minY, float maxX, float maxY, bool on)
         {
         }
 

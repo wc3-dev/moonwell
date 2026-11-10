@@ -293,11 +293,11 @@ namespace Moonwell.Engine
         {
             if (change.Radius < 0f)
             {
-                Terrain.World.SetBlight(change.MinX, change.MinY, change.MaxX, change.MaxY, on);
+                Terrain.World.Blight(change.MinX, change.MinY, change.MaxX, change.MaxY, on);
             }
             else
             {
-                Terrain.World.SetBlight(change.X, change.Y, change.Radius, on);
+                Terrain.World.Blight(change.X, change.Y, change.Radius, on);
             }
         }
 
