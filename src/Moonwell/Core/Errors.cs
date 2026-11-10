@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Moonwell
 {
@@ -62,11 +63,18 @@ namespace Moonwell
                 Runtime.World.Print(ScreenLine(label, error.Message, times, release, where));
                 Runtime.World.Log(LogLine(label, error.Message, times, where));
             }
-#if DEBUG
             if (first)
             {
-                DebugSession.ErrorShown(subject);
+                FirstShown(subject);
             }
+        }
+
+        /// <summary>An error's first showing, in a development build: the debug mode may halt on it; a release build leaves the call out.</summary>
+        [Conditional("DEBUG")]
+        private static void FirstShown(object? subject)
+        {
+#if DEBUG
+            DebugSession.ErrorShown(subject);
 #endif
         }
 
