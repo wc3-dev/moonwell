@@ -50,4 +50,12 @@ namespace Moonwell
     public sealed class SyncUncheckedAttribute : Attribute
     {
     }
+
+    /// @CSharpLua.Ignore
+    /// <summary>A function of one of the map's Lua libraries, which the build's bindings call; the analyzer cannot see into it, so it
+    /// rejects it inside <c>Local.For</c>. A function whose comments hold <c>---@localsafe</c> is written without it.</summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class LuaLibraryAttribute : Attribute
+    {
+    }
 }

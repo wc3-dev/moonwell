@@ -8,9 +8,10 @@
     <Compile Remove="build/**" />
   </ItemGroup>
 
-  <!-- But for Placed, which the build writes from the map's placed things before the compile, as the map's code names it. -->
+  <!-- But for Placed and the Lua libraries' bindings, which the build writes before the compile, as the map's code names them. -->
   <ItemGroup>
     <Compile Include="build/generated/Placed.g.cs" Condition="Exists('build/generated/Placed.g.cs')" />
+    <Compile Include="build/generated/LuaLibraries.g.cs" Condition="Exists('build/generated/LuaLibraries.g.cs')" />
   </ItemGroup>
 
 </Project>
