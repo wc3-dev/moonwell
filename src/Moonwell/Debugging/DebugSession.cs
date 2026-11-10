@@ -131,6 +131,12 @@ namespace Moonwell
             StepRunning = false;
         }
 
+        /// <summary>Writes a text file in CustomMapData through the debug world; nothing when none is installed.</summary>
+        internal static void WriteFile(string path, List<string> lines)
+        {
+            world?.WriteFile(path, lines);
+        }
+
         /// <summary>Real seconds of this machine's processor (os.clock) from the debug world, for timing; 0 when none is installed.</summary>
         internal static float Clock()
         {
@@ -446,6 +452,16 @@ namespace Moonwell
                     Game.Print("Speeds: 1/4, 1/2, 1, 2, 4, 8.");
                 }
             }
+            else
+            {
+                DebugTools.Heard(slot, text.Trim());
+            }
+        }
+
+        /// <summary>Makes a unit invulnerable, or not, through the debug world: -god.</summary>
+        internal static void SetInvulnerable(Unit unit, bool invulnerable)
+        {
+            world?.SetInvulnerable(unit.Handle, invulnerable);
         }
 
         /// <summary>-step with its count: that many steps, one after another, while halted.</summary>
@@ -703,7 +719,7 @@ namespace Moonwell
         /// A number of chat text: digits with a decimal point or a fraction ("0.25", ".5", "1/4"); false for anything else.
         /// Read by hand, so the game's Lua and .NET read it the same.
         /// </summary>
-        private static bool Number(string text, out float value)
+        internal static bool Number(string text, out float value)
         {
             value = 0.0f;
             var slash = text.IndexOf('/');

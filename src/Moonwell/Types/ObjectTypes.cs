@@ -559,6 +559,21 @@ namespace Moonwell
             return made;
         }
 
+        /// <summary>The id of the map's unit class of that name, in any case ("footman" for a Footman class), or 0 when none is registered: the debug mode's -spawn.</summary>
+        internal static int UnitIdOfName(string name)
+        {
+            var wanted = name.ToLower();
+            foreach (var pair in ids)
+            {
+                if (makers.ContainsKey(pair.Value) && pair.Key.Name.ToLower() == wanted)
+                {
+                    return pair.Value;
+                }
+            }
+
+            return 0;
+        }
+
         /// <summary>The object id made from four characters, the first one the highest byte.</summary>
         [LocalSafe]
         public static int FourCC(string code)

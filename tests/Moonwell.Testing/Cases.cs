@@ -520,6 +520,13 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.actors.actor-before-added", Run = ActorCases.ActorBeforeAdded });
             list.Add(new Case { Name = "debug.session.toggle", Run = SessionCases.Toggle });
             list.Add(new Case { Name = "debug.session.error-halts", Run = SessionCases.ErrorHalts });
+            list.Add(new Case { Name = "debug.leaks.scope-grows", Run = ToolsCases.ScopeGrows });
+            list.Add(new Case { Name = "debug.leaks.held", Run = ToolsCases.HeldCounted });
+            list.Add(new Case { Name = "debug.profile.timers-and-sections", Run = ToolsCases.ProfileTimersAndSections });
+            list.Add(new Case { Name = "debug.profile.reactions", Run = ToolsCases.ProfileReactions });
+            list.Add(new Case { Name = "debug.tools.map-command-wins", Run = ToolsCases.MapCommandWins });
+            list.Add(new Case { Name = "debug.tools.cheats", Run = ToolsCases.Cheats });
+            list.Add(new Case { Name = "debug.tools.sections", Run = ToolsCases.Sections });
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
             list.Add(new Case { Name = "debug.session.halt-holds-unknown-units", Run = InputReviewCases.HaltHoldsUnknownUnits });
             list.Add(new Case { Name = "debug.session.map-pause-during-halt", Run = InputReviewCases.MapPauseDuringHalt });

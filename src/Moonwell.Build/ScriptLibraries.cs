@@ -12,6 +12,7 @@ namespace Moonwell.Build
         private const string NativesResource = "Moonwell.Natives.types.lua";
         private const string MoonwellLibrary = "Moonwell.dll";
         private const string MoonwellResource = "Moonwell.moonwell.lua";
+        private const string DebugResource = "Moonwell.moonwell.debug.lua";
 
         /// <summary>The groups of CSharp.lua's core files a map rarely uses, by their folder: numerics (vectors, matrices, quaternions, complex numbers) and threading (tasks, async, threads). No other core file uses either.</summary>
         internal static readonly string[] TrimmedGroups = { "Numerics", "Threading" };
@@ -25,6 +26,17 @@ namespace Moonwell.Build
         /// </returns>
         /// <exception cref="BuildException">A library or its embedded Lua is missing.</exception>
         public static List<string> Extract(string targetPath, string folder)
+        {
+            return Extract(targetPath, folder, false);
+        }
+
+        /// <summary>Writes the Lua files to link, as <see cref="Extract(string, string)"/>; a development build also links <c>moonwell.debug.lua</c>, the debug tools' Lua, after <c>moonwell.lua</c>.</summary>
+        /// <param name="targetPath">The map's built assembly; the two Moonwell libraries are next to it.</param>
+        /// <param name="folder">The folder the Moonwell files are written to; it is created when missing.</param>
+        /// <param name="development">True for a development build.</param>
+        /// <returns>The paths of the files to link, in order.</returns>
+        /// <exception cref="BuildException">A library or its embedded Lua is missing.</exception>
+        public static List<string> Extract(string targetPath, string folder, bool development)
         {
             var beside = Path.GetDirectoryName(Path.GetFullPath(targetPath))!;
             var natives = ReadResource(Path.Combine(beside, NativesLibrary), NativesResource, targetPath);
@@ -50,6 +62,11 @@ namespace Moonwell.Build
 
             files.Add(Write(folder, "types.lua", natives));
             files.Add(Write(folder, "moonwell.lua", moonwell));
+            if (development)
+            {
+                files.Add(Write(folder, "moonwell.debug.lua", ReadResource(Path.Combine(beside, MoonwellLibrary), DebugResource, targetPath)));
+            }
+
             return files;
         }
 
