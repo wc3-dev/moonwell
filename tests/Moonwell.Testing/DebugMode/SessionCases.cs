@@ -563,6 +563,12 @@ namespace Moonwell.Testing
             Errors.Report(component, ".OnOther", new MoonwellException("boom"));
             Expect.True(Runtime.Clock.IsHalted, "the clock after a component's error");
             Expect.Same(other, DebugMode.Selected, "the component's unit is selected");
+            Errors.Report(unit, ".OnHalted", new MoonwellException("boom"));
+            Expect.Same(unit, DebugMode.Selected, "an error while halted still selects");
+            debug.Ctrl(0, DebugKey.H);
+            Errors.Warn("Moonwell.Leak", new MoonwellException("a report of Moonwell's own"));
+            Dev.Report("Unit.Check", "a report of Moonwell's own");
+            Expect.True(!Runtime.Clock.IsHalted, "Moonwell's own reports don't halt");
         }
 
         /// <summary>A selected unit removed: DebugMode.Selected reads null and IsSelected false at once, before the panel's next run.</summary>

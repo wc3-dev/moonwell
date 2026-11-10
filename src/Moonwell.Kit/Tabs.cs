@@ -62,7 +62,7 @@ namespace Moonwell
             {
                 if (value < 0 || value >= pages.Count)
                 {
-                    Errors.Report(this, ".Selected", new MoonwellException("no page " + value + " of " + pages.Count));
+                    Errors.Warn(this, ".Selected", new MoonwellException("no page " + value + " of " + pages.Count));
                     return;
                 }
 
