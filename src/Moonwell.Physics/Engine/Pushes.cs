@@ -831,7 +831,7 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 var name = bit == PushedBit ? ".OnPushed" : (bit == SlammedBit ? ".OnSlammed" : ".OnGrounded");
-                Errors.Report(Names.NameOf(obj) + name, error);
+                Errors.Report(obj, name, error);
             }
         }
 

@@ -51,7 +51,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".OnEnd", error);
+                Errors.Report(this, ".OnEnd", error);
             }
 
             if (this is Scope scope)
@@ -72,7 +72,7 @@ namespace Moonwell
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(this) + ".Finish", error);
+                Errors.Report(this, ".Finish", error);
             }
 
             HasEnded = true;

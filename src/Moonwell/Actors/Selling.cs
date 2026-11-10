@@ -36,7 +36,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(shop) + "." + NameOf(kind), error);
+                    Errors.Report(shop, "." + NameOf(kind), error);
                 }
             }
 
@@ -55,7 +55,7 @@ namespace Moonwell
                 }
                 catch (Exception error)
                 {
-                    Errors.Report(Names.NameOf(component) + "." + NameOf(kind), error);
+                    Errors.Report(component, "." + NameOf(kind), error);
                 }
             }
 

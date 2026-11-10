@@ -177,7 +177,7 @@ namespace Moonwell.Engine
             }
             catch (Exception error)
             {
-                Errors.Report(Names.NameOf(obj) + "." + MethodName(bit), error);
+                Errors.Report(obj, "." + MethodName(bit), error);
             }
         }
 

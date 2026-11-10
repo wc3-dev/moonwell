@@ -540,6 +540,31 @@ namespace Moonwell.Testing
             Expect.Near(2.0f, Runtime.Clock.Speed, "the speed after -speed");
         }
 
+        /// <summary>
+        /// An error's first showing while the mode is on halts with units held and selects the object whose member failed, or
+        /// the actor a component is on; a repeat of it doesn't halt again, and while the mode is off nothing halts (decision 265).
+        /// </summary>
+        public static void ErrorHalts(FakeWorld world)
+        {
+            var unit = UnitAt(world, 0.0f, 0.0f);
+            Errors.Report(unit, ".OnTest", new MoonwellException("off"));
+            Expect.True(!Runtime.Clock.IsHalted, "the clock after an error while off");
+            var debug = On(world);
+            Errors.Report(unit, ".OnTest", new MoonwellException("boom"));
+            Expect.True(Runtime.Clock.IsHalted, "the clock after the error's first showing");
+            Expect.True(Paused(world, unit), "the unit is held");
+            Expect.Same(unit, DebugMode.Selected, "the failed unit is selected");
+            debug.Ctrl(0, DebugKey.H);
+            Expect.True(!Runtime.Clock.IsHalted, "the clock after Ctrl + H");
+            Errors.Report(unit, ".OnTest", new MoonwellException("boom"));
+            Expect.True(!Runtime.Clock.IsHalted, "the clock after a repeat of the error");
+            var other = UnitAt(world, 500.0f, 0.0f);
+            var component = other.Add(new A());
+            Errors.Report(component, ".OnOther", new MoonwellException("boom"));
+            Expect.True(Runtime.Clock.IsHalted, "the clock after a component's error");
+            Expect.Same(other, DebugMode.Selected, "the component's unit is selected");
+        }
+
         /// <summary>A selected unit removed: DebugMode.Selected reads null and IsSelected false at once, before the panel's next run.</summary>
         public static void EndedSelectedReadsNull(FakeWorld world)
         {
