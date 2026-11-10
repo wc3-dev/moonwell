@@ -72,6 +72,19 @@ namespace Moonwell.Testing
             Expect.Equal(50, ("b\0" + "2")[2], "the 2 after a joined \\0 stays a 2");
         }
 
+        /// <summary>
+        /// Contains finds a needle with Lua's pattern signs where it starts: CoreSystem gave find the count of escaped signs as its
+        /// start up to the fork's CoreSystem 2.0.3-moonwell.12, so a match before it was missed.
+        /// </summary>
+        public static void ContainsPatternSigns(FakeWorld world)
+        {
+            var line = "Moonwell: X failed (Timer 500)";
+            Expect.True(line.Contains("Moonwell: X failed (Timer 500)"), "two parentheses, the match at the start");
+            Expect.True("a.b-c%d".Contains("a.b-c%d"), "a dot, a dash and a percent");
+            Expect.True(!"abc".Contains("a.c"), "a dot is a dot");
+            Expect.True("(A)".Contains("(a)", System.StringComparison.OrdinalIgnoreCase), "ignoring case");
+        }
+
         private static int Three()
         {
             return 3;

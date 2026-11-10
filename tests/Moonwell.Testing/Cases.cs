@@ -2079,6 +2079,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "strings.interpolated", Run = StringCases.Interpolated });
             list.Add(new Case { Name = "strings.percent", Run = StringCases.Percent });
             list.Add(new Case { Name = "strings.folded", Run = StringCases.Folded });
+            list.Add(new Case { Name = "strings.contains-pattern-signs", Run = StringCases.ContainsPatternSigns });
             list.Add(new Case { Name = "conditionals.nullable-first-branch", Run = ConditionalCases.NullableFirstBranch });
             list.Add(new Case { Name = "conditionals.nullable-bool-first-branch", Run = ConditionalCases.NullableBoolFirstBranch });
             list.Add(new Case { Name = "conditionals.struct-type-parameter", Run = ConditionalCases.StructTypeParameter });
