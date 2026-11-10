@@ -9,21 +9,21 @@ namespace Moonwell
         [ChangesState]
         public static bool CanStand(this Unit unit, float x, float y)
         {
-            return Pathing.CanStand(Pathing.World.CollisionOf(unit.Handle), x, y, Pathing.World.MovementOf(unit.Handle));
+            return Paths.CanStand(Paths.World.CollisionOf(unit.Handle), x, y, Paths.World.MovementOf(unit.Handle));
         }
 
         /// <summary>The spot nearest a point where the unit could stand, as the game would put it there. It moves a hidden helper, not the unit.</summary>
         [ChangesState]
         public static Vector2 NearestSpot(this Unit unit, float x, float y)
         {
-            return Pathing.NearestSpot(Pathing.World.CollisionOf(unit.Handle), x, y, Pathing.World.MovementOf(unit.Handle));
+            return Paths.NearestSpot(Paths.World.CollisionOf(unit.Handle), x, y, Paths.World.MovementOf(unit.Handle));
         }
 
         /// <summary>A path the unit could walk from where it is to a point, by its size. Units are not in it; see Route.</summary>
         [ChangesState]
         public static Route FindPath(this Unit unit, float x, float y)
         {
-            return Search.Find(Cells.Across(Pathing.World.CollisionOf(unit.Handle)), Pathing.World.MovementOf(unit.Handle), unit.X, unit.Y, x, y);
+            return Search.Find(Cells.Across(Paths.World.CollisionOf(unit.Handle)), Paths.World.MovementOf(unit.Handle), unit.X, unit.Y, x, y);
         }
 
         /// <summary>Whether the unit could walk from where it is to a point and stand there, by its size. Units are not in it.</summary>

@@ -25,7 +25,7 @@ namespace Moonwell.Build
         public static IReadOnlyList<DeclaredObject> Objects { get; } = Enumerable.Range(0, 12).Select(Helper).ToList();
 
         /// <summary>The line of the map's generated Main that installs the package with the helper types.</summary>
-        public static string Install => "global::Moonwell.Pathing.Install(new int[] { " + string.Join(", ", Ids.Select(id => $"{Types}.FourCC({ObjectLua.Quote(id)})")) + " });";
+        public static string Install => "global::Moonwell.Paths.Install(new int[] { " + string.Join(", ", Ids.Select(id => $"{Types}.FourCC({ObjectLua.Quote(id)})")) + " });";
 
         /// <summary>Fails the build when one of the map's classes or the map's object files has a helper's id.</summary>
         /// <exception cref="BuildException">An id is taken.</exception>

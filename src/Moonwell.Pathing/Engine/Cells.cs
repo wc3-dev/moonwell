@@ -127,9 +127,9 @@ namespace Moonwell.Engine
                 return;
             }
 
-            if (Pathing.World.IsLiveBuilding(handle))
+            if (Paths.World.IsLiveBuilding(handle))
             {
-                Pathing.World.PlaceOf(handle, out var x, out var y);
+                Paths.World.PlaceOf(handle, out var x, out var y);
                 buildings[handle] = new Vector2(x, y);
                 Changed(x, y);
             }
@@ -151,7 +151,7 @@ namespace Moonwell.Engine
                 items[key] = lies;
                 if (!lies)
                 {
-                    Pathing.World.WatchDeathsAround(Middle(col), Middle(row));
+                    Paths.World.WatchDeathsAround(Middle(col), Middle(row));
                 }
             }
 

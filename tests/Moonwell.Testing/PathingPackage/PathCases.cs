@@ -23,7 +23,7 @@ namespace Moonwell.Testing
 
             Terrain.Install(terrain, 10, 10, -576f, -576f, text.ToString());
             var fake = new FakePathingWorld(terrain);
-            Pathing.Install(fake);
+            Paths.Install(fake);
             return fake;
         }
 
@@ -65,16 +65,16 @@ namespace Moonwell.Testing
             var terrain = new FakeTerrainWorld();
             var fake = Setup(terrain);
             Gap64(terrain);
-            Expect.True(Pathing.CanStand(31f, -200f, 0f), "open ground");
+            Expect.True(Paths.CanStand(31f, -200f, 0f), "open ground");
             Expect.Equal(2, fake.LastCells, "a 31 asks the two-cell helper");
-            Expect.True(!Pathing.CanStand(40f, 32f, 100f), "in the wall");
+            Expect.True(!Paths.CanStand(40f, 32f, 100f), "in the wall");
             Expect.Equal(3, fake.LastCells, "a 40 asks the three-cell helper");
-            Expect.True(Pathing.CanStand(40f, 32f, 100f, Movement.Amphibious), "an amphibious one floats in it, as the wall's cells float");
+            Expect.True(Paths.CanStand(40f, 32f, 100f, Movement.Amphibious), "an amphibious one floats in it, as the wall's cells float");
             Expect.True(fake.LastMovement == Movement.Amphibious, "with its movement");
-            var spot = Pathing.NearestSpot(8f, 40f, 100f);
+            var spot = Paths.NearestSpot(8f, 40f, 100f);
             Expect.True(spot == new Vector2(80f, 112f), "pushed to the nearest free cell's middle, " + spot);
             var tries = fake.Tries;
-            Expect.True(Pathing.CanStand(31f, 32f, 100f, Movement.Fly), "a flier stands over a wall");
+            Expect.True(Paths.CanStand(31f, 32f, 100f, Movement.Fly), "a flier stands over a wall");
             Expect.Equal(tries, fake.Tries, "a flier asks no helper");
         }
 
@@ -82,7 +82,7 @@ namespace Moonwell.Testing
         public static void Open(FakeWorld world)
         {
             Setup(new FakeTerrainWorld());
-            var path = Pathing.FindPath(31f, -300f, -100f, 300f, 100f);
+            var path = Paths.FindPath(31f, -300f, -100f, 300f, 100f);
             Expect.True(path.Reaches, "reaches");
             Expect.Equal(2, path.Points.Count, "start and end");
             Expect.True(path.Points[1] == new Vector2(300f, 100f), "ends at the target");
@@ -95,10 +95,10 @@ namespace Moonwell.Testing
             var terrain = new FakeTerrainWorld();
             Setup(terrain);
             Gap64(terrain);
-            var small = Pathing.FindPath(31f, -200f, 40f, 200f, 40f);
+            var small = Paths.FindPath(31f, -200f, 40f, 200f, 40f);
             Expect.True(small.Reaches, "a 31 goes through");
             Expect.Near(400f, small.Length, "straight through");
-            var large = Pathing.FindPath(32f, -200f, 40f, 200f, 40f);
+            var large = Paths.FindPath(32f, -200f, 40f, 200f, 40f);
             Expect.True(!large.Reaches, "a 32 does not");
             var end = large.Points[large.Points.Count - 1];
             Expect.True(end == new Vector2(-48f, 48f), "it ends against the wall, nearest the target: " + end);
@@ -110,7 +110,7 @@ namespace Moonwell.Testing
             var terrain = new FakeTerrainWorld();
             Setup(terrain);
             Wall(terrain, 0, 1, -4, 3, FakeTerrainWorld.NoWalk);
-            var path = Pathing.FindPath(31f, -200f, 0f, 200f, 0f);
+            var path = Paths.FindPath(31f, -200f, 0f, 200f, 0f);
             Expect.True(path.Reaches, "reaches");
             Expect.True(path.Points.Count > 2, "it turns");
             Expect.True(path.Length > 400f && path.Length < 600f, "longer than the line, not far: " + path.Length);
@@ -130,8 +130,8 @@ namespace Moonwell.Testing
                 Wall(terrain, k, k, k, k, FakeTerrainWorld.NoWalk);
             }
 
-            Expect.True(!Pathing.FindPath(8f, -64f, 64f, 64f, -64f).Reaches, "a size 8 cannot pass between the corners");
-            Expect.True(Pathing.FindPath(8f, -64f, 64f, -200f, 200f).Reaches, "on its own side it goes anywhere");
+            Expect.True(!Paths.FindPath(8f, -64f, 64f, 64f, -64f).Reaches, "a size 8 cannot pass between the corners");
+            Expect.True(Paths.FindPath(8f, -64f, 64f, -200f, 200f).Reaches, "on its own side it goes anywhere");
         }
 
         /// <summary>A target no square can stand on does not reach; one outside the playable area neither.</summary>
@@ -140,8 +140,8 @@ namespace Moonwell.Testing
             var terrain = new FakeTerrainWorld();
             Setup(terrain);
             Wall(terrain, 0, 1, -2, 1, FakeTerrainWorld.NoWalk);
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 32f, 0f).Reaches, "inside the wall");
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 2000f, 0f).Reaches, "outside the area");
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 32f, 0f).Reaches, "inside the wall");
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 2000f, 0f).Reaches, "outside the area");
         }
 
         /// <summary>Destructables and buildings come from the item trick, asked once a cell; Refresh asks again.</summary>
@@ -151,15 +151,15 @@ namespace Moonwell.Testing
             Setup(terrain);
             var blocked = true;
             terrain.Occupied = (x, y) => blocked && x >= 0f && x < 64f;
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the trees wall it off");
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the trees wall it off");
             var asked = terrain.PlaceCalls;
             Expect.True(asked > 0, "the item was asked");
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the same again");
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the same again");
             Expect.Equal(asked, terrain.PlaceCalls, "no cell asked twice");
             blocked = false;
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "kept until a refresh");
-            Pathing.Refresh(Bounds.FromCorners(new Vector2(0f, -600f), new Vector2(63f, 600f)));
-            Expect.True(Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "open after the refresh");
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "kept until a refresh");
+            Paths.Refresh(Bounds.FromCorners(new Vector2(0f, -600f), new Vector2(63f, 600f)));
+            Expect.True(Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "open after the refresh");
         }
 
         /// <summary>Across a strip of water the whole area high: ground stops, amphibious crosses, float keeps to the water, fly goes straight.</summary>
@@ -170,11 +170,11 @@ namespace Moonwell.Testing
             Wall(terrain, -16, -1, -8, 7, FakeTerrainWorld.NoFloat);
             Wall(terrain, 4, 15, -8, 7, FakeTerrainWorld.NoFloat);
             Wall(terrain, 0, 3, -8, 7, FakeTerrainWorld.NoWalk);
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "ground stops at the water");
-            Expect.True(Pathing.FindPath(31f, -200f, 0f, 200f, 0f, Movement.Amphibious).Reaches, "amphibious crosses");
-            Expect.True(Pathing.FindPath(31f, 64f, -200f, 64f, 200f, Movement.Float).Reaches, "a ship along the strip");
-            Expect.True(!Pathing.FindPath(31f, 64f, 0f, -200f, 0f, Movement.Float).Reaches, "a ship not onto land");
-            var fly = Pathing.FindPath(31f, -200f, 0f, 200f, 0f, Movement.Fly);
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "ground stops at the water");
+            Expect.True(Paths.FindPath(31f, -200f, 0f, 200f, 0f, Movement.Amphibious).Reaches, "amphibious crosses");
+            Expect.True(Paths.FindPath(31f, 64f, -200f, 64f, 200f, Movement.Float).Reaches, "a ship along the strip");
+            Expect.True(!Paths.FindPath(31f, 64f, 0f, -200f, 0f, Movement.Float).Reaches, "a ship not onto land");
+            var fly = Paths.FindPath(31f, -200f, 0f, 200f, 0f, Movement.Fly);
             Expect.True(fly.Reaches && fly.Points.Count == 2, "a flier straight over");
         }
 
@@ -183,7 +183,7 @@ namespace Moonwell.Testing
         {
             var terrain = new FakeTerrainWorld();
             var fake = Setup(terrain);
-            var spots = Pathing.Spots(31f, 0f, 0f, 5);
+            var spots = Paths.Spots(31f, 0f, 0f, 5);
             Expect.Equal(5, spots.Count, "five");
             Expect.True(spots[0] == new Vector2(0f, 0f), "the point first");
             for (var a = 0; a < spots.Count; a++)
@@ -196,7 +196,7 @@ namespace Moonwell.Testing
             }
 
             fake.Stand(31f, 0f, 0f);
-            Expect.True(Pathing.Spots(31f, 0f, 0f, 1)[0] != new Vector2(0f, 0f), "not on a standing unit");
+            Expect.True(Paths.Spots(31f, 0f, 0f, 1)[0] != new Vector2(0f, 0f), "not on a standing unit");
         }
 
         /// <summary>A blocked cell has the deaths near it watched, and a death the game reports opens the way without a Refresh (decision 247).</summary>
@@ -206,7 +206,7 @@ namespace Moonwell.Testing
             var fake = Setup(terrain);
             var blocked = true;
             terrain.Occupied = (x, y) => blocked && x >= 0f && x < 64f;
-            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the trees wall it off");
+            Expect.True(!Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the trees wall it off");
             Expect.True(fake.Watched.Count > 0, "the deaths near the blocked cells are watched");
             Expect.True(fake.Watched[0].X >= 0f && fake.Watched[0].X < 64f, "at a blocked cell: " + fake.Watched[0]);
             blocked = false;
@@ -215,7 +215,7 @@ namespace Moonwell.Testing
                 fake.Changed!(32f, y);
             }
 
-            Expect.True(Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "open after the deaths");
+            Expect.True(Paths.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "open after the deaths");
         }
 
         /// <summary>Moonwell's own destructable changes and the buildings it takes in and forgets drop the cells round them (decision 247).</summary>
@@ -223,26 +223,53 @@ namespace Moonwell.Testing
         {
             var terrain = new FakeTerrainWorld();
             var fake = Setup(terrain);
-            Expect.True(Pathing.FindPath(8f, -400f, 0f, 400f, 0f).Reaches, "open ground, every cell on the way asked");
+            Expect.True(Paths.FindPath(8f, -400f, 0f, 400f, 0f).Reaches, "open ground, every cell on the way asked");
             var asked = terrain.PlaceCalls;
             var scope = new TestScope("scope", new List<string>());
             var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, scope);
-            Expect.True(Pathing.FindPath(8f, -400f, 0f, 400f, 0f).Reaches, "again");
+            Expect.True(Paths.FindPath(8f, -400f, 0f, 400f, 0f).Reaches, "again");
             Expect.True(terrain.PlaceCalls > asked, "a made destructable drops the cells round it");
             asked = terrain.PlaceCalls;
             tree.Kill();
-            Pathing.FindPath(8f, -400f, 0f, 400f, 0f);
+            Paths.FindPath(8f, -400f, 0f, 400f, 0f);
             Expect.True(terrain.PlaceCalls > asked, "a killed one too");
             fake.AllBuildings = true;
             asked = terrain.PlaceCalls;
             var building = Unit.Create(Footman, Player.Get(0), 0f, 0f, Game.Instance);
-            Pathing.FindPath(8f, -400f, 0f, 400f, 0f);
+            Paths.FindPath(8f, -400f, 0f, 400f, 0f);
             Expect.True(terrain.PlaceCalls > asked, "a building taken in drops the cells round it");
             fake.AllBuildings = false;
             asked = terrain.PlaceCalls;
             building.Remove();
-            Pathing.FindPath(8f, -400f, 0f, 400f, 0f);
+            Paths.FindPath(8f, -400f, 0f, 400f, 0f);
             Expect.True(terrain.PlaceCalls > asked, "and again when it goes");
+        }
+
+        /// <summary>A wall straight across the area stops walkers until its scope ends; a slanting one, whose cells touch at corners, stops them too; fliers cross both (decision 245).</summary>
+        public static void Walls(FakeWorld world)
+        {
+            Setup(new FakeTerrainWorld());
+            var scope = new TestScope("wall", new List<string>());
+            Paths.Wall(0f, -300f, 0f, 300f, scope);
+            Expect.True(!Terrain.IsWalkable(16f, 100f), "the wall's cells are not walkable");
+            Expect.True(Terrain.IsWalkable(48f, 100f), "the cell beside it is");
+            Expect.True(!Paths.FindPath(8f, -200f, 0f, 200f, 0f).Reaches, "a walker cannot cross");
+            Expect.True(!Paths.FindPath(8f, -200f, 0f, 200f, 0f, Movement.Float).Reaches, "a ship cannot either");
+            Expect.True(Paths.FindPath(8f, -200f, 0f, 200f, 0f, Movement.Fly).Reaches, "a flier crosses");
+            scope.End();
+            Expect.True(Paths.FindPath(8f, -200f, 0f, 200f, 0f).Reaches, "open once the scope ends");
+            var slant = new TestScope("slant", new List<string>());
+            Paths.Wall(-300f, -300f, 300f, 300f, slant);
+            Expect.True(!Paths.FindPath(8f, -200f, 100f, 200f, -100f).Reaches, "a slanting wall stops a size 8");
+            Expect.True(Paths.FindPath(8f, -200f, 100f, -300f, 200f).Reaches, "on its own side it goes anywhere");
+            slant.End();
+            var shallow = new TestScope("shallow", new List<string>());
+            Paths.Wall(-440f, -100f, 520f, 50f, shallow);
+            Expect.True(Paths.FindPath(8f, 0f, -200f, 0f, 200f).Reaches, "a shallow slant short of the west edge leaves a way round");
+            shallow.End();
+            var across = new TestScope("across", new List<string>());
+            Paths.Wall(-520f, -100f, 520f, 50f, across);
+            Expect.True(!Paths.FindPath(8f, 0f, -200f, 0f, 200f).Reaches, "the same slant across the area has no gap");
         }
 
         /// <summary>A unit's own calls go by its collision size and place.</summary>

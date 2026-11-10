@@ -1140,6 +1140,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "pathing.unit-calls", Run = PathCases.UnitCalls });
             list.Add(new Case { Name = "pathing.game-deaths", Run = PathCases.GameDeaths });
             list.Add(new Case { Name = "pathing.moonwell-changes", Run = PathCases.MoonwellChanges });
+            list.Add(new Case { Name = "pathing.walls", Run = PathCases.Walls });
             list.Add(new Case { Name = "maths.actors.face-own-place", Run = FaceOwnPlaceCases.KeepsFacing });
             list.Add(new Case { Name = "terrain.bounce.flat", Run = GroundBounceCases.BounceFlat });
             list.Add(new Case { Name = "terrain.bounce.slope", Run = GroundBounceCases.BounceSlope });

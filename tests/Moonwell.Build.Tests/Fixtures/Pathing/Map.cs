@@ -16,8 +16,8 @@ namespace PathingFixture
     {
         public override void OnGameStart()
         {
-            var route = Pathing.FindPath(31f, 0f, 0f, 256f, 0f);
-            if (route.Reaches && Pathing.CanStand(31f, 256f, 0f))
+            var route = Paths.FindPath(31f, 0f, 0f, 256f, 0f);
+            if (route.Reaches && Paths.CanStand(31f, 256f, 0f))
             {
                 Player.One.Print("Reaches " + route.Length);
             }

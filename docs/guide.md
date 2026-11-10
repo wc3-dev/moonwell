@@ -1093,9 +1093,10 @@ paths by its size. It brings `Moonwell.Terrain` and `Moonwell.Objects` with it.
 
 ```csharp
 if (!caster.CanStand(x, y)) { var landing = caster.NearestSpot(x, y); }
-var spots = Pathing.Spots(31f, x, y, 5);           // five free spots, nearest first, not overlapping
+var spots = Paths.Spots(31f, x, y, 5);           // five free spots, nearest first, not overlapping
 var route = unit.FindPath(x, y);                   // route.Points, route.Length, route.Reaches
 if (unit.CanReach(x, y)) { /* it can walk there and stand */ }
+Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cross it while the scope holds it
 ```
 
 - A unit takes a square of the game's 32 cells by its collision size: below 16 one cell, 16 to 31 two, 32 to 47 three,
@@ -1107,11 +1108,13 @@ if (unit.CanReach(x, y)) { /* it can walk there and stand */ }
   where the game's own walker would stop, with `Reaches` false. The game's walkers also go round units that stand in
   the way when they are ordered, and stop farther from a unit than its square needs.
 - A route never squeezes between two blocked cells that touch only at a corner, as the game's walkers don't.
+- `Paths.Wall` takes walking and floating from the cells along a line through `Terrain.Block`, one cell thick; fliers
+  cross it. It ends with its scope.
 - Ships take `Movement.Float`, amphibious units `Movement.Amphibious` and fliers `Movement.Fly` (a straight line); a
   unit's own calls take its movement from the unit. Foot, horse and hover units are all `Movement.Ground`.
 - A path search keeps what the game said of each cell. Moonwell's own destructable changes, the buildings it sees come
   and go, a building's death, and the death of a destructable next to a cell a search found blocked all drop it. After
-  changing destructables or buildings with natives, call `Pathing.Refresh(area)`.
+  changing destructables or buildings with natives, call `Paths.Refresh(area)`.
 - These calls move a hidden helper or item, so they change game state and are not for `Local.For`.
 
 ## Interactions and finding
