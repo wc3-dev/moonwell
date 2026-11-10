@@ -7,7 +7,7 @@ namespace Moonwell.Testing
     /// <summary>
     /// The fake game the pathing package's cases run against. A helper is put as probe 11-09 saw the game put a hidden unit:
     /// exactly where asked when its square is free, else at the middle of the nearest cell where it is, by distance. Its cells
-    /// are the terrain fake's (walkable or floatable, and an item's Occupied) and the squares of the units a case stands.
+    /// are the terrain fake's (walkable or floatable, and an item's Occupied) and the squares of the units a case stands, but for the unit a try leaves out.
     /// </summary>
     public sealed class FakePathingWorld : IPathingWorld
     {
@@ -15,6 +15,9 @@ namespace Moonwell.Testing
 
         /// <summary>The squares of units standing, each its first column, first row and cells across.</summary>
         public List<int[]> Standing = new List<int[]>();
+
+        /// <summary>The unit each square of Standing belongs to, when a case named one.</summary>
+        public Dictionary<int[], unit> Owners = new Dictionary<int[], unit>();
 
         /// <summary>Each unit's collision size; 31 for one not in it.</summary>
         public Dictionary<unit, float> Collisions = new Dictionary<unit, float>();
@@ -31,23 +34,32 @@ namespace Moonwell.Testing
         /// <summary>How many times a helper was put.</summary>
         public int Tries;
 
+        // The unit the try being made leaves out.
+        private unit? leftOut;
+
         public FakePathingWorld(FakeTerrainWorld terrain)
         {
             this.terrain = terrain;
         }
 
-        /// <summary>Stands a unit's square, by collision size, at a point.</summary>
-        public void Stand(float collision, float x, float y)
+        /// <summary>Stands a unit's square, by collision size, at a point; a try that leaves that unit out does not count it.</summary>
+        public void Stand(float collision, float x, float y, unit? owner = null)
         {
             var cells = collision < 16f ? 1 : collision < 32f ? 2 : collision < 48f ? 3 : 4;
-            Standing.Add(new[] { Cell(x) - cells / 2, Cell(y) - cells / 2, cells });
+            var square = new[] { Cell(x) - cells / 2, Cell(y) - cells / 2, cells };
+            Standing.Add(square);
+            if (owner != null)
+            {
+                Owners[square] = owner;
+            }
         }
 
-        public void Try(int cells, Movement movement, float x, float y, out float landedX, out float landedY)
+        public void Try(int cells, Movement movement, float x, float y, unit? leftOut, out float landedX, out float landedY)
         {
             Tries++;
             LastCells = cells;
             LastMovement = movement;
+            this.leftOut = leftOut;
             landedX = x;
             landedY = y;
             if (Fits(Cell(x), Cell(y), cells, movement))
@@ -133,6 +145,11 @@ namespace Moonwell.Testing
 
                     foreach (var square in Standing)
                     {
+                        if (leftOut != null && Owners.TryGetValue(square, out var owner) && owner == leftOut)
+                        {
+                            continue;
+                        }
+
                         if (i >= square[0] && i < square[0] + square[2] && j >= square[1] && j < square[1] + square[2])
                         {
                             return false;

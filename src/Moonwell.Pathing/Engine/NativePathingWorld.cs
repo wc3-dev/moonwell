@@ -8,12 +8,17 @@ namespace Moonwell.Engine
     /// The game as the pathing package sees it, through the game's natives; the only class of the package that calls them.
     /// The helpers are hidden units of the types the build declares, made on first use, owned by Neutral Passive: a hidden
     /// unit is put by its own square against terrain, destructables, buildings and shown units, and blocks nothing itself
-    /// (probe 11-09). It has no Locust, which would drop units from its square.
+    /// (probe 11-09). It has no Locust, which would drop units from its square. A unit is left out of a try by Ghost (Visible),
+    /// added for the moment of it: the helper then stands on the unit, and adding and removing it in one instant fires no
+    /// order or selection event and keeps a walker's or attacker's order (probe 11-10). Turning its pathing off does not
+    /// leave it out.
     /// </summary>
     internal sealed class NativePathingWorld : IPathingWorld
     {
         /// <summary>The helper types, cells 1 to 4 for each movement but flying (Ground, Float, Amphibious): index (cells - 1) * 3 + movement.</summary>
         private readonly int[] types;
+
+        private static readonly int Ghost = ObjectTypes.FourCC("Aeth");
 
         /// <summary>The helpers made so far, by the same index.</summary>
         private readonly unit?[] helpers = new unit?[12];
@@ -90,7 +95,7 @@ namespace Moonwell.Engine
             });
         }
 
-        public void Try(int cells, Movement movement, float x, float y, out float landedX, out float landedY)
+        public void Try(int cells, Movement movement, float x, float y, unit? leftOut, out float landedX, out float landedY)
         {
             var index = (cells - 1) * 3 + (int)movement;
             var helper = helpers[index];
@@ -101,9 +106,15 @@ namespace Moonwell.Engine
                 helpers[index] = helper;
             }
 
+            // A unit that has Ghost (Visible) already is left out as it is, and keeps it.
+            var ghosted = leftOut != null && Natives.UnitAddAbility(leftOut, Ghost);
             Natives.SetUnitPosition(helper, x, y);
             landedX = Natives.GetUnitX(helper);
             landedY = Natives.GetUnitY(helper);
+            if (ghosted)
+            {
+                Natives.UnitRemoveAbility(leftOut!, Ghost);
+            }
         }
 
         public float CollisionOf(unit handle)
