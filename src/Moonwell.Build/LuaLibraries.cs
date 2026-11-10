@@ -10,7 +10,8 @@ namespace Moonwell.Build
     /// map's code in the order of their paths, and the C# the map calls them through, written before the compile from the
     /// LuaLS comments above each function (decision 255). A global function or one of a global table (<c>function Push(...)</c>,
     /// <c>function Knockback.push(...)</c>) gets a static method of the class <c>Lua.Knockback</c>, named after the table, or after
-    /// the file for a global function; a method (<c>T:f</c>) and a local function are left out. A function's call is refused inside
+    /// the file for a global function; a method (<c>T:f</c>), a local function and one marked <c>---@private</c> are left out. A global
+    /// whose comments type it (<c>---@type integer</c> above <c>udg_Gold = 0</c>) gets a property. A function's call is refused inside
     /// <c>Local.For</c> unless its comments hold <c>---@localsafe</c> (decision 256).
     /// </summary>
     public static class LuaLibraries
@@ -45,6 +46,10 @@ namespace Moonwell.Build
         private static readonly Regex Param = new Regex(@"^---\s*@param\s+([A-Za-z_][A-Za-z0-9_]*|\.\.\.)(\??)\s+(.+)$", RegexOptions.Compiled);
 
         private static readonly Regex Return = new Regex(@"^---\s*@return\s+(.+)$", RegexOptions.Compiled);
+
+        private static readonly Regex TypeComment = new Regex(@"^---\s*@type\s+(.+)$", RegexOptions.Compiled);
+
+        private static readonly Regex Global = new Regex(@"^([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)", RegexOptions.Compiled);
 
         /// <summary>The project's Lua libraries, by path relative to its <c>lua</c> folder, in ordinal order of those paths.</summary>
         /// <param name="project">The map project.</param>
@@ -122,14 +127,21 @@ namespace Moonwell.Build
                     continue;
                 }
 
+                var atTop = raw.Length > 0 && !char.IsWhiteSpace(raw[0]);
+                var hidden = comments.Any(comment => Regex.IsMatch(comment, @"^---\s*@private\b"));
                 var found = Function.Match(line);
-                if (found.Success && raw.Length > 0 && !char.IsWhiteSpace(raw[0]))
+                if (found.Success && atTop && !hidden)
                 {
                     var table = found.Groups[2].Success ? found.Groups[1].Value : fileClass;
                     var name = found.Groups[2].Success ? found.Groups[2].Value : found.Groups[1].Value;
                     var lua = found.Groups[2].Success ? found.Groups[1].Value + "." + name : name;
                     var parameters = found.Groups[3].Value.Split(',').Select(one => one.Trim()).Where(one => one.Length > 0).ToList();
                     yield return (table, Method(lua, name, parameters, comments, relative));
+                }
+                else if (atTop && !hidden && Global.Match(line) is { Success: true } global
+                    && comments.Select(comment => TypeComment.Match(comment)).FirstOrDefault(match => match.Success) is { } typed)
+                {
+                    yield return (fileClass, Variable(global.Groups[1].Value, ReadType(typed.Groups[1].Value), relative));
                 }
 
                 comments.Clear();
@@ -205,6 +217,25 @@ namespace Moonwell.Build
             text.Append($"        public static {result} {Identifier(name)}({string.Join(", ", outer)}) => {body};\n\n");
             text.Append($"        /// @CSharpLua.Template = \"{template}\"\n");
             text.Append($"        private static {rawResult} {Identifier(name)}__lua({string.Join(", ", inner)}) => throw new global::System.InvalidOperationException(\"{lua} is Lua, which runs only in the game\");\n");
+            return text.ToString();
+        }
+
+        // A global the comments type (---@type integer above udg_Gold = 0) as a property; its set is refused inside Local.For.
+        private static string Variable(string name, string luaType, string relative)
+        {
+            var type = Map(Bare(luaType));
+            var nullable = IsOptional(luaType) || !type.Value;
+            var csharp = type.CSharp + (nullable ? "?" : string.Empty);
+            var raw = type.Raw + (nullable ? "?" : string.Empty);
+            var id = Identifier(name);
+            var text = new StringBuilder();
+            text.Append($"        /// <summary>{Escape(name)} of {Escape(relative)}.</summary>\n");
+            text.Append($"        public static {csharp} {id} {{ get => {type.FromRaw(id + "__get()", false)}; set => {id}__set({type.ToRaw("value", nullable)}); }}\n\n");
+            text.Append($"        /// @CSharpLua.Template = \"{name}\"\n");
+            text.Append($"        private static {raw} {id}__get() => throw new global::System.InvalidOperationException(\"{name} is Lua, which runs only in the game\");\n\n");
+            text.Append($"        /// @CSharpLua.Template = \"{name} = {{0}}\"\n");
+            text.Append("        [global::Moonwell.LuaLibrary]\n");
+            text.Append($"        private static void {id}__set({raw} value) => throw new global::System.InvalidOperationException(\"{name} is Lua, which runs only in the game\");\n");
             return text.ToString();
         }
 
