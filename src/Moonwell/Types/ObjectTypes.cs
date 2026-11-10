@@ -40,6 +40,9 @@ namespace Moonwell
         /// <summary>The spells whose targets are only their caster, which land on the dummy; by the ability's id.</summary>
         private static HashSet<int> landsOnCaster = new HashSet<int>();
 
+        /// <summary>The unit types packages keep for themselves (HelperType).</summary>
+        private static HashSet<int> helperTypes = new HashSet<int>();
+
         /// <summary>The research each spell requires and at what level, keyed by the ability's id; a lookup only.</summary>
         private static Dictionary<int, List<(int Tech, int Level)>> requirements = new Dictionary<int, List<(int Tech, int Level)>>();
 
@@ -275,6 +278,19 @@ namespace Moonwell
         public static void DummyType(int unitTypeId)
         {
             DummyTypeId = unitTypeId;
+        }
+
+        /// <summary>Registers a unit type a package keeps for itself, such as the pathing package's hidden units that try places: Moonwell never takes a unit of it in, so map code never meets one.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void HelperType(int unitTypeId)
+        {
+            helperTypes.Add(unitTypeId);
+        }
+
+        /// <summary>Whether a unit type is the casting dummy's or one a package registered with HelperType.</summary>
+        internal static bool IsHelper(int unitTypeId)
+        {
+            return unitTypeId == DummyTypeId || helperTypes.Contains(unitTypeId);
         }
 
         /// <summary>Registers the order string a dummy casts a spell with, and whether the spell's targets are only its caster.</summary>
@@ -632,6 +648,7 @@ namespace Moonwell
             landsOnCaster = new HashSet<int>();
             requirements = new Dictionary<int, List<(int Tech, int Level)>>();
             DummyTypeId = 0;
+            helperTypes = new HashSet<int>();
             SpellBuffs.Reset();
             unitDefaults = null;
             itemDefaults = null;
