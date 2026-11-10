@@ -10,6 +10,7 @@ namespace Moonwell.Build
             Name = Path.GetFileNameWithoutExtension(projectFile);
             MapFolder = Path.Combine(folder, "map");
             AssetsFolder = Path.Combine(folder, "assets");
+            DataFolder = Path.Combine(folder, "data");
             BuildFolder = Path.Combine(folder, "build");
             StagedFolder = Path.Combine(BuildFolder, Name);
             ArchivePath = Path.Combine(BuildFolder, Name + ".w3x");
@@ -30,6 +31,9 @@ namespace Moonwell.Build
 
         /// <summary>The folder of files that override or add to the map, <c>assets</c> under the project folder.</summary>
         public string AssetsFolder { get; }
+
+        /// <summary>The folder of CSV and JSON files the build makes typed C# of, <c>data</c> under the project folder.</summary>
+        public string DataFolder { get; }
 
         /// <summary>The folder the build writes into, <c>build</c> under the project folder.</summary>
         public string BuildFolder { get; }

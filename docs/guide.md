@@ -2305,6 +2305,37 @@ they are. A node is in one object or array at most, as in .NET.
 `JsonNode.Parse` throws a `JsonException`, whose `Position` says where, for text that is no JSON or nests deeper than 64,
 and a file a player edited can be either: catch it where you read one.
 
+## Data files
+
+CSV and JSON files in the project's `data` folder become typed C# the build writes before it compiles, so object
+constructors and game code read them by name, and a wrong name is a compile error. The class is `Data`, with a class
+for each file (`data\abilities.csv` is `Data.Abilities`). Run a build once after adding a file, so the editor sees it.
+
+```
+data\abilities.csv            data\waves.csv
+Id,Damage:float,Cooldown      Wave,Unit,Count
+Smite,75;150;225,9            1,Footman,10
+                              2,Knight,4
+```
+
+```csharp
+Damage = Levels(Data.Abilities.Smite.Damage);          // in Smite's constructor
+foreach (var wave in Data.Waves.All) { ... }            // in game code: wave.Unit, wave.Count
+```
+
+- A CSV file's first line names its columns, and each line after it is a `Row`, in `All` in the file's order. When the
+  first column holds names, not numbers, each row is also a member named by it, its words run together
+  (`Big Bash` is `BigBash`). Values are separated by commas, decimals by points, and a value with a comma is quoted.
+- A column is `int` when every value is a whole number, else `float` when every value is a number, else text. A value
+  with a `;` makes the column a list: `75;150;225`. `Damage:float`, `:int` or `:text` in the header gives the type,
+  as `Levels(...)` for a `float` field takes only `float`s. An empty value is 0, or the empty text or list.
+- A JSON file is typed from its shape: an object is a class of its keys (`Data.Quests.Intro.Title`), the objects in a
+  list share a class with every key they have (`StepsItem` for `Steps`), and a whole number is an `int`. A list at
+  the top of the file is `All`.
+- Names are made of the letters a to z, digits and `_`, starting with a letter: the build stops at a file, column,
+  key or row name it can't make one from, at two that make the same, and at a CSV line with more values than columns.
+  Only the files directly in `data` are read.
+
 ## C# the game's Lua cannot run
 
 Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A few C# forms stop the compiler, write

@@ -435,6 +435,24 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void template_map_reads_its_data_files()
+        {
+            // The package's Moonwell.targets has dotnet build compile Data, which the build writes from data\ before the compile.
+            var parent = folders.TemporaryFolderOutsideRepository();
+            var map = packed.TemplateMap(parent);
+            WriteFeedConfig(map);
+            Directory.CreateDirectory(Path.Combine(map, "data"));
+            File.WriteAllText(Path.Combine(map, "data", "waves.csv"), "Wave,Count\n1,10\n");
+            File.WriteAllText(
+                Path.Combine(map, "Spawns.cs"),
+                "namespace Keep\n{\n    public static class Spawns\n    {\n        public static int First() { return Moonwell.Data.Waves.All[0].Count; }\n    }\n}\n");
+
+            MapBuild.Run(map, Packed(), new StringWriter());
+
+            Assert.Contains("Waves", File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua")));
+        }
+
+        [Fact]
         public void template_map_calls_no_native()
         {
             var template = Path.Combine(TestFolders.Fixture("."), "..", "..", "..", "template", "MoonwellMap");
