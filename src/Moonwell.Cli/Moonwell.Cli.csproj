@@ -4,11 +4,16 @@
     <ProjectReference Include="..\Moonwell.Build\Moonwell.Build.csproj" />
   </ItemGroup>
 
+  <!-- moonwell new writes the template's map project, as dotnet new moonwell does, from these. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\template\MoonwellMap\**" Exclude="..\..\template\MoonwellMap\bin\**;..\..\template\MoonwellMap\obj\**;..\..\template\MoonwellMap\build\**;..\..\template\MoonwellMap\.template.config\**" LogicalName="template/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>moonwell</ToolCommandName>
-    <Description>The moonwell command: builds a Moonwell map project into a Warcraft III map and starts the game with it.</Description>
+    <Description>The moonwell command: makes a Moonwell map project, builds it into a Warcraft III map, and starts the game with it.</Description>
     <!-- The machine's regional format never reaches the map: numbers are written as the game reads them (MapBuild.Run sets the same culture). -->
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
