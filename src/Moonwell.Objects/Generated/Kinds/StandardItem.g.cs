@@ -507,6 +507,13 @@ namespace Moonwell.Objects
         {
             Fields.PutLevel(field, level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardItem", fieldTypes, this, field, level, value));
         }
+
+        /// <summary>Writes the tooltips from one text: <c>Purchase Potion of Healing</c> as the title, and the text, with <c>tip.Number(250)</c> a number in gold.</summary>
+        protected void Describe(string name, global::System.Func<global::Moonwell.Objects.Tip, string> text)
+        {
+            Tooltip = "Purchase " + name;
+            TooltipExtended = global::Moonwell.Objects.Tip.Texts(1, text)[0];
+        }
     }
 }
 

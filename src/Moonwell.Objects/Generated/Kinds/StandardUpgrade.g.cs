@@ -402,6 +402,14 @@ namespace Moonwell.Objects
         {
             Fields.PutLevel(field, level, global::Moonwell.Objects.FieldChecks.LevelValue("StandardUpgrade", fieldTypes, this, field, level, value));
         }
+
+        /// <summary>Writes the tooltips from one text: each level's title, <c>Upgrade to Steel Forged Swords</c> from that level's name, and each level's text.</summary>
+        protected void Describe(global::Moonwell.Objects.Levels<string> name, global::System.Func<global::Moonwell.Objects.Tip, string> text)
+        {
+            var count = global::System.Math.Max(1, LevelCount);
+            Tooltip = Levels(global::Moonwell.Objects.Tip.UpgradeTitles(name, count));
+            TooltipExtended = Levels(global::Moonwell.Objects.Tip.Texts(count, text));
+        }
     }
 }
 

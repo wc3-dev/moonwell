@@ -178,6 +178,17 @@ public sealed class Champion : Human.Units.Paladin
   first comma, quoted or not, so a comma in it fails the build, and placeholders, which hold one, cannot go in it. A new
   buff that keeps a standard text with a comma (Flame Strike's) fails too: set `TooltipExtended`. Write `‚` (U+201A)
   for a comma there: the game draws it as one and does not cut the text at it.
+- `Describe` writes an ability's, an item's or an upgrade's tooltips from one text, so they show its own numbers:
+  `Describe("Smite", tip => $"Deals {tip[Damage]} damage.", TipLines.Cooldown)`. In a level's text `tip[Damage]` is
+  that level's value in the game's tooltip gold; in the learn tooltip, which tells of every level, it is `75/150/225`,
+  or one number when every level has the same. `tip.Percent(...)` shows 0.25 as 25%, `tip.Number(250)` a number that
+  doesn't change by level, and `tip.Level` the level (0 in the learn tooltip). An ability gets its four tooltips,
+  titled as the game's own (`Smite - [Level 2]`, the name alone for a unit's ability of one level, and
+  `Learn Smite - [Level %d]`); `TipLines` adds mana, cooldown, range, area and duration lines from its fields, each
+  left out where it is 0. An item gets `Purchase Tonic` and its extended tooltip. An upgrade gets `Upgrade to` each
+  level's name, as in `Describe(Levels("Iron Swords", "Steel Swords", "Mithril Swords"), ...)`, and each level's
+  text. `Describe` reads the fields when it is called, so it goes after the values it shows, and a tooltip set after
+  it wins. Like a set, it belongs in the constructor: anywhere else fails the build.
 - A field with no name of its own is set by its id: `Set("Htb1", 2, 250f)`, or `Set("ua1w", WeaponType.Missile)` for a
   choice. The value has exactly the type the field holds, so `1.5f` or `5` in the wrong field, a choice's number and an
   id the class doesn't have are error MW0049. A list of numbers held as text (`RequirementsLevels = "1,2"`) is only

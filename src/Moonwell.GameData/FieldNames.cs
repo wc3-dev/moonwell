@@ -21,7 +21,7 @@ public static class FieldNames
 {
     private static readonly string[] Reserved =
     {
-        "Declared", "Equals", "Fields", "Finalize", "GetHashCode", "GetType", "Levels", "MemberwiseClone", "PerLevel",
+        "Declared", "Describe", "Equals", "Fields", "Finalize", "GetHashCode", "GetType", "Levels", "MemberwiseClone", "PerLevel",
         "ReferenceEquals", "Set", "ToString", "Totals",
     };
 
