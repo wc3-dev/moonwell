@@ -100,6 +100,12 @@ namespace Moonwell.Objects
             }
         }
 
+        /// <summary>Empties the list, as a field World Editor leaves empty is.</summary>
+        public void Clear()
+        {
+            SetTo();
+        }
+
         /// <summary>Takes a class out of the list; one not there changes nothing.</summary>
         public void Remove<TObject>()
             where TObject : T
