@@ -16,7 +16,7 @@ namespace Moonwell.Build
         // The name a set of a unit's Level is reported with.
         private const string UnitLevel = "Level";
 
-        private static readonly Dictionary<short, OpCode> OpCodesByValue = ReadOpCodes();
+        internal static readonly Dictionary<short, OpCode> OpCodesByValue = ReadOpCodes();
 
         /// <summary>Throws for the first call to a declared field's setter outside a constructor, or to a unit's Level setter outside a declared class's constructor.</summary>
         public static void Check(Assembly map)
@@ -180,7 +180,7 @@ namespace Moonwell.Build
             return null;
         }
 
-        private static int OperandSize(OperandType type, byte[] il, int position)
+        internal static int OperandSize(OperandType type, byte[] il, int position)
         {
             switch (type)
             {

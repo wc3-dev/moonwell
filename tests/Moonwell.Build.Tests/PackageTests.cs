@@ -408,6 +408,7 @@ namespace Moonwell.Build.Tests
             Assert.Equal(Path.Combine(map, "build", "Keep.w3x"), archive);
             Assert.True(File.Exists(archive), log.ToString());
             Assert.DoesNotContain("note:", log.ToString());
+            Assert.DoesNotContain("warning:", log.ToString());
             Assert.Contains("Name = \"Keep\";", File.ReadAllText(Path.Combine(map, "Map.cs")));
             var script = File.ReadAllText(Path.Combine(map, "build", "Keep", "war3map.lua"));
             Assert.Contains("[\"Keep.Heroes.Champion\"]", script);
