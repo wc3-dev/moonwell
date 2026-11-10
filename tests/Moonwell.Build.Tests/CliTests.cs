@@ -10,7 +10,11 @@ namespace Moonwell.Build.Tests
     {
         private const string Usage =
             "usage: moonwell build [folder] [--release]\n" +
-            "       moonwell run [folder] [--release] [--game <exe>]";
+            "       moonwell run [folder] [--release] [--game <exe>]\n" +
+            "       moonwell watch [folder] [--release] [--run] [--game <exe>]\n" +
+            "       moonwell new <name>\n" +
+            "       moonwell clean [folder]\n" +
+            "       moonwell objects [folder]";
 
         private readonly SampleBuilds builds;
         private readonly TestFolders folders;
@@ -97,6 +101,12 @@ namespace Moonwell.Build.Tests
         [InlineData("build", "one", "two")]
         [InlineData("build", "--game", "game.exe")]
         [InlineData("run", "--game")]
+        [InlineData("new")]
+        [InlineData("new", "One", "Two")]
+        [InlineData("new", "One", "--release")]
+        [InlineData("clean", "--release")]
+        [InlineData("objects", "--run")]
+        [InlineData("watch", "--game", "game.exe")]
         public void bad_arguments_exit_2(params string[] args)
         {
             var (exitCode, output, error, started) = Run(args);
@@ -149,6 +159,108 @@ namespace Moonwell.Build.Tests
             Assert.Equal($"moonwell: the game is not at {game}", error.Trim());
             Assert.Empty(started);
             Assert.Equal(string.Empty, output);
+        }
+
+        [Fact]
+        public void new_writes_the_template_under_the_maps_name()
+        {
+            var parent = folders.TemporaryFolderOutsideRepository();
+            var template = Path.Combine(TestFolders.Fixture("."), "..", "..", "..", "template", "MoonwellMap");
+
+            var folder = NewMap.Write("MyMap", parent, "1.2.3");
+
+            Assert.Equal(Path.Combine(parent, "MyMap"), folder);
+            var project = File.ReadAllText(Path.Combine(folder, "MyMap.csproj"));
+            Assert.Contains("Include=\"Moonwell.Objects\" Version=\"1.2.3\"", project);
+            Assert.DoesNotContain("MOONWELL_VERSION", project);
+            Assert.Contains("namespace MyMap.Heroes", File.ReadAllText(Path.Combine(folder, "Heroes", "Champion.cs")));
+            Assert.DoesNotContain("MoonwellMap", File.ReadAllText(Path.Combine(folder, "Map.cs")));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".gitignore")), File.ReadAllBytes(Path.Combine(folder, ".gitignore")));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(template, "map", "war3map.w3e")), File.ReadAllBytes(Path.Combine(folder, "map", "war3map.w3e")));
+            Assert.False(Directory.Exists(Path.Combine(folder, ".template.config")));
+            Assert.Equal(Directory.GetFiles(Path.Combine(template, "map")).Length, Directory.GetFiles(Path.Combine(folder, "map")).Length);
+        }
+
+        [Theory]
+        [InlineData("My-Map")]
+        [InlineData("2Maps")]
+        public void new_refuses_a_name_that_is_no_namespace(string name)
+        {
+            var error = Assert.Throws<BuildException>(() => NewMap.Write(name, folders.TemporaryFolderOutsideRepository(), "1.2.3"));
+
+            Assert.Equal($"\"{name}\" cannot be a map's name: it is the code's namespace too, so use letters, digits and _ only, not starting with a digit", error.Message);
+        }
+
+        [Fact]
+        public void new_refuses_a_folder_with_files()
+        {
+            var parent = folders.TemporaryFolderOutsideRepository();
+            Directory.CreateDirectory(Path.Combine(parent, "MyMap"));
+            File.WriteAllText(Path.Combine(parent, "MyMap", "notes.txt"), "mine");
+
+            var error = Assert.Throws<BuildException>(() => NewMap.Write("MyMap", parent, "1.2.3"));
+
+            Assert.Equal($"{Path.Combine(parent, "MyMap")} is not empty; pick another name or folder", error.Message);
+            Assert.Equal("mine", File.ReadAllText(Path.Combine(parent, "MyMap", "notes.txt")));
+        }
+
+        [Fact]
+        public void clean_deletes_the_build_folder()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            Directory.CreateDirectory(Path.Combine(folder, "build", "Sample"));
+            File.WriteAllText(Path.Combine(folder, "build", "Sample.w3x"), "x");
+
+            var (exitCode, output, error, _) = Run("clean", folder);
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(@"moonwell: deleted build\", output.Trim());
+            Assert.Equal(string.Empty, error);
+            Assert.False(Directory.Exists(Path.Combine(folder, "build")));
+            Assert.True(Directory.Exists(Path.Combine(folder, "map")));
+            Assert.Equal(@"moonwell: no build\ to delete", Run("clean", folder).Output.Trim());
+        }
+
+        [Fact]
+        public void objects_lists_the_maps_classes()
+        {
+            var (exitCode, output, error, _) = Run("objects", folders.TemporaryCopyOfSample());
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(string.Empty, error);
+            Assert.Equal("H001  hero  Sample.Arthas  based on Hpal", output.Trim());
+        }
+
+        [Fact]
+        public async Task watch_builds_again_after_a_change_and_starts_the_game_again()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            var game = Path.Combine(Path.GetTempPath(), "moonwell-game-" + Guid.NewGuid().ToString("N") + ".exe");
+            File.WriteAllText(game, string.Empty);
+            temporaryFiles.Add(game);
+            using var started = new SemaphoreSlim(0);
+            var stopped = 0;
+            using var cancel = new CancellationTokenSource();
+            var error = TextWriter.Synchronized(new StringWriter());
+
+            var watching = Task.Run(() => Cli.Run(
+                new[] { "watch", folder, "--run", "--game", game },
+                TextWriter.Synchronized(new StringWriter()),
+                error,
+                (_, _) => started.Release(),
+                () => Interlocked.Increment(ref stopped),
+                cancel.Token));
+
+            Assert.True(await started.WaitAsync(TimeSpan.FromMinutes(5)), "the first build started no game: " + error);
+            Assert.Equal(0, Volatile.Read(ref stopped));
+            File.AppendAllText(Path.Combine(folder, "Hello.cs"), "\n// changed\n");
+            Assert.True(await started.WaitAsync(TimeSpan.FromMinutes(5)), "the change built nothing: " + error);
+            Assert.Equal(1, Volatile.Read(ref stopped));
+
+            // The build writes only where the watch does not look, so nothing more is built while nothing changes.
+            Assert.False(await started.WaitAsync(TimeSpan.FromSeconds(5)));
+            await cancel.CancelAsync();
+            Assert.Equal(0, await watching);
         }
 
         public void Dispose()
