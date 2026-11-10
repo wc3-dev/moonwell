@@ -5,4 +5,11 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\src\Moonwell.Analyzers\Moonwell.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <!-- And they compile Placed, the data classes and the Lua bindings, as the package's Moonwell.targets has them do. -->
+  <ItemGroup>
+    <Compile Include="build/generated/Placed.g.cs" Condition="Exists('build/generated/Placed.g.cs')" />
+    <Compile Include="build/generated/Data.g.cs" Condition="Exists('build/generated/Data.g.cs')" />
+    <Compile Include="build/generated/LuaLibraries.g.cs" Condition="Exists('build/generated/LuaLibraries.g.cs')" />
+  </ItemGroup>
+
 </Project>

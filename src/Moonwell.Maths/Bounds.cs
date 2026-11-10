@@ -24,6 +24,13 @@ namespace Moonwell
             return new Bounds(a, b);
         }
 
+        /// <summary>A placed region's rect, so <c>Placed.Regions.Spawn</c> goes where bounds do.</summary>
+        [LocalSafe]
+        public static implicit operator Bounds(PlacedRegion region)
+        {
+            return new Bounds(new Vector2(region.Left, region.Bottom), new Vector2(region.Right, region.Top));
+        }
+
         /// <summary>The bounds of a size from a corner, as Godot's Rect2(position, size).</summary>
         [LocalSafe]
         public static Bounds FromSize(Vector2 corner, Vector2 size)

@@ -339,6 +339,12 @@ namespace Moonwell
         /// <summary>The starting components, which the runtime adds in order when the item is taken in.</summary>
         internal List<ItemComponent> StartComponents => Components;
 
+        /// <summary>An item an editor placed in the map, by World Editor's name for it without <c>gg_item_</c>: its type's id and its number, <c>ratc_0005</c>. Null when the map has no such item, or once it has left the game. The build checks a name written as a literal; <c>Placed.Items</c> lists every one.</summary>
+        public static Item? Named(string name)
+        {
+            return Of(Runtime.World.PlacedItem(name));
+        }
+
         /// <summary>The object of a game item: made when the item is first seen; null for null or for an item the game has removed.</summary>
         public static Item? Of(item? handle)
         {

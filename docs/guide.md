@@ -7,20 +7,21 @@ This guide describes Moonwell 0.10.0; the guide for 0.9.0 is at the
 
 Moonwell needs the .NET 10 SDK and Warcraft III 3.0, whose `common.j` and `Blizzard.j` the build reads from the
 install. Name an install outside `C:\Program Files (x86)\Warcraft III` with the `MOONWELL_WAR3` environment variable.
-Install the template and the `moonwell` command once:
+Install the `moonwell` command once:
 
 ```
-dotnet new install Moonwell.Templates
 dotnet tool install --global Moonwell.Cli
 ```
 
 Then make a map and play it:
 
 ```
-dotnet new moonwell -n MyMap
+moonwell new MyMap
 cd MyMap
 moonwell run
 ```
+
+`dotnet new moonwell -n MyMap` makes the same project, after `dotnet new install Moonwell.Templates`.
 
 The game opens the map and shows the Moonwell version. Player 1 has a Champion, a Paladin of the map's own, with
 three footmen to fight. Learn Smite and cast it: the screen names the target. Each kill shows the Champion's count and heals it a tenth of its life.
@@ -553,6 +554,35 @@ public sealed class Ferry : Unit
     }
 }
 ```
+
+## Placed things
+
+What any editor placed in the map is in the class `Placed`, which the build writes from the map's files before it
+compiles. Each member is named as World Editor names its variable, without `gg_`: a unit, item or destructable by its
+type's id and number, a region, camera or sound by its name with `_` for spaces. A name that is gone from the map is a
+compile error.
+
+```csharp
+Placed.Units.Hpal_0002?.Kill();                       // null once the unit has left the game
+var spawn = Placed.Regions.Spawn_Left;                // a PlacedRegion: Name, Left, Bottom, Right, Top, CenterX, CenterY
+Unit.Create<Footman>(player, spawn.CenterX, spawn.CenterY, Game.Instance);
+Placed.Sounds.Intro?.Play();                          // with the Sound Editor's volume, pitch, 3D and fades
+```
+
+| Kind | In `Placed` | By a name built in code |
+|---|---|---|
+| Unit | `Placed.Units.hfoo_0001`, typed as the map's class when its `[ObjectId]` is the unit's type | `Unit.Named("hfoo_0001")` |
+| Item | `Placed.Items.ratc_0005`, typed the same way | `Item.Named("ratc_0005")` |
+| Destructable | `Placed.Destructables.LTg1_0002`, trees left out | `Destructable.Named("LTlt_0012")`, trees too |
+| Region | `Placed.Regions.Spawn_Left`, a `PlacedRegion`; goes where `Bounds` does | `AreaShape.Region("Spawn Left")` |
+| Camera | `Placed.Cameras.Intro`, a `PlacedCamera`; goes where `CameraSetup` does | `CameraSetup.Named("Intro")` |
+| Sound | `Placed.Sounds.Intro`, a `PlacedSound` with `Play()`, `PlayAt(x, y)`, `PlayOn(unit)`, `Stop()` | `PlacedSound.Named("Intro")` |
+
+- A lookup gives null for a name the map does not have, and once the thing has left the game; the build fails at the
+  line of a name written as text that the map does not have.
+- A unit or item placed of the map's own class comes back as that class, as `Unit.Of` gives it.
+- A destructable is found nearest its place among those of its type, as the game makes most of them itself.
+- `Placed` changes when the map does: after placing something in an editor, build once before naming it.
 
 ## Stats and scores
 
@@ -2276,6 +2306,70 @@ they are. A node is in one object or array at most, as in .NET.
 `JsonNode.Parse` throws a `JsonException`, whose `Position` says where, for text that is no JSON or nests deeper than 64,
 and a file a player edited can be either: catch it where you read one.
 
+## Data files
+
+CSV and JSON files in the project's `data` folder become typed C# the build writes before it compiles, so object
+constructors and game code read them by name, and a wrong name is a compile error. The class is `Data`, with a class
+for each file (`data\abilities.csv` is `Data.Abilities`). Run a build once after adding a file, so the editor sees it.
+
+```
+data\abilities.csv            data\waves.csv
+Id,Damage:float,Cooldown      Wave,Unit,Count
+Smite,75;150;225,9            1,Footman,10
+                              2,Knight,4
+```
+
+```csharp
+Damage = Levels(Data.Abilities.Smite.Damage);          // in Smite's constructor
+foreach (var wave in Data.Waves.All) { ... }            // in game code: wave.Unit, wave.Count
+```
+
+- A CSV file's first line names its columns, and each line after it is a `Row`, in `All` in the file's order. When the
+  first column holds names, not numbers, each row is also a member named by it, its words run together
+  (`Big Bash` is `BigBash`). Values are separated by commas, decimals by points, and a value with a comma is quoted.
+- A column is `int` when every value is a whole number, else `float` when every value is a number, else text. A value
+  with a `;` makes the column a list: `75;150;225`. `Damage:float`, `:int` or `:text` in the header gives the type,
+  as `Levels(...)` for a `float` field takes only `float`s. An empty value is 0, or the empty text or list.
+- A JSON file is typed from its shape: an object is a class of its keys (`Data.Quests.Intro.Title`), the objects in a
+  list share a class with every key they have (`StepsItem` for `Steps`), and a whole number is an `int`. A list at
+  the top of the file is `All`.
+- Names are made of the letters a to z, digits and `_`, starting with a letter: the build stops at a file, column,
+  key or row name it can't make one from, at two that make the same, and at a CSV line with more values than columns.
+  Only the files directly in `data` are read.
+
+## Lua libraries
+
+A Lua library from Hive or elsewhere goes in the project's `lua` folder as a `.lua` file. The build links every one
+into the script before the map's code, in the order of their paths, and writes C# to call each global function and each
+function of a global table, typed from the library's LuaLS comments:
+
+```lua
+---Pushes a unit away.
+---@param target unit
+---@param distance number
+---@param angle? number
+---@return boolean
+function Knockback.push(target, distance, angle) ... end
+```
+
+```csharp
+Lua.Knockback.push(hero, 300f);   // the class is the table's, or the file's (knock_back.lua is KnockBack) for a global function
+```
+
+| Comment | C# |
+|---|---|
+| `number`, `integer`, `string`, `boolean` | `float`, `int`, `string`, `bool` |
+| `unit`, `item`, `destructable`, `player` | Moonwell's `Unit`, `Item`, `Destructable`, `Player`, turned into the game's handle and back |
+| another of the game's types (`timer`, `effect`, `rect`) | that handle |
+| `fun(u: unit, x: number): boolean` | `Func<Unit, float, bool>`: a lambda, given Moonwell's objects |
+| `name?`, `type?` or `type\|nil` | optional, `null` for nil |
+| anything else, or no comment | `object` |
+
+- A method (`function T:f()`), a local function and a function's `...` are left out; the library can still use them.
+- The analyzer cannot see into Lua, so a library function inside `Local.For` is an error (MW0001), unless its comments
+  hold `---@localsafe`: add that line to the library when the function changes nothing in the game.
+- A library runs only in the game, so the tests' fake world cannot call one.
+
 ## C# the game's Lua cannot run
 
 Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A few C# forms stop the compiler, write
@@ -2353,6 +2447,16 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
 `moonwell build` builds the map in the current folder into `build\MyMap.w3x`; `moonwell run` builds it and starts the
 game with it. Both make a development build: it checks the values Moonwell receives and keeps the Lua readable.
 `--release` makes the release build. `moonwell run --game <exe>` names the game when it is not in its usual place.
+
+| Command | What it does |
+|---|---|
+| `moonwell new <name>` | Makes a map project in a new folder of that name, the name being its namespace too |
+| `moonwell watch` | Builds, then builds again each time a file of the project changes (the code, `assets/`, `map/`), until Ctrl+C; a failed build is shown and the watch goes on |
+| `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
+| `moonwell clean` | Deletes `build/` |
+| `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
+
+Each takes the project's folder after the command, as `build` does; `new` takes the name.
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and

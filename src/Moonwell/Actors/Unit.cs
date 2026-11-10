@@ -1200,6 +1200,12 @@ namespace Moonwell
         /// <summary>The starting components, which the runtime adds in order when the unit enters.</summary>
         internal List<UnitComponent> StartComponents => Components;
 
+        /// <summary>A unit an editor placed in the map, by World Editor's name for it without <c>gg_unit_</c>: its type's id and its number, <c>hfoo_0001</c>. Null when the map has no such unit, or once it has left the game. The build checks a name written as a literal; <c>Placed.Units</c> lists every one.</summary>
+        public static Unit? Named(string name)
+        {
+            return Of(Runtime.World.PlacedUnit(name));
+        }
+
         /// <summary>The object of a game unit: made when the unit is first seen; null for null, for a unit the game has removed, and for one Moonwell has removed, whose handle still reads its type in that frame.</summary>
         public static Unit? Of(unit? handle)
         {
