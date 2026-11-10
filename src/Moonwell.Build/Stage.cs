@@ -96,14 +96,66 @@ namespace Moonwell.Build
 
             if (Directory.Exists(project.AssetsFolder))
             {
+                var packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var file in RelativeFiles(project.AssetsFolder))
                 {
-                    if (File.Exists(Path.Combine(project.StagedFolder, file)))
+                    var name = Images.PackedName(file);
+                    if (packed.TryGetValue(name, out var other))
+                    {
+                        throw new BuildException($@"assets\{other} and assets\{file} are both {name} in the map; keep one");
+                    }
+
+                    packed[name] = file;
+                    if (File.Exists(Path.Combine(project.StagedFolder, name)))
                     {
                         log.WriteLine($@"note: assets\{file} replaces the map's file");
                     }
 
-                    Copy(project.AssetsFolder, file, project.StagedFolder);
+                    if (Images.IsPng(file))
+                    {
+                        Images.WriteBlp(Path.Combine(project.AssetsFolder, file), Path.Combine(project.StagedFolder, name), $@"assets\{file}");
+                    }
+                    else
+                    {
+                        Copy(project.AssetsFolder, file, project.StagedFolder);
+                    }
+                }
+
+                WriteGreyCopies(project, packed, log);
+            }
+        }
+
+        // An icon named BTN or PASBTN gets the grey copy a disabled button shows, unless the map or its assets have one (decision 250).
+        private static void WriteGreyCopies(MapProject project, Dictionary<string, string> packed, TextWriter log)
+        {
+            var madeFrom = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (name, file) in packed)
+            {
+                var grey = Images.GreyCopyName(name);
+                if (grey == null)
+                {
+                    continue;
+                }
+
+                if (madeFrom.TryGetValue(grey, out var first))
+                {
+                    log.WriteLine($@"warning: assets\{first} and assets\{file} share the grey copy {grey}, as the game finds it by the file name alone; it is made from assets\{first}");
+                    continue;
+                }
+
+                if (File.Exists(Path.Combine(project.StagedFolder, grey)))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    Images.WriteGreyCopy(Path.Combine(project.AssetsFolder, file), Path.Combine(project.StagedFolder, grey), $@"assets\{file}");
+                    madeFrom[grey] = file;
+                }
+                catch (BuildException failure)
+                {
+                    log.WriteLine($"warning: {failure.Message}");
                 }
             }
         }

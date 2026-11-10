@@ -151,6 +151,127 @@ namespace Moonwell.Build.Tests
             Assert.Contains(@"note: assets\war3map.wts replaces the map's file", log.ToString());
         }
 
+        [Fact]
+        public void a_png_in_the_assets_is_packed_as_a_blp_at_its_path()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            CopyImage("red-64x32.png", project, @"Icons\BTNRed.png");
+            CopyImage("glass-32.png", project, @"Icons\Glass.png");
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            Assert.False(File.Exists(Path.Combine(project.StagedFolder, @"Icons\BTNRed.png")));
+            var red = Path.Combine(project.StagedFolder, @"Icons\BTNRed.blp");
+            using (var blp = new War3Net.Drawing.Blp.BlpFile(File.OpenRead(red)))
+            {
+                // Down to 2x1: War3Net's encoder stops when the shorter side is 1.
+                Assert.Equal(6, blp.MipMapCount);
+                var pixels = blp.GetPixels(0, out var width, out var height);
+                Assert.Equal((64, 32), (width, height));
+
+                // BGRA, within what JPEG loses.
+                Assert.InRange(pixels[0], 0, 8);
+                Assert.InRange(pixels[1], 0, 8);
+                Assert.InRange(pixels[2], 247, 255);
+            }
+
+            // An opaque image keeps the game's alpha depth at 0, a see-through one gets 8.
+            Assert.Equal(0u, BitConverter.ToUInt32(File.ReadAllBytes(red), 8));
+            var glass = File.ReadAllBytes(Path.Combine(project.StagedFolder, @"Icons\Glass.blp"));
+            Assert.Equal(8u, BitConverter.ToUInt32(glass, 8));
+            using (var blp = new War3Net.Drawing.Blp.BlpFile(new MemoryStream(glass)))
+            {
+                Assert.InRange(blp.GetPixels(0, out _, out _)[3], 120, 136);
+            }
+        }
+
+        [Fact]
+        public void a_png_whose_side_is_not_a_power_of_two_is_refused_naming_it()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            CopyImage("wide-100x64.png", project, "Wide.png");
+
+            var error = Assert.Throws<BuildException>(() => Stage.WriteWithoutObjects(project, map, TextWriter.Null));
+
+            Assert.Equal(@"assets\Wide.png is 100x64; each side of a texture must be a power of two (32, 64, 128, 256...), so resize it", error.Message);
+        }
+
+        [Fact]
+        public void a_png_the_build_cannot_read_is_refused_naming_it()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            File.WriteAllText(Path.Combine(project.AssetsFolder, "Broken.png"), "not an image");
+
+            var error = Assert.Throws<BuildException>(() => Stage.WriteWithoutObjects(project, map, TextWriter.Null));
+
+            Assert.StartsWith(@"assets\Broken.png is not a PNG the build can read (", error.Message);
+        }
+
+        [Fact]
+        public void a_png_and_a_blp_of_one_name_are_refused()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            CopyImage("red-64x32.png", project, "Fire.png");
+            File.WriteAllText(Path.Combine(project.AssetsFolder, "fire.blp"), "x");
+
+            var error = Assert.Throws<BuildException>(() => Stage.WriteWithoutObjects(project, map, TextWriter.Null));
+
+            Assert.Equal(@"assets\Fire.png and assets\fire.blp are both fire.blp in the map; keep one", error.Message);
+        }
+
+        [Fact]
+        public void an_icon_gets_its_grey_copy_where_the_game_reads_it()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            CopyImage("red-64x32.png", project, @"Icons\BTNRed.png");
+            CopyImage("red-64x32.png", project, @"Icons\PASBTNRed.png");
+            CopyImage("glass-32.png", project, @"Icons\Glass.png");
+            Images.WriteBlp(Path.Combine(TestFolders.Fixture("Images"), "red-64x32.png"), Path.Combine(project.AssetsFolder, "BTNFromBlp.blp"), "red");
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            var greys = Path.Combine(project.StagedFolder, @"ReplaceableTextures\CommandButtonsDisabled");
+            Assert.Equal(
+                new[] { "DISBTNFromBlp.blp", "DISBTNRed.blp", "DISPASBTNRed.blp" },
+                Directory.GetFiles(greys).Select(Path.GetFileName).OrderBy(name => name, StringComparer.Ordinal));
+            using var blp = new War3Net.Drawing.Blp.BlpFile(File.OpenRead(Path.Combine(greys, "DISBTNRed.blp")));
+            var pixels = blp.GetPixels(0, out var width, out var height);
+            Assert.Equal((64, 32), (width, height));
+
+            // Red's brightness, 76, at the game's HD grey: 0.459 x 76 + 8.5 is 44, within what JPEG loses.
+            for (var channel = 0; channel < 3; channel++)
+            {
+                Assert.InRange(pixels[channel], 38, 50);
+            }
+        }
+
+        [Fact]
+        public void a_grey_copy_of_the_assets_is_kept_and_one_name_twice_is_warned_of()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            CopyImage("red-64x32.png", project, "BTNOwn.png");
+            var own = Path.Combine(project.AssetsFolder, @"ReplaceableTextures\CommandButtonsDisabled\DISBTNOwn.blp");
+            Directory.CreateDirectory(Path.GetDirectoryName(own)!);
+            File.WriteAllText(own, "own");
+            CopyImage("red-64x32.png", project, @"Fire\BTNFire.png");
+            CopyImage("glass-32.png", project, @"Ice\BTNFire.png");
+            File.WriteAllText(Path.Combine(project.AssetsFolder, "BTNBroken.blp"), "not an image");
+            var log = new StringWriter();
+
+            Stage.WriteWithoutObjects(project, map, log);
+
+            Assert.Equal("own", File.ReadAllText(Path.Combine(project.StagedFolder, @"ReplaceableTextures\CommandButtonsDisabled\DISBTNOwn.blp")));
+            Assert.Contains(@"warning: assets\Fire\BTNFire.png and assets\Ice\BTNFire.png share the grey copy ReplaceableTextures\CommandButtonsDisabled\DISBTNFire.blp, as the game finds it by the file name alone; it is made from assets\Fire\BTNFire.png", log.ToString());
+            Assert.Contains(@"warning: assets\BTNBroken.blp is not a BLP the build can read to make its grey copy (", log.ToString());
+            Assert.Contains(@"put one at assets\ReplaceableTextures\CommandButtonsDisabled\DISBTNBroken.blp yourself", log.ToString());
+        }
+
         [Theory]
         [InlineData("assets", @"Ljud\Hälsning.txt", "ä")]
         [InlineData("assets", "Pris€.txt", "€")]
@@ -287,6 +408,13 @@ namespace Moonwell.Build.Tests
                 .Select(file => Path.GetRelativePath(folder, file))
                 .OrderBy(file => file, StringComparer.Ordinal)
                 .ToList();
+        }
+
+        private static void CopyImage(string fixture, MapProject project, string relative)
+        {
+            var target = Path.Combine(project.AssetsFolder, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(Path.Combine(TestFolders.Fixture("Images"), fixture), target);
         }
 
         private static List<string> Hashes(string folder)
