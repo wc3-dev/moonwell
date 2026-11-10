@@ -14,8 +14,11 @@ namespace Moonwell.Engine
         private const float Diagonal = 45.254834f;
 
         /// <summary>The most cells the A* takes after the goal is found cut off, looking for the nearest spot.</summary>
-        // shortcut: when both ends lie in large separate areas (a river across the map), the flood and the A* each still go over most of the smaller one; a reach map per square size would answer at once.
+        // shortcut: a cut-off area of more than FloodCap cells (about 1,000 by 1,000) is found only when the A* has gone over all the ground it can reach, as a map split by a river; a reach map per square size would answer at once.
         private const int NearestCap = 2048;
+
+        /// <summary>The most cells the flood from the goal takes: a closed-in area bigger than this is not found cut off early.</summary>
+        private const int FloodCap = 1024;
 
         private readonly Dictionary<int, bool> fits = new Dictionary<int, bool>();
         private readonly Dictionary<int, bool> open = new Dictionary<int, bool>();
@@ -80,8 +83,10 @@ namespace Moonwell.Engine
 
         private readonly Dictionary<int, int> came = new Dictionary<int, int>();
 
-        // A* from the start, with a flood from the goal a step for each of its steps (decision 248): when the flood runs out
-        // before the two meet, the goal is cut off, and the A* goes on only to NearestCap cells for the nearest spot it finds.
+        // A* from the start, with a flood from the goal a step for every two of its steps (decision 248): when the flood runs
+        // out before the two meet, the goal is cut off, and the A* goes on only to NearestCap cells for the nearest spot it
+        // finds. The flood stops at FloodCap cells, so a reachable goal costs the A* at most that much more (probe 3 in the
+        // game: a step for each step made a route round a long wall 0.47 s where it had been 0.15 s).
         private int Run(int goal, float toX, float toY, out bool reached)
         {
             var cost = new Dictionary<int, float> { [startKey] = 0f };
@@ -111,9 +116,9 @@ namespace Moonwell.Engine
                     return key;
                 }
 
-                if (!settled)
+                if (!settled && closed.Count % 2 == 0)
                 {
-                    if (flooded.Contains(key))
+                    if (flooded.Contains(key) || floodNext >= FloodCap)
                     {
                         settled = true;
                     }
