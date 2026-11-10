@@ -2305,6 +2305,39 @@ they are. A node is in one object or array at most, as in .NET.
 `JsonNode.Parse` throws a `JsonException`, whose `Position` says where, for text that is no JSON or nests deeper than 64,
 and a file a player edited can be either: catch it where you read one.
 
+## Lua libraries
+
+A Lua library from Hive or elsewhere goes in the project's `lua` folder as a `.lua` file. The build links every one
+into the script before the map's code, in the order of their paths, and writes C# to call each global function and each
+function of a global table, typed from the library's LuaLS comments:
+
+```lua
+---Pushes a unit away.
+---@param target unit
+---@param distance number
+---@param angle? number
+---@return boolean
+function Knockback.push(target, distance, angle) ... end
+```
+
+```csharp
+Lua.Knockback.push(hero, 300f);   // the class is the table's, or the file's (knock_back.lua is KnockBack) for a global function
+```
+
+| Comment | C# |
+|---|---|
+| `number`, `integer`, `string`, `boolean` | `float`, `int`, `string`, `bool` |
+| `unit`, `item`, `destructable`, `player` | Moonwell's `Unit`, `Item`, `Destructable`, `Player`, turned into the game's handle and back |
+| another of the game's types (`timer`, `effect`, `rect`) | that handle |
+| `fun(u: unit, x: number): boolean` | `Func<Unit, float, bool>`: a lambda, given Moonwell's objects |
+| `name?`, `type?` or `type\|nil` | optional, `null` for nil |
+| anything else, or no comment | `object` |
+
+- A method (`function T:f()`), a local function and a function's `...` are left out; the library can still use them.
+- The analyzer cannot see into Lua, so a library function inside `Local.For` is an error (MW0001), unless its comments
+  hold `---@localsafe`: add that line to the library when the function changes nothing in the game.
+- A library runs only in the game, so the tests' fake world cannot call one.
+
 ## C# the game's Lua cannot run
 
 Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A few C# forms stop the compiler, write

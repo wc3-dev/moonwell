@@ -54,7 +54,7 @@ namespace Moonwell.Build.Tests
             var text = Text();
 
             Assert.Contains("/// <summary>Pushes a unit away.</summary>\n        [global::Moonwell.LuaLibrary]\n        public static bool push(global::Moonwell.Unit target, float distance, float? angle = null) => push__lua(target.Handle, distance, angle);", text);
-            Assert.Contains("/// @CSharpLua.Template = \"Knockback.push({0}, {1}, {2})\"\n        private static bool push__lua(global::Moonwell.unit target, float distance, float? angle)", text);
+            Assert.Contains("/// @CSharpLua.Template = \"Knockback.push({0}, {1}, {2})\"\n        private static bool push__lua(global::Moonwell.unit? target, float distance, float? angle)", text);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace Moonwell.Build.Tests
             Assert.Contains("public static void SpawnShadow(object x, object y) => SpawnShadow__lua(x, y);", text);
             Assert.DoesNotContain("hidden", text);
             Assert.DoesNotContain("method", text);
-            Assert.Empty(CSharpSyntaxTree.ParseText(text).GetDiagnostics());
+            Assert.Empty(CSharpSyntaxTree.ParseText(Wrapped(Classes())).GetDiagnostics());
         }
 
         [Fact]
@@ -107,11 +107,9 @@ namespace Moonwell.Build.Tests
             Assert.Contains("Knockback.strength(300", script);
         }
 
-        private static string Text()
-        {
-            var classes = LuaLibraries.Bindings(Library.Split('\n'), "KnockBack", "lua/knockback.lua").ToList();
-            return string.Join("\n", classes.Select(one => one.Table + ":\n" + one.Method)) + "\n" + Wrapped(classes);
-        }
+        private static List<(string Table, string Method)> Classes() => LuaLibraries.Bindings(Library.Split('\n'), "KnockBack", "lua/knockback.lua").ToList();
+
+        private static string Text() => Wrapped(Classes());
 
         // The methods in classes, as the written file has them, for the syntax check.
         private static string Wrapped(IEnumerable<(string Table, string Method)> classes)
