@@ -75,6 +75,36 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>Whether every unit counts as a living building.</summary>
+        public bool AllBuildings;
+
+        /// <summary>The places WatchDeathsAround was asked about, in order.</summary>
+        public List<Vector2> Watched = new List<Vector2>();
+
+        /// <summary>What Listen was given: a case calls it as the game would at a death.</summary>
+        public Action<float, float>? Changed;
+
+        public bool IsLiveBuilding(unit handle)
+        {
+            return AllBuildings;
+        }
+
+        public void PlaceOf(unit handle, out float x, out float y)
+        {
+            x = 0f;
+            y = 0f;
+        }
+
+        public void Listen(Action<float, float> changed)
+        {
+            Changed = changed;
+        }
+
+        public void WatchDeathsAround(float x, float y)
+        {
+            Watched.Add(new Vector2(x, y));
+        }
+
         public float CollisionOf(unit handle)
         {
             return Collisions.TryGetValue(handle, out var size) ? size : 31f;

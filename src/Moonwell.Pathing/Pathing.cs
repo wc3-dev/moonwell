@@ -37,6 +37,9 @@ namespace Moonwell
         {
             world = host;
             Cells.Reset();
+            host.Listen(Cells.Changed);
+            PathingHook.Changed = Cells.Changed;
+            PathingHook.UnitChanged = Cells.UnitChanged;
         }
 
         internal static IPathingWorld World => world ?? throw new InvalidOperationException("Moonwell.Pathing is not installed: the map's generated Main installs it when the map uses the package.");

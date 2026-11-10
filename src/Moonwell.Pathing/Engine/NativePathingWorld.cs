@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Moonwell.Hosting;
 
 namespace Moonwell.Engine
@@ -16,9 +18,76 @@ namespace Moonwell.Engine
         /// <summary>The helpers made so far, by the same index.</summary>
         private readonly unit?[] helpers = new unit?[12];
 
+        /// <summary>How far round a blocked cell's middle the destructables whose deaths are watched may stand: a texture up to 8 cells across has its place within it.</summary>
+        // shortcut: a destructable larger than 8 cells (a bridge, a big gate) killed by the game is not seen; Moonwell's own changes to it are. Widen the rect if maps need it.
+        private const float WatchReach = 128f;
+
+        /// <summary>The destructables whose deaths are watched.</summary>
+        private readonly HashSet<destructable> watched = new HashSet<destructable>();
+
+        /// <summary>The trigger the watched deaths run, made by Listen.</summary>
+        private trigger? deaths;
+
+        /// <summary>The rect the destructables near a cell are found in, moved for each.</summary>
+        private rect? near;
+
         internal NativePathingWorld(int[] typeIds)
         {
             types = typeIds;
+        }
+
+        public bool IsLiveBuilding(unit handle)
+        {
+            return Natives.IsUnitType(handle, Natives.UNIT_TYPE_STRUCTURE) && !Natives.IsUnitType(handle, Natives.UNIT_TYPE_DEAD) && Natives.GetUnitTypeId(handle) != 0;
+        }
+
+        public void PlaceOf(unit handle, out float x, out float y)
+        {
+            x = Natives.GetUnitX(handle);
+            y = Natives.GetUnitY(handle);
+        }
+
+        public void Listen(Action<float, float> changed)
+        {
+            deaths = Natives.CreateTrigger();
+            Natives.TriggerAddAction(deaths, () =>
+            {
+                var dead = Natives.GetTriggerDestructable();
+                changed(Natives.GetDestructableX(dead), Natives.GetDestructableY(dead));
+            });
+            var buildings = Natives.CreateTrigger();
+            for (var slot = 0; slot < Natives.bj_MAX_PLAYER_SLOTS; slot++)
+            {
+                Natives.TriggerRegisterPlayerUnitEvent(buildings, Natives.Player(slot), Natives.EVENT_PLAYER_UNIT_DEATH, null);
+            }
+
+            Natives.TriggerAddAction(buildings, () =>
+            {
+                var dying = Natives.GetTriggerUnit();
+                if (Natives.IsUnitType(dying, Natives.UNIT_TYPE_STRUCTURE))
+                {
+                    changed(Natives.GetUnitX(dying), Natives.GetUnitY(dying));
+                }
+            });
+        }
+
+        public void WatchDeathsAround(float x, float y)
+        {
+            if (deaths == null)
+            {
+                return;
+            }
+
+            near ??= Natives.Rect(0f, 0f, 0f, 0f);
+            Natives.SetRect(near, x - WatchReach, y - WatchReach, x + WatchReach, y + WatchReach);
+            Natives.EnumDestructablesInRect(near, null, () =>
+            {
+                var found = Natives.GetEnumDestructable();
+                if (watched.Add(found))
+                {
+                    Natives.TriggerRegisterDeathEvent(deaths, found);
+                }
+            });
         }
 
         public void Try(int cells, Movement movement, float x, float y, out float landedX, out float landedY)

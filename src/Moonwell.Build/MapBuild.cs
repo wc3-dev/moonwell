@@ -71,8 +71,9 @@ namespace Moonwell.Build
             var settings = MapSettingsReader.Read(targetPath, project);
             var map = SourceMap.Open(project, settings, log);
 
-            // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly.
-            if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath))
+            // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly. The pathing package's
+            // helper units are object data, so a map that uses it takes this path too.
+            if (Declarations.UsesObjects(targetPath) || FileStore.ReferencesObjects(targetPath) || Declarations.Needs(targetPath, PathingAssemblyName))
             {
                 var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
                 BuildWithObjects(project, settings, map, targetPath, objectsDll, options, log);

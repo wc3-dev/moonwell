@@ -62,6 +62,7 @@ namespace Moonwell.Build.Tests
         [InlineData("Moonwell.Maths")]
         [InlineData("Moonwell.Interactions")]
         [InlineData("Moonwell.Terrain")]
+        [InlineData("Moonwell.Pathing")]
         [InlineData("Moonwell.Physics")]
         [InlineData("Moonwell.Areas")]
         [InlineData("Moonwell.Input")]

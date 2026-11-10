@@ -8,7 +8,9 @@ namespace Moonwell.Engine
     /// <c>c - cells / 2</c> for <c>cells</c> cells, along x and y alike. A cell is open for walking where the terrain's grid
     /// says walkable and an item lies there (the item trick sees destructables and buildings, not units or pathing set by
     /// code, which the terrain's grid sees); for floating where it is water and the item lies. The item's answer is kept,
-    /// as it costs a call to the game; <c>Refresh</c> drops it.
+    /// as it costs a call to the game, and dropped round a change Moonwell sees: its own destructable changes, a building
+    /// it takes in or forgets, a building's death, and the death of a destructable near a cell found blocked (decision 247);
+    /// <c>Refresh</c> drops it too.
     /// </summary>
     internal static class Cells
     {
@@ -18,8 +20,14 @@ namespace Moonwell.Engine
         /// <summary>Offset that keeps a cell's column and row positive in a key: maps are at most 1920 cells across from the centre.</summary>
         private const int Offset = 2048;
 
+        /// <summary>How far round a change's place the item answers are dropped: half the largest destructable's texture (a bridge, 32 cells) and a cell.</summary>
+        private const float ChangeReach = 544f;
+
         /// <summary>Where an item lies in each cell asked: true where it lies at the cell's middle.</summary>
         private static Dictionary<int, bool> items = new Dictionary<int, bool>();
+
+        /// <summary>The place of each living building Moonwell took in, so its cells are asked again when it goes.</summary>
+        private static Dictionary<unit, Vector2> buildings = new Dictionary<unit, Vector2>();
 
         /// <summary>The cells across a unit's square for a collision size.</summary>
         internal static int Across(float collision)
@@ -103,10 +111,35 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Drops every item answer, for a new install.</summary>
+        /// <summary>Drops the item answers round a place where something that blocks paths changed (decision 247).</summary>
+        internal static void Changed(float x, float y)
+        {
+            Refresh(Bounds.FromCorners(new Vector2(x - ChangeReach, y - ChangeReach), new Vector2(x + ChangeReach, y + ChangeReach)));
+        }
+
+        /// <summary>A unit Moonwell took in or forgot: a living building is kept with its place when it comes, and its cells asked again when it comes and when it goes.</summary>
+        internal static void UnitChanged(unit handle)
+        {
+            if (buildings.TryGetValue(handle, out var place))
+            {
+                buildings.Remove(handle);
+                Changed(place.X, place.Y);
+                return;
+            }
+
+            if (Pathing.World.IsLiveBuilding(handle))
+            {
+                Pathing.World.PlaceOf(handle, out var x, out var y);
+                buildings[handle] = new Vector2(x, y);
+                Changed(x, y);
+            }
+        }
+
+        /// <summary>Drops every item answer and building, for a new install.</summary>
         internal static void Reset()
         {
             items = new Dictionary<int, bool>();
+            buildings = new Dictionary<unit, Vector2>();
         }
 
         private static bool ItemLies(int col, int row)
@@ -116,6 +149,10 @@ namespace Moonwell.Engine
             {
                 lies = Terrain.ItemLands(Middle(col), Middle(row));
                 items[key] = lies;
+                if (!lies)
+                {
+                    Pathing.World.WatchDeathsAround(Middle(col), Middle(row));
+                }
             }
 
             return lies;

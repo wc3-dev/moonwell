@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Moonwell.Engine;
 
 namespace Moonwell
 {
@@ -130,6 +131,7 @@ namespace Moonwell
                 {
                     Runtime.World.PutDestructableLife(Handle, value);
                     lastLife = IsGone ? 0.0f : Runtime.World.DestructableLifeOf(Handle);
+                    PathingHook.Tell(X, Y);
                 }
             }
         }
@@ -203,6 +205,8 @@ namespace Moonwell
                 scope.Adopt(made);
             }
 
+            PathingHook.Tell(made.X, made.Y);
+
             return made;
         }
 
@@ -220,6 +224,7 @@ namespace Moonwell
             {
                 Runtime.World.SlayDestructable(Handle);
                 lastLife = 0.0f;
+                PathingHook.Tell(X, Y);
             }
         }
 
@@ -234,6 +239,7 @@ namespace Moonwell
             Runtime.World.RestoreDestructable(Handle, MaxLife, showBirth);
             lastLife = Runtime.World.DestructableLifeOf(Handle);
             IsOpen = false;
+            PathingHook.Tell(X, Y);
             if (!HasEnded && (Mask & Hook.OnRestored) != 0)
             {
                 try
@@ -286,6 +292,7 @@ namespace Moonwell
                 Runtime.World.SlayDestructable(Handle);
                 opening = false;
                 lastLife = 0.0f;
+                PathingHook.Tell(X, Y);
             }
 
             Runtime.World.AnimateDestructable(Handle, "death alternate", false);
@@ -304,6 +311,7 @@ namespace Moonwell
             {
                 Runtime.World.RestoreDestructable(Handle, MaxLife, true);
                 lastLife = Runtime.World.DestructableLifeOf(Handle);
+                PathingHook.Tell(X, Y);
             }
 
             Runtime.World.AnimateDestructable(Handle, "stand", false);
@@ -531,6 +539,7 @@ namespace Moonwell
         /// <summary>Removes the destructable from the game unless the game has already, and forgets it.</summary>
         internal override void Finish()
         {
+            PathingHook.Tell(X, Y);
             if (watched)
             {
                 Runtime.World.UnwatchDeath(Handle);

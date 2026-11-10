@@ -1061,6 +1061,34 @@ if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at
 - A `Height` read costs about 9 microseconds in the game, so code that runs every tick on many objects should read it
   sparingly.
 
+## Pathing
+
+Add the `Moonwell.Pathing` package for where a unit fits, the nearest spot it can stand, free spots for a group, and
+paths by its size. It brings `Moonwell.Terrain` and `Moonwell.Objects` with it.
+
+```csharp
+if (!caster.CanStand(x, y)) { var landing = caster.NearestSpot(x, y); }
+var spots = Pathing.Spots(31f, x, y, 5);           // five free spots, nearest first, not overlapping
+var route = unit.FindPath(x, y);                   // route.Points, route.Length, route.Reaches
+if (unit.CanReach(x, y)) { /* it can walk there and stand */ }
+```
+
+- A unit takes a square of the game's 32 cells by its collision size: below 16 one cell, 16 to 31 two, 32 to 47 three,
+  48 and up four. A gap of 64 lets sizes up to 31 through; 128 lets every size through.
+- `CanStand`, `NearestSpot` and `Spots` are the game's own answer: a hidden helper of the unit's square is put there,
+  about 10 microseconds a try. They see terrain, trees, buildings and the units standing there.
+- `FindPath` and `CanReach` are Moonwell's own search on the same cells. They see terrain, destructables, buildings and
+  pathing set by code, never units. A target that can't be reached gives the route to the reachable spot nearest it,
+  where the game's own walker would stop, with `Reaches` false. The game's walkers also go round units that stand in
+  the way when they are ordered, and stop farther from a unit than its square needs.
+- A route never squeezes between two blocked cells that touch only at a corner, as the game's walkers don't.
+- Ships take `Movement.Float`, amphibious units `Movement.Amphibious` and fliers `Movement.Fly` (a straight line); a
+  unit's own calls take its movement from the unit. Foot, horse and hover units are all `Movement.Ground`.
+- A path search keeps what the game said of each cell. Moonwell's own destructable changes, the buildings it sees come
+  and go, a building's death, and the death of a destructable next to a cell a search found blocked all drop it. After
+  changing destructables or buildings with natives, call `Pathing.Refresh(area)`.
+- These calls move a hidden helper or item, so they change game state and are not for `Local.For`.
+
 ## Interactions and finding
 
 Add the `Moonwell.Interactions` package (the template's `.csproj` has the line, commented) for things that react to what

@@ -199,6 +199,52 @@ namespace Moonwell.Testing
             Expect.True(Pathing.Spots(31f, 0f, 0f, 1)[0] != new Vector2(0f, 0f), "not on a standing unit");
         }
 
+        /// <summary>A blocked cell has the deaths near it watched, and a death the game reports opens the way without a Refresh (decision 247).</summary>
+        public static void GameDeaths(FakeWorld world)
+        {
+            var terrain = new FakeTerrainWorld();
+            var fake = Setup(terrain);
+            var blocked = true;
+            terrain.Occupied = (x, y) => blocked && x >= 0f && x < 64f;
+            Expect.True(!Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "the trees wall it off");
+            Expect.True(fake.Watched.Count > 0, "the deaths near the blocked cells are watched");
+            Expect.True(fake.Watched[0].X >= 0f && fake.Watched[0].X < 64f, "at a blocked cell: " + fake.Watched[0]);
+            blocked = false;
+            for (var y = -256f; y <= 256f; y += 512f)
+            {
+                fake.Changed!(32f, y);
+            }
+
+            Expect.True(Pathing.FindPath(31f, -200f, 0f, 200f, 0f).Reaches, "open after the deaths");
+        }
+
+        /// <summary>Moonwell's own destructable changes and the buildings it takes in and forgets drop the cells round them (decision 247).</summary>
+        public static void MoonwellChanges(FakeWorld world)
+        {
+            var terrain = new FakeTerrainWorld();
+            var fake = Setup(terrain);
+            Expect.True(Pathing.FindPath(8f, -400f, 0f, 400f, 0f).Reaches, "open ground, every cell on the way asked");
+            var asked = terrain.PlaceCalls;
+            var scope = new TestScope("scope", new List<string>());
+            var tree = Destructable.Create(ObjectTypes.FourCC("LTlt"), 0f, 0f, scope);
+            Expect.True(Pathing.FindPath(8f, -400f, 0f, 400f, 0f).Reaches, "again");
+            Expect.True(terrain.PlaceCalls > asked, "a made destructable drops the cells round it");
+            asked = terrain.PlaceCalls;
+            tree.Kill();
+            Pathing.FindPath(8f, -400f, 0f, 400f, 0f);
+            Expect.True(terrain.PlaceCalls > asked, "a killed one too");
+            fake.AllBuildings = true;
+            asked = terrain.PlaceCalls;
+            var building = Unit.Create(Footman, Player.Get(0), 0f, 0f, Game.Instance);
+            Pathing.FindPath(8f, -400f, 0f, 400f, 0f);
+            Expect.True(terrain.PlaceCalls > asked, "a building taken in drops the cells round it");
+            fake.AllBuildings = false;
+            asked = terrain.PlaceCalls;
+            building.Remove();
+            Pathing.FindPath(8f, -400f, 0f, 400f, 0f);
+            Expect.True(terrain.PlaceCalls > asked, "and again when it goes");
+        }
+
         /// <summary>A unit's own calls go by its collision size and place.</summary>
         public static void UnitCalls(FakeWorld world)
         {
