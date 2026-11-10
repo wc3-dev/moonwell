@@ -8,6 +8,7 @@ using Xunit;
 namespace Moonwell.Build.Tests
 {
     /// <summary>A map's code reaching what an editor placed, through Placed and the Named lookups (decision 254).</summary>
+    [Collection("Sample")]
     public sealed class PlacedBuildTests : IDisposable
     {
         private const string Code = "using Moonwell;\n\nnamespace Sample\n{\n    public sealed class Settings : GameComponent\n    {\n        public override void OnGameStart()\n        {\n            BODY\n        }\n    }\n}\n";
