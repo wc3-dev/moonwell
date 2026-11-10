@@ -112,13 +112,13 @@ namespace Moonwell.Engine
         }
 
         /// <summary>Blight in a circle; the player only says whose blight it is to the game, and changes nothing seen (probe, 11-09).</summary>
-        public void SetBlight(float x, float y, float radius, bool on)
+        public void Blight(float x, float y, float radius, bool on)
         {
             Natives.SetBlight(Natives.Player(0), x, y, radius, on);
         }
 
         /// <summary>Blight in a rect, through a rect made for the call.</summary>
-        public void SetBlight(float minX, float minY, float maxX, float maxY, bool on)
+        public void Blight(float minX, float minY, float maxX, float maxY, bool on)
         {
             var area = Natives.Rect(minX, minY, maxX, maxY);
             Natives.SetBlightRect(Natives.Player(0), area, on);

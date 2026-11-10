@@ -50,10 +50,10 @@ namespace Moonwell.Hosting
         void SetPathing(float x, float y, int kind, bool on);
 
         /// <summary>Adds or removes blight in a circle; removing leaves blight a building made.</summary>
-        void SetBlight(float x, float y, float radius, bool on);
+        void Blight(float x, float y, float radius, bool on);
 
         /// <summary>Adds or removes blight in a rect, by its edges; removing leaves blight a building made.</summary>
-        void SetBlight(float minX, float minY, float maxX, float maxY, bool on);
+        void Blight(float minX, float minY, float maxX, float maxY, bool on);
 
         /// <summary>Whether a point is blighted.</summary>
         bool IsBlighted(float x, float y);

@@ -177,10 +177,10 @@ namespace Moonwell.Testing
         }
 
         /// <summary>Records blight in a circle.</summary>
-        public void SetBlight(float x, float y, float radius, bool on) => Blights.Add((on ? "on " : "off ") + (int)x + " " + (int)y + " " + (int)radius);
+        public void Blight(float x, float y, float radius, bool on) => Blights.Add((on ? "on " : "off ") + (int)x + " " + (int)y + " " + (int)radius);
 
         /// <summary>Records blight in a rect.</summary>
-        public void SetBlight(float minX, float minY, float maxX, float maxY, bool on) => Blights.Add((on ? "on " : "off ") + (int)minX + " " + (int)minY + " " + (int)maxX + " " + (int)maxY);
+        public void Blight(float minX, float minY, float maxX, float maxY, bool on) => Blights.Add((on ? "on " : "off ") + (int)minX + " " + (int)minY + " " + (int)maxX + " " + (int)maxY);
 
         /// <summary>Whether a point reads blighted.</summary>
         public bool IsBlighted(float x, float y) => Blighted(x, y);
