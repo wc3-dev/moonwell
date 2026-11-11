@@ -2131,6 +2131,9 @@ which is in each player's language. The build rejects, as compile errors:
   of your own (`ShowTo(p, () => ...)`, where `ShowTo` gives it to `Local.For`) is checked as part of the block; calling
   that parameter outside `Local.For` too is MW0040. A delegate it cannot follow (a list's element, a library's
   result) is MW0039: write the lambda in place.
+- A library's method, property, constructor or operator inside it (MW0039 too): a library project of your own, or a
+  NuGet package. The analyzer cannot see a library's code, so the library says what a block may call, with
+  `[LocalSafe]` or `[MachineLocal]` (below). .NET's own classes need no mark.
 - A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
   localised names, `RealTime.LocalNow`, `PlayerFile.Read`, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
   reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
@@ -2161,6 +2164,12 @@ calling it outside one is MW0002. Where the code runs on every machine anyway, o
 `[MachineLocal]` on a field or auto-property of your own makes its value one machine's: code of one machine writes it,
 and any other read is MW0002, `+=`, `++` and `.Add` included. A plain `=` is allowed anywhere, as it reads nothing: a
 reset in a constructor needs no block. A local or an event cannot be marked.
+
+In a library project of your own, the marks also say what a map's `Local.For` may call. `[MachineLocal]` on a method
+works as above: its body is checked when the library is built. `[LocalSafe]` goes on a method, a constructor, a
+property (its getter only) or a class (every member), and says it only reads, or changes only what one player sees or
+hears. Nothing checks that: the analyzer takes the library's word, so a wrong `[LocalSafe]` desyncs with no error.
+A library you cannot mark, such as someone else's package, is called from a block marked `[SyncUnchecked]` (next).
 
 `[SyncUnchecked]` on a method turns the checks off in its own body, except `decimal`; `Local.For` still follows a method
 so marked, so a block whose changes are meant is marked itself: `Local.For(p, [SyncUnchecked] () => ...)`. That is the
