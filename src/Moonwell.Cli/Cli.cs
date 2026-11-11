@@ -14,7 +14,7 @@ namespace Moonwell.Tool
             "       moonwell new <name>\n" +
             "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
-            "       moonwell objects [folder]";
+            "       moonwell objects [folder] [--to-map]";
 
         // Folders of the project a change in which is no reason to build again: what the builds write, and the tools'.
         private static readonly string[] Unwatched = { "build", "bin", "obj", ".git", ".vs", ".idea" };
@@ -64,6 +64,12 @@ namespace Moonwell.Tool
                         break;
                     case "clean":
                         Clean(options.Folder, output);
+                        break;
+                    case "objects" when options.ToMap:
+                        var written = MapObjects.WriteToMap(options.Folder, output);
+                        output.WriteLine(written.Count > 0
+                            ? $@"moonwell: wrote {string.Join(", ", written)} into map\"
+                            : @"moonwell: map\ already holds the built objects");
                         break;
                     case "objects":
                         Objects(options.Folder, output);
@@ -241,6 +247,10 @@ namespace Moonwell.Tool
                 {
                     options.Launch = true;
                 }
+                else if (argument == "--to-map" && options.Command == "objects")
+                {
+                    options.ToMap = true;
+                }
                 else if (argument == "--game" && options.Command is "run" or "watch" && i + 1 < args.Length)
                 {
                     options.Game = args[++i];
@@ -287,6 +297,9 @@ namespace Moonwell.Tool
 
             // run, and watch --run: start the game with the map.
             public bool Launch { get; set; }
+
+            // objects --to-map: write the built object files into the source map. No build sets it (decisions 4 and 275).
+            public bool ToMap { get; set; }
 
             public string Game { get; set; } = Path.Combine(GameInstall.Places()[0], "_retail_", "x86_64", "Warcraft III.exe");
         }

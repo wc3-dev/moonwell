@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Moonwell.Hosting;
 
 namespace Moonwell.Engine
 {
@@ -6,7 +7,9 @@ namespace Moonwell.Engine
     /// The terrain changes a map holds, and how each is made and taken back. Pathing and tiles keep what the ground was
     /// before any change touched a cell or corner, and work out each one again from that and the changes still held, oldest
     /// first, so the newest wins. Blight can't be read back cell by cell, so ending one takes its blight off and makes every
-    /// blight change still held again, oldest first. A raise is the game's crater, taken back by the opposite one.
+    /// blight change still held again, oldest first. A raise is the game's crater, taken back by stopping it. A saved game
+    /// that holds craters loads wrong, so they are stopped when the game is about to save and made again after; a load
+    /// shows the map's own tiles, so the tiles held are painted again then.
     /// </summary>
     internal static class Changes
     {
@@ -16,7 +19,7 @@ namespace Moonwell.Engine
         /// <summary>The white tint, packed: the water as it started.</summary>
         private const int White = -1;
 
-        /// <summary>The changes held now, but raises, in the order they were made.</summary>
+        /// <summary>The changes held now, in the order they were made.</summary>
         private static readonly List<TerrainChange> held = new List<TerrainChange>();
 
         /// <summary>A cell's four flags before any change touched it, by the cell's number.</summary>
@@ -28,6 +31,68 @@ namespace Moonwell.Engine
         /// <summary>A corner's variation before any change touched it, by the corner's number.</summary>
         private static readonly Dictionary<int, int> variationsBefore = new Dictionary<int, int>();
 
+        /// <summary>Whether the craters are out of the game for a save, to be made again.</summary>
+        private static bool stopped;
+
+        /// <summary>
+        /// The game is about to write a saved game. A save that holds lasting craters loads wrong: the first load of a game
+        /// drops them, and a load of a save made in a loaded game puts them on top again (game facts, 11-11). So every
+        /// raise's craters are stopped, which the save then holds, and made again in the next moment, after the save is
+        /// written. Moonwell's own grid is left as it is: Height reads the raise all along.
+        /// </summary>
+        internal static void Saving()
+        {
+            for (var k = 0; k < held.Count; k++)
+            {
+                if (held[k].Kind == TerrainChange.Raise)
+                {
+                    Stop(held[k]);
+                }
+            }
+
+            if (!stopped)
+            {
+                stopped = true;
+                Game.Instance.After(0f, Again);
+            }
+        }
+
+        /// <summary>
+        /// A saved game was loaded: Moonwell's lists are as they were when the save was written, with the craters stopped,
+        /// so they are made again; a crater made at the load stays. The game shows the map's own tiles again, so every tile
+        /// change held paints its corners again. Pathing set by code lasts through a load. The first raise or tile change
+        /// asks for the load to be heard, so a map with neither hears none for this.
+        /// </summary>
+        internal static void Loaded()
+        {
+            Again();
+            for (var k = 0; k < held.Count; k++)
+            {
+                if (held[k].Kind == TerrainChange.Tiles)
+                {
+                    EachCorner(held[k]);
+                }
+            }
+        }
+
+        /// <summary>Makes the craters stopped for a save again, once: after the save in the game that goes on, and at the load in one loaded from it, whichever comes first there. A raise made since the save has its craters and is left.</summary>
+        private static void Again()
+        {
+            if (!stopped)
+            {
+                return;
+            }
+
+            stopped = false;
+            for (var k = 0; k < held.Count; k++)
+            {
+                if (held[k].Kind == TerrainChange.Raise && held[k].Craters == null)
+                {
+                    Craters(held[k]);
+                }
+            }
+        }
+
         /// <summary>Forgets every change, at install.</summary>
         internal static void Reset()
         {
@@ -35,6 +100,7 @@ namespace Moonwell.Engine
             cellsBefore.Clear();
             tilesBefore.Clear();
             variationsBefore.Clear();
+            stopped = false;
         }
 
         /// <summary>Makes a change in a scope, unless the scope has ended, and gives it.</summary>
@@ -50,6 +116,9 @@ namespace Moonwell.Engine
             switch (change.Kind)
             {
                 case TerrainChange.Raise:
+                    held.Add(change);
+                    Events.Listen(GameEvent.Saving);
+                    Events.Listen(GameEvent.Loaded);
                     Raise(change, 1f);
                     break;
                 case TerrainChange.Paths:
@@ -58,6 +127,7 @@ namespace Moonwell.Engine
                     break;
                 case TerrainChange.Tiles:
                     held.Add(change);
+                    Events.Listen(GameEvent.Loaded);
                     EachCorner(change);
                     break;
                 case TerrainChange.Blights:
@@ -87,13 +157,13 @@ namespace Moonwell.Engine
             }
 
             change.Applied = false;
+            held.Remove(change);
             if (change.Kind == TerrainChange.Raise)
             {
                 Raise(change, -1f);
                 return;
             }
 
-            held.Remove(change);
             switch (change.Kind)
             {
                 case TerrainChange.Paths:
@@ -132,9 +202,72 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Makes a raise, or takes it back with the sign -1: the game's crater, and the same at every corner of the grid inside the radius.</summary>
+        /// <summary>
+        /// Asks the game for a raise's craters, and keeps them to stop them by: one for a round raise, and for a grid raise
+        /// one of a tile's radius a corner, which moves the corner at its centre alone (the corners next to it are at the
+        /// radius, where a crater moves nothing). A corner outside the map, or moved by 0, has none.
+        /// </summary>
+        private static void Craters(TerrainChange change)
+        {
+            var amounts = change.Amounts;
+            if (amounts == null)
+            {
+                change.Craters = new[] { Terrain.World.Crater(change.X, change.Y, change.Radius, -change.By) };
+                return;
+            }
+
+            var grid = Terrain.Grid;
+            var made = new List<object>();
+            for (var j = 0; j < change.Up; j++)
+            {
+                var row = change.FirstRow + j;
+                if (row < 0 || row >= grid.Rows)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < change.Across; i++)
+                {
+                    var column = change.FirstColumn + i;
+                    var by = amounts[j * change.Across + i];
+                    if (by != 0f && column >= 0 && column < grid.Columns)
+                    {
+                        made.Add(Terrain.World.Crater(grid.Left + column * TileSize, grid.Bottom + row * TileSize, TileSize, -by));
+                    }
+                }
+            }
+
+            change.Craters = made.ToArray();
+        }
+
+        /// <summary>Takes a raise's craters out of the game, if it holds any.</summary>
+        private static void Stop(TerrainChange change)
+        {
+            var craters = change.Craters;
+            if (craters == null)
+            {
+                return;
+            }
+
+            change.Craters = null;
+            for (var k = 0; k < craters.Length; k++)
+            {
+                Terrain.World.StopCrater(craters[k]);
+            }
+        }
+
+        /// <summary>Makes a raise, or takes it back with the sign -1: the game's crater made or stopped, and the same at every corner of the grid inside the radius.</summary>
         private static void Raise(TerrainChange change, float sign)
         {
+            if (sign > 0f)
+            {
+                Craters(change);
+            }
+            else
+            {
+                Stop(change);
+            }
+
             if (change.Amounts != null)
             {
                 RaiseEach(change, change.Amounts, sign);
@@ -142,7 +275,6 @@ namespace Moonwell.Engine
             }
 
             var by = change.By * sign;
-            Terrain.World.Crater(change.X, change.Y, change.Radius, -by);
             var grid = Terrain.Grid;
             Corners(change.MinX, change.MaxX, grid.Left, grid.Columns, out var i0, out var i1);
             Corners(change.MinY, change.MaxY, grid.Bottom, grid.Rows, out var j0, out var j1);
@@ -161,11 +293,7 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>
-        /// Makes a grid raise, or takes it back with the sign -1: a crater a corner, of one tile's radius, which moves the
-        /// corner at its centre alone (the corners next to it are at the radius, where a crater moves nothing), and the
-        /// same in the grid. A corner outside the map, or moved by 0, is left out.
-        /// </summary>
+        /// <summary>Moves the grid's corners by a grid raise's amounts, or back with the sign -1. A corner outside the map, or moved by 0, is left out.</summary>
         private static void RaiseEach(TerrainChange change, float[] amounts, float sign)
         {
             var grid = Terrain.Grid;
@@ -177,7 +305,6 @@ namespace Moonwell.Engine
                     continue;
                 }
 
-                var y = grid.Bottom + row * TileSize;
                 for (var i = 0; i < change.Across; i++)
                 {
                     var column = change.FirstColumn + i;
@@ -187,7 +314,6 @@ namespace Moonwell.Engine
                         continue;
                     }
 
-                    Terrain.World.Crater(grid.Left + column * TileSize, y, TileSize, -by);
                     grid.Raise(column, row, by);
                 }
             }

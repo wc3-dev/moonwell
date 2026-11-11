@@ -6,6 +6,7 @@ using Xunit;
 namespace Moonwell.Build.Tests
 {
     /// <summary>A map whose code is in a library project of its own: what the library uses is installed as if the map used it.</summary>
+    [Collection("Sample")]
     public sealed class LibraryBuildTests : IDisposable
     {
         private readonly TestFolders folders;

@@ -35,6 +35,7 @@ namespace Moonwell
             Player.Reset();
             Team.Reset();
             Inbound.ResetAlliances();
+            Inbound.ResetNesting();
             Sharing.Reset();
             ChatCommand.Reset();
             RealClock.Reset();
@@ -68,6 +69,7 @@ namespace Moonwell
             Leaks.Reset();
             Profiler.Reset();
             DebugTools.Reset();
+            LoopGuard.Reset();
 #endif
             Game.Instance.Every(0.25f, Sweep.Run);
         }
@@ -75,6 +77,7 @@ namespace Moonwell
         /// <summary>Called when a wake request is due; runs the timers that are due.</summary>
         internal static void Wake()
         {
+            Inbound.ResetNesting();
             Scheduler.Wake();
         }
 

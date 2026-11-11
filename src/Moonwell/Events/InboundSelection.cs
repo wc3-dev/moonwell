@@ -6,7 +6,7 @@ namespace Moonwell
     internal static partial class Inbound
     {
         /// <summary>A player selects or deselects a unit: the player's Selection takes it in or lets it go, then the unit's OnSelected or OnDeselected, its components', the game's and the player's run, in that order (decision 203).</summary>
-        internal static void Selection(unit handle, player who, bool selected)
+        private static void HandleSelection(unit handle, player who, bool selected)
         {
             var unit = Unit.Of(handle);
             var player = Player.Of(who);

@@ -113,6 +113,7 @@ namespace Moonwell.Build
                 throw CannotWrite(project, project.ArchivePath, error);
             }
 
+            Silenced.Report(project, targetPath, log);
             log.WriteLine($@"moonwell: built build\{project.Name}.w3x");
             return project.ArchivePath;
         }

@@ -66,6 +66,9 @@ namespace Moonwell
         /// <summary>A grid change's tile or pathing kinds for each corner, row by row from the bottom left, 0 for a corner it leaves; null for another change.</summary>
         internal readonly int[]? Values;
 
+        /// <summary>The game's craters of a raise; null while the game holds none: before it is made, while a save is written, and once it has ended.</summary>
+        internal object[]? Craters;
+
         /// <summary>Whether the change was made in the game, so its end has something to take back.</summary>
         internal bool Applied;
 

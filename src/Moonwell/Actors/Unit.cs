@@ -63,17 +63,48 @@ namespace Moonwell
         [LocalSafe]
         public unit Handle { get; internal set; } = null!;
 
-        /// <summary>The type id of the unit, as the game read it when the unit was taken in.</summary>
+        /// <summary>The type id last read from the game, kept for when the game no longer gives it.</summary>
+        internal int lastTypeId;
+
+        /// <summary>The type id the game read when the unit was taken in, which picked its class and is the type of its Default: TypeId follows a morph, this does not. 0 for an object with no handle.</summary>
+        internal int firstTypeId;
+
+        /// <summary>The unit's type id, as the game reads it now. A morph (Bear Form, Metamorphosis) changes it when its morph time is up, and a building's upgrade when it finishes. The unit keeps the class it came in as, with that class's reactions, components, declared fields and Default. Once the game has removed the unit, the type it last had.</summary>
         [LocalSafe]
-        public int TypeId { get; internal set; }
+        public int TypeId
+        {
+            get
+            {
+                if (Handle != null && !IsGone)
+                {
+                    var now = Runtime.World.UnitTypeId(Handle);
+                    if (now != 0)
+                    {
+                        if (Local.Depth != 0)
+                        {
+                            return now;
+                        }
+
+                        lastTypeId = now;
+                    }
+                }
+
+                return lastTypeId;
+            }
+
+            internal set
+            {
+                lastTypeId = value;
+            }
+        }
 
         /// <summary>Whether the unit is an illusion (Mirror Image, a Wand of Illusion), as the game read it when the unit was taken in. An illusion has its hero's type id but is taken in as a plain unit, not as the hero's class: it has none of the class's starting components and runs no OnCreated. Map-wide reactions (OnUnitCreated, OnUnitDied) still see it.</summary>
         [LocalSafe]
         public bool IsIllusion { get; internal set; }
 
-        /// <summary>The default object of the unit's type, as Unreal's class default object: the values its class declares (a type no class of the map's declares, its values as World Editor made them, standard where World Editor left them), the same whatever this unit's are now and once it is gone. One per type, shared by its units, with no handle; it is gone, so its live actions do nothing.</summary>
+        /// <summary>The default object of the unit's type, as Unreal's class default object: the values its class declares (a type no class of the map's declares, its values as World Editor made them, standard where World Editor left them), the same whatever this unit's are now and once it is gone. One per type, shared by its units, with no handle; it is gone, so its live actions do nothing. A unit that has morphed keeps the default object of the type it came in as, as it keeps its class.</summary>
         [LocalSafe]
-        public Unit Default => ObjectTypes.DefaultOf(this, DeclaredTypeId);
+        public Unit Default => ObjectTypes.DefaultOf(this, firstTypeId != 0 ? firstTypeId : DeclaredTypeId);
 
         /// <summary>The id of the type whose declared values the unit reads: its type id, else, while its constructor runs, the id its class is registered with, else 0.</summary>
         internal int DeclaredTypeId => TypeId != 0 ? TypeId : ObjectTypes.IdOfClass(this);
@@ -203,18 +234,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.Life, nameof(Life));
                     return lastLife;
                 }
 
                 var now = Runtime.World.LifeOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Life, nameof(Life));
                     return lastLife;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastLife = now;
+                    Keep(Kept.Life);
                 }
 
                 return now;
@@ -227,6 +261,7 @@ namespace Moonwell
                     // The game clamps to the most life, so that is what a removed unit gives back.
                     var most = MaxLife;
                     lastLife = value <= 0.405f ? 0.0f : (value < most ? value : most);
+                    Keep(Kept.Life);
                     Runtime.World.SetLife(Handle, value);
                 }
             }
@@ -245,18 +280,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.MaxLife, nameof(MaxLife));
                     return lastMaxLife;
                 }
 
                 var now = Runtime.World.MaxLifeOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.MaxLife, nameof(MaxLife));
                     return lastMaxLife;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastMaxLife = now;
+                    Keep(Kept.MaxLife);
                 }
 
                 return now;
@@ -274,6 +312,7 @@ namespace Moonwell
                 {
                     // The game keeps the whole number, and lowers the life to it.
                     lastMaxLife = (int)value;
+                    Keep(Kept.MaxLife);
                     if (lastLife > lastMaxLife)
                     {
                         lastLife = lastMaxLife;
@@ -297,18 +336,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Mana, nameof(Mana));
                     return lastMana;
                 }
 
                 var now = Runtime.World.ManaOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Mana, nameof(Mana));
                     return lastMana;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastMana = now;
+                    Keep(Kept.Mana);
                 }
 
                 return now;
@@ -327,6 +369,7 @@ namespace Moonwell
                     // The game clamps to the most mana (0 for a unit without mana), so that is what a removed unit gives back.
                     var most = MaxMana;
                     lastMana = value < most ? value : most;
+                    Keep(Kept.Mana);
                     if (lastMana < 0.0f)
                     {
                         lastMana = 0.0f;
@@ -350,18 +393,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.MaxMana, nameof(MaxMana));
                     return lastMaxMana;
                 }
 
                 var now = Runtime.World.MaxManaOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.MaxMana, nameof(MaxMana));
                     return lastMaxMana;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastMaxMana = now;
+                    Keep(Kept.MaxMana);
                 }
 
                 return now;
@@ -379,6 +425,7 @@ namespace Moonwell
                 {
                     // The game keeps the whole number, and lowers the mana to it.
                     lastMaxMana = (int)value;
+                    Keep(Kept.MaxMana);
                     if (lastMana > lastMaxMana)
                     {
                         lastMana = lastMaxMana;
@@ -389,7 +436,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The x of the unit; once the game has removed it, the last x read.</summary>
+        /// <summary>The x of the unit; once the game has removed it, the last x read, which is where it died when Moonwell heard its death since (a death that runs a reaction).</summary>
         [LocalSafe]
         public float X
         {
@@ -397,25 +444,28 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.X, nameof(X));
                     return lastX;
                 }
 
                 var now = Runtime.World.UnitX(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.X, nameof(X));
                     return lastX;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastX = now;
+                    Keep(Kept.X);
                 }
 
                 return now;
             }
         }
 
-        /// <summary>The y of the unit; once the game has removed it, the last y read.</summary>
+        /// <summary>The y of the unit; once the game has removed it, the last y read, which is where it died when Moonwell heard its death since (a death that runs a reaction).</summary>
         [LocalSafe]
         public float Y
         {
@@ -423,18 +473,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.Y, nameof(Y));
                     return lastY;
                 }
 
                 var now = Runtime.World.UnitY(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Y, nameof(Y));
                     return lastY;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastY = now;
+                    Keep(Kept.Y);
                 }
 
                 return now;
@@ -467,18 +520,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.Facing, nameof(Facing));
                     return lastFacing;
                 }
 
                 var now = Runtime.World.FacingOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Facing, nameof(Facing));
                     return lastFacing;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastFacing = now;
+                    Keep(Kept.Facing);
                 }
 
                 return now;
@@ -489,6 +545,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastFacing = value;
+                    Keep(Kept.Facing);
                     Runtime.World.TurnUnit(Handle, value);
                 }
             }
@@ -516,18 +573,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Level, nameof(Level));
                     return lastLevel;
                 }
 
                 var now = Runtime.World.LevelOf(Handle);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.Level, nameof(Level));
                     return lastLevel;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastLevel = now;
+                    Keep(Kept.Level);
                 }
 
                 return now;
@@ -555,12 +615,14 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Name, nameof(Name));
                     return lastName;
                 }
 
                 var now = Runtime.World.UnitNameOf(Handle);
                 if (string.IsNullOrEmpty(now) && RemovedByGame())
                 {
+                    CheckKept(Kept.Name, nameof(Name));
                     return lastName;
                 }
 
@@ -578,6 +640,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastName = value;
+                    Keep(Kept.Name);
                     Runtime.World.RenameUnit(Handle, value);
                 }
             }
@@ -596,6 +659,7 @@ namespace Moonwell
 
                 // The game leaves the life 0 (seen), so a unit that is killed and then removed reads 0, not the life it had;
                 // read it, as a hero may have been revived inside the death event, unless OnDeath removed the unit.
+                Keep(Kept.Life);
                 lastLife = IsGone ? 0.0f : Life;
             }
         }
@@ -608,6 +672,7 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.IsPaused, nameof(IsPaused));
                     return lastPaused;
                 }
 
@@ -621,12 +686,14 @@ namespace Moonwell
                 var now = Runtime.World.IsPausedUnit(Handle);
                 if (!now && RemovedByGame())
                 {
+                    CheckKept(Kept.IsPaused, nameof(IsPaused));
                     return lastPaused;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastPaused = now;
+                    Keep(Kept.IsPaused);
                 }
 
                 return now;
@@ -637,6 +704,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastPaused = value;
+                    Keep(Kept.IsPaused);
 #if DEBUG
                     if (DebugSession.WantPause(Handle, value))
                     {
@@ -661,18 +729,21 @@ namespace Moonwell
 
                 if (IsGone || scaleKnown)
                 {
+                    CheckKept(Kept.Scale, nameof(Scale));
                     return lastScale;
                 }
 
                 var now = Runtime.World.ScaleOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Scale, nameof(Scale));
                     return lastScale;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastScale = now;
+                    Keep(Kept.Scale);
                     scaleKnown = true;
                 }
 
@@ -690,6 +761,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastScale = value;
+                    Keep(Kept.Scale);
                     scaleKnown = true;
                     Runtime.World.ScaleUnit(Handle, value);
                 }
@@ -855,18 +927,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.FlyHeight, nameof(FlyHeight));
                     return lastFlyHeight;
                 }
 
                 var now = Runtime.World.FlyHeightOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.FlyHeight, nameof(FlyHeight));
                     return lastFlyHeight;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastFlyHeight = now;
+                    Keep(Kept.FlyHeight);
                 }
 
                 return now;
@@ -883,6 +958,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastFlyHeight = value;
+                    Keep(Kept.FlyHeight);
                     if (!flyReady)
                     {
                         flyReady = true;
@@ -1122,18 +1198,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.InventorySize, nameof(InventorySize));
                     return lastInventorySize;
                 }
 
                 var now = Runtime.World.InventorySizeOf(Handle);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.InventorySize, nameof(InventorySize));
                     return lastInventorySize;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastInventorySize = now;
+                    Keep(Kept.InventorySize);
                 }
 
                 return now;

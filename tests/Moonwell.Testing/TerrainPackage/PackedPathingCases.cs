@@ -59,7 +59,12 @@ namespace Moonwell.Testing
             maxY = 3584f;
         }
 
-        public void Crater(float x, float y, float radius, float depth)
+        public object Crater(float x, float y, float radius, float depth)
+        {
+            return 0;
+        }
+
+        public void StopCrater(object crater)
         {
         }
 

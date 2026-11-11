@@ -263,7 +263,7 @@ namespace Moonwell.Engine
                     return;
                 }
 
-                inOrder[i].Stay(now);
+                inOrder[i].RunStays(now);
             }
         }
 

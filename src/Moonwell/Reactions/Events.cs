@@ -10,7 +10,7 @@ namespace Moonwell
         private static bool[] listening = new bool[EventCount];
 
         /// <summary>How many GameEvents there are.</summary>
-        private const int EventCount = 18;
+        private const int EventCount = 19;
 
         /// <summary>The reaction bits that some class overrides, once any has been needed.</summary>
         private static int wanted;
@@ -20,6 +20,12 @@ namespace Moonwell
 
         /// <summary>Set by the frames package: makes its frames again when a saved game loads, before the map's OnGameLoaded; null without one.</summary>
         internal static Action? LoadListener;
+
+        /// <summary>Set by the terrain package: makes its raises and painted tiles again when a saved game loads, before the map's OnGameLoaded; null without one.</summary>
+        internal static Action? TerrainLoadListener;
+
+        /// <summary>Set by the terrain package: takes its craters out of the game when the game is about to write a saved game; null without one.</summary>
+        internal static Action? TerrainSaveListener;
 
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, Damage?>? DamageDealer;
@@ -159,6 +165,8 @@ namespace Moonwell
             wanted = 0;
             DamageListener = null;
             LoadListener = null;
+            TerrainLoadListener = null;
+            TerrainSaveListener = null;
             DamageDealer = null;
         }
 

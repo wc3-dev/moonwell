@@ -122,6 +122,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
+            list.Add(new Case { Name = "pool.morphed-not-kept", Run = PoolCases.MorphedNotKept });
             list.Add(new Case { Name = "pool.scope-ends", Run = PoolCases.ScopeEnds });
             list.Add(new Case { Name = "teams.alliance-from-the-game", Run = TeamCases.AllianceFromTheGame });
             list.Add(new Case { Name = "teams.alliance-listened-when-reacted", Run = TeamCases.AllianceListenedWhenReacted });
@@ -613,6 +614,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.areas.region", Run = AreasViewCases.Region });
             list.Add(new Case { Name = "debug.areas.no-tracker", Run = AreasViewCases.NoTracker });
             list.Add(new Case { Name = "debug.areas.registered", Run = AreasViewCases.Registered });
+            list.Add(new Case { Name = "debug.areas.stay-not-inside-reported", Run = AreaCases.StayNotInsideReported });
             list.Add(new Case { Name = "debug.physics.lines", Run = PhysicsViewCases.Lines });
             list.Add(new Case { Name = "debug.physics.stats", Run = PhysicsViewCases.Stats });
 #endif
@@ -943,6 +945,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "areas.area.step-hands-over-and-restarts", Run = AreaCases.StepHandsOverAndRestarts });
             list.Add(new Case { Name = "areas.area.step-hands-over-and-keeps-running", Run = AreaCases.StepHandsOverAndKeepsRunning });
             list.Add(new Case { Name = "areas.area.step-leaves-and-reenters", Run = AreaCases.StepLeavesAndReenters });
+            list.Add(new Case { Name = "areas.area.stay-ends-on-leaving", Run = AreaCases.StayEndsOnLeaving });
+            list.Add(new Case { Name = "areas.area.stay-two-areas", Run = AreaCases.StayTwoAreas });
+            list.Add(new Case { Name = "areas.area.stay-area-ends", Run = AreaCases.StayAreaEnds });
+            list.Add(new Case { Name = "areas.area.stay-not-inside", Run = AreaCases.StayNotInside });
         }
 
         /// <summary>Adds the cases for the full audit's fixes to areas and input.</summary>
@@ -982,6 +988,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "orders.games-own", Run = OrderCases.GamesOwn });
             list.Add(new Case { Name = "orders.only-when-wanted", Run = OrderCases.OnlyWhenWanted });
             list.Add(new Case { Name = "orders.nested", Run = OrderCases.Nested });
+            list.Add(new Case { Name = "nesting.past-the-limit", Run = NestingCases.PastTheLimit });
+            list.Add(new Case { Name = "nesting.at-the-limit", Run = NestingCases.AtTheLimit });
+            list.Add(new Case { Name = "nesting.each-chain", Run = NestingCases.EachChain });
             list.Add(new Case { Name = "orders.last-three", Run = OrderCases.LastThree });
             list.Add(new Case { Name = "orders.repeat-takes-place", Run = OrderCases.RepeatTakesPlace });
             list.Add(new Case { Name = "orders.not-worth-it", Run = OrderCases.NotWorthIt });
@@ -1141,6 +1150,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.grid-block", Run = GridChangeCases.Block });
             list.Add(new Case { Name = "terrain.change.grid-refused", Run = GridChangeCases.Refused });
             list.Add(new Case { Name = "terrain.change.grid-outside-and-copy", Run = GridChangeCases.OutsideAndCopy });
+            list.Add(new Case { Name = "terrain.change.save-and-load", Run = ChangeCases.SaveAndLoad });
             list.Add(new Case { Name = "terrain.raycast.not-installed", Run = GroundRayCases.NotInstalled });
             list.Add(new Case { Name = "terrain.raycast.miss-makes-nothing", Run = MissCases.GroundMissMakesNothing });
         }
@@ -1481,6 +1491,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.paused-gone-before-sweep", Run = UnitCases.PausedGoneBeforeSweep });
             list.Add(new Case { Name = "units.gone-before-sweep", Run = UnitCases.GoneBeforeSweep });
             list.Add(new Case { Name = "units.gone-before-sweep-local", Run = UnitCases.GoneBeforeSweepInLocal });
+            list.Add(new Case { Name = "units.unkept-read-reported", Run = UnitCases.UnkeptReadReported });
+            list.Add(new Case { Name = "units.death-keeps-place", Run = UnitCases.DeathKeepsPlace });
+            list.Add(new Case { Name = "units.type-id-follows-morph", Run = UnitCases.TypeIdFollowsMorph });
             list.Add(new Case { Name = "units.order-immediate", Run = UnitCases.OrderImmediate });
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
@@ -1831,6 +1844,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "summons.removed-lets-go", Run = SummonCases.RemovedLetsGo });
             list.Add(new Case { Name = "summons.timed-life-kills", Run = SummonCases.TimedLifeKills });
             list.Add(new Case { Name = "summons.limit-kills-oldest", Run = SummonCases.LimitKillsOldest });
+            list.Add(new Case { Name = "summons.limit-counts-morphed", Run = SummonCases.LimitCountsMorphed });
             list.Add(new Case { Name = "summons.dies-with-summoner", Run = SummonCases.DiesWithSummoner });
             list.Add(new Case { Name = "summons.reaction-order", Run = SummonCases.ReactionOrder });
             list.Add(new Case { Name = "summons.game-summon-links", Run = SummonCases.GameSummonLinks });
@@ -2142,6 +2156,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.compound-conditional", Run = CompilerCases.CompoundConditional });
             list.Add(new Case { Name = "compiler.forms.patterns", Run = FormCases.Patterns });
             list.Add(new Case { Name = "compiler.forms.struct-copies", Run = FormCases.StructCopies });
+            list.Add(new Case { Name = "compiler.forms.struct-stores", Run = FormCases.StructStores });
             list.Add(new Case { Name = "compiler.forms.tuples", Run = FormCases.Tuples });
             list.Add(new Case { Name = "compiler.forms.declarations", Run = FormCases.Declarations });
             list.Add(new Case { Name = "compiler.forms.ranges", Run = FormCases.Ranges });

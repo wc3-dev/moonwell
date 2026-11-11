@@ -22,7 +22,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit enters the map: it is taken in when its type is registered, when a component wants to hear of entries, or once the interactions package tracks units (KnownUnits.EveryUnit). A hero is also taken in while a component wants OnHeroLevelUp, so its level is known before its first level-up.</summary>
-        internal static void Entered(unit handle)
+        private static void HandleEntered(unit handle)
         {
             if (KnownUnits.Find(handle) != null)
             {
@@ -37,7 +37,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit picks up an item: the item becomes the unit's player's, as the game leaves its owner alone (seen 11-02), every item, so one taken in later reads right; a new carry starts, unless the item went into the 3.0 bag (decision 166); then the item's OnPickedUp and components, then the unit's OnItemPickedUp and components. A reaction that drops or removes the item ends the pick-up: the reactions after it run nothing. An item or unit that is ending reacts to none.</summary>
-        internal static void PickedUp(unit u, item i)
+        private static void HandlePickedUp(unit u, item i)
         {
             var carrierPlayer = Runtime.World.OwnerOf(u);
             if (carrierPlayer != null)
@@ -87,7 +87,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit drops an item: the item's OnDropped and components, then the unit's OnItemDropped and components, then the carry the drop is about ends. The game fires a drop for a move between slots too, and takes a dropped item out of its slot only after the event, so a carry whose unit still has the item in a slot is looked at again a moment later, and ends only if the unit has let go of it by then; Unit.Drop ends it inside its call.</summary>
-        internal static void Dropped(unit u, item i)
+        private static void HandleDropped(unit u, item i)
         {
             if (KnownUnits.Find(u) == null && KnownItems.Find(i) == null && ObjectTypes.ItemMaker(Runtime.World.ItemTypeId(i)) == null)
             {
@@ -141,7 +141,7 @@ namespace Moonwell
         }
 
         /// <summary>A destructable dies: its type's OnDeath, then its components' OnDeath; one that is ending reacts to none, since the game fires the death event inside RemoveDestructable.</summary>
-        internal static void DestructableDied(destructable d)
+        private static void HandleDestructableDied(destructable d)
         {
             var dead = Destructable.Of(d);
             if (dead == null || dead.ending || dead.opening)
@@ -184,7 +184,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit takes damage: the source's type and components deal it, the target's take it, then the map's and the players' reactions; returns the amount after them. A dummy's damage is the unit it casts for's, or no one's for a player's cast (decisions 168, 172).</summary>
-        internal static float Damaged(unit target, unit? source, float amount, bool isAttack)
+        private static float HandleDamaged(unit target, unit? source, float amount, bool isAttack)
         {
             if (dealing != null && dealing.Target == target && dealing.Source == source)
             {
@@ -313,7 +313,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit dies: its type's OnDeath and components, then the killer's OnKill and components, then the map's and the players' reactions, then the buffs a death ends end, of those on the unit as it died; a killer equal to the dying unit counts as none, and a dummy is the unit it casts for, or none for a player's cast (decisions 168, 172).</summary>
-        internal static void Died(unit dying, unit? killer)
+        private static void HandleDied(unit dying, unit? killer)
         {
             unit? slain = killer == dying ? null : killer;
             var byDummy = slain != null && Dummies.IsDummy(slain);
@@ -330,6 +330,11 @@ namespace Moonwell
             {
                 return;
             }
+
+            // Where it died is kept, for a reaction's timer that first reads it once the corpse is gone (decision 270).
+            dead.lastX = Runtime.World.UnitX(dying);
+            dead.lastY = Runtime.World.UnitY(dying);
+            dead.Keep(Kept.X | Kept.Y);
 
             // The buffs the death ends are those on the unit now, which see it; one its reactions apply stays.
             var buffs = dead.GetAll<Buff>();
@@ -374,7 +379,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit's spell takes effect: its previous cast ends, the ability and the caster see the new cast, then the map's and the caster's player's reactions run. A dummy's cast runs none (decision 171); only the spell-buff watch sees it, as the cast of the unit it casts for.</summary>
-        internal static void SpellEffect(unit caster, int abilityId, unit? target, float x, float y)
+        private static void HandleSpellEffect(unit caster, int abilityId, unit? target, float x, float y)
         {
             if (Dummies.IsDummy(caster))
             {
@@ -426,7 +431,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit starts to cast a spell (the game's channel event, before mana, cooldown and effect): an ability class with a cast reaction gets the cast in OnCasting (decision 225), and a cast it refuses ends, the caster is stopped, which spends nothing (seen 11-08), and the caster's owner sees the text as an error. A dummy's cast runs none (decision 171).</summary>
-        internal static void SpellChannel(unit caster, int abilityId, unit? target, float x, float y)
+        private static void HandleSpellChannel(unit caster, int abilityId, unit? target, float x, float y)
         {
             if (ObjectTypes.AbilityMaker(abilityId) == null || Dummies.IsDummy(caster))
             {
@@ -481,7 +486,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit's spell runs to its end (the game's finish event): the ability's OnFinished, when the cast it is making is live, has taken effect and is for this ability.</summary>
-        internal static void SpellFinished(unit caster, int abilityId)
+        private static void HandleSpellFinished(unit caster, int abilityId)
         {
             var by = KnownUnits.Find(caster);
             var cast = by?.ActiveCast;
@@ -507,7 +512,7 @@ namespace Moonwell
         }
 
         /// <summary>A unit's spell ends: the cast it is making ends, when that cast is live and is for this ability; a dummy's spell ending starts its time to be free again.</summary>
-        internal static void SpellEnded(unit caster, int abilityId)
+        private static void HandleSpellEnded(unit caster, int abilityId)
         {
             if (Dummies.IsDummy(caster))
             {
@@ -946,7 +951,7 @@ namespace Moonwell
         }
 
         /// <summary>A hero gains one level or more, as one event that reads the last: for each level gained, in order, the hero's OnLevelUp and its components', then the map's and the hero's player's OnHeroLevelUp. A hero first taken in here, or whose level was known as this one or higher (taken away by a native), runs them once, for the level reached. The levels after one whose reactions ended the hero run nothing.</summary>
-        internal static void HeroLevel(unit handle)
+        private static void HandleHeroLevel(unit handle)
         {
             if (KnownUnits.Find(handle) == null && !Events.Wants(Hook.OnHeroLevelUp))
             {
@@ -991,7 +996,7 @@ namespace Moonwell
         }
 
         /// <summary>A hero learns a skill or raises its level: the ability's OnLearned, the hero's OnSkillLearned and its components', then the map's and the hero's player's OnHeroSkillLearned. The game spends the skill point after the event (seen 11-02).</summary>
-        internal static void HeroSkill(unit handle, int abilityId)
+        private static void HandleHeroSkill(unit handle, int abilityId)
         {
             if (KnownUnits.Find(handle) == null && ObjectTypes.AbilityMaker(abilityId) == null && !Events.Wants(Hook.OnHeroSkillLearned))
             {
@@ -1188,7 +1193,7 @@ namespace Moonwell
         }
 
         /// <summary>A player leaves the game: the game's components react, then the leaving player's.</summary>
-        internal static void Left(player p)
+        private static void HandleLeft(player p)
         {
             var leaving = Player.Of(p);
             if (leaving == null)
@@ -1201,11 +1206,33 @@ namespace Moonwell
             Sharing.Left(leaving);
         }
 
-        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06). Moonwell makes its lasting lightning again, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
-        internal static void GameLoaded()
+        /// <summary>The game is about to write a saved game: the terrain package takes its craters out of the game, as a save that holds them loads wrong (game facts, 11-11). No map code runs.</summary>
+        internal static void GameSaving()
+        {
+            try
+            {
+                Events.TerrainSaveListener?.Invoke();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Terrain", error);
+            }
+        }
+
+        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06), and so are its painted tiles (11-11). Moonwell makes its lasting lightning again, the terrain package its craters and tiles, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
+        private static void HandleGameLoaded()
         {
             RealClock.Loaded();
             LastingLightning.Loaded();
+            try
+            {
+                Events.TerrainLoadListener?.Invoke();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Terrain", error);
+            }
+
             try
             {
                 Events.LoadListener?.Invoke();
@@ -1239,7 +1266,7 @@ namespace Moonwell
         }
 
         /// <summary>A person typed a chat line with a dash in it, anywhere.</summary>
-        internal static void ChatArrived(player p, string text)
+        private static void HandleChatArrived(player p, string text)
         {
             var from = Player.Of(p);
             if (from != null)
@@ -1249,7 +1276,7 @@ namespace Moonwell
         }
 
         /// <summary>A person pressed Esc.</summary>
-        internal static void EscArrived(player p)
+        private static void HandleEscArrived(player p)
         {
             var from = Player.Of(p);
             if (from != null)
@@ -1259,7 +1286,7 @@ namespace Moonwell
         }
 
         /// <summary>A sharing message arrived from a player.</summary>
-        internal static void SyncArrived(player p, string data)
+        private static void HandleSyncArrived(player p, string data)
         {
             var from = Player.Of(p);
             if (from != null)

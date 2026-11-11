@@ -143,6 +143,12 @@ namespace Moonwell
             return world != null ? world.Clock() : 0.0f;
         }
 
+        /// <summary>Raw game seconds from the debug world, before Moonwell's clock halts or scales them; 0 when none is installed. The loop guard's Lua tells one instant from the next by it.</summary>
+        internal static float GameNow()
+        {
+            return world != null ? world.GameNow() : 0.0f;
+        }
+
         /// <summary>Turns the mode on, listening to the keys and the mouse the first time; or off, resuming at speed 1, letting go of held units and clearing the selection.</summary>
         internal static void Toggle()
         {

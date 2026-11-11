@@ -139,10 +139,20 @@ namespace Moonwell.Testing
         /// <summary>The water tints, in order, as "r g b a".</summary>
         public readonly List<string> Tints = new List<string>();
 
-        /// <summary>Records a lasting crater.</summary>
-        public void Crater(float x, float y, float radius, float depth)
+        /// <summary>The craters stopped, in order, each by its place in Craters.</summary>
+        public readonly List<int> Stopped = new List<int>();
+
+        /// <summary>Records a lasting crater, and gives its place in Craters to stop it by.</summary>
+        public object Crater(float x, float y, float radius, float depth)
         {
             Craters.Add(new[] { x, y, radius, depth });
+            return Craters.Count - 1;
+        }
+
+        /// <summary>Records a crater stopped.</summary>
+        public void StopCrater(object crater)
+        {
+            Stopped.Add((int)crater);
         }
 
         /// <summary>Records a ripple.</summary>
