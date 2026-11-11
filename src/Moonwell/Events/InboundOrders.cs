@@ -40,7 +40,7 @@ namespace Moonwell
         /// player's OnUnitOrdered. A target order's place is its target's when ordered, and one with neither the unit's. The game's
         /// own orders run nothing.
         /// </summary>
-        internal static void Ordered(unit handle, int id, OrderKind kind, float x, float y, unit? targetUnit, item? targetItem, destructable? targetDestructable, int queue)
+        private static void HandleOrdered(unit handle, int id, OrderKind kind, float x, float y, unit? targetUnit, item? targetItem, destructable? targetDestructable, int queue)
         {
             CheckUnloaded(handle);
             if (handle == ownOrder || id == UndefendOrder || (KnownUnits.Find(handle) == null && !Events.Wants(Hook.OnUnitOrdered)))
