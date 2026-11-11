@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using Moonwell.GameData;
+using Moonwell.MapFiles;
 using Moonwell.Tool;
 using War3Net.IO.Mpq;
 using Xunit;
@@ -15,7 +17,7 @@ namespace Moonwell.Build.Tests
             "       moonwell new <name>\n" +
             "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
-            "       moonwell objects [folder]";
+            "       moonwell objects [folder] [--to-map]";
 
         private readonly SampleBuilds builds;
         private readonly TestFolders folders;
@@ -110,6 +112,7 @@ namespace Moonwell.Build.Tests
         [InlineData("import", "old.w3x", "One", "Two")]
         [InlineData("clean", "--release")]
         [InlineData("objects", "--run")]
+        [InlineData("build", "--to-map")]
         [InlineData("watch", "--game", "game.exe")]
         public void bad_arguments_exit_2(params string[] args)
         {
@@ -236,6 +239,76 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void objects_to_map_writes_only_the_object_files_and_the_next_build_lets_code_win()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            var map = Path.Combine(folder, "map");
+            var staged = Path.Combine(folder, "build", "Sample");
+            var before = Directory.GetFiles(map, "*", SearchOption.AllDirectories).ToDictionary(file => file, File.ReadAllBytes);
+
+            var (exitCode, output, error, started) = Run("objects", folder, "--to-map");
+
+            Assert.True(exitCode == 0, error + output);
+            Assert.Empty(started);
+            var added = Directory.GetFiles(map, "*", SearchOption.AllDirectories).Where(file => !before.ContainsKey(file)).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
+            Assert.Equal(new[] { "war3map.w3u", "war3mapSkin.w3u" }, added);
+            Assert.EndsWith(@"moonwell: wrote war3map.w3u, war3mapSkin.w3u into map\", output.TrimEnd());
+            foreach (var (file, bytes) in before)
+            {
+                Assert.Equal(bytes, File.ReadAllBytes(file));
+            }
+
+            var built = added.ToDictionary(name => name!, name => File.ReadAllBytes(Path.Combine(staged, name!)));
+            foreach (var (name, bytes) in built)
+            {
+                Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(map, name)));
+            }
+
+            // Run again, the build takes the files back and the command finds nothing to write.
+            var again = Run("objects", folder, "--to-map");
+            Assert.True(again.ExitCode == 0, again.Error + again.Output);
+            Assert.EndsWith(@"moonwell: map\ already holds the built objects", again.Output.TrimEnd());
+
+            // A change made to the class's object in World Editor: the next build writes the class's own value, and leaves the source map be.
+            var skinPath = Path.Combine(map, "war3mapSkin.w3u");
+            var skin = ObjectFile.ReadLenient(Kind.Unit, File.ReadAllBytes(skinPath));
+            Assert.Equal("Arthas", ((FieldValue.Text)skin.Custom.Single(entry => entry.Id == "H001").Find("unam", 0)!.Value).Value);
+            skin.Custom.Single(entry => entry.Id == "H001").Set("unam", 0, 0, new FieldValue.Text("Edited"));
+            var edited = skin.ToBytes();
+            File.WriteAllBytes(skinPath, edited);
+
+            var next = Run("build", folder);
+
+            Assert.True(next.ExitCode == 0, next.Error + next.Output);
+            foreach (var (name, bytes) in built)
+            {
+                Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(staged, name)));
+            }
+
+            Assert.Equal(edited, File.ReadAllBytes(skinPath));
+        }
+
+        [Fact]
+        public void objects_to_map_leaves_out_moonwells_own_helper_objects()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            File.WriteAllText(
+                Path.Combine(folder, "Thunder.cs"),
+                "using Moonwell;\n\nnamespace Sample\n{\n    public sealed class Thunder : GameComponent\n    {\n        public void Strike(Unit from, Unit to)\n        {\n            from.CastOn<Moonwell.Objects.Human.Abilities.StormBolt>(to, Game.Instance);\n        }\n    }\n}\n");
+
+            var (exitCode, output, error, _) = Run("objects", folder, "--to-map");
+
+            Assert.True(exitCode == 0, error + output);
+            Assert.Equal(new[] { "H001", DummyType.Id }, NewUnitIds(Path.Combine(folder, "build", "Sample", "war3map.w3u")));
+            Assert.Equal(new[] { "H001" }, NewUnitIds(Path.Combine(folder, "map", "war3map.w3u")));
+            Assert.Equal(new[] { "H001" }, NewUnitIds(Path.Combine(folder, "map", "war3mapSkin.w3u")));
+
+            // The build refuses a source map that defines the dummy's id, so the next one passes only without it.
+            var next = Run("build", folder);
+            Assert.True(next.ExitCode == 0, next.Error + next.Output);
+        }
+
+        [Fact]
         public async Task watch_builds_again_after_a_change_and_starts_the_game_again()
         {
             var folder = folders.TemporaryCopyOfSample();
@@ -283,6 +356,11 @@ namespace Moonwell.Build.Tests
             var started = new List<(string Exe, string Arguments)>();
             var exitCode = Cli.Run(args, output, error, (exe, arguments) => started.Add((exe, arguments)));
             return (exitCode, output.ToString(), error.ToString(), started);
+        }
+
+        private static List<string> NewUnitIds(string path)
+        {
+            return ObjectFile.ReadLenient(Kind.Unit, File.ReadAllBytes(path)).Custom.Select(entry => entry.Id).Order(StringComparer.Ordinal).ToList();
         }
 
         private static string ReadScript(string archivePath)

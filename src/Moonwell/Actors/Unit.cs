@@ -63,17 +63,48 @@ namespace Moonwell
         [LocalSafe]
         public unit Handle { get; internal set; } = null!;
 
-        /// <summary>The type id of the unit, as the game read it when the unit was taken in.</summary>
+        /// <summary>The type id last read from the game, kept for when the game no longer gives it.</summary>
+        internal int lastTypeId;
+
+        /// <summary>The type id the game read when the unit was taken in, which picked its class and is the type of its Default: TypeId follows a morph, this does not. 0 for an object with no handle.</summary>
+        internal int firstTypeId;
+
+        /// <summary>The unit's type id, as the game reads it now. A morph (Bear Form, Metamorphosis) changes it when its morph time is up, and a building's upgrade when it finishes. The unit keeps the class it came in as, with that class's reactions, components, declared fields and Default. Once the game has removed the unit, the type it last had.</summary>
         [LocalSafe]
-        public int TypeId { get; internal set; }
+        public int TypeId
+        {
+            get
+            {
+                if (Handle != null && !IsGone)
+                {
+                    var now = Runtime.World.UnitTypeId(Handle);
+                    if (now != 0)
+                    {
+                        if (Local.Depth != 0)
+                        {
+                            return now;
+                        }
+
+                        lastTypeId = now;
+                    }
+                }
+
+                return lastTypeId;
+            }
+
+            internal set
+            {
+                lastTypeId = value;
+            }
+        }
 
         /// <summary>Whether the unit is an illusion (Mirror Image, a Wand of Illusion), as the game read it when the unit was taken in. An illusion has its hero's type id but is taken in as a plain unit, not as the hero's class: it has none of the class's starting components and runs no OnCreated. Map-wide reactions (OnUnitCreated, OnUnitDied) still see it.</summary>
         [LocalSafe]
         public bool IsIllusion { get; internal set; }
 
-        /// <summary>The default object of the unit's type, as Unreal's class default object: the values its class declares (a type no class of the map's declares, its values as World Editor made them, standard where World Editor left them), the same whatever this unit's are now and once it is gone. One per type, shared by its units, with no handle; it is gone, so its live actions do nothing.</summary>
+        /// <summary>The default object of the unit's type, as Unreal's class default object: the values its class declares (a type no class of the map's declares, its values as World Editor made them, standard where World Editor left them), the same whatever this unit's are now and once it is gone. One per type, shared by its units, with no handle; it is gone, so its live actions do nothing. A unit that has morphed keeps the default object of the type it came in as, as it keeps its class.</summary>
         [LocalSafe]
-        public Unit Default => ObjectTypes.DefaultOf(this, DeclaredTypeId);
+        public Unit Default => ObjectTypes.DefaultOf(this, firstTypeId != 0 ? firstTypeId : DeclaredTypeId);
 
         /// <summary>The id of the type whose declared values the unit reads: its type id, else, while its constructor runs, the id its class is registered with, else 0.</summary>
         internal int DeclaredTypeId => TypeId != 0 ? TypeId : ObjectTypes.IdOfClass(this);

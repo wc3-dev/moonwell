@@ -105,6 +105,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
+            list.Add(new Case { Name = "pool.morphed-not-kept", Run = PoolCases.MorphedNotKept });
             list.Add(new Case { Name = "pool.scope-ends", Run = PoolCases.ScopeEnds });
             list.Add(new Case { Name = "teams.alliance-from-the-game", Run = TeamCases.AllianceFromTheGame });
             list.Add(new Case { Name = "teams.alliance-listened-when-reacted", Run = TeamCases.AllianceListenedWhenReacted });
@@ -970,6 +971,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "orders.games-own", Run = OrderCases.GamesOwn });
             list.Add(new Case { Name = "orders.only-when-wanted", Run = OrderCases.OnlyWhenWanted });
             list.Add(new Case { Name = "orders.nested", Run = OrderCases.Nested });
+            list.Add(new Case { Name = "nesting.past-the-limit", Run = NestingCases.PastTheLimit });
+            list.Add(new Case { Name = "nesting.at-the-limit", Run = NestingCases.AtTheLimit });
+            list.Add(new Case { Name = "nesting.each-chain", Run = NestingCases.EachChain });
             list.Add(new Case { Name = "orders.last-three", Run = OrderCases.LastThree });
             list.Add(new Case { Name = "orders.repeat-takes-place", Run = OrderCases.RepeatTakesPlace });
             list.Add(new Case { Name = "orders.not-worth-it", Run = OrderCases.NotWorthIt });
@@ -1467,6 +1471,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.gone-before-sweep-local", Run = UnitCases.GoneBeforeSweepInLocal });
             list.Add(new Case { Name = "units.unkept-read-reported", Run = UnitCases.UnkeptReadReported });
             list.Add(new Case { Name = "units.death-keeps-place", Run = UnitCases.DeathKeepsPlace });
+            list.Add(new Case { Name = "units.type-id-follows-morph", Run = UnitCases.TypeIdFollowsMorph });
             list.Add(new Case { Name = "units.order-immediate", Run = UnitCases.OrderImmediate });
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
@@ -1817,6 +1822,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "summons.removed-lets-go", Run = SummonCases.RemovedLetsGo });
             list.Add(new Case { Name = "summons.timed-life-kills", Run = SummonCases.TimedLifeKills });
             list.Add(new Case { Name = "summons.limit-kills-oldest", Run = SummonCases.LimitKillsOldest });
+            list.Add(new Case { Name = "summons.limit-counts-morphed", Run = SummonCases.LimitCountsMorphed });
             list.Add(new Case { Name = "summons.dies-with-summoner", Run = SummonCases.DiesWithSummoner });
             list.Add(new Case { Name = "summons.reaction-order", Run = SummonCases.ReactionOrder });
             list.Add(new Case { Name = "summons.game-summon-links", Run = SummonCases.GameSummonLinks });

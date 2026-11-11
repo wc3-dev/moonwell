@@ -8,7 +8,7 @@ namespace Moonwell
         /// <summary>How many destructables a run checks; past this many they take turns. Each is a native call, so a run over all of 18,596 stopped the game for 12 ms, four times a second, and at this limit it takes 2.3 ms (game facts, 10-31 and 11-01).</summary>
         internal const int MostDestructables = 2000;
 
-        /// <summary>Ends each live unit and item, and each destructable it comes to, whose type id reads 0, which means the game has removed it, and forgets the handles of the units the runtime removed once theirs reads 0.</summary>
+        /// <summary>Ends each live unit and item, and each destructable it comes to, whose type id reads 0, which means the game has removed it, keeps the type id of each unit that stays, and forgets the handles of the units the runtime removed once theirs reads 0.</summary>
         internal static void Run()
         {
             KnownUnits.ForgetRemoved();
@@ -16,10 +16,16 @@ namespace Moonwell
             for (var i = 0; i < units.Count; i++)
             {
                 var unit = units[i];
-                if (Runtime.World.UnitTypeId(unit.Handle) == 0)
+                var typeId = Runtime.World.UnitTypeId(unit.Handle);
+                if (typeId == 0)
                 {
                     unit.IsGone = true;
                     unit.End();
+                }
+                else
+                {
+                    // A morph or an upgrade changed it: kept, so that the unit reads its last type once it is gone.
+                    unit.TypeId = typeId;
                 }
             }
 

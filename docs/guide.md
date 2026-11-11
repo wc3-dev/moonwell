@@ -218,6 +218,12 @@ public sealed class Champion : Human.Units.Paladin
   code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero, an
   illusion, a unit inside a transport and a transport carrying units are never kept,
   and `[Pooled]` on a hero class fails the build.
+- A unit keeps the class it came in as, also when the game changes its type. A morph (Bear Form, Metamorphosis) and a
+  building's upgrade change the type of the same unit: a morph when its morph time is up, an upgrade when it finishes.
+  `TypeId` reads the type the unit has now, so `hall.TypeId == ObjectTypes.IdOf<Keep>()` tells that a `Hall` has
+  become a keep. Everything else stays the first class's: the object, its reactions and components, its declared
+  fields and its `Default`. The new type's class runs nothing for it, `OnCreated` neither; its declared values are
+  `Unit.Default<Keep>()`'s. A unit of a `[Pooled]` class that has morphed is removed, not kept.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -314,6 +320,12 @@ public sealed class KillCounter : UnitComponent
   life running out, or a unit's own damage.
 - An event runs the type's reaction first, then its components' in the order added, then the game's, then those of
   the players whose units it involves (above). A reaction that fails is reported, and the others still run.
+- An event the game fires inside a call a reaction makes runs its reactions inside that call: `next.Kill()` in an
+  `OnDeath` runs the other unit's `OnDeath` before it returns. The game stops running events nested too deep, with no
+  error: past 98 in a plain Lua map, and sooner in C#, where each `try` takes some of that room. Events nested more
+  than 20 deep are reported once for the chain, with the reaction the newest one runs (`game events nested more than
+  20 deep, ... at OnDeath for Bomb`), in a release build too; they still run. A chain that long starts its next step
+  from a timer, which runs a moment later with nothing nested: `Game.Instance.After(0f, () => next.Kill())`.
 - A buff is a class that inherits `Buff`, or a standard buff to show its icon. `Duration` and `Tick` set its time,
   `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
   apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
@@ -2507,6 +2519,7 @@ game with it. Both make a development build: it checks the values Moonwell recei
 | `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
 | `moonwell clean` | Deletes `build/` |
 | `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
+| `moonwell objects --to-map` | Builds, then writes the built object files into `map/`, so World Editor lists the objects declared in code; close World Editor first |
 
 Each takes the project's folder after the command, as `build` does; `new` takes the name.
 
@@ -2572,11 +2585,13 @@ build counts nothing, so there such a loop still freezes the game.
 costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
 game closes first. A line longer than 253 characters is split.
 
-To place objects declared in code in World Editor, open `build\MyMap.w3x` there and Save Map As a folder beside `map/`:
-World Editor will not save over `map/` and names the new folder `map2.w3m`. Delete `map/`, rename `map2.w3m` to `map`,
-and open `map/` in World Editor again, so that later saves go there. The next build keeps the placed units; code wins
-over any object it also declares. World Editor's own changes to an object get a warning at each build: kept when no
-class declares the object, dropped, with the fields named, when one does.
+To place objects declared in code in World Editor, close World Editor, run `moonwell objects --to-map` and open `map/`
+again. The command builds the map and writes the built object files into `map/`, and nothing else there; a build never
+writes into `map/`. Run it again when a new object should be placed. World Editor reads a map's objects when it opens
+the map, so one left open lists none of the new ones, and its next save puts its own objects back. The objects
+Moonwell adds for itself, such as the dummy that casts for `CastOn`, are left out. The next build keeps the placed
+units; code wins over any object it also declares. World Editor's own changes to an object get a warning at each
+build: kept when no class declares the object, dropped, with the fields named, when one does.
 
 ## Debug mode
 

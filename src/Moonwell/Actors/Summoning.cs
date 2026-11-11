@@ -130,14 +130,14 @@ namespace Moonwell
             summoner.summoned.Add(summon);
         }
 
-        /// <summary>Kills the summoner's oldest living summons of a type until no more than the limit are left.</summary>
+        /// <summary>Kills the summoner's oldest living summons made as a type, one that has morphed since among them, until no more than the limit are left.</summary>
         private static void Trim(Unit summoner, int typeId, int limit)
         {
             var living = LivingOf(summoner);
             var count = 0;
             for (var i = 0; i < living.Count; i++)
             {
-                if (living[i].TypeId == typeId)
+                if (living[i].firstTypeId == typeId)
                 {
                     count++;
                 }
@@ -146,7 +146,7 @@ namespace Moonwell
             var oldest = new List<Unit>();
             for (var i = 0; i < living.Count && count - oldest.Count > limit; i++)
             {
-                if (living[i].TypeId == typeId)
+                if (living[i].firstTypeId == typeId)
                 {
                     oldest.Add(living[i]);
                 }
