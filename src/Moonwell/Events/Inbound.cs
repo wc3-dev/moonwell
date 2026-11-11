@@ -331,6 +331,11 @@ namespace Moonwell
                 return;
             }
 
+            // Where it died is kept, for a reaction's timer that first reads it once the corpse is gone (decision 270).
+            dead.lastX = Runtime.World.UnitX(dying);
+            dead.lastY = Runtime.World.UnitY(dying);
+            dead.Keep(Kept.X | Kept.Y);
+
             // The buffs the death ends are those on the unit now, which see it; one its reactions apply stays.
             var buffs = dead.GetAll<Buff>();
             var applied = Buff.AppliesOf(buffs);

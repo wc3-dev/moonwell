@@ -64,12 +64,14 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.ProperName, nameof(ProperName));
                     return lastProperName;
                 }
 
                 var now = Runtime.World.ProperNameOf(Handle);
                 if (string.IsNullOrEmpty(now) && RemovedByGame())
                 {
+                    CheckKept(Kept.ProperName, nameof(ProperName));
                     return lastProperName;
                 }
 
@@ -81,6 +83,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastProperName = value;
+                    Keep(Kept.ProperName);
                     Runtime.World.SetProperName(Handle, value);
                 }
             }
@@ -94,18 +97,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.Experience, nameof(Experience));
                     return lastExperience;
                 }
 
                 var now = Runtime.World.ExperienceOf(Handle);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.Experience, nameof(Experience));
                     return lastExperience;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastExperience = now;
+                    Keep(Kept.Experience);
                 }
 
                 return now;
@@ -127,6 +133,7 @@ namespace Moonwell
                     }
 
                     // The last value is what the game took, which the getter keeps.
+                    Keep(Kept.Experience);
                     lastExperience = Experience;
                 }
             }
@@ -140,7 +147,9 @@ namespace Moonwell
                 Runtime.World.AddExperience(Handle, amount, showEffect);
 
                 // The last values are what the game took, which the getters keep.
+                Keep(Kept.Level);
                 lastLevel = Level;
+                Keep(Kept.Experience);
                 lastExperience = Experience;
             }
         }
@@ -222,7 +231,9 @@ namespace Moonwell
                 }
 
                 // The last values are what the game took, which the getters keep.
+                Keep(Kept.Level);
                 lastLevel = Level;
+                Keep(Kept.Experience);
                 lastExperience = Experience;
                 if (lastLevel < leveledTo)
                 {
@@ -244,18 +255,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Strength, nameof(Strength));
                     return lastStrength;
                 }
 
                 var now = Runtime.World.StrengthOf(Handle, false);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.Strength, nameof(Strength));
                     return lastStrength;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastStrength = now;
+                    Keep(Kept.Strength);
                 }
 
                 return now;
@@ -272,6 +286,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastStrength = value;
+                    Keep(Kept.Strength);
                     Runtime.World.SetStrength(Handle, value);
                 }
             }
@@ -290,18 +305,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Agility, nameof(Agility));
                     return lastAgility;
                 }
 
                 var now = Runtime.World.AgilityOf(Handle, false);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.Agility, nameof(Agility));
                     return lastAgility;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastAgility = now;
+                    Keep(Kept.Agility);
                 }
 
                 return now;
@@ -318,6 +336,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastAgility = value;
+                    Keep(Kept.Agility);
                     Runtime.World.SetAgility(Handle, value);
                 }
             }
@@ -336,18 +355,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Intelligence, nameof(Intelligence));
                     return lastIntelligence;
                 }
 
                 var now = Runtime.World.IntelligenceOf(Handle, false);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.Intelligence, nameof(Intelligence));
                     return lastIntelligence;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastIntelligence = now;
+                    Keep(Kept.Intelligence);
                 }
 
                 return now;
@@ -364,6 +386,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastIntelligence = value;
+                    Keep(Kept.Intelligence);
                     Runtime.World.SetIntelligence(Handle, value);
                 }
             }
@@ -377,18 +400,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.StrengthWithBonus, nameof(StrengthWithBonus));
                     return lastStrengthWithBonus;
                 }
 
                 var now = Runtime.World.StrengthOf(Handle, true);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.StrengthWithBonus, nameof(StrengthWithBonus));
                     return lastStrengthWithBonus;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastStrengthWithBonus = now;
+                    Keep(Kept.StrengthWithBonus);
                 }
 
                 return now;
@@ -403,18 +429,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.AgilityWithBonus, nameof(AgilityWithBonus));
                     return lastAgilityWithBonus;
                 }
 
                 var now = Runtime.World.AgilityOf(Handle, true);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.AgilityWithBonus, nameof(AgilityWithBonus));
                     return lastAgilityWithBonus;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastAgilityWithBonus = now;
+                    Keep(Kept.AgilityWithBonus);
                 }
 
                 return now;
@@ -429,18 +458,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.IntelligenceWithBonus, nameof(IntelligenceWithBonus));
                     return lastIntelligenceWithBonus;
                 }
 
                 var now = Runtime.World.IntelligenceOf(Handle, true);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.IntelligenceWithBonus, nameof(IntelligenceWithBonus));
                     return lastIntelligenceWithBonus;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastIntelligenceWithBonus = now;
+                    Keep(Kept.IntelligenceWithBonus);
                 }
 
                 return now;
@@ -467,18 +499,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.SkillPoints, nameof(SkillPoints));
                     return lastSkillPoints;
                 }
 
                 var now = Runtime.World.SkillPointsOf(Handle);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.SkillPoints, nameof(SkillPoints));
                     return lastSkillPoints;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastSkillPoints = now;
+                    Keep(Kept.SkillPoints);
                 }
 
                 return now;
@@ -492,6 +527,7 @@ namespace Moonwell
                     if (delta != 0 && Runtime.World.AddSkillPoints(Handle, delta))
                     {
                         lastSkillPoints = value;
+                        Keep(Kept.SkillPoints);
                     }
                 }
             }
