@@ -1124,6 +1124,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.water-tint", Run = ChangeCases.WaterTint });
             list.Add(new Case { Name = "terrain.change.spread", Run = ChangeCases.Spread });
             list.Add(new Case { Name = "terrain.change.trail", Run = ChangeCases.Trail });
+            list.Add(new Case { Name = "terrain.change.after-load", Run = ChangeCases.AfterLoad });
             list.Add(new Case { Name = "terrain.raycast.not-installed", Run = GroundRayCases.NotInstalled });
             list.Add(new Case { Name = "terrain.raycast.miss-makes-nothing", Run = MissCases.GroundMissMakesNothing });
         }
