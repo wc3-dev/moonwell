@@ -61,6 +61,112 @@ namespace Moonwell.Testing
             Expect.Equal(0, map["a"].X, "a Dictionary's value");
         }
 
+        /// <summary>
+        /// A struct that can change is a copy wherever it is stored or given on: put into a collection, given to a
+        /// delegate, read through its owner, or standing in a conditional or an expression body (the fork's
+        /// 2.0.4-moonwell.22), and where a call or a property gives it back as a type parameter (2.0.4-moonwell.23). A
+        /// change made in place is still a change to the original. A method held to struct types that copies its value
+        /// takes a number too.
+        /// </summary>
+        public static void StructStores(FakeWorld world)
+        {
+            var a = new Spot { X = 1 };
+            var initialized = new List<Spot> { a };
+            Spot[] expression = [a];
+            var array = new[] { a };
+            var indexed = new List<Spot> { new Spot() };
+            indexed[0] = a;
+            var map = new Dictionary<string, Spot> { ["a"] = a };
+            map["b"] = a;
+            a.X = 9;
+            Expect.Equal(1, initialized[0].X, "a collection initializer");
+            Expect.Equal(1, expression[0].X, "a collection expression");
+            Expect.Equal(1, array[0].X, "an array initializer");
+            Expect.Equal(1, indexed[0].X, "a List's indexer");
+            Expect.Equal(1, map["a"].X, "a Dictionary's initializer");
+            Expect.Equal(1, map["b"].X, "a Dictionary's indexer");
+
+            var b = new Spot { X = 1 };
+            Action<Spot> change = spot => spot.X = 9;
+            change(b);
+            Expect.Equal(1, b.X, "a lambda's parameter");
+            Action<Spot> moved = MoveSpot;
+            moved(b);
+            Expect.Equal(1, b.X, "a method given as a delegate");
+            var list = new List<Spot> { b };
+            list.ForEach(spot => spot.X = 9);
+            Expect.Equal(1, list[0].X, "a lambda the core calls");
+
+            var owner = new SpotOwner { Spot = new Spot { X = 1 } };
+            MoveSpot(owner.Spot);
+            Expect.Equal(1, owner.Spot.X, "a field given as an argument");
+            var given = owner.Given();
+            given.X = 9;
+            Expect.Equal(1, owner.Spot.X, "a field given back by an expression body");
+            var picked = owner.Spot.X > 0 ? owner.Spot : b;
+            picked.X = 9;
+            Expect.Equal(1, owner.Spot.X, "a field in a conditional");
+            owner.Spot.X = 5;
+            Expect.Equal(5, owner.Spot.X, "a change in place");
+
+            var first = list.First();
+            first.X = 9;
+            Expect.Equal(1, list[0].X, "a struct LINQ gives back");
+            var found = list.Find(spot => spot.X == 1);
+            found.X = 9;
+            Expect.Equal(1, list[0].X, "a struct a List gives back");
+            Spot? maybe = b;
+            var value = maybe.Value;
+            value.X = 9;
+            Expect.Equal(1, maybe.Value.X, "a nullable's value");
+            foreach (var pair in map)
+            {
+                var held = pair.Value;
+                held.X = 9;
+            }
+            Expect.Equal(1, map["a"].X, "a Dictionary's value read from its pair");
+            var keeper = new Keeper<Spot>(new Spot { X = 1 });
+            var kept = keeper.Get();
+            kept.X = 9;
+            Expect.Equal(1, keeper.Get().X, "a generic class's value");
+
+            Expect.Equal(7, CopyOf(7), "a number copied by a method held to struct types");
+            Expect.Equal(5, CopyOf(owner.Spot).X, "a struct copied by it");
+        }
+
+        private static void MoveSpot(Spot spot)
+        {
+            spot.X = 9;
+        }
+
+        private static T CopyOf<T>(T value) where T : struct
+        {
+            var copy = value;
+            return copy;
+        }
+
+        private class SpotOwner
+        {
+            public Spot Spot;
+
+            public Spot Given() => Spot;
+        }
+
+        private class Keeper<T>
+        {
+            private readonly T value;
+
+            public Keeper(T value)
+            {
+                this.value = value;
+            }
+
+            public T Get()
+            {
+                return value;
+            }
+        }
+
         /// <summary>A deconstruction into new names, elements as targets, and a tuple as text (MW0022).</summary>
         public static void Tuples(FakeWorld world)
         {

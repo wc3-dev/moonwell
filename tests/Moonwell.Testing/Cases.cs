@@ -2125,6 +2125,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.compound-conditional", Run = CompilerCases.CompoundConditional });
             list.Add(new Case { Name = "compiler.forms.patterns", Run = FormCases.Patterns });
             list.Add(new Case { Name = "compiler.forms.struct-copies", Run = FormCases.StructCopies });
+            list.Add(new Case { Name = "compiler.forms.struct-stores", Run = FormCases.StructStores });
             list.Add(new Case { Name = "compiler.forms.tuples", Run = FormCases.Tuples });
             list.Add(new Case { Name = "compiler.forms.declarations", Run = FormCases.Declarations });
             list.Add(new Case { Name = "compiler.forms.ranges", Run = FormCases.Ranges });
