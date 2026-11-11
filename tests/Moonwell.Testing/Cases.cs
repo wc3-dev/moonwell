@@ -596,6 +596,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.areas.region", Run = AreasViewCases.Region });
             list.Add(new Case { Name = "debug.areas.no-tracker", Run = AreasViewCases.NoTracker });
             list.Add(new Case { Name = "debug.areas.registered", Run = AreasViewCases.Registered });
+            list.Add(new Case { Name = "debug.areas.stay-not-inside-reported", Run = AreaCases.StayNotInsideReported });
             list.Add(new Case { Name = "debug.physics.lines", Run = PhysicsViewCases.Lines });
             list.Add(new Case { Name = "debug.physics.stats", Run = PhysicsViewCases.Stats });
 #endif
@@ -926,6 +927,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "areas.area.step-hands-over-and-restarts", Run = AreaCases.StepHandsOverAndRestarts });
             list.Add(new Case { Name = "areas.area.step-hands-over-and-keeps-running", Run = AreaCases.StepHandsOverAndKeepsRunning });
             list.Add(new Case { Name = "areas.area.step-leaves-and-reenters", Run = AreaCases.StepLeavesAndReenters });
+            list.Add(new Case { Name = "areas.area.stay-ends-on-leaving", Run = AreaCases.StayEndsOnLeaving });
+            list.Add(new Case { Name = "areas.area.stay-two-areas", Run = AreaCases.StayTwoAreas });
+            list.Add(new Case { Name = "areas.area.stay-area-ends", Run = AreaCases.StayAreaEnds });
+            list.Add(new Case { Name = "areas.area.stay-not-inside", Run = AreaCases.StayNotInside });
         }
 
         /// <summary>Adds the cases for the full audit's fixes to areas and input.</summary>

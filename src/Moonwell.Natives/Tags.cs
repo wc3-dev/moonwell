@@ -37,8 +37,9 @@ namespace Moonwell
     }
 
     /// @CSharpLua.Ignore
-    /// <summary>A runtime member that may be called inside <c>Local.For</c>: it reads, or changes only what one player
-    /// sees or hears. On a property it covers the getter; on a class or struct, every member.</summary>
+    /// <summary>A member of Moonwell's, or of a library a map references, that may be called inside <c>Local.For</c>: it
+    /// reads, or changes only what one player sees or hears. On a property it covers the getter; on a class or struct,
+    /// every member. The analyzer takes the mark's word: it does not check the member's body.</summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor)]
     public sealed class LocalSafeAttribute : Attribute
     {

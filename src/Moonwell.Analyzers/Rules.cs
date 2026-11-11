@@ -80,11 +80,11 @@ public static class Rules
     public static readonly DiagnosticDescriptor Unfollowed = new(
         "MW0039",
         "Code inside Local.For the analyzer cannot follow",
-        "{0}; inside Local.For, write the lambda in place or call a method of the map",
+        "{0}; inside Local.For, {1}",
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The analyzer follows what Local.For runs: a lambda written in place, a method of the map, a delegate parameter whose callers' arguments it checks, and the delegates given to a variable, field, property or event of the map. A delegate from anywhere else (a list's element, a library's result, a lambda's parameter) runs code it cannot see, which may change the game on one machine only." + Silence);
+        description: "The analyzer follows what Local.For runs: a lambda written in place, a method of the map, a delegate parameter whose callers' arguments it checks, and the delegates given to a variable, field, property or event of the map. A delegate from anywhere else (a list's element, a library's result, a lambda's parameter) runs code it cannot see, which may change the game on one machine only. So does a method, property, constructor or operator of a library (a library project of the map's own or a NuGet package; not Moonwell's or .NET's own), unless the library marks it [LocalSafe] or [MachineLocal]." + Silence);
 
     public static readonly DiagnosticDescriptor OneMachineCode = new(
         "MW0040",
