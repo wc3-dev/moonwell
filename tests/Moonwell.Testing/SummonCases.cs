@@ -127,6 +127,20 @@ namespace Moonwell.Testing
             Expect.Same(bear, summoner.Summons[0], "oldest first");
         }
 
+        /// <summary>A summon that has morphed into another type still counts toward the limit of the type it was made as (decision 274).</summary>
+        public static void LimitCountsMorphed(FakeWorld world)
+        {
+            var summoner = Summoner(world);
+            var first = summoner.Summon(Wolf, 0f, 0f, 0f, Game.Instance, limit: 2);
+            var second = summoner.Summon(Wolf, 0f, 0f, 0f, Game.Instance, limit: 2);
+            world.MorphUnit(second.Handle, Bear);
+            var third = summoner.Summon(Wolf, 0f, 0f, 0f, Game.Instance, limit: 2);
+
+            Expect.True(!first.IsAlive, "the oldest wolf died");
+            Expect.True(second.IsAlive && third.IsAlive, "the morphed one and the new one live");
+            Expect.Equal(Bear, second.TypeId, "the morphed one reads its new type");
+        }
+
         /// <summary>A summon made to die with its summoner dies when the summoner dies, or leaves the game; one not made so lives on.</summary>
         public static void DiesWithSummoner(FakeWorld world)
         {

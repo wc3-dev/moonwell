@@ -49,6 +49,18 @@ namespace Moonwell.Testing
             Expect.Equal(true, world.RemovedUnits.Contains(other.Handle), "the other type removed");
         }
 
+        /// <summary>A unit of a pooled type that has morphed into a type not pooled is removed, not kept: given out again it would not be of the pooled type (decision 274).</summary>
+        public static void MorphedNotKept(FakeWorld world)
+        {
+            ObjectTypes.Pooled(Footman);
+            var unit = Unit.Create(Footman, Player.Get(0), 0.0f, 0.0f, Game.Instance);
+            world.MorphUnit(unit.Handle, ObjectTypes.FourCC("hkni"));
+            unit.Remove();
+
+            Expect.Equal(0, world.PutAwayUnits.Count, "nothing put away");
+            Expect.Equal(true, world.RemovedUnits.Contains(unit.Handle), "the morphed one removed");
+        }
+
         /// <summary>A unit kept when its scope ends: the pool keeps what a scope ends, not only Remove.</summary>
         public static void ScopeEnds(FakeWorld world)
         {
