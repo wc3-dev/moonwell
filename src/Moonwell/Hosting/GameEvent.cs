@@ -56,5 +56,8 @@ namespace Moonwell.Hosting
 
         /// <summary>An item goes into or comes out of a unit's 3.0 equipment slots.</summary>
         Equip,
+
+        /// <summary>The game is about to write a saved game.</summary>
+        Saving,
     }
 }

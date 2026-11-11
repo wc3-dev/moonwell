@@ -164,21 +164,6 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>
-        /// Puts every corner back at the map's own height, as a saved game's load puts the game's ground: every block is
-        /// forgotten, and read from the text again when it is next looked at.
-        /// </summary>
-        internal void Reset()
-        {
-            for (var block = 0; block < heights.Length; block++)
-            {
-                heights[block] = null!;
-                flags[block] = null!;
-            }
-
-            Raises++;
-        }
-
         /// <summary>Widens a block's bounds to hold a height.</summary>
         private void Widen(int block, float z)
         {

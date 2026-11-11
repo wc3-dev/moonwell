@@ -48,6 +48,9 @@ namespace Moonwell
         /// <summary>How far a raise moves the ground at its centre.</summary>
         internal readonly float By;
 
+        /// <summary>The game's craters of a raise; null while the game holds none: before it is made, while a save is written, and once it has ended.</summary>
+        internal object[]? Craters;
+
         /// <summary>Whether the change was made in the game, so its end has something to take back.</summary>
         internal bool Applied;
 

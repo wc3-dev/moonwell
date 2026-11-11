@@ -39,6 +39,7 @@ namespace Moonwell
             mapTiles = null;
             Changes.Reset();
             Events.TerrainLoadListener = Changes.Loaded;
+            Events.TerrainSaveListener = Changes.Saving;
         }
 
         /// <summary>The playable area: the map's bounds less the camera's margins, as the game's own playable area is. Read once, at the start, when the package is installed and before any map code.</summary>
@@ -325,6 +326,7 @@ namespace Moonwell
             mapTiles = null;
             Changes.Reset();
             Events.TerrainLoadListener = null;
+            Events.TerrainSaveListener = null;
         }
 
         /// <summary>The error of a read before Install.</summary>
