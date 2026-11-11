@@ -1151,6 +1151,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.grid-refused", Run = GridChangeCases.Refused });
             list.Add(new Case { Name = "terrain.change.grid-outside-and-copy", Run = GridChangeCases.OutsideAndCopy });
             list.Add(new Case { Name = "terrain.change.save-and-load", Run = ChangeCases.SaveAndLoad });
+            list.Add(new Case { Name = "terrain.change.grid-save-and-load", Run = GridChangeCases.SaveAndLoad });
             list.Add(new Case { Name = "terrain.raycast.not-installed", Run = GroundRayCases.NotInstalled });
             list.Add(new Case { Name = "terrain.raycast.miss-makes-nothing", Run = MissCases.GroundMissMakesNothing });
         }

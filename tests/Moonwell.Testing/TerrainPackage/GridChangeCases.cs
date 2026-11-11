@@ -91,6 +91,44 @@ namespace Moonwell.Testing
             Expect.Equal(64, fake.PathSets, "and the game told again");
         }
 
+        /// <summary>A save stops a grid raise's craters, one a corner, and the next moment or a load makes them again; a load paints a grid of tiles again; Height stays as it was (game facts, 11-11).</summary>
+        public static void SaveAndLoad(FakeWorld world)
+        {
+            var fake = Flat();
+            var holder = Game.Instance.Add(new Holder());
+            Terrain.Raise(1280f, 1280f, 2, new[] { 100f, 0f, -50f, 20f }, holder);
+            Terrain.SetTile(1280f, 1280f, 2, new[] { Tile.LordaeronSummerGrass, 0, 0, Tile.LordaeronSummerRock }, holder);
+            Expect.Equal(3, fake.Craters.Count, "a crater a corner moved");
+
+            Inbound.GameSaving();
+            Expect.Equal(3, fake.Stopped.Count, "each is stopped for the save");
+            Expect.Near(100f, Terrain.Height(1280f, 1280f), "Height reads the raise all along");
+            world.Advance(0.01f);
+            Expect.Equal(6, fake.Craters.Count, "and asked again the next moment");
+            Expect.Near(-20f, fake.Craters[5][3], "the last with its own depth");
+
+            // A game loaded from a save: as when the save was written, with the craters stopped and the map's own tiles.
+            Inbound.GameSaving();
+            Expect.Equal(6, fake.Stopped.Count, "stopped for a second save");
+            fake.Tiles.Clear();
+            fake.Variations.Clear();
+            var paints = fake.Paints;
+            Inbound.GameLoaded();
+            Expect.Equal(9, fake.Craters.Count, "a load asks a crater a corner again");
+            Expect.Near(100f, Terrain.Height(1280f, 1280f), "the first corner is as before the load");
+            Expect.Near(-50f, Terrain.Height(1280f, 1408f), "the row above");
+            Expect.Equal(Tile.LordaeronSummerGrass, Terrain.Tile(1280f, 1280f), "the first tile is painted again");
+            Expect.Equal(Tile.LordaeronSummerRock, Terrain.Tile(1408f, 1408f), "and the last");
+            Expect.Equal(paints + 2, fake.Paints, "two corners painted");
+            world.Advance(0.01f);
+            Expect.Equal(9, fake.Craters.Count, "the moment after the load asks nothing more");
+
+            holder.End();
+            Expect.Equal(9, fake.Stopped.Count, "the end stops the craters the load made");
+            Expect.Near(0f, Terrain.Height(1280f, 1280f), "and takes the raise back");
+            Expect.Equal(Tile.LordaeronSummerDirt, Terrain.Tile(1280f, 1280f), "and the tile");
+        }
+
         /// <summary>A grid that is not rows of its columns is refused: the change comes back ended and the game is asked nothing; so is one made in an ended scope.</summary>
         public static void Refused(FakeWorld world)
         {
