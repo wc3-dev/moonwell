@@ -970,6 +970,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "orders.games-own", Run = OrderCases.GamesOwn });
             list.Add(new Case { Name = "orders.only-when-wanted", Run = OrderCases.OnlyWhenWanted });
             list.Add(new Case { Name = "orders.nested", Run = OrderCases.Nested });
+            list.Add(new Case { Name = "nesting.past-the-limit", Run = NestingCases.PastTheLimit });
+            list.Add(new Case { Name = "nesting.at-the-limit", Run = NestingCases.AtTheLimit });
+            list.Add(new Case { Name = "nesting.each-chain", Run = NestingCases.EachChain });
             list.Add(new Case { Name = "orders.last-three", Run = OrderCases.LastThree });
             list.Add(new Case { Name = "orders.repeat-takes-place", Run = OrderCases.RepeatTakesPlace });
             list.Add(new Case { Name = "orders.not-worth-it", Run = OrderCases.NotWorthIt });
@@ -2033,9 +2036,6 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "death.self", Run = DeathCases.Self });
             list.Add(new Case { Name = "death.same-player", Run = DeathCases.SamePlayer });
             list.Add(new Case { Name = "death.not-an-end", Run = DeathCases.NotAnEnd });
-            list.Add(new Case { Name = "nesting.past-the-limit", Run = NestingCases.PastTheLimit });
-            list.Add(new Case { Name = "nesting.at-the-limit", Run = NestingCases.AtTheLimit });
-            list.Add(new Case { Name = "nesting.each-chain", Run = NestingCases.EachChain });
             list.Add(new Case { Name = "abilities.registered", Run = AbilityCases.Registered });
             list.Add(new Case { Name = "abilities.generic", Run = AbilityCases.Generic });
             list.Add(new Case { Name = "cast.order", Run = AbilityCases.Order });
