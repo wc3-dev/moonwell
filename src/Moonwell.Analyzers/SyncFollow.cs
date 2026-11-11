@@ -25,7 +25,7 @@ public sealed partial class SyncAnalyzer
             What = what;
             Unseen = unseen;
             Written = written;
-            Fix = fix;
+            Fix = fix ?? (unseen ? "write the lambda in place or call a method of the map" : null);
         }
 
         public string Path { get; }
@@ -38,7 +38,7 @@ public sealed partial class SyncAnalyzer
         /// <summary>The shared value the code changes, which is MW0048 and not MW0001; null for any other finding.</summary>
         public string? Written { get; }
 
-        /// <summary>What to do about a shared value changed.</summary>
+        /// <summary>What to do about a shared value changed, or about code the analyzer cannot follow.</summary>
         public string? Fix { get; }
 
         /// <summary>The name the path starts with: what the reported code calls.</summary>
@@ -430,7 +430,10 @@ public sealed partial class SyncAnalyzer
                     }
                 }
 
-                return null;
+                // A library's own code is not seen, so its member runs here only on the library's word (decision 267).
+                return IsLibrary(member) && !IsLocalSafe(member, write) && !IsMachineLocal(member, write)
+                    ? new Finding(name, "runs a library's code, which the analyzer cannot follow", true, fix: "call only what a library marks [LocalSafe] or [MachineLocal]")
+                    : null;
             }
 
             // CSharp.lua runs a class's static initializers and static constructor when the class is first touched.
@@ -502,6 +505,19 @@ public sealed partial class SyncAnalyzer
 
         private bool IsMoonwell(ISymbol member) =>
             IsRuntime(member) || packages.Any(package => SymbolEqualityComparer.Default.Equals(member.ContainingAssembly, package));
+
+        // The keys .NET's own assemblies are signed with: System.Runtime's (most of them), mscorlib's, netstandard's and the core library's.
+        private static readonly string[] DotNetKeys = { "b03f5f7f11d50a3a", "b77a5c561934e089", "cc7b13ffcd2ddd51", "7cec85d7bea7798e" };
+
+        /// <summary>
+        /// Whether a member is a library's: of an assembly that is not the map's, .NET's own or one of Moonwell's (told by
+        /// its name, as the build tells them), such as a library project of the map's own or a NuGet package. A delegate
+        /// type's Invoke is no code of its library.
+        /// </summary>
+        private bool IsLibrary(ISymbol member) =>
+            member is not IMethodSymbol { MethodKind: MethodKind.DelegateInvoke } && !IsMap(member) && member.ContainingAssembly is { } assembly
+            && assembly.Name != "Moonwell" && !assembly.Name.StartsWith("Moonwell.", System.StringComparison.Ordinal)
+            && !DotNetKeys.Contains(string.Concat(assembly.Identity.PublicKeyToken.Select(part => part.ToString("x2"))));
 
         /// <summary>
         /// The map's overrides and implementations of a virtual, abstract or interface method that a virtual call on a
@@ -1873,8 +1889,7 @@ public sealed partial class SyncAnalyzer
                 && (IsLocalForAction(parameter) || localParameters.Value.Contains(Canonical(parameter)) || (MayRun(parameter) && IsLocal(operation, context.ContainingSymbol)))
                 && !Followable(argument.Value))
             {
-                var value = Unwrap(argument.Value).Syntax;
-                context.ReportDiagnostic(Diagnostic.Create(Rules.Unfollowed, value.GetLocation(), new Finding(value.ToString(), Unfollowed, true).Message(value.ToString())));
+                context.ReportDiagnostic(UnfollowedAt(Unwrap(argument.Value).Syntax));
             }
 
             // hud.Show = actions[0], where the setter gives its value to Local.For.
@@ -1887,8 +1902,7 @@ public sealed partial class SyncAnalyzer
             };
             if (assigned is ({ } valueParameter, { } assignedValue) && localParameters.Value.Contains(Canonical(valueParameter)) && !Followable(assignedValue))
             {
-                var value = Unwrap(assignedValue).Syntax;
-                context.ReportDiagnostic(Diagnostic.Create(Rules.Unfollowed, value.GetLocation(), new Finding(value.ToString(), Unfollowed, true).Message(value.ToString())));
+                context.ReportDiagnostic(UnfollowedAt(Unwrap(assignedValue).Syntax));
             }
 
             if (operation is IParameterReferenceOperation reference && localParameters.Value.Contains(Canonical(reference.Parameter))
@@ -1903,6 +1917,13 @@ public sealed partial class SyncAnalyzer
                         "is given to Local.For, so the code given for it is checked as code of one machine, and " + where));
                 }
             }
+        }
+
+        // MW0039 at a delegate the analyzer cannot follow.
+        private static Diagnostic UnfollowedAt(SyntaxNode value)
+        {
+            var finding = new Finding(value.ToString(), Unfollowed, true);
+            return Diagnostic.Create(Rules.Unfollowed, value.GetLocation(), finding.Message(value.ToString()), finding.Fix);
         }
 
         /// <summary>Whether a delegate leaves for other code: given as an argument, kept in a field, property or event, or returned. A local it is kept in is left alone.</summary>

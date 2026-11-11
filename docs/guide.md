@@ -1,7 +1,7 @@
 # Making a map with Moonwell
 
-This guide describes Moonwell 0.11.0; the guide for 0.10.0 is at the
-[`v0.10.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.10.0/docs/guide.md).
+This guide describes Moonwell 0.12.0; the guide for 0.11.0 is at the
+[`v0.11.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.11.0/docs/guide.md).
 
 ## Start a map
 
@@ -218,6 +218,12 @@ public sealed class Champion : Human.Units.Paladin
   code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero, an
   illusion, a unit inside a transport and a transport carrying units are never kept,
   and `[Pooled]` on a hero class fails the build.
+- A unit keeps the class it came in as, also when the game changes its type. A morph (Bear Form, Metamorphosis) and a
+  building's upgrade change the type of the same unit: a morph when its morph time is up, an upgrade when it finishes.
+  `TypeId` reads the type the unit has now, so `hall.TypeId == ObjectTypes.IdOf<Keep>()` tells that a `Hall` has
+  become a keep. Everything else stays the first class's: the object, its reactions and components, its declared
+  fields and its `Default`. The new type's class runs nothing for it, `OnCreated` neither; its declared values are
+  `Unit.Default<Keep>()`'s. A unit of a `[Pooled]` class that has morphed is removed, not kept.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
@@ -314,6 +320,12 @@ public sealed class KillCounter : UnitComponent
   life running out, or a unit's own damage.
 - An event runs the type's reaction first, then its components' in the order added, then the game's, then those of
   the players whose units it involves (above). A reaction that fails is reported, and the others still run.
+- An event the game fires inside a call a reaction makes runs its reactions inside that call: `next.Kill()` in an
+  `OnDeath` runs the other unit's `OnDeath` before it returns. The game stops running events nested too deep, with no
+  error: past 98 in a plain Lua map, and sooner in C#, where each `try` takes some of that room. Events nested more
+  than 20 deep are reported once for the chain, with the reaction the newest one runs (`game events nested more than
+  20 deep, ... at OnDeath for Bomb`), in a release build too; they still run. A chain that long starts its next step
+  from a timer, which runs a moment later with nothing nested: `Game.Instance.After(0f, () => next.Kill())`.
 - A buff is a class that inherits `Buff`, or a standard buff to show its icon. `Duration` and `Tick` set its time,
   `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
   apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
@@ -415,7 +427,10 @@ the game, whose integers are 32 bits, and are MW0030.
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last
-value read or set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the
+value read or set, and setting does nothing. A member never read or set while it was in the game gives 0 then, as in
+`OnLeave` after the game removed it, and a development build reports that read: read it into a variable while the unit
+is in the game, and use that. Where a unit died is kept as its `X` and `Y` when a death reaction (`OnDeath`, `OnKill`,
+`OnUnitDied`) sees the death, so a timer started there can read them after the corpse is gone. In the
 quarter second before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
 `Local.For`, a change is not.
 
@@ -1119,6 +1134,10 @@ Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and 
 - Where changes of a kind overlap, the newest held wins, and ending one shows what is under it. Raises add up, as the
   game's craters do. `Height`, `Normal`, `Raycast` and physics follow a raise on every machine; ripples, waves and
   shakes are only for the look.
+- A saved game keeps neither the game's own craters nor its painted tiles rightly. Moonwell takes its raises out of the
+  game while a save is written and makes them again after it and at a load, and paints its tiles again at a load,
+  before `OnGameLoaded`, so the ground comes back as it was; pathing lasts by itself. Craters and tiles a map makes
+  with natives are not looked after.
 - Pathing changes are per 32 cell, and the reads see them at once. A tile is painted per 128 corner; the game draws only
   the map's own tiles (at most 16), so a development build reports another.
 - `Raise`, `SetTile` and `Block` also take a grid of corners as one change: `Terrain.Raise(x, y, columns, amounts,
@@ -1414,7 +1433,11 @@ public sealed class ShopFloor : Area // a game component: Components.Add(new Sho
 {
     public ShopFloor() { Shape = AreaShape.Region("Shop"); Tick = 1f; } // the region's name in World Editor
     public override bool Accepts(Unit unit) => unit is Hero;
-    public override void OnUnitEntered(Unit enteringUnit) { enteringUnit.Owner.Print("Welcome."); }
+    public override void OnUnitEntered(Unit enteringUnit)
+    {
+        enteringUnit.Owner.Print("Welcome.");
+        enteringUnit.Apply(new Rested(), heldBy: Stay(enteringUnit)); // a buff of the map's: it ends when the unit leaves
+    }
     public override void OnUnitStays(Unit stayingUnit) { stayingUnit.Life += 20f; }
     public override void OnUnitLeft(Unit leavingUnit) { leavingUnit.Owner.Print("Come again."); }
 }
@@ -1436,9 +1459,15 @@ public sealed class ShopFloor : Area // a game component: Components.Add(new Sho
   centre is inside, and always the cell its own centre is in (a polygon's centroid). So a small circle (a landmine) or a
   band thinner than a cell is never left without cells, but it may be only that one. `Contains` is the true shape, so
   the two can disagree within a cell of an edge.
-- A timer an area's reaction makes with `After` is the area's and ends with it, so one made in `OnUnitLeft` while the
-  area ends is ended at once; a buff or component added to a unit is the unit's. Make it on `Game.Instance` to outlive
-  the area.
+- `Stay(unit)` is the scope of one unit's stay, from its `OnUnitEntered` until it leaves or the area ends, so what an
+  area gives needs no taking back: a buff, component or stat modifier held by it (`heldBy: Stay(enteringUnit)`) ends
+  when the unit leaves, right after `OnUnitLeft`, and a timer made on it (`Stay(unit).Every(1f, Pulse)`) ends then
+  too. A buff two areas give this way stays until the unit has left both, where `Remove<T>()` in `OnUnitLeft` takes it
+  at the first. For a unit that is not inside, as in `Accepts` and `OnUnitLeft`, the stay has ended and holds nothing,
+  which a development build reports.
+- A timer an area's reaction makes with plain `After` is the area's and ends with it, so one made in `OnUnitLeft` while
+  the area ends is ended at once; make it on `Game.Instance` to outlive the area. A buff or component added with no
+  `heldBy` is the unit's.
 - Costs: a unit inside, hidden, dead or refused keeps a check running every 0.25 s; the 1/32 s step for `OnUnitStays`
   runs only while an area with a `Tick` has a unit inside. Adding an area lists every unit of every player once to find
   those already inside, so on a map of thousands of units an area made at each cast pays that at each cast.
@@ -2169,6 +2198,9 @@ which is in each player's language. The build rejects, as compile errors:
   of your own (`ShowTo(p, () => ...)`, where `ShowTo` gives it to `Local.For`) is checked as part of the block; calling
   that parameter outside `Local.For` too is MW0040. A delegate it cannot follow (a list's element, a library's
   result) is MW0039: write the lambda in place.
+- A library's method, property, constructor or operator inside it (MW0039 too): a library project of your own, or a
+  NuGet package. The analyzer cannot see a library's code, so the library says what a block may call, with
+  `[LocalSafe]` or `[MachineLocal]` (below). .NET's own classes need no mark.
 - A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
   localised names, `RealTime.LocalNow`, `PlayerFile.Read`, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
   reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
@@ -2200,13 +2232,20 @@ calling it outside one is MW0002. Where the code runs on every machine anyway, o
 and any other read is MW0002, `+=`, `++` and `.Add` included. A plain `=` is allowed anywhere, as it reads nothing: a
 reset in a constructor needs no block. A local or an event cannot be marked.
 
+In a library project of your own, the marks also say what a map's `Local.For` may call. `[MachineLocal]` on a method
+works as above: its body is checked when the library is built. `[LocalSafe]` goes on a method, a constructor, a
+property (its getter only) or a class (every member), and says it only reads, or changes only what one player sees or
+hears. Nothing checks that: the analyzer takes the library's word, so a wrong `[LocalSafe]` desyncs with no error.
+A library you cannot mark, such as someone else's package, is called from a block marked `[SyncUnchecked]` (next).
+
 `[SyncUnchecked]` on a method turns the checks off in its own body, except `decimal`; `Local.For` still follows a method
 so marked, so a block whose changes are meant is marked itself: `Local.For(p, [SyncUnchecked] () => ...)`. That is the
 way for MW0048's false alarms: a lazy `instance ??= new Hud()`, or a cache filled inside a block.
 `Natives.BlzSendSyncData` inside `Local.For` sends a machine-local value to every machine.
 
-A `#pragma warning disable`, `NoWarn` or `.editorconfig` on one of these rules removes its protection, and nothing says
-so. To turn the checks off where you mean it, use `[SyncUnchecked]`.
+A `#pragma warning disable`, `[SuppressMessage]`, `NoWarn` or `.editorconfig` on one of these rules removes its
+protection. To turn the checks off where you mean it, use `[SyncUnchecked]`. Every build lists each place that turns a
+Moonwell rule off, `[SyncUnchecked]` included, so nothing is silenced unseen (see The build).
 
 ## Files and sharing
 
@@ -2439,8 +2478,9 @@ Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A fe
 Lua that does something else, or call a library function the Lua core does not have. The analyzer rejects most of them
 as errors with their line, so the map does not build and then fail on the screen. `[SyncUnchecked]` does not silence
 them, `decimal` included, because the Lua cannot run them anywhere; a `#pragma warning disable` does, and the map then
-fails in the game. The list comes from about 770 checks in 60 programs, run on .NET and in Lua with what they printed
-compared, and from later checks of the compiler Moonwell builds with.
+fails in the game (the build's list of what is turned off names it; see The build). The list comes from about 770
+checks in 60 programs, run on .NET and in Lua with what they printed compared, and from later checks of the compiler
+Moonwell builds with.
 
 | Rule | Rejects | Write instead |
 |---|---|---|
@@ -2453,6 +2493,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 | MW0053 | a native as a method group, `xs.Select(Natives.Cos)` or `Func<float, float> f = Natives.Cos`: it is written `Moonwell.Natives.Cos`, which the game's Lua does not have, so the script stops there | a lambda that calls it, `x => Natives.Cos(x)` |
+| MW0056 | `new Dictionary<Quest, int>()` or `new OrderedMap<Quest, int>()` where `Quest` is a class of the map's with static setup, a static field given a value that is no constant or a static constructor: the setup runs while the script loads, and the map can stop there with nothing on the screen (see The build) | the static field in another class or set on first use, or another key; a `HashSet` or an `OrderedSet` is fine |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
 
@@ -2469,8 +2510,7 @@ The analyzer does not see these, so they build and then go wrong in the game:
 
 | Form | In the game | Write instead |
 |---|---|---|
-| a struct of your own that can change, put into a collection by an initializer, a collection expression or an indexer (`new List<P> { a }`, `[a]`, `new P[] { a }`, `list[0] = a`, `dict[k] = a`), or changed through a lambda's parameter (`p => p.X = 9`, `list.ForEach(...)`) | not copied: both hold the same struct, so a change to one is a change to the other | a `readonly struct`, made new to change it, or a class; `Add` and `Insert` copy |
-| a `where T : struct` or `unmanaged` method that copies its value (`var y = x;`, `foreach (var x in e) return x;`), given an `int`, a `float` or a `bool` | fails: "attempt to index a number value" | the method without the constraint |
+| a struct of your own that can change, copied with its collection (`ToArray()`, `Clone()`, `[.. list]`) and then changed in place (`copy[0].X = 9`), changed by a method called on a `foreach` variable or straight on a List's element or on what a call gives back (`list[0].Move()`, `list.First().Move()`), or changed in a named method the collection calls (`list.ForEach(Move)`) | not copied: both hold the same struct, so a change to one is a change to the other | a `readonly struct`, made new to change it, or a class; a copy in a variable of its own (`var c = list[0];`) and a lambda (`list.ForEach(p => ...)`) are safe |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
 | an `abstract` property read by its bare name or through `this.` in the class that declares it (`abstract string Kind { get; }`, then `Kind` in that class) | nil: the class's own override is never asked | a `virtual` property with a body (`virtual string Kind => "";`) |
@@ -2518,16 +2558,21 @@ game with it. Both make a development build: it checks the values Moonwell recei
 | `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
 | `moonwell clean` | Deletes `build/` |
 | `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
+| `moonwell objects --to-map` | Builds, then writes the built object files into `map/`, so World Editor lists the objects declared in code; close World Editor first |
 
 Each takes the project's folder after the command, as `build` does; `new` takes the name.
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
-`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use. The
-build does not catch a
-`Dictionary` keyed by a map's own class that has a static field with a value: the map can stop while it loads, with
-nothing on the screen. Key by the handle, or set the field on first use. Moonwell's classes, `Unit` and the rest, are
-safe keys.
+`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use.
+
+A `new Dictionary` or `new OrderedMap` keyed by a map's own class that has static setup is MW0056. Static setup is a
+static field given a value that is no constant (`static readonly List<Quest> All = new()`), or a static constructor.
+The game's Lua runs it while the script loads, when the dictionary's type is made, and the map can stop there with
+nothing on the screen. Move the field to another class, set it on first use, or key by the handle. A constant
+(`static int next = 1`) is no setup, a `HashSet` and an `OrderedSet` are fine, and Moonwell's classes, `Unit` and the
+rest, are safe keys. The rule does not see a key class from a library, or a generic class of your own that makes a
+dictionary keyed by its type parameter.
 
 The build loads the script in Lua without running it, as the game does first, and stops with the C# file and line when
 Lua refuses it. Lua allows 200 locals in a function: each parameter, local variable and object or collection
@@ -2546,21 +2591,46 @@ there; the key itself is not checked. Two warnings point at mistakes that can be
   none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
   Editor's own objects, item tables).
 
+The build ends by listing each place that turns a Moonwell rule off, as `Hud.cs:12: [SyncUnchecked] on Hud.Refresh`,
+and writes the same list to `build\silenced.txt`. Past five places it prints only the count and the file's name. A map
+that turns nothing off gets no list and no file. What it lists:
+
+- `[SyncUnchecked]` on a method, a lambda or a local function.
+- `#pragma warning disable` that names an MW rule, or names no rule at all, which turns every rule off.
+- `[SuppressMessage]` for an MW rule.
+- `NoWarn` with an MW rule, and `RunAnalyzers` or `RunAnalyzersDuringBuild` set to false, in the project.
+- A line of an `.editorconfig` or `.globalconfig` that sets an MW rule, one of Moonwell's categories or every analyzer
+  rule to `none`, `silent` or `suggestion`.
+
+The list is of this build: a `#pragma` inside `#if RELEASE` shows only in a release build. Of a library project of
+your own it lists the `[SyncUnchecked]` members, by name with no line; the library's own `#pragma`s and project
+settings are not read.
+
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
 the file and line. An error that repeats shows and goes to the log at its 1st, 10th, 100th time and so on, with its
 count ("failed 10 times"); past a hundred different errors, the new ones share one count. The log keeps its last 200
 lines.
 
+A loop that never ends freezes the game for every player, and nothing in the game stops it. A development build counts
+the turns of your loops (`while`, `do`, `for`, `foreach`) and stops one with an error at its line, as any other error
+in a reaction, once more than 10,000,000 turns have run in one instant: `more than 10000000 loop turns in one instant;
+the loop was stopped`. The code after the loop does not run, and the next reaction does. An empty loop of that many
+turns has frozen the game for about a second by then, so honest work that large belongs on a timer, a part at a time.
+Only the map project's own code is counted, not Moonwell's packages, a library project or a Lua library. A release
+build counts nothing, so there such a loop still freezes the game.
+
 `Game.Log("text")` writes a map's own line to the same file, in order with the errors, inside `Local.For` too. A write
 costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
 game closes first. A line longer than 253 characters is split.
 
-To place objects declared in code in World Editor, open `build\MyMap.w3x` there and Save Map As a folder beside `map/`:
-World Editor will not save over `map/` and names the new folder `map2.w3m`. Delete `map/`, rename `map2.w3m` to `map`,
-and open `map/` in World Editor again, so that later saves go there. The next build keeps the placed units; code wins
-over any object it also declares. World Editor's own changes to an object get a warning at each build: kept when no
-class declares the object, dropped, with the fields named, when one does.
+To place objects declared in code in World Editor, close World Editor, run `moonwell objects --to-map` and open `map/`
+again. The command builds the map and writes the built object files into `map/`, and nothing else there; a build never
+writes into `map/`. Run it again when a new object should be placed. World Editor reads a map's objects when it opens
+the map, so one left open lists none of the new ones, and its next save puts its own objects back. The objects
+Moonwell adds for itself, such as the dummy that casts for `CastOn`, are left out. The next build keeps the placed
+units; code wins over any object it also declares. World Editor's own changes to an object get a warning at each
+build: kept when no class declares the object, dropped, with the fields named, when one does.
 
 ## Debug mode
 

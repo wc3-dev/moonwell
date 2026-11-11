@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 namespace Moonwell.Build.Tests
 {
     /// <summary>Forms of code whose failing line has no statement of its own in a block: each error names the line that failed, built as a map is and run in Lua.</summary>
+    [Collection("Sample")]
     public sealed class ErrorShapesTests : IDisposable
     {
         // Every class fails once; the comment on a line names the class that fails there.

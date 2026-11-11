@@ -17,11 +17,12 @@ internal static class MapCode
 
     /// <summary>
     /// The analyzer's diagnostics for a body run with a player p and a unit u, and members beside it, in source
-    /// order, each as "id: the code it points at".
+    /// order, each as "id: the code it points at". A library is the source of another assembly the map references, read
+    /// as a built one is: a library project of the map's own.
     /// </summary>
-    public static List<string> Check(string body, string members = "")
+    public static List<string> Check(string body, string members = "", string library = "")
     {
-        return Found(Analyze(Wrap(body, members)));
+        return Found(Analyze(Wrap(body, members), library: library));
     }
 
     /// <summary>The analyzer's diagnostics for a whole file, in source order, each as "id: the code it points at"; path names the file.</summary>
@@ -73,9 +74,9 @@ internal static class MapCode
     }
 
     /// <summary>The message of the only diagnostic for a body and members.</summary>
-    public static string Message(string body, string members = "")
+    public static string Message(string body, string members = "", string library = "")
     {
-        return Assert.Single(Analyze(Wrap(body, members)).Diagnostics).GetMessage();
+        return Assert.Single(Analyze(Wrap(body, members), library: library).Diagnostics).GetMessage();
     }
 
     private static string Wrap(string body, string members)
@@ -104,17 +105,24 @@ internal static class MapCode
     /// <summary>Compiles a whole file and loads it, to run the map code on .NET as the build does.</summary>
     public static System.Reflection.Assembly Load(string source)
     {
+        return System.Reflection.Assembly.Load(Built(source));
+    }
+
+    // A whole file as its built assembly; a library given so has its attributes read from metadata.
+    private static byte[] Built(string source)
+    {
         var (_, compilation) = Compile(source);
         using var stream = new MemoryStream();
         var emitted = compilation.Emit(stream);
         Assert.True(emitted.Success, string.Join("\n", emitted.Diagnostics));
-        return System.Reflection.Assembly.Load(stream.ToArray());
+        return stream.ToArray();
     }
 
-    private static (SyntaxTree Tree, CSharpCompilation Compilation) Compile(string source, bool broken = false, string path = "")
+    private static (SyntaxTree Tree, CSharpCompilation Compilation) Compile(string source, bool broken = false, string path = "", string library = "")
     {
         var tree = CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Latest), path);
-        var compilation = CSharpCompilation.Create("Map" + Guid.NewGuid().ToString("N"), new[] { tree }, References,
+        var references = library.Length == 0 ? References : References.Append(MetadataReference.CreateFromImage(Built(library))).ToList();
+        var compilation = CSharpCompilation.Create("Map" + Guid.NewGuid().ToString("N"), new[] { tree }, references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
         var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
         Assert.True(broken ? errors.Count > 0 : errors.Count == 0, string.Join("\n", errors));
@@ -122,9 +130,9 @@ internal static class MapCode
     }
 
     // Every analyzer but the id analyzer, unless the caller names them: the other tests' classes have no ids.
-    private static (SyntaxTree Tree, ImmutableArray<Diagnostic> Diagnostics) Analyze(string source, bool broken = false, ImmutableArray<DiagnosticAnalyzer>? analyzers = null, string path = "")
+    private static (SyntaxTree Tree, ImmutableArray<Diagnostic> Diagnostics) Analyze(string source, bool broken = false, ImmutableArray<DiagnosticAnalyzer>? analyzers = null, string path = "", string library = "")
     {
-        var (tree, compilation) = Compile(source, broken, path);
+        var (tree, compilation) = Compile(source, broken, path, library);
         analyzers ??= ImmutableArray.Create<DiagnosticAnalyzer>(new SyncAnalyzer(), new LuaAnalyzer(), new NameAnalyzer(), new SyntaxAnalyzer(), new FieldRulesAnalyzer(), new MovedAnalyzer(), new BareDamageAnalyzer(), new DeclaredAnalyzer(), new ReactionAnalyzer(), new ScopeAnalyzer(), new BuildOnlyAnalyzer(), new SpellBuffAnalyzer(), new SaveAnalyzer(), new ItemRemoveAnalyzer());
         return (tree, compilation.WithAnalyzers(analyzers.Value).GetAnalyzerDiagnosticsAsync().Result);
     }

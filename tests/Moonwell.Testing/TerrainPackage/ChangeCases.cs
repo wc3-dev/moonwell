@@ -23,7 +23,7 @@ namespace Moonwell.Testing
             return fake;
         }
 
-        /// <summary>A raise moves Height as the game's crater does (cos of the distance over the radius, at corners), asks the game for the crater, and its end takes both back.</summary>
+        /// <summary>A raise moves Height as the game's crater does (cos of the distance over the radius, at corners), asks the game for the crater, and its end takes both back: the crater by stopping it.</summary>
         public static void RaiseHeight(FakeWorld world)
         {
             var fake = Flat();
@@ -38,8 +38,9 @@ namespace Moonwell.Testing
             holder.End();
             Expect.Near(0f, Terrain.Height(1280f, 1280f), "the centre after");
             Expect.Near(0f, Terrain.Height(1408f, 1280f), "a corner after");
-            Expect.Equal(2, fake.Craters.Count, "the end asks the opposite crater");
-            Expect.Near(100f, fake.Craters[1][3], "of the opposite depth");
+            Expect.Equal(1, fake.Craters.Count, "the end asks no crater");
+            Expect.Equal(1, fake.Stopped.Count, "it stops its own");
+            Expect.Equal(0, fake.Stopped[0], "the one it made");
         }
 
         /// <summary>Raises add up where they meet, and ending one leaves the other; Lower goes down.</summary>
@@ -63,6 +64,70 @@ namespace Moonwell.Testing
             Terrain.Raise(1280f, 1280f, 384f, 200f, Game.Instance);
             Expect.True(Terrain.Raycast(new Vector3(256f, 1280f, 50f), new Vector3(2304f, 1280f, 50f), out var hit), "the hill is hit");
             Expect.True(hit.Point.X < 1280f && hit.Point.X > 896f, "on its near side: " + hit.Point.X);
+        }
+
+        /// <summary>
+        /// A save that holds lasting craters loads wrong, and a load shows the map's own tiles (game facts, 11-11). So a save
+        /// stops the craters of the raises held, the next moment makes them again, and a load makes them again in a game
+        /// loaded from the save; Height reads the raise all along; a load paints the tiles held again and leaves pathing; an
+        /// ended raise and one made since the save are not made again.
+        /// </summary>
+        public static void SaveAndLoad(FakeWorld world)
+        {
+            var fake = Flat();
+            var holder = Game.Instance.Add(new Holder());
+            Terrain.Block(1280f, 1280f, 64f, Pathing.Walk, holder);
+            Expect.True(!world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded) && !world.Listening.Contains(Moonwell.Hosting.GameEvent.Saving), "pathing asks for no save or load to be heard");
+            Terrain.Raise(1280f, 1280f, 256f, 100f, holder);
+            Expect.True(world.Listening.Contains(Moonwell.Hosting.GameEvent.Saving), "a raise asks for a save to be heard");
+            Expect.True(world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded), "and a loaded game");
+            Terrain.Raise(640f, 640f, 256f, 50f, Game.Instance).End();
+            Terrain.SetTile(1280f, 1280f, Tile.LordaeronSummerGrass, 64f, holder);
+            Expect.Equal(2, fake.Craters.Count, "two craters asked");
+            Expect.Equal(1, fake.Stopped.Count, "the ended raise's is stopped");
+
+            // The game is about to save: the save holds no crater.
+            Inbound.GameSaving();
+            Expect.Equal(2, fake.Stopped.Count, "the raise held is stopped for the save");
+            Expect.Equal(0, fake.Stopped[1], "its own crater");
+            Expect.Near(100f, Terrain.Height(1280f, 1280f), "Height reads the raise all along");
+            var late = Terrain.Raise(1920f, 1920f, 256f, 30f, Game.Instance);
+            Expect.Equal(3, fake.Craters.Count, "a raise made in that moment asks its crater");
+
+            // The game that goes on: the next moment makes the stopped one again.
+            world.Advance(0.01f);
+            Expect.Equal(4, fake.Craters.Count, "the raise held is asked again, and neither the ended one nor the one made since");
+            Expect.Near(1280f, fake.Craters[3][0], "at its place");
+            Expect.Near(-100f, fake.Craters[3][3], "with its own depth");
+            late.End();
+            Expect.Equal(3, fake.Stopped.Count, "the late raise ends as any other");
+
+            // A game loaded from a save: as when the save was written, with the craters stopped and the map's own tiles.
+            Inbound.GameSaving();
+            Expect.Equal(4, fake.Stopped.Count, "stopped for the second save");
+            fake.Tiles.Clear();
+            fake.Variations.Clear();
+            var paints = fake.Paints;
+            var sets = fake.PathSets;
+            Inbound.GameLoaded();
+            Expect.Equal(5, fake.Craters.Count, "the load asks the raise again");
+            Expect.Near(-100f, fake.Craters[4][3], "with its own depth");
+            Expect.Near(100f, Terrain.Height(1280f, 1280f), "Height is as before the load");
+            Expect.Near(70.711f, Terrain.Height(1408f, 1280f), "at every corner");
+            Expect.Near(0f, Terrain.Height(640f, 640f), "the ended raise stays ended");
+            Expect.Equal(Tile.LordaeronSummerGrass, Terrain.Tile(1280f, 1280f), "the tile is painted again");
+            Expect.Equal(paints + 1, fake.Paints, "one corner painted");
+            Expect.Equal(sets, fake.PathSets, "pathing lasts through a load: nothing is set again");
+            Expect.True(!Terrain.IsWalkable(1296f, 1296f), "and is still taken");
+            world.Advance(0.01f);
+            Expect.Equal(5, fake.Craters.Count, "the moment after the load asks nothing more");
+
+            holder.End();
+            Expect.Equal(5, fake.Stopped.Count, "the end stops the crater the load made");
+            Expect.Equal(4, fake.Stopped[4], "that one");
+            Expect.Near(0f, Terrain.Height(1280f, 1280f), "and takes the raise back");
+            Expect.Equal(Tile.LordaeronSummerDirt, Terrain.Tile(1280f, 1280f), "and the tile");
+            Expect.True(Terrain.IsWalkable(1296f, 1296f), "and the pathing");
         }
 
         /// <summary>A radius of 0 is refused, and a raise in an ended scope is never made.</summary>

@@ -70,6 +70,7 @@ namespace Moonwell
 
             made.Handle = handle;
             made.TypeId = typeId;
+            made.firstTypeId = typeId;
             made.IsIllusion = illusion;
             made.owner = Runtime.World.OwnerOf(handle);
             known[handle] = made;
@@ -82,6 +83,7 @@ namespace Moonwell
             {
                 hero.leveledTo = Runtime.World.LevelOf(handle);
                 hero.lastLevel = hero.leveledTo;
+                hero.Keep(Kept.Level);
             }
 
             for (var i = 0; i < made.StartComponents.Count; i++)

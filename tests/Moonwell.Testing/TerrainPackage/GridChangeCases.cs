@@ -44,7 +44,8 @@ namespace Moonwell.Testing
             holder.End();
             Expect.Near(10f, Terrain.Height(1280f, 1280f), "the single raise is left");
             Expect.Near(0f, Terrain.Height(1536f, 1408f), "the last corner after");
-            Expect.Equal(11, fake.Craters.Count, "the end asks the opposite craters");
+            Expect.Equal(6, fake.Craters.Count, "the end asks no crater");
+            Expect.Equal(5, fake.Stopped.Count, "it stops its five");
             hill.End();
         }
 

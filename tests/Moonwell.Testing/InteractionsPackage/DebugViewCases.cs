@@ -279,7 +279,7 @@ namespace Moonwell.Testing
         {
             Interactions.Install(new FakeInteractionWorld());
             Expect.Equal(1, DebugViews.All.Count, "views after an install");
-            Runtime.Reset(world);
+            world.Restart();
             Expect.Equal(0, DebugViews.All.Count, "views after a reset");
             Interactions.Step = 0.05f;
             Interactions.Install(new FakeInteractionWorld());

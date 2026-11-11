@@ -721,5 +721,111 @@ namespace Moonwell.Testing
             world.Advance(2f);
             Expect.Equal(2, area.Log.Count, "nothing after");
         }
+
+        /// <summary>A buff held by a unit's stay, and a timer made on it, end when the unit leaves, after OnUnitLeft; the stay is the same scope at every read, and a new one the next time the unit enters (decision 266).</summary>
+        public static void StayEndsOnLeaving(FakeWorld world)
+        {
+            var fake = Fresh();
+            var area = Added(world, new LogArea(Square()));
+            var unit = UnitAt(world, 10f, 10f);
+            var ticks = 0;
+            var heldAtLeft = false;
+            Scope? first = null;
+            area.WhenEntered = u =>
+            {
+                u.Apply(new Lasting(), heldBy: area.Stay(u));
+                area.Stay(u).Every(1f, () => ticks++);
+            };
+            area.WhenLeft = u => heldAtLeft = u.Has<Lasting>() && !first!.HasEnded;
+            fake.Enter(fake.Regions[0], unit.Handle);
+            first = area.Stay(unit);
+            Expect.Same(first, area.Stay(unit), "the same scope at every read");
+            Expect.Same(area, first.Parent!, "the stay is the area's");
+            Expect.True(unit.Has<Lasting>(), "the buff is on while the unit is inside");
+            world.Advance(2f);
+            Expect.Equal(2, ticks, "the stay's timer ran");
+            fake.Leave(fake.Regions[0], unit.Handle);
+            Expect.True(heldAtLeft, "in OnUnitLeft the stay and what it holds are still there");
+            Expect.True(first.HasEnded, "the stay ended as the unit left");
+            Expect.True(!unit.Has<Lasting>(), "and the buff with it");
+            Expect.Equal(0, area.ChildCount, "the area holds nothing more");
+            world.Advance(2f);
+            Expect.Equal(2, ticks, "and the timer");
+            fake.Enter(fake.Regions[0], unit.Handle);
+            Expect.True(!area.Stay(unit).HasEnded && area.Stay(unit) != first, "a new stay the next time it enters");
+            Expect.True(unit.Has<Lasting>(), "which holds the buff again");
+        }
+
+        /// <summary>Two areas give a unit one buff class, each held by its own stay: the buff stays until the unit has left both, where a Remove in OnUnitLeft would take it at the first (the two auras trap).</summary>
+        public static void StayTwoAreas(FakeWorld world)
+        {
+            var fake = Fresh();
+            var one = Added(world, new LogArea(Square()));
+            var two = Added(world, new LogArea(Square()));
+            one.WhenEntered = u => u.Apply(new Lasting(), heldBy: one.Stay(u));
+            two.WhenEntered = u => u.Apply(new Lasting(), heldBy: two.Stay(u));
+            var unit = UnitAt(world, 10f, 10f);
+            fake.Enter(fake.Regions[0], unit.Handle);
+            fake.Enter(fake.Regions[1], unit.Handle);
+            Expect.Equal(1, unit.GetAll<Lasting>().Count, "one buff from two areas");
+            fake.Leave(fake.Regions[0], unit.Handle);
+            Expect.True(unit.Has<Lasting>(), "still on after leaving the first");
+            fake.Leave(fake.Regions[1], unit.Handle);
+            Expect.True(!unit.Has<Lasting>(), "gone after leaving both");
+        }
+
+        /// <summary>An area that ends ends the stay of every unit inside, after its OnUnitLeft: what the stays hold ends, and their timers.</summary>
+        public static void StayAreaEnds(FakeWorld world)
+        {
+            var fake = Fresh();
+            var area = Added(world, new LogArea(Square()));
+            var a = UnitAt(world, 10f, 10f);
+            var b = UnitAt(world, 20f, 20f);
+            var ticks = 0;
+            var heldAtLeft = 0;
+            area.WhenEntered = u =>
+            {
+                u.Add(new Tally(), heldBy: area.Stay(u));
+                area.Stay(u).Every(1f, () => ticks++);
+            };
+            area.WhenLeft = u => heldAtLeft += u.Has<Tally>() ? 1 : 0;
+            fake.Enter(fake.Regions[0], a.Handle);
+            fake.Enter(fake.Regions[0], b.Handle);
+            var stayOfA = area.Stay(a);
+            var stayOfB = area.Stay(b);
+            Expect.True(stayOfA != stayOfB, "a stay for each unit");
+            area.End();
+            Expect.Equal(2, heldAtLeft, "each unit still had its component in OnUnitLeft");
+            Expect.True(stayOfA.HasEnded && stayOfB.HasEnded, "both stays ended with the area");
+            Expect.True(!a.Has<Tally>() && !b.Has<Tally>(), "and what they held");
+            world.Advance(2f);
+            Expect.Equal(0, ticks, "and their timers");
+        }
+
+        /// <summary>The stay of a unit that is not inside has ended, so what it would hold is not added.</summary>
+        public static void StayNotInside(FakeWorld world)
+        {
+            Fresh();
+            var area = Added(world, new LogArea(Square()));
+            var unit = UnitAt(world, 900f, 900f);
+            var stay = area.Stay(unit);
+            Expect.True(stay.HasEnded, "the scope given has ended");
+            Expect.True(unit.Add(new Tally(), heldBy: stay).HasEnded && !unit.Has<Tally>(), "nothing is held by it");
+            Expect.Equal(0, area.ChildCount, "and the area keeps none");
+        }
+
+#if DEBUG
+        /// <summary>The stay of a unit that is not inside is reported in a development build.</summary>
+        public static void StayNotInsideReported(FakeWorld world)
+        {
+            Fresh();
+            var area = Added(world, new LogArea(Square()));
+            var unit = UnitAt(world, 900f, 900f);
+            var before = world.Printed.Count;
+            area.Stay(unit);
+            Expect.Equal(before + 1, world.Printed.Count, "the lines printed");
+            Expect.True(world.Printed[before].Contains("LogArea.Stay") && world.Printed[before].Contains("not inside"), "the report says why: " + world.Printed[before]);
+        }
+#endif
     }
 }

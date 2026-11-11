@@ -100,9 +100,11 @@ namespace Moonwell.Build.Tests
 
             // The Objects map's StrongFootman replaces the footman; the knight and the archmage have no class of the map's. A unit
             // the game made has its type id and a plain class; its default object has neither handle nor class of the map's.
-            Assert.Equal("885 Knight", Query(lua, "local u = Moonwell.Unit(); u.TypeId = Moonwell.ObjectTypes.FourCC('hkni'); return Objects.Report.DefaultOf(u)"));
-            Assert.Equal("450 Archmage", Query(lua, "local h = Moonwell.Hero(); h.TypeId = Moonwell.ObjectTypes.FourCC('Hamg'); return Objects.Report.DefaultOf(h)"));
-            Assert.Equal("600 Footman", Query(lua, "local u = Moonwell.Unit(); u.TypeId = Moonwell.ObjectTypes.FourCC('hfoo'); return Objects.Report.DefaultOf(u)"));
+            // The game gives a unit's type (decision 274), so each unit here has a handle the game answers for.
+            lua.DoString("GetUnitTypeId = function(handle) return Moonwell.ObjectTypes.FourCC(handle.type) end");
+            Assert.Equal("885 Knight", Query(lua, "local u = Moonwell.Unit(); u.Handle = { type = 'hkni' }; return Objects.Report.DefaultOf(u)"));
+            Assert.Equal("450 Archmage", Query(lua, "local h = Moonwell.Hero(); h.Handle = { type = 'Hamg' }; return Objects.Report.DefaultOf(h)"));
+            Assert.Equal("600 Footman", Query(lua, "local u = Moonwell.Unit(); u.Handle = { type = 'hfoo' }; return Objects.Report.DefaultOf(u)"));
         }
 
         [Fact]

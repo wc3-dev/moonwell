@@ -108,18 +108,21 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.Life, nameof(Life));
                     return lastLife;
                 }
 
                 var now = Runtime.World.DestructableLifeOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Life, nameof(Life));
                     return lastLife;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastLife = now;
+                    Keep(Kept.Life);
                 }
 
                 return now;
@@ -131,6 +134,7 @@ namespace Moonwell
                 {
                     Runtime.World.PutDestructableLife(Handle, value);
                     lastLife = IsGone ? 0.0f : Runtime.World.DestructableLifeOf(Handle);
+                    Keep(Kept.Life);
                     PathingHook.Tell(X, Y);
                 }
             }
@@ -149,18 +153,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.MaxLife, nameof(MaxLife));
                     return lastMaxLife;
                 }
 
                 var now = Runtime.World.DestructableMaxLifeOf(Handle);
                 if (now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.MaxLife, nameof(MaxLife));
                     return lastMaxLife;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastMaxLife = now;
+                    Keep(Kept.MaxLife);
                 }
 
                 return now;
@@ -179,6 +186,7 @@ namespace Moonwell
                     Runtime.World.PutDestructableMaxLife(Handle, value);
                     lastMaxLife = Runtime.World.DestructableMaxLifeOf(Handle);
                     lastLife = Runtime.World.DestructableLifeOf(Handle);
+                    Keep(Kept.MaxLife | Kept.Life);
                 }
             }
         }
@@ -224,6 +232,7 @@ namespace Moonwell
             {
                 Runtime.World.SlayDestructable(Handle);
                 lastLife = 0.0f;
+                Keep(Kept.Life);
                 PathingHook.Tell(X, Y);
             }
         }
@@ -238,6 +247,7 @@ namespace Moonwell
 
             Runtime.World.RestoreDestructable(Handle, MaxLife, showBirth);
             lastLife = Runtime.World.DestructableLifeOf(Handle);
+            Keep(Kept.Life);
             IsOpen = false;
             PathingHook.Tell(X, Y);
             if (!HasEnded && (Mask & Hook.OnRestored) != 0)
@@ -292,6 +302,7 @@ namespace Moonwell
                 Runtime.World.SlayDestructable(Handle);
                 opening = false;
                 lastLife = 0.0f;
+                Keep(Kept.Life);
                 PathingHook.Tell(X, Y);
             }
 
@@ -311,6 +322,7 @@ namespace Moonwell
             {
                 Runtime.World.RestoreDestructable(Handle, MaxLife, true);
                 lastLife = Runtime.World.DestructableLifeOf(Handle);
+                Keep(Kept.Life);
                 PathingHook.Tell(X, Y);
             }
 
