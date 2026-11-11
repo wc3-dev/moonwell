@@ -415,7 +415,10 @@ the game, whose integers are 32 bits, and are MW0030.
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last
-value read or set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the
+value read or set, and setting does nothing. A member never read or set while it was in the game gives 0 then, as in
+`OnLeave` after the game removed it, and a development build reports that read: read it into a variable while the unit
+is in the game, and use that. Where a unit died is kept as its `X` and `Y` when a death reaction (`OnDeath`, `OnKill`,
+`OnUnitDied`) sees the death, so a timer started there can read them after the corpse is gone. In the
 quarter second before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
 `Local.For`, a change is not.
 
@@ -2451,8 +2454,7 @@ The analyzer does not see these, so they build and then go wrong in the game:
 
 | Form | In the game | Write instead |
 |---|---|---|
-| a struct of your own that can change, put into a collection by an initializer, a collection expression or an indexer (`new List<P> { a }`, `[a]`, `new P[] { a }`, `list[0] = a`, `dict[k] = a`), or changed through a lambda's parameter (`p => p.X = 9`, `list.ForEach(...)`) | not copied: both hold the same struct, so a change to one is a change to the other | a `readonly struct`, made new to change it, or a class; `Add` and `Insert` copy |
-| a `where T : struct` or `unmanaged` method that copies its value (`var y = x;`, `foreach (var x in e) return x;`), given an `int`, a `float` or a `bool` | fails: "attempt to index a number value" | the method without the constraint |
+| a struct of your own that can change, copied with its collection (`ToArray()`, `Clone()`, `[.. list]`) and then changed in place (`copy[0].X = 9`), changed by a method called on a `foreach` variable or straight on a List's element or on what a call gives back (`list[0].Move()`, `list.First().Move()`), or changed in a named method the collection calls (`list.ForEach(Move)`) | not copied: both hold the same struct, so a change to one is a change to the other | a `readonly struct`, made new to change it, or a class; a copy in a variable of its own (`var c = list[0];`) and a lambda (`list.ForEach(p => ...)`) are safe |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
 | an `abstract` property read by its bare name or through `this.` in the class that declares it (`abstract string Kind { get; }`, then `Kind` in that class) | nil: the class's own override is never asked | a `virtual` property with a body (`virtual string Kind => "";`) |

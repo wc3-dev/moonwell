@@ -1464,6 +1464,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.paused-gone-before-sweep", Run = UnitCases.PausedGoneBeforeSweep });
             list.Add(new Case { Name = "units.gone-before-sweep", Run = UnitCases.GoneBeforeSweep });
             list.Add(new Case { Name = "units.gone-before-sweep-local", Run = UnitCases.GoneBeforeSweepInLocal });
+            list.Add(new Case { Name = "units.unkept-read-reported", Run = UnitCases.UnkeptReadReported });
+            list.Add(new Case { Name = "units.death-keeps-place", Run = UnitCases.DeathKeepsPlace });
             list.Add(new Case { Name = "units.order-immediate", Run = UnitCases.OrderImmediate });
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
@@ -2125,6 +2127,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.compound-conditional", Run = CompilerCases.CompoundConditional });
             list.Add(new Case { Name = "compiler.forms.patterns", Run = FormCases.Patterns });
             list.Add(new Case { Name = "compiler.forms.struct-copies", Run = FormCases.StructCopies });
+            list.Add(new Case { Name = "compiler.forms.struct-stores", Run = FormCases.StructStores });
             list.Add(new Case { Name = "compiler.forms.tuples", Run = FormCases.Tuples });
             list.Add(new Case { Name = "compiler.forms.declarations", Run = FormCases.Declarations });
             list.Add(new Case { Name = "compiler.forms.ranges", Run = FormCases.Ranges });

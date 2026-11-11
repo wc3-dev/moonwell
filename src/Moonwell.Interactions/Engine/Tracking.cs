@@ -678,6 +678,7 @@ namespace Moonwell.Engine
             {
                 unit.lastX = x;
                 unit.lastY = y;
+                unit.Keep(Kept.X | Kept.Y);
             }
         }
 
@@ -908,6 +909,7 @@ namespace Moonwell.Engine
             {
                 unit.lastX = x;
                 unit.lastY = y;
+                unit.Keep(Kept.X | Kept.Y);
             }
 
             entry.X = x;

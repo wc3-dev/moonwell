@@ -177,18 +177,21 @@ namespace Moonwell
 
                 if (IsGone)
                 {
+                    CheckKept(Kept.Charges, nameof(Charges));
                     return lastCharges;
                 }
 
                 var now = Runtime.World.ChargesOf(Handle);
                 if (now == 0 && RemovedByGame())
                 {
+                    CheckKept(Kept.Charges, nameof(Charges));
                     return lastCharges;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastCharges = now;
+                    Keep(Kept.Charges);
                 }
 
                 return now;
@@ -205,6 +208,7 @@ namespace Moonwell
                 if (InGame())
                 {
                     lastCharges = value;
+                    Keep(Kept.Charges);
                     Runtime.World.SetCharges(Handle, value);
                 }
             }
@@ -251,6 +255,7 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.X, nameof(X));
                     return lastX;
                 }
 
@@ -258,12 +263,14 @@ namespace Moonwell
                 var now = holder != null ? holder.X : Runtime.World.ItemX(Handle);
                 if (holder == null && now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.X, nameof(X));
                     return lastX;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastX = now;
+                    Keep(Kept.X);
                 }
 
                 return now;
@@ -278,6 +285,7 @@ namespace Moonwell
             {
                 if (IsGone)
                 {
+                    CheckKept(Kept.Y, nameof(Y));
                     return lastY;
                 }
 
@@ -285,12 +293,14 @@ namespace Moonwell
                 var now = holder != null ? holder.Y : Runtime.World.ItemY(Handle);
                 if (holder == null && now == 0.0f && RemovedByGame())
                 {
+                    CheckKept(Kept.Y, nameof(Y));
                     return lastY;
                 }
 
                 if (Local.Depth == 0)
                 {
                     lastY = now;
+                    Keep(Kept.Y);
                 }
 
                 return now;
@@ -312,6 +322,7 @@ namespace Moonwell
                 {
                     lastX = x2;
                     lastY = y2;
+                    Keep(Kept.X | Kept.Y);
                 }
             }
         }
