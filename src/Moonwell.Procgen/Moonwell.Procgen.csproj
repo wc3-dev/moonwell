@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Procedural generation for Moonwell maps: noise and fields from a seed, the same on every machine, and a terrain generator that makes hills, tiles and blocked ground while the game runs.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets none, so that a map that references only Moonwell.Procgen still gets Moonwell's analyzer, and Moonwell.Maths and Moonwell.Terrain. -->
+    <ProjectReference Include="..\Moonwell\Moonwell.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.Maths\Moonwell.Maths.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.Terrain\Moonwell.Terrain.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <!--
+    The package carries its C# source beside its library, like Moonwell (see Moonwell.csproj). A map without it
+    carries none of its code: CSharp.lua compiles only the packages a map references.
+  -->
+  <ItemGroup>
+    <Content Include="**/*.cs" Exclude="obj/**;bin/**" Pack="true" PackagePath="contentFiles/cs/net10.0/Moonwell.Procgen/" BuildAction="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Moonwell.Testing" />
+    <InternalsVisibleTo Include="Moonwell.Tests" />
+  </ItemGroup>
+
+</Project>
