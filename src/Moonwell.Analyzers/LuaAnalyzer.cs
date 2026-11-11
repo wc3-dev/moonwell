@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -29,6 +31,107 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         context.RegisterOperationAction(HandleIsType, OperationKind.IsType);
         context.RegisterOperationAction(HandlePattern, OperationKind.DeclarationPattern, OperationKind.TypePattern, OperationKind.RecursivePattern);
         context.RegisterOperationAction(NativeGroup, OperationKind.MethodReference);
+        context.RegisterOperationAction(KeyedBySetup, OperationKind.ObjectCreation);
+    }
+
+    /// <summary>
+    /// MW0056: a new of a Dictionary, or of Moonwell's OrderedMap, which holds one, keyed by a class of the map's with static
+    /// setup. The Lua of Dictionary reads its key class when the type is made, CSharp.lua makes every type a file names while
+    /// the script loads, and a class's first read runs its static setup, before the names its own file uses are filled in.
+    /// </summary>
+    private static void KeyedBySetup(OperationAnalysisContext context)
+    {
+        foreach (var keyed in Keyed(context.Operation.Type))
+        {
+            // A base class's setup runs too: the read goes up to it.
+            for (var type = keyed.TypeArguments[0] as INamedTypeSymbol;
+                type != null && SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, context.Compilation.Assembly);
+                type = type.BaseType)
+            {
+                if (Setup(type, context.Compilation, context.CancellationToken) is { } setup)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Rules.LoadStop, context.Operation.Syntax.GetLocation(),
+                        keyed.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat), keyed.TypeArguments[0].Name, setup));
+                    return;
+                }
+            }
+        }
+    }
+
+    // The Dictionary and OrderedMap types a type is or has among its type arguments: List<Dictionary<K, V>> makes the dictionary's type too.
+    // shortcut: a generic class of the map's own that makes a dictionary keyed by its type parameter is not followed; follow it when a map trips on one.
+    private static IEnumerable<INamedTypeSymbol> Keyed(ITypeSymbol? type)
+    {
+        if (type is not INamedTypeSymbol named)
+        {
+            yield break;
+        }
+
+        var space = named.ContainingNamespace?.ToDisplayString();
+        if (named.Arity == 2 && ((named.Name == "Dictionary" && space == "System.Collections.Generic") || (named.Name == "OrderedMap" && space == "Moonwell")))
+        {
+            yield return named;
+        }
+
+        foreach (var inner in named.TypeArguments.SelectMany(Keyed))
+        {
+            yield return inner;
+        }
+    }
+
+    // What CSharp.lua puts in a class's static setup, as the message names it, or null when the class has none: a static
+    // constructor's statements, and what Sets finds in a static field, a field-like event or a property with a field behind it.
+    private static string? Setup(INamedTypeSymbol type, Compilation compilation, CancellationToken cancel)
+    {
+        foreach (var reference in type.OriginalDefinition.DeclaringSyntaxReferences)
+        {
+            if (reference.GetSyntax(cancel) is not TypeDeclarationSyntax declared)
+            {
+                continue;
+            }
+
+            var model = Models.Of(compilation, declared.SyntaxTree);
+            foreach (var member in declared.Members.Where(member => member.Modifiers.Any(SyntaxKind.StaticKeyword)))
+            {
+                switch (member)
+                {
+                    case ConstructorDeclarationSyntax { Body.Statements.Count: > 0 } or ConstructorDeclarationSyntax { ExpressionBody: not null }:
+                        return type.Name + "'s static constructor";
+                    case BaseFieldDeclarationSyntax fields:
+                        foreach (var variable in fields.Declaration.Variables)
+                        {
+                            if (Sets(model, variable.Initializer, (model.GetDeclaredSymbol(variable, cancel) as IFieldSymbol)?.Type, cancel) is { } what)
+                            {
+                                return what + type.Name + "." + variable.Identifier.ValueText;
+                            }
+                        }
+
+                        break;
+                    case PropertyDeclarationSyntax { ExpressionBody: null, AccessorList: { } accessors } property when accessors.Accessors.All(accessor => accessor.Body == null && accessor.ExpressionBody == null):
+                        if (Sets(model, property.Initializer, model.GetDeclaredSymbol(property, cancel)?.Type, cancel) is { } value)
+                        {
+                            return value + type.Name + "." + property.Identifier.ValueText;
+                        }
+
+                        break;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // What a static member's value puts in the setup: a value that is no constant (a constant goes into the class's table, with
+    // no setup), and with no value the default of a struct that is not .NET's own, which is read by its name.
+    private static string? Sets(SemanticModel model, EqualsValueClauseSyntax? given, ITypeSymbol? holds, CancellationToken cancel)
+    {
+        if (given != null)
+        {
+            return model.GetConstantValue(given.Value, cancel).HasValue ? null : "the value of ";
+        }
+
+        return holds is { TypeKind: TypeKind.Struct } && holds.ContainingNamespace?.ToDisplayString() is { } space
+            && space != "System" && !space.StartsWith("System.", System.StringComparison.Ordinal) ? "the default value of " : null;
     }
 
     /// <summary>MW0053: a native as a method group, which CSharp.lua writes by its full name, Moonwell.Natives.X, a table the game's Lua does not have.</summary>

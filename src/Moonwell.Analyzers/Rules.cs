@@ -145,8 +145,17 @@ public static class Rules
         isEnabledByDefault: true,
         description: "CSharp.lua writes a call of a native as the game's own function (Natives.Cos(x) is Cos(x)), but a native given as a method group (xs.Select(Natives.Cos), Func<float, float> f = Natives.Cos, an event's += Natives.X) by its full name, Moonwell.Natives.Cos. The game's Lua has no Moonwell.Natives table, so the script stops there: attempt to index a nil value. A lambda that calls the native is written as a call.");
 
+    public static readonly DiagnosticDescriptor LoadStop = new(
+        "MW0056",
+        "A dictionary keyed by a class with static setup",
+        "'{0}' is keyed by {1}, and {2} is static setup, which the game's Lua runs when this type is made: while the script loads, before the map's code is ready, so the map can stop loading with nothing on the screen; move it to another class, do it on first use, or key by something else",
+        LuaCategory,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "CSharp.lua runs a class's static setup the first time the class is read: a static field, auto-property or event given a value that is no constant, a static field or auto-property of a struct of the map's or Moonwell's with no value (it gets its default there), and a static constructor's statements. The Lua of Dictionary<TKey, TValue> reads its key class when the type is made, and so does Moonwell's OrderedMap, which holds one; CSharp.lua makes every type a file names while the script loads, wherever in the file the new is. So the key class's setup runs then, when the names its own file uses may not be filled in yet, and reading one stops the script with nothing on the screen (seen 2026-11-11 in the tests' Lua, also for a setup in a base class of the key). Whether it stops depends on the order of the files' names and on what the setup reads, so the rule rejects every new of such a type, also as a type argument (new List<Dictionary<Quest, int>>()). A constant (static int next = 1) is no setup. HashSet, OrderedSet, List, and the class as a dictionary's value, do not read the class, and Moonwell's own classes have no setup. Not seen: a key class of a library, a generic class of the map's own that makes a dictionary keyed by its type parameter, and a type named without new (typeof, a cast).");
+
     /// <summary>The rules of C# that CSharp.lua cannot compile.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck, NativeGroup);
+    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck, NativeGroup, LoadStop);
 
     private const string ObjectsCategory = "Objects";
 

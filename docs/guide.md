@@ -2434,6 +2434,7 @@ compared, and from later checks of the compiler Moonwell builds with.
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 | MW0053 | a native as a method group, `xs.Select(Natives.Cos)` or `Func<float, float> f = Natives.Cos`: it is written `Moonwell.Natives.Cos`, which the game's Lua does not have, so the script stops there | a lambda that calls it, `x => Natives.Cos(x)` |
+| MW0056 | `new Dictionary<Quest, int>()` or `new OrderedMap<Quest, int>()` where `Quest` is a class of the map's with static setup, a static field given a value that is no constant or a static constructor: the setup runs while the script loads, and the map can stop there with nothing on the screen (see The build) | the static field in another class or set on first use, or another key; a `HashSet` or an `OrderedSet` is fine |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
 
@@ -2504,11 +2505,15 @@ Each takes the project's folder after the command, as `build` does; `new` takes 
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
-`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use. The
-build does not catch a
-`Dictionary` keyed by a map's own class that has a static field with a value: the map can stop while it loads, with
-nothing on the screen. Key by the handle, or set the field on first use. Moonwell's classes, `Unit` and the rest, are
-safe keys.
+`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use.
+
+A `new Dictionary` or `new OrderedMap` keyed by a map's own class that has static setup is MW0056. Static setup is a
+static field given a value that is no constant (`static readonly List<Quest> All = new()`), or a static constructor.
+The game's Lua runs it while the script loads, when the dictionary's type is made, and the map can stop there with
+nothing on the screen. Move the field to another class, set it on first use, or key by the handle. A constant
+(`static int next = 1`) is no setup, a `HashSet` and an `OrderedSet` are fine, and Moonwell's classes, `Unit` and the
+rest, are safe keys. The rule does not see a key class from a library, or a generic class of your own that makes a
+dictionary keyed by its type parameter.
 
 The build loads the script in Lua without running it, as the game does first, and stops with the C# file and line when
 Lua refuses it. Lua allows 200 locals in a function: each parameter, local variable and object or collection
