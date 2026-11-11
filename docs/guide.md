@@ -2507,6 +2507,7 @@ game with it. Both make a development build: it checks the values Moonwell recei
 | `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
 | `moonwell clean` | Deletes `build/` |
 | `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
+| `moonwell objects --to-map` | Builds, then writes the built object files into `map/`, so World Editor lists the objects declared in code; close World Editor first |
 
 Each takes the project's folder after the command, as `build` does; `new` takes the name.
 
@@ -2564,11 +2565,13 @@ lines.
 costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
 game closes first. A line longer than 253 characters is split.
 
-To place objects declared in code in World Editor, open `build\MyMap.w3x` there and Save Map As a folder beside `map/`:
-World Editor will not save over `map/` and names the new folder `map2.w3m`. Delete `map/`, rename `map2.w3m` to `map`,
-and open `map/` in World Editor again, so that later saves go there. The next build keeps the placed units; code wins
-over any object it also declares. World Editor's own changes to an object get a warning at each build: kept when no
-class declares the object, dropped, with the fields named, when one does.
+To place objects declared in code in World Editor, close World Editor, run `moonwell objects --to-map` and open `map/`
+again. The command builds the map and writes the built object files into `map/`, and nothing else there; a build never
+writes into `map/`. Run it again when a new object should be placed. World Editor reads a map's objects when it opens
+the map, so one left open lists none of the new ones, and its next save puts its own objects back. The objects
+Moonwell adds for itself, such as the dummy that casts for `CastOn`, are left out. The next build keeps the placed
+units; code wins over any object it also declares. World Editor's own changes to an object get a warning at each
+build: kept when no class declares the object, dropped, with the fields named, when one does.
 
 ## Debug mode
 
