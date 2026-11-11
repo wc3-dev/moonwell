@@ -52,6 +52,42 @@ namespace Moonwell.Build.Tests
             Assert.Equal(Compiler.CompileSingleCodeForGame(program), WithoutMarkerLines(marked));
         }
 
+        [Theory]
+        [InlineData("while (A()) { G(); H(); }", 1)]
+        [InlineData("while (A()) G();", 1)]
+        [InlineData("while (A()) ;", 1)]
+        [InlineData("while (A()) { }", 1)]
+        [InlineData("while (A()) if (B()) break; else continue;", 1)]
+        [InlineData("for (var i = 0; i < 3; i++) G();", 1)]
+        [InlineData("for (;;) { }", 1)]
+        [InlineData("for (var i = 0; i < n; i++) { if (B()) continue; G(); }", 1)]
+        [InlineData("foreach (var item in items) G();", 1)]
+        [InlineData("foreach (var item in items) { if (item > 1) return item; }", 1)]
+        [InlineData("do G(); while (A());", 1)]
+        [InlineData("do { } while (A());", 1)]
+        [InlineData("do { if (B()) continue; G(); } while (A());", 1)]
+        [InlineData("while (A()) while (B()) G();", 2)]
+        [InlineData("for (var i = 0; i < n; i++) { foreach (var item in items) { G(); } H(); }", 2)]
+        [InlineData("while (A()) { System.Action act = () => { while (B()) { G(); } }; act(); }", 2)]
+        [InlineData("while (A()) { void Local() { G(); } Local(); }", 1)]
+        [InlineData("while (A()) { switch (n) { case 1: G(); break; default: H(); break; } }", 1)]
+        [InlineData("while (A()) { try { G(); } catch { H(); } }", 1)]
+        [InlineData("if (A()) { G(); } using (var a = new Res()) { H(); }", 0)]
+        public void the_loop_guards_call_opens_each_loop_body_and_adds_only_its_own_line(string body, int loops)
+        {
+            var program = Program(body);
+
+            var marked = Compiler.CompileSingleCodeForGame(LineMarks.Mark(program, 1, Symbols, loops: true));
+
+            // Each call opens its loop's body: the loop's head is the line above, but for the name of a local function declared
+            // ahead, with no marker between, so an error the call raises names the loop's own line.
+            var lines = marked.Split('\n').Select(line => line.Trim()).ToList();
+            var calls = Enumerable.Range(0, lines.Count).Where(index => lines[index] == "MoonwellLoop()").ToList();
+            Assert.Equal(loops, calls.Count);
+            Assert.All(calls, index => Assert.Matches(@"(^| )do$|^repeat$", lines.Take(index).Last(line => !line.StartsWith("local ", StringComparison.Ordinal))));
+            Assert.Equal(Compiler.CompileSingleCodeForGame(program), WithoutMarkerLines(WithoutLoopLines(marked)));
+        }
+
         [Fact]
         public void marks_part_two_using_declarations_and_nothing_else()
         {
@@ -71,6 +107,11 @@ namespace Moonwell.Build.Tests
                 + "    static int F(int n, System.Collections.Generic.List<int> items)\n    {\n"
                 + "        " + body + "\n"
                 + "        return 0;\n    }\n}\n";
+        }
+
+        private static string WithoutLoopLines(string lua)
+        {
+            return string.Concat(lua.Split('\n').Where(line => line.Trim() != "MoonwellLoop()").Select(line => line + "\n"))[..^1];
         }
 
         private static string WithoutMarkerLines(string lua)

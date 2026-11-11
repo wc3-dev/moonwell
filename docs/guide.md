@@ -2560,6 +2560,14 @@ the file and line. An error that repeats shows and goes to the log at its 1st, 1
 count ("failed 10 times"); past a hundred different errors, the new ones share one count. The log keeps its last 200
 lines.
 
+A loop that never ends freezes the game for every player, and nothing in the game stops it. A development build counts
+the turns of your loops (`while`, `do`, `for`, `foreach`) and stops one with an error at its line, as any other error
+in a reaction, once more than 10,000,000 turns have run in one instant: `more than 10000000 loop turns in one instant;
+the loop was stopped`. The code after the loop does not run, and the next reaction does. An empty loop of that many
+turns has frozen the game for about a second by then, so honest work that large belongs on a timer, a part at a time.
+Only the map project's own code is counted, not Moonwell's packages, a library project or a Lua library. A release
+build counts nothing, so there such a loop still freezes the game.
+
 `Game.Log("text")` writes a map's own line to the same file, in order with the errors, inside `Local.For` too. A write
 costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
 game closes first. A line longer than 253 characters is split.

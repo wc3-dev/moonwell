@@ -17,6 +17,13 @@ namespace Moonwell
         {
             if (Runtime.World.IsLocal(player.Handle))
             {
+#if DEBUG
+                // Only this machine runs the action's loops, so the loop guard's count is put back after it.
+                if (Depth == 0)
+                {
+                    LoopGuard.Hold();
+                }
+#endif
                 Depth++;
                 try
                 {
@@ -30,6 +37,12 @@ namespace Moonwell
                 finally
                 {
                     Depth--;
+#if DEBUG
+                    if (Depth == 0)
+                    {
+                        LoopGuard.Release();
+                    }
+#endif
                 }
             }
         }

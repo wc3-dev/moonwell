@@ -68,6 +68,7 @@ namespace Moonwell
             Leaks.Reset();
             Profiler.Reset();
             DebugTools.Reset();
+            LoopGuard.Reset();
 #endif
             Game.Instance.Every(0.25f, Sweep.Run);
         }

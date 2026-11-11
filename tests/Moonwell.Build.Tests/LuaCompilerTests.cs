@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using War3Net.Build.Extensions;
 using War3Net.Build.Info;
 using Xunit;
@@ -83,6 +84,9 @@ namespace Moonwell.Build.Tests
                 #if __CSharpLua__
                             Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, "symbols: csharplua");
                 #endif
+                            for (var i = 0; i < 3; i++)
+                            {
+                            }
                         }
                     }
                 }
@@ -104,6 +108,11 @@ namespace Moonwell.Build.Tests
                 {
                     Assert.Matches(@"/\*\[\[--@mw \d+:\d+\]\]\*/ Moonwell\.Natives\.DisplayTextToPlayer\([^\n]*""" + text + @"""", marked);
                 }
+
+                // Only a development build's loops call the loop guard, and only its script defines it.
+                Assert.Equal(!release, marked.Contains("/*[[MoonwellLoop()]]*/", StringComparison.Ordinal));
+                Assert.Equal(!release, Regex.IsMatch(script, @"^\s*MoonwellLoop\(\)\s*$", RegexOptions.Multiline));
+                Assert.Equal(!release, script.Contains("function MoonwellLoop()", StringComparison.Ordinal));
             }
         }
 

@@ -1,6 +1,6 @@
 -- Moonwell's Lua for a development build only, linked after moonwell.lua (decisions 262 and 263): ended objects kept
--- weakly, the game's handles counted as natives make and destroy them, the line that made a timer, and the profiler's
--- timing of the map's own reactions. A release build links none of it.
+-- weakly, the game's handles counted as natives make and destroy them, the line that made a timer, the profiler's
+-- timing of the map's own reactions, and the loop guard. A release build links none of it.
 
 -- Ended objects, kept weakly with the time each ended, and canaries, so that only an object that outlived a full
 -- collection counts: the collector runs on what is made, not on time (game facts, 11-10).
@@ -205,4 +205,42 @@ function MoonwellProfileStop()
     for key, original in pairs(originals) do rawset(class, key, original) end
   end
   profileWrapped = nil
+end
+
+-- The loop guard. Nothing ends a Lua call that runs on (game facts, 10-25), so a development build writes MoonwellLoop()
+-- at the start of every loop body of the map's own code (LineMarks in Moonwell.Build): a call a turn, 29 ns (game facts,
+-- 10-12). It counts the turns run while the game's time stands still, reading the time every 100,000 turns; at 100
+-- such steps, 10,000,000 turns in one instant, Moonwell.LoopGuard.Stop raises an error at the loop's line. An empty loop
+-- of that many turns has frozen the game for a second, so no honest loop gets there. The time is the game's own, the same
+-- on every machine, and Local.For holds the count while its action runs, so every machine stops a loop at the same turn.
+local loopStep, loopSteps = 100000, 100
+local loopTurns, loopStepsRun, loopInstant
+local heldTurns, heldStepsRun, heldInstant
+
+function MoonwellLoopReset()
+  loopTurns, loopStepsRun, loopInstant = 0, 0, nil
+end
+MoonwellLoopReset()
+
+function MoonwellLoop()
+  loopTurns = loopTurns + 1
+  if loopTurns < loopStep then return end
+  loopTurns = 0
+  local now = Moonwell.DebugSession.GameNow()
+  if now ~= loopInstant then
+    loopInstant, loopStepsRun = now, 0
+    return
+  end
+  loopStepsRun = loopStepsRun + 1
+  if loopStepsRun < loopSteps then return end
+  loopStepsRun = 0
+  Moonwell.LoopGuard.Stop()
+end
+
+function MoonwellLoopHold()
+  heldTurns, heldStepsRun, heldInstant = loopTurns, loopStepsRun, loopInstant
+end
+
+function MoonwellLoopRelease()
+  loopTurns, loopStepsRun, loopInstant = heldTurns, heldStepsRun, heldInstant
 end

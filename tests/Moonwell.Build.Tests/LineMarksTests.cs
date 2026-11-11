@@ -326,6 +326,114 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_loop_body_starts_with_the_loop_guards_call_before_its_first_marker()
+        {
+            var source = Lines(
+                "class A",
+                "{",
+                "    void F()",
+                "    {",
+                "        while (B())",
+                "        {",
+                "            G();",
+                "            H();",
+                "        }",
+                "    }",
+                "}");
+
+            var marked = LineMarks.Mark(source, 1, Debug, loops: true);
+
+            Assert.Contains("        /*[[--@mw 1:5]]*/ while (B())\n", marked);
+            Assert.Contains("            /*[[MoonwellLoop()]]*/ /*[[--@mw 1:7]]*/ G();\n", marked);
+            Assert.Contains("            /*[[--@mw 1:8]]*/ H();\n", marked);
+            Assert.Equal(source.Split('\n').Length, marked.Split('\n').Length);
+        }
+
+        [Fact]
+        public void every_kind_of_loop_gets_the_call_and_nothing_else_does()
+        {
+            var source = Lines(
+                "class A",
+                "{",
+                "    void F(int[] items)",
+                "    {",
+                "        for (var i = 0; i < 3; i++) { G(); }",
+                "        foreach (var item in items) { G(); }",
+                "        do { G(); } while (B());",
+                "        if (B()) { G(); }",
+                "        System.Action act = () => { G(); };",
+                "        lock (items) { G(); }",
+                "    }",
+                "}");
+
+            var marked = LineMarks.Mark(source, 1, Debug, loops: true).Split('\n');
+
+            Assert.Contains("for (var i = 0; i < 3; i++) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:5]]*/ G();", marked[4]);
+            Assert.Contains("foreach (var item in items) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:6]]*/ G();", marked[5]);
+            Assert.Contains("do { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:7]]*/ G();", marked[6]);
+            Assert.All(marked.Skip(7), line => Assert.DoesNotContain("MoonwellLoop", line));
+        }
+
+        [Fact]
+        public void a_bare_and_an_empty_loop_body_get_the_call()
+        {
+            var source = Lines(
+                "class A",
+                "{",
+                "    void F()",
+                "    {",
+                "        while (B()) G();",
+                "        while (B()) ;",
+                "        while (B()) { }",
+                "        while (B()) while (C()) G();",
+                "    }",
+                "}");
+
+            var marked = LineMarks.Mark(source, 1, Debug, loops: true).Split('\n');
+
+            Assert.Contains("while (B()) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:5]]*/ G(); /*[[--@mw 1:5]]*/ }", marked[4]);
+            Assert.Contains("while (B()) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:6]]*/ ; /*[[--@mw 1:6]]*/ }", marked[5]);
+            Assert.Contains("while (B()) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:7]]*/ }", marked[6]);
+            Assert.Contains("while (B()) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:8]]*/ while (C()) { /*[[MoonwellLoop()]]*/ /*[[--@mw 1:8]]*/ G();", marked[7]);
+        }
+
+        [Fact]
+        public void loops_get_no_call_unless_asked()
+        {
+            var source = Lines("class A", "{", "    void F()", "    {", "        while (B()) { G(); }", "    }", "}");
+
+            Assert.DoesNotContain("MoonwellLoop", LineMarks.Mark(source, 1, Debug));
+        }
+
+        [Fact]
+        public void columns_read_as_the_files_own_past_a_loop_guards_call()
+        {
+            var source = Lines("class A", "{", "    void F()", "    {", "        while (B()) G(); H();", "    }", "}");
+
+            var marked = LineMarks.Mark(source, 1, Debug, out var columns, loops: true).Split('\n');
+
+            var line = source.Split('\n')[4];
+            foreach (var code in new[] { "B(", "G(", "H(" })
+            {
+                Assert.Equal(line.IndexOf(code, StringComparison.Ordinal) + 1, columns.Original(5, marked[4].IndexOf(code, StringComparison.Ordinal) + 1));
+            }
+        }
+
+        [Fact]
+        public void stage_marks_loops_only_when_asked()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            File.WriteAllText(Path.Combine(folder, "Loops.cs"), Lines("class Loops", "{", "    void F()", "    {", "        while (true) { }", "    }", "}"));
+            var project = MapProject.Find(folder);
+
+            MarkedProject.Stage(project, Debug, loops: true);
+            Assert.Contains("/*[[MoonwellLoop()]]*/", File.ReadAllText(Path.Combine(folder, "build", "marked", "Loops.cs")));
+
+            MarkedProject.Stage(project, Debug);
+            Assert.DoesNotContain("MoonwellLoop", File.ReadAllText(Path.Combine(folder, "build", "marked", "Loops.cs")));
+        }
+
+        [Fact]
         public void stage_copies_and_marks()
         {
             var folder = folders.TemporaryCopyOfSample();
