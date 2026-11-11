@@ -1,7 +1,7 @@
 # Making a map with Moonwell
 
-This guide describes Moonwell 0.12.0; the guide for 0.11.0 is at the
-[`v0.11.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.11.0/docs/guide.md).
+This guide describes Moonwell 0.13.0; the guide for 0.12.0 is at the
+[`v0.12.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.12.0/docs/guide.md).
 
 ## Start a map
 
@@ -1215,7 +1215,7 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 - `Noise` and `Field` are the numbers under it, for a map's own generators: `Noise.At(seed, x, y)` is smooth noise
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.
-- Not measured in the game yet: how long a large plan takes to work out and to make.
+- A plan of 53 by 53 corners took 62 ms to work out in the game, and its 2,601 craters 14 ms to make (3.0.1.24371).
 
 ## Interactions and finding
 
