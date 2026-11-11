@@ -1206,11 +1206,20 @@ namespace Moonwell
             Sharing.Left(leaving);
         }
 
-        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06). Moonwell makes its lasting lightning again, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
+        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06), and so are its lasting craters and painted tiles (11-11). Moonwell makes its lasting lightning again, the terrain package its raises and tiles, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
         internal static void GameLoaded()
         {
             RealClock.Loaded();
             LastingLightning.Loaded();
+            try
+            {
+                Events.TerrainLoadListener?.Invoke();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Terrain", error);
+            }
+
             try
             {
                 Events.LoadListener?.Invoke();
