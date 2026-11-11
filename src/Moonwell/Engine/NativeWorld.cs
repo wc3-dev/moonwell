@@ -179,6 +179,11 @@ namespace Moonwell.Engine
                     Natives.TriggerRegisterGameEvent(loaded, Natives.EVENT_GAME_LOADED);
                     Natives.TriggerAddAction(loaded, LoadedAction);
                     break;
+                case GameEvent.Saving:
+                    var saving = Natives.CreateTrigger();
+                    Natives.TriggerRegisterGameEvent(saving, Natives.EVENT_GAME_SAVE);
+                    Natives.TriggerAddAction(saving, SavingAction);
+                    break;
                 case GameEvent.HeroLevel:
                     Register(Natives.EVENT_PLAYER_HERO_LEVEL, HeroLevelAction);
                     break;
@@ -559,6 +564,18 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Loaded", error);
+            }
+        }
+
+        private static void SavingAction()
+        {
+            try
+            {
+                Inbound.GameSaving();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Saving", error);
             }
         }
 

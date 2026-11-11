@@ -25,8 +25,11 @@ namespace Moonwell.Hosting
         /// <summary>The playable area: the map's bounds less the camera's margins.</summary>
         void PlayableArea(out float minX, out float minY, out float maxX, out float maxY);
 
-        /// <summary>Makes a lasting crater: the ground at a corner a distance d from the centre goes down by depth x cos(90 degrees x d / radius) inside the radius, from the next moment. A negative depth raises it.</summary>
-        void Crater(float x, float y, float radius, float depth);
+        /// <summary>Makes a lasting crater, and gives it to stop it by: the ground at a corner a distance d from the centre goes down by depth x cos(90 degrees x d / radius) inside the radius, from the next moment. A negative depth raises it.</summary>
+        object Crater(float x, float y, float radius, float depth);
+
+        /// <summary>Takes a lasting crater out of the game at once: the ground it moved goes back.</summary>
+        void StopCrater(object crater);
 
         /// <summary>Plays rings that run out from a point over some seconds; the ground is as before after.</summary>
         void Ripple(float x, float y, float radius, float depth, float seconds);
