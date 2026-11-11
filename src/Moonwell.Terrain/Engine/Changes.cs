@@ -6,7 +6,8 @@ namespace Moonwell.Engine
     /// The terrain changes a map holds, and how each is made and taken back. Pathing and tiles keep what the ground was
     /// before any change touched a cell or corner, and work out each one again from that and the changes still held, oldest
     /// first, so the newest wins. Blight can't be read back cell by cell, so ending one takes its blight off and makes every
-    /// blight change still held again, oldest first. A raise is the game's crater, taken back by the opposite one.
+    /// blight change still held again, oldest first. A raise is the game's crater, taken back by the opposite one. A saved
+    /// game's load drops the game's craters and painted tiles, so both are made again then.
     /// </summary>
     internal static class Changes
     {
@@ -16,7 +17,7 @@ namespace Moonwell.Engine
         /// <summary>The white tint, packed: the water as it started.</summary>
         private const int White = -1;
 
-        /// <summary>The changes held now, but raises, in the order they were made.</summary>
+        /// <summary>The changes held now, in the order they were made.</summary>
         private static readonly List<TerrainChange> held = new List<TerrainChange>();
 
         /// <summary>A cell's four flags before any change touched it, by the cell's number.</summary>
@@ -27,6 +28,29 @@ namespace Moonwell.Engine
 
         /// <summary>A corner's variation before any change touched it, by the corner's number.</summary>
         private static readonly Dictionary<int, int> variationsBefore = new Dictionary<int, int>();
+
+        /// <summary>
+        /// A saved game was loaded. The game has dropped every lasting crater and shows the map's own tiles again, and
+        /// Moonwell's grid and lists are as they were at the save (game facts, 11-11). So the grid goes back to the map's
+        /// own ground and every raise held is made again, in the game and in the grid, and every tile change held paints its
+        /// corners again. A crater made at the load stays. Pathing set by code lasts through a load.
+        /// </summary>
+        internal static void Loaded()
+        {
+            Terrain.Grid.Reset();
+            for (var k = 0; k < held.Count; k++)
+            {
+                var change = held[k];
+                if (change.Kind == TerrainChange.Raise)
+                {
+                    Raise(change, 1f);
+                }
+                else if (change.Kind == TerrainChange.Tiles)
+                {
+                    EachCorner(change);
+                }
+            }
+        }
 
         /// <summary>Forgets every change, at install.</summary>
         internal static void Reset()
@@ -50,6 +74,7 @@ namespace Moonwell.Engine
             switch (change.Kind)
             {
                 case TerrainChange.Raise:
+                    held.Add(change);
                     Raise(change, 1f);
                     break;
                 case TerrainChange.Paths:
@@ -87,13 +112,13 @@ namespace Moonwell.Engine
             }
 
             change.Applied = false;
+            held.Remove(change);
             if (change.Kind == TerrainChange.Raise)
             {
                 Raise(change, -1f);
                 return;
             }
 
-            held.Remove(change);
             switch (change.Kind)
             {
                 case TerrainChange.Paths:

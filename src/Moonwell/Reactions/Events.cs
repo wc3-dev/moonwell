@@ -21,6 +21,9 @@ namespace Moonwell
         /// <summary>Set by the frames package: makes its frames again when a saved game loads, before the map's OnGameLoaded; null without one.</summary>
         internal static Action? LoadListener;
 
+        /// <summary>Set by the terrain package: makes its raises and painted tiles again when a saved game loads, before the map's OnGameLoaded; null without one.</summary>
+        internal static Action? TerrainLoadListener;
+
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, Damage?>? DamageDealer;
 
@@ -159,6 +162,7 @@ namespace Moonwell
             wanted = 0;
             DamageListener = null;
             LoadListener = null;
+            TerrainLoadListener = null;
             DamageDealer = null;
         }
 
