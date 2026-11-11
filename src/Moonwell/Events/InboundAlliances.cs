@@ -31,7 +31,7 @@ namespace Moonwell
         }
 
         /// <summary>The game says a player's alliances changed: unless Moonwell's own set is running, each pair from that player that differs runs its reactions.</summary>
-        internal static void AllianceChanged(player giver)
+        private static void HandleAllianceChanged(player giver)
         {
             var giving = Player.Of(giver);
             if (alliancesHeld > 0 || giving == null)

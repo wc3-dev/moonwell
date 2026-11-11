@@ -7,7 +7,7 @@ namespace Moonwell
     internal static partial class Inbound
     {
         /// <summary>A unit is loaded: it joins the transport's Cargo, then the cargo's OnLoaded, its components', the transport's OnCargoLoaded, its components', the game's and the cargo's player's OnUnitLoaded run, in that order.</summary>
-        internal static void Loaded(unit cargoHandle, unit transportHandle)
+        private static void HandleLoaded(unit cargoHandle, unit transportHandle)
         {
             var cargo = Unit.Of(cargoHandle);
             var transport = Unit.Of(transportHandle);
