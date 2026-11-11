@@ -53,6 +53,15 @@ namespace Moonwell.Build
         /// <summary>The full paths of the C# files <c>dotnet build</c> compiled, once <see cref="DotnetBuild.Run"/> has read them; null before.</summary>
         internal IReadOnlyList<string>? Sources { get; set; }
 
+        /// <summary>The project's <c>NoWarn</c> as <c>dotnet build</c> had it, once <see cref="DotnetBuild.Run"/> has read it.</summary>
+        internal string NoWarn { get; set; } = string.Empty;
+
+        /// <summary>The property that kept the analyzers from running (<c>RunAnalyzers</c> or <c>RunAnalyzersDuringBuild</c> set to false), or null when they ran.</summary>
+        internal string? AnalyzersOff { get; set; }
+
+        /// <summary>The full paths of the <c>.editorconfig</c> and <c>.globalconfig</c> files the compiler read, once <see cref="DotnetBuild.Run"/> has read them.</summary>
+        internal IReadOnlyList<string> ConfigFiles { get; set; } = Array.Empty<string>();
+
         /// <summary>Finds the map project at a folder or at a <c>.csproj</c> file.</summary>
         /// <param name="path">A project folder, or the path of its <c>.csproj</c> file.</param>
         /// <returns>The map project.</returns>

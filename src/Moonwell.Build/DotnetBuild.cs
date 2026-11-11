@@ -39,7 +39,8 @@ namespace Moonwell.Build
 
             // AddImplicitDefineConstants adds the SDK's symbols (NET, NET10_0_OR_GREATER) to DefineConstants, as the compile does.
             var captured = new StringWriter();
-            var query = Dotnet(project, new[] { "msbuild", project.ProjectFile, "-t:AddImplicitDefineConstants", "-getProperty:TargetPath", "-getProperty:DefineConstants", "-getItem:Compile", "-p:Configuration=" + configuration, "--disable-build-servers" }, captured);
+            // NoWarn, the two analyzer switches and the analyzer config files are what Silenced lists.
+            var query = Dotnet(project, new[] { "msbuild", project.ProjectFile, "-t:AddImplicitDefineConstants", "-getProperty:TargetPath", "-getProperty:DefineConstants", "-getProperty:NoWarn", "-getProperty:RunAnalyzers", "-getProperty:RunAnalyzersDuringBuild", "-getItem:Compile", "-getItem:EditorConfigFiles", "-p:Configuration=" + configuration, "--disable-build-servers" }, captured);
             var text = captured.ToString();
             var start = text.IndexOf('{');
             if (query != 0 || start < 0)
@@ -51,9 +52,14 @@ namespace Moonwell.Build
             using var answer = JsonDocument.Parse(text.Substring(start, text.LastIndexOf('}') - start + 1));
             var properties = answer.RootElement.GetProperty("Properties");
             project.Symbols = (properties.GetProperty("DefineConstants").GetString() ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            project.Sources = answer.RootElement.TryGetProperty("Items", out var items) && items.TryGetProperty("Compile", out var compile)
-                ? compile.EnumerateArray().Select(item => item.GetProperty("FullPath").GetString()!).ToList()
+            List<string> Paths(string item) => answer.RootElement.TryGetProperty("Items", out var items) && items.TryGetProperty(item, out var found)
+                ? found.EnumerateArray().Select(one => one.GetProperty("FullPath").GetString()!).ToList()
                 : new List<string>();
+            project.Sources = Paths("Compile");
+            project.ConfigFiles = Paths("EditorConfigFiles");
+            project.NoWarn = properties.GetProperty("NoWarn").GetString() ?? string.Empty;
+            project.AnalyzersOff = new[] { "RunAnalyzers", "RunAnalyzersDuringBuild" }
+                .FirstOrDefault(name => string.Equals(properties.GetProperty(name).GetString(), "false", StringComparison.OrdinalIgnoreCase));
             return properties.GetProperty("TargetPath").GetString() is { Length: > 0 } targetPath
                 ? targetPath
                 : throw new BuildException("dotnet msbuild could not find the built assembly");

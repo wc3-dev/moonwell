@@ -2186,8 +2186,9 @@ so marked, so a block whose changes are meant is marked itself: `Local.For(p, [S
 way for MW0048's false alarms: a lazy `instance ??= new Hud()`, or a cache filled inside a block.
 `Natives.BlzSendSyncData` inside `Local.For` sends a machine-local value to every machine.
 
-A `#pragma warning disable`, `NoWarn` or `.editorconfig` on one of these rules removes its protection, and nothing says
-so. To turn the checks off where you mean it, use `[SyncUnchecked]`.
+A `#pragma warning disable`, `[SuppressMessage]`, `NoWarn` or `.editorconfig` on one of these rules removes its
+protection. To turn the checks off where you mean it, use `[SyncUnchecked]`. Every build lists each place that turns a
+Moonwell rule off, `[SyncUnchecked]` included, so nothing is silenced unseen (see The build).
 
 ## Files and sharing
 
@@ -2420,8 +2421,9 @@ Moonwell turns your C# into Lua with CSharp.lua, and the game runs the Lua. A fe
 Lua that does something else, or call a library function the Lua core does not have. The analyzer rejects most of them
 as errors with their line, so the map does not build and then fail on the screen. `[SyncUnchecked]` does not silence
 them, `decimal` included, because the Lua cannot run them anywhere; a `#pragma warning disable` does, and the map then
-fails in the game. The list comes from about 770 checks in 60 programs, run on .NET and in Lua with what they printed
-compared, and from later checks of the compiler Moonwell builds with.
+fails in the game (the build's list of what is turned off names it; see The build). The list comes from about 770
+checks in 60 programs, run on .NET and in Lua with what they printed compared, and from later checks of the compiler
+Moonwell builds with.
 
 | Rule | Rejects | Write instead |
 |---|---|---|
@@ -2526,6 +2528,21 @@ there; the key itself is not checked. Two warnings point at mistakes that can be
 - A declared object nothing uses: no other object lists it, no code of another class names it, and the map places
   none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
   Editor's own objects, item tables).
+
+The build ends by listing each place that turns a Moonwell rule off, as `Hud.cs:12: [SyncUnchecked] on Hud.Refresh`,
+and writes the same list to `build\silenced.txt`. Past five places it prints only the count and the file's name. A map
+that turns nothing off gets no list and no file. What it lists:
+
+- `[SyncUnchecked]` on a method, a lambda or a local function.
+- `#pragma warning disable` that names an MW rule, or names no rule at all, which turns every rule off.
+- `[SuppressMessage]` for an MW rule.
+- `NoWarn` with an MW rule, and `RunAnalyzers` or `RunAnalyzersDuringBuild` set to false, in the project.
+- A line of an `.editorconfig` or `.globalconfig` that sets an MW rule, one of Moonwell's categories or every analyzer
+  rule to `none`, `silent` or `suggestion`.
+
+The list is of this build: a `#pragma` inside `#if RELEASE` shows only in a release build. Of a library project of
+your own it lists the `[SyncUnchecked]` members, by name with no line; the library's own `#pragma`s and project
+settings are not read.
 
 An error in a reaction shows on the screen with its C# file and line, and is written in full to
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
