@@ -24,7 +24,7 @@ namespace Moonwell.Testing
         /// <summary>Steep hills with no fade, so every rule has corners to fit.</summary>
         private static TerrainGenerator Steep(int seed)
         {
-            return new TerrainGenerator(seed) { Highest = 600f, FeatureSize = 1024f, EdgeFade = 0f };
+            return new TerrainGenerator(seed) { Lowest = 0f, Highest = 600f, FeatureSize = 1024f, EdgeFade = 0f };
         }
 
         private static FakeTerrainWorld Flat()
@@ -213,7 +213,7 @@ namespace Moonwell.Testing
         /// <summary>Hills with a rule of each kind, for the cases that compare plans.</summary>
         private static TerrainGenerator Hills(int seed)
         {
-            var generator = new TerrainGenerator(seed) { Highest = 500f, FeatureSize = 1024f };
+            var generator = new TerrainGenerator(seed) { Lowest = 0f, Highest = 500f, FeatureSize = 1024f };
             generator.Paint(Tile.LordaeronSummerGrass);
             generator.Paint(Tile.LordaeronSummerDirt, fromHeight: 0.4f, cover: 0.6f);
             generator.Paint(Tile.LordaeronSummerRock, fromSlope: 25f);

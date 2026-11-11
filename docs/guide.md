@@ -1185,7 +1185,8 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 - `Plan(area)` only works the ground out: a `TerrainPlan` with a height, a tile and blocked pathing for each 128
   corner. A map may change it (`plan.Heights[column, row]`, `plan.Tiles`, `plan.Blocked`) before `Apply`.
 - `Apply(scope)` makes it as terrain changes held in the scope: ending the scope takes the ground back.
-- Heights go from `Lowest` to `Highest`, measured from the ground as it was. `EdgeFade` brings them back to it at the
+- Heights go from `Lowest` to `Highest` (150 below to 150 above, unless set), measured from the ground as it was. A
+  range all above 0 makes a plateau with a steep rim. `EdgeFade` brings the heights back to the ground at the
   area's edge, so an area inside a hand-made map has no seam.
 - A rule's heights are a share of the range (0 lowest, 1 highest) and its slopes are degrees. Slopes are read from the
   heights the plan adds, so the rules fit ground that starts flat.

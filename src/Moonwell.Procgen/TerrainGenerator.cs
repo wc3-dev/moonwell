@@ -34,11 +34,15 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public int Seed { get; }
 
-        /// <summary>How far the lowest corner is moved from the ground as it was, in the game's units; below 0 digs.</summary>
-        public float Lowest { get; set; } = 0f;
+        /// <summary>
+        /// How far the lowest corner is moved from the ground as it was, in the game's units; below 0 digs. With a range
+        /// around 0, as it starts, the ground stays at its level on the whole and the edge fade is gentle; a range all above
+        /// 0 makes a plateau, with a steep rim where it fades.
+        /// </summary>
+        public float Lowest { get; set; } = -150f;
 
         /// <summary>How far the highest corner is moved from the ground as it was.</summary>
-        public float Highest { get; set; } = 300f;
+        public float Highest { get; set; } = 150f;
 
         /// <summary>How far across a hill is, in the game's units.</summary>
         public float FeatureSize { get; set; } = 1536f;
@@ -55,8 +59,8 @@ namespace Moonwell.Procgen
         /// <summary>
         /// Paints a tile (one of <c>Tile</c>'s) on every corner whose height and slope are in the ranges. A height is a
         /// share of the range, 0 at <c>Lowest</c> and 1 at <c>Highest</c>; a slope is in degrees. A
-        /// <paramref name="cover"/> below 1 paints patches about 512 across, over roughly that share of the corners.
-        /// Later rules paint over earlier ones. A tile of 0 throws ArgumentException.
+        /// <paramref name="cover"/> below 1 paints patches about 512 across: 0.5 covers about half of the corners, and
+        /// less covers fewer. Later rules paint over earlier ones. A tile of 0 throws ArgumentException.
         /// </summary>
         public void Paint(int tile, float fromHeight = 0f, float toHeight = 1f, float fromSlope = 0f, float toSlope = 90f, float cover = 1f)
         {
@@ -137,7 +141,7 @@ namespace Moonwell.Procgen
                     for (var k = 0; k < paints.Count; k++)
                     {
                         var rule = paints[k];
-                        if (rule.Fits(height, steep) && (rule.Cover >= 1f || Noise.At(rule.Seed, column / PatchSize, row / PatchSize) < rule.Cover))
+                        if (rule.Fits(height, steep) && (rule.Cover >= 1f || Noise.Layered(rule.Seed, column / PatchSize, row / PatchSize, 2, 0.5f) < rule.Cover))
                         {
                             plan.Tiles[at] = rule.Value;
                         }
