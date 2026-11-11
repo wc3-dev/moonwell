@@ -202,10 +202,42 @@ namespace Moonwell.Engine
             }
         }
 
-        /// <summary>Asks the game for a raise's crater, and keeps it to stop it by.</summary>
+        /// <summary>
+        /// Asks the game for a raise's craters, and keeps them to stop them by: one for a round raise, and for a grid raise
+        /// one of a tile's radius a corner, which moves the corner at its centre alone (the corners next to it are at the
+        /// radius, where a crater moves nothing). A corner outside the map, or moved by 0, has none.
+        /// </summary>
         private static void Craters(TerrainChange change)
         {
-            change.Craters = new[] { Terrain.World.Crater(change.X, change.Y, change.Radius, -change.By) };
+            var amounts = change.Amounts;
+            if (amounts == null)
+            {
+                change.Craters = new[] { Terrain.World.Crater(change.X, change.Y, change.Radius, -change.By) };
+                return;
+            }
+
+            var grid = Terrain.Grid;
+            var made = new List<object>();
+            for (var j = 0; j < change.Up; j++)
+            {
+                var row = change.FirstRow + j;
+                if (row < 0 || row >= grid.Rows)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < change.Across; i++)
+                {
+                    var column = change.FirstColumn + i;
+                    var by = amounts[j * change.Across + i];
+                    if (by != 0f && column >= 0 && column < grid.Columns)
+                    {
+                        made.Add(Terrain.World.Crater(grid.Left + column * TileSize, grid.Bottom + row * TileSize, TileSize, -by));
+                    }
+                }
+            }
+
+            change.Craters = made.ToArray();
         }
 
         /// <summary>Takes a raise's craters out of the game, if it holds any.</summary>
@@ -236,6 +268,12 @@ namespace Moonwell.Engine
                 Stop(change);
             }
 
+            if (change.Amounts != null)
+            {
+                RaiseEach(change, change.Amounts, sign);
+                return;
+            }
+
             var by = change.By * sign;
             var grid = Terrain.Grid;
             Corners(change.MinX, change.MaxX, grid.Left, grid.Columns, out var i0, out var i1);
@@ -251,6 +289,32 @@ namespace Moonwell.Engine
                     {
                         grid.Raise(i, j, by * Angles.Cos(90f * d / change.Radius));
                     }
+                }
+            }
+        }
+
+        /// <summary>Moves the grid's corners by a grid raise's amounts, or back with the sign -1. A corner outside the map, or moved by 0, is left out.</summary>
+        private static void RaiseEach(TerrainChange change, float[] amounts, float sign)
+        {
+            var grid = Terrain.Grid;
+            for (var j = 0; j < change.Up; j++)
+            {
+                var row = change.FirstRow + j;
+                if (row < 0 || row >= grid.Rows)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < change.Across; i++)
+                {
+                    var column = change.FirstColumn + i;
+                    var by = amounts[j * change.Across + i] * sign;
+                    if (by == 0f || column < 0 || column >= grid.Columns)
+                    {
+                        continue;
+                    }
+
+                    grid.Raise(column, row, by);
                 }
             }
         }
@@ -312,7 +376,8 @@ namespace Moonwell.Engine
                         var other = held[k];
                         if (other.Kind == TerrainChange.Paths && other.Contains(x, y))
                         {
-                            flags = other.On ? flags | other.Value : flags & ~other.Value;
+                            var kinds = other.ValueAt(x, y);
+                            flags = other.On ? flags | kinds : flags & ~kinds;
                             touched = true;
                         }
                     }
@@ -368,7 +433,7 @@ namespace Moonwell.Engine
                         var other = held[k];
                         if (other.Kind == TerrainChange.Tiles && other.Contains(x, y))
                         {
-                            tile = other.Value;
+                            tile = other.ValueAt(x, y);
                             variation = -1;
                             touched = true;
                         }
