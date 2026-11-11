@@ -1121,6 +1121,9 @@ Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and 
   shakes are only for the look.
 - Pathing changes are per 32 cell, and the reads see them at once. A tile is painted per 128 corner; the game draws only
   the map's own tiles (at most 16), so a development build reports another.
+- `Raise`, `SetTile` and `Block` also take a grid of corners as one change: `Terrain.Raise(x, y, columns, amounts,
+  scope)` moves each corner by its own amount, from the map's corner nearest `(x, y)`, row by row from the bottom
+  left. An amount or tile of 0, or `Pathing.None`, leaves a corner. A blocked corner takes the 16 cells around it.
 - The game can't take off blight a building made, and a development build reports a `Cleanse` whose centre stays
   blighted. Blight the map was made with goes under an ended `Blight` too.
 - The water can't be made, moved or raised at runtime. `WaterTint` multiplies its colour: white leaves it.
@@ -1159,6 +1162,40 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
   and go, a building's death, and the death of a destructable next to a cell a search found blocked all drop it. After
   changing destructables or buildings with natives, call `Paths.Refresh(area)`.
 - These calls move a hidden helper or item, so they change game state and are not for `Local.For`.
+
+## Procedural terrain
+
+Add the `Moonwell.Procgen` package to make ground from a seed while the game runs: hills, the tiles on them, and where
+units can't walk. It brings `Moonwell.Terrain` and `Moonwell.Maths` with it.
+
+```csharp
+using Moonwell.Procgen;
+
+var hills = new TerrainGenerator(Game.Random.Int(0, 1000000)) { Highest = 400f, FeatureSize = 2048f };
+hills.Paint(Tile.LordaeronSummerGrass);
+hills.Paint(Tile.LordaeronSummerDirt, fromHeight: 0.5f, cover: 0.6f);   // patches on the upper half
+hills.Paint(Tile.LordaeronSummerRock, fromSlope: 25f);                  // later rules paint over earlier ones
+hills.Block(Pathing.Walk | Pathing.Build, fromSlope: 35f);
+hills.Level(spawn.X, spawn.Y, 512f);                                    // a level place, never blocked
+hills.Plan(Terrain.Playable).Apply(Game.Instance);
+```
+
+- The same seed, settings and area size give the same ground on every machine and in every game. A seed from
+  `Game.Random` gives new ground each game; a fixed number gives the same ground each time.
+- `Plan(area)` only works the ground out: a `TerrainPlan` with a height, a tile and blocked pathing for each 128
+  corner. A map may change it (`plan.Heights[column, row]`, `plan.Tiles`, `plan.Blocked`) before `Apply`.
+- `Apply(scope)` makes it as terrain changes held in the scope: ending the scope takes the ground back.
+- Heights go from `Lowest` to `Highest`, measured from the ground as it was. `EdgeFade` brings them back to it at the
+  area's edge, so an area inside a hand-made map has no seam.
+- A rule's heights are a share of the range (0 lowest, 1 highest) and its slopes are degrees. Slopes are read from the
+  heights the plan adds, so the rules fit ground that starts flat.
+- The game makes no cliffs, ramps or water while it runs, so the ground is slopes, and tiles come from the map's own
+  list. A height changes no pathing by itself: `Block` rules do.
+- Level places are not promised a way to each other; `unit.CanReach` (`Moonwell.Pathing`) can check.
+- `Noise` and `Field` are the numbers under it, for a map's own generators: `Noise.At(seed, x, y)` is smooth noise
+  from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
+  `Normalize`, `FadeEdges` and `Smooth`.
+- Not measured in the game yet: how long a large plan takes to work out and to make.
 
 ## Interactions and finding
 

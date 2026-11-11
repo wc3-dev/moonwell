@@ -135,6 +135,12 @@ namespace Moonwell.Engine
         /// <summary>Makes a raise, or takes it back with the sign -1: the game's crater, and the same at every corner of the grid inside the radius.</summary>
         private static void Raise(TerrainChange change, float sign)
         {
+            if (change.Amounts != null)
+            {
+                RaiseEach(change, change.Amounts, sign);
+                return;
+            }
+
             var by = change.By * sign;
             Terrain.World.Crater(change.X, change.Y, change.Radius, -by);
             var grid = Terrain.Grid;
@@ -151,6 +157,38 @@ namespace Moonwell.Engine
                     {
                         grid.Raise(i, j, by * Angles.Cos(90f * d / change.Radius));
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Makes a grid raise, or takes it back with the sign -1: a crater a corner, of one tile's radius, which moves the
+        /// corner at its centre alone (the corners next to it are at the radius, where a crater moves nothing), and the
+        /// same in the grid. A corner outside the map, or moved by 0, is left out.
+        /// </summary>
+        private static void RaiseEach(TerrainChange change, float[] amounts, float sign)
+        {
+            var grid = Terrain.Grid;
+            for (var j = 0; j < change.Up; j++)
+            {
+                var row = change.FirstRow + j;
+                if (row < 0 || row >= grid.Rows)
+                {
+                    continue;
+                }
+
+                var y = grid.Bottom + row * TileSize;
+                for (var i = 0; i < change.Across; i++)
+                {
+                    var column = change.FirstColumn + i;
+                    var by = amounts[j * change.Across + i] * sign;
+                    if (by == 0f || column < 0 || column >= grid.Columns)
+                    {
+                        continue;
+                    }
+
+                    Terrain.World.Crater(grid.Left + column * TileSize, y, TileSize, -by);
+                    grid.Raise(column, row, by);
                 }
             }
         }
@@ -212,7 +250,8 @@ namespace Moonwell.Engine
                         var other = held[k];
                         if (other.Kind == TerrainChange.Paths && other.Contains(x, y))
                         {
-                            flags = other.On ? flags | other.Value : flags & ~other.Value;
+                            var kinds = other.ValueAt(x, y);
+                            flags = other.On ? flags | kinds : flags & ~kinds;
                             touched = true;
                         }
                     }
@@ -268,7 +307,7 @@ namespace Moonwell.Engine
                         var other = held[k];
                         if (other.Kind == TerrainChange.Tiles && other.Contains(x, y))
                         {
-                            tile = other.Value;
+                            tile = other.ValueAt(x, y);
                             variation = -1;
                             touched = true;
                         }
