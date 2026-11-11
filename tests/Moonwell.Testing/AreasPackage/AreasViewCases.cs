@@ -198,7 +198,7 @@ namespace Moonwell.Testing
             Added(world, new Arena(Square(0f, 0f, 256f)));
             Added(world, new Pit(Square(300f, 0f, 256f)));
             Expect.Equal(1, DebugViews.All.Count, "views after two areas");
-            Runtime.Reset(world);
+            world.Restart();
             Expect.Equal(0, DebugViews.All.Count, "views after a reset");
             AreaSystem.Install(new FakeAreaWorld(), new string[0], new float[0]);
             Added(world, new Arena(Square(0f, 0f, 256f)));

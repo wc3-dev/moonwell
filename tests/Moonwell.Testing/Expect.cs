@@ -1,16 +1,20 @@
 using System;
+using System.Collections.Generic;
 
 namespace Moonwell.Testing
 {
     /// <summary>Checks a condition inside a case; a failed check throws ExpectationFailed.</summary>
     public static class Expect
     {
+        /// <summary>Where failed checks go in place of being thrown, when set: the twin run sets it for a case's second machine, where the case's checks of what one player sees do not hold and the case must still run to its end.</summary>
+        public static List<string>? Kept;
+
         /// <summary>Fails unless the two ints are equal.</summary>
         public static void Equal(int expected, int actual, string what)
         {
             if (expected != actual)
             {
-                throw Mismatch(what, expected, actual);
+                Mismatch(what, expected, actual);
             }
         }
 
@@ -19,7 +23,7 @@ namespace Moonwell.Testing
         {
             if (expected != actual)
             {
-                throw Mismatch(what, expected, actual);
+                Mismatch(what, expected, actual);
             }
         }
 
@@ -28,7 +32,7 @@ namespace Moonwell.Testing
         {
             if (expected != actual)
             {
-                throw Mismatch(what, expected, actual);
+                Mismatch(what, expected, actual);
             }
         }
 
@@ -37,7 +41,7 @@ namespace Moonwell.Testing
         {
             if (!object.ReferenceEquals(expected, actual))
             {
-                throw Mismatch(what, expected, actual);
+                Mismatch(what, expected, actual);
             }
         }
 
@@ -48,7 +52,7 @@ namespace Moonwell.Testing
             // Written so that NaN, which compares false with everything, fails.
             if (!(Math.Abs(expected - actual) <= tolerance))
             {
-                throw Mismatch(what, expected, actual);
+                Mismatch(what, expected, actual);
             }
         }
 
@@ -57,7 +61,7 @@ namespace Moonwell.Testing
         {
             if (!condition)
             {
-                throw new ExpectationFailed(what);
+                Fail(what);
             }
         }
 
@@ -76,15 +80,27 @@ namespace Moonwell.Testing
                     return;
                 }
 
-                throw new ExpectationFailed(what + ": threw " + error.Message);
+                Fail(what + ": threw " + error.Message);
+                return;
             }
 
-            throw new ExpectationFailed(what + ": nothing was thrown");
+            Fail(what + ": nothing was thrown");
         }
 
-        private static ExpectationFailed Mismatch(string what, object? expected, object? actual)
+        private static void Mismatch(string what, object? expected, object? actual)
         {
-            return new ExpectationFailed(what + ": expected " + expected + ", got " + actual);
+            Fail(what + ": expected " + expected + ", got " + actual);
+        }
+
+        private static void Fail(string message)
+        {
+            if (Kept != null)
+            {
+                Kept.Add(message);
+                return;
+            }
+
+            throw new ExpectationFailed(message);
         }
     }
 }
