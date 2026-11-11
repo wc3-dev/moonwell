@@ -35,8 +35,9 @@ namespace Moonwell.Build
         /// </summary>
         /// <param name="project">The map project.</param>
         /// <param name="symbols">The preprocessor symbols CSharp.lua compiles with.</param>
+        /// <param name="loops">True for a development build: each loop body of the marked files starts with the loop guard's call.</param>
         /// <returns>The copy.</returns>
-        public static MarkedProject Stage(MapProject project, IEnumerable<string> symbols)
+        public static MarkedProject Stage(MapProject project, IEnumerable<string> symbols, bool loops = false)
         {
             var folder = Path.Combine(project.BuildFolder, "marked");
             if (Directory.Exists(folder))
@@ -58,7 +59,7 @@ namespace Moonwell.Build
                 if (!relative.StartsWith("build/", StringComparison.OrdinalIgnoreCase))
                 {
                     marked.Add(relative);
-                    text = LineMarks.Mark(text, marked.Count, symbolList, out var fileColumns);
+                    text = LineMarks.Mark(text, marked.Count, symbolList, out var fileColumns, loops);
                     columns[relative] = fileColumns;
                 }
 
