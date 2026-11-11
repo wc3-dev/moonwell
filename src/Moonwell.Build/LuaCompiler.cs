@@ -89,8 +89,9 @@ namespace Moonwell.Build
             libraries.AddRange(LuaLibraries.Files(project));
 
             // The symbols dotnet build compiled with, so the Lua runs the code the map's assembly has, and the line marks see it too.
+            // A development build's loops call the loop guard, which only its moonwell.debug.lua defines.
             var symbols = CompiledFiles.LuaSymbols(project, release);
-            var marked = MarkedProject.Stage(project, symbols);
+            var marked = MarkedProject.Stage(project, symbols, !release);
             files = marked.Files;
             var compiler = new Compiler(marked.ProjectFile, project.GeneratedFolder, string.Empty, null!, null!, "*", "-define:" + string.Join(";", symbols), false, null!, string.Empty)
             {

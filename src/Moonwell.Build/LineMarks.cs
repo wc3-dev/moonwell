@@ -10,10 +10,13 @@ namespace Moonwell.Build
     /// </summary>
     public static class LineMarks
     {
-        /// <inheritdoc cref="Mark(string, int, IEnumerable{string}, out MarkedColumns)"/>
-        public static string Mark(string source, int file, IEnumerable<string> symbols)
+        // The loop guard's call, which CSharp.lua copies into the script as a line of its own, as it does a marker.
+        private const string LoopMark = "/*[[MoonwellLoop()]]*/ ";
+
+        /// <inheritdoc cref="Mark(string, int, IEnumerable{string}, out MarkedColumns, bool)"/>
+        public static string Mark(string source, int file, IEnumerable<string> symbols, bool loops = false)
         {
-            return Mark(source, file, symbols, out _);
+            return Mark(source, file, symbols, out _, loops);
         }
 
         /// <summary>
@@ -22,14 +25,18 @@ namespace Moonwell.Build
         /// or <c>/*[[--@mw -]]*/ </c> when it is a member's body: lines after it name no C# line. The markers are inline, so no line
         /// moves; CSharp.lua's code template (<c>/*[[...]]*/</c>) keeps them when comments are off. CSharp.lua writes the comments
         /// of blocks and sections only, so a body with no braces gets braces around it, and a section before a case that can fail
-        /// gets them too when it can have them; neither changes what the code does.
+        /// gets them too when it can have them; neither changes what the code does. With <paramref name="loops"/>, the body of every
+        /// <c>while</c>, <c>do</c>, <c>for</c> and <c>foreach</c> starts with <c>/*[[MoonwellLoop()]]*/ </c>, before its first
+        /// statement's marker, so the call is on the loop's own line: the loop guard of a development build
+        /// (<c>moonwell.debug.lua</c>), which counts the turn.
         /// </summary>
         /// <param name="source">The file's text.</param>
         /// <param name="file">The file's number in the line table, from 1.</param>
         /// <param name="symbols">The preprocessor symbols CSharp.lua compiles with; statements in inactive branches get no marker.</param>
         /// <param name="columns">What was inserted, to read a column of the marked text as the file's own.</param>
+        /// <param name="loops">True writes the loop guard's call at the start of each loop body.</param>
         /// <returns>The marked text.</returns>
-        public static string Mark(string source, int file, IEnumerable<string> symbols, out MarkedColumns columns)
+        public static string Mark(string source, int file, IEnumerable<string> symbols, out MarkedColumns columns, bool loops = false)
         {
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest).WithPreprocessorSymbols(symbols);
             var tree = CSharpSyntaxTree.ParseText(source, options);
@@ -38,9 +45,10 @@ namespace Moonwell.Build
             {
                 if (node is StatementSyntax statement)
                 {
-                    if (statement.Parent is BlockSyntax)
+                    if (statement.Parent is BlockSyntax parent)
                     {
-                        inserts.Add((statement.SpanStart, false, Marker(StartTag(statement, file))));
+                        var turn = loops && IsLoop(parent.Parent) && statement == parent.Statements[0] ? LoopMark : string.Empty;
+                        inserts.Add((statement.SpanStart, false, turn + Marker(StartTag(statement, file))));
                     }
                     else if (statement.Parent is SwitchSectionSyntax section)
                     {
@@ -48,14 +56,17 @@ namespace Moonwell.Build
                     }
                     else if (IsBareBody(statement))
                     {
-                        inserts.Add((statement.SpanStart, false, "{ " + Marker(StartTag(statement, file))));
+                        var turn = loops && IsLoop(statement.Parent) ? LoopMark : string.Empty;
+                        inserts.Add((statement.SpanStart, false, "{ " + turn + Marker(StartTag(statement, file))));
                         inserts.Add((statement.Span.End, true, " " + Marker(EndTag(statement, file)) + "}"));
                     }
                 }
 
                 if (node is BlockSyntax block && !block.CloseBraceToken.IsMissing)
                 {
-                    inserts.Add((block.CloseBraceToken.SpanStart, true, Marker(EndTag(block, file))));
+                    // An empty body has no first statement to carry the loop guard's call.
+                    var turn = loops && IsLoop(block.Parent) && block.Statements.Count == 0 ? LoopMark : string.Empty;
+                    inserts.Add((block.CloseBraceToken.SpanStart, true, turn + Marker(EndTag(block, file))));
                 }
             }
 
@@ -90,6 +101,11 @@ namespace Moonwell.Build
             {
                 inserts.Add((statement.Span.End, true, " " + Marker(Location(next!, file)) + "}"));
             }
+        }
+
+        private static bool IsLoop(SyntaxNode? node)
+        {
+            return node is WhileStatementSyntax or DoStatementSyntax or ForStatementSyntax or CommonForEachStatementSyntax;
         }
 
         // A statement that is a body by itself, with no braces. The if of an else stays bare: CSharp.lua writes it as an elseif.
