@@ -21,7 +21,8 @@ namespace Moonwell
     /// at each cast pays that at each cast. Add it in the map's <c>Components</c> or with <c>Game.Instance.Add</c>; ending it
     /// lets every unit inside leave. A timer or interaction a reaction makes in the area's scope ends when the area ends, so
     /// one made in <c>OnUnitLeft</c> while the area ends is ended at once; name another scope, such as
-    /// <c>Game.Instance</c>, to outlive the area. A buff or component added to a unit is the unit's (decision 65).
+    /// <c>Game.Instance</c>, to outlive the area. A buff or component added to a unit is the unit's (decision 65); held by
+    /// the unit's stay (<c>heldBy: Stay(enteringUnit)</c>), it ends when the unit leaves (decision 266).
     /// </summary>
     public abstract class Area : GameComponent
     {
@@ -51,6 +52,9 @@ namespace Moonwell
 
         /// <summary>The units in the region that Accepts refused, in the order refused: while RecheckAccepts, the place check asks again for each that has a place, and a yes enters it. A unit that leaves the region, or ends, is forgotten.</summary>
         private readonly OrderedSet<Unit> refused = new OrderedSet<Unit>();
+
+        /// <summary>The stays that were asked for, each by its unit inside; null until the first is.</summary>
+        private Dictionary<Unit, AreaStay>? stays;
 
         /// <summary>How many package steps a Tick is, worked out when the area is added; 0 for none.</summary>
         internal int tickSteps;
@@ -144,10 +148,39 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Runs once when a unit that entered goes out, dies, is hidden or loaded, ends, is refused at the place check, or the area ends. A unit that dies and is brought back to life inside enters again (<c>OnUnitEntered</c>). The unit is no longer inside here. When the area ends, a timer made here is the area's and is ended at once; a buff or component added to the unit is the unit's.</summary>
+        /// <summary>Runs once when a unit that entered goes out, dies, is hidden or loaded, ends, is refused at the place check, or the area ends. A unit that dies and is brought back to life inside enters again (<c>OnUnitEntered</c>). The unit is no longer inside here. What the unit's stay holds is still there, and ends right after. When the area ends, a timer made here is the area's and is ended at once; a buff or component added to the unit is the unit's.</summary>
         /// <param name="leavingUnit">The unit that left.</param>
         public virtual void OnUnitLeft(Unit leavingUnit)
         {
+        }
+
+        /// <summary>
+        /// The scope of a unit's stay, from its <c>OnUnitEntered</c> until it leaves or the area ends (decision 266), the same
+        /// one at every read. Held by it (<c>enteringUnit.Apply(new Slow(), heldBy: Stay(enteringUnit))</c>), a buff,
+        /// component or stat modifier ends when the unit leaves, right after <c>OnUnitLeft</c>, and a buff two areas give
+        /// stays until the unit has left both; a timer made on it (<c>Stay(unit).Every(1f, ...)</c>) ends then too. For a
+        /// unit that is not inside, as in <c>Accepts</c> and <c>OnUnitLeft</c>, it gives a scope that has ended, so nothing
+        /// is held by it, and a development build reports it.
+        /// </summary>
+        public Scope Stay(Unit unit)
+        {
+            if (stays != null && stays.TryGetValue(unit, out var found) && !found.HasEnded)
+            {
+                return found;
+            }
+
+            var stay = new AreaStay();
+            if (!since.ContainsKey(unit))
+            {
+                Dev.Report(Names.NameOf(this) + ".Stay", Names.NameOf(unit) + " is not inside; read it from OnUnitEntered until the unit leaves");
+                stay.End();
+                return stay;
+            }
+
+            Adopt(stay);
+            stays ??= new Dictionary<Unit, AreaStay>();
+            stays[unit] = stay;
+            return stay;
         }
 
         /// <summary>The units inside, in the order they entered; a copy that later changes do not touch.</summary>
@@ -533,7 +566,7 @@ namespace Moonwell
         }
 
         /// <summary>Runs OnUnitStays for each unit inside, if the area's Tick is due at this package step.</summary>
-        internal void Stay(int step)
+        internal void RunStays(int step)
         {
             if (stopped || tickSteps <= 0 || inside.Count == 0)
             {
@@ -561,7 +594,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Takes a unit out first, then runs OnUnitLeft, once; does nothing when the unit is not inside.</summary>
+        /// <summary>Takes a unit out first, then runs OnUnitLeft, once, then ends the unit's stay if one was asked for; does nothing when the unit is not inside.</summary>
         private void Exit(Unit unit)
         {
             if (!since.Remove(unit))
@@ -571,7 +604,19 @@ namespace Moonwell
 
             inside.Remove(unit);
             Refresh();
+
+            // Taken out before OnUnitLeft: a unit that reaction brings back inside starts a new stay.
+            AreaStay? stay = null;
+            if (stays != null && stays.TryGetValue(unit, out stay))
+            {
+                stays.Remove(unit);
+            }
+
             CallLeft(unit);
+            if (stay != null)
+            {
+                stay.End();
+            }
         }
 
         /// <summary>Tells the tracker when the area starts or stops counting for the package's check (it has a unit inside, away or refused) and for its step (it has a Tick and a unit inside).</summary>
