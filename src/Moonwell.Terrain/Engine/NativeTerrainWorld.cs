@@ -66,9 +66,15 @@ namespace Moonwell.Engine
         }
 
         /// <summary>A lasting crater of the game's, made at once (duration 0).</summary>
-        public void Crater(float x, float y, float radius, float depth)
+        public object Crater(float x, float y, float radius, float depth)
         {
-            Natives.TerrainDeformCrater(x, y, radius, depth, 0, true);
+            return Natives.TerrainDeformCrater(x, y, radius, depth, 0, true);
+        }
+
+        /// <summary>Stops a crater at once: a settled one of 300 read 0 a second after (game facts, 11-11).</summary>
+        public void StopCrater(object crater)
+        {
+            Natives.TerrainDeformStop((terraindeformation)crater, 0);
         }
 
         /// <summary>One ripple, as Blizzard.j's TerrainDeformationRippleBJ makes it from the centre out, with waves 128 wide passing twice a second.</summary>

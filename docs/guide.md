@@ -1134,9 +1134,10 @@ Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and 
 - Where changes of a kind overlap, the newest held wins, and ending one shows what is under it. Raises add up, as the
   game's craters do. `Height`, `Normal`, `Raycast` and physics follow a raise on every machine; ripples, waves and
   shakes are only for the look.
-- A saved game's load drops the game's own craters and painted tiles. Moonwell makes its raises and tiles again when
-  the game loads, before `OnGameLoaded`, so the ground comes back as it was; pathing lasts by itself. Craters and tiles
-  a map makes with natives are lost at a load.
+- A saved game keeps neither the game's own craters nor its painted tiles rightly. Moonwell takes its raises out of the
+  game while a save is written and makes them again after it and at a load, and paints its tiles again at a load,
+  before `OnGameLoaded`, so the ground comes back as it was; pathing lasts by itself. Craters and tiles a map makes
+  with natives are not looked after.
 - Pathing changes are per 32 cell, and the reads see them at once. A tile is painted per 128 corner; the game draws only
   the map's own tiles (at most 16), so a development build reports another.
 - The game can't take off blight a building made, and a development build reports a `Cleanse` whose centre stays
