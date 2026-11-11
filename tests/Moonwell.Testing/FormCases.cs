@@ -64,8 +64,9 @@ namespace Moonwell.Testing
         /// <summary>
         /// A struct that can change is a copy wherever it is stored or given on: put into a collection, given to a
         /// delegate, read through its owner, or standing in a conditional or an expression body (the fork's
-        /// 2.0.4-moonwell.22). A change made in place is still a change to the original. A method held to struct types
-        /// that copies its value takes a number too.
+        /// 2.0.4-moonwell.22), and where a call or a property gives it back as a type parameter (2.0.4-moonwell.23). A
+        /// change made in place is still a change to the original. A method held to struct types that copies its value
+        /// takes a number too.
         /// </summary>
         public static void StructStores(FakeWorld world)
         {
@@ -108,6 +109,27 @@ namespace Moonwell.Testing
             owner.Spot.X = 5;
             Expect.Equal(5, owner.Spot.X, "a change in place");
 
+            var first = list.First();
+            first.X = 9;
+            Expect.Equal(1, list[0].X, "a struct LINQ gives back");
+            var found = list.Find(spot => spot.X == 1);
+            found.X = 9;
+            Expect.Equal(1, list[0].X, "a struct a List gives back");
+            Spot? maybe = b;
+            var value = maybe.Value;
+            value.X = 9;
+            Expect.Equal(1, maybe.Value.X, "a nullable's value");
+            foreach (var pair in map)
+            {
+                var held = pair.Value;
+                held.X = 9;
+            }
+            Expect.Equal(1, map["a"].X, "a Dictionary's value read from its pair");
+            var keeper = new Keeper<Spot>(new Spot { X = 1 });
+            var kept = keeper.Get();
+            kept.X = 9;
+            Expect.Equal(1, keeper.Get().X, "a generic class's value");
+
             Expect.Equal(7, CopyOf(7), "a number copied by a method held to struct types");
             Expect.Equal(5, CopyOf(owner.Spot).X, "a struct copied by it");
         }
@@ -128,6 +150,21 @@ namespace Moonwell.Testing
             public Spot Spot;
 
             public Spot Given() => Spot;
+        }
+
+        private class Keeper<T>
+        {
+            private readonly T value;
+
+            public Keeper(T value)
+            {
+                this.value = value;
+            }
+
+            public T Get()
+            {
+                return value;
+            }
         }
 
         /// <summary>A deconstruction into new names, elements as targets, and a tuple as text (MW0022).</summary>
