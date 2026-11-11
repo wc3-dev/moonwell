@@ -415,7 +415,10 @@ the game, whose integers are 32 bits, and are MW0030.
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last
-value read or set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the
+value read or set, and setting does nothing. A member never read or set while it was in the game gives 0 then, as in
+`OnLeave` after the game removed it, and a development build reports that read: read it into a variable while the unit
+is in the game, and use that. Where a unit died is kept as its `X` and `Y` when a death reaction (`OnDeath`, `OnKill`,
+`OnUnitDied`) sees the death, so a timer started there can read them after the corpse is gone. In the
 quarter second before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
 `Local.For`, a change is not.
 
@@ -1119,6 +1122,9 @@ Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and 
 - Where changes of a kind overlap, the newest held wins, and ending one shows what is under it. Raises add up, as the
   game's craters do. `Height`, `Normal`, `Raycast` and physics follow a raise on every machine; ripples, waves and
   shakes are only for the look.
+- A saved game's load drops the game's own craters and painted tiles. Moonwell makes its raises and tiles again when
+  the game loads, before `OnGameLoaded`, so the ground comes back as it was; pathing lasts by itself. Craters and tiles
+  a map makes with natives are lost at a load.
 - Pathing changes are per 32 cell, and the reads see them at once. A tile is painted per 128 corner; the game draws only
   the map's own tiles (at most 16), so a development build reports another.
 - The game can't take off blight a building made, and a development build reports a `Cleanse` whose centre stays
@@ -2436,6 +2442,7 @@ Moonwell builds with.
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
 | MW0053 | a native as a method group, `xs.Select(Natives.Cos)` or `Func<float, float> f = Natives.Cos`: it is written `Moonwell.Natives.Cos`, which the game's Lua does not have, so the script stops there | a lambda that calls it, `x => Natives.Cos(x)` |
+| MW0056 | `new Dictionary<Quest, int>()` or `new OrderedMap<Quest, int>()` where `Quest` is a class of the map's with static setup, a static field given a value that is no constant or a static constructor: the setup runs while the script loads, and the map can stop there with nothing on the screen (see The build) | the static field in another class or set on first use, or another key; a `HashSet` or an `OrderedSet` is fine |
 
 MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
 
@@ -2452,8 +2459,7 @@ The analyzer does not see these, so they build and then go wrong in the game:
 
 | Form | In the game | Write instead |
 |---|---|---|
-| a struct of your own that can change, put into a collection by an initializer, a collection expression or an indexer (`new List<P> { a }`, `[a]`, `new P[] { a }`, `list[0] = a`, `dict[k] = a`), or changed through a lambda's parameter (`p => p.X = 9`, `list.ForEach(...)`) | not copied: both hold the same struct, so a change to one is a change to the other | a `readonly struct`, made new to change it, or a class; `Add` and `Insert` copy |
-| a `where T : struct` or `unmanaged` method that copies its value (`var y = x;`, `foreach (var x in e) return x;`), given an `int`, a `float` or a `bool` | fails: "attempt to index a number value" | the method without the constraint |
+| a struct of your own that can change, copied with its collection (`ToArray()`, `Clone()`, `[.. list]`) and then changed in place (`copy[0].X = 9`), changed by a method called on a `foreach` variable or straight on a List's element or on what a call gives back (`list[0].Move()`, `list.First().Move()`), or changed in a named method the collection calls (`list.ForEach(Move)`) | not copied: both hold the same struct, so a change to one is a change to the other | a `readonly struct`, made new to change it, or a class; a copy in a variable of its own (`var c = list[0];`) and a lambda (`list.ForEach(p => ...)`) are safe |
 | a `null` after a number, `bool` or `char` in a `+` chain: `"a" + true + null` | the build stops at its line: "CSharp.lua cannot compile this code" | leave the `null` out |
 | a later value in one `using` throwing while it is made (`using Res a = new Res(), b = Fail();`) | `a` is not disposed | a `using` of its own for each |
 | an `abstract` property read by its bare name or through `this.` in the class that declares it (`abstract string Kind { get; }`, then `Kind` in that class) | nil: the class's own override is never asked | a `virtual` property with a body (`virtual string Kind => "";`) |
@@ -2506,11 +2512,15 @@ Each takes the project's folder after the command, as `build` does; `new` takes 
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
-`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use. The
-build does not catch a
-`Dictionary` keyed by a map's own class that has a static field with a value: the map can stop while it loads, with
-nothing on the screen. Key by the handle, or set the field on first use. Moonwell's classes, `Unit` and the rest, are
-safe keys.
+`ObjectTypes`' registrations, which the editor does not offer. `ObjectTypes.FourCC` and `IdOf` are a map's to use.
+
+A `new Dictionary` or `new OrderedMap` keyed by a map's own class that has static setup is MW0056. Static setup is a
+static field given a value that is no constant (`static readonly List<Quest> All = new()`), or a static constructor.
+The game's Lua runs it while the script loads, when the dictionary's type is made, and the map can stop there with
+nothing on the screen. Move the field to another class, set it on first use, or key by the handle. A constant
+(`static int next = 1`) is no setup, a `HashSet` and an `OrderedSet` are fine, and Moonwell's classes, `Unit` and the
+rest, are safe keys. The rule does not see a key class from a library, or a generic class of your own that makes a
+dictionary keyed by its type parameter.
 
 The build loads the script in Lua without running it, as the game does first, and stops with the C# file and line when
 Lua refuses it. Lua allows 200 locals in a function: each parameter, local variable and object or collection

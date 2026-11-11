@@ -331,6 +331,11 @@ namespace Moonwell
                 return;
             }
 
+            // Where it died is kept, for a reaction's timer that first reads it once the corpse is gone (decision 270).
+            dead.lastX = Runtime.World.UnitX(dying);
+            dead.lastY = Runtime.World.UnitY(dying);
+            dead.Keep(Kept.X | Kept.Y);
+
             // The buffs the death ends are those on the unit now, which see it; one its reactions apply stays.
             var buffs = dead.GetAll<Buff>();
             var applied = Buff.AppliesOf(buffs);
@@ -1201,11 +1206,20 @@ namespace Moonwell
             Sharing.Left(leaving);
         }
 
-        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06). Moonwell makes its lasting lightning again, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
+        /// <summary>A game saved with the game's own Save Game was loaded: Lua is as at the save, so the shared date is old, and the map's lightning and frames are gone (game facts, 11-06), and so are its lasting craters and painted tiles (11-11). Moonwell makes its lasting lightning again, the terrain package its raises and tiles, the frames package its frames, then the game components' OnGameLoaded runs.</summary>
         internal static void GameLoaded()
         {
             RealClock.Loaded();
             LastingLightning.Loaded();
+            try
+            {
+                Events.TerrainLoadListener?.Invoke();
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Terrain", error);
+            }
+
             try
             {
                 Events.LoadListener?.Invoke();

@@ -65,6 +65,39 @@ namespace Moonwell.Testing
             Expect.True(hit.Point.X < 1280f && hit.Point.X > 896f, "on its near side: " + hit.Point.X);
         }
 
+        /// <summary>A saved game's load drops the game's craters and painted tiles (game facts, 11-11): each raise held is asked again and each tile held painted again, Height stays as it was, pathing is left alone, and an ended raise is not made again.</summary>
+        public static void AfterLoad(FakeWorld world)
+        {
+            var fake = Flat();
+            var holder = Game.Instance.Add(new Holder());
+            Terrain.Block(1280f, 1280f, 64f, Pathing.Walk, holder);
+            Expect.True(!world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded), "pathing asks for no load to be heard");
+            Terrain.Raise(1280f, 1280f, 256f, 100f, holder);
+            Expect.True(world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded), "a raise asks for a loaded game to be heard");
+            Terrain.Raise(640f, 640f, 256f, 50f, Game.Instance).End();
+            Terrain.SetTile(1280f, 1280f, Tile.LordaeronSummerGrass, 64f, holder);
+            // What the game does at a load: its craters and painted tiles are gone.
+            fake.Craters.Clear();
+            fake.Tiles.Clear();
+            fake.Variations.Clear();
+            var paints = fake.Paints;
+            var sets = fake.PathSets;
+            Inbound.GameLoaded();
+            Expect.Equal(1, fake.Craters.Count, "the raise held is asked again, and the ended one is not");
+            Expect.Near(-100f, fake.Craters[0][3], "with its own depth");
+            Expect.Near(100f, Terrain.Height(1280f, 1280f), "Height is as before the load, not doubled");
+            Expect.Near(70.711f, Terrain.Height(1408f, 1280f), "at every corner");
+            Expect.Near(0f, Terrain.Height(640f, 640f), "the ended raise stays ended");
+            Expect.Equal(Tile.LordaeronSummerGrass, Terrain.Tile(1280f, 1280f), "the tile is painted again");
+            Expect.Equal(paints + 1, fake.Paints, "one corner painted");
+            Expect.Equal(sets, fake.PathSets, "pathing lasts through a load: nothing is set again");
+            Expect.True(!Terrain.IsWalkable(1296f, 1296f), "and is still taken");
+            holder.End();
+            Expect.Near(0f, Terrain.Height(1280f, 1280f), "the end takes the raise back");
+            Expect.Equal(Tile.LordaeronSummerDirt, Terrain.Tile(1280f, 1280f), "and the tile");
+            Expect.True(Terrain.IsWalkable(1296f, 1296f), "and the pathing");
+        }
+
         /// <summary>A radius of 0 is refused, and a raise in an ended scope is never made.</summary>
         public static void RaiseRefused(FakeWorld world)
         {
