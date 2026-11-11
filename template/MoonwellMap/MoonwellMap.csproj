@@ -20,6 +20,8 @@
     <!-- <PackageReference Include="Moonwell.Terrain" Version="MOONWELL_VERSION" /> -->
     <!-- For where units fit, the nearest spot they can stand and paths by their size, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Pathing" Version="MOONWELL_VERSION" /> -->
+    <!-- For ground made from a seed while the game runs (hills, tiles and blocked ground), and noise, take the comment off the next line. -->
+    <!-- <PackageReference Include="Moonwell.Procgen" Version="MOONWELL_VERSION" /> -->
     <!-- For missiles, knockback, walls and ballistics, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Physics" Version="MOONWELL_VERSION" /> -->
     <!-- For parts of the map that units enter and leave, take the comment off the next line. -->

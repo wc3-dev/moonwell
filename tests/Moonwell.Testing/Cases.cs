@@ -57,7 +57,24 @@ namespace Moonwell.Testing
             AddJson(list);
             AddDebug(list);
             AddPlaced(list);
+            AddProcgen(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
+        private static void AddProcgen(List<Case> list)
+        {
+            list.Add(new Case { Name = "procgen.noise.hash", Run = NoiseCases.Hash });
+            list.Add(new Case { Name = "procgen.noise.smooth", Run = NoiseCases.Smooth });
+            list.Add(new Case { Name = "procgen.noise.layered", Run = NoiseCases.Layered });
+            list.Add(new Case { Name = "procgen.field.basics", Run = NoiseCases.FieldBasics });
+            list.Add(new Case { Name = "procgen.field.shaping", Run = NoiseCases.FieldShaping });
+            list.Add(new Case { Name = "procgen.terrain.same-seed", Run = TerrainGeneratorCases.SameSeed });
+            list.Add(new Case { Name = "procgen.terrain.range-and-fade", Run = TerrainGeneratorCases.RangeAndFade });
+            list.Add(new Case { Name = "procgen.terrain.paint", Run = TerrainGeneratorCases.Paint });
+            list.Add(new Case { Name = "procgen.terrain.block-and-level", Run = TerrainGeneratorCases.BlockAndLevel });
+            list.Add(new Case { Name = "procgen.terrain.apply", Run = TerrainGeneratorCases.Apply });
+            list.Add(new Case { Name = "procgen.terrain.refused", Run = TerrainGeneratorCases.Refused });
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>
@@ -1128,6 +1145,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.water-tint", Run = ChangeCases.WaterTint });
             list.Add(new Case { Name = "terrain.change.spread", Run = ChangeCases.Spread });
             list.Add(new Case { Name = "terrain.change.trail", Run = ChangeCases.Trail });
+            list.Add(new Case { Name = "terrain.change.grid-raise", Run = GridChangeCases.Raise });
+            list.Add(new Case { Name = "terrain.change.grid-tiles", Run = GridChangeCases.Tiles });
+            list.Add(new Case { Name = "terrain.change.grid-block", Run = GridChangeCases.Block });
+            list.Add(new Case { Name = "terrain.change.grid-refused", Run = GridChangeCases.Refused });
+            list.Add(new Case { Name = "terrain.change.grid-outside-and-copy", Run = GridChangeCases.OutsideAndCopy });
             list.Add(new Case { Name = "terrain.change.save-and-load", Run = ChangeCases.SaveAndLoad });
             list.Add(new Case { Name = "terrain.raycast.not-installed", Run = GroundRayCases.NotInstalled });
             list.Add(new Case { Name = "terrain.raycast.miss-makes-nothing", Run = MissCases.GroundMissMakesNothing });

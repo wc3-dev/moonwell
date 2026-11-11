@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Moonwell.Engine;
 
@@ -41,6 +42,25 @@ namespace Moonwell
             return Round(TerrainChange.Raise, x, y, radius, 0, false, -by, scope, "Terrain.Lower");
         }
 
+        /// <summary>
+        /// Raises each corner of a grid by its own amount (a negative one lowers it, 0 leaves it) for as long as the scope
+        /// holds it, as one change. The grid's first corner is the map's corner nearest (x, y); <paramref name="by"/> holds a
+        /// corner each, row by row from the bottom left, <paramref name="columns"/> across and 128 apart. <c>Height</c> and
+        /// the rest follow as for a single <c>Raise</c>. A corner outside the map is left out. The array is copied. A grid
+        /// that is not rows of <paramref name="columns"/> is refused.
+        /// </summary>
+        [ChangesState]
+        public static TerrainChange Raise(float x, float y, int columns, float[] by, Scope scope)
+        {
+            var amounts = new float[by.Length];
+            for (var k = 0; k < by.Length; k++)
+            {
+                amounts[k] = by[k];
+            }
+
+            return OverGrid(TerrainChange.Raise, x, y, columns, amounts, null, scope, "Terrain.Raise");
+        }
+
         /// <summary>Rings that run out from a point over some seconds. Only for the look: <c>Height</c> does not see it, and the ground is as before after.</summary>
         [ChangesState]
         public static void Ripple(float x, float y, float radius, float depth, float seconds)
@@ -79,6 +99,23 @@ namespace Moonwell
             return Round(TerrainChange.Paths, x, y, radius, (int)kinds, false, 0f, scope, "Terrain.Block");
         }
 
+        /// <summary>
+        /// Takes each corner's own kinds of pathing away (<c>Pathing.None</c> leaves a corner) for as long as the scope
+        /// holds it, as one change: in the 128 square around the corner, the 16 cells whose centres are in it. The grid
+        /// is laid out as <c>Raise</c>'s over a grid.
+        /// </summary>
+        [ChangesState]
+        public static TerrainChange Block(float x, float y, int columns, Pathing[] kinds, Scope scope)
+        {
+            var values = new int[kinds.Length];
+            for (var k = 0; k < kinds.Length; k++)
+            {
+                values[k] = (int)kinds[k];
+            }
+
+            return OverGrid(TerrainChange.Paths, x, y, columns, null, values, scope, "Terrain.Block");
+        }
+
         /// <summary>Gives kinds of pathing in a rect for as long as the scope holds it, as <c>Block</c> takes them.</summary>
         [ChangesState]
         public static TerrainChange Allow(Bounds area, Pathing kinds, Scope scope)
@@ -111,6 +148,30 @@ namespace Moonwell
         {
             CheckTile(tile);
             return Rect(TerrainChange.Tiles, area, tile, false, scope);
+        }
+
+        /// <summary>
+        /// Paints each corner of a grid with its own tile (0 leaves a corner) for as long as the scope holds it, as one
+        /// change. The grid is laid out as <c>Raise</c>'s over a grid. A development build reports each tile the map's
+        /// list lacks, once.
+        /// </summary>
+        [ChangesState]
+        public static TerrainChange SetTile(float x, float y, int columns, int[] tiles, Scope scope)
+        {
+            var values = new int[tiles.Length];
+            var seen = new List<int>();
+            for (var k = 0; k < tiles.Length; k++)
+            {
+                var tile = tiles[k];
+                values[k] = tile;
+                if (tile != 0 && !seen.Contains(tile))
+                {
+                    seen.Add(tile);
+                    CheckTile(tile);
+                }
+            }
+
+            return OverGrid(TerrainChange.Tiles, x, y, columns, null, values, scope, "Terrain.SetTile");
         }
 
         /// <summary>The tile at the corner nearest a point, one of <c>Tile</c>'s.</summary>
@@ -279,6 +340,34 @@ namespace Moonwell
         {
             var centre = area.Center;
             return Changes.Make(new TerrainChange(kind, centre.X, centre.Y, -1f, area.Min.X, area.Min.Y, area.Max.X, area.Max.Y, value, on, 0f), scope);
+        }
+
+        /// <summary>A change over a grid of corners, its first the map's corner nearest (x, y); refused for a grid that is not rows of columns.</summary>
+        private static TerrainChange OverGrid(int kind, float x, float y, int columns, float[]? amounts, int[]? values, Scope scope, string label)
+        {
+            var length = amounts != null ? amounts.Length : values!.Length;
+            var fits = columns >= 1 && length >= columns && length % columns == 0;
+            var grid = Grid;
+            var change = new TerrainChange(kind, grid.Left, grid.Bottom, Nearest((x - grid.Left) / 128f), Nearest((y - grid.Bottom) / 128f), fits ? columns : 0, fits ? length / columns : 0, amounts, values);
+            if (!fits)
+            {
+                Errors.Refuse(label, "a grid of " + length + " corners is not rows of " + columns);
+                change.End();
+                return change;
+            }
+
+            return Changes.Make(change, scope);
+        }
+
+        /// <summary>The whole number nearest a value, a negative one too; 0 for a NaN.</summary>
+        private static int Nearest(float value)
+        {
+            if (value >= 0f)
+            {
+                return Slots.Whole(value + 0.5f);
+            }
+
+            return value < 0f ? -Slots.Whole(0.5f - value) : 0;
         }
 
         /// <summary>Reports, in a development build, a tile the map's list lacks: the game would read it back but not draw it.</summary>
