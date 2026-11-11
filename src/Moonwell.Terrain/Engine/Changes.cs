@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Moonwell.Hosting;
 
 namespace Moonwell.Engine
 {
@@ -33,7 +34,8 @@ namespace Moonwell.Engine
         /// A saved game was loaded. The game has dropped every lasting crater and shows the map's own tiles again, and
         /// Moonwell's grid and lists are as they were at the save (game facts, 11-11). So the grid goes back to the map's
         /// own ground and every raise held is made again, in the game and in the grid, and every tile change held paints its
-        /// corners again. A crater made at the load stays. Pathing set by code lasts through a load.
+        /// corners again. A crater made at the load stays. Pathing set by code lasts through a load. The first raise or tile
+        /// change asks for the load to be heard, so a map with neither hears none for this.
         /// </summary>
         internal static void Loaded()
         {
@@ -75,6 +77,7 @@ namespace Moonwell.Engine
             {
                 case TerrainChange.Raise:
                     held.Add(change);
+                    Events.Listen(GameEvent.Loaded);
                     Raise(change, 1f);
                     break;
                 case TerrainChange.Paths:
@@ -83,6 +86,7 @@ namespace Moonwell.Engine
                     break;
                 case TerrainChange.Tiles:
                     held.Add(change);
+                    Events.Listen(GameEvent.Loaded);
                     EachCorner(change);
                     break;
                 case TerrainChange.Blights:

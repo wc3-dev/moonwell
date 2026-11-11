@@ -70,10 +70,12 @@ namespace Moonwell.Testing
         {
             var fake = Flat();
             var holder = Game.Instance.Add(new Holder());
+            Terrain.Block(1280f, 1280f, 64f, Pathing.Walk, holder);
+            Expect.True(!world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded), "pathing asks for no load to be heard");
             Terrain.Raise(1280f, 1280f, 256f, 100f, holder);
+            Expect.True(world.Listening.Contains(Moonwell.Hosting.GameEvent.Loaded), "a raise asks for a loaded game to be heard");
             Terrain.Raise(640f, 640f, 256f, 50f, Game.Instance).End();
             Terrain.SetTile(1280f, 1280f, Tile.LordaeronSummerGrass, 64f, holder);
-            Terrain.Block(1280f, 1280f, 64f, Pathing.Walk, holder);
             // What the game does at a load: its craters and painted tiles are gone.
             fake.Craters.Clear();
             fake.Tiles.Clear();
