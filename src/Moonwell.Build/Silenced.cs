@@ -95,7 +95,8 @@ namespace Moonwell.Build
 
             foreach (var node in tree.GetRoot().DescendantNodes(descendIntoTrivia: true))
             {
-                if (node is PragmaWarningDirectiveTriviaSyntax pragma && pragma.DisableOrRestoreKeyword.IsKind(SyntaxKind.DisableKeyword))
+                // A #pragma in a branch the symbols leave out is still parsed, as not active.
+                if (node is PragmaWarningDirectiveTriviaSyntax { IsActive: true } pragma && pragma.DisableOrRestoreKeyword.IsKind(SyntaxKind.DisableKeyword))
                 {
                     var rules = pragma.ErrorCodes.Select(code => code.ToString()).Where(code => Rule.IsMatch(code)).ToList();
                     if (pragma.ErrorCodes.Count == 0)
