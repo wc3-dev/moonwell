@@ -33,7 +33,7 @@ namespace Moonwell.Testing
         private static void StartAt(FakeWorld world, float time)
         {
             world.Time = time;
-            Runtime.Reset(world);
+            world.Restart();
             Runtime.ListenForCarriers();
         }
 

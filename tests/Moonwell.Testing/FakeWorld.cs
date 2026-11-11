@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Moonwell.Hosting;
 
@@ -21,6 +22,9 @@ namespace Moonwell.Testing
 
         /// <summary>The slot of the player at this machine.</summary>
         public int LocalSlot;
+
+        /// <summary>Added to LocalSlot: the twin run sets it to 1 to run a case again as the next player's machine, whatever slot the case sets.</summary>
+        public static int MachineShift;
 
         /// <summary>The slots the game gives the neutral players.</summary>
         public int NeutralAggressive = 24, NeutralVictim = 25, NeutralExtra = 26, NeutralPassive = 27;
@@ -335,13 +339,22 @@ namespace Moonwell.Testing
         /// <summary>Whether a call on a unit or an item throws, for a case that checks the runtime makes none.</summary>
         public bool CallsThrow;
 
+        /// <summary>What the runtime is given in place of a world, when set: the twin run sets it to an IWorld that writes down the runtime's calls and passes them on.</summary>
+        public static Func<FakeWorld, object>? Around;
+
+        /// <summary>Starts the runtime again on this world.</summary>
+        public void Restart()
+        {
+            Runtime.Reset(Around != null ? (IWorld)Around(this) : this);
+        }
+
         /// <summary>Makes a fresh world for one case and makes it the runtime's world; as the runtime does at its start, it listens for pick-ups and drops.</summary>
         public static FakeWorld Install()
         {
             var world = new FakeWorld();
             world.GameBuffs = new FakeGameBuffs(world);
             world.Dummies = new FakeDummies(world);
-            Runtime.Reset(world);
+            world.Restart();
             RealClock.Wanted = false;
             Interactions.ResetSettings();
             Physics.ResetSettings();
@@ -943,7 +956,7 @@ namespace Moonwell.Testing
 
             var waiting = new List<string>(pendingSync);
             pendingSync.Clear();
-            var local = Player.Get(LocalSlot);
+            var local = Player.Get(LocalSlot + MachineShift);
             foreach (var text in waiting)
             {
                 DeliverSync(local, text);
@@ -1047,10 +1060,10 @@ namespace Moonwell.Testing
             return startYs.TryGetValue(SlotOf(player), out var y) ? y : 0f;
         }
 
-        /// <summary>Whether a player is the one at this machine: the player in LocalSlot.</summary>
+        /// <summary>Whether a player is the one at this machine: the player in LocalSlot, moved on by MachineShift.</summary>
         public bool IsLocal(player player)
         {
-            return SlotOf(player) == LocalSlot;
+            return SlotOf(player) == LocalSlot + MachineShift;
         }
 
         /// <summary>A copy of the units placed in the world.</summary>
