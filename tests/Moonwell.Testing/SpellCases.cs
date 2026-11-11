@@ -21,8 +21,10 @@ namespace Moonwell.Testing
             /// <summary>Whether the cast had ended when OnFinished ran.</summary>
             public bool EndedInFinished;
 
+#if DEBUG
             /// <summary>Whether OnCast refuses its cast, too late.</summary>
             public bool RefuseLate;
+#endif
 
             public override void OnCasting(Cast cast)
             {
@@ -38,10 +40,12 @@ namespace Moonwell.Testing
             {
                 TestLog.Lines.Add("cast");
                 Given = cast;
+#if DEBUG
                 if (RefuseLate)
                 {
                     cast.Refuse("too late");
                 }
+#endif
             }
 
             public override void OnFinished(Cast cast)
