@@ -226,7 +226,9 @@ function MoonwellLoop()
   loopTurns = loopTurns + 1
   if loopTurns < loopStep then return end
   loopTurns = 0
-  local now = Moonwell.DebugSession.GameNow()
+  -- Static setup that runs while the script loads can loop before Moonwell's classes are there: one instant, then.
+  local session = Moonwell and Moonwell.DebugSession
+  local now = session and session.GameNow() or 0
   if now ~= loopInstant then
     loopInstant, loopStepsRun = now, 0
     return
