@@ -218,6 +218,12 @@ public sealed class Champion : Human.Units.Paladin
   code changed on the unit itself (its scale, its colour, abilities added with natives) stays. A dead unit, a hero, an
   illusion, a unit inside a transport and a transport carrying units are never kept,
   and `[Pooled]` on a hero class fails the build.
+- A unit keeps the class it came in as, also when the game changes its type. A morph (Bear Form, Metamorphosis) and a
+  building's upgrade change the type of the same unit: a morph when its morph time is up, an upgrade when it finishes.
+  `TypeId` reads the type the unit has now, so `hall.TypeId == ObjectTypes.IdOf<Keep>()` tells that a `Hall` has
+  become a keep. Everything else stays the first class's: the object, its reactions and components, its declared
+  fields and its `Default`. The new type's class runs nothing for it, `OnCreated` neither; its declared values are
+  `Unit.Default<Keep>()`'s. A unit of a `[Pooled]` class that has morphed is removed, not kept.
 
 Each value a class sets is checked against World Editor's limits. One outside them fails the build with its line, and
 a constant is marked in the editor as error MW0009:
