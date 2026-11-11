@@ -3,7 +3,10 @@ using Xunit;
 
 namespace Moonwell.Build.Tests
 {
-    /// <summary>Defines the collection of tests that build the Sample, and gives it the Sample's builds and other fixtures' builds, each made once.</summary>
+    /// <summary>
+    /// Defines the collection of tests that build the Sample, and gives it the Sample's builds and other fixtures' builds, each made once.
+    /// Every class that runs a dotnet build belongs to it, so no two builds run at once: each rewrites the obj files of the projects in src.
+    /// </summary>
     [CollectionDefinition("Sample")]
     public sealed class SampleCollection : ICollectionFixture<SampleBuilds>, ICollectionFixture<FixtureBuilds>
     {
