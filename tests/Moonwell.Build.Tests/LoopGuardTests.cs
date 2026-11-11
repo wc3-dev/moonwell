@@ -6,6 +6,7 @@ namespace Moonwell.Build.Tests
     /// The loop guard in a map built as a development build and run in Lua: a loop that never ends is stopped by a reported
     /// error that names its line, and what comes after it runs.
     /// </summary>
+    [Collection("Sample")]
     public sealed class LoopGuardTests : IClassFixture<LoopGuardTests.LoopsRun>
     {
         private const string Red = "|cffff4040";
