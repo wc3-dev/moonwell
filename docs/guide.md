@@ -415,7 +415,10 @@ the game, whose integers are 32 bits, and are MW0030.
 ## Units, heroes and items
 
 A unit's members read and change the game's. Once the game has removed a unit, item or destructable they give the last
-value read or set (0 when never read, as in `OnLeave` after the game removed it), and setting does nothing. In the
+value read or set, and setting does nothing. A member never read or set while it was in the game gives 0 then, as in
+`OnLeave` after the game removed it, and a development build reports that read: read it into a variable while the unit
+is in the game, and use that. Where a unit died is kept as its `X` and `Y` when a death reaction (`OnDeath`, `OnKill`,
+`OnUnitDied`) sees the death, so a timer started there can read them after the corpse is gone. In the
 quarter second before Moonwell notices a removal, a read that gives 0 on a removed unit keeps the last value too. A read is safe in
 `Local.For`, a change is not.
 

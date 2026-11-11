@@ -965,6 +965,72 @@ namespace Moonwell.Testing
             Expect.Near(1.0f, untouched.Scale, "an unset scale outside");
         }
 
+        /// <summary>A read, after a unit, item or destructable left the game, of a member Moonwell kept no value for is reported in a development build, once; one read or set while it was in the game is not, nor one on a default object (decision 270).</summary>
+        public static void UnkeptReadReported(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            unit.PlaceAt(10.0f, 20.0f);
+            Expect.Near(10.0f, unit.X, "x read while the unit is in the game");
+            unit.Facing = 45.0f;
+            world.VanishUnit(unit.Handle);
+            var before = world.Printed.Count;
+
+            Expect.Near(10.0f, unit.X, "the x read before");
+            Expect.Near(45.0f, unit.Facing, "the facing set before");
+            Expect.Near(0.0f, unit.Default.Facing, "a default object's facing");
+            Expect.Equal(before, world.Printed.Count, "a value read or set before is not reported, nor a default object's");
+
+            // One line reads it both times, as a report is counted by the line it comes from.
+            float ReadY() => unit.Y;
+            Expect.Near(0.0f, ReadY(), "a y never read, before the sweep");
+            world.Advance(0.3f);
+            Expect.True(unit.IsGone, "the sweep found the unit gone");
+            Expect.Near(0.0f, ReadY(), "a y never read, after the sweep");
+#if DEBUG
+            Expect.Equal(before + 1, world.Printed.Count, "a value never read is reported, once");
+            Expect.True(world.Printed[before].Contains("Unit.Y"), "the report names the member and the unit: " + world.Printed[before]);
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports nothing");
+#endif
+
+            var removed = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            var item = Item.Of(world.NewItem(ObjectTypes.FourCC("ofoo")))!;
+            var tree = Destructable.Of(world.NewDestructable(ObjectTypes.FourCC("dfoo")))!;
+            removed.Remove();
+            world.VanishItem(item.Handle);
+            world.VanishDestructable(tree.Handle);
+            before = world.Printed.Count;
+
+            Expect.Equal(0, removed.Level, "a level never read, of a unit Moonwell removed");
+            Expect.Equal(0, item.Charges, "an item's charges never read");
+            Expect.Near(0.0f, tree.MaxLife, "a destructable's most life never read");
+#if DEBUG
+            Expect.Equal(before + 3, world.Printed.Count, "each is reported");
+            Expect.True(world.Printed[before].Contains("Unit.Level"), "the unit's: " + world.Printed[before]);
+            Expect.True(world.Printed[before + 1].Contains("Item.Charges"), "the item's: " + world.Printed[before + 1]);
+            Expect.True(world.Printed[before + 2].Contains("Destructable.MaxLife"), "the destructable's: " + world.Printed[before + 2]);
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports none of them");
+#endif
+        }
+
+        /// <summary>Where a unit died is kept at a death Moonwell hears, so a timer that first reads the place once the corpse is gone gets it, with nothing reported (decision 270).</summary>
+        public static void DeathKeepsPlace(FakeWorld world)
+        {
+            ObjectTypes.Unit(ObjectTypes.FourCC("h000"), () => new Dummy());
+            var dummy = (Dummy)Unit.Of(world.NewUnit(ObjectTypes.FourCC("h000")))!;
+            dummy.PlaceAt(300.0f, -200.0f);
+            dummy.Kill();
+            world.VanishUnit(dummy.Handle);
+            world.Advance(0.3f);
+            var before = world.Printed.Count;
+
+            Expect.True(dummy.IsGone, "the corpse is gone");
+            Expect.Near(300.0f, dummy.X, "the x of the death");
+            Expect.Near(-200.0f, dummy.Y, "the y of the death");
+            Expect.Equal(before, world.Printed.Count, "and nothing is reported");
+        }
+
         /// <summary>A unit's default object reads its type's declared values, whatever the unit's own are now.</summary>
         public static void DefaultReadsTypeValues(FakeWorld world)
         {
