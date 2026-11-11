@@ -314,6 +314,12 @@ public sealed class KillCounter : UnitComponent
   life running out, or a unit's own damage.
 - An event runs the type's reaction first, then its components' in the order added, then the game's, then those of
   the players whose units it involves (above). A reaction that fails is reported, and the others still run.
+- An event the game fires inside a call a reaction makes runs its reactions inside that call: `next.Kill()` in an
+  `OnDeath` runs the other unit's `OnDeath` before it returns. The game stops running events nested too deep, with no
+  error: past 98 in a plain Lua map, and sooner in C#, where each `try` takes some of that room. Events nested more
+  than 20 deep are reported once for the chain, with the reaction the newest one runs (`game events nested more than
+  20 deep, ... at OnDeath for Bomb`), in a release build too; they still run. A chain that long starts its next step
+  from a timer, which runs a moment later with nothing nested: `Game.Instance.After(0f, () => next.Kill())`.
 - A buff is a class that inherits `Buff`, or a standard buff to show its icon. `Duration` and `Tick` set its time,
   `OnApply`, `OnTick` and `OnExpire` are its reactions, and `unit.Apply(new Burn())` puts it on a unit. A second
   apply of its class refreshes the one there, unless its `Stacking` says otherwise: that one lasts the new apply's
