@@ -1031,6 +1031,37 @@ namespace Moonwell.Testing
             Expect.Equal(before, world.Printed.Count, "and nothing is reported");
         }
 
+        /// <summary>A unit's TypeId is the game's type now: a morph or a building's upgrade changes it, while the unit keeps the object, the class and the default object it came in with; once the unit is gone it reads the type it last had, also when that was never read (decision 274).</summary>
+        public static void TypeIdFollowsMorph(FakeWorld world)
+        {
+            var hall = ObjectTypes.FourCC("h000");
+            var keep = ObjectTypes.FourCC("hkee");
+            ObjectTypes.Unit(hall, () => new Dummy());
+            var unit = Unit.Of(world.NewUnit(hall))!;
+            var first = unit.Default;
+
+            world.MorphUnit(unit.Handle, keep);
+
+            Expect.Equal(keep, unit.TypeId, "the type after the morph");
+            Expect.True(unit is Dummy, "the class it came in as");
+            Expect.Same(unit, Unit.Of(unit.Handle)!, "the same object for the handle");
+            Expect.Same(first, unit.Default, "its default object stays its class's");
+            Expect.Equal(hall, unit.Default.TypeId, "which has the type it came in as");
+            var local = 0;
+            Local.For(Player.Get(0), () => local = unit.TypeId);
+            Expect.Equal(keep, local, "the type inside Local.For");
+
+            world.MorphUnit(unit.Handle, hall);
+            Expect.Equal(hall, unit.TypeId, "the type after the morph back");
+
+            world.MorphUnit(unit.Handle, keep);
+            world.Advance(0.3f);
+            world.VanishUnit(unit.Handle);
+            world.Advance(0.3f);
+            Expect.True(unit.IsGone, "the sweep found the unit gone");
+            Expect.Equal(keep, unit.TypeId, "a gone unit reads the type it last had, though it was never read while it had it");
+        }
+
         /// <summary>A unit's default object reads its type's declared values, whatever the unit's own are now.</summary>
         public static void DefaultReadsTypeValues(FakeWorld world)
         {

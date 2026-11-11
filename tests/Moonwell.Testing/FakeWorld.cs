@@ -390,6 +390,12 @@ namespace Moonwell.Testing
             vanishedUnits.Add(u);
         }
 
+        /// <summary>Changes a unit's type id on the same handle, as a morph does when its morph time is up and a building's upgrade when it finishes: nothing is told (probe of 11-11).</summary>
+        public void MorphUnit(unit u, int typeId)
+        {
+            unitTypes[u] = typeId;
+        }
+
         /// <summary>Makes an item vanish the way the game does: its type id reads 0 and nothing is told.</summary>
         public void VanishItem(item i)
         {

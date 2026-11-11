@@ -70,6 +70,7 @@ namespace Moonwell
 
             made.Handle = handle;
             made.TypeId = typeId;
+            made.firstTypeId = typeId;
             made.IsIllusion = illusion;
             made.owner = Runtime.World.OwnerOf(handle);
             known[handle] = made;
