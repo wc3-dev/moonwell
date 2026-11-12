@@ -3,10 +3,10 @@ namespace Moonwell
     /// <summary>The words the game adds after an animation's kind to pick which of that kind plays ("Stand Gold", "Attack Slam"), as SpecialEffect.AddSubAnimation takes them; what AnimationTag is to a unit. Each is the game's own number (ConvertSubAnimType).</summary>
     public enum SubAnimation
     {
-        /// <summary>"rooted".</summary>
-        Rooted = 11,
+        /// <summary>"alternate", the model's other form, as AnimationTag.Alternate on a unit. The game calls it SUBANIM_TYPE_ROOTED, and it is the one that picks "Alternate" animations (seen 11-12).</summary>
+        Alternate = 11,
 
-        /// <summary>"alternateex" (the game's SUBANIM_TYPE_ALTERNATE_EX). It does not pick a model's "Alternate" animations, and the game has no sub-animation that does (seen 11-12): play those by name, "morph alternate".</summary>
+        /// <summary>"alternateex" (the game's SUBANIM_TYPE_ALTERNATE_EX). It does not pick a model's "Alternate" animations (seen 11-12): Alternate does.</summary>
         AlternateEx = 12,
 
         /// <summary>"looping".</summary>
