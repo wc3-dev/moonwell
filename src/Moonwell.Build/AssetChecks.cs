@@ -8,7 +8,7 @@ using Moonwell.GameData;
 namespace Moonwell.Build
 {
     /// <summary>
-    /// Warns of the file paths the map's object data and code name that neither the game nor the map has (decision 251), and
+    /// Warns of the file paths the map's object data, code and models name that neither the game nor the map has (decision 251), and
     /// of the textures, models and sounds in the assets that nothing in the built map names (decision 252).
     /// </summary>
     public static class AssetChecks
@@ -54,6 +54,17 @@ namespace Moonwell.Build
                     if (!inMap.Contains(Key(path)) && !InGame(game, path))
                     {
                         log.WriteLine($"warning: {user} names {path}, which neither the game nor the map has");
+                    }
+                }
+
+                foreach (var model in staged.Where(file => file.EndsWith(".mdx", StringComparison.OrdinalIgnoreCase)))
+                {
+                    foreach (var texture in Textures(File.ReadAllBytes(Path.Combine(project.StagedFolder, model))))
+                    {
+                        if (!inMap.Contains(Key(texture)) && !InGame(game, texture))
+                        {
+                            log.WriteLine($"warning: the model {model} names the texture {texture}, which neither the game nor the map has");
+                        }
                     }
                 }
 
@@ -105,6 +116,47 @@ namespace Moonwell.Build
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// The texture paths a model (.mdx) names, once each: its TEXS chunk, 268 bytes a texture, the path the 260 after the
+        /// first 4. A texture with no path (team colour and the other replaceable ones) is left out, and a file that is no
+        /// model gives none.
+        /// </summary>
+        public static IReadOnlyList<string> Textures(byte[] model)
+        {
+            var found = new List<string>();
+            if (model.Length < 4 || Encoding.ASCII.GetString(model, 0, 4) != "MDLX")
+            {
+                return found;
+            }
+
+            for (var at = 4; at + 8 <= model.Length;)
+            {
+                var size = BitConverter.ToInt32(model, at + 4);
+                if (size < 0 || at + 8 + (long)size > model.Length)
+                {
+                    break;
+                }
+
+                if (Encoding.ASCII.GetString(model, at, 4) == "TEXS")
+                {
+                    for (var texture = at + 8; texture + 268 <= at + 8 + size; texture += 268)
+                    {
+                        var path = Encoding.Latin1.GetString(model, texture + 4, 260);
+                        var end = path.IndexOf('\0');
+                        path = (end < 0 ? path : path[..end]).Trim();
+                        if (path.Length > 0 && !found.Contains(path, StringComparer.OrdinalIgnoreCase))
+                        {
+                            found.Add(path);
+                        }
+                    }
+                }
+
+                at += 8 + size;
+            }
+
+            return found;
         }
 
         // A path ends in one of the extensions the game swaps (.png is not one, as the map holds an asset's PNG as a BLP) and

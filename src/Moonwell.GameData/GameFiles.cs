@@ -22,18 +22,21 @@ public sealed class GameFiles : IDisposable
     private readonly Dictionary<string, string> _aliases = new(StringComparer.OrdinalIgnoreCase);
 
     // Where a file is looked for in each graphics mode (Sven, 2026-10-27): the mode's own tier first (Classic is the
-    // base files and the installed locale's), then the rest, so a file only another tier holds is still found.
+    // base files and the installed locale's), then the rest, so a file only another tier holds is still found. Each
+    // Reforged tier has a locale folder of its own inside it, where the unit voice lines' .flac files are (J6).
     private readonly Dictionary<string, string[]> _prefixes;
+    private readonly string _locale;
 
     private GameFiles(CascStorage storage)
     {
         _storage = storage;
-        var locale = $"{Root}_Locales/{storage.Build.Locale}.w3mod:";
+        _locale = $"_Locales/{storage.Build.Locale}.w3mod:";
+        string locale = Root + _locale, hdLocale = Hd + _locale, deLocale = De + _locale;
         _prefixes = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            ["sd"] = [locale, Root, Hd, De],
-            ["hd"] = [Hd, locale, Root, De],
-            ["de"] = [De, locale, Root, Hd],
+            ["sd"] = [locale, Root, hdLocale, Hd, deLocale, De],
+            ["hd"] = [hdLocale, Hd, locale, Root, deLocale, De],
+            ["de"] = [deLocale, De, locale, Root, hdLocale, Hd],
         };
         if (storage.Read(Root + Aliases) is { } json)
         {
@@ -104,15 +107,16 @@ public sealed class GameFiles : IDisposable
     /// <summary>
     /// The files under <paramref name="folder"/> (<c>ReplaceableTextures/CommandButtons/</c>) whose names end in one
     /// of <paramref name="extensions"/>: the Classic files and, in another graphics mode, its tier's too (where
-    /// <c>BTNPriestV1</c> is), as paths object data would write (no storage prefix), once each, sorted.
+    /// <c>BTNPriestV1</c> is), each with the installed locale's (where the unit voice lines are), as paths object data
+    /// would write (no storage prefix), once each, sorted.
     /// </summary>
     public List<string> List(string folder, string mode, params string[] extensions)
     {
         var tiers = mode switch
         {
-            "hd" => new[] { Root, Hd },
-            "de" => [Root, De],
-            _ => [Root],
+            "hd" => new[] { Root, Root + _locale, Hd, Hd + _locale },
+            "de" => [Root, Root + _locale, De, De + _locale],
+            _ => [Root, Root + _locale],
         };
         var found = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var tier in tiers)
@@ -120,7 +124,7 @@ public sealed class GameFiles : IDisposable
             var start = tier + Normalized(folder);
             foreach (var path in _storage.Paths)
             {
-                // Another tier and the locales sit in nested folders (War3.w3mod:_HD.w3mod:...), which are left out.
+                // Another tier and the other locales sit in nested folders (War3.w3mod:_HD.w3mod:...), which are left out.
                 if (path.StartsWith(start, StringComparison.OrdinalIgnoreCase)
                     && path.IndexOf(".w3mod:", tier.Length, StringComparison.OrdinalIgnoreCase) < 0
                     && extensions.Any(extension => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)))
@@ -162,6 +166,19 @@ public sealed class GameFiles : IDisposable
                 break;
             case ".dds":
                 yield return stem + ".blp";
+                break;
+            // A sound path plays under any of the three (game facts); Classic stores the voice lines as .ogg.
+            case ".wav":
+            case ".flac":
+            case ".ogg":
+                foreach (var sound in new[] { ".wav", ".flac", ".ogg" })
+                {
+                    if (sound != extension)
+                    {
+                        yield return stem + sound;
+                    }
+                }
+
                 break;
         }
     }
