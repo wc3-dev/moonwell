@@ -3336,6 +3336,12 @@ namespace Moonwell.Testing
             Live(fx).Tint = new int[] { red, green, blue, alpha };
         }
 
+        /// <summary>Draws an effect's team-coloured parts in a player's colour.</summary>
+        public void SetEffectTeamColor(effect fx, player player)
+        {
+            Live(fx).TeamColor = player;
+        }
+
         /// <summary>Plays an animation of an effect by name, or queues it.</summary>
         public void AnimateEffect(effect fx, string name, bool queued)
         {

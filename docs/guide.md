@@ -445,7 +445,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
-| `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255 |
+| `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255; an alpha of 0 makes the unit's portrait black too, where a `Scale` of 0.01 hides the model and keeps the portrait |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | as an effect's ([below](#special-effects)); it plays once, then an idle unit stands; a walking unit keeps walking and only stutters; a name the model lacks plays its stand, and a name picks no variant (`"attack 2"` is any attack) |
 | `PlayAnimation(index)` | by the animation's index in the model, from 0: the one way to pick a variant; indices differ between models |
 | `AnimationSpeed` | read and set, 1 unless set; 0.5 plays at half speed, 0 holds the unit still mid-animation |
@@ -811,10 +811,11 @@ After(3f, mark.End);
 | `Facing`, `Pitch`, `Roll` | read and set, in degrees; `Facing` reads 0 to 360 as a unit's does, and a positive pitch noses it down |
 | `Scale`, `AnimationSpeed` | read and set, 1 unless set |
 | `Tint` | read and set, a `Color`; its alpha is the model's opacity; white unless set |
+| `TeamColor` | read and set, a `Player`: the model's team-coloured parts are drawn in that player's colour; null unless set, and setting null does nothing |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | by name: `Animation.Stand`, `Animation.Attack`, or any name the model has (`"attack slam"`) |
 | `PlaysDeath` | true unless set; false makes it vanish at once instead of playing its death |
 | `Model`, `Unit`, `AttachPoint`, `IsShownTo(player)` | read |
-| `Handle` | the game's effect, for anything Moonwell does not do: a player's team colour on the model, stretching by axis, the sub-animations |
+| `Handle` | the game's effect, for anything Moonwell does not do: stretching by axis, the sub-animations |
 
 - `End()` ends an effect, and its scope's end does too. It plays its death animation, the way the game's effects go,
   unless `PlaysDeath` is false. A model with no death animation stands about 4 to 5 seconds before it goes, so set
