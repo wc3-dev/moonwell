@@ -2547,6 +2547,12 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
   and without one shows the icon in colour (seen). The build makes it the way the game's HD copies are, unless
   `assets/` or the map has one there. Two icons with one file name in different folders share one copy, and the build
   warns of it.
+- A model has to be made for the graphics the map is played in. An HD (Reforged) model draws nothing in Classic
+  graphics: the unit keeps its shadow, life bar and icon and has no body, and neither the build nor the game says so
+  (seen). A Classic model shows in both. An HD model is told by its textures, a diffuse, a normal and an ORM map for
+  each part; the MDX version does not tell them apart. A Classic model's own textures can be `.blp` or `.dds` (seen).
+  A map set to Reforged only in World Editor's map options is drawn in Reforged graphics whatever the player has
+  chosen (seen).
 - The build warns of a path that object data or the map's code names (a texture, model or sound) that neither the game
   nor the map has, naming the class and field (`Sample.Arthas: uico`) or the type whose code has it. As in the game, a file
   under another extension of its kind counts: `.mdl` and `.mdx`; `.blp`, `.dds` and `.tga`; `.wav`, `.flac` and `.ogg`.
