@@ -264,6 +264,42 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Plays an animation of the model by its kind (BlzPlaySpecialEffect); which of that kind plays goes by the effect's sub-animations, so Morph with none plays the plain "Morph", and with SubAnimation.Alternate added "Morph Alternate". Does nothing once it has ended.</summary>
+        public void PlayAnimation(AnimationType type)
+        {
+            if (handle != null && !HasEnded)
+            {
+                Runtime.World.AnimateEffectByType(handle, (int)type);
+            }
+        }
+
+        /// <summary>Adds a sub-animation to the effect (BlzSpecialEffectAddSubAnimation): the animations it plays by kind from then on are the ones with that word. Does nothing once it has ended.</summary>
+        public void AddSubAnimation(SubAnimation subAnimation)
+        {
+            if (handle != null && !HasEnded)
+            {
+                Runtime.World.SetEffectSubAnimation(handle, (int)subAnimation, true);
+            }
+        }
+
+        /// <summary>Removes a sub-animation AddSubAnimation added (BlzSpecialEffectRemoveSubAnimation). Does nothing once it has ended.</summary>
+        public void RemoveSubAnimation(SubAnimation subAnimation)
+        {
+            if (handle != null && !HasEnded)
+            {
+                Runtime.World.SetEffectSubAnimation(handle, (int)subAnimation, false);
+            }
+        }
+
+        /// <summary>Removes every sub-animation of the effect (BlzSpecialEffectClearSubAnimations). Does nothing once it has ended.</summary>
+        public void ClearSubAnimations()
+        {
+            if (handle != null && !HasEnded)
+            {
+                Runtime.World.ClearEffectSubAnimations(handle);
+            }
+        }
+
         /// <summary>Queues an animation of the model by name, to play after the one playing. Does nothing once it has ended.</summary>
         public void QueueAnimation(string name)
         {

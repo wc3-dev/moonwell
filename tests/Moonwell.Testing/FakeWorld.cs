@@ -3348,6 +3348,29 @@ namespace Moonwell.Testing
             Live(fx).Animations.Add(queued ? "queue " + name : name);
         }
 
+        /// <summary>Plays an animation of an effect by its kind.</summary>
+        public void AnimateEffectByType(effect fx, int type)
+        {
+            Live(fx).Animations.Add("type " + type);
+        }
+
+        /// <summary>Adds a sub-animation to an effect, or removes it.</summary>
+        public void SetEffectSubAnimation(effect fx, int subAnimation, bool on)
+        {
+            var held = Live(fx).SubAnimations;
+            held.Remove(subAnimation);
+            if (on)
+            {
+                held.Add(subAnimation);
+            }
+        }
+
+        /// <summary>Removes every sub-animation of an effect.</summary>
+        public void ClearEffectSubAnimations(effect fx)
+        {
+            Live(fx).SubAnimations.Clear();
+        }
+
         /// <summary>Sets the speed of an effect's animations.</summary>
         public void SetEffectSpeed(effect fx, float speed)
         {

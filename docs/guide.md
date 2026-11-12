@@ -822,9 +822,11 @@ After(3f, mark.End);
 | `Tint` | read and set, a `Color`; its alpha is the model's opacity; white unless set |
 | `TeamColor` | read and set, a `Player`: the model's team-coloured parts are drawn in that player's colour; null unless set, and setting null does nothing |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | by name: `Animation.Stand`, `Animation.Attack`, or any name the model has (`"attack slam"`) |
+| `PlayAnimation(type)` | by kind: `AnimationType.Morph`, `AnimationType.Attack`; which of that kind plays goes by the effect's sub-animations, so with none it is the plain one |
+| `AddSubAnimation(sub)`, `RemoveSubAnimation(sub)`, `ClearSubAnimations()` | `SubAnimation.Alternate`, `Slam`, `Gold` and the rest of the game's: the word after the kind in an animation's name; with `Alternate` added, `AnimationType.Morph` plays "Morph Alternate" |
 | `PlaysDeath` | true unless set; false makes it vanish at once instead of playing its death |
 | `Model`, `Unit`, `AttachPoint`, `IsShownTo(player)` | read |
-| `Handle` | the game's effect, for anything Moonwell does not do: stretching by axis, the sub-animations |
+| `Handle` | the game's effect, for anything Moonwell does not do: stretching by axis |
 
 - `End()` ends an effect, and its scope's end does too. It plays its death animation, the way the game's effects go,
   unless `PlaysDeath` is false. A model with no death animation stands about 4 to 5 seconds before it goes, so set

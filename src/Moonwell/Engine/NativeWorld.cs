@@ -1857,6 +1857,31 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>Plays an animation of an effect by its kind: BlzPlaySpecialEffect.</summary>
+        public void AnimateEffectByType(effect fx, int type)
+        {
+            Natives.BlzPlaySpecialEffect(fx, Natives.ConvertAnimType(type));
+        }
+
+        /// <summary>Adds a sub-animation to an effect, BlzSpecialEffectAddSubAnimation, or removes it, BlzSpecialEffectRemoveSubAnimation.</summary>
+        public void SetEffectSubAnimation(effect fx, int subAnimation, bool on)
+        {
+            if (on)
+            {
+                Natives.BlzSpecialEffectAddSubAnimation(fx, Natives.ConvertSubAnimType(subAnimation));
+            }
+            else
+            {
+                Natives.BlzSpecialEffectRemoveSubAnimation(fx, Natives.ConvertSubAnimType(subAnimation));
+            }
+        }
+
+        /// <summary>Removes every sub-animation of an effect: BlzSpecialEffectClearSubAnimations.</summary>
+        public void ClearEffectSubAnimations(effect fx)
+        {
+            Natives.BlzSpecialEffectClearSubAnimations(fx);
+        }
+
         /// <summary>Sets the speed of an effect's animations: BlzSetSpecialEffectTimeScale.</summary>
         public void SetEffectSpeed(effect fx, float speed)
         {
