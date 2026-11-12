@@ -219,7 +219,16 @@ namespace Objects
     {
         public Veteran()
         {
-            GoldCost = 250;
+            Costs.Put(this, 250);
+        }
+    }
+
+    // A setup helper: it sets a declared field of the object a constructor hands it, and runs again in the game.
+    public static class Costs
+    {
+        public static void Put(StandardUnit unit, int gold)
+        {
+            unit.GoldCost = gold;
         }
     }
 

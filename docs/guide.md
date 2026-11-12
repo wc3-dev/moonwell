@@ -156,9 +156,12 @@ public sealed class Champion : Human.Units.Paladin
   names, and six ability fields are
   named apart: `Inferno.InfernalDuration`, `Taunt.PreferHostiles` and `PreferFriendlies`, `WindWalk.BackstabDamage` and
   `Backstab`, `HealingModifier.HealingPercent`.
-- A field with no live value (`Model`, `Tooltip`, `GoldCost`) keeps World Editor's name, is set only in the constructor,
-  and reads the declared value anywhere. A set anywhere else fails the build, which names the class and method but no
-  line: `MyMap.Heroes.Champion.OnKill sets GoldCost; declared fields are set only in the constructor`.
+- A field with no live value (`Model`, `Tooltip`, `GoldCost`) keeps World Editor's name, is set only in the constructor
+  or in a method that only constructors call (Setup that classes share, below), and reads the declared value anywhere.
+  A set anywhere else fails the build, which names the class and method but no line:
+  `MyMap.Heroes.Champion.OnKill sets GoldCost; declared fields are set only in the constructor, or in a method that only
+  constructors call`. C# itself accepts `unit.GoldCost = 5` in any code, as the setter is public for such a method to
+  reach; the build is what stops it.
 - A unit's portrait follows its `Model` by itself: a class that sets only `Model` shows that model in the portrait
   box, though the unit it is based on names a portrait file of its own. `PortraitModelFile` need not be set. Seen in
   classic graphics; HD graphics was not tried.
@@ -249,6 +252,57 @@ To see a standard object's values, go to its class: Go to Definition on `Paladin
 `Moonwell.Objects` embeds in its library, in an editor that navigates to embedded sources (the editors on Microsoft's C#
 language server do). Its constructor sets each value of the base tables, World Editor's
 Default. A map on another data set plays that set's values for the fields it leaves unset.
+
+### Setup that classes share
+
+Classes with different bases cannot share a base class. What their constructors have in common goes in a method that
+takes the object, a setup helper, and each constructor calls it:
+
+```csharp
+public static class Clan
+{
+    public static void Look(StandardUnit unit, string name, string model, int x, int y)
+    {
+        unit.Name = name;
+        unit.Model = @"war3mapImported\Clan_" + model + ".mdx";
+        unit.Icon = @"ReplaceableTextures\CommandButtons\BTNClan" + model + ".blp";
+        unit.Tooltip = "Train " + name;
+        unit.ButtonPositionX = x;
+        unit.ButtonPositionY = y;
+    }
+}
+
+[ObjectId("o000")]
+public sealed class ClanGrunt : Orc.Units.Grunt
+{
+    public ClanGrunt()
+    {
+        Clan.Look(this, "Clan Grunt", "Grunt", 0, 0);
+    }
+}
+
+[ObjectId("o001")]
+public sealed class ClanRaider : Orc.Units.Raider
+{
+    public ClanRaider()
+    {
+        Clan.Look(this, "Clan Raider", "Raider", 1, 0);
+        AttackRange = 450;
+    }
+}
+```
+
+- The helper takes the kind base its classes share: `StandardUnit`, `StandardHero`, `StandardItem`, `StandardAbility`,
+  `StandardBuff`, `StandardUpgrade`, `StandardDestructable` or `StandardDoodad`. A hero is not a `StandardUnit`, so
+  heroes take a helper of their own.
+- It sets fields, changes lists (`unit.Requires.Clear()`) and may call other helpers. `Set` by id and `Describe` are
+  protected, so they stay in the class: in its constructor, or in a method of it that only constructors call. A unit's
+  `Level` stays in the constructor.
+- Only constructors call a helper, straight or through another helper, as its sets do nothing in the game. A call from
+  anywhere else fails the build, naming the caller:
+  `MyMap.Clan.Look sets Model, and MyMap.ClanGrunt.OnDeath calls it; declared fields are set only in the constructor, or
+  in a method that only constructors call`. A helper held as a delegate (`var look = Clan.Look;`), a set in a lambda
+  inside a helper and a helper nothing calls fail the same way.
 
 ### The default object and the name
 

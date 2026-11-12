@@ -592,7 +592,8 @@ public static class ObjectsWriter
         {
             var get = field.PerLevel ? $"GetLevels<{element}>(this, {id})" : $"Get<{element}>(this, {id})";
             text.Append($"{indent}    get {{ return Fields.{get}; }}\n");
-            text.Append($"{indent}    protected set {{ Fields.Put({id}, value); }}\n");
+            // Public, so that a setup helper shared by classes with different bases can set it; the build's SetterScan keeps the sets to constructors.
+            text.Append($"{indent}    set {{ Fields.Put({id}, value); }}\n");
         }
 
         text.Append($"{indent}}}\n");

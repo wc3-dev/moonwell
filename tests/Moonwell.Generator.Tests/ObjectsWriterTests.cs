@@ -246,7 +246,7 @@ public class ObjectsWriterTests
             + "                public global::Moonwell.Objects.Levels<float> Damage\n"
             + "                {\n"
             + "                    get { return Fields.GetLevels<float>(this, \"Htb1\"); }\n"
-            + "                    protected set { Fields.Put(\"Htb1\", value); }\n"
+            + "                    set { Fields.Put(\"Htb1\", value); }\n"
             + "                }\n",
             stormBolt);
         Assert.DoesNotContain("AmountHealedDamaged", stormBolt);
@@ -265,7 +265,7 @@ public class ObjectsWriterTests
             + "        public int GoldCost\n"
             + "        {\n"
             + "            get { return Fields.Get<int>(this, \"ugol\"); }\n"
-            + "            protected set { Fields.Put(\"ugol\", value); }\n"
+            + "            set { Fields.Put(\"ugol\", value); }\n"
             + "        }\n",
             unit);
         Assert.Contains(

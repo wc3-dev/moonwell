@@ -99,7 +99,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.ArmorType ArmorType
         {
             get { return Fields.Get<global::Moonwell.Objects.ArmorType>(this, "barm"); }
-            protected set { Fields.Put("barm", value); }
+            set { Fields.Put("barm", value); }
         }
 
         /// <summary>Build Time (bbut), 1 to 298.</summary>
@@ -108,7 +108,7 @@ namespace Moonwell.Objects
         public int BuildTime
         {
             get { return Fields.Get<int>(this, "bbut"); }
-            protected set { Fields.Put("bbut", value); }
+            set { Fields.Put("bbut", value); }
         }
 
         /// <summary>Category (bcat).</summary>
@@ -116,7 +116,7 @@ namespace Moonwell.Objects
         public string Category
         {
             get { return Fields.Get<string>(this, "bcat"); }
-            protected set { Fields.Put("bcat", value); }
+            set { Fields.Put("bcat", value); }
         }
 
         /// <summary>Cliff Height (bclh), 0 to 50.</summary>
@@ -125,7 +125,7 @@ namespace Moonwell.Objects
         public int CliffHeight
         {
             get { return Fields.Get<int>(this, "bclh"); }
-            protected set { Fields.Put("bclh", value); }
+            set { Fields.Put("bclh", value); }
         }
 
         /// <summary>Show Dead Version in Palette (bcpd).</summary>
@@ -133,7 +133,7 @@ namespace Moonwell.Objects
         public bool ShowDeadVersionInPalette
         {
             get { return Fields.Get<bool>(this, "bcpd"); }
-            protected set { Fields.Put("bcpd", value); }
+            set { Fields.Put("bcpd", value); }
         }
 
         /// <summary>Can Place Random Scale (bcpr).</summary>
@@ -141,7 +141,7 @@ namespace Moonwell.Objects
         public bool CanPlaceRandomScale
         {
             get { return Fields.Get<bool>(this, "bcpr"); }
-            protected set { Fields.Put("bcpr", value); }
+            set { Fields.Put("bcpr", value); }
         }
 
         /// <summary>Death (bdsn).</summary>
@@ -149,7 +149,7 @@ namespace Moonwell.Objects
         public string Death
         {
             get { return Fields.Get<string>(this, "bdsn"); }
-            protected set { Fields.Put("bdsn", value); }
+            set { Fields.Put("bdsn", value); }
         }
 
         /// <summary>Model File (bfil).</summary>
@@ -157,7 +157,7 @@ namespace Moonwell.Objects
         public string Model
         {
             get { return Fields.Get<string>(this, "bfil"); }
-            protected set { Fields.Put("bfil", value); }
+            set { Fields.Put("bfil", value); }
         }
 
         /// <summary>Fly-Over Height (bflh), 0 to 99999.</summary>
@@ -166,7 +166,7 @@ namespace Moonwell.Objects
         public float FlyOverHeight
         {
             get { return Fields.Get<float>(this, "bflh"); }
-            protected set { Fields.Put("bflh", value); }
+            set { Fields.Put("bflh", value); }
         }
 
         /// <summary>Fat Line of Sight (bflo).</summary>
@@ -174,7 +174,7 @@ namespace Moonwell.Objects
         public bool FatLineOfSight
         {
             get { return Fields.Get<bool>(this, "bflo"); }
-            protected set { Fields.Put("bflo", value); }
+            set { Fields.Put("bflo", value); }
         }
 
         /// <summary>Fog Radius (bfra), 0 to 99999.</summary>
@@ -184,7 +184,7 @@ namespace Moonwell.Objects
         public float FogRadius
         {
             get { return Fields.Get<float>(this, "bfra"); }
-            protected set { Fields.Put("bfra", value); }
+            set { Fields.Put("bfra", value); }
         }
 
         /// <summary>Fog Visibility (bfvi).</summary>
@@ -192,7 +192,7 @@ namespace Moonwell.Objects
         public bool FogVisibility
         {
             get { return Fields.Get<bool>(this, "bfvi"); }
-            protected set { Fields.Put("bfvi", value); }
+            set { Fields.Put("bfvi", value); }
         }
 
         /// <summary>Fixed Rotation (bfxr), -1 to 360.</summary>
@@ -201,7 +201,7 @@ namespace Moonwell.Objects
         public float FixedRotation
         {
             get { return Fields.Get<float>(this, "bfxr"); }
-            protected set { Fields.Put("bfxr", value); }
+            set { Fields.Put("bfxr", value); }
         }
 
         /// <summary>Model File - Portrait (bgpm).</summary>
@@ -209,7 +209,7 @@ namespace Moonwell.Objects
         public string ModelFilePortrait
         {
             get { return Fields.Get<string>(this, "bgpm"); }
-            protected set { Fields.Put("bgpm", value); }
+            set { Fields.Put("bgpm", value); }
         }
 
         /// <summary>Selection Size - Game (bgsc), 1 to 99999.</summary>
@@ -219,7 +219,7 @@ namespace Moonwell.Objects
         public float SelectionSizeGame
         {
             get { return Fields.Get<float>(this, "bgsc"); }
-            protected set { Fields.Put("bgsc", value); }
+            set { Fields.Put("bgsc", value); }
         }
 
         /// <summary>Selectable In Game (bgse).</summary>
@@ -227,7 +227,7 @@ namespace Moonwell.Objects
         public bool SelectableInGame
         {
             get { return Fields.Get<bool>(this, "bgse"); }
-            protected set { Fields.Put("bgse", value); }
+            set { Fields.Put("bgse", value); }
         }
 
         /// <summary>Model File - Has Lightweight Model (blit).</summary>
@@ -235,7 +235,7 @@ namespace Moonwell.Objects
         public bool ModelFileHasLightweightModel
         {
             get { return Fields.Get<bool>(this, "blit"); }
-            protected set { Fields.Put("blit", value); }
+            set { Fields.Put("blit", value); }
         }
 
         /// <summary>Maximum Pitch Angle (degrees) (bmap), 0 to 99999.</summary>
@@ -245,7 +245,7 @@ namespace Moonwell.Objects
         public float MaximumPitchAngleDegrees
         {
             get { return Fields.Get<float>(this, "bmap"); }
-            protected set { Fields.Put("bmap", value); }
+            set { Fields.Put("bmap", value); }
         }
 
         /// <summary>Max Roll Angle (degrees) (bmar), 0 to 99999.</summary>
@@ -255,7 +255,7 @@ namespace Moonwell.Objects
         public float MaxRollAngleDegrees
         {
             get { return Fields.Get<float>(this, "bmar"); }
-            protected set { Fields.Put("bmar", value); }
+            set { Fields.Put("bmar", value); }
         }
 
         /// <summary>Maximum Scale (bmas), 0.1 to 10.</summary>
@@ -265,7 +265,7 @@ namespace Moonwell.Objects
         public float MaximumScale
         {
             get { return Fields.Get<float>(this, "bmas"); }
-            protected set { Fields.Put("bmas", value); }
+            set { Fields.Put("bmas", value); }
         }
 
         /// <summary>Minimum Scale (bmis), 0.1 to 10.</summary>
@@ -275,7 +275,7 @@ namespace Moonwell.Objects
         public float MinimumScale
         {
             get { return Fields.Get<float>(this, "bmis"); }
-            protected set { Fields.Put("bmis", value); }
+            set { Fields.Put("bmis", value); }
         }
 
         /// <summary>Minimap Color 3 (Blue) (bmmb), 0 to 255.</summary>
@@ -284,7 +284,7 @@ namespace Moonwell.Objects
         public int MinimapColor3Blue
         {
             get { return Fields.Get<int>(this, "bmmb"); }
-            protected set { Fields.Put("bmmb", value); }
+            set { Fields.Put("bmmb", value); }
         }
 
         /// <summary>Minimap Color 2 (Green) (bmmg), 0 to 255.</summary>
@@ -293,7 +293,7 @@ namespace Moonwell.Objects
         public int MinimapColor2Green
         {
             get { return Fields.Get<int>(this, "bmmg"); }
-            protected set { Fields.Put("bmmg", value); }
+            set { Fields.Put("bmmg", value); }
         }
 
         /// <summary>Minimap Color 1 (Red) (bmmr), 0 to 255.</summary>
@@ -302,7 +302,7 @@ namespace Moonwell.Objects
         public int MinimapColor1Red
         {
             get { return Fields.Get<int>(this, "bmmr"); }
-            protected set { Fields.Put("bmmr", value); }
+            set { Fields.Put("bmmr", value); }
         }
 
         /// <summary>Hidden In Game (bnrn).</summary>
@@ -310,7 +310,7 @@ namespace Moonwell.Objects
         public bool HiddenInGame
         {
             get { return Fields.Get<bool>(this, "bnrn"); }
-            protected set { Fields.Put("bnrn", value); }
+            set { Fields.Put("bnrn", value); }
         }
 
         /// <summary>Occlusion Height (boch), 0 to 99999.</summary>
@@ -319,7 +319,7 @@ namespace Moonwell.Objects
         public float OcclusionHeight
         {
             get { return Fields.Get<float>(this, "boch"); }
-            protected set { Fields.Put("boch", value); }
+            set { Fields.Put("boch", value); }
         }
 
         /// <summary>Occlusion Type (HD) (boct).</summary>
@@ -327,7 +327,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.OcclusionType OcclusionTypeHD
         {
             get { return Fields.Get<global::Moonwell.Objects.OcclusionType>(this, "boct"); }
-            protected set { Fields.Put("boct", value); }
+            set { Fields.Put("boct", value); }
         }
 
         /// <summary>Placeable on Cliffs (bonc).</summary>
@@ -335,7 +335,7 @@ namespace Moonwell.Objects
         public bool PlaceableOnCliffs
         {
             get { return Fields.Get<bool>(this, "bonc"); }
-            protected set { Fields.Put("bonc", value); }
+            set { Fields.Put("bonc", value); }
         }
 
         /// <summary>Placeable on Water (bonw).</summary>
@@ -343,7 +343,7 @@ namespace Moonwell.Objects
         public bool PlaceableOnWater
         {
             get { return Fields.Get<bool>(this, "bonw"); }
-            protected set { Fields.Put("bonw", value); }
+            set { Fields.Put("bonw", value); }
         }
 
         /// <summary>Pathing Texture (Dead) (bptd).</summary>
@@ -351,7 +351,7 @@ namespace Moonwell.Objects
         public string PathingTextureDead
         {
             get { return Fields.Get<string>(this, "bptd"); }
-            protected set { Fields.Put("bptd", value); }
+            set { Fields.Put("bptd", value); }
         }
 
         /// <summary>Pathing Texture (bptx).</summary>
@@ -359,7 +359,7 @@ namespace Moonwell.Objects
         public string PathingTexture
         {
             get { return Fields.Get<string>(this, "bptx"); }
-            protected set { Fields.Put("bptx", value); }
+            set { Fields.Put("bptx", value); }
         }
 
         /// <summary>Elevation Sample Radius (brad), 0 to 99999.</summary>
@@ -369,7 +369,7 @@ namespace Moonwell.Objects
         public float ElevationSampleRadius
         {
             get { return Fields.Get<float>(this, "brad"); }
-            protected set { Fields.Put("brad", value); }
+            set { Fields.Put("brad", value); }
         }
 
         /// <summary>Repair Gold Cost (breg), 0 to 100000.</summary>
@@ -378,7 +378,7 @@ namespace Moonwell.Objects
         public int RepairGoldCost
         {
             get { return Fields.Get<int>(this, "breg"); }
-            protected set { Fields.Put("breg", value); }
+            set { Fields.Put("breg", value); }
         }
 
         /// <summary>Repair Lumber Cost (brel), 0 to 100000.</summary>
@@ -387,7 +387,7 @@ namespace Moonwell.Objects
         public int RepairLumberCost
         {
             get { return Fields.Get<int>(this, "brel"); }
-            protected set { Fields.Put("brel", value); }
+            set { Fields.Put("brel", value); }
         }
 
         /// <summary>Repair Time (bret), 1 to 10000.</summary>
@@ -396,7 +396,7 @@ namespace Moonwell.Objects
         public int RepairTime
         {
             get { return Fields.Get<int>(this, "bret"); }
-            protected set { Fields.Put("bret", value); }
+            set { Fields.Put("bret", value); }
         }
 
         /// <summary>Selection Size - Editor (bsel), 0 to 99999.</summary>
@@ -406,7 +406,7 @@ namespace Moonwell.Objects
         public float SelectionSizeEditor
         {
             get { return Fields.Get<float>(this, "bsel"); }
-            protected set { Fields.Put("bsel", value); }
+            set { Fields.Put("bsel", value); }
         }
 
         /// <summary>Shadow (bshd).</summary>
@@ -414,7 +414,7 @@ namespace Moonwell.Objects
         public string Shadow
         {
             get { return Fields.Get<string>(this, "bshd"); }
-            protected set { Fields.Put("bshd", value); }
+            set { Fields.Put("bshd", value); }
         }
 
         /// <summary>Minimap - Show (bsmm).</summary>
@@ -422,7 +422,7 @@ namespace Moonwell.Objects
         public bool MinimapShow
         {
             get { return Fields.Get<bool>(this, "bsmm"); }
-            protected set { Fields.Put("bsmm", value); }
+            set { Fields.Put("bsmm", value); }
         }
 
         /// <summary>Looping Sound (bsnd).</summary>
@@ -430,7 +430,7 @@ namespace Moonwell.Objects
         public string LoopingSound
         {
             get { return Fields.Get<string>(this, "bsnd"); }
-            protected set { Fields.Put("bsnd", value); }
+            set { Fields.Put("bsnd", value); }
         }
 
         /// <summary>Editor Suffix (bsuf), at most 50 characters.</summary>
@@ -439,7 +439,7 @@ namespace Moonwell.Objects
         public string EditorSuffix
         {
             get { return Fields.Get<string>(this, "bsuf"); }
-            protected set { Fields.Put("bsuf", value); }
+            set { Fields.Put("bsuf", value); }
         }
 
         /// <summary>Targeted As (btar).</summary>
@@ -447,7 +447,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Targets TargetedAs
         {
             get { return Fields.Get<global::Moonwell.Objects.Targets>(this, "btar"); }
-            protected set { Fields.Put("btar", value); }
+            set { Fields.Put("btar", value); }
         }
 
         /// <summary>Allow Custom Team Color (btcc).</summary>
@@ -455,7 +455,7 @@ namespace Moonwell.Objects
         public bool AllowCustomTeamColor
         {
             get { return Fields.Get<bool>(this, "btcc"); }
-            protected set { Fields.Put("btcc", value); }
+            set { Fields.Put("btcc", value); }
         }
 
         /// <summary>Team Color (btco).</summary>
@@ -463,7 +463,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.TeamColor TeamColor
         {
             get { return Fields.Get<global::Moonwell.Objects.TeamColor>(this, "btco"); }
-            protected set { Fields.Put("btco", value); }
+            set { Fields.Put("btco", value); }
         }
 
         /// <summary>Tilesets (btil).</summary>
@@ -471,7 +471,7 @@ namespace Moonwell.Objects
         public string Tilesets
         {
             get { return Fields.Get<string>(this, "btil"); }
-            protected set { Fields.Put("btil", value); }
+            set { Fields.Put("btil", value); }
         }
 
         /// <summary>Has Tileset Specific Data (btsp).</summary>
@@ -479,7 +479,7 @@ namespace Moonwell.Objects
         public bool HasTilesetSpecificData
         {
             get { return Fields.Get<bool>(this, "btsp"); }
-            protected set { Fields.Put("btsp", value); }
+            set { Fields.Put("btsp", value); }
         }
 
         /// <summary>Replaceable Texture File (btxf).</summary>
@@ -487,7 +487,7 @@ namespace Moonwell.Objects
         public string ReplaceableTextureFile
         {
             get { return Fields.Get<string>(this, "btxf"); }
-            protected set { Fields.Put("btxf", value); }
+            set { Fields.Put("btxf", value); }
         }
 
         /// <summary>Replaceable Texture ID (btxi), 0 to 1000.</summary>
@@ -496,7 +496,7 @@ namespace Moonwell.Objects
         public int ReplaceableTextureID
         {
             get { return Fields.Get<int>(this, "btxi"); }
-            protected set { Fields.Put("btxi", value); }
+            set { Fields.Put("btxi", value); }
         }
 
         /// <summary>Show Helper Object for Selection (buch).</summary>
@@ -504,7 +504,7 @@ namespace Moonwell.Objects
         public bool ShowHelperObjectForSelection
         {
             get { return Fields.Get<bool>(this, "buch"); }
-            protected set { Fields.Put("buch", value); }
+            set { Fields.Put("buch", value); }
         }
 
         /// <summary>Minimap - Use Custom Color (bumm).</summary>
@@ -512,7 +512,7 @@ namespace Moonwell.Objects
         public bool MinimapUseCustomColor
         {
             get { return Fields.Get<bool>(this, "bumm"); }
-            protected set { Fields.Put("bumm", value); }
+            set { Fields.Put("bumm", value); }
         }
 
         /// <summary>On User-Specified List (busr).</summary>
@@ -520,7 +520,7 @@ namespace Moonwell.Objects
         public bool OnUserSpecifiedList
         {
             get { return Fields.Get<bool>(this, "busr"); }
-            protected set { Fields.Put("busr", value); }
+            set { Fields.Put("busr", value); }
         }
 
         /// <summary>Model File - Variations (bvar), 1 to 10.</summary>
@@ -529,7 +529,7 @@ namespace Moonwell.Objects
         public int ModelFileVariations
         {
             get { return Fields.Get<int>(this, "bvar"); }
-            protected set { Fields.Put("bvar", value); }
+            set { Fields.Put("bvar", value); }
         }
 
         /// <summary>Tinting Color 3 (Blue) (bvcb), 0 to 255.</summary>
@@ -538,7 +538,7 @@ namespace Moonwell.Objects
         public int TintingColor3Blue
         {
             get { return Fields.Get<int>(this, "bvcb"); }
-            protected set { Fields.Put("bvcb", value); }
+            set { Fields.Put("bvcb", value); }
         }
 
         /// <summary>Tinting Color 2 (Green) (bvcg), 0 to 255.</summary>
@@ -547,7 +547,7 @@ namespace Moonwell.Objects
         public int TintingColor2Green
         {
             get { return Fields.Get<int>(this, "bvcg"); }
-            protected set { Fields.Put("bvcg", value); }
+            set { Fields.Put("bvcg", value); }
         }
 
         /// <summary>Tinting Color 1 (Red) (bvcr), 0 to 255.</summary>
@@ -556,7 +556,7 @@ namespace Moonwell.Objects
         public int TintingColor1Red
         {
             get { return Fields.Get<int>(this, "bvcr"); }
-            protected set { Fields.Put("bvcr", value); }
+            set { Fields.Put("bvcr", value); }
         }
 
         /// <summary>Is Walkable (bwal).</summary>
@@ -564,7 +564,7 @@ namespace Moonwell.Objects
         public bool IsWalkable
         {
             get { return Fields.Get<bool>(this, "bwal"); }
-            protected set { Fields.Put("bwal", value); }
+            set { Fields.Put("bwal", value); }
         }
 
         /// <summary>Makes the values of a field that has one for each level, level 1 first.</summary>
