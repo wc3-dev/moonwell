@@ -223,14 +223,14 @@ namespace Moonwell.Testing
         {
             var fx = SpecialEffect.Create(Glow, 0f, 0f, Game.Instance);
             var fake = world.Effects[0];
-            fx.AddSubAnimation(SubAnimation.AlternateEx);
+            fx.AddSubAnimation(SubAnimation.Alternate);
             fx.AddSubAnimation(SubAnimation.Berserk);
             fx.PlayAnimation(AnimationType.Morph);
             Expect.Equal("type 7", fake.Animations[0], "ANIM_TYPE_MORPH");
             Expect.Equal(2, fake.SubAnimations.Count, "sub-animations added");
-            Expect.Equal(12, fake.SubAnimations[0], "SUBANIM_TYPE_ALTERNATE_EX");
+            Expect.Equal(11, fake.SubAnimations[0], "SUBANIM_TYPE_ROOTED, which picks Alternate");
             Expect.Equal(62, fake.SubAnimations[1], "SUBANIM_TYPE_BERSERK");
-            fx.RemoveSubAnimation(SubAnimation.AlternateEx);
+            fx.RemoveSubAnimation(SubAnimation.Alternate);
             Expect.Equal(1, fake.SubAnimations.Count, "one removed");
             Expect.Equal(62, fake.SubAnimations[0], "the other kept");
             fx.ClearSubAnimations();
