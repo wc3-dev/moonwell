@@ -178,6 +178,7 @@ namespace Moonwell.Testing
 
         /// <summary>The red, green, blue and alpha each unit was last tinted with.</summary>
         public Dictionary<unit, int[]> Tints = new Dictionary<unit, int[]>();
+        public Dictionary<unit, int> TeamColors = new Dictionary<unit, int>();
 
         /// <summary>What was asked of each unit's animations, in order: "play attack", "queue stand", "index 3", "speed 0.5", "tag defend", "untag defend".</summary>
         public Dictionary<unit, List<string>> UnitAnimations = new Dictionary<unit, List<string>>();
@@ -2802,6 +2803,13 @@ namespace Moonwell.Testing
         {
             NoteGone(unit);
             Tints[unit] = new int[] { red, green, blue, alpha };
+        }
+
+        /// <summary>Keeps the player colour a unit was given.</summary>
+        public void SetUnitTeamColor(unit unit, int color)
+        {
+            NoteGone(unit);
+            TeamColors[unit] = color;
         }
 
         /// <summary>Records an animation played by name, or queued.</summary>
