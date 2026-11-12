@@ -138,7 +138,7 @@ namespace Moonwell.Build
 
             foreach (var place in buttons.GroupBy(one => (one.Button.X, one.Button.Y)).Where(Clashes))
             {
-                yield return $"{unit.ClassName}: {Names(place.Select(one => one.Button))} at button ({place.Key.X}, {place.Key.Y}) of its {card} ([AllowClash] keeps it quiet)";
+                yield return $"{unit.ClassName}: {Names(place.Select(one => one.Button))} at button ({place.Key.X}, {place.Key.Y}) of its {card}, so the game moves all but the first to other places ([AllowClash] keeps it quiet)";
             }
 
             foreach (var hotkey in buttons.Where(one => one.Button.Hotkey.Length > 0).GroupBy(one => one.Button.Hotkey.ToUpperInvariant()).Where(Clashes))

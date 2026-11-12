@@ -159,6 +159,9 @@ public sealed class Champion : Human.Units.Paladin
 - A field with no live value (`Model`, `Tooltip`, `GoldCost`) keeps World Editor's name, is set only in the constructor,
   and reads the declared value anywhere. A set anywhere else fails the build, which names the class and method but no
   line: `MyMap.Heroes.Champion.OnKill sets GoldCost; declared fields are set only in the constructor`.
+- A unit's portrait follows its `Model` by itself: a class that sets only `Model` shows that model in the portrait
+  box, though the unit it is based on names a portrait file of its own. `PortraitModelFile` need not be set. Seen in
+  classic graphics; HD graphics was not tried.
 - A hero's `MaxLife`, `MaxMana` and `Mana` in its constructor are the totals it starts with: `MaxLife = 800` starts a
   Paladin at 800 life. The build takes off what its starting strength and intelligence give (25 life per strength and
   15 mana per intelligence, or the map's own in `war3mapMisc.txt`) and writes the rest as the base field. A total the
@@ -171,6 +174,12 @@ public sealed class Champion : Human.Units.Paladin
   and `Remove<T>()`. Where the game's list differs by level, as a tiered upgrade's requirements do, the build makes the
   same changes to each level's own list: `Requires.Add<Blacksmith>()` on a copy of Iron Forged Swords keeps the Keep and
   Castle its later levels need. Read in C#, such a list is level 1's with the changes.
+- A requirement counts unit types, so a class based on a standard building does not count as it: a copy of the
+  Stronghold does not meet the "requires Stronghold" a class based on the Beastiary inherits. Two ways out. Name the
+  map's own class, `Requires.Set<MyHold>()`; a real Stronghold then does not count. Or make the class count as the
+  standard building, by listing it on that building: `DependencyEquivalents.Add<MyHold>()` in a `[Replaces]` class of
+  `Orc.Units.Stronghold`. Listing the Stronghold on the copy does nothing. A hero's tier requirements name buildings
+  the same way; they were not tried in the game.
 - The tooltips are World Editor's four: `Tooltip` (Tooltip - Normal), `TooltipExtended` (Tooltip - Normal - Extended),
   `TooltipLearn` (Tooltip - Learn) and `TooltipLearnExtended` (Tooltip - Learn - Extended). A tooltip shows an
   object's values with World Editor's placeholders: `<A000,Dur1>` an ability's at a level, `<h000,realHP>` a unit's,
@@ -2596,8 +2605,10 @@ there; the key itself is not checked. Two warnings point at mistakes that can be
   (two Storm Bolts: only one of them casts; a Channel's order is its Base Order ID). The card is the unit's abilities
   and what it trains, researches, upgrades to and sells; what a worker builds is checked the same way as its build
   menu. So three classes based on the Grunt in one `Trains` list are warned of once: they share the Grunt's place
-  and hotkey until each sets `ButtonPositionX`, `ButtonPositionY` and `Hotkey`. A card with more buttons than its 12
-  places (11 beside Cancel in a build menu) is warned of too; the game's own Move, Stop and Attack are not counted.
+  and hotkey until each sets `ButtonPositionX`, `ButtonPositionY` and `Hotkey`. The game shows them all: the first in
+  the list keeps the place and the others move to free places, each still marked with the grid key of the place it
+  was declared at. A card with more buttons than its 12 places is warned of too; the game's own Move, Stop and Attack
+  are not counted. A build menu has 11, as Cancel holds (3, 2), and a building declared there is moved as well.
   Only things with an icon count, and for orders only castable abilities, with a hotkey. Buttons the game itself
   gave the standard unit are left alone among themselves (a Headhunter and its Berserker share a place). `[AllowClash]`
   on the unit keeps it quiet.

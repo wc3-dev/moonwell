@@ -79,7 +79,7 @@ namespace Moonwell.Build.Tests
                 }
                 """);
 
-            Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash are both at button (0, 2) of its command card ([AllowClash] keeps it quiet)", log);
+            Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash are both at button (0, 2) of its command card, so the game moves all but the first to other places ([AllowClash] keeps it quiet)", log);
             Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash both have the hotkey T ([AllowClash] keeps it quiet)", log);
             Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash both take the order thunderbolt, so only one of them casts ([AllowClash] keeps it quiet)", log);
             Assert.DoesNotContain("Sample.Quiet:", log);
@@ -192,13 +192,13 @@ namespace Moonwell.Build.Tests
                 }
                 """);
 
-            Assert.Contains("warning: Sample.Camp: Sample.WolfA, Sample.WolfB, Sample.ClawA and Sample.ClawB are all at button (0, 0) of its command card ([AllowClash] keeps it quiet)", log);
+            Assert.Contains("warning: Sample.Camp: Sample.WolfA, Sample.WolfB, Sample.ClawA and Sample.ClawB are all at button (0, 0) of its command card, so the game moves all but the first to other places ([AllowClash] keeps it quiet)", log);
             Assert.Contains("warning: Sample.Camp: Sample.WolfA and Sample.WolfB both have the hotkey G ([AllowClash] keeps it quiet)", log);
             Assert.Contains("warning: Sample.Camp: Sample.PlateA and Sample.PlateB are both at button", log);
             Assert.Contains("warning: Sample.Camp: Sample.ClawA and Sample.ClawB both have the hotkey K", log);
             Assert.Contains("warning: Sample.Plain: Moonwell.Objects.Orc.Units.Grunt", log);
             Assert.DoesNotContain("Sample.Plain: Moonwell.Objects.Orc.Units.Headhunter", log);
-            Assert.Matches(@"warning: Sample\.Builder: Sample\.Camp and Sample\.QuietCamp are both at button \(\d, \d\) of its build menu \(\[AllowClash\] keeps it quiet\)", log);
+            Assert.Matches(@"warning: Sample\.Builder: Sample\.Camp and Sample\.QuietCamp are both at button \(\d, \d\) of its build menu, so the game moves all but the first to other places \(\[AllowClash\] keeps it quiet\)", log);
             Assert.Matches(@"warning: Sample\.Crowded: its command card holds 1[3-5] buttons, and has 12 places \(\[AllowClash\] keeps it quiet\)", log);
             Assert.DoesNotContain("Sample.QuietCamp:", log);
             Assert.DoesNotContain("Sample.Camp: its command card holds", log);
