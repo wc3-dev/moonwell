@@ -2628,7 +2628,8 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
   World Editor's list of imported files, after the entries the map in `map/` has there. The game does not read the
   list. World Editor does: it shows a green icon for a file the list does not name, and its save drops the file (seen).
   So the built map can be opened in World Editor to look at, with its models and icons. A save there still writes the
-  script anew from the triggers, without the map's code.
+  script anew from the triggers, without the map's code. For the map in `map/`, see `moonwell objects --to-map`
+  ([The build](#the-build)).
 
 ## The build
 
@@ -2643,7 +2644,7 @@ game with it. Both make a development build: it checks the values Moonwell recei
 | `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
 | `moonwell clean` | Deletes `build/` |
 | `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
-| `moonwell objects --to-map` | Builds, then writes the built object files into `map/`, so World Editor lists the objects declared in code; close World Editor first |
+| `moonwell objects --to-map` | Builds, then writes the built object files, the files from `assets/` and the list that names them into `map/`, so World Editor lists the objects declared in code and shows their models and icons; close World Editor first |
 | `moonwell game find <path>` | Says whether the game has a file, by the storage path it is read from (`moonwell game find Textures\HeroFarseer.blp`). A folder, or a path with `*`, lists the files there (`moonwell game find Units\Orc\HeroTaurenChieftain`) |
 | `moonwell game extract <path>` | Writes the game's file into the current folder, under the name the game stores it by; `--out` names the file or the folder instead. A folder, or a path with `*`, writes every file there at its game path, so `--out assets` puts each where the map would replace it |
 
@@ -2721,8 +2722,12 @@ costs the game up to 23 ms, so the file is written at most once a second: the li
 game closes first. A line longer than 253 characters is split.
 
 To place objects declared in code in World Editor, close World Editor, run `moonwell objects --to-map` and open `map/`
-again. The command builds the map and writes the built object files into `map/`, and nothing else there; a build never
-writes into `map/`. Run it again when a new object should be placed. World Editor reads a map's objects when it opens
+again. The command builds the map and writes the built object files into `map/`; a build never writes into `map/`. It
+also copies the files from `assets/` there, a PNG as its BLP, and names them in `map\war3map.imp`, so a placed unit
+shows its model and icon in World Editor. Run it again when a new object should be placed or an asset has changed.
+`assets/` stays the place to change a file: the build takes a file from `assets/` over its copy in `map/`. A file
+deleted from `assets/` stays in `map/`, and in the built map, until it is deleted there too or in World Editor's Asset
+Manager. World Editor reads a map's objects when it opens
 the map, so one left open lists none of the new ones, and its next save puts its own objects back. The objects
 Moonwell adds for itself, such as the dummy that casts for `CastOn`, are left out. The next build keeps the placed
 units; code wins over any object it also declares. World Editor's own changes to an object get a warning at each

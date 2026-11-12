@@ -248,7 +248,7 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void objects_to_map_writes_only_the_object_files_and_the_next_build_lets_code_win()
+        public void objects_to_map_writes_the_object_files_the_assets_and_their_list_and_the_next_build_lets_code_win()
         {
             var folder = folders.TemporaryCopyOfSample();
             var map = Path.Combine(folder, "map");
@@ -259,9 +259,10 @@ namespace Moonwell.Build.Tests
 
             Assert.True(exitCode == 0, error + output);
             Assert.Empty(started);
-            var added = Directory.GetFiles(map, "*", SearchOption.AllDirectories).Where(file => !before.ContainsKey(file)).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
-            Assert.Equal(new[] { "war3map.w3u", "war3mapSkin.w3u" }, added);
-            Assert.EndsWith(@"moonwell: wrote war3map.w3u, war3mapSkin.w3u into map\", output.TrimEnd());
+            var added = Directory.GetFiles(map, "*", SearchOption.AllDirectories).Where(file => !before.ContainsKey(file)).Select(file => Path.GetRelativePath(map, file)).Order(StringComparer.Ordinal).ToList();
+            Assert.Equal(new[] { @"Moonwell\hello.txt", "war3map.imp", "war3map.w3u", "war3mapSkin.w3u" }, added);
+            Assert.EndsWith(@"moonwell: wrote war3map.w3u, war3mapSkin.w3u, Moonwell\hello.txt, war3map.imp into map\", output.TrimEnd());
+            Assert.Equal(new[] { @"Moonwell\hello.txt" }, ImportList.Paths(Path.Combine(map, "war3map.imp")));
             foreach (var (file, bytes) in before)
             {
                 Assert.Equal(bytes, File.ReadAllBytes(file));
@@ -276,7 +277,8 @@ namespace Moonwell.Build.Tests
             // Run again, the build takes the files back and the command finds nothing to write.
             var again = Run("objects", folder, "--to-map");
             Assert.True(again.ExitCode == 0, again.Error + again.Output);
-            Assert.EndsWith(@"moonwell: map\ already holds the built objects", again.Output.TrimEnd());
+            Assert.EndsWith(@"moonwell: map\ already holds the built objects and assets", again.Output.TrimEnd());
+            Assert.DoesNotContain("replaces the map's file", again.Output);
 
             // A change made to the class's object in World Editor: the next build writes the class's own value, and leaves the source map be.
             var skinPath = Path.Combine(map, "war3mapSkin.w3u");

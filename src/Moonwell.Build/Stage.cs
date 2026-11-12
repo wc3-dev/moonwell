@@ -109,11 +109,9 @@ namespace Moonwell.Build
                     }
 
                     packed[name] = file;
-                    if (File.Exists(Path.Combine(project.StagedFolder, name)))
-                    {
-                        log.WriteLine($@"note: assets\{file} replaces the map's file");
-                    }
-                    else
+                    var target = Path.Combine(project.StagedFolder, name);
+                    var replaced = File.Exists(target) ? File.ReadAllBytes(target) : null;
+                    if (replaced == null)
                     {
                         imported.Add(name);
                     }
@@ -125,6 +123,12 @@ namespace Moonwell.Build
                     else
                     {
                         Copy(project.AssetsFolder, file, project.StagedFolder);
+                    }
+
+                    // The same file in both is a copy `moonwell objects --to-map` put in the map, and needs no note.
+                    if (replaced != null && !replaced.AsSpan().SequenceEqual(File.ReadAllBytes(target)))
+                    {
+                        log.WriteLine($@"note: assets\{file} replaces the map's file");
                     }
                 }
 
