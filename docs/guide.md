@@ -2624,6 +2624,11 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
   code, object data, a model or a frame file. It leaves them in the map, as a path the code puts together while the
   game runs (`"BTN" + name + ".blp"`) is not seen. A file at one of the game's paths, a grey copy and a model's
   `_portrait` are not listed.
+- The build names every file from `assets/`, and each BLP and grey copy it makes, in the built map's `war3map.imp`,
+  World Editor's list of imported files, after the entries the map in `map/` has there. The game does not read the
+  list. World Editor does: it shows a green icon for a file the list does not name, and its save drops the file (seen).
+  So the built map can be opened in World Editor to look at, with its models and icons. A save there still writes the
+  script anew from the triggers, without the map's code.
 
 ## The build
 
