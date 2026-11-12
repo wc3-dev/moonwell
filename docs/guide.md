@@ -2553,6 +2553,12 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
   each part; the MDX version does not tell them apart. A Classic model's own textures can be `.blp` or `.dds` (seen).
   A map set to Reforged only in World Editor's map options is drawn in Reforged graphics whatever the player has
   chosen (seen).
+- A unit's voice comes from its sound set (`UnitSoundSet = "HeroTaurenChieftain"`), and a map cannot add a set: the
+  game reads its sound tables from its own files only (seen). For a voice of the map's own, give the unit a set the
+  map uses nowhere else and replace that set's files. `moonwell game find Units\Orc\HeroTaurenChieftain` lists them
+  (`HeroTaurenChieftainWhat1.ogg` and so on), and a `.flac` of the same name in `assets/` at that path replaces the
+  line (seen). Every unit with that set then speaks the new lines, and the set decides how many lines of each kind
+  there are.
 - The build warns of a path that object data or the map's code names (a texture, model or sound) that neither the game
   nor the map has, naming the class and field (`Sample.Arthas: uico`) or the type whose code has it. As in the game, a file
   under another extension of its kind counts: `.mdl` and `.mdx`; `.blp`, `.dds` and `.tga`; `.wav`, `.flac` and `.ogg`.
