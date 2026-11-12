@@ -380,6 +380,17 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_setup_helpers_set_does_nothing_in_lua()
+        {
+            using var lua = compiled.Start();
+
+            // Veteran's constructor hands itself to Costs.Put, which sets GoldCost: the helper runs again here, calls no native and changes nothing.
+            lua.DoString("natives = {}; setmetatable(_G, { __index = function(_, name) return function() natives[#natives + 1] = name; return nil end end })");
+            Assert.Equal("250", Query(lua, "local v = Objects.Veteran(); Objects.Costs.Put(v, 5); return tostring(v:getGoldCost())"));
+            Assert.Equal(string.Empty, Query(lua, "return table.concat(natives, ',')"));
+        }
+
+        [Fact]
         public void constructor_with_levels_per_level_and_set_runs()
         {
             using var lua = compiled.Start();
@@ -479,7 +490,7 @@ namespace Moonwell.Build.Tests
             Assert.DoesNotContain(hero.Fields, field => field.Property == "AnimationWalkSpeed");
 
             Assert.Contains("    public abstract class StandardHero : global::Moonwell.Hero\n", compiled.Stubs);
-            Assert.Contains("        public int GoldCost\n        {\n            get { return default; }\n            protected set { }\n        }\n", compiled.Stubs);
+            Assert.Contains("        public int GoldCost\n        {\n            get { return default; }\n            set { }\n        }\n", compiled.Stubs);
             Assert.Contains(
                 "namespace Moonwell.Objects\n{\n"
                 + "    /// @CSharpLua.Ignore\n    public static partial class Human\n    {\n"
