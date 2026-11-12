@@ -644,6 +644,15 @@ namespace Moonwell.Hosting
         /// <summary>Plays an animation of an effect by name, or queues it after the one playing.</summary>
         void AnimateEffect(effect fx, string name, bool queued);
 
+        /// <summary>Plays an animation of an effect by its kind, the game's number for it (AnimationType).</summary>
+        void AnimateEffectByType(effect fx, int type);
+
+        /// <summary>Adds a sub-animation to an effect, or removes it, by the game's number for it (SubAnimation).</summary>
+        void SetEffectSubAnimation(effect fx, int subAnimation, bool on);
+
+        /// <summary>Removes every sub-animation of an effect.</summary>
+        void ClearEffectSubAnimations(effect fx);
+
         /// <summary>Sets the speed of an effect's animations; 1 is the model's own.</summary>
         void SetEffectSpeed(effect fx, float speed);
 

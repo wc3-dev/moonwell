@@ -29,8 +29,11 @@ namespace Moonwell.Testing
         /// <summary>Its animation speed; 1 until set.</summary>
         public float Speed = 1.0f;
 
-        /// <summary>The animations it was given, in order; a queued one reads "queue " and its name.</summary>
+        /// <summary>The animations it was given, in order; a queued one reads "queue " and its name, one by kind "type " and the game's number.</summary>
         public List<string> Animations = new List<string>();
+
+        /// <summary>The sub-animations it has, by the game's numbers, in the order added.</summary>
+        public List<int> SubAnimations = new List<int>();
 
         /// <summary>Its red, green, blue and alpha; null until tinted.</summary>
         public int[]? Tint;

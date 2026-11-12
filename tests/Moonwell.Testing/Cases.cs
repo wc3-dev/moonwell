@@ -1687,6 +1687,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "effects.facing", Run = EffectCases.Facing });
             list.Add(new Case { Name = "effects.scale", Run = EffectCases.Scale });
             list.Add(new Case { Name = "effects.animations", Run = EffectCases.Animations });
+            list.Add(new Case { Name = "effects.animation-by-type", Run = EffectCases.AnimationByType });
             list.Add(new Case { Name = "effects.animation-speed", Run = EffectCases.AnimationSpeed });
             list.Add(new Case { Name = "effects.tint", Run = EffectCases.Tint });
             list.Add(new Case { Name = "effects.team-color", Run = EffectCases.TeamColor });
