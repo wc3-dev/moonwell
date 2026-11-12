@@ -2583,10 +2583,15 @@ The build checks the objects the map declares. A tooltip placeholder that names 
 case-sensitive) or a level its ability doesn't have (`<A001,DataA4>` of 3 levels) fails it, as the game shows 0
 there; the key itself is not checked. Two warnings point at mistakes that can be meant:
 
-- On a declared unit's command card, two abilities at one button place, with one hotkey, or taking one order (two
-  Storm Bolts: only one of them casts; a Channel's order is its Base Order ID). Only abilities with an icon count,
-  and only castable ones, with a hotkey, for hotkeys and orders. A pair of the game's own abilities is warned only
-  when the map changed the unit's list. `[AllowClash]` on the unit keeps it quiet.
+- On a declared unit's command card, two buttons at one place or with one hotkey, or two abilities taking one order
+  (two Storm Bolts: only one of them casts; a Channel's order is its Base Order ID). The card is the unit's abilities
+  and what it trains, researches, upgrades to and sells; what a worker builds is checked the same way as its build
+  menu. So three classes based on the Grunt in one `Trains` list are warned of once: they share the Grunt's place
+  and hotkey until each sets `ButtonPositionX`, `ButtonPositionY` and `Hotkey`. A card with more buttons than its 12
+  places (11 beside Cancel in a build menu) is warned of too; the game's own Move, Stop and Attack are not counted.
+  Only things with an icon count, and for orders only castable abilities, with a hotkey. Buttons the game itself
+  gave the standard unit are left alone among themselves (a Headhunter and its Berserker share a place). `[AllowClash]`
+  on the unit keeps it quiet.
 - A declared object nothing uses: no other object lists it, no code of another class names it, and the map places
   none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
   Editor's own objects, item tables).
