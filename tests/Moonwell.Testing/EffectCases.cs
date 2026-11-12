@@ -223,22 +223,22 @@ namespace Moonwell.Testing
         {
             var fx = SpecialEffect.Create(Glow, 0f, 0f, Game.Instance);
             var fake = world.Effects[0];
-            fx.AddSubAnimation(SubAnimation.Alternate);
+            fx.AddSubAnimation(SubAnimation.AlternateEx);
             fx.AddSubAnimation(SubAnimation.Berserk);
             fx.PlayAnimation(AnimationType.Morph);
             Expect.Equal("type 7", fake.Animations[0], "ANIM_TYPE_MORPH");
             Expect.Equal(2, fake.SubAnimations.Count, "sub-animations added");
             Expect.Equal(12, fake.SubAnimations[0], "SUBANIM_TYPE_ALTERNATE_EX");
             Expect.Equal(62, fake.SubAnimations[1], "SUBANIM_TYPE_BERSERK");
-            fx.RemoveSubAnimation(SubAnimation.Alternate);
+            fx.RemoveSubAnimation(SubAnimation.AlternateEx);
             Expect.Equal(1, fake.SubAnimations.Count, "one removed");
             Expect.Equal(62, fake.SubAnimations[0], "the other kept");
             fx.ClearSubAnimations();
             Expect.Equal(0, fake.SubAnimations.Count, "cleared");
             fx.End();
             fx.PlayAnimation(AnimationType.Stand);
-            fx.AddSubAnimation(SubAnimation.Alternate);
-            fx.RemoveSubAnimation(SubAnimation.Alternate);
+            fx.AddSubAnimation(SubAnimation.AlternateEx);
+            fx.RemoveSubAnimation(SubAnimation.AlternateEx);
             fx.ClearSubAnimations();
             Expect.Equal(1, fake.Animations.Count, "nothing played after the end");
         }

@@ -264,7 +264,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Plays an animation of the model by its kind (BlzPlaySpecialEffect); which of that kind plays goes by the effect's sub-animations, so Morph with none plays the plain "Morph", and with SubAnimation.Alternate added "Morph Alternate". Does nothing once it has ended.</summary>
+        /// <summary>Plays an animation of the model by its kind (BlzPlaySpecialEffect); which of that kind plays goes by the effect's sub-animations, so Morph with none plays the plain "Morph", and Stand with SubAnimation.Gold added "Stand Gold" (seen 11-12). No sub-animation picks an "Alternate" animation: play that by name, "morph alternate". Does nothing once it has ended.</summary>
         public void PlayAnimation(AnimationType type)
         {
             if (handle != null && !HasEnded)
