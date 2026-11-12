@@ -79,7 +79,7 @@ namespace Moonwell.Build.Tests
                 }
                 """);
 
-            Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash are both at button (0, 2) of its command card ([AllowClash] keeps it quiet)", log);
+            Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash are both at button (0, 2) of its command card, so the game moves all but the first to other places ([AllowClash] keeps it quiet)", log);
             Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash both have the hotkey T ([AllowClash] keeps it quiet)", log);
             Assert.Contains($"warning: Sample.Brute: {StormBolt} and Sample.Smash both take the order thunderbolt, so only one of them casts ([AllowClash] keeps it quiet)", log);
             Assert.DoesNotContain("Sample.Quiet:", log);
@@ -87,6 +87,121 @@ namespace Moonwell.Build.Tests
             Assert.DoesNotContain("Sample.Kept is declared", log);
             Assert.DoesNotContain("Sample.Grunt is declared", log);
             Assert.DoesNotContain("Sample.Smash is declared", log);
+        }
+
+        [Fact]
+        public void what_a_unit_trains_builds_researches_and_sells_is_checked_as_its_abilities_are()
+        {
+            var log = Build("""
+                using Moonwell.Objects;
+
+                namespace Sample
+                {
+                    [ObjectId("o001")]
+                    public sealed class WolfA : Moonwell.Objects.Orc.Units.Grunt
+                    {
+                    }
+
+                    [ObjectId("o002")]
+                    public sealed class WolfB : Moonwell.Objects.Orc.Units.Grunt
+                    {
+                    }
+
+                    [ObjectId("R001")]
+                    public sealed class PlateA : Moonwell.Objects.Orc.Upgrades.SteelArmor
+                    {
+                    }
+
+                    [ObjectId("R002")]
+                    public sealed class PlateB : Moonwell.Objects.Orc.Upgrades.SteelArmor
+                    {
+                    }
+
+                    [ObjectId("I001")]
+                    public sealed class ClawA : Moonwell.Objects.Items.ClawsOfAttack3
+                    {
+                    }
+
+                    [ObjectId("I002")]
+                    public sealed class ClawB : Moonwell.Objects.Items.ClawsOfAttack3
+                    {
+                    }
+
+                    [ObjectId("o003")]
+                    public sealed class Camp : Moonwell.Objects.Orc.Units.Barracks
+                    {
+                        public Camp()
+                        {
+                            Trains.Set<WolfA, WolfB>();
+                            ResearchesAvailable.Set<PlateA, PlateB>();
+                            Sells.Set<ClawA, ClawB>();
+                        }
+                    }
+
+                    [ObjectId("o004")]
+                    [AllowClash]
+                    public sealed class QuietCamp : Moonwell.Objects.Orc.Units.Barracks
+                    {
+                        public QuietCamp()
+                        {
+                            Trains.Set<WolfA, WolfB>();
+                        }
+                    }
+
+                    [ObjectId("o007")]
+                    public sealed class Plain : Moonwell.Objects.Orc.Units.Barracks
+                    {
+                        public Plain()
+                        {
+                            Trains.Add<WolfA>();
+                        }
+                    }
+
+                    [ObjectId("o005")]
+                    public sealed class Builder : Moonwell.Objects.Orc.Units.Peon
+                    {
+                        public Builder()
+                        {
+                            Builds.Set<Camp, QuietCamp>();
+                        }
+                    }
+
+                    [ObjectId("o006")]
+                    public sealed class Crowded : Moonwell.Objects.Orc.Units.Barracks
+                    {
+                        public Crowded()
+                        {
+                            Trains.Add<Moonwell.Objects.Orc.Units.Peon>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.Raider>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.Shaman>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.WitchDoctor>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.KodoBeast>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.WindRider>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.Tauren>();
+                            Trains.Add<Moonwell.Objects.Orc.Units.SpiritWalker>();
+                        }
+                    }
+
+                    public static class Uses
+                    {
+                        public static System.Type[] All()
+                        {
+                            return new[] { typeof(Builder), typeof(Crowded), typeof(Plain) };
+                        }
+                    }
+                }
+                """);
+
+            Assert.Contains("warning: Sample.Camp: Sample.WolfA, Sample.WolfB, Sample.ClawA and Sample.ClawB are all at button (0, 0) of its command card, so the game moves all but the first to other places ([AllowClash] keeps it quiet)", log);
+            Assert.Contains("warning: Sample.Camp: Sample.WolfA and Sample.WolfB both have the hotkey G ([AllowClash] keeps it quiet)", log);
+            Assert.Contains("warning: Sample.Camp: Sample.PlateA and Sample.PlateB are both at button", log);
+            Assert.Contains("warning: Sample.Camp: Sample.ClawA and Sample.ClawB both have the hotkey K", log);
+            Assert.Contains("warning: Sample.Plain: Moonwell.Objects.Orc.Units.Grunt", log);
+            Assert.DoesNotContain("Sample.Plain: Moonwell.Objects.Orc.Units.Headhunter", log);
+            Assert.Matches(@"warning: Sample\.Builder: Sample\.Camp and Sample\.QuietCamp are both at button \(\d, \d\) of its build menu, so the game moves all but the first to other places \(\[AllowClash\] keeps it quiet\)", log);
+            Assert.Matches(@"warning: Sample\.Crowded: its command card holds 1[3-5] buttons, and has 12 places \(\[AllowClash\] keeps it quiet\)", log);
+            Assert.DoesNotContain("Sample.QuietCamp:", log);
+            Assert.DoesNotContain("Sample.Camp: its command card holds", log);
         }
 
         [Theory]

@@ -8,8 +8,9 @@ namespace Moonwell.Build
 {
     /// <summary>
     /// The checks on what a map declares (decision 260): a tooltip placeholder that names no object, or a level its ability
-    /// doesn't have, fails the build, as the game shows 0 there; two abilities in one place of a declared unit's command card,
-    /// with one hotkey or one order, and a declared object nothing uses, are warnings. <c>[AllowClash]</c> on the unit and
+    /// doesn't have, fails the build, as the game shows 0 there; two buttons in one place of a declared unit's command card
+    /// or build menu (its abilities and what it trains, researches, upgrades to, sells and builds), with one hotkey or one
+    /// order, more buttons than places, and a declared object nothing uses, are warnings. <c>[AllowClash]</c> on the unit and
     /// <c>[AllowUnused]</c> on the object keep them quiet.
     /// </summary>
     public static class ObjectChecks
@@ -102,39 +103,65 @@ namespace Moonwell.Build
             }
         }
 
+        // The lists whose things share a unit's command card with its abilities, and the build menu's own list.
+        private static readonly string[] CardLists = { "uabi", "uhab", "utra", "ures", "uupt", "useu", "usei", "umki" };
+        private static readonly string[] BuildLists = { "ubui" };
+
         private static IEnumerable<string> CommandCards(Objects objects, IReadOnlySet<string> allowClash)
         {
             foreach (var unit in objects.Declared.Where(one => one.Kind is "unit" or "hero" && !allowClash.Contains(one.ClassName)))
             {
-                var changedList = unit.Changed.ContainsKey("uabi") || unit.Changed.ContainsKey("uhab");
-                var buttons = objects.Abilities(unit, "uabi").Concat(objects.Abilities(unit, "uhab")).Distinct().Select(objects.Button).Where(one => one != null).Select(one => one!).ToList();
-                for (var i = 0; i < buttons.Count; i++)
+                // shortcut: the game's own buttons (move, stop, attack, a queue's Cancel) are not counted, add them if a full card is missed.
+                foreach (var warning in Card(objects, unit, CardLists, "command card", 12).Concat(Card(objects, unit, BuildLists, "build menu", 11)))
                 {
-                    for (var j = i + 1; j < buttons.Count; j++)
-                    {
-                        var (a, b) = (buttons[i], buttons[j]);
-                        if (!changedList && !a.Declared && !b.Declared)
-                        {
-                            continue;
-                        }
-
-                        if (a.X == b.X && a.Y == b.Y)
-                        {
-                            yield return $"{unit.ClassName}: {a.Name} and {b.Name} are both at button ({a.X}, {a.Y}) of its command card ([AllowClash] keeps it quiet)";
-                        }
-
-                        if (a.Hotkey.Length > 0 && string.Equals(a.Hotkey, b.Hotkey, StringComparison.OrdinalIgnoreCase))
-                        {
-                            yield return $"{unit.ClassName}: {a.Name} and {b.Name} both have the hotkey {a.Hotkey} ([AllowClash] keeps it quiet)";
-                        }
-
-                        if (a.Hotkey.Length > 0 && b.Hotkey.Length > 0 && a.Order.Length > 0 && a.Order == b.Order)
-                        {
-                            yield return $"{unit.ClassName}: {a.Name} and {b.Name} both take the order {a.Order}, so only one of them casts ([AllowClash] keeps it quiet)";
-                        }
-                    }
+                    yield return warning;
                 }
             }
+        }
+
+        private static IEnumerable<string> Card(Objects objects, DeclaredObject unit, string[] lists, string card, int places)
+        {
+            // A clash among the things the game itself gave the standard unit is the game's own (a Headhunter and its Berserker), so one of the map's must be in it.
+            var games = lists.SelectMany(list => objects.StandardList(unit, list)).ToHashSet(StringComparer.Ordinal);
+            var buttons = lists.SelectMany(list => objects.Listed(unit, list)).Distinct()
+                .Select(id => (Button: objects.Button(id), Maps: !games.Contains(id)))
+                .Where(one => one.Button != null)
+                .Select(one => (Button: one.Button!, Maps: one.Maps || one.Button!.Declared))
+                .ToList();
+            // The game's own that share a place take turns in it, so they count once.
+            var count = buttons.Count(one => one.Maps) + buttons.Where(one => !one.Maps).Select(one => (one.Button.X, one.Button.Y)).Distinct().Count();
+            if (count > places && buttons.Any(one => one.Maps))
+            {
+                var beside = places < 12 ? " beside Cancel" : string.Empty;
+                yield return $"{unit.ClassName}: its {card} holds {count} buttons, and has {places} places{beside} ([AllowClash] keeps it quiet)";
+            }
+
+            foreach (var place in buttons.GroupBy(one => (one.Button.X, one.Button.Y)).Where(Clashes))
+            {
+                yield return $"{unit.ClassName}: {Names(place.Select(one => one.Button))} at button ({place.Key.X}, {place.Key.Y}) of its {card}, so the game moves all but the first to other places ([AllowClash] keeps it quiet)";
+            }
+
+            foreach (var hotkey in buttons.Where(one => one.Button.Hotkey.Length > 0).GroupBy(one => one.Button.Hotkey.ToUpperInvariant()).Where(Clashes))
+            {
+                yield return $"{unit.ClassName}: {Names(hotkey.Select(one => one.Button), "have")} the hotkey {hotkey.Key} ([AllowClash] keeps it quiet)";
+            }
+
+            foreach (var order in buttons.Where(one => one.Button.Hotkey.Length > 0 && one.Button.Order.Length > 0).GroupBy(one => one.Button.Order).Where(Clashes))
+            {
+                yield return $"{unit.ClassName}: {Names(order.Select(one => one.Button), "take")} the order {order.Key}, so only one of them casts ([AllowClash] keeps it quiet)";
+            }
+        }
+
+        private static bool Clashes<TKey>(IGrouping<TKey, (Button Button, bool Maps)> group)
+        {
+            return group.Count() > 1 && group.Any(one => one.Maps);
+        }
+
+        // "A and B are both", "A, B and C all have".
+        private static string Names(IEnumerable<Button> buttons, string verb = "are")
+        {
+            var names = buttons.Select(one => one.Name).ToList();
+            return string.Join(", ", names.Take(names.Count - 1)) + " and " + names[^1] + (names.Count == 2 ? (verb == "are" ? " are both" : " both " + verb) : (verb == "are" ? " are all" : " all " + verb));
         }
 
         private static IEnumerable<string> Unused(DeclarationSet declarations, IReadOnlyDictionary<string, string> ids, IReadOnlySet<string> placed, MapCode code)
@@ -303,6 +330,7 @@ namespace Moonwell.Build
             private readonly IReadOnlyDictionary<string, string> ids;
             private readonly IReadOnlySet<string> standardIds;
             private readonly IReadOnlySet<string> abilityIds;
+            private static readonly string[] Kinds = { "ability", "item", "upgrade" };
 
             public Objects(DeclarationSet declarations, IReadOnlyDictionary<string, string> ids, StandardData standard, string? set)
             {
@@ -336,29 +364,44 @@ namespace Moonwell.Build
                 return isAbility && int.TryParse(Value(declared, id, "alev", 0), NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) ? count : 0;
             }
 
-            /// <summary>The ids of the abilities in a unit's list, in order.</summary>
-            public IEnumerable<string> Abilities(DeclaredObject unit, string field)
+            /// <summary>The ids of the things in a unit's list, in order.</summary>
+            public IEnumerable<string> Listed(DeclaredObject unit, string field)
             {
                 if (unit.Changed.TryGetValue(field, out var changed) && changed is IReadOnlyList<string> names)
                 {
                     return names.Select(name => ids.TryGetValue(name, out var id) ? id : declarations.StandardClassIds.TryGetValue(name, out var standardId) ? standardId : name);
                 }
 
+                return StandardList(unit, field);
+            }
+
+            /// <summary>The ids in the list of the standard unit a declared one is based on.</summary>
+            public IEnumerable<string> StandardList(DeclaredObject unit, string field)
+            {
                 return (standard.Value(unit.StandardRoot, field, 0, set) ?? string.Empty)
                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             }
 
-            /// <summary>An ability's button: null for an ability with no icon, or one off the card's 4 by 3 places.</summary>
+            /// <summary>A listed thing's button: null for one with no icon, or one off the card's 4 by 3 places.</summary>
             public Button? Button(string id)
             {
                 var declared = byId.GetValueOrDefault(id);
-                if (string.IsNullOrEmpty(Value(declared, id, "aart", 0)))
+                var kind = declared?.Kind ?? Kinds.FirstOrDefault(one => standard.Ids(one).Contains(id));
+                var (icon, placeX, placeY, hotkey, level) = kind switch
+                {
+                    "ability" => ("aart", "abpx", "abpy", "ahky", 0),
+                    "item" => ("iico", "ubpx", "ubpy", "uhot", 0),
+                    // An upgrade's button is its next level's: the first is the one a new game shows.
+                    "upgrade" => ("gar1", "gbpx", "gbpy", "ghk1", 1),
+                    _ => ("uico", "ubpx", "ubpy", "uhot", 0),
+                };
+                if (string.IsNullOrEmpty(Value(declared, id, icon, level)))
                 {
                     return null;
                 }
 
-                var x = Number(Value(declared, id, "abpx", 0));
-                var y = Number(Value(declared, id, "abpy", 0));
+                var x = Number(Value(declared, id, placeX, 0));
+                var y = Number(Value(declared, id, placeY, 0));
                 if (x is < 0 or > 3 || y is < 0 or > 2)
                 {
                     return null;
@@ -366,9 +409,9 @@ namespace Moonwell.Build
 
                 // A Channel's order is its Base Order ID, so two Channels with their own differ.
                 var root = declared?.StandardRoot ?? id;
-                var order = root == "ANcl" ? Value(declared, id, "Ncl6", 1) : Value(declared, id, "aord", 0);
+                var order = kind != "ability" ? null : root == "ANcl" ? Value(declared, id, "Ncl6", 1) : Value(declared, id, "aord", 0);
                 var name = declared?.ClassName ?? declarations.StandardClassIds.FirstOrDefault(pair => pair.Value == id).Key ?? id;
-                return new Button(name, declared != null, x, y, Value(declared, id, "ahky", 0) ?? string.Empty, order ?? string.Empty);
+                return new Button(name, declared != null, x, y, Value(declared, id, hotkey, level) ?? string.Empty, order ?? string.Empty);
             }
 
             // What a declared object changed, else its standard root's value; for a standard object, its own.
