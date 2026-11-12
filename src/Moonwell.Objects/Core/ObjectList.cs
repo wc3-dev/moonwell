@@ -198,6 +198,72 @@ namespace Moonwell.Objects
             SetTo(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8));
         }
 
+        /// <summary>Replaces the whole list with these classes, in order; a class given twice is kept at its first place.</summary>
+        public void Set<T1, T2, T3, T4, T5, T6, T7, T8, T9>()
+            where T1 : T
+            where T2 : T
+            where T3 : T
+            where T4 : T
+            where T5 : T
+            where T6 : T
+            where T7 : T
+            where T8 : T
+            where T9 : T
+        {
+            SetTo(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9));
+        }
+
+        /// <summary>Replaces the whole list with these classes, in order; a class given twice is kept at its first place.</summary>
+        public void Set<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>()
+            where T1 : T
+            where T2 : T
+            where T3 : T
+            where T4 : T
+            where T5 : T
+            where T6 : T
+            where T7 : T
+            where T8 : T
+            where T9 : T
+            where T10 : T
+        {
+            SetTo(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10));
+        }
+
+        /// <summary>Replaces the whole list with these classes, in order; a class given twice is kept at its first place.</summary>
+        public void Set<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>()
+            where T1 : T
+            where T2 : T
+            where T3 : T
+            where T4 : T
+            where T5 : T
+            where T6 : T
+            where T7 : T
+            where T8 : T
+            where T9 : T
+            where T10 : T
+            where T11 : T
+        {
+            SetTo(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11));
+        }
+
+        /// <summary>Replaces the whole list with these classes, in order; a class given twice is kept at its first place.</summary>
+        public void Set<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>()
+            where T1 : T
+            where T2 : T
+            where T3 : T
+            where T4 : T
+            where T5 : T
+            where T6 : T
+            where T7 : T
+            where T8 : T
+            where T9 : T
+            where T10 : T
+            where T11 : T
+            where T12 : T
+        {
+            SetTo(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12));
+        }
+
         /// <summary>Puts a class in the place of another; with the other absent nothing changes, and with the class already there the other is only taken out.</summary>
         public void Replace<TOld, TNew>()
             where TOld : T

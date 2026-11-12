@@ -37,6 +37,8 @@ namespace Moonwell
 
         private Color tint = Color.White;
 
+        private Player? teamColor;
+
         private bool playsDeath = true;
 
         private SpecialEffect(string model, float x, float y, Player? shownTo)
@@ -159,6 +161,23 @@ namespace Moonwell
 
                 tint = value;
                 Runtime.World.TintEffect(handle, value.R, value.G, value.B, value.A);
+            }
+        }
+
+        /// <summary>The player whose colour the model's team-coloured parts are drawn in (BlzSetSpecialEffectColorByPlayer); null unless set. Setting null does nothing, as the game has no way back.</summary>
+        [LocalSafe]
+        public Player? TeamColor
+        {
+            get { return teamColor; }
+            set
+            {
+                if (handle == null || HasEnded || value == null)
+                {
+                    return;
+                }
+
+                teamColor = value;
+                Runtime.World.SetEffectTeamColor(handle, value.Handle);
             }
         }
 
