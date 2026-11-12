@@ -41,6 +41,7 @@ namespace Moonwell.Build.Tests
                             Game.Print(@"war3mapImported\Shield.blp");
                             Game.Print(@"ReplaceableTextures\CommandButtons\BTNFootman.blp");
                             Game.Print(@"Units\Human\Footman\FootmanYes1.wav");
+                            Game.Print(@"Units\Human\HeroPaladin\HeroPaladinWhat1.flac");
                             Game.Print(@"{0}.blp");
                         }
                     }
@@ -94,6 +95,65 @@ namespace Moonwell.Build.Tests
             Assert.Equal(
                 new[] { @"warning: nothing in the map names these assets, so they may be unused (a path the code puts together while the game runs is not seen): assets\Sounds\Lost.wav, assets\war3mapImported\Lost.png" },
                 Lines(output, "warning:"));
+        }
+
+        [Fact]
+        public void a_texture_a_model_names_that_neither_the_game_nor_the_map_has_is_warned_of_naming_the_model()
+        {
+            var project = folders.TemporaryCopyOf("Sample");
+            File.WriteAllText(Path.Combine(project, "Looks.cs"), """
+                using Moonwell;
+
+                namespace Sample
+                {
+                    public sealed class Looks : GameComponent
+                    {
+                        public override void OnGameStart()
+                        {
+                            Game.Print("Hero.mdx");
+                        }
+                    }
+                }
+                """);
+            CopyImage("glass-32.png", project, @"Textures\Mine.png");
+            File.WriteAllBytes(
+                Path.Combine(project, "assets", "Hero.mdx"),
+                Model("", @"Textures\Mine.blp", @"Textures\Typo.blp", @"Textures\Typo.blp", @"ReplaceableTextures\CommandButtons\BTNFootman.blp"));
+
+            var output = Build(project);
+
+            // A replaceable texture has no path, the map has one as a PNG, the game has another, and one named twice is warned of once.
+            Assert.Equal(
+                new[] { @"warning: the model Hero.mdx names the texture Textures\Typo.blp, which neither the game nor the map has" },
+                Lines(output, "warning:"));
+        }
+
+        [Fact]
+        public void a_file_that_is_no_model_or_is_cut_short_names_no_textures()
+        {
+            Assert.Empty(AssetChecks.Textures(new byte[] { (byte)'x' }));
+            Assert.Empty(AssetChecks.Textures(Model(@"Textures\A.blp")[..^10]));
+        }
+
+        // A model with a version chunk and a texture chunk, as an .mdx holds them.
+        private static byte[] Model(params string[] textures)
+        {
+            using var stream = new MemoryStream();
+            using var writer = new BinaryWriter(stream);
+            writer.Write("MDLX"u8);
+            writer.Write("VERS"u8);
+            writer.Write(4);
+            writer.Write(800);
+            writer.Write("TEXS"u8);
+            writer.Write(textures.Length * 268);
+            foreach (var texture in textures)
+            {
+                writer.Write(texture.Length == 0 ? 1 : 0);
+                writer.Write(System.Text.Encoding.Latin1.GetBytes(texture.PadRight(260, '\0')));
+                writer.Write(0);
+            }
+
+            return stream.ToArray();
         }
 
         private static string[] Lines(string output, string start)
