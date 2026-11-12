@@ -314,7 +314,7 @@ namespace Moonwell.Objects
         public string Description
         {
             get { return Fields.Get<string>(this, "ides"); }
-            protected set { Fields.Put("ides", value); }
+            set { Fields.Put("ides", value); }
         }
 
         /// <summary>Attack 1 - Damage Base (ua1b), 0 to 500000.</summary>
@@ -323,7 +323,7 @@ namespace Moonwell.Objects
         public int Damage
         {
             get { return Fields.Get<int>(this, "ua1b"); }
-            protected set { Fields.Put("ua1b", value); }
+            set { Fields.Put("ua1b", value); }
         }
 
         /// <summary>Attack 1 - Cooldown Time (ua1c), 0 to 3600.</summary>
@@ -333,7 +333,7 @@ namespace Moonwell.Objects
         public float AttackCooldown
         {
             get { return Fields.Get<float>(this, "ua1c"); }
-            protected set { Fields.Put("ua1c", value); }
+            set { Fields.Put("ua1c", value); }
         }
 
         /// <summary>Attack 1 - Damage Number of Dice (ua1d), 0 to 100.</summary>
@@ -342,7 +342,7 @@ namespace Moonwell.Objects
         public int DamageDice
         {
             get { return Fields.Get<int>(this, "ua1d"); }
-            protected set { Fields.Put("ua1d", value); }
+            set { Fields.Put("ua1d", value); }
         }
 
         /// <summary>Attack 1 - Area of Effect (Full Damage) (ua1f), 0 to 1000.</summary>
@@ -351,7 +351,7 @@ namespace Moonwell.Objects
         public int Attack1AreaOfEffectFullDamage
         {
             get { return Fields.Get<int>(this, "ua1f"); }
-            protected set { Fields.Put("ua1f", value); }
+            set { Fields.Put("ua1f", value); }
         }
 
         /// <summary>Attack 1 - Targets Allowed (ua1g).</summary>
@@ -359,7 +359,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Targets Attack1TargetsAllowed
         {
             get { return Fields.Get<global::Moonwell.Objects.Targets>(this, "ua1g"); }
-            protected set { Fields.Put("ua1g", value); }
+            set { Fields.Put("ua1g", value); }
         }
 
         /// <summary>Attack 1 - Area of Effect (Medium Damage) (ua1h), 0 to 1000.</summary>
@@ -368,7 +368,7 @@ namespace Moonwell.Objects
         public int Attack1AreaOfEffectMediumDamage
         {
             get { return Fields.Get<int>(this, "ua1h"); }
-            protected set { Fields.Put("ua1h", value); }
+            set { Fields.Put("ua1h", value); }
         }
 
         /// <summary>Attack 1 - Projectile Art (ua1m).</summary>
@@ -376,7 +376,7 @@ namespace Moonwell.Objects
         public string Attack1ProjectileArt
         {
             get { return Fields.Get<string>(this, "ua1m"); }
-            protected set { Fields.Put("ua1m", value); }
+            set { Fields.Put("ua1m", value); }
         }
 
         /// <summary>Attack 1 - Area of Effect Targets (ua1p).</summary>
@@ -384,7 +384,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Targets Attack1AreaOfEffectTargets
         {
             get { return Fields.Get<global::Moonwell.Objects.Targets>(this, "ua1p"); }
-            protected set { Fields.Put("ua1p", value); }
+            set { Fields.Put("ua1p", value); }
         }
 
         /// <summary>Attack 1 - Area of Effect (Small Damage) (ua1q), 0 to 1000.</summary>
@@ -393,7 +393,7 @@ namespace Moonwell.Objects
         public int Attack1AreaOfEffectSmallDamage
         {
             get { return Fields.Get<int>(this, "ua1q"); }
-            protected set { Fields.Put("ua1q", value); }
+            set { Fields.Put("ua1q", value); }
         }
 
         /// <summary>Attack 1 - Range (ua1r), 0 to 20000.</summary>
@@ -402,7 +402,7 @@ namespace Moonwell.Objects
         public int AttackRange
         {
             get { return Fields.Get<int>(this, "ua1r"); }
-            protected set { Fields.Put("ua1r", value); }
+            set { Fields.Put("ua1r", value); }
         }
 
         /// <summary>Attack 1 - Damage Sides per Die (ua1s), 0 to 100.</summary>
@@ -411,7 +411,7 @@ namespace Moonwell.Objects
         public int DamageSides
         {
             get { return Fields.Get<int>(this, "ua1s"); }
-            protected set { Fields.Put("ua1s", value); }
+            set { Fields.Put("ua1s", value); }
         }
 
         /// <summary>Attack 1 - Attack Type (ua1t).</summary>
@@ -419,7 +419,7 @@ namespace Moonwell.Objects
         public global::Moonwell.AttackType AttackType
         {
             get { return Fields.Get<global::Moonwell.AttackType>(this, "ua1t"); }
-            protected set { Fields.Put("ua1t", value); }
+            set { Fields.Put("ua1t", value); }
         }
 
         /// <summary>Attack 1 - Weapon Type (ua1w).</summary>
@@ -427,7 +427,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.WeaponType Attack1WeaponType
         {
             get { return Fields.Get<global::Moonwell.Objects.WeaponType>(this, "ua1w"); }
-            protected set { Fields.Put("ua1w", value); }
+            set { Fields.Put("ua1w", value); }
         }
 
         /// <summary>Attack 1 - Projectile Speed (ua1z), 0 to 10000.</summary>
@@ -436,7 +436,7 @@ namespace Moonwell.Objects
         public int Attack1ProjectileSpeed
         {
             get { return Fields.Get<int>(this, "ua1z"); }
-            protected set { Fields.Put("ua1z", value); }
+            set { Fields.Put("ua1z", value); }
         }
 
         /// <summary>Attack 2 - Damage Base (ua2b), 0 to 500000.</summary>
@@ -445,7 +445,7 @@ namespace Moonwell.Objects
         public int Attack2Damage
         {
             get { return Fields.Get<int>(this, "ua2b"); }
-            protected set { Fields.Put("ua2b", value); }
+            set { Fields.Put("ua2b", value); }
         }
 
         /// <summary>Attack 2 - Cooldown Time (ua2c), 0 to 3600.</summary>
@@ -455,7 +455,7 @@ namespace Moonwell.Objects
         public float Attack2Cooldown
         {
             get { return Fields.Get<float>(this, "ua2c"); }
-            protected set { Fields.Put("ua2c", value); }
+            set { Fields.Put("ua2c", value); }
         }
 
         /// <summary>Attack 2 - Damage Number of Dice (ua2d), 0 to 100.</summary>
@@ -464,7 +464,7 @@ namespace Moonwell.Objects
         public int Attack2DamageDice
         {
             get { return Fields.Get<int>(this, "ua2d"); }
-            protected set { Fields.Put("ua2d", value); }
+            set { Fields.Put("ua2d", value); }
         }
 
         /// <summary>Attack 2 - Area of Effect (Full Damage) (ua2f), 0 to 1000.</summary>
@@ -473,7 +473,7 @@ namespace Moonwell.Objects
         public int Attack2AreaOfEffectFullDamage
         {
             get { return Fields.Get<int>(this, "ua2f"); }
-            protected set { Fields.Put("ua2f", value); }
+            set { Fields.Put("ua2f", value); }
         }
 
         /// <summary>Attack 2 - Targets Allowed (ua2g).</summary>
@@ -481,7 +481,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Targets Attack2TargetsAllowed
         {
             get { return Fields.Get<global::Moonwell.Objects.Targets>(this, "ua2g"); }
-            protected set { Fields.Put("ua2g", value); }
+            set { Fields.Put("ua2g", value); }
         }
 
         /// <summary>Attack 2 - Area of Effect (Medium Damage) (ua2h), 0 to 1000.</summary>
@@ -490,7 +490,7 @@ namespace Moonwell.Objects
         public int Attack2AreaOfEffectMediumDamage
         {
             get { return Fields.Get<int>(this, "ua2h"); }
-            protected set { Fields.Put("ua2h", value); }
+            set { Fields.Put("ua2h", value); }
         }
 
         /// <summary>Attack 2 - Projectile Art (ua2m).</summary>
@@ -498,7 +498,7 @@ namespace Moonwell.Objects
         public string Attack2ProjectileArt
         {
             get { return Fields.Get<string>(this, "ua2m"); }
-            protected set { Fields.Put("ua2m", value); }
+            set { Fields.Put("ua2m", value); }
         }
 
         /// <summary>Attack 2 - Area of Effect Targets (ua2p).</summary>
@@ -506,7 +506,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Targets Attack2AreaOfEffectTargets
         {
             get { return Fields.Get<global::Moonwell.Objects.Targets>(this, "ua2p"); }
-            protected set { Fields.Put("ua2p", value); }
+            set { Fields.Put("ua2p", value); }
         }
 
         /// <summary>Attack 2 - Area of Effect (Small Damage) (ua2q), 0 to 1000.</summary>
@@ -515,7 +515,7 @@ namespace Moonwell.Objects
         public int Attack2AreaOfEffectSmallDamage
         {
             get { return Fields.Get<int>(this, "ua2q"); }
-            protected set { Fields.Put("ua2q", value); }
+            set { Fields.Put("ua2q", value); }
         }
 
         /// <summary>Attack 2 - Range (ua2r), 0 to 20000.</summary>
@@ -524,7 +524,7 @@ namespace Moonwell.Objects
         public int Attack2Range
         {
             get { return Fields.Get<int>(this, "ua2r"); }
-            protected set { Fields.Put("ua2r", value); }
+            set { Fields.Put("ua2r", value); }
         }
 
         /// <summary>Attack 2 - Damage Sides per Die (ua2s), 0 to 100.</summary>
@@ -533,7 +533,7 @@ namespace Moonwell.Objects
         public int Attack2DamageSides
         {
             get { return Fields.Get<int>(this, "ua2s"); }
-            protected set { Fields.Put("ua2s", value); }
+            set { Fields.Put("ua2s", value); }
         }
 
         /// <summary>Attack 2 - Attack Type (ua2t).</summary>
@@ -541,7 +541,7 @@ namespace Moonwell.Objects
         public global::Moonwell.AttackType Attack2Type
         {
             get { return Fields.Get<global::Moonwell.AttackType>(this, "ua2t"); }
-            protected set { Fields.Put("ua2t", value); }
+            set { Fields.Put("ua2t", value); }
         }
 
         /// <summary>Attack 2 - Weapon Type (ua2w).</summary>
@@ -549,7 +549,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.WeaponType Attack2WeaponType
         {
             get { return Fields.Get<global::Moonwell.Objects.WeaponType>(this, "ua2w"); }
-            protected set { Fields.Put("ua2w", value); }
+            set { Fields.Put("ua2w", value); }
         }
 
         /// <summary>Attack 2 - Projectile Speed (ua2z), 0 to 10000.</summary>
@@ -558,7 +558,7 @@ namespace Moonwell.Objects
         public int Attack2ProjectileSpeed
         {
             get { return Fields.Get<int>(this, "ua2z"); }
-            protected set { Fields.Put("ua2z", value); }
+            set { Fields.Put("ua2z", value); }
         }
 
         /// <summary>Required Animation Names - Attachments (uaap), at most 20 entries.</summary>
@@ -567,7 +567,7 @@ namespace Moonwell.Objects
         public string RequiredAnimationNamesAttachments
         {
             get { return Fields.Get<string>(this, "uaap"); }
-            protected set { Fields.Put("uaap", value); }
+            set { Fields.Put("uaap", value); }
         }
 
         /// <summary>Normal (uabi).</summary>
@@ -584,7 +584,7 @@ namespace Moonwell.Objects
         public float AIPlacementRadius
         {
             get { return Fields.Get<float>(this, "uabr"); }
-            protected set { Fields.Put("uabr", value); }
+            set { Fields.Put("uabr", value); }
         }
 
         /// <summary>Normal Skin (uabs).</summary>
@@ -592,7 +592,7 @@ namespace Moonwell.Objects
         public string NormalSkin
         {
             get { return Fields.Get<string>(this, "uabs"); }
-            protected set { Fields.Put("uabs", value); }
+            set { Fields.Put("uabs", value); }
         }
 
         /// <summary>AI Placement Type (uabt).</summary>
@@ -600,7 +600,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.AiBuffer AIPlacementType
         {
             get { return Fields.Get<global::Moonwell.Objects.AiBuffer>(this, "uabt"); }
-            protected set { Fields.Put("uabt", value); }
+            set { Fields.Put("uabt", value); }
         }
 
         /// <summary>Acquisition Range (uacq), 0 to 20000.</summary>
@@ -610,7 +610,7 @@ namespace Moonwell.Objects
         public float AcquisitionRange
         {
             get { return Fields.Get<float>(this, "uacq"); }
-            protected set { Fields.Put("uacq", value); }
+            set { Fields.Put("uacq", value); }
         }
 
         /// <summary>Attacks Enabled (uaen).</summary>
@@ -618,7 +618,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.AttackBits AttacksEnabled
         {
             get { return Fields.Get<global::Moonwell.Objects.AttackBits>(this, "uaen"); }
-            protected set { Fields.Put("uaen", value); }
+            set { Fields.Put("uaen", value); }
         }
 
         /// <summary>Agility per Level (uagp), 0 to 20.</summary>
@@ -627,7 +627,7 @@ namespace Moonwell.Objects
         public float AgilityPerLevel
         {
             get { return Fields.Get<float>(this, "uagp"); }
-            protected set { Fields.Put("uagp", value); }
+            set { Fields.Put("uagp", value); }
         }
 
         /// <summary>Required Attachment Link Names (ualp), at most 20 entries.</summary>
@@ -636,7 +636,7 @@ namespace Moonwell.Objects
         public string RequiredAttachmentLinkNames
         {
             get { return Fields.Get<string>(this, "ualp"); }
-            protected set { Fields.Put("ualp", value); }
+            set { Fields.Put("ualp", value); }
         }
 
         /// <summary>Minimum Attack Range (uamn), 0 to 20000.</summary>
@@ -645,7 +645,7 @@ namespace Moonwell.Objects
         public int MinimumAttackRange
         {
             get { return Fields.Get<int>(this, "uamn"); }
-            protected set { Fields.Put("uamn", value); }
+            set { Fields.Put("uamn", value); }
         }
 
         /// <summary>Required Animation Names (uani), at most 20 entries.</summary>
@@ -654,7 +654,7 @@ namespace Moonwell.Objects
         public string RequiredAnimationNames
         {
             get { return Fields.Get<string>(this, "uani"); }
-            protected set { Fields.Put("uani", value); }
+            set { Fields.Put("uani", value); }
         }
 
         /// <summary>Armor Type (uarm).</summary>
@@ -662,7 +662,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.ArmorType ArmorType
         {
             get { return Fields.Get<global::Moonwell.Objects.ArmorType>(this, "uarm"); }
-            protected set { Fields.Put("uarm", value); }
+            set { Fields.Put("uarm", value); }
         }
 
         /// <summary>Show Air To Ground Indicators (uatg).</summary>
@@ -670,7 +670,7 @@ namespace Moonwell.Objects
         public bool ShowAirToGroundIndicators
         {
             get { return Fields.Get<bool>(this, "uatg"); }
-            protected set { Fields.Put("uatg", value); }
+            set { Fields.Put("uatg", value); }
         }
 
         /// <summary>Tooltip - Awaken (uawt).</summary>
@@ -678,7 +678,7 @@ namespace Moonwell.Objects
         public string TooltipAwaken
         {
             get { return Fields.Get<string>(this, "uawt"); }
-            protected set { Fields.Put("uawt", value); }
+            set { Fields.Put("uawt", value); }
         }
 
         /// <summary>Gold Bounty Awarded - Base (ubba), 0 to 10000.</summary>
@@ -687,7 +687,7 @@ namespace Moonwell.Objects
         public int GoldBountyAwardedBase
         {
             get { return Fields.Get<int>(this, "ubba"); }
-            protected set { Fields.Put("ubba", value); }
+            set { Fields.Put("ubba", value); }
         }
 
         /// <summary>Is a Building (ubdg).</summary>
@@ -695,7 +695,7 @@ namespace Moonwell.Objects
         public bool IsABuilding
         {
             get { return Fields.Get<bool>(this, "ubdg"); }
-            protected set { Fields.Put("ubdg", value); }
+            set { Fields.Put("ubdg", value); }
         }
 
         /// <summary>Gold Bounty Awarded - Number of Dice (ubdi), 0 to 100.</summary>
@@ -704,7 +704,7 @@ namespace Moonwell.Objects
         public int GoldBountyAwardedNumberOfDice
         {
             get { return Fields.Get<int>(this, "ubdi"); }
-            protected set { Fields.Put("ubdi", value); }
+            set { Fields.Put("ubdi", value); }
         }
 
         /// <summary>Build Time (ubld), 1 to 298.</summary>
@@ -713,7 +713,7 @@ namespace Moonwell.Objects
         public int BuildTime
         {
             get { return Fields.Get<int>(this, "ubld"); }
-            protected set { Fields.Put("ubld", value); }
+            set { Fields.Put("ubld", value); }
         }
 
         /// <summary>Animation - Blend Time (seconds) (uble), 0 to 1.</summary>
@@ -722,7 +722,7 @@ namespace Moonwell.Objects
         public float AnimationBlendTimeSeconds
         {
             get { return Fields.Get<float>(this, "uble"); }
-            protected set { Fields.Put("uble", value); }
+            set { Fields.Put("uble", value); }
         }
 
         /// <summary>Required Bone Names (ubpr), at most 20 entries.</summary>
@@ -731,7 +731,7 @@ namespace Moonwell.Objects
         public string RequiredBoneNames
         {
             get { return Fields.Get<string>(this, "ubpr"); }
-            protected set { Fields.Put("ubpr", value); }
+            set { Fields.Put("ubpr", value); }
         }
 
         /// <summary>Button Position (X) (ubpx), 0 to 3.</summary>
@@ -740,7 +740,7 @@ namespace Moonwell.Objects
         public int ButtonPositionX
         {
             get { return Fields.Get<int>(this, "ubpx"); }
-            protected set { Fields.Put("ubpx", value); }
+            set { Fields.Put("ubpx", value); }
         }
 
         /// <summary>Button Position (Y) (ubpy), 0 to 2.</summary>
@@ -749,7 +749,7 @@ namespace Moonwell.Objects
         public int ButtonPositionY
         {
             get { return Fields.Get<int>(this, "ubpy"); }
-            protected set { Fields.Put("ubpy", value); }
+            set { Fields.Put("ubpy", value); }
         }
 
         /// <summary>Attack 1 - Animation Backswing Point (ubs1), 0 to 10.</summary>
@@ -759,7 +759,7 @@ namespace Moonwell.Objects
         public float Attack1AnimationBackswingPoint
         {
             get { return Fields.Get<float>(this, "ubs1"); }
-            protected set { Fields.Put("ubs1", value); }
+            set { Fields.Put("ubs1", value); }
         }
 
         /// <summary>Attack 2 - Animation Backswing Point (ubs2), 0 to 10.</summary>
@@ -769,7 +769,7 @@ namespace Moonwell.Objects
         public float Attack2AnimationBackswingPoint
         {
             get { return Fields.Get<float>(this, "ubs2"); }
-            protected set { Fields.Put("ubs2", value); }
+            set { Fields.Put("ubs2", value); }
         }
 
         /// <summary>Gold Bounty Awarded - Sides per Die (ubsi), 0 to 100.</summary>
@@ -778,7 +778,7 @@ namespace Moonwell.Objects
         public int GoldBountyAwardedSidesPerDie
         {
             get { return Fields.Get<int>(this, "ubsi"); }
-            protected set { Fields.Put("ubsi", value); }
+            set { Fields.Put("ubsi", value); }
         }
 
         /// <summary>Construction (ubsl).</summary>
@@ -786,7 +786,7 @@ namespace Moonwell.Objects
         public string Construction
         {
             get { return Fields.Get<string>(this, "ubsl"); }
-            protected set { Fields.Put("ubsl", value); }
+            set { Fields.Put("ubsl", value); }
         }
 
         /// <summary>Structures Built (ubui).</summary>
@@ -801,7 +801,7 @@ namespace Moonwell.Objects
         public bool CategorizationCampaign
         {
             get { return Fields.Get<bool>(this, "ucam"); }
-            protected set { Fields.Put("ucam", value); }
+            set { Fields.Put("ucam", value); }
         }
 
         /// <summary>Transported Size (ucar), 0 to 8.</summary>
@@ -810,7 +810,7 @@ namespace Moonwell.Objects
         public int TransportedSize
         {
             get { return Fields.Get<int>(this, "ucar"); }
-            protected set { Fields.Put("ucar", value); }
+            set { Fields.Put("ucar", value); }
         }
 
         /// <summary>Can Build On (ucbo).</summary>
@@ -818,7 +818,7 @@ namespace Moonwell.Objects
         public bool CanBuildOn
         {
             get { return Fields.Get<bool>(this, "ucbo"); }
-            protected set { Fields.Put("ucbo", value); }
+            set { Fields.Put("ucbo", value); }
         }
 
         /// <summary>Animation - Cast Backswing (ucbs), 0 to 10.</summary>
@@ -828,7 +828,7 @@ namespace Moonwell.Objects
         public float AnimationCastBackswing
         {
             get { return Fields.Get<float>(this, "ucbs"); }
-            protected set { Fields.Put("ucbs", value); }
+            set { Fields.Put("ucbs", value); }
         }
 
         /// <summary>Tinting Color 3 (Blue) (uclb), 0 to 255.</summary>
@@ -837,7 +837,7 @@ namespace Moonwell.Objects
         public int TintingColor3Blue
         {
             get { return Fields.Get<int>(this, "uclb"); }
-            protected set { Fields.Put("uclb", value); }
+            set { Fields.Put("uclb", value); }
         }
 
         /// <summary>Tinting Color 2 (Green) (uclg), 0 to 255.</summary>
@@ -846,7 +846,7 @@ namespace Moonwell.Objects
         public int TintingColor2Green
         {
             get { return Fields.Get<int>(this, "uclg"); }
-            protected set { Fields.Put("uclg", value); }
+            set { Fields.Put("uclg", value); }
         }
 
         /// <summary>Tinting Color 1 (Red) (uclr), 0 to 255.</summary>
@@ -855,7 +855,7 @@ namespace Moonwell.Objects
         public int TintingColor1Red
         {
             get { return Fields.Get<int>(this, "uclr"); }
-            protected set { Fields.Put("uclr", value); }
+            set { Fields.Put("uclr", value); }
         }
 
         /// <summary>Collision Size (ucol), 0 to 1024.</summary>
@@ -865,7 +865,7 @@ namespace Moonwell.Objects
         public float CollisionSize
         {
             get { return Fields.Get<float>(this, "ucol"); }
-            protected set { Fields.Put("ucol", value); }
+            set { Fields.Put("ucol", value); }
         }
 
         /// <summary>Animation - Cast Point (ucpt), 0 to 10.</summary>
@@ -875,7 +875,7 @@ namespace Moonwell.Objects
         public float AnimationCastPoint
         {
             get { return Fields.Get<float>(this, "ucpt"); }
-            protected set { Fields.Put("ucpt", value); }
+            set { Fields.Put("ucpt", value); }
         }
 
         /// <summary>Attack 1 - Weapon Sound (ucs1).</summary>
@@ -884,7 +884,7 @@ namespace Moonwell.Objects
         public global::Moonwell.WeaponSound Attack1WeaponSound
         {
             get { return Fields.Get<global::Moonwell.WeaponSound>(this, "ucs1"); }
-            protected set { Fields.Put("ucs1", value); }
+            set { Fields.Put("ucs1", value); }
         }
 
         /// <summary>Attack 2 - Weapon Sound (ucs2).</summary>
@@ -893,7 +893,7 @@ namespace Moonwell.Objects
         public global::Moonwell.WeaponSound Attack2WeaponSound
         {
             get { return Fields.Get<global::Moonwell.WeaponSound>(this, "ucs2"); }
-            protected set { Fields.Put("ucs2", value); }
+            set { Fields.Put("ucs2", value); }
         }
 
         /// <summary>Caster Upgrade Art (ucua).</summary>
@@ -901,7 +901,7 @@ namespace Moonwell.Objects
         public string CasterUpgradeArt
         {
             get { return Fields.Get<string>(this, "ucua"); }
-            protected set { Fields.Put("ucua", value); }
+            set { Fields.Put("ucua", value); }
         }
 
         /// <summary>Caster Upgrade Names (ucun), at most 32 entries.</summary>
@@ -910,7 +910,7 @@ namespace Moonwell.Objects
         public string CasterUpgradeNames
         {
             get { return Fields.Get<string>(this, "ucun"); }
-            protected set { Fields.Put("ucun", value); }
+            set { Fields.Put("ucun", value); }
         }
 
         /// <summary>Caster Upgrade Tips (ucut).</summary>
@@ -918,7 +918,7 @@ namespace Moonwell.Objects
         public string CasterUpgradeTips
         {
             get { return Fields.Get<string>(this, "ucut"); }
-            protected set { Fields.Put("ucut", value); }
+            set { Fields.Put("ucut", value); }
         }
 
         /// <summary>Default Active Ability (udaa).</summary>
@@ -933,7 +933,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.DeathType DeathType
         {
             get { return Fields.Get<global::Moonwell.Objects.DeathType>(this, "udea"); }
-            protected set { Fields.Put("udea", value); }
+            set { Fields.Put("udea", value); }
         }
 
         /// <summary>Defense Base (udef), 0 to 1000.</summary>
@@ -942,7 +942,7 @@ namespace Moonwell.Objects
         public int Armor
         {
             get { return Fields.Get<int>(this, "udef"); }
-            protected set { Fields.Put("udef", value); }
+            set { Fields.Put("udef", value); }
         }
 
         /// <summary>Dependency Equivalents (udep).</summary>
@@ -958,7 +958,7 @@ namespace Moonwell.Objects
         public float Attack1DamageLossFactor
         {
             get { return Fields.Get<float>(this, "udl1"); }
-            protected set { Fields.Put("udl1", value); }
+            set { Fields.Put("udl1", value); }
         }
 
         /// <summary>Attack 2 - Damage Loss Factor (udl2), 0 to 10.</summary>
@@ -967,7 +967,7 @@ namespace Moonwell.Objects
         public float Attack2DamageLossFactor
         {
             get { return Fields.Get<float>(this, "udl2"); }
-            protected set { Fields.Put("udl2", value); }
+            set { Fields.Put("udl2", value); }
         }
 
         /// <summary>Attack 1 - Animation Damage Point (udp1), 0 to 10.</summary>
@@ -977,7 +977,7 @@ namespace Moonwell.Objects
         public float Attack1AnimationDamagePoint
         {
             get { return Fields.Get<float>(this, "udp1"); }
-            protected set { Fields.Put("udp1", value); }
+            set { Fields.Put("udp1", value); }
         }
 
         /// <summary>Attack 2 - Animation Damage Point (udp2), 0 to 10.</summary>
@@ -987,7 +987,7 @@ namespace Moonwell.Objects
         public float Attack2AnimationDamagePoint
         {
             get { return Fields.Get<float>(this, "udp2"); }
-            protected set { Fields.Put("udp2", value); }
+            set { Fields.Put("udp2", value); }
         }
 
         /// <summary>Can Drop Items On Death (udro).</summary>
@@ -995,7 +995,7 @@ namespace Moonwell.Objects
         public bool CanDropItemsOnDeath
         {
             get { return Fields.Get<bool>(this, "udro"); }
-            protected set { Fields.Put("udro", value); }
+            set { Fields.Put("udro", value); }
         }
 
         /// <summary>Death Time (seconds) (udtm), 0.1 to 20.</summary>
@@ -1005,7 +1005,7 @@ namespace Moonwell.Objects
         public float DeathTimeSeconds
         {
             get { return Fields.Get<float>(this, "udtm"); }
-            protected set { Fields.Put("udtm", value); }
+            set { Fields.Put("udtm", value); }
         }
 
         /// <summary>Defense Type (udty).</summary>
@@ -1013,7 +1013,7 @@ namespace Moonwell.Objects
         public global::Moonwell.DefenseType DefenseType
         {
             get { return Fields.Get<global::Moonwell.DefenseType>(this, "udty"); }
-            protected set { Fields.Put("udty", value); }
+            set { Fields.Put("udty", value); }
         }
 
         /// <summary>Attack 1 - Damage Upgrade Amount (udu1), 0 to 1000.</summary>
@@ -1022,7 +1022,7 @@ namespace Moonwell.Objects
         public int Attack1DamageUpgradeAmount
         {
             get { return Fields.Get<int>(this, "udu1"); }
-            protected set { Fields.Put("udu1", value); }
+            set { Fields.Put("udu1", value); }
         }
 
         /// <summary>Attack 2 - Damage Upgrade Amount (udu2), 0 to 1000.</summary>
@@ -1031,7 +1031,7 @@ namespace Moonwell.Objects
         public int Attack2DamageUpgradeAmount
         {
             get { return Fields.Get<int>(this, "udu2"); }
-            protected set { Fields.Put("udu2", value); }
+            set { Fields.Put("udu2", value); }
         }
 
         /// <summary>Defense Upgrade Bonus (udup), 0 to 1000.</summary>
@@ -1040,7 +1040,7 @@ namespace Moonwell.Objects
         public int DefenseUpgradeBonus
         {
             get { return Fields.Get<int>(this, "udup"); }
-            protected set { Fields.Put("udup", value); }
+            set { Fields.Put("udup", value); }
         }
 
         /// <summary>Equipment Preview Animation Props (uepa).</summary>
@@ -1048,7 +1048,7 @@ namespace Moonwell.Objects
         public string EquipmentPreviewAnimationProps
         {
             get { return Fields.Get<string>(this, "uepa"); }
-            protected set { Fields.Put("uepa", value); }
+            set { Fields.Put("uepa", value); }
         }
 
         /// <summary>Elevation - Sample Points (uept), 0 to 4.</summary>
@@ -1057,7 +1057,7 @@ namespace Moonwell.Objects
         public int ElevationSamplePoints
         {
             get { return Fields.Get<int>(this, "uept"); }
-            protected set { Fields.Put("uept", value); }
+            set { Fields.Put("uept", value); }
         }
 
         /// <summary>Elevation - Sample Radius (uerd), 0 to 2048.</summary>
@@ -1067,7 +1067,7 @@ namespace Moonwell.Objects
         public float ElevationSampleRadius
         {
             get { return Fields.Get<float>(this, "uerd"); }
-            protected set { Fields.Put("uerd", value); }
+            set { Fields.Put("uerd", value); }
         }
 
         /// <summary>Equipment Preview Ignores VFX (uevi).</summary>
@@ -1075,7 +1075,7 @@ namespace Moonwell.Objects
         public bool EquipmentPreviewIgnoresVFX
         {
             get { return Fields.Get<bool>(this, "uevi"); }
-            protected set { Fields.Put("uevi", value); }
+            set { Fields.Put("uevi", value); }
         }
 
         /// <summary>Force Building Hit Points Display (ufhp).</summary>
@@ -1083,7 +1083,7 @@ namespace Moonwell.Objects
         public bool ForceBuildingHitPointsDisplay
         {
             get { return Fields.Get<bool>(this, "ufhp"); }
-            protected set { Fields.Put("ufhp", value); }
+            set { Fields.Put("ufhp", value); }
         }
 
         /// <summary>Can Flee (ufle).</summary>
@@ -1091,7 +1091,7 @@ namespace Moonwell.Objects
         public bool CanFlee
         {
             get { return Fields.Get<bool>(this, "ufle"); }
-            protected set { Fields.Put("ufle", value); }
+            set { Fields.Put("ufle", value); }
         }
 
         /// <summary>Food Produced (ufma), 0 to 300.</summary>
@@ -1100,7 +1100,7 @@ namespace Moonwell.Objects
         public int FoodProduced
         {
             get { return Fields.Get<int>(this, "ufma"); }
-            protected set { Fields.Put("ufma", value); }
+            set { Fields.Put("ufma", value); }
         }
 
         /// <summary>Food Cost (ufoo), 0 to 300.</summary>
@@ -1109,7 +1109,7 @@ namespace Moonwell.Objects
         public int Food
         {
             get { return Fields.Get<int>(this, "ufoo"); }
-            protected set { Fields.Put("ufoo", value); }
+            set { Fields.Put("ufoo", value); }
         }
 
         /// <summary>Formation Rank (ufor), 0 to 9.</summary>
@@ -1118,7 +1118,7 @@ namespace Moonwell.Objects
         public int FormationRank
         {
             get { return Fields.Get<int>(this, "ufor"); }
-            protected set { Fields.Put("ufor", value); }
+            set { Fields.Put("ufor", value); }
         }
 
         /// <summary>Fog of War - Sample Radius (ufrd), 0 to 2048.</summary>
@@ -1128,7 +1128,7 @@ namespace Moonwell.Objects
         public float FogOfWarSampleRadius
         {
             get { return Fields.Get<float>(this, "ufrd"); }
-            protected set { Fields.Put("ufrd", value); }
+            set { Fields.Put("ufrd", value); }
         }
 
         /// <summary>Gold Cost (ugol), 0 to 100000.</summary>
@@ -1137,7 +1137,7 @@ namespace Moonwell.Objects
         public int GoldCost
         {
             get { return Fields.Get<int>(this, "ugol"); }
-            protected set { Fields.Put("ugol", value); }
+            set { Fields.Put("ugol", value); }
         }
 
         /// <summary>Repair Gold Cost (ugor), 0 to 100000.</summary>
@@ -1146,7 +1146,7 @@ namespace Moonwell.Objects
         public int RepairGoldCost
         {
             get { return Fields.Get<int>(this, "ugor"); }
-            protected set { Fields.Put("ugor", value); }
+            set { Fields.Put("ugor", value); }
         }
 
         /// <summary>Hero (uhab), at most 5 entries.</summary>
@@ -1162,7 +1162,7 @@ namespace Moonwell.Objects
         public string HeroSkin
         {
             get { return Fields.Get<string>(this, "uhas"); }
-            protected set { Fields.Put("uhas", value); }
+            set { Fields.Put("uhas", value); }
         }
 
         /// <summary>Attack 1 - Damage Factor - Medium (uhd1), 0 to 10.</summary>
@@ -1171,7 +1171,7 @@ namespace Moonwell.Objects
         public float Attack1DamageFactorMedium
         {
             get { return Fields.Get<float>(this, "uhd1"); }
-            protected set { Fields.Put("uhd1", value); }
+            set { Fields.Put("uhd1", value); }
         }
 
         /// <summary>Attack 2 - Damage Factor - Medium (uhd2), 0 to 10.</summary>
@@ -1180,7 +1180,7 @@ namespace Moonwell.Objects
         public float Attack2DamageFactorMedium
         {
             get { return Fields.Get<float>(this, "uhd2"); }
-            protected set { Fields.Put("uhd2", value); }
+            set { Fields.Put("uhd2", value); }
         }
 
         /// <summary>Hero - Hide Hero Interface Icon (uhhb).</summary>
@@ -1188,7 +1188,7 @@ namespace Moonwell.Objects
         public bool HeroHideHeroInterfaceIcon
         {
             get { return Fields.Get<bool>(this, "uhhb"); }
-            protected set { Fields.Put("uhhb", value); }
+            set { Fields.Put("uhhb", value); }
         }
 
         /// <summary>Hero - Hide Hero Death Message (uhhd).</summary>
@@ -1196,7 +1196,7 @@ namespace Moonwell.Objects
         public bool HeroHideHeroDeathMessage
         {
             get { return Fields.Get<bool>(this, "uhhd"); }
-            protected set { Fields.Put("uhhd", value); }
+            set { Fields.Put("uhhd", value); }
         }
 
         /// <summary>Hero - Hide Hero Minimap Display (uhhm).</summary>
@@ -1204,7 +1204,7 @@ namespace Moonwell.Objects
         public bool HeroHideHeroMinimapDisplay
         {
             get { return Fields.Get<bool>(this, "uhhm"); }
-            protected set { Fields.Put("uhhm", value); }
+            set { Fields.Put("uhhm", value); }
         }
 
         /// <summary>Hide Minimap Display (uhom).</summary>
@@ -1212,7 +1212,7 @@ namespace Moonwell.Objects
         public bool HideMinimapDisplay
         {
             get { return Fields.Get<bool>(this, "uhom"); }
-            protected set { Fields.Put("uhom", value); }
+            set { Fields.Put("uhom", value); }
         }
 
         /// <summary>Display as Neutral Hostile (uhos).</summary>
@@ -1220,7 +1220,7 @@ namespace Moonwell.Objects
         public bool DisplayAsNeutralHostile
         {
             get { return Fields.Get<bool>(this, "uhos"); }
-            protected set { Fields.Put("uhos", value); }
+            set { Fields.Put("uhos", value); }
         }
 
         /// <summary>Hotkey (uhot).</summary>
@@ -1228,7 +1228,7 @@ namespace Moonwell.Objects
         public string Hotkey
         {
             get { return Fields.Get<string>(this, "uhot"); }
-            protected set { Fields.Put("uhot", value); }
+            set { Fields.Put("uhot", value); }
         }
 
         /// <summary>Hit Points Regeneration Rate (uhpr), 0 to 1000.</summary>
@@ -1237,7 +1237,7 @@ namespace Moonwell.Objects
         public float HitPointRegen
         {
             get { return Fields.Get<float>(this, "uhpr"); }
-            protected set { Fields.Put("uhpr", value); }
+            set { Fields.Put("uhpr", value); }
         }
 
         /// <summary>Hit Points Regeneration Type (uhrt).</summary>
@@ -1245,7 +1245,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.RegenType HitPointsRegenerationType
         {
             get { return Fields.Get<global::Moonwell.Objects.RegenType>(this, "uhrt"); }
-            protected set { Fields.Put("uhrt", value); }
+            set { Fields.Put("uhrt", value); }
         }
 
         /// <summary>Can Be Built On (uibo).</summary>
@@ -1253,7 +1253,7 @@ namespace Moonwell.Objects
         public bool CanBeBuiltOn
         {
             get { return Fields.Get<bool>(this, "uibo"); }
-            protected set { Fields.Put("uibo", value); }
+            set { Fields.Put("uibo", value); }
         }
 
         /// <summary>Icon - Game Interface (uico).</summary>
@@ -1261,7 +1261,7 @@ namespace Moonwell.Objects
         public string Icon
         {
             get { return Fields.Get<string>(this, "uico"); }
-            protected set { Fields.Put("uico", value); }
+            set { Fields.Put("uico", value); }
         }
 
         /// <summary>Projectile Impact - Z (uimz), -1000 to 1000.</summary>
@@ -1270,7 +1270,7 @@ namespace Moonwell.Objects
         public float ProjectileImpactZ
         {
             get { return Fields.Get<float>(this, "uimz"); }
-            protected set { Fields.Put("uimz", value); }
+            set { Fields.Put("uimz", value); }
         }
 
         /// <summary>Placeable In Editor (uine).</summary>
@@ -1278,7 +1278,7 @@ namespace Moonwell.Objects
         public bool PlaceableInEditor
         {
             get { return Fields.Get<bool>(this, "uine"); }
-            protected set { Fields.Put("uine", value); }
+            set { Fields.Put("uine", value); }
         }
 
         /// <summary>Intelligence per Level (uinp), 0 to 20.</summary>
@@ -1287,7 +1287,7 @@ namespace Moonwell.Objects
         public float IntelligencePerLevel
         {
             get { return Fields.Get<float>(this, "uinp"); }
-            protected set { Fields.Put("uinp", value); }
+            set { Fields.Put("uinp", value); }
         }
 
         /// <summary>Projectile Impact - Z (Swimming) (uisz), -1000 to 1000.</summary>
@@ -1296,7 +1296,7 @@ namespace Moonwell.Objects
         public float ProjectileImpactZSwimming
         {
             get { return Fields.Get<float>(this, "uisz"); }
-            protected set { Fields.Put("uisz", value); }
+            set { Fields.Put("uisz", value); }
         }
 
         /// <summary>Lumber Bounty Awarded - Base (ulba), 0 to 10000.</summary>
@@ -1305,7 +1305,7 @@ namespace Moonwell.Objects
         public int LumberBountyAwardedBase
         {
             get { return Fields.Get<int>(this, "ulba"); }
-            protected set { Fields.Put("ulba", value); }
+            set { Fields.Put("ulba", value); }
         }
 
         /// <summary>Lumber Bounty Awarded - Number of Dice (ulbd), 0 to 100.</summary>
@@ -1314,7 +1314,7 @@ namespace Moonwell.Objects
         public int LumberBountyAwardedNumberOfDice
         {
             get { return Fields.Get<int>(this, "ulbd"); }
-            protected set { Fields.Put("ulbd", value); }
+            set { Fields.Put("ulbd", value); }
         }
 
         /// <summary>Lumber Bounty Awarded - Sides per Die (ulbs), 0 to 100.</summary>
@@ -1323,7 +1323,7 @@ namespace Moonwell.Objects
         public int LumberBountyAwardedSidesPerDie
         {
             get { return Fields.Get<int>(this, "ulbs"); }
-            protected set { Fields.Put("ulbs", value); }
+            set { Fields.Put("ulbs", value); }
         }
 
         /// <summary>Looping Fade In Rate (ulfi), 0 to 12700.</summary>
@@ -1332,7 +1332,7 @@ namespace Moonwell.Objects
         public int LoopingFadeInRate
         {
             get { return Fields.Get<int>(this, "ulfi"); }
-            protected set { Fields.Put("ulfi", value); }
+            set { Fields.Put("ulfi", value); }
         }
 
         /// <summary>Looping Fade Out Rate (ulfo), 0 to 12700.</summary>
@@ -1341,7 +1341,7 @@ namespace Moonwell.Objects
         public int LoopingFadeOutRate
         {
             get { return Fields.Get<int>(this, "ulfo"); }
-            protected set { Fields.Put("ulfo", value); }
+            set { Fields.Put("ulfo", value); }
         }
 
         /// <summary>Use Extended Line of Sight (ulos).</summary>
@@ -1349,7 +1349,7 @@ namespace Moonwell.Objects
         public bool UseExtendedLineOfSight
         {
             get { return Fields.Get<bool>(this, "ulos"); }
-            protected set { Fields.Put("ulos", value); }
+            set { Fields.Put("ulos", value); }
         }
 
         /// <summary>Projectile Launch - X (ulpx), -1000 to 1000.</summary>
@@ -1358,7 +1358,7 @@ namespace Moonwell.Objects
         public float ProjectileLaunchX
         {
             get { return Fields.Get<float>(this, "ulpx"); }
-            protected set { Fields.Put("ulpx", value); }
+            set { Fields.Put("ulpx", value); }
         }
 
         /// <summary>Projectile Launch - Y (ulpy), -1000 to 1000.</summary>
@@ -1367,7 +1367,7 @@ namespace Moonwell.Objects
         public float ProjectileLaunchY
         {
             get { return Fields.Get<float>(this, "ulpy"); }
-            protected set { Fields.Put("ulpy", value); }
+            set { Fields.Put("ulpy", value); }
         }
 
         /// <summary>Projectile Launch - Z (ulpz), -1000 to 1000.</summary>
@@ -1376,7 +1376,7 @@ namespace Moonwell.Objects
         public float ProjectileLaunchZ
         {
             get { return Fields.Get<float>(this, "ulpz"); }
-            protected set { Fields.Put("ulpz", value); }
+            set { Fields.Put("ulpz", value); }
         }
 
         /// <summary>Projectile Launch - Z (Swimming) (ulsz), -1000 to 1000.</summary>
@@ -1385,7 +1385,7 @@ namespace Moonwell.Objects
         public float ProjectileLaunchZSwimming
         {
             get { return Fields.Get<float>(this, "ulsz"); }
-            protected set { Fields.Put("ulsz", value); }
+            set { Fields.Put("ulsz", value); }
         }
 
         /// <summary>Lumber Cost (ulum), 0 to 100000.</summary>
@@ -1394,7 +1394,7 @@ namespace Moonwell.Objects
         public int LumberCost
         {
             get { return Fields.Get<int>(this, "ulum"); }
-            protected set { Fields.Put("ulum", value); }
+            set { Fields.Put("ulum", value); }
         }
 
         /// <summary>Repair Lumber Cost (ulur), 0 to 100000.</summary>
@@ -1403,7 +1403,7 @@ namespace Moonwell.Objects
         public int RepairLumberCost
         {
             get { return Fields.Get<int>(this, "ulur"); }
-            protected set { Fields.Put("ulur", value); }
+            set { Fields.Put("ulur", value); }
         }
 
         /// <summary>Attack 1 - Projectile Arc (uma1), 0 to 1.</summary>
@@ -1412,7 +1412,7 @@ namespace Moonwell.Objects
         public float Attack1ProjectileArc
         {
             get { return Fields.Get<float>(this, "uma1"); }
-            protected set { Fields.Put("uma1", value); }
+            set { Fields.Put("uma1", value); }
         }
 
         /// <summary>Attack 2 - Projectile Arc (uma2), 0 to 1.</summary>
@@ -1421,7 +1421,7 @@ namespace Moonwell.Objects
         public float Attack2ProjectileArc
         {
             get { return Fields.Get<float>(this, "uma2"); }
-            protected set { Fields.Put("uma2", value); }
+            set { Fields.Put("uma2", value); }
         }
 
         /// <summary>Speed Maximum (umas), 0 to 522.</summary>
@@ -1430,7 +1430,7 @@ namespace Moonwell.Objects
         public int SpeedMaximum
         {
             get { return Fields.Get<int>(this, "umas"); }
-            protected set { Fields.Put("umas", value); }
+            set { Fields.Put("umas", value); }
         }
 
         /// <summary>Upgrade Model 1 (umd1).</summary>
@@ -1438,7 +1438,7 @@ namespace Moonwell.Objects
         public string UpgradeModel1
         {
             get { return Fields.Get<string>(this, "umd1"); }
-            protected set { Fields.Put("umd1", value); }
+            set { Fields.Put("umd1", value); }
         }
 
         /// <summary>Upgrade Model 2 (umd2).</summary>
@@ -1446,7 +1446,7 @@ namespace Moonwell.Objects
         public string UpgradeModel2
         {
             get { return Fields.Get<string>(this, "umd2"); }
-            protected set { Fields.Put("umd2", value); }
+            set { Fields.Put("umd2", value); }
         }
 
         /// <summary>Model File (umdl).</summary>
@@ -1454,7 +1454,7 @@ namespace Moonwell.Objects
         public string Model
         {
             get { return Fields.Get<string>(this, "umdl"); }
-            protected set { Fields.Put("umdl", value); }
+            set { Fields.Put("umdl", value); }
         }
 
         /// <summary>Attack 1 - Projectile Homing Enabled (umh1).</summary>
@@ -1462,7 +1462,7 @@ namespace Moonwell.Objects
         public bool Attack1ProjectileHomingEnabled
         {
             get { return Fields.Get<bool>(this, "umh1"); }
-            protected set { Fields.Put("umh1", value); }
+            set { Fields.Put("umh1", value); }
         }
 
         /// <summary>Attack 2 - Projectile Homing Enabled (umh2).</summary>
@@ -1470,7 +1470,7 @@ namespace Moonwell.Objects
         public bool Attack2ProjectileHomingEnabled
         {
             get { return Fields.Get<bool>(this, "umh2"); }
-            protected set { Fields.Put("umh2", value); }
+            set { Fields.Put("umh2", value); }
         }
 
         /// <summary>Speed Minimum (umis), 0 to 522.</summary>
@@ -1479,7 +1479,7 @@ namespace Moonwell.Objects
         public int SpeedMinimum
         {
             get { return Fields.Get<int>(this, "umis"); }
-            protected set { Fields.Put("umis", value); }
+            set { Fields.Put("umis", value); }
         }
 
         /// <summary>Items Made (umki), at most 12 entries.</summary>
@@ -1496,7 +1496,7 @@ namespace Moonwell.Objects
         public float ManaRegen
         {
             get { return Fields.Get<float>(this, "umpr"); }
-            protected set { Fields.Put("umpr", value); }
+            set { Fields.Put("umpr", value); }
         }
 
         /// <summary>Movement (umsl).</summary>
@@ -1504,7 +1504,7 @@ namespace Moonwell.Objects
         public string Movement
         {
             get { return Fields.Get<string>(this, "umsl"); }
-            protected set { Fields.Put("umsl", value); }
+            set { Fields.Put("umsl", value); }
         }
 
         /// <summary>Height Minimum (umvf), -1000 to 1000.</summary>
@@ -1513,7 +1513,7 @@ namespace Moonwell.Objects
         public float HeightMinimum
         {
             get { return Fields.Get<float>(this, "umvf"); }
-            protected set { Fields.Put("umvf", value); }
+            set { Fields.Put("umvf", value); }
         }
 
         /// <summary>Turn Rate (umvr), 0.1 to 3.</summary>
@@ -1523,7 +1523,7 @@ namespace Moonwell.Objects
         public float TurnRate
         {
             get { return Fields.Get<float>(this, "umvr"); }
-            protected set { Fields.Put("umvr", value); }
+            set { Fields.Put("umvr", value); }
         }
 
         /// <summary>Speed Base (umvs), 0 to 522.</summary>
@@ -1532,7 +1532,7 @@ namespace Moonwell.Objects
         public int Speed
         {
             get { return Fields.Get<int>(this, "umvs"); }
-            protected set { Fields.Put("umvs", value); }
+            set { Fields.Put("umvs", value); }
         }
 
         /// <summary>Type (umvt).</summary>
@@ -1540,7 +1540,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.MoveType Type
         {
             get { return Fields.Get<global::Moonwell.Objects.MoveType>(this, "umvt"); }
-            protected set { Fields.Put("umvt", value); }
+            set { Fields.Put("umvt", value); }
         }
 
         /// <summary>Maximum Pitch Angle (degrees) (umxp), 0 to 180.</summary>
@@ -1550,7 +1550,7 @@ namespace Moonwell.Objects
         public float MaximumPitchAngleDegrees
         {
             get { return Fields.Get<float>(this, "umxp"); }
-            protected set { Fields.Put("umxp", value); }
+            set { Fields.Put("umxp", value); }
         }
 
         /// <summary>Maximum Roll Angle (degrees) (umxr), 0 to 180.</summary>
@@ -1560,7 +1560,7 @@ namespace Moonwell.Objects
         public float MaximumRollAngleDegrees
         {
             get { return Fields.Get<float>(this, "umxr"); }
-            protected set { Fields.Put("umxr", value); }
+            set { Fields.Put("umxr", value); }
         }
 
         /// <summary>Neutral Building - Shows Minimap Icon (unbm).</summary>
@@ -1568,7 +1568,7 @@ namespace Moonwell.Objects
         public bool NeutralBuildingShowsMinimapIcon
         {
             get { return Fields.Get<bool>(this, "unbm"); }
-            protected set { Fields.Put("unbm", value); }
+            set { Fields.Put("unbm", value); }
         }
 
         /// <summary>Neutral Building - Valid As Random Building (unbr).</summary>
@@ -1576,7 +1576,7 @@ namespace Moonwell.Objects
         public bool NeutralBuildingValidAsRandomBuilding
         {
             get { return Fields.Get<bool>(this, "unbr"); }
-            protected set { Fields.Put("unbr", value); }
+            set { Fields.Put("unbr", value); }
         }
 
         /// <summary>Name - Editor Suffix (unsf), at most 50 characters.</summary>
@@ -1585,7 +1585,7 @@ namespace Moonwell.Objects
         public string NameEditorSuffix
         {
             get { return Fields.Get<string>(this, "unsf"); }
-            protected set { Fields.Put("unsf", value); }
+            set { Fields.Put("unsf", value); }
         }
 
         /// <summary>Occluder Height (uocc), 0 to 2048.</summary>
@@ -1594,7 +1594,7 @@ namespace Moonwell.Objects
         public float OccluderHeight
         {
             get { return Fields.Get<float>(this, "uocc"); }
-            protected set { Fields.Put("uocc", value); }
+            set { Fields.Put("uocc", value); }
         }
 
         /// <summary>Occlusion Type (HD) (uoct).</summary>
@@ -1602,7 +1602,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.OcclusionType OcclusionTypeHD
         {
             get { return Fields.Get<global::Moonwell.Objects.OcclusionType>(this, "uoct"); }
-            protected set { Fields.Put("uoct", value); }
+            set { Fields.Put("uoct", value); }
         }
 
         /// <summary>Orientation Interpolation (uori), 0 to 8.</summary>
@@ -1611,7 +1611,7 @@ namespace Moonwell.Objects
         public int OrientationInterpolation
         {
             get { return Fields.Get<int>(this, "uori"); }
-            protected set { Fields.Put("uori", value); }
+            set { Fields.Put("uori", value); }
         }
 
         /// <summary>Placement Requires (upap).</summary>
@@ -1619,7 +1619,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.PathingRequire PlacementRequires
         {
             get { return Fields.Get<global::Moonwell.Objects.PathingRequire>(this, "upap"); }
-            protected set { Fields.Put("upap", value); }
+            set { Fields.Put("upap", value); }
         }
 
         /// <summary>Placement Prevented By (upar).</summary>
@@ -1627,7 +1627,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.PathingPrevent PlacementPreventedBy
         {
             get { return Fields.Get<global::Moonwell.Objects.PathingPrevent>(this, "upar"); }
-            protected set { Fields.Put("upar", value); }
+            set { Fields.Put("upar", value); }
         }
 
         /// <summary>Pathing Map (upat).</summary>
@@ -1635,7 +1635,7 @@ namespace Moonwell.Objects
         public string PathingMap
         {
             get { return Fields.Get<string>(this, "upat"); }
-            protected set { Fields.Put("upat", value); }
+            set { Fields.Put("upat", value); }
         }
 
         /// <summary>Placement Requires Water Radius (upaw), 0 to 2048.</summary>
@@ -1645,7 +1645,7 @@ namespace Moonwell.Objects
         public float PlacementRequiresWaterRadius
         {
             get { return Fields.Get<float>(this, "upaw"); }
-            protected set { Fields.Put("upaw", value); }
+            set { Fields.Put("upaw", value); }
         }
 
         /// <summary>Upgrades Used (upgr).</summary>
@@ -1661,7 +1661,7 @@ namespace Moonwell.Objects
         public int PointValue
         {
             get { return Fields.Get<int>(this, "upoi"); }
-            protected set { Fields.Put("upoi", value); }
+            set { Fields.Put("upoi", value); }
         }
 
         /// <summary>Portrait Model File (upor).</summary>
@@ -1669,7 +1669,7 @@ namespace Moonwell.Objects
         public string PortraitModelFile
         {
             get { return Fields.Get<string>(this, "upor"); }
-            protected set { Fields.Put("upor", value); }
+            set { Fields.Put("upor", value); }
         }
 
         /// <summary>Primary Attribute (upra).</summary>
@@ -1677,7 +1677,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.AttributeType PrimaryAttribute
         {
             get { return Fields.Get<global::Moonwell.Objects.AttributeType>(this, "upra"); }
-            protected set { Fields.Put("upra", value); }
+            set { Fields.Put("upra", value); }
         }
 
         /// <summary>Priority (upri), 0 to 20.</summary>
@@ -1686,7 +1686,7 @@ namespace Moonwell.Objects
         public int Priority
         {
             get { return Fields.Get<int>(this, "upri"); }
-            protected set { Fields.Put("upri", value); }
+            set { Fields.Put("upri", value); }
         }
 
         /// <summary>Proper Names (upro), at most 32 entries.</summary>
@@ -1695,7 +1695,7 @@ namespace Moonwell.Objects
         public string ProperNames
         {
             get { return Fields.Get<string>(this, "upro"); }
-            protected set { Fields.Put("upro", value); }
+            set { Fields.Put("upro", value); }
         }
 
         /// <summary>Proper Names Used (upru), 0 to 1000.</summary>
@@ -1704,7 +1704,7 @@ namespace Moonwell.Objects
         public int ProperNamesUsed
         {
             get { return Fields.Get<int>(this, "upru"); }
-            protected set { Fields.Put("upru", value); }
+            set { Fields.Put("upru", value); }
         }
 
         /// <summary>Propulsion Window (degrees) (uprw), 1 to 180.</summary>
@@ -1714,7 +1714,7 @@ namespace Moonwell.Objects
         public float PropulsionWindowDegrees
         {
             get { return Fields.Get<float>(this, "uprw"); }
-            protected set { Fields.Put("uprw", value); }
+            set { Fields.Put("uprw", value); }
         }
 
         /// <summary>Attack 1 - Damage Factor - Small (uqd1), 0 to 10.</summary>
@@ -1723,7 +1723,7 @@ namespace Moonwell.Objects
         public float Attack1DamageFactorSmall
         {
             get { return Fields.Get<float>(this, "uqd1"); }
-            protected set { Fields.Put("uqd1", value); }
+            set { Fields.Put("uqd1", value); }
         }
 
         /// <summary>Attack 2 - Damage Factor - Small (uqd2), 0 to 10.</summary>
@@ -1732,7 +1732,7 @@ namespace Moonwell.Objects
         public float Attack2DamageFactorSmall
         {
             get { return Fields.Get<float>(this, "uqd2"); }
-            protected set { Fields.Put("uqd2", value); }
+            set { Fields.Put("uqd2", value); }
         }
 
         /// <summary>Race (urac).</summary>
@@ -1740,7 +1740,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.UnitRace Race
         {
             get { return Fields.Get<global::Moonwell.Objects.UnitRace>(this, "urac"); }
-            protected set { Fields.Put("urac", value); }
+            set { Fields.Put("urac", value); }
         }
 
         /// <summary>Attack 1 - Range Motion Buffer (urb1), 0 to 2000.</summary>
@@ -1749,7 +1749,7 @@ namespace Moonwell.Objects
         public float Attack1RangeMotionBuffer
         {
             get { return Fields.Get<float>(this, "urb1"); }
-            protected set { Fields.Put("urb1", value); }
+            set { Fields.Put("urb1", value); }
         }
 
         /// <summary>Attack 2 - Range Motion Buffer (urb2), 0 to 2000.</summary>
@@ -1758,7 +1758,7 @@ namespace Moonwell.Objects
         public float Attack2RangeMotionBuffer
         {
             get { return Fields.Get<float>(this, "urb2"); }
-            protected set { Fields.Put("urb2", value); }
+            set { Fields.Put("urb2", value); }
         }
 
         /// <summary>Requirements (ureq).</summary>
@@ -1780,7 +1780,7 @@ namespace Moonwell.Objects
         public bool RevivesDeadHeroes
         {
             get { return Fields.Get<bool>(this, "urev"); }
-            protected set { Fields.Put("urev", value); }
+            set { Fields.Put("urev", value); }
         }
 
         /// <summary>Group Separation - Group Number (urpg), 0 to 1024.</summary>
@@ -1789,7 +1789,7 @@ namespace Moonwell.Objects
         public int GroupSeparationGroupNumber
         {
             get { return Fields.Get<int>(this, "urpg"); }
-            protected set { Fields.Put("urpg", value); }
+            set { Fields.Put("urpg", value); }
         }
 
         /// <summary>Group Separation - Enabled (urpo).</summary>
@@ -1797,7 +1797,7 @@ namespace Moonwell.Objects
         public bool GroupSeparationEnabled
         {
             get { return Fields.Get<bool>(this, "urpo"); }
-            protected set { Fields.Put("urpo", value); }
+            set { Fields.Put("urpo", value); }
         }
 
         /// <summary>Group Separation - Parameter (urpp), 0 to 4.</summary>
@@ -1806,7 +1806,7 @@ namespace Moonwell.Objects
         public int GroupSeparationParameter
         {
             get { return Fields.Get<int>(this, "urpp"); }
-            protected set { Fields.Put("urpp", value); }
+            set { Fields.Put("urpp", value); }
         }
 
         /// <summary>Group Separation - Priority (urpr), 0 to 10000.</summary>
@@ -1815,7 +1815,7 @@ namespace Moonwell.Objects
         public int GroupSeparationPriority
         {
             get { return Fields.Get<int>(this, "urpr"); }
-            protected set { Fields.Put("urpr", value); }
+            set { Fields.Put("urpr", value); }
         }
 
         /// <summary>Requirements - Tier 2 (urq1).</summary>
@@ -1880,7 +1880,7 @@ namespace Moonwell.Objects
         public string RequirementsLevels
         {
             get { return Fields.Get<string>(this, "urqa"); }
-            protected set { Fields.Put("urqa", value); }
+            set { Fields.Put("urqa", value); }
         }
 
         /// <summary>Requirements - Tiers Used (urqc), at most 9.</summary>
@@ -1889,7 +1889,7 @@ namespace Moonwell.Objects
         public int RequirementsTiersUsed
         {
             get { return Fields.Get<int>(this, "urqc"); }
-            protected set { Fields.Put("urqc", value); }
+            set { Fields.Put("urqc", value); }
         }
 
         /// <summary>Random (ursl).</summary>
@@ -1897,7 +1897,7 @@ namespace Moonwell.Objects
         public string Random
         {
             get { return Fields.Get<string>(this, "ursl"); }
-            protected set { Fields.Put("ursl", value); }
+            set { Fields.Put("ursl", value); }
         }
 
         /// <summary>Repair Time (urtm), 1 to 10000.</summary>
@@ -1906,7 +1906,7 @@ namespace Moonwell.Objects
         public int RepairTime
         {
             get { return Fields.Get<int>(this, "urtm"); }
-            protected set { Fields.Put("urtm", value); }
+            set { Fields.Put("urtm", value); }
         }
 
         /// <summary>Animation - Run Speed (urun), 0 to 2000.</summary>
@@ -1916,7 +1916,7 @@ namespace Moonwell.Objects
         public float AnimationRunSpeed
         {
             get { return Fields.Get<float>(this, "urun"); }
-            protected set { Fields.Put("urun", value); }
+            set { Fields.Put("urun", value); }
         }
 
         /// <summary>Hero Revival Locations (urva).</summary>
@@ -1931,7 +1931,7 @@ namespace Moonwell.Objects
         public bool ScaleProjectiles
         {
             get { return Fields.Get<bool>(this, "uscb"); }
-            protected set { Fields.Put("uscb", value); }
+            set { Fields.Put("uscb", value); }
         }
 
         /// <summary>Attack 1 - Damage Spill Distance (usd1), 0 to 10000.</summary>
@@ -1941,7 +1941,7 @@ namespace Moonwell.Objects
         public float Attack1DamageSpillDistance
         {
             get { return Fields.Get<float>(this, "usd1"); }
-            protected set { Fields.Put("usd1", value); }
+            set { Fields.Put("usd1", value); }
         }
 
         /// <summary>Attack 2 - Damage Spill Distance (usd2), 0 to 10000.</summary>
@@ -1951,7 +1951,7 @@ namespace Moonwell.Objects
         public float Attack2DamageSpillDistance
         {
             get { return Fields.Get<float>(this, "usd2"); }
-            protected set { Fields.Put("usd2", value); }
+            set { Fields.Put("usd2", value); }
         }
 
         /// <summary>Items Sold (usei), at most 12 entries.</summary>
@@ -1975,7 +1975,7 @@ namespace Moonwell.Objects
         public bool SelectionCircleOnWater
         {
             get { return Fields.Get<bool>(this, "usew"); }
-            protected set { Fields.Put("usew", value); }
+            set { Fields.Put("usew", value); }
         }
 
         /// <summary>Shadow Texture (Building) (ushb).</summary>
@@ -1983,7 +1983,7 @@ namespace Moonwell.Objects
         public string ShadowTextureBuilding
         {
             get { return Fields.Get<string>(this, "ushb"); }
-            protected set { Fields.Put("ushb", value); }
+            set { Fields.Put("ushb", value); }
         }
 
         /// <summary>Shadow Image - Height (ushh), 0 to 2048.</summary>
@@ -1993,7 +1993,7 @@ namespace Moonwell.Objects
         public float ShadowImageHeight
         {
             get { return Fields.Get<float>(this, "ushh"); }
-            protected set { Fields.Put("ushh", value); }
+            set { Fields.Put("ushh", value); }
         }
 
         /// <summary>Has Water Shadow (ushr).</summary>
@@ -2001,7 +2001,7 @@ namespace Moonwell.Objects
         public bool HasWaterShadow
         {
             get { return Fields.Get<bool>(this, "ushr"); }
-            protected set { Fields.Put("ushr", value); }
+            set { Fields.Put("ushr", value); }
         }
 
         /// <summary>Shadow Image (Unit) (ushu).</summary>
@@ -2009,7 +2009,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.ShadowImage ShadowImageUnit
         {
             get { return Fields.Get<global::Moonwell.Objects.ShadowImage>(this, "ushu"); }
-            protected set { Fields.Put("ushu", value); }
+            set { Fields.Put("ushu", value); }
         }
 
         /// <summary>Shadow Image - Width (ushw), 0 to 2048.</summary>
@@ -2019,7 +2019,7 @@ namespace Moonwell.Objects
         public float ShadowImageWidth
         {
             get { return Fields.Get<float>(this, "ushw"); }
-            protected set { Fields.Put("ushw", value); }
+            set { Fields.Put("ushw", value); }
         }
 
         /// <summary>Shadow Image - Center X (ushx), 0 to 2048.</summary>
@@ -2029,7 +2029,7 @@ namespace Moonwell.Objects
         public float ShadowImageCenterX
         {
             get { return Fields.Get<float>(this, "ushx"); }
-            protected set { Fields.Put("ushx", value); }
+            set { Fields.Put("ushx", value); }
         }
 
         /// <summary>Shadow Image - Center Y (ushy), 0 to 2048.</summary>
@@ -2039,7 +2039,7 @@ namespace Moonwell.Objects
         public float ShadowImageCenterY
         {
             get { return Fields.Get<float>(this, "ushy"); }
-            protected set { Fields.Put("ushy", value); }
+            set { Fields.Put("ushy", value); }
         }
 
         /// <summary>Sight Radius (Day) (usid), 0 to 1800.</summary>
@@ -2048,7 +2048,7 @@ namespace Moonwell.Objects
         public int SightRange
         {
             get { return Fields.Get<int>(this, "usid"); }
-            protected set { Fields.Put("usid", value); }
+            set { Fields.Put("usid", value); }
         }
 
         /// <summary>Sight Radius (Night) (usin), 0 to 1800.</summary>
@@ -2057,7 +2057,7 @@ namespace Moonwell.Objects
         public int SightRadiusNight
         {
             get { return Fields.Get<int>(this, "usin"); }
-            protected set { Fields.Put("usin", value); }
+            set { Fields.Put("usin", value); }
         }
 
         /// <summary>Stock Initial After Start Delay (usit), 1 to 32.</summary>
@@ -2066,7 +2066,7 @@ namespace Moonwell.Objects
         public int StockInitialAfterStartDelay
         {
             get { return Fields.Get<int>(this, "usit"); }
-            protected set { Fields.Put("usit", value); }
+            set { Fields.Put("usit", value); }
         }
 
         /// <summary>Sleeps (usle).</summary>
@@ -2074,7 +2074,7 @@ namespace Moonwell.Objects
         public bool Sleeps
         {
             get { return Fields.Get<bool>(this, "usle"); }
-            protected set { Fields.Put("usle", value); }
+            set { Fields.Put("usle", value); }
         }
 
         /// <summary>Selection Circle - Height (uslz), 0 to 2048.</summary>
@@ -2083,7 +2083,7 @@ namespace Moonwell.Objects
         public float SelectionCircleHeight
         {
             get { return Fields.Get<float>(this, "uslz"); }
-            protected set { Fields.Put("uslz", value); }
+            set { Fields.Put("uslz", value); }
         }
 
         /// <summary>Stock Maximum (usma), 0 to 32.</summary>
@@ -2092,7 +2092,7 @@ namespace Moonwell.Objects
         public int StockMaximum
         {
             get { return Fields.Get<int>(this, "usma"); }
-            protected set { Fields.Put("usma", value); }
+            set { Fields.Put("usma", value); }
         }
 
         /// <summary>Unit Sound Set (usnd).</summary>
@@ -2100,7 +2100,7 @@ namespace Moonwell.Objects
         public string UnitSoundSet
         {
             get { return Fields.Get<string>(this, "usnd"); }
-            protected set { Fields.Put("usnd", value); }
+            set { Fields.Put("usnd", value); }
         }
 
         /// <summary>Special (uspa).</summary>
@@ -2108,7 +2108,7 @@ namespace Moonwell.Objects
         public string Special
         {
             get { return Fields.Get<string>(this, "uspa"); }
-            protected set { Fields.Put("uspa", value); }
+            set { Fields.Put("uspa", value); }
         }
 
         /// <summary>Categorization - Special (uspe).</summary>
@@ -2116,7 +2116,7 @@ namespace Moonwell.Objects
         public bool CategorizationSpecial
         {
             get { return Fields.Get<bool>(this, "uspe"); }
-            protected set { Fields.Put("uspe", value); }
+            set { Fields.Put("uspe", value); }
         }
 
         /// <summary>Attack 1 - Damage Spill Radius (usr1), 0 to 10000.</summary>
@@ -2126,7 +2126,7 @@ namespace Moonwell.Objects
         public float Attack1DamageSpillRadius
         {
             get { return Fields.Get<float>(this, "usr1"); }
-            protected set { Fields.Put("usr1", value); }
+            set { Fields.Put("usr1", value); }
         }
 
         /// <summary>Attack 2 - Damage Spill Radius (usr2), 0 to 10000.</summary>
@@ -2136,7 +2136,7 @@ namespace Moonwell.Objects
         public float Attack2DamageSpillRadius
         {
             get { return Fields.Get<float>(this, "usr2"); }
-            protected set { Fields.Put("usr2", value); }
+            set { Fields.Put("usr2", value); }
         }
 
         /// <summary>Stock Replenish Interval (usrg), 0 to 3600.</summary>
@@ -2145,7 +2145,7 @@ namespace Moonwell.Objects
         public int StockReplenishInterval
         {
             get { return Fields.Get<int>(this, "usrg"); }
-            protected set { Fields.Put("usrg", value); }
+            set { Fields.Put("usrg", value); }
         }
 
         /// <summary>Selection Scale (ussc), 0.1 to 20.</summary>
@@ -2155,7 +2155,7 @@ namespace Moonwell.Objects
         public float SelectionScale
         {
             get { return Fields.Get<float>(this, "ussc"); }
-            protected set { Fields.Put("ussc", value); }
+            set { Fields.Put("ussc", value); }
         }
 
         /// <summary>Icon - Score Screen (ussi).</summary>
@@ -2163,7 +2163,7 @@ namespace Moonwell.Objects
         public string IconScoreScreen
         {
             get { return Fields.Get<string>(this, "ussi"); }
-            protected set { Fields.Put("ussi", value); }
+            set { Fields.Put("ussi", value); }
         }
 
         /// <summary>Stock Start Delay (usst), 0 to 3600.</summary>
@@ -2172,7 +2172,7 @@ namespace Moonwell.Objects
         public int StockStartDelay
         {
             get { return Fields.Get<int>(this, "usst"); }
-            protected set { Fields.Put("usst", value); }
+            set { Fields.Put("usst", value); }
         }
 
         /// <summary>Strength per Level (ustp), 0 to 20.</summary>
@@ -2181,7 +2181,7 @@ namespace Moonwell.Objects
         public float StrengthPerLevel
         {
             get { return Fields.Get<float>(this, "ustp"); }
-            protected set { Fields.Put("ustp", value); }
+            set { Fields.Put("ustp", value); }
         }
 
         /// <summary>Target (utaa).</summary>
@@ -2189,7 +2189,7 @@ namespace Moonwell.Objects
         public string Target
         {
             get { return Fields.Get<string>(this, "utaa"); }
-            protected set { Fields.Put("utaa", value); }
+            set { Fields.Put("utaa", value); }
         }
 
         /// <summary>Targeted as (utar).</summary>
@@ -2197,7 +2197,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Targets TargetedAs
         {
             get { return Fields.Get<global::Moonwell.Objects.Targets>(this, "utar"); }
-            protected set { Fields.Put("utar", value); }
+            set { Fields.Put("utar", value); }
         }
 
         /// <summary>Attack 1 - Maximum Number of Targets (utc1), 0 to 100.</summary>
@@ -2206,7 +2206,7 @@ namespace Moonwell.Objects
         public int Attack1MaximumNumberOfTargets
         {
             get { return Fields.Get<int>(this, "utc1"); }
-            protected set { Fields.Put("utc1", value); }
+            set { Fields.Put("utc1", value); }
         }
 
         /// <summary>Attack 2 - Maximum Number of Targets (utc2), 0 to 100.</summary>
@@ -2215,7 +2215,7 @@ namespace Moonwell.Objects
         public int Attack2MaximumNumberOfTargets
         {
             get { return Fields.Get<int>(this, "utc2"); }
-            protected set { Fields.Put("utc2", value); }
+            set { Fields.Put("utc2", value); }
         }
 
         /// <summary>Allow Custom Team Color (utcc).</summary>
@@ -2223,7 +2223,7 @@ namespace Moonwell.Objects
         public bool AllowCustomTeamColor
         {
             get { return Fields.Get<bool>(this, "utcc"); }
-            protected set { Fields.Put("utcc", value); }
+            set { Fields.Put("utcc", value); }
         }
 
         /// <summary>Team Color (utco).</summary>
@@ -2231,7 +2231,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.TeamColor TeamColor
         {
             get { return Fields.Get<global::Moonwell.Objects.TeamColor>(this, "utco"); }
-            protected set { Fields.Put("utco", value); }
+            set { Fields.Put("utco", value); }
         }
 
         /// <summary>Tilesets (util).</summary>
@@ -2239,7 +2239,7 @@ namespace Moonwell.Objects
         public string Tilesets
         {
             get { return Fields.Get<string>(this, "util"); }
-            protected set { Fields.Put("util", value); }
+            set { Fields.Put("util", value); }
         }
 
         /// <summary>Tooltip - Basic (utip).</summary>
@@ -2247,7 +2247,7 @@ namespace Moonwell.Objects
         public string Tooltip
         {
             get { return Fields.Get<string>(this, "utip"); }
-            protected set { Fields.Put("utip", value); }
+            set { Fields.Put("utip", value); }
         }
 
         /// <summary>Tooltip - Revive (utpr).</summary>
@@ -2255,7 +2255,7 @@ namespace Moonwell.Objects
         public string TooltipRevive
         {
             get { return Fields.Get<string>(this, "utpr"); }
-            protected set { Fields.Put("utpr", value); }
+            set { Fields.Put("utpr", value); }
         }
 
         /// <summary>Units Trained (utra).</summary>
@@ -2270,7 +2270,7 @@ namespace Moonwell.Objects
         public bool HasTilesetSpecificData
         {
             get { return Fields.Get<bool>(this, "utss"); }
-            protected set { Fields.Put("utss", value); }
+            set { Fields.Put("utss", value); }
         }
 
         /// <summary>Tooltip - Extended (utub).</summary>
@@ -2278,7 +2278,7 @@ namespace Moonwell.Objects
         public string TooltipExtended
         {
             get { return Fields.Get<string>(this, "utub"); }
-            protected set { Fields.Put("utub", value); }
+            set { Fields.Put("utub", value); }
         }
 
         /// <summary>Unit Classification (utyp).</summary>
@@ -2286,7 +2286,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.UnitClass UnitClassification
         {
             get { return Fields.Get<global::Moonwell.Objects.UnitClass>(this, "utyp"); }
-            protected set { Fields.Put("utyp", value); }
+            set { Fields.Put("utyp", value); }
         }
 
         /// <summary>Ground Texture (uubs).</summary>
@@ -2294,7 +2294,7 @@ namespace Moonwell.Objects
         public string GroundTexture
         {
             get { return Fields.Get<string>(this, "uubs"); }
-            protected set { Fields.Put("uubs", value); }
+            set { Fields.Put("uubs", value); }
         }
 
         /// <summary>Use Click Helper (uuch).</summary>
@@ -2302,7 +2302,7 @@ namespace Moonwell.Objects
         public bool UseClickHelper
         {
             get { return Fields.Get<bool>(this, "uuch"); }
-            protected set { Fields.Put("uuch", value); }
+            set { Fields.Put("uuch", value); }
         }
 
         /// <summary>Upgrades To (uupt), at most 12 entries.</summary>
@@ -2318,7 +2318,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.VersionFlags ModelFileExtraVersions
         {
             get { return Fields.Get<global::Moonwell.Objects.VersionFlags>(this, "uver"); }
-            protected set { Fields.Put("uver", value); }
+            set { Fields.Put("uver", value); }
         }
 
         /// <summary>Animation - Walk Speed (uwal), 0 to 2000.</summary>
@@ -2328,7 +2328,7 @@ namespace Moonwell.Objects
         public float AnimationWalkSpeed
         {
             get { return Fields.Get<float>(this, "uwal"); }
-            protected set { Fields.Put("uwal", value); }
+            set { Fields.Put("uwal", value); }
         }
 
         /// <summary>Attack 1 - Show UI (uwu1).</summary>
@@ -2336,7 +2336,7 @@ namespace Moonwell.Objects
         public bool Attack1ShowUI
         {
             get { return Fields.Get<bool>(this, "uwu1"); }
-            protected set { Fields.Put("uwu1", value); }
+            set { Fields.Put("uwu1", value); }
         }
 
         /// <summary>Attack 2 - Show UI (uwu2).</summary>
@@ -2344,7 +2344,7 @@ namespace Moonwell.Objects
         public bool Attack2ShowUI
         {
             get { return Fields.Get<bool>(this, "uwu2"); }
-            protected set { Fields.Put("uwu2", value); }
+            set { Fields.Put("uwu2", value); }
         }
 
         /// <summary>Makes the values of a field that has one for each level, level 1 first.</summary>

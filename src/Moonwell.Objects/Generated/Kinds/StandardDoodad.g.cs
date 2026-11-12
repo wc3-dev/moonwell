@@ -71,7 +71,7 @@ namespace Moonwell.Objects
         public bool AnimateInFogOfWar
         {
             get { return Fields.Get<bool>(this, "danf"); }
-            protected set { Fields.Put("danf", value); }
+            set { Fields.Put("danf", value); }
         }
 
         /// <summary>Category (dcat).</summary>
@@ -79,7 +79,7 @@ namespace Moonwell.Objects
         public string Category
         {
             get { return Fields.Get<string>(this, "dcat"); }
-            protected set { Fields.Put("dcat", value); }
+            set { Fields.Put("dcat", value); }
         }
 
         /// <summary>Can Place Random Scale (dcpr).</summary>
@@ -87,7 +87,7 @@ namespace Moonwell.Objects
         public bool CanPlaceRandomScale
         {
             get { return Fields.Get<bool>(this, "dcpr"); }
-            protected set { Fields.Put("dcpr", value); }
+            set { Fields.Put("dcpr", value); }
         }
 
         /// <summary>Cull Underwater (HD) (dcuw).</summary>
@@ -95,7 +95,7 @@ namespace Moonwell.Objects
         public bool CullUnderwaterHD
         {
             get { return Fields.Get<bool>(this, "dcuw"); }
-            protected set { Fields.Put("dcuw", value); }
+            set { Fields.Put("dcuw", value); }
         }
 
         /// <summary>Is a Decal (HD) (ddec).</summary>
@@ -103,7 +103,7 @@ namespace Moonwell.Objects
         public bool IsADecalHD
         {
             get { return Fields.Get<bool>(this, "ddec"); }
-            protected set { Fields.Put("ddec", value); }
+            set { Fields.Put("ddec", value); }
         }
 
         /// <summary>Default Scale (ddes), 0.01 to 100.</summary>
@@ -113,7 +113,7 @@ namespace Moonwell.Objects
         public float Scale
         {
             get { return Fields.Get<float>(this, "ddes"); }
-            protected set { Fields.Put("ddes", value); }
+            set { Fields.Put("ddes", value); }
         }
 
         /// <summary>Decal Sort Priority (HD) (decs), -2147483647 to 2147483647.</summary>
@@ -122,7 +122,7 @@ namespace Moonwell.Objects
         public int DecalSortPriorityHD
         {
             get { return Fields.Get<int>(this, "decs"); }
-            protected set { Fields.Put("decs", value); }
+            set { Fields.Put("decs", value); }
         }
 
         /// <summary>Model File (dfil).</summary>
@@ -130,7 +130,7 @@ namespace Moonwell.Objects
         public string Model
         {
             get { return Fields.Get<string>(this, "dfil"); }
-            protected set { Fields.Put("dfil", value); }
+            set { Fields.Put("dfil", value); }
         }
 
         /// <summary>Floats (dflt).</summary>
@@ -138,7 +138,7 @@ namespace Moonwell.Objects
         public bool Floats
         {
             get { return Fields.Get<bool>(this, "dflt"); }
-            protected set { Fields.Put("dflt", value); }
+            set { Fields.Put("dflt", value); }
         }
 
         /// <summary>Fixed Rotation (dfxr), -1 to 360.</summary>
@@ -147,7 +147,7 @@ namespace Moonwell.Objects
         public float FixedRotation
         {
             get { return Fields.Get<float>(this, "dfxr"); }
-            protected set { Fields.Put("dfxr", value); }
+            set { Fields.Put("dfxr", value); }
         }
 
         /// <summary>Ignore Model Clicks (dimc).</summary>
@@ -155,7 +155,7 @@ namespace Moonwell.Objects
         public bool IgnoreModelClicks
         {
             get { return Fields.Get<bool>(this, "dimc"); }
-            protected set { Fields.Put("dimc", value); }
+            set { Fields.Put("dimc", value); }
         }
 
         /// <summary>Maximum Pitch Angle (degrees) (dmap), 0 to 99999.</summary>
@@ -165,7 +165,7 @@ namespace Moonwell.Objects
         public float MaximumPitchAngleDegrees
         {
             get { return Fields.Get<float>(this, "dmap"); }
-            protected set { Fields.Put("dmap", value); }
+            set { Fields.Put("dmap", value); }
         }
 
         /// <summary>Max Roll Angle (degrees) (dmar), 0 to 99999.</summary>
@@ -175,7 +175,7 @@ namespace Moonwell.Objects
         public float MaxRollAngleDegrees
         {
             get { return Fields.Get<float>(this, "dmar"); }
-            protected set { Fields.Put("dmar", value); }
+            set { Fields.Put("dmar", value); }
         }
 
         /// <summary>Maximum Scale (dmas), 0.01 to 100.</summary>
@@ -185,7 +185,7 @@ namespace Moonwell.Objects
         public float MaximumScale
         {
             get { return Fields.Get<float>(this, "dmas"); }
-            protected set { Fields.Put("dmas", value); }
+            set { Fields.Put("dmas", value); }
         }
 
         /// <summary>Minimum Scale (dmis), 0.01 to 100.</summary>
@@ -195,7 +195,7 @@ namespace Moonwell.Objects
         public float MinimumScale
         {
             get { return Fields.Get<float>(this, "dmis"); }
-            protected set { Fields.Put("dmis", value); }
+            set { Fields.Put("dmis", value); }
         }
 
         /// <summary>Minimap Color 3 (Blue) (dmmb), 0 to 255.</summary>
@@ -204,7 +204,7 @@ namespace Moonwell.Objects
         public int MinimapColor3Blue
         {
             get { return Fields.Get<int>(this, "dmmb"); }
-            protected set { Fields.Put("dmmb", value); }
+            set { Fields.Put("dmmb", value); }
         }
 
         /// <summary>Minimap Color 2 (Green) (dmmg), 0 to 255.</summary>
@@ -213,7 +213,7 @@ namespace Moonwell.Objects
         public int MinimapColor2Green
         {
             get { return Fields.Get<int>(this, "dmmg"); }
-            protected set { Fields.Put("dmmg", value); }
+            set { Fields.Put("dmmg", value); }
         }
 
         /// <summary>Minimap Color 1 (Red) (dmmr), 0 to 255.</summary>
@@ -222,7 +222,7 @@ namespace Moonwell.Objects
         public int MinimapColor1Red
         {
             get { return Fields.Get<int>(this, "dmmr"); }
-            protected set { Fields.Put("dmmr", value); }
+            set { Fields.Put("dmmr", value); }
         }
 
         /// <summary>Name (dnam), not empty.</summary>
@@ -231,7 +231,7 @@ namespace Moonwell.Objects
         public string Name
         {
             get { return Fields.Get<string>(this, "dnam"); }
-            protected set { Fields.Put("dnam", value); }
+            set { Fields.Put("dnam", value); }
         }
 
         /// <summary>Occlusion Type (HD) (doct).</summary>
@@ -239,7 +239,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.OcclusionType2 OcclusionTypeHD
         {
             get { return Fields.Get<global::Moonwell.Objects.OcclusionType2>(this, "doct"); }
-            protected set { Fields.Put("doct", value); }
+            set { Fields.Put("doct", value); }
         }
 
         /// <summary>Placeable on Cliffs (donc).</summary>
@@ -247,7 +247,7 @@ namespace Moonwell.Objects
         public bool PlaceableOnCliffs
         {
             get { return Fields.Get<bool>(this, "donc"); }
-            protected set { Fields.Put("donc", value); }
+            set { Fields.Put("donc", value); }
         }
 
         /// <summary>Placeable on Water (donw).</summary>
@@ -255,7 +255,7 @@ namespace Moonwell.Objects
         public bool PlaceableOnWater
         {
             get { return Fields.Get<bool>(this, "donw"); }
-            protected set { Fields.Put("donw", value); }
+            set { Fields.Put("donw", value); }
         }
 
         /// <summary>Pathing Texture (dptx).</summary>
@@ -263,7 +263,7 @@ namespace Moonwell.Objects
         public string PathingTexture
         {
             get { return Fields.Get<string>(this, "dptx"); }
-            protected set { Fields.Put("dptx", value); }
+            set { Fields.Put("dptx", value); }
         }
 
         /// <summary>Selection Size (dsel), 0 to 99999.</summary>
@@ -273,7 +273,7 @@ namespace Moonwell.Objects
         public float SelectionSize
         {
             get { return Fields.Get<float>(this, "dsel"); }
-            protected set { Fields.Put("dsel", value); }
+            set { Fields.Put("dsel", value); }
         }
 
         /// <summary>Has a Shadow (HD) (dsh2).</summary>
@@ -281,7 +281,7 @@ namespace Moonwell.Objects
         public bool HasAShadowHD
         {
             get { return Fields.Get<bool>(this, "dsh2"); }
-            protected set { Fields.Put("dsh2", value); }
+            set { Fields.Put("dsh2", value); }
         }
 
         /// <summary>Has a Shadow (SD) (dshd).</summary>
@@ -289,7 +289,7 @@ namespace Moonwell.Objects
         public bool HasAShadowSD
         {
             get { return Fields.Get<bool>(this, "dshd"); }
-            protected set { Fields.Put("dshd", value); }
+            set { Fields.Put("dshd", value); }
         }
 
         /// <summary>Show in Fog of War (dshf).</summary>
@@ -297,7 +297,7 @@ namespace Moonwell.Objects
         public bool ShowInFogOfWar
         {
             get { return Fields.Get<bool>(this, "dshf"); }
-            protected set { Fields.Put("dshf", value); }
+            set { Fields.Put("dshf", value); }
         }
 
         /// <summary>Minimap - Show (dsmm).</summary>
@@ -305,7 +305,7 @@ namespace Moonwell.Objects
         public bool MinimapShow
         {
             get { return Fields.Get<bool>(this, "dsmm"); }
-            protected set { Fields.Put("dsmm", value); }
+            set { Fields.Put("dsmm", value); }
         }
 
         /// <summary>Looping Sound (dsnd).</summary>
@@ -313,7 +313,7 @@ namespace Moonwell.Objects
         public string LoopingSound
         {
             get { return Fields.Get<string>(this, "dsnd"); }
-            protected set { Fields.Put("dsnd", value); }
+            set { Fields.Put("dsnd", value); }
         }
 
         /// <summary>Allow Custom Team Color (dtcc).</summary>
@@ -321,7 +321,7 @@ namespace Moonwell.Objects
         public bool AllowCustomTeamColor
         {
             get { return Fields.Get<bool>(this, "dtcc"); }
-            protected set { Fields.Put("dtcc", value); }
+            set { Fields.Put("dtcc", value); }
         }
 
         /// <summary>Team Color (dtco).</summary>
@@ -329,7 +329,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.TeamColor TeamColor
         {
             get { return Fields.Get<global::Moonwell.Objects.TeamColor>(this, "dtco"); }
-            protected set { Fields.Put("dtco", value); }
+            set { Fields.Put("dtco", value); }
         }
 
         /// <summary>Tilesets (dtil).</summary>
@@ -337,7 +337,7 @@ namespace Moonwell.Objects
         public string Tilesets
         {
             get { return Fields.Get<string>(this, "dtil"); }
-            protected set { Fields.Put("dtil", value); }
+            set { Fields.Put("dtil", value); }
         }
 
         /// <summary>Has Tileset Specific Data (dtsp).</summary>
@@ -345,7 +345,7 @@ namespace Moonwell.Objects
         public bool HasTilesetSpecificData
         {
             get { return Fields.Get<bool>(this, "dtsp"); }
-            protected set { Fields.Put("dtsp", value); }
+            set { Fields.Put("dtsp", value); }
         }
 
         /// <summary>Use Click Helper (duch).</summary>
@@ -353,7 +353,7 @@ namespace Moonwell.Objects
         public bool UseClickHelper
         {
             get { return Fields.Get<bool>(this, "duch"); }
-            protected set { Fields.Put("duch", value); }
+            set { Fields.Put("duch", value); }
         }
 
         /// <summary>Minimap - Use Custom Color (dumc).</summary>
@@ -361,7 +361,7 @@ namespace Moonwell.Objects
         public bool MinimapUseCustomColor
         {
             get { return Fields.Get<bool>(this, "dumc"); }
-            protected set { Fields.Put("dumc", value); }
+            set { Fields.Put("dumc", value); }
         }
 
         /// <summary>On User-Specified List (dusr).</summary>
@@ -369,7 +369,7 @@ namespace Moonwell.Objects
         public bool OnUserSpecifiedList
         {
             get { return Fields.Get<bool>(this, "dusr"); }
-            protected set { Fields.Put("dusr", value); }
+            set { Fields.Put("dusr", value); }
         }
 
         /// <summary>Variations (dvar), 1 to 10.</summary>
@@ -378,7 +378,7 @@ namespace Moonwell.Objects
         public int Variations
         {
             get { return Fields.Get<int>(this, "dvar"); }
-            protected set { Fields.Put("dvar", value); }
+            set { Fields.Put("dvar", value); }
         }
 
         /// <summary>Tinting Color 3 (Blue) (dvb1), 0 to 255.</summary>
@@ -387,7 +387,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Levels<int> TintingColor3Blue
         {
             get { return Fields.GetLevels<int>(this, "dvb1"); }
-            protected set { Fields.Put("dvb1", value); }
+            set { Fields.Put("dvb1", value); }
         }
 
         /// <summary>Tinting Color 2 (Green) (dvg1), 0 to 255.</summary>
@@ -396,7 +396,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Levels<int> TintingColor2Green
         {
             get { return Fields.GetLevels<int>(this, "dvg1"); }
-            protected set { Fields.Put("dvg1", value); }
+            set { Fields.Put("dvg1", value); }
         }
 
         /// <summary>Visibility Radius (dvis), 0 to 99999.</summary>
@@ -406,7 +406,7 @@ namespace Moonwell.Objects
         public float VisibilityRadius
         {
             get { return Fields.Get<float>(this, "dvis"); }
-            protected set { Fields.Put("dvis", value); }
+            set { Fields.Put("dvis", value); }
         }
 
         /// <summary>Tinting Color 1 (Red) (dvr1), 0 to 255.</summary>
@@ -415,7 +415,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.Levels<int> TintingColor1Red
         {
             get { return Fields.GetLevels<int>(this, "dvr1"); }
-            protected set { Fields.Put("dvr1", value); }
+            set { Fields.Put("dvr1", value); }
         }
 
         /// <summary>Is Water (HD) (dwat).</summary>
@@ -423,7 +423,7 @@ namespace Moonwell.Objects
         public bool IsWaterHD
         {
             get { return Fields.Get<bool>(this, "dwat"); }
-            protected set { Fields.Put("dwat", value); }
+            set { Fields.Put("dwat", value); }
         }
 
         /// <summary>Walkable (dwlk).</summary>
@@ -431,7 +431,7 @@ namespace Moonwell.Objects
         public bool Walkable
         {
             get { return Fields.Get<bool>(this, "dwlk"); }
-            protected set { Fields.Put("dwlk", value); }
+            set { Fields.Put("dwlk", value); }
         }
 
         /// <summary>Makes the values of a field that has one for each level, level 1 first.</summary>

@@ -66,7 +66,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> ManaLoss
                 {
                     get { return Fields.GetLevels<float>(this, "Adm1"); }
-                    protected set { Fields.Put("Adm1", value); }
+                    set { Fields.Put("Adm1", value); }
                 }
 
                 /// <summary>Summoned Unit Damage (Adm2), 0 to 99999.</summary>
@@ -75,7 +75,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> SummonedUnitDamage
                 {
                     get { return Fields.GetLevels<float>(this, "Adm2"); }
-                    protected set { Fields.Put("Adm2", value); }
+                    set { Fields.Put("Adm2", value); }
                 }
             }
 
@@ -119,7 +119,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> DamagePerSecond
                 {
                     get { return Fields.GetLevels<float>(this, "Tdg1"); }
-                    protected set { Fields.Put("Tdg1", value); }
+                    set { Fields.Put("Tdg1", value); }
                 }
 
                 /// <summary>Medium Damage Radius (Tdg2), 0 to 99999.</summary>
@@ -128,7 +128,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MediumDamageRadius
                 {
                     get { return Fields.GetLevels<float>(this, "Tdg2"); }
-                    protected set { Fields.Put("Tdg2", value); }
+                    set { Fields.Put("Tdg2", value); }
                 }
 
                 /// <summary>Medium Damage Per Second (Tdg3), 0 to 99999.</summary>
@@ -137,7 +137,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MediumDamagePerSecond
                 {
                     get { return Fields.GetLevels<float>(this, "Tdg3"); }
-                    protected set { Fields.Put("Tdg3", value); }
+                    set { Fields.Put("Tdg3", value); }
                 }
 
                 /// <summary>Small Damage Radius (Tdg4), 0 to 99999.</summary>
@@ -146,7 +146,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> SmallDamageRadius
                 {
                     get { return Fields.GetLevels<float>(this, "Tdg4"); }
-                    protected set { Fields.Put("Tdg4", value); }
+                    set { Fields.Put("Tdg4", value); }
                 }
 
                 /// <summary>Small Damage Per Second (Tdg5), 0 to 99999.</summary>
@@ -155,7 +155,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> SmallDamagePerSecond
                 {
                     get { return Fields.GetLevels<float>(this, "Tdg5"); }
-                    protected set { Fields.Put("Tdg5", value); }
+                    set { Fields.Put("Tdg5", value); }
                 }
             }
 
@@ -202,7 +202,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> CanBeDispelled
                 {
                     get { return Fields.GetLevels<bool>(this, "cyc1"); }
-                    protected set { Fields.Put("cyc1", value); }
+                    set { Fields.Put("cyc1", value); }
                 }
             }
 
@@ -254,7 +254,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> AirUnitLowerDuration
                 {
                     get { return Fields.GetLevels<float>(this, "Ens1"); }
-                    protected set { Fields.Put("Ens1", value); }
+                    set { Fields.Put("Ens1", value); }
                 }
 
                 /// <summary>Air Unit Height (Ens2), 0 to 99999.</summary>
@@ -263,7 +263,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> AirUnitHeight
                 {
                     get { return Fields.GetLevels<float>(this, "Ens2"); }
-                    protected set { Fields.Put("Ens2", value); }
+                    set { Fields.Put("Ens2", value); }
                 }
 
                 /// <summary>Melee Attack Range (Ens3), 0 to 99999.</summary>
@@ -272,7 +272,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MeleeAttackRange
                 {
                     get { return Fields.GetLevels<float>(this, "Ens3"); }
-                    protected set { Fields.Put("Ens3", value); }
+                    set { Fields.Put("Ens3", value); }
                 }
 
                 /// <summary>Stun Duration (Ens4), 0 to 99999.</summary>
@@ -281,7 +281,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> StunDuration
                 {
                     get { return Fields.GetLevels<float>(this, "Ens4"); }
-                    protected set { Fields.Put("Ens4", value); }
+                    set { Fields.Put("Ens4", value); }
                 }
 
                 /// <summary>Attack Speed Reduction Percent (Ens5), 0 to 99999.</summary>
@@ -290,7 +290,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> AttackSpeedReductionPercent
                 {
                     get { return Fields.GetLevels<float>(this, "Ens5"); }
-                    protected set { Fields.Put("Ens5", value); }
+                    set { Fields.Put("Ens5", value); }
                 }
 
                 /// <summary>Bonus Damage Taken Percent (Ens6), 0 to 99999.</summary>
@@ -299,7 +299,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> BonusDamageTakenPercent
                 {
                     get { return Fields.GetLevels<float>(this, "Ens6"); }
-                    protected set { Fields.Put("Ens6", value); }
+                    set { Fields.Put("Ens6", value); }
                 }
 
                 /// <summary>Silences When Ensnared (Ens7).</summary>
@@ -307,7 +307,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> SilencesWhenEnsnared
                 {
                     get { return Fields.GetLevels<bool>(this, "Ens7"); }
-                    protected set { Fields.Put("Ens7", value); }
+                    set { Fields.Put("Ens7", value); }
                 }
             }
 
@@ -363,7 +363,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> ArmorDuration
                 {
                     get { return Fields.GetLevels<float>(this, "Ufa1"); }
-                    protected set { Fields.Put("Ufa1", value); }
+                    set { Fields.Put("Ufa1", value); }
                 }
 
                 /// <summary>Armor Bonus (Ufa2), 0 to 99999.</summary>
@@ -372,7 +372,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> ArmorBonus
                 {
                     get { return Fields.GetLevels<float>(this, "Ufa2"); }
-                    protected set { Fields.Put("Ufa2", value); }
+                    set { Fields.Put("Ufa2", value); }
                 }
             }
 
@@ -419,7 +419,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> ChanceToReduceDamage
                 {
                     get { return Fields.GetLevels<float>(this, "Ssk1"); }
-                    protected set { Fields.Put("Ssk1", value); }
+                    set { Fields.Put("Ssk1", value); }
                 }
 
                 /// <summary>Minimum Damage (Ssk2), 0 to 99999.</summary>
@@ -428,7 +428,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MinimumDamage
                 {
                     get { return Fields.GetLevels<float>(this, "Ssk2"); }
-                    protected set { Fields.Put("Ssk2", value); }
+                    set { Fields.Put("Ssk2", value); }
                 }
 
                 /// <summary>Ignored Damage (Ssk3), 0 to 99999.</summary>
@@ -437,7 +437,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> IgnoredDamage
                 {
                     get { return Fields.GetLevels<float>(this, "Ssk3"); }
-                    protected set { Fields.Put("Ssk3", value); }
+                    set { Fields.Put("Ssk3", value); }
                 }
 
                 /// <summary>Include Ranged Damage (Ssk4).</summary>
@@ -445,7 +445,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> IncludeRangedDamage
                 {
                     get { return Fields.GetLevels<bool>(this, "Ssk4"); }
-                    protected set { Fields.Put("Ssk4", value); }
+                    set { Fields.Put("Ssk4", value); }
                 }
 
                 /// <summary>Include Melee Damage (Ssk5).</summary>
@@ -453,7 +453,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> IncludeMeleeDamage
                 {
                     get { return Fields.GetLevels<bool>(this, "Ssk5"); }
-                    protected set { Fields.Put("Ssk5", value); }
+                    set { Fields.Put("Ssk5", value); }
                 }
             }
 
@@ -517,7 +517,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<int> SummonedUnitCount
                 {
                     get { return Fields.GetLevels<int>(this, "Npa5"); }
-                    protected set { Fields.Put("Npa5", value); }
+                    set { Fields.Put("Npa5", value); }
                 }
 
                 /// <summary>Summoned Unit Duration (Npa6), 0 to 99999.</summary>
@@ -526,7 +526,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> SummonedUnitDuration
                 {
                     get { return Fields.GetLevels<float>(this, "Npa6"); }
-                    protected set { Fields.Put("Npa6", value); }
+                    set { Fields.Put("Npa6", value); }
                 }
 
                 /// <summary>Damage per Second (Poi1), 0 to 99999.</summary>
@@ -535,7 +535,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> DamagePerSecond
                 {
                     get { return Fields.GetLevels<float>(this, "Poi1"); }
-                    protected set { Fields.Put("Poi1", value); }
+                    set { Fields.Put("Poi1", value); }
                 }
 
                 /// <summary>Movement Speed Factor (Poi2), 0 to 100.</summary>
@@ -544,7 +544,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MovementSpeedFactor
                 {
                     get { return Fields.GetLevels<float>(this, "Poi2"); }
-                    protected set { Fields.Put("Poi2", value); }
+                    set { Fields.Put("Poi2", value); }
                 }
 
                 /// <summary>Attack Speed Factor (Poi3), 0 to 100.</summary>
@@ -553,7 +553,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> AttackSpeedFactor
                 {
                     get { return Fields.GetLevels<float>(this, "Poi3"); }
-                    protected set { Fields.Put("Poi3", value); }
+                    set { Fields.Put("Poi3", value); }
                 }
 
                 /// <summary>Stacking Type (Poi4).</summary>
@@ -561,7 +561,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<global::Moonwell.Objects.StackFlags> StackingType
                 {
                     get { return Fields.GetLevels<global::Moonwell.Objects.StackFlags>(this, "Poi4"); }
-                    protected set { Fields.Put("Poi4", value); }
+                    set { Fields.Put("Poi4", value); }
                 }
 
                 /// <summary>Unit Type (ipmu).</summary>
@@ -609,7 +609,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MovementSpeedFactor
                 {
                     get { return Fields.GetLevels<float>(this, "Slo1"); }
-                    protected set { Fields.Put("Slo1", value); }
+                    set { Fields.Put("Slo1", value); }
                 }
 
                 /// <summary>Attack Speed Factor (Slo2), -10 to 10.</summary>
@@ -618,7 +618,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> AttackSpeedFactor
                 {
                     get { return Fields.GetLevels<float>(this, "Slo2"); }
-                    protected set { Fields.Put("Slo2", value); }
+                    set { Fields.Put("Slo2", value); }
                 }
 
                 /// <summary>Always Autocast (Slo3).</summary>
@@ -626,7 +626,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> AlwaysAutocast
                 {
                     get { return Fields.GetLevels<bool>(this, "Slo3"); }
-                    protected set { Fields.Put("Slo3", value); }
+                    set { Fields.Put("Slo3", value); }
                 }
             }
 
@@ -680,7 +680,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> DamageIncrease
                 {
                     get { return Fields.GetLevels<float>(this, "Roa1"); }
-                    protected set { Fields.Put("Roa1", value); }
+                    set { Fields.Put("Roa1", value); }
                 }
 
                 /// <summary>Defense Increase (Roa2), 0 to 99999.</summary>
@@ -689,7 +689,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<int> DefenseIncrease
                 {
                     get { return Fields.GetLevels<int>(this, "Roa2"); }
-                    protected set { Fields.Put("Roa2", value); }
+                    set { Fields.Put("Roa2", value); }
                 }
 
                 /// <summary>Life Regeneration Rate (Roa3), 0 to 99999.</summary>
@@ -698,7 +698,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> LifeRegenerationRate
                 {
                     get { return Fields.GetLevels<float>(this, "Roa3"); }
-                    protected set { Fields.Put("Roa3", value); }
+                    set { Fields.Put("Roa3", value); }
                 }
 
                 /// <summary>Mana Regen (Roa4), 0 to 99999.</summary>
@@ -707,7 +707,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> ManaRegen
                 {
                     get { return Fields.GetLevels<float>(this, "Roa4"); }
-                    protected set { Fields.Put("Roa4", value); }
+                    set { Fields.Put("Roa4", value); }
                 }
 
                 /// <summary>Prefer Hostiles (Roa5).</summary>
@@ -715,7 +715,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> PreferHostiles
                 {
                     get { return Fields.GetLevels<bool>(this, "Roa5"); }
-                    protected set { Fields.Put("Roa5", value); }
+                    set { Fields.Put("Roa5", value); }
                 }
 
                 /// <summary>Prefer Friendlies (Roa6).</summary>
@@ -723,7 +723,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<bool> PreferFriendlies
                 {
                     get { return Fields.GetLevels<bool>(this, "Roa6"); }
-                    protected set { Fields.Put("Roa6", value); }
+                    set { Fields.Put("Roa6", value); }
                 }
 
                 /// <summary>Max Units (Roa7), 0 to 100.</summary>
@@ -732,7 +732,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<int> MaxUnits
                 {
                     get { return Fields.GetLevels<int>(this, "Roa7"); }
-                    protected set { Fields.Put("Roa7", value); }
+                    set { Fields.Put("Roa7", value); }
                 }
             }
 
@@ -773,7 +773,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> AirTimeSeconds
                 {
                     get { return Fields.GetLevels<float>(this, "Tsp1"); }
-                    protected set { Fields.Put("Tsp1", value); }
+                    set { Fields.Put("Tsp1", value); }
                 }
 
                 /// <summary>Minimum Hit Interval (seconds) (Tsp2), 0 to 99999.</summary>
@@ -782,7 +782,7 @@ namespace Moonwell.Objects
                 public global::Moonwell.Objects.Levels<float> MinimumHitIntervalSeconds
                 {
                     get { return Fields.GetLevels<float>(this, "Tsp2"); }
-                    protected set { Fields.Put("Tsp2", value); }
+                    set { Fields.Put("Tsp2", value); }
                 }
             }
 

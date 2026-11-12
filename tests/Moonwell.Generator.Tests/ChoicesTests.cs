@@ -461,7 +461,7 @@ public class ChoicesTests
             "        public global::Moonwell.AttackType AttackType\n"
             + "        {\n"
             + "            get { return Fields.Get<global::Moonwell.AttackType>(this, \"ua1t\"); }\n"
-            + "            protected set { Fields.Put(\"ua1t\", value); }\n"
+            + "            set { Fields.Put(\"ua1t\", value); }\n"
             + "        }\n",
             files["Kinds/StandardUnit.g.cs"]);
         Assert.Contains("public global::Moonwell.Objects.Levels<global::Moonwell.Objects.Targets> TargetsAllowed\n", files["Kinds/StandardAbility.g.cs"]);

@@ -55,7 +55,7 @@ namespace Moonwell.Objects
         public string Icon
         {
             get { return Fields.Get<string>(this, "fart"); }
-            protected set { Fields.Put("fart", value); }
+            set { Fields.Put("fart", value); }
         }
 
         /// <summary>Effect (feat).</summary>
@@ -63,7 +63,7 @@ namespace Moonwell.Objects
         public string Effect
         {
             get { return Fields.Get<string>(this, "feat"); }
-            protected set { Fields.Put("feat", value); }
+            set { Fields.Put("feat", value); }
         }
 
         /// <summary>Is an Effect (feff).</summary>
@@ -71,7 +71,7 @@ namespace Moonwell.Objects
         public bool IsAnEffect
         {
             get { return Fields.Get<bool>(this, "feff"); }
-            protected set { Fields.Put("feff", value); }
+            set { Fields.Put("feff", value); }
         }
 
         /// <summary>Effect Sound (Looping) (fefl).</summary>
@@ -79,7 +79,7 @@ namespace Moonwell.Objects
         public string EffectSoundLooping
         {
             get { return Fields.Get<string>(this, "fefl"); }
-            protected set { Fields.Put("fefl", value); }
+            set { Fields.Put("fefl", value); }
         }
 
         /// <summary>Effect Sound (fefs).</summary>
@@ -87,7 +87,7 @@ namespace Moonwell.Objects
         public string EffectSound
         {
             get { return Fields.Get<string>(this, "fefs"); }
-            protected set { Fields.Put("fefs", value); }
+            set { Fields.Put("fefs", value); }
         }
 
         /// <summary>Effect Attachment Point (feft), at most 32 entries.</summary>
@@ -96,7 +96,7 @@ namespace Moonwell.Objects
         public string EffectAttachmentPoint
         {
             get { return Fields.Get<string>(this, "feft"); }
-            protected set { Fields.Put("feft", value); }
+            set { Fields.Put("feft", value); }
         }
 
         /// <summary>Lightning (flig).</summary>
@@ -104,7 +104,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.LightningEffect Lightning
         {
             get { return Fields.Get<global::Moonwell.Objects.LightningEffect>(this, "flig"); }
-            protected set { Fields.Put("flig", value); }
+            set { Fields.Put("flig", value); }
         }
 
         /// <summary>Missile Arc (fmac), 0 to 1.</summary>
@@ -113,7 +113,7 @@ namespace Moonwell.Objects
         public float MissileArc
         {
             get { return Fields.Get<float>(this, "fmac"); }
-            protected set { Fields.Put("fmac", value); }
+            set { Fields.Put("fmac", value); }
         }
 
         /// <summary>Missile Art (fmat).</summary>
@@ -121,7 +121,7 @@ namespace Moonwell.Objects
         public string MissileArt
         {
             get { return Fields.Get<string>(this, "fmat"); }
-            protected set { Fields.Put("fmat", value); }
+            set { Fields.Put("fmat", value); }
         }
 
         /// <summary>Missile Homing Enabled (fmho).</summary>
@@ -129,7 +129,7 @@ namespace Moonwell.Objects
         public bool MissileHomingEnabled
         {
             get { return Fields.Get<bool>(this, "fmho"); }
-            protected set { Fields.Put("fmho", value); }
+            set { Fields.Put("fmho", value); }
         }
 
         /// <summary>Missile Speed (fmsp), 0 to 10000.</summary>
@@ -138,7 +138,7 @@ namespace Moonwell.Objects
         public int MissileSpeed
         {
             get { return Fields.Get<int>(this, "fmsp"); }
-            protected set { Fields.Put("fmsp", value); }
+            set { Fields.Put("fmsp", value); }
         }
 
         /// <summary>Name (Editor Only) (fnam).</summary>
@@ -146,7 +146,7 @@ namespace Moonwell.Objects
         public string Name
         {
             get { return Fields.Get<string>(this, "fnam"); }
-            protected set { Fields.Put("fnam", value); }
+            set { Fields.Put("fnam", value); }
         }
 
         /// <summary>Editor Suffix (fnsf), at most 50 characters.</summary>
@@ -155,7 +155,7 @@ namespace Moonwell.Objects
         public string EditorSuffix
         {
             get { return Fields.Get<string>(this, "fnsf"); }
-            protected set { Fields.Put("fnsf", value); }
+            set { Fields.Put("fnsf", value); }
         }
 
         /// <summary>Race (frac).</summary>
@@ -163,7 +163,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.UnitRace Race
         {
             get { return Fields.Get<global::Moonwell.Objects.UnitRace>(this, "frac"); }
-            protected set { Fields.Put("frac", value); }
+            set { Fields.Put("frac", value); }
         }
 
         /// <summary>Special (fsat).</summary>
@@ -171,7 +171,7 @@ namespace Moonwell.Objects
         public string Special
         {
             get { return Fields.Get<string>(this, "fsat"); }
-            protected set { Fields.Put("fsat", value); }
+            set { Fields.Put("fsat", value); }
         }
 
         /// <summary>Required Spell Detail (fspd).</summary>
@@ -179,7 +179,7 @@ namespace Moonwell.Objects
         public global::Moonwell.Objects.SpellDetail RequiredSpellDetail
         {
             get { return Fields.Get<global::Moonwell.Objects.SpellDetail>(this, "fspd"); }
-            protected set { Fields.Put("fspd", value); }
+            set { Fields.Put("fspd", value); }
         }
 
         /// <summary>Special Attachment Point (fspt), at most 32 entries.</summary>
@@ -188,7 +188,7 @@ namespace Moonwell.Objects
         public string SpecialAttachmentPoint
         {
             get { return Fields.Get<string>(this, "fspt"); }
-            protected set { Fields.Put("fspt", value); }
+            set { Fields.Put("fspt", value); }
         }
 
         /// <summary>Target Attachment Point 1 (fta0), at most 32 entries.</summary>
@@ -197,7 +197,7 @@ namespace Moonwell.Objects
         public string TargetAttachmentPoint1
         {
             get { return Fields.Get<string>(this, "fta0"); }
-            protected set { Fields.Put("fta0", value); }
+            set { Fields.Put("fta0", value); }
         }
 
         /// <summary>Target Attachment Point 2 (fta1), at most 32 entries.</summary>
@@ -206,7 +206,7 @@ namespace Moonwell.Objects
         public string TargetAttachmentPoint2
         {
             get { return Fields.Get<string>(this, "fta1"); }
-            protected set { Fields.Put("fta1", value); }
+            set { Fields.Put("fta1", value); }
         }
 
         /// <summary>Target Attachment Point 3 (fta2), at most 32 entries.</summary>
@@ -215,7 +215,7 @@ namespace Moonwell.Objects
         public string TargetAttachmentPoint3
         {
             get { return Fields.Get<string>(this, "fta2"); }
-            protected set { Fields.Put("fta2", value); }
+            set { Fields.Put("fta2", value); }
         }
 
         /// <summary>Target Attachment Point 4 (fta3), at most 32 entries.</summary>
@@ -224,7 +224,7 @@ namespace Moonwell.Objects
         public string TargetAttachmentPoint4
         {
             get { return Fields.Get<string>(this, "fta3"); }
-            protected set { Fields.Put("fta3", value); }
+            set { Fields.Put("fta3", value); }
         }
 
         /// <summary>Target Attachment Point 5 (fta4), at most 32 entries.</summary>
@@ -233,7 +233,7 @@ namespace Moonwell.Objects
         public string TargetAttachmentPoint5
         {
             get { return Fields.Get<string>(this, "fta4"); }
-            protected set { Fields.Put("fta4", value); }
+            set { Fields.Put("fta4", value); }
         }
 
         /// <summary>Target Attachment Point 6 (fta5), at most 32 entries.</summary>
@@ -242,7 +242,7 @@ namespace Moonwell.Objects
         public string TargetAttachmentPoint6
         {
             get { return Fields.Get<string>(this, "fta5"); }
-            protected set { Fields.Put("fta5", value); }
+            set { Fields.Put("fta5", value); }
         }
 
         /// <summary>Target Attachments (ftac), 0 to 6.</summary>
@@ -251,7 +251,7 @@ namespace Moonwell.Objects
         public int TargetAttachments
         {
             get { return Fields.Get<int>(this, "ftac"); }
-            protected set { Fields.Put("ftac", value); }
+            set { Fields.Put("ftac", value); }
         }
 
         /// <summary>Target (ftat).</summary>
@@ -259,7 +259,7 @@ namespace Moonwell.Objects
         public string Target
         {
             get { return Fields.Get<string>(this, "ftat"); }
-            protected set { Fields.Put("ftat", value); }
+            set { Fields.Put("ftat", value); }
         }
 
         /// <summary>Tooltip (ftip).</summary>
@@ -267,7 +267,7 @@ namespace Moonwell.Objects
         public string Tooltip
         {
             get { return Fields.Get<string>(this, "ftip"); }
-            protected set { Fields.Put("ftip", value); }
+            set { Fields.Put("ftip", value); }
         }
 
         /// <summary>Tooltip - Extended (fube).</summary>
@@ -275,7 +275,7 @@ namespace Moonwell.Objects
         public string TooltipExtended
         {
             get { return Fields.Get<string>(this, "fube"); }
-            protected set { Fields.Put("fube", value); }
+            set { Fields.Put("fube", value); }
         }
 
         /// <summary>Makes the values of a field that has one for each level, level 1 first.</summary>

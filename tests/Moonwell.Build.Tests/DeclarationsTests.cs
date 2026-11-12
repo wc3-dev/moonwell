@@ -445,7 +445,7 @@ namespace Moonwell.Build.Tests
         {
             AssertFails(
                 "SetOutsideCtor",
-                "SetOutsideCtor.Reset.Heal sets GoldCost; declared fields are set only in the constructor");
+                "SetOutsideCtor.Reset.Heal sets GoldCost; declared fields are set only in the constructor, or in a method that only constructors call");
         }
 
         [Fact]
@@ -465,7 +465,7 @@ namespace Moonwell.Build.Tests
         {
             AssertFails(
                 "AddOutsideCtor",
-                "AddOutsideCtor.Grow.Learn changes Abilities; declared fields are set only in the constructor");
+                "AddOutsideCtor.Grow.Learn changes Abilities; declared fields are set only in the constructor, or in a method that only constructors call");
         }
 
         [Fact]
@@ -473,7 +473,7 @@ namespace Moonwell.Build.Tests
         {
             AssertFails(
                 "SetListOutsideCtor",
-                "SetListOutsideCtor.Grow.Learn changes Abilities; declared fields are set only in the constructor");
+                "SetListOutsideCtor.Grow.Learn changes Abilities; declared fields are set only in the constructor, or in a method that only constructors call");
         }
 
         [Fact]
@@ -481,7 +481,7 @@ namespace Moonwell.Build.Tests
         {
             AssertFails(
                 "ReplaceOutsideCtor",
-                "ReplaceOutsideCtor.Grow.Learn changes Abilities; declared fields are set only in the constructor");
+                "ReplaceOutsideCtor.Grow.Learn changes Abilities; declared fields are set only in the constructor, or in a method that only constructors call");
         }
 
         [Fact]
@@ -489,7 +489,7 @@ namespace Moonwell.Build.Tests
         {
             AssertFails(
                 "SetByIdOutsideCtor",
-                "SetByIdOutsideCtor.Grow.Retune changes uhpm; declared fields are set only in the constructor");
+                "SetByIdOutsideCtor.Grow.Retune changes uhpm; declared fields are set only in the constructor, or in a method that only constructors call");
         }
 
         [Fact]
@@ -497,7 +497,54 @@ namespace Moonwell.Build.Tests
         {
             AssertFails(
                 "DescribeOutsideCtor",
-                "DescribeOutsideCtor.Bolt.Retell changes the tooltips; declared fields are set only in the constructor");
+                "DescribeOutsideCtor.Bolt.Retell changes the tooltips; declared fields are set only in the constructor, or in a method that only constructors call");
+        }
+
+        [Fact]
+        public void a_setup_helper_declares_for_classes_with_different_bases()
+        {
+            var project = MapProject.Find(Path.Combine(TestFolders.Fixture("ObjectErrors"), "SetupHelper"));
+            var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
+
+            var declared = Declarations.Read(assembly, project, built.Standard, null);
+
+            var guard = Find(declared.Objects, "SetupHelper.Guard");
+            Assert.Equal(("hfoo", "Clan Guard", 111), (guard.StandardRoot, guard.Changed["unam"], guard.Changed["ugol"]));
+            var gunner = Find(declared.Objects, "SetupHelper.Gunner");
+            Assert.Equal(("hrif", "Clan Gunner", 222), (gunner.StandardRoot, gunner.Changed["unam"], gunner.Changed["ugol"]));
+            Assert.Contains("Moonwell.Objects.Human.Abilities.Defend", Assert.IsAssignableFrom<IReadOnlyList<string>>(gunner.Changed["uabi"]));
+        }
+
+        [Fact]
+        public void a_setup_helper_called_outside_a_constructor_names_the_caller()
+        {
+            AssertFails(
+                "SetupHelperOutside",
+                "SetupHelperOutside.Clan.Free changes Requires, and SetupHelperOutside.Guard.Discount calls it; declared fields are set only in the constructor, or in a method that only constructors call");
+        }
+
+        [Fact]
+        public void a_setup_helper_reached_through_another_names_the_caller_and_the_way()
+        {
+            AssertFails(
+                "SetupHelperThrough",
+                "SetupHelperThrough.Clan.Cost sets GoldCost, and SetupHelperThrough.Guard.OnDeath calls it through SetupHelperThrough.Clan.Look; declared fields are set only in the constructor, or in a method that only constructors call");
+        }
+
+        [Fact]
+        public void a_setup_helper_held_as_a_delegate_is_an_error()
+        {
+            AssertFails(
+                "SetupHelperHeld",
+                "SetupHelperHeld.Clan.Cost sets GoldCost; declared fields are set only in the constructor, or in a method that only constructors call");
+        }
+
+        [Fact]
+        public void a_set_from_a_class_that_declares_nothing_is_an_error()
+        {
+            AssertFails(
+                "SetFromOutside",
+                "SetFromOutside.Tax's constructor sets GoldCost; declared fields are set only in the constructor, or in a method that only constructors call");
         }
 
         [Fact]
