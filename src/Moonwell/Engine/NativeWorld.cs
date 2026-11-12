@@ -1838,6 +1838,12 @@ namespace Moonwell.Engine
             Natives.BlzSetSpecialEffectAlpha(fx, alpha);
         }
 
+        /// <summary>Draws an effect's team-coloured parts in a player's colour: BlzSetSpecialEffectColorByPlayer.</summary>
+        public void SetEffectTeamColor(effect fx, player player)
+        {
+            Natives.BlzSetSpecialEffectColorByPlayer(fx, player);
+        }
+
         /// <summary>Plays an animation of an effect by name, BlzSetSpecialEffectAnimation, or queues it, BlzQueueSpecialEffectAnimation.</summary>
         public void AnimateEffect(effect fx, string name, bool queued)
         {

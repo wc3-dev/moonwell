@@ -35,6 +35,9 @@ namespace Moonwell.Testing
         /// <summary>Its red, green, blue and alpha; null until tinted.</summary>
         public int[]? Tint;
 
+        /// <summary>The player whose colour its team-coloured parts are drawn in; null until set.</summary>
+        public player? TeamColor;
+
         /// <summary>How many times the runtime ended it.</summary>
         public int Ends;
 

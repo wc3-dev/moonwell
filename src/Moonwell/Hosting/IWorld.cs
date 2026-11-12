@@ -638,6 +638,9 @@ namespace Moonwell.Hosting
         /// <summary>Tints an effect: red, green and blue, and its alpha, each 0 to 255.</summary>
         void TintEffect(effect fx, int red, int green, int blue, int alpha);
 
+        /// <summary>Draws an effect's team-coloured parts in a player's colour.</summary>
+        void SetEffectTeamColor(effect fx, player player);
+
         /// <summary>Plays an animation of an effect by name, or queues it after the one playing.</summary>
         void AnimateEffect(effect fx, string name, bool queued);
 

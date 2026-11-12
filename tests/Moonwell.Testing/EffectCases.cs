@@ -245,6 +245,22 @@ namespace Moonwell.Testing
             Expect.True(fx.Tint == new Color(255, 0, 0, 128), "the last tint after the end");
         }
 
+        /// <summary>TeamColor is null unless set, gives the game the player, and reads back what was set; null and a set after the end ask nothing.</summary>
+        public static void TeamColor(FakeWorld world)
+        {
+            var fx = SpecialEffect.Create(Glow, 0f, 0f, Game.Instance);
+            Expect.True(fx.TeamColor == null, "none unless set");
+            fx.TeamColor = Player.Two;
+            Expect.Same(Player.Two.Handle, world.Effects[0].TeamColor!, "the game's player");
+            Expect.Same(Player.Two, fx.TeamColor!, "reads what was set");
+            fx.TeamColor = null;
+            Expect.Same(Player.Two, fx.TeamColor!, "null changes nothing");
+            fx.End();
+            fx.TeamColor = Player.One;
+            Expect.Same(Player.Two, fx.TeamColor!, "the last colour after the end");
+            Expect.Same(Player.Two.Handle, world.Effects[0].TeamColor!, "nothing asked after the end");
+        }
+
         /// <summary>Makes a footman at a place, with no class registered for its type.</summary>
         private static Unit NewFootman(FakeWorld world, out unit handle)
         {
