@@ -1,3 +1,4 @@
+using System.IO.Enumeration;
 using System.Reflection;
 using Moonwell.Build;
 using Moonwell.GameData;
@@ -14,7 +15,9 @@ namespace Moonwell.Tool
             "       moonwell new <name>\n" +
             "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
-            "       moonwell objects [folder] [--to-map]";
+            "       moonwell objects [folder] [--to-map]\n" +
+            "       moonwell game find <path> [--mode sd|hd|de] [--game <folder>]\n" +
+            "       moonwell game extract <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
 
         // Folders of the project a change in which is no reason to build again: what the builds write, and the tools'.
         private static readonly string[] Unwatched = { "build", "bin", "obj", ".git", ".vs", ".idea" };
@@ -33,6 +36,17 @@ namespace Moonwell.Tool
             {
                 output.WriteLine(Version());
                 return 0;
+            }
+
+            if (args.Length > 0 && args[0] == "game")
+            {
+                if (!TryParseGame(args, out var game))
+                {
+                    error.WriteLine(Usage);
+                    return 2;
+                }
+
+                return Report(error, () => Game(game, output));
             }
 
             if (!TryParse(args, out var options))
@@ -212,6 +226,132 @@ namespace Moonwell.Tool
             }
         }
 
+        // game find and game extract: one file as the game finds it, or every file under a folder or matching a pattern with *.
+        private static void Game(GameOptions options, TextWriter output)
+        {
+            GameFiles files;
+            try
+            {
+                files = GameFiles.Open(GameInstall.Require(InstallOf(options.Install)));
+            }
+            catch (IOException failure)
+            {
+                throw new BuildException(failure.Message);
+            }
+
+            using (files)
+            {
+                var path = GameFiles.Normalized(options.Path);
+                var star = path.IndexOf('*', StringComparison.Ordinal);
+                if (star < 0 && !path.EndsWith('/') && files.Find(path, options.Mode) is { } found)
+                {
+                    if (!options.Extract)
+                    {
+                        output.WriteLine(found);
+                        return;
+                    }
+
+                    // The name as the game stores it: a .blp asked for is written as the .dds it is.
+                    var name = found[(found.LastIndexOfAny(new[] { '/', ':' }) + 1)..];
+                    var target = options.Out == null ? name
+                        : Directory.Exists(options.Out) || options.Out.EndsWith('/') || options.Out.EndsWith('\\') ? Path.Combine(options.Out, name)
+                        : options.Out;
+                    Write(target, files.Read(path, options.Mode));
+                    output.WriteLine($"moonwell: wrote {target}");
+                    return;
+                }
+
+                var folder = star < 0 ? path.TrimEnd('/') + "/" : path[..(path.LastIndexOf('/', star) + 1)];
+                var pattern = star < 0 ? folder + "*" : path;
+                var listed = files.List(folder, options.Mode, string.Empty)
+                    .Where(file => FileSystemName.MatchesSimpleExpression(pattern, file))
+                    .ToList();
+                if (listed.Count == 0)
+                {
+                    throw new BuildException($"the game has no file {options.Path}");
+                }
+
+                foreach (var file in listed)
+                {
+                    if (options.Extract)
+                    {
+                        Write(Path.Combine(options.Out ?? ".", file), files.Read(file, options.Mode));
+                    }
+                    else
+                    {
+                        output.WriteLine(file);
+                    }
+                }
+
+                if (options.Extract)
+                {
+                    output.WriteLine($"moonwell: wrote {listed.Count} files into {options.Out ?? "."}");
+                }
+            }
+        }
+
+        private static void Write(string target, byte[]? bytes)
+        {
+            if (Path.GetDirectoryName(Path.GetFullPath(target)) is { } folder)
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            File.WriteAllBytes(target, bytes ?? throw new BuildException($"the game's storage does not hold {target}"));
+        }
+
+        // --game takes the install's folder or anything inside it, such as the exe that run takes.
+        private static string? InstallOf(string? given)
+        {
+            for (var folder = given; !string.IsNullOrEmpty(folder); folder = Path.GetDirectoryName(folder))
+            {
+                if (GameInstall.IsInstall(folder))
+                {
+                    return folder;
+                }
+            }
+
+            return given;
+        }
+
+        private static bool TryParseGame(string[] args, out GameOptions options)
+        {
+            options = new GameOptions();
+            if (args.Length < 2 || args[1] is not ("find" or "extract"))
+            {
+                return false;
+            }
+
+            options.Extract = args[1] == "extract";
+            for (var i = 2; i < args.Length; i++)
+            {
+                var argument = args[i];
+                var next = i + 1 < args.Length ? args[i + 1] : null;
+                if (argument == "--mode" && next is "sd" or "hd" or "de")
+                {
+                    options.Mode = args[++i];
+                }
+                else if (argument == "--game" && next != null)
+                {
+                    options.Install = args[++i];
+                }
+                else if (argument == "--out" && options.Extract && next != null)
+                {
+                    options.Out = args[++i];
+                }
+                else if (argument.StartsWith("--", StringComparison.Ordinal) || options.Path.Length > 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    options.Path = argument;
+                }
+            }
+
+            return options.Path.Length > 0;
+        }
+
         // The tool's version without the source revision the SDK appends after a plus sign.
         private static string Version()
         {
@@ -280,6 +420,21 @@ namespace Moonwell.Tool
 
             // A game is named only for a command that starts one; new needs its name, import its map and name.
             return (!gameGiven || options.Launch) && (options.Command != "new" || positionals.Count == 1) && (options.Command != "import" || positionals.Count == 2);
+        }
+
+        private sealed class GameOptions
+        {
+            public bool Extract { get; set; }
+
+            public string Path { get; set; } = string.Empty;
+
+            public string Mode { get; set; } = "sd";
+
+            // --game: the install's folder, or a path inside it; the usual place when not given.
+            public string? Install { get; set; }
+
+            // extract --out: the file to write, or the folder to write into; the current folder when not given.
+            public string? Out { get; set; }
         }
 
         private sealed class Options

@@ -17,7 +17,9 @@ namespace Moonwell.Build.Tests
             "       moonwell new <name>\n" +
             "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
-            "       moonwell objects [folder] [--to-map]";
+            "       moonwell objects [folder] [--to-map]\n" +
+            "       moonwell game find <path> [--mode sd|hd|de] [--game <folder>]\n" +
+            "       moonwell game extract <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
 
         private readonly SampleBuilds builds;
         private readonly TestFolders folders;
@@ -114,6 +116,13 @@ namespace Moonwell.Build.Tests
         [InlineData("objects", "--run")]
         [InlineData("build", "--to-map")]
         [InlineData("watch", "--game", "game.exe")]
+        [InlineData("game")]
+        [InlineData("game", "list", "x")]
+        [InlineData("game", "find")]
+        [InlineData("game", "find", "one", "two")]
+        [InlineData("game", "find", "x", "--mode", "ultra")]
+        [InlineData("game", "find", "x", "--out", "here")]
+        [InlineData("game", "extract", "x", "--out")]
         public void bad_arguments_exit_2(params string[] args)
         {
             var (exitCode, output, error, started) = Run(args);
@@ -338,6 +347,74 @@ namespace Moonwell.Build.Tests
             Assert.False(await started.WaitAsync(TimeSpan.FromSeconds(5)));
             await cancel.CancelAsync();
             Assert.Equal(0, await watching);
+        }
+
+        [InstallFact]
+        public void game_find_names_the_storage_path_and_lists_a_folder()
+        {
+            var (exitCode, output, _, _) = Run("game", "find", @"ReplaceableTextures\CommandButtons\BTNPeasant.blp");
+            Assert.Equal(0, exitCode);
+            Assert.Equal("War3.w3mod:ReplaceableTextures/CommandButtons/BTNPeasant.dds", output.Trim(), ignoreCase: true);
+
+            // --game takes the exe that run takes, and a mode reads its own tier first.
+            var exe = Path.Combine(GameInstall.Find()!, "_retail_", "x86_64", "Warcraft III.exe");
+            (exitCode, output, _, _) = Run("game", "find", "ReplaceableTextures/CommandButtons/BTNPeasant.blp", "--mode", "de", "--game", exe);
+            Assert.Equal(0, exitCode);
+            Assert.StartsWith("War3.w3mod:_DE.w3mod:", output, StringComparison.OrdinalIgnoreCase);
+
+            foreach (var folder in new[] { @"Units\Human\HeroPaladin", "Units/Human/HeroPaladin/", "units/human/heropaladin/*what*.ogg" })
+            {
+                (exitCode, output, _, _) = Run("game", "find", folder);
+                Assert.Equal(0, exitCode);
+                Assert.Contains("Units/Human/HeroPaladin/HeroPaladinWhat1.ogg", output.Split('\n').Select(line => line.Trim()));
+            }
+
+            Assert.DoesNotContain("HeroPaladinDeath", output);
+        }
+
+        [InstallFact]
+        public void game_find_of_a_missing_file_exits_1()
+        {
+            var (exitCode, output, error, _) = Run("game", "find", @"units\human\NoSuchUnit\NoSuchUnit.mdx");
+
+            Assert.Equal(1, exitCode);
+            Assert.Equal(string.Empty, output);
+            Assert.Equal(@"moonwell: the game has no file units\human\NoSuchUnit\NoSuchUnit.mdx", error.Trim());
+        }
+
+        [Fact]
+        public void game_find_without_an_install_exits_1()
+        {
+            var empty = folders.TemporaryFolderOutsideRepository();
+            Directory.CreateDirectory(empty);
+
+            var (exitCode, _, error, _) = Run("game", "find", "x.blp", "--game", empty);
+
+            Assert.Equal(1, exitCode);
+            Assert.StartsWith("moonwell: No Warcraft III install", error);
+            Assert.DoesNotContain("unexpected error", error);
+        }
+
+        [InstallFact]
+        public void game_extract_writes_the_file_or_a_folder_of_files()
+        {
+            var target = folders.TemporaryFolderOutsideRepository();
+            Directory.CreateDirectory(target);
+
+            var (exitCode, output, _, _) = Run("game", "extract", @"UI\SoundInfo\UnitAckSounds.slk", "--out", target);
+            Assert.Equal(0, exitCode);
+            Assert.Equal($"moonwell: wrote {Path.Combine(target, "UnitAckSounds.slk")}", output.Trim());
+            Assert.StartsWith("ID;", File.ReadAllText(Path.Combine(target, "UnitAckSounds.slk")));
+
+            var named = Path.Combine(target, "sub", "peasant.dds");
+            Assert.Equal(0, Run("game", "extract", @"ReplaceableTextures\CommandButtons\BTNPeasant.blp", "--out", named).ExitCode);
+            Assert.Equal("DDS ", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(named), 0, 4));
+
+            (exitCode, output, _, _) = Run("game", "extract", "Units/Human/HeroPaladin/*What*.ogg", "--out", target);
+            Assert.Equal(0, exitCode);
+            Assert.Matches(@"^moonwell: wrote \d+ files into ", output.Trim());
+            Assert.True(new FileInfo(Path.Combine(target, "Units", "Human", "HeroPaladin", "HeroPaladinWhat1.ogg")).Length > 0);
+            Assert.False(File.Exists(Path.Combine(target, "Units", "Human", "HeroPaladin", "HeroPaladinDeath.ogg")));
         }
 
         public void Dispose()

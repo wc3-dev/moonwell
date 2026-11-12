@@ -2579,8 +2579,12 @@ game with it. Both make a development build: it checks the values Moonwell recei
 | `moonwell clean` | Deletes `build/` |
 | `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
 | `moonwell objects --to-map` | Builds, then writes the built object files into `map/`, so World Editor lists the objects declared in code; close World Editor first |
+| `moonwell game find <path>` | Says whether the game has a file, by the storage path it is read from (`moonwell game find Textures\HeroFarseer.blp`). A folder, or a path with `*`, lists the files there (`moonwell game find Units\Orc\HeroTaurenChieftain`) |
+| `moonwell game extract <path>` | Writes the game's file into the current folder, under the name the game stores it by; `--out` names the file or the folder instead. A folder, or a path with `*`, writes every file there at its game path, so `--out assets` puts each where the map would replace it |
 
-Each takes the project's folder after the command, as `build` does; `new` takes the name.
+Each takes the project's folder after the command, as `build` does; `new` takes the name. The `game` commands need
+no project. They take `--mode sd`, `hd` or `de` for the graphics the file is looked up in (Classic when not given),
+and `--game <folder>` for an install that is not in its usual place. They end with 1 when the game has no such file.
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
