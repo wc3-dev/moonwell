@@ -839,6 +839,15 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Draws the model's team-coloured parts in a player colour (SetUnitColor), whoever owns the unit: <c>unit.SetTeamColor(PlayerColor.Blue)</c>. The game keeps no colour to read back. A new <see cref="Owner"/> and a set of the owner's <see cref="Player.Color"/> give the unit that player's colour again. Does nothing once the unit is gone.</summary>
+        public void SetTeamColor(PlayerColor color)
+        {
+            if (InGame())
+            {
+                Runtime.World.SetUnitTeamColor(Handle, (int)color);
+            }
+        }
+
         private static int Clamp(int value)
         {
             return value < 0 ? 0 : value > 255 ? 255 : value;

@@ -479,6 +479,9 @@ namespace Moonwell.Hosting
         /// <summary>Tints a unit's model; each value is 0-255.</summary>
         void TintUnit(unit unit, int red, int green, int blue, int alpha);
 
+        /// <summary>Draws a unit's team-coloured parts in a player colour, the game's number for it.</summary>
+        void SetUnitTeamColor(unit unit, int color);
+
         /// <summary>Plays an animation of a unit's model by name, or queues it after the one playing.</summary>
         void AnimateUnit(unit unit, string name, bool queued);
 

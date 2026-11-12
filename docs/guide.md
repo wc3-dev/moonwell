@@ -509,6 +509,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255; an alpha of 0 makes the unit's portrait black too, where a `Scale` of 0.01 hides the model and keeps the portrait |
+| `SetTeamColor(PlayerColor.Blue)` | draws the model's team-coloured parts in that colour, whoever owns the unit; nothing to read back; a new `Owner`, or a set of the owner's `Color`, gives it that player's colour again |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | as an effect's ([below](#special-effects)); it plays once, then an idle unit stands; a walking unit keeps walking and only stutters; a name the model lacks plays its stand, and a name picks no variant (`"attack 2"` is any attack) |
 | `PlayAnimation(index)` | by the animation's index in the model, from 0: the one way to pick a variant; indices differ between models |
 | `AnimationSpeed` | read and set, 1 unless set; 0.5 plays at half speed, 0 holds the unit still mid-animation |
