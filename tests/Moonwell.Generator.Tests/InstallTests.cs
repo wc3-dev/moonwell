@@ -136,6 +136,35 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
         Assert.DoesNotContain(models, model => model.Contains(".w3mod:", StringComparison.OrdinalIgnoreCase));
     }
 
+    [InstallFact]
+    public void a_unit_voice_line_is_found_under_any_sound_extension_and_listed()
+    {
+        var files = _install.Files!;
+        var locale = $"_Locales/{files.Build.Locale}.w3mod:";
+
+        // Classic stores a voice line as .ogg in the locale's folder; the .flac is in the locale folder inside the Definitive Edition's tier (J6).
+        foreach (var extension in new[] { ".wav", ".flac", ".ogg" })
+        {
+            Assert.Equal(
+                $"War3.w3mod:{locale}Units/Human/HeroPaladin/HeroPaladinWhat1.ogg",
+                files.Find(@"Units\Human\HeroPaladin\HeroPaladinWhat1" + extension, "sd"));
+        }
+
+        Assert.Equal(
+            $"War3.w3mod:_HD.w3mod:{locale}Units/Human/HeroPaladin/HeroPaladinWhat1.ogg",
+            files.Find(@"Units\Human\HeroPaladin\HeroPaladinWhat1.flac", "hd"));
+        Assert.Equal(
+            $"War3.w3mod:_DE.w3mod:{locale}Units/Human/HeroPaladin/HeroPaladinWhat1.flac",
+            files.Find(@"Units\Human\HeroPaladin\HeroPaladinWhat1.flac", "de"));
+        Assert.NotNull(files.Read(@"Units\Human\HeroPaladin\HeroPaladinWhat1.flac"));
+
+        var sounds = files.List("Units/Human/HeroPaladin/", "sd", ".ogg", ".flac", ".wav");
+        Assert.Contains("Units/Human/HeroPaladin/HeroPaladinWhat1.ogg", sounds);
+        Assert.Contains("Units/Human/HeroPaladin/HeroPaladinDeath.ogg", sounds);
+        Assert.DoesNotContain(sounds, sound => sound.Contains(".w3mod:", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("Units/Human/HeroPaladin/HeroPaladinWhat1.flac", files.List("Units/Human/HeroPaladin/", "de", ".flac"));
+    }
+
     /// <summary>The install, opened once for the class.</summary>
     public sealed class Install : IDisposable
     {

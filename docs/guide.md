@@ -2540,6 +2540,8 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
 - The build warns of a path that object data or the map's code names (a texture, model or sound) that neither the game
   nor the map has, naming the class and field (`Sample.Arthas: uico`) or the type whose code has it. As in the game, a file
   under another extension of its kind counts: `.mdl` and `.mdx`; `.blp`, `.dds` and `.tga`; `.wav`, `.flac` and `.ogg`.
+- It warns the same way of a texture that an `.mdx` model in the map names and neither the game nor the map has,
+  naming the model: a model's textures must be in `assets/` at the exact paths the model has for them.
 - The build also lists the textures, models and sounds in `assets/` that nothing in the built map names: not the
   code, object data, a model or a frame file. It leaves them in the map, as a path the code puts together while the
   game runs (`"BTN" + name + ".blp"`) is not seen. A file at one of the game's paths, a grey copy and a model's
