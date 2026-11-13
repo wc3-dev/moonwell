@@ -14,8 +14,9 @@ namespace Moonwell.Engine
         private const int MostWritten = 5000;
 
         /// <summary>
-        /// Walks the game UI, the world frame and the simple UI's parent, writing each frame's index under its parent, name, size,
-        /// whether it shows and its count of children, and tells the typer where. A frame's children are asked for by index, which
+        /// Walks the game UI, the world frame and the simple UI's parent (or ConsoleUI's, when the game gives no origin frame for
+        /// it), writing each frame's index under its parent, name, size, whether it shows and its count of children, and tells
+        /// the typer where. A frame's children are asked for by index, which
         /// gives frames only, never the Strings and Textures the game crashes on (Tasyen's "UI: OriginFrames"; walks of 11-08 and
         /// 11-13 read every one with no crash). Heard on every machine, so each asks for the same frames and the handle ids stay
         /// the same everywhere; each machine writes its own file.
@@ -23,21 +24,26 @@ namespace Moonwell.Engine
         internal static void Write(IFramesWorld world, Player typer)
         {
             var lines = new List<string>();
-            string[] roots = { "game UI", "world frame", "simple UI parent" };
-            int[] kinds = { 0, 17, 18 };
-            for (var i = 0; i < roots.Length; i++)
-            {
-                var root = world.OriginFrame(kinds[i], 0);
-                if (root != null)
-                {
-                    lines.Add(roots[i]);
-                    Walk(world, root, 0, "  ", lines);
-                }
-            }
+            Root(world, lines, "game UI", world.OriginFrame(0, 0));
+            Root(world, lines, "world frame", world.OriginFrame(17, 0));
 
-            var count = lines.Count - roots.Length;
+            // The game gave nil for the simple UI's parent by its origin (seen 11-13), so ConsoleUI's parent stands in.
+            var simple = world.OriginFrame(18, 0);
+            var console = simple == null ? world.GameFrame("ConsoleUI") : null;
+            Root(world, lines, "simple UI parent", console != null ? world.ParentOf(console) : simple);
+            var count = lines.Count - 3;
             DebugSession.WriteFile(FilePath, lines);
             typer.Print("-frames: " + count + " frames written to CustomMapData\\" + FilePath + (count >= MostWritten ? ", stopped at the most" : string.Empty));
+        }
+
+        /// <summary>Names a root in the file and walks it; "none" when the game gives none.</summary>
+        private static void Root(IFramesWorld world, List<string> lines, string label, framehandle? root)
+        {
+            lines.Add(label + (root == null ? ": none" : string.Empty));
+            if (root != null)
+            {
+                Walk(world, root, 0, "  ", lines);
+            }
         }
 
         private static void Walk(IFramesWorld world, framehandle frame, int index, string indent, List<string> lines)
