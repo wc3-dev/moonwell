@@ -401,6 +401,9 @@ namespace Moonwell.Hosting
         /// <summary>Sets the name of one unit.</summary>
         void RenameUnit(unit unit, string name);
 
+        /// <summary>The icon of a unit type, as this machine's graphics mode reads it.</summary>
+        string IconOf(int typeId);
+
         /// <summary>A hero's proper name.</summary>
         string ProperNameOf(unit hero);
 
