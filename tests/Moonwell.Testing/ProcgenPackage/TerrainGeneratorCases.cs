@@ -40,35 +40,108 @@ namespace Moonwell.Testing
             return fake;
         }
 
-        /// <summary>The same seed and settings give the same plan, wherever the area is; another seed gives another.</summary>
+        /// <summary>The same seed, settings and area give the same plan; the area elsewhere, or another seed, gives another.</summary>
         public static void SameSeed(FakeWorld world)
         {
             var first = Hills(11).Plan(Area());
-            var second = Hills(11).Plan(Bounds.FromCorners(new Vector2(-5000f, 300f), new Vector2(-2440f, 2860f)));
+            var again = Hills(11).Plan(Area());
+            var elsewhere = Hills(11).Plan(Bounds.FromCorners(new Vector2(-5000f, 300f), new Vector2(-2440f, 2860f)));
             var other = Hills(12).Plan(Area());
             Expect.Equal(Side, first.Columns, "a corner every 128 across");
             Expect.Equal(Side, first.Rows, "and up");
-            Expect.Near(-5000f, second.X, "the plan starts at the area's lower left");
-            Expect.Near(300f, second.Y, "its y");
+            Expect.Near(-5000f, elsewhere.X, "the plan starts at the area's lower left");
+            Expect.Near(300f, elsewhere.Y, "its y");
             var same = true;
+            var moved = false;
             var differs = false;
             for (var k = 0; k < Side * Side; k++)
             {
-                same = same && first.Heights.Cells[k] == second.Heights.Cells[k] && first.Tiles[k] == second.Tiles[k] && first.Blocked[k] == second.Blocked[k];
+                same = same && first.Heights.Cells[k] == again.Heights.Cells[k] && first.Tiles[k] == again.Tiles[k] && first.Blocked[k] == again.Blocked[k];
+                moved = moved || first.Heights.Cells[k] != elsewhere.Heights.Cells[k];
                 differs = differs || first.Heights.Cells[k] != other.Heights.Cells[k];
             }
 
-            Expect.True(same, "the same seed gives the same plan");
+            Expect.True(same, "the same seed and area give the same plan");
+            Expect.True(moved, "the area elsewhere gives other ground");
             Expect.True(differs, "another seed gives another");
         }
 
-        /// <summary>Heights go from Lowest to Highest and reach both with no fade; with a fade the edge is the ground as it was and the middle is as without it.</summary>
+        /// <summary>Two neighbouring plans with no fade give the same height, tile and blocked corner on their shared edge, a level place across it too; an area moved by a corner is the same ground moved.</summary>
+        public static void Seams(FakeWorld world)
+        {
+            var generator = Hills(21);
+            generator.EdgeFade = 0f;
+            generator.Level(-2560f, 1280f, 300f);
+            var left = generator.Plan(Bounds.FromCorners(new Vector2(-5120f, 0f), new Vector2(-2560f, 2560f)));
+            var right = generator.Plan(Bounds.FromCorners(new Vector2(-2560f, 0f), new Vector2(0f, 2560f)));
+            var below = generator.Plan(Bounds.FromCorners(new Vector2(-2560f, -2560f), new Vector2(0f, 0f)));
+            var mismatches = 0;
+            for (var k = 0; k < Side; k++)
+            {
+                mismatches += Same(left, Side - 1, k, right, 0, k) ? 0 : 1;
+                mismatches += Same(below, k, Side - 1, right, k, 0) ? 0 : 1;
+            }
+
+            Expect.Equal(0, mismatches, "the shared edges match");
+            Expect.Near(right.Heights[0, 10], right.Heights[2, 10], "the level place reaches the right plan");
+            Expect.Near(right.Heights[0, 10], left.Heights[Side - 3, 10], "and the left, at the same height");
+            Expect.True(right.Blocked[10 * Side] == Pathing.None && left.Blocked[10 * Side + Side - 1] == Pathing.None, "and is not blocked on either side");
+
+            var shifted = generator.Plan(Bounds.FromCorners(new Vector2(-2432f, 0f), new Vector2(128f, 2560f)));
+            var along = 0;
+            for (var row = 0; row < Side; row++)
+            {
+                for (var column = 0; column < Side - 1; column++)
+                {
+                    along += Same(right, column + 1, row, shifted, column, row) ? 0 : 1;
+                }
+            }
+
+            Expect.Equal(0, along, "an area a corner to the right is the same ground a corner along");
+        }
+
+        /// <summary>One area planned whole and as four quarters gives the same corners.</summary>
+        public static void Quarters(FakeWorld world)
+        {
+            var generator = Hills(4);
+            generator.EdgeFade = 0f;
+            generator.Level(1300f, 1250f, 400f);
+            var whole = generator.Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(5120f, 5120f)));
+            var differ = 0;
+            for (var quarter = 0; quarter < 4; quarter++)
+            {
+                var offsetColumn = quarter % 2 * (Side - 1);
+                var offsetRow = quarter / 2 * (Side - 1);
+                var part = generator.Plan(Bounds.FromCorners(new Vector2(offsetColumn * 128f, offsetRow * 128f), new Vector2(offsetColumn * 128f + 2560f, offsetRow * 128f + 2560f)));
+                for (var row = 0; row < Side; row++)
+                {
+                    for (var column = 0; column < Side; column++)
+                    {
+                        differ += Same(whole, offsetColumn + column, offsetRow + row, part, column, row) ? 0 : 1;
+                    }
+                }
+            }
+
+            Expect.Equal(41, whole.Columns, "the whole is 41 corners across");
+            Expect.Equal(0, differ, "every quarter's corners are the whole's");
+        }
+
+        /// <summary>Whether a corner of one plan has the same height, tile and blocked pathing as a corner of another.</summary>
+        private static bool Same(TerrainPlan first, int firstColumn, int firstRow, TerrainPlan second, int secondColumn, int secondRow)
+        {
+            var a = firstRow * first.Columns + firstColumn;
+            var b = secondRow * second.Columns + secondColumn;
+            return first.Heights.Cells[a] == second.Heights.Cells[b] && first.Tiles[a] == second.Tiles[b] && first.Blocked[a] == second.Blocked[b];
+        }
+
+        /// <summary>Heights stay from Lowest to Highest and fill most of it, with a fade or not; with a fade the edge is the ground as it was and the middle is as without it.</summary>
         public static void RangeAndFade(FakeWorld world)
         {
             var generator = new TerrainGenerator(3) { Lowest = -100f, Highest = 400f, EdgeFade = 0f };
-            var plan = generator.Plan(Area());
-            Expect.Near(-100f, plan.Heights.Lowest(), "the lowest corner is at Lowest");
-            Expect.Near(400f, plan.Heights.Highest(), "the highest at Highest");
+            var plan = generator.Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(6400f, 6400f)));
+            Expect.True(plan.Heights.Lowest() >= -100f && plan.Heights.Highest() <= 400f, "inside the range: " + plan.Heights.Lowest() + " to " + plan.Heights.Highest());
+            Expect.True(plan.Heights.Highest() - plan.Heights.Lowest() > 250f, "over half of it in a large area: " + plan.Heights.Lowest() + " to " + plan.Heights.Highest());
+            plan = generator.Plan(Area());
             generator.EdgeFade = 512f;
             var faded = generator.Plan(Area());
             var edge = 0f;
@@ -138,20 +211,23 @@ namespace Moonwell.Testing
         {
             var generator = Steep(8);
             generator.Block(Pathing.Walk | Pathing.Build, fromSlope: 20f);
-            generator.Block(Pathing.Fly, fromHeight: 0.9f);
+            generator.Block(Pathing.Fly, fromHeight: 0.7f);
             var open = generator.Plan(Area());
             var walls = 0;
             var free = 0;
-            var top = 0;
+            var high = 0;
+            var wrong = 0;
             for (var k = 0; k < Side * Side; k++)
             {
                 walls += (open.Blocked[k] & Pathing.Walk) != 0 ? 1 : 0;
                 free += open.Blocked[k] == Pathing.None ? 1 : 0;
-                top = open.Heights.Cells[k] > open.Heights.Cells[top] ? k : top;
+                var fits = open.Heights.Cells[k] / 600f >= 0.7f;
+                high += fits ? 1 : 0;
+                wrong += fits != ((open.Blocked[k] & Pathing.Fly) != 0) ? 1 : 0;
             }
 
             Expect.True(walls > 0 && free > 0, "steep corners are blocked and gentle ones are not: " + walls + ", " + free);
-            Expect.True((open.Blocked[top] & Pathing.Fly) != 0, "the highest corner fits the height rule");
+            Expect.True(high > 0 && wrong == 0, "the high corners, and only they, fit the height rule: " + high + ", " + wrong);
 
             generator.Level(1280f, 1280f, 300f);
             var plan = generator.Plan(Area());
