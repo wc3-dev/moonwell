@@ -18,16 +18,16 @@ namespace Moonwell.Procgen
         /// <summary>How many corners across a patch of a rule's cover is.</summary>
         private const float PatchSize = 4f;
 
-        // What the work costs in the game's Lua, in microseconds, from the timings of 11-11 (game facts): fixed numbers, so a
-        // step of Make does the same corners on every machine.
-        private const float NoiseCost = 4.5f;   // a corner's noise, a layer
+        // What the work costs in the game's Lua, in microseconds, measured on 3.0.1.24371 (game facts, 11-13): fixed numbers,
+        // so a step of Make does the same corners on every machine.
+        private const float NoiseCost = 3.6f;   // a corner's noise, a layer
         private const float LevelCost = 1.5f;   // a corner in a level place's reach
         private const float FadeCost = 0.5f;    // a corner faded
-        private const float RuleCost = 1f;      // a corner, a rule
-        private const float RaiseCost = 5.5f;   // a corner's crater
-        private const float PaintCost = 3.5f;   // a corner painted
+        private const float RuleCost = 0.5f;    // a corner, a rule
+        private const float RaiseCost = 6.2f;   // a corner's crater
+        private const float PaintCost = 4f;     // a corner painted
         private const float ScanCost = 6.5f;    // a corner's 16 cells looked at for blocking
-        private const float BlockCost = 115f;   // a blocked corner, a kind
+        private const float BlockCost = 130f;   // a blocked corner, a kind
 
         /// <summary>The names of Make's steps, as <c>TerrainMaking.Step</c> gives them.</summary>
         private const string HeightsStep = "Heights";

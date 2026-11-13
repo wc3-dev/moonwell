@@ -1327,6 +1327,8 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.
 - A plan of 53 by 53 corners took 62 ms to work out in the game, and its 2,601 craters 14 ms to make (3.0.1.24371).
+  Planned and made in one go with tiles and blocked corners it took 132 ms, a frozen frame; made in steps of 1 to
+  8 ms no frame was longer than the game's own (about 30 ms), and at 4 ms a step it took 1 s (3.0.1.24371).
 
 ## Interactions and finding
 
