@@ -2654,6 +2654,8 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
 `moonwell build` builds the map in the current folder into `build\MyMap.w3x`; `moonwell run` builds it and starts the
 game with it. Both make a development build: it checks the values Moonwell receives and keeps the Lua readable.
 `--release` makes the release build. `moonwell run --game <exe>` names the game when it is not in its usual place.
+A second build of the same map started while one runs (a `watch` and a `run`, say) waits for the first to end and
+says so.
 
 | Command | What it does |
 |---|---|
