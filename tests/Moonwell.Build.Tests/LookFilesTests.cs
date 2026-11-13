@@ -35,9 +35,9 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_piece_is_cut_at_a_power_of_two_and_mirrored_when_left_is_greater()
         {
-            var top = Look(Quad, Row(new Region(0, 0, 1, 0.5)));
-            var mirrored = Look(Quad, Row(new Region(1, 0, 0, 0.5)));
-            var piece = Look(Quad, Row(new Region(0, 0, 0.75, 0.5)));
+            var top = Look(Quad, RowOf(new Region(0, 0, 1, 0.5)));
+            var mirrored = Look(Quad, RowOf(new Region(1, 0, 0, 0.5)));
+            var piece = Look(Quad, RowOf(new Region(0, 0, 0.75, 0.5)));
 
             Assert.Equal((64, 16), (top.Width, top.Height));
             Assert.Equal((255, 0, 0), Rgb(top, 0, 0));
@@ -52,8 +52,8 @@ namespace Moonwell.Build.Tests
         {
             var white = Make(16, 16, (x, y) => (255, 255, 255, 255));
 
-            var green = Look(white, Row(null, new Rgb(0, 255, 0)));
-            var round = Look(white, Row(null, null, round: true));
+            var green = Look(white, RowOf(null, new Rgb(0, 255, 0)));
+            var round = Look(white, RowOf(null, null, round: true));
 
             Assert.Equal((0, 255, 0), Rgb(green, 5, 5));
             Assert.Equal(0, round.At(1, 1, 3));
@@ -64,7 +64,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_bar_step_is_the_looks_left_part()
         {
-            var top = Look(Quad, Row(new Region(0, 0, 1, 0.5)));
+            var top = Look(Quad, RowOf(new Region(0, 0, 1, 0.5)));
 
             var half = Cut(top, 32);
             var quarter = Cut(top, 16);
@@ -88,9 +88,9 @@ namespace Moonwell.Build.Tests
             Assert.Equal(message, error.Message);
         }
 
-        private static Row Row(Region? region, Rgb? color = null, bool round = false)
+        private static LookFiles.Row RowOf(Region? region, Rgb? color = null, bool round = false)
         {
-            return new Row("A", "A", 2, region, color, round, false);
+            return new LookFiles.Row("A", "A", 2, region, color, round, false);
         }
 
         private static (int, int, int) Rgb(Picture picture, int x, int y)
@@ -142,19 +142,14 @@ namespace Moonwell.Build.Tests
             Directory.CreateDirectory(assets);
             File.Copy(Path.Combine(TestFolders.Fixture("Images"), "red-64x32.png"), Path.Combine(assets, "Bar.png"));
             File.WriteAllText(Path.Combine(assets, "Bar.looks.csv"), "Name,Left,Top,Right,Bottom,Round\nHalf,0,0,0.5,1,\nRing,,,,,yes\n");
-            File.WriteAllText(Path.Combine(copy, "Looked.cs"), """
+            File.WriteAllText(Path.Combine(copy, "Hello.cs"), """
                 namespace Sample
                 {
-                    public static class Looked
+                    public sealed class Hello : Moonwell.GameComponent
                     {
-                        public static string Half()
+                        public override void OnGameStart()
                         {
-                            return Moonwell.Looks.Bar.Half;
-                        }
-
-                        public static string Ring(string icon)
-                        {
-                            return Moonwell.Looks.Round(icon);
+                            Moonwell.Natives.DisplayTextToPlayer(Moonwell.Natives.Player(0), 0f, 0f, Moonwell.Looks.Bar.Half + Moonwell.Looks.Round("x"));
                         }
                     }
                 }

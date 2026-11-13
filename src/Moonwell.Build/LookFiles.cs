@@ -297,7 +297,7 @@ namespace Moonwell.Build
                 return null;
             }
 
-            var (w, h, p) = Images.ReadBlp(bytes, $"the game's {table.Base}.blp");
+            var (w, h, p) = Images.ReadGame(bytes, $"the game's {table.Base}.blp");
             return new Picture(w, h, p);
         }
 
