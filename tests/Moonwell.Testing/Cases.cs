@@ -1152,6 +1152,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.grid-raise", Run = GridChangeCases.Raise });
             list.Add(new Case { Name = "terrain.change.grid-tiles", Run = GridChangeCases.Tiles });
             list.Add(new Case { Name = "terrain.change.grid-block", Run = GridChangeCases.Block });
+            list.Add(new Case { Name = "terrain.change.grid-block-sparse", Run = GridChangeCases.SparseBlock });
             list.Add(new Case { Name = "terrain.change.grid-refused", Run = GridChangeCases.Refused });
             list.Add(new Case { Name = "terrain.change.grid-outside-and-copy", Run = GridChangeCases.OutsideAndCopy });
             list.Add(new Case { Name = "terrain.change.save-and-load", Run = ChangeCases.SaveAndLoad });
