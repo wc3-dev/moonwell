@@ -26,7 +26,7 @@ namespace Moonwell.Testing
             return Bounds.FromCorners(new Vector2(0f, 0f), new Vector2((Side - 1) * 128f, (Side - 1) * 128f));
         }
 
-        /// <summary>Hills, tiles, blocked slopes, a forest, a home, camps and roads; the world's own edge fades.</summary>
+        /// <summary>Hills, tiles, blocked slopes, a forest, a mix of two biomes above and a third to the right, a home, camps and roads; the world's own edge fades.</summary>
         private static TerrainGenerator Land(int seed, out PlaceList camps)
         {
             var land = new TerrainGenerator(seed) { Lowest = 0f, Highest = 500f, FeatureSize = 1024f };
@@ -34,6 +34,8 @@ namespace Moonwell.Testing
             land.Paint(Tile.LordaeronSummerDirt, fromHeight: 0.4f, cover: 0.6f);
             land.Block(Pathing.Walk | Pathing.Build, fromSlope: 25f);
             land.Forest(Tree, cover: 0.5f, density: 0.6f, toSlope: 25f);
+            land.Mix(Bounds.FromCorners(new Vector2(0f, 2560f), new Vector2(5000f, 5000f)), 1536f, new RockyHills(), new Grassland());
+            land.Use(new SnowyForest(), Bounds.FromCorners(new Vector2(2560f, 0f), new Vector2(5000f, 2560f)));
             var home = land.Level(1024f, 1024f, 384f);
             camps = land.Places("Camp", World(), 4, radius: 256f, spacing: 1200f, from: home, difficulties: 2);
             camps.Add(1, Kobold, Kobold);
@@ -169,6 +171,13 @@ namespace Moonwell.Testing
             Expect.Equal(0, sizes, "chunks of 7 corners, the last ones 5");
             Expect.Equal(0, mismatches, "every chunk's corners are the whole plan's");
             Expect.Equal(whole.Places.Count, held, "each place held by one chunk");
+            var biomed = 0;
+            foreach (var tile in whole.Tiles)
+            {
+                biomed += tile != 0 && tile != Tile.LordaeronSummerGrass && tile != Tile.LordaeronSummerDirt ? 1 : 0;
+            }
+
+            Expect.True(biomed > 100, "the biomes' own tiles in the world: " + biomed);
             Expect.True(whole.Places.Count >= 3, "a home and camps: " + whole.Places.Count);
             Expect.Near(0f, whole.Heights[0, 20], "the world's edge fades");
             Expect.Throws<ArgumentException>(() => land.Grow(World(), Game.Instance, chunkSize: 0), "a chunk size of 0");

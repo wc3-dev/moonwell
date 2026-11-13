@@ -9,9 +9,10 @@ namespace Moonwell.Procgen
     /// them. Set it up, then <c>Plan(area)</c> works the ground out and the plan's
     /// <c>Apply</c> makes it. The same seed, settings and area give the same ground on every machine; a seed from
     /// <c>Game.Random</c> gives new ground every game. The game makes no cliffs, ramps or water while it runs, so the
-    /// ground is slopes. Slopes are read from the heights the plan adds, so the rules fit ground that starts flat.
+    /// ground is slopes. Slopes are read from the heights the plan adds, so the rules fit ground that starts flat. A
+    /// generator is a biome: its own hill shape and rules are the ground outside every biome it uses.
     /// </summary>
-    public sealed class TerrainGenerator
+    public sealed class TerrainGenerator : Biome
     {
         /// <summary>The distance between corners.</summary>
         private const float TileSize = 128f;
@@ -89,9 +90,16 @@ namespace Moonwell.Procgen
 
         private const string PlacesStep = "Places";
 
-        private readonly List<Rule> paints = new List<Rule>();
-        private readonly List<Rule> blocks = new List<Rule>();
-        private readonly List<TreeRule> trees = new List<TreeRule>();
+        /// <summary>How far across, in corners, the patches of noise that pick a corner's biome where biomes blend are.</summary>
+        private const float PickSize = 3f;
+
+        // Measured in .NET over a 400 by 400 corner plan of two biomes (11-13): the noise is read at MixPatch over the size, so
+        // patches come about the size across, and its margin is MixSlope a unit of that, so a border blends over about the blend.
+        private const float MixPatch = 1.45f;
+        private const float MixSlope = 0.385f;
+
+        /// <summary>The Use and Mix calls, in order: later ones lie over earlier ones.</summary>
+        private readonly List<Spot> spots = new List<Spot>();
 
         /// <summary>Every place, from Level, Places and Exit, in the order made.</summary>
         private readonly List<Place> places = new List<Place>();
@@ -111,90 +119,51 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public int Seed { get; }
 
-        /// <summary>
-        /// How far below the ground as it was the ground goes at most, in the game's units; below 0 digs. The same for
-        /// every area, so plans of one generator meet. With a range
-        /// around 0, as it starts, the ground stays at its level on the whole and the edge fade is gentle; a range all above
-        /// 0 makes a plateau, with a steep rim where it fades.
-        /// </summary>
-        public float Lowest { get; set; } = -150f;
-
-        /// <summary>How far above the ground as it was the ground goes at most. Most areas reach close to Lowest and Highest, and a few corners sit flat on them.</summary>
-        public float Highest { get; set; } = 150f;
-
-        /// <summary>How far across a hill is, in the game's units.</summary>
-        public float FeatureSize { get; set; } = 1536f;
-
-        /// <summary>The layers of noise: each adds bumps half the size of the one before.</summary>
-        public int Layers { get; set; } = 4;
-
-        /// <summary>How strong each layer is beside the one before, from 0 (smooth) to 1 (rough).</summary>
-        public float Roughness { get; set; } = 0.5f;
-
         /// <summary>How far in from the area's edge the heights fade to the ground as it was, so an area inside a hand-made map has no seam; 0 for no fade, for areas that meet each other.</summary>
         public float EdgeFade { get; set; } = 512f;
 
-        /// <summary>
-        /// Paints a tile (one of <c>Tile</c>'s) on every corner whose height and slope are in the ranges. A height is a
-        /// share of the range, 0 at <c>Lowest</c> and 1 at <c>Highest</c>; a slope is in degrees. A
-        /// <paramref name="cover"/> below 1 paints patches about 512 across: 0.5 covers about half of the corners, and
-        /// less covers fewer. Later rules paint over earlier ones. A tile of 0 throws ArgumentException.
-        /// </summary>
-        public void Paint(int tile, float fromHeight = 0f, float toHeight = 1f, float fromSlope = 0f, float toSlope = 90f, float cover = 1f)
-        {
-            if (tile == 0)
-            {
-                throw new ArgumentException("TerrainGenerator.Paint takes one of Tile's tiles, not 0");
-            }
-
-            paints.Add(new Rule(tile, fromHeight, toHeight, fromSlope, toSlope, cover, Seed + 7919 * (paints.Count + 1)));
-        }
-
-        /// <summary>Takes kinds of pathing from every corner whose height and slope are in the ranges, read as <c>Paint</c>'s. Rules add up.</summary>
-        public void Block(Pathing kinds, float fromHeight = 0f, float toHeight = 1f, float fromSlope = 0f, float toSlope = 90f)
-        {
-            blocks.Add(new Rule((int)kinds, fromHeight, toHeight, fromSlope, toSlope, 1f, 0));
-        }
-
-        /// <summary>
-        /// Stands patches of forest about 1024 across on the corners whose height, slope and tile fit, read as <c>Paint</c>'s,
-        /// with <paramref name="onTile"/> a tile this generator paints there (0 for any corner). <paramref name="cover"/> is
-        /// as <c>Paint</c>'s: 0.5 covers about half of the corners, and less covers fewer. <paramref name="density"/> is the
-        /// share of a patch's corners that get a tree, 1 for a thick forest. A tree is a destructable of
-        /// <paramref name="type"/> (<c>ObjectTypes.FourCC("LTlt")</c>) in one of its first <paramref name="variations"/>
-        /// models (the game's tree walls have 10). Trees keep off level places, a corner has one tree at most, and a later
-        /// tree rule takes a corner from an earlier one. A type of 0, or fewer than 1 variation, throws ArgumentException.
-        /// </summary>
-        public void Forest(int type, float cover = 0.5f, float density = 1f, float fromHeight = 0f, float toHeight = 1f, float fromSlope = 0f, float toSlope = 90f, int onTile = 0, int variations = 10)
-        {
-            trees.Add(new TreeRule(TreeRule.Forest, type, variations, cover, density, 0f, TreeSeed(), new Rule(onTile, fromHeight, toHeight, fromSlope, toSlope, 1f, 0)));
-        }
-
-        /// <summary>
-        /// Stands forest walls along winding lines through the world, about <paramref name="spacing"/> apart (in the game's
-        /// units) and <paramref name="width"/> trees thick, with a share <paramref name="gaps"/> of their length left open
-        /// in gaps about 512 across, so they edge open ground and channel movement. The lines come from where the corners
-        /// are in the world, so they go on across plans of this generator. Read as <c>Forest</c>'s otherwise. A spacing or
-        /// width of 0 or less throws ArgumentException, as <c>Forest</c> does.
-        /// </summary>
-        public void Wall(int type, float spacing = 2048f, float width = 2f, float gaps = 0.15f, float fromHeight = 0f, float toHeight = 1f, float fromSlope = 0f, float toSlope = 90f, int onTile = 0, int variations = 10)
-        {
-            if (!(spacing > 0f) || !(width > 0f))
-            {
-                throw new ArgumentException("TerrainGenerator.Wall takes a spacing and a width above 0, not " + spacing + " and " + width);
-            }
-
-            trees.Add(new TreeRule(TreeRule.Walls, type, variations, gaps, width * width / 4f, spacing / TileSize, TreeSeed(), new Rule(onTile, fromHeight, toHeight, fromSlope, toSlope, 1f, 0)));
-        }
-
-        /// <summary>Stands single trees on a share <paramref name="chance"/> of the corners that fit, read as <c>Forest</c>'s.</summary>
-        public void Scatter(int type, float chance = 0.02f, float fromHeight = 0f, float toHeight = 1f, float fromSlope = 0f, float toSlope = 90f, int onTile = 0, int variations = 10)
-        {
-            trees.Add(new TreeRule(TreeRule.Single, type, variations, chance, 0f, 0f, TreeSeed(), new Rule(onTile, fromHeight, toHeight, fromSlope, toSlope, 1f, 0)));
-        }
-
         /// <summary>The tile painted along roads, one of <c>Tile</c>'s; 0 (as it starts) leaves the tiles the rules paint.</summary>
         public int RoadTile { get; set; }
+
+        /// <summary>
+        /// How far biomes blend at their borders, in the game's units: past the edge of a <c>Use</c>'s or <c>Mix</c>'s
+        /// area into what lies under it, and across the borders of a <c>Mix</c>'s patches. Heights blend smoothly over it,
+        /// and tiles, trees and blocking come from one biome or the other in ragged patches. 0 gives sharp borders.
+        /// </summary>
+        public float BiomeBlend { get; set; } = 512f;
+
+        /// <summary>
+        /// Puts a biome in an area: its hills, tiles, trees and blocking there, blending over <c>BiomeBlend</c> past the
+        /// area's edge into what lies under it. Later <c>Use</c> and <c>Mix</c> calls lie over earlier ones, and the
+        /// generator's own settings and rules are the ground outside every biome. A plan reads the biome as it is when the
+        /// plan starts, so changing it later changes later plans. Biome borders come from the world, so plans of one
+        /// generator agree on a border across their edge. A null biome throws ArgumentException.
+        /// </summary>
+        public void Use(Biome biome, Bounds area)
+        {
+            Mix(area, 1f, biome);
+        }
+
+        /// <summary>
+        /// Puts several biomes in an area, in patches about <paramref name="size"/> across (in the game's units) picked
+        /// from the seed and blended over <c>BiomeBlend</c> at their borders; read as <c>Use</c>'s otherwise. A biome
+        /// listed twice covers about twice the ground. A size of 0 or less, no biomes or a null one throws ArgumentException.
+        /// </summary>
+        public void Mix(Bounds area, float size, params Biome[] biomes)
+        {
+            var refused = !(size > 0f) || biomes == null || biomes.Length == 0;
+            for (var k = 0; !refused && k < biomes!.Length; k++)
+            {
+                refused = biomes[k] == null;
+            }
+
+            if (refused)
+            {
+                throw new ArgumentException("TerrainGenerator.Use and Mix take biomes, none null, and a size above 0, not " + size);
+            }
+
+            spots.Add(new Spot(area, (Biome[])biomes!.Clone(), size, Seed + 32452843 * (spots.Count + 1)));
+        }
 
         /// <summary>
         /// A level place at a point (the game's coordinates), for a base, a hub or a spawn: the ground within the radius is
@@ -533,11 +502,13 @@ namespace Moonwell.Procgen
         [ChangesState]
         public GrowingWorld Grow(Bounds area, Scope scope, int chunkSize = 16)
         {
-            if (chunkSize < 1 || !(FeatureSize > 0f) || Layers < 1)
+            if (chunkSize < 1)
             {
-                throw new ArgumentException("TerrainGenerator.Grow takes a chunk size of 1 or more, a FeatureSize above 0 and 1 layer or more, not " + chunkSize + ", " + FeatureSize + " and " + Layers);
+                throw new ArgumentException("TerrainGenerator.Grow takes a chunk size of 1 or more, not " + chunkSize);
             }
 
+            // A plan of one corner refuses now what a chunk's plan would refuse later, inside a step.
+            Plan(Bounds.FromCorners(area.Min, area.Min), area);
             return new GrowingWorld(this, area, scope, chunkSize);
         }
 
@@ -552,7 +523,7 @@ namespace Moonwell.Procgen
                 work.Add(RoadsStep, ground.RoadCount, ground.RoadsCost / ground.RoadCount, ground.Roads, ground.RoadCostOf);
             }
 
-            work.Add(HeightsStep, ground.Cells, NoiseCost * Layers, ground.Hills);
+            work.Add(HeightsStep, ground.Cells, ground.HillCost, ground.Hills);
             work.Add(HeightsStep, ground.Places, LevelCost * ground.PlaceCorners, ground.Levels);
             if (EdgeFade > 0f)
             {
@@ -560,14 +531,14 @@ namespace Moonwell.Procgen
             }
 
             work.Add(HeightsStep, ground.Corners, RaiseCost, ground.Heights);
-            work.Add(TilesStep, ground.Corners, RuleCost * (2 + paints.Count + blocks.Count + trees.Count) + PaintCost + TreeRulesCost(), ground.Rules);
-            if (blocks.Count > 0)
+            work.Add(TilesStep, ground.Corners, ground.RulesCost, ground.Rules);
+            if (ground.AnyBlocks)
             {
                 // shortcut: a guess of one blocked corner in eight until the rules have run, when the bar's speed changes to fit.
                 work.Add(BlockedStep, ground.Corners, ScanCost + BlockCost / 8f, ground.Blocks, ground.BlockCostOf, ground.BlocksCost);
             }
 
-            if (trees.Count > 0)
+            if (ground.AnyTrees)
             {
                 // shortcut: a guess of one tree in eight corners until the rules have run, as for blocking.
                 work.Add(TreesStep, ground.Corners, ScanCost + TreeCost / 8f, ground.Trees, ground.TreeCostOf, ground.TreesCost);
@@ -624,43 +595,6 @@ namespace Moonwell.Procgen
             return true;
         }
 
-        /// <summary>
-        /// How far the noise is stretched about its middle: layers added together stay nearer the middle than one does, so
-        /// this brings them back to one layer's spread, whatever the layers and roughness.
-        /// </summary>
-        private float Spread()
-        {
-            var sum = 0f;
-            var squares = 0f;
-            var strength = 1f;
-            for (var layer = 0; layer < Layers; layer++)
-            {
-                sum += strength;
-                squares += strength * strength;
-                strength *= Roughness;
-            }
-
-            return sum / Maths.Sqrt(squares);
-        }
-
-        /// <summary>A seed for the next tree rule, apart from the paint rules' seeds.</summary>
-        private int TreeSeed()
-        {
-            return Seed + 104729 * (trees.Count + 1);
-        }
-
-        /// <summary>What deciding a corner's tree costs, every tree rule.</summary>
-        private float TreeRulesCost()
-        {
-            var cost = 0f;
-            foreach (var rule in trees)
-            {
-                cost += rule.Kind == TreeRule.Forest ? ForestCost : rule.Kind == TreeRule.Walls ? WallCost : ScatterCost;
-            }
-
-            return cost;
-        }
-
         /// <summary>The kinds in a set of pathing.</summary>
         private static int Kinds(Pathing kinds)
         {
@@ -711,16 +645,24 @@ namespace Moonwell.Procgen
 
             private readonly Scope? scope;
             private readonly int seed;
-            private readonly float featureCells;
-            private readonly int layers;
-            private readonly float roughness;
-            private readonly float lowest;
-            private readonly float highest;
-            private readonly float spread;
             private readonly float fade;
-            private readonly Rule[] paints;
-            private readonly Rule[] blocks;
-            private readonly TreeRule[] trees;
+            private readonly float blend;
+
+            /// <summary>The biomes as the plan takes them: the generator's own first, then each one that Use and Mix name, once.</summary>
+            private readonly Land[] lands;
+
+            /// <summary>The Use and Mix calls, and each one's biomes as lands.</summary>
+            private readonly Spot[] spots;
+
+            private readonly int[][] spotLands;
+
+            /// <summary>Each land's share of the point weighed last, and the scores of a Mix's biomes there.</summary>
+            private readonly float[] weights;
+
+            private readonly float[] scores;
+
+            /// <summary>The land each cell takes its rules from.</summary>
+            private readonly int[] landOf;
             private readonly Place[] places;
             private readonly int roadTile;
 
@@ -759,23 +701,41 @@ namespace Moonwell.Procgen
 
             internal Groundwork(TerrainGenerator generator, Bounds area, Bounds whole, Scope? scope)
             {
-                if (!(generator.FeatureSize > 0f) || generator.Layers < 1)
-                {
-                    throw new ArgumentException("TerrainGenerator.Plan takes a FeatureSize above 0 and 1 layer or more, not " + generator.FeatureSize + " and " + generator.Layers);
-                }
-
                 this.scope = scope;
                 seed = generator.Seed;
-                featureCells = generator.FeatureSize / TileSize;
-                layers = generator.Layers;
-                roughness = generator.Roughness;
-                lowest = generator.Lowest;
-                highest = generator.Highest;
-                spread = generator.Spread();
                 fade = generator.EdgeFade / TileSize;
-                paints = generator.paints.ToArray();
-                blocks = generator.blocks.ToArray();
-                trees = generator.trees.ToArray();
+                blend = generator.BiomeBlend > 0f ? generator.BiomeBlend : 0f;
+                var biomes = new List<Biome> { generator };
+                spots = generator.spots.ToArray();
+                spotLands = new int[spots.Length][];
+                var most = 1;
+                for (var k = 0; k < spots.Length; k++)
+                {
+                    var named = spots[k].Biomes;
+                    spotLands[k] = new int[named.Length];
+                    for (var i = 0; i < named.Length; i++)
+                    {
+                        var at = biomes.IndexOf(named[i]);
+                        if (at < 0)
+                        {
+                            at = biomes.Count;
+                            biomes.Add(named[i]);
+                        }
+
+                        spotLands[k][i] = at;
+                    }
+
+                    most = Math.Max(most, named.Length);
+                }
+
+                lands = new Land[biomes.Count];
+                for (var k = 0; k < lands.Length; k++)
+                {
+                    lands[k] = new Land(biomes[k], seed);
+                }
+
+                weights = new float[lands.Length];
+                scores = new float[most];
                 places = generator.places.ToArray();
                 roadTile = generator.RoadTile;
                 var size = area.Size;
@@ -793,9 +753,40 @@ namespace Moonwell.Procgen
                 level = new bool[cells.Length];
                 roadGap = new float[cells.Length];
                 roadHeight = new float[cells.Length];
+                landOf = new int[cells.Length];
                 for (var at = 0; at < cells.Length; at++)
                 {
                     roadGap[at] = float.MaxValue;
+                }
+
+                // A cell reads the lands of the calls that reach the area; a road's points read the ground anywhere along it.
+                var reaches = new bool[lands.Length];
+                reaches[0] = true;
+                var pointCost = 0f;
+                for (var k = 0; k < spots.Length; k++)
+                {
+                    var mixCost = spotLands[k].Length > 1 ? 2f * NoiseCost * spotLands[k].Length : 0f;
+                    pointCost += mixCost;
+                    if (spots[k].Reaches(area, blend + TileSize))
+                    {
+                        HillCost += mixCost;
+                        foreach (var land in spotLands[k])
+                        {
+                            reaches[land] = true;
+                        }
+                    }
+                }
+
+                for (var k = 0; k < lands.Length; k++)
+                {
+                    pointCost += NoiseCost * lands[k].Layers;
+                    if (reaches[k])
+                    {
+                        HillCost += NoiseCost * lands[k].Layers;
+                        RulesCost = Math.Max(RulesCost, lands[k].RulesCost);
+                        AnyBlocks = AnyBlocks || lands[k].Blocks.Length > 0;
+                        AnyTrees = AnyTrees || lands[k].Trees.Length > 0;
+                    }
                 }
 
                 var near = new List<Road>();
@@ -812,7 +803,7 @@ namespace Moonwell.Procgen
                     if (cost > 0f)
                     {
                         near.Add(road);
-                        costs.Add(cost + points.Count * (NoiseCost * layers + PlaceCost * places.Length));
+                        costs.Add(cost + points.Count * (pointCost + PlaceCost * places.Length));
                     }
                 }
 
@@ -829,6 +820,17 @@ namespace Moonwell.Procgen
 
             /// <summary>The cells: the area's corners and one more on every side.</summary>
             internal int Cells => cells.Length;
+
+            /// <summary>What a cell's hills cost, with every biome that reaches the area.</summary>
+            internal float HillCost { get; }
+
+            /// <summary>What a corner's rules cost, by the biome that reaches the area with the most.</summary>
+            internal float RulesCost { get; }
+
+            /// <summary>Whether a biome that reaches the area blocks, or stands trees.</summary>
+            internal bool AnyBlocks { get; }
+
+            internal bool AnyTrees { get; }
 
             /// <summary>The area's corners.</summary>
             internal int Corners => columns * rows;
@@ -890,7 +892,10 @@ namespace Moonwell.Procgen
             {
                 for (var at = from; at < to; at++)
                 {
-                    var height = Height(firstColumn - 1 + at % wide, firstRow - 1 + at / wide);
+                    var column = firstColumn - 1 + at % wide;
+                    var row = firstRow - 1 + at / wide;
+                    var height = Height(column, row);
+                    landOf[at] = lands.Length > 1 ? Pick(column, row) : 0;
                     var gap = roadGap[at];
                     if (gap < RoadBlend)
                     {
@@ -980,14 +985,18 @@ namespace Moonwell.Procgen
             /// <summary>Works out the tile and the blocked pathing of the corners in a range by the rules, and paints them when making.</summary>
             internal void Rules(int from, int to)
             {
-                var span = highest - lowest;
                 for (var at = from; at < to; at++)
                 {
                     var cell = Cell(at);
+                    var land = lands[landOf[cell]];
+                    var paints = land.Paints;
+                    var blocks = land.Blocks;
+                    var trees = land.Trees;
+                    var span = land.Highest - land.Lowest;
                     var alongX = (cells[cell + 1] - cells[cell - 1]) / (2f * TileSize);
                     var alongY = (cells[cell + wide] - cells[cell - wide]) / (2f * TileSize);
                     var steep = alongX * alongX + alongY * alongY;
-                    var height = span != 0f ? Maths.Clamp01((cells[cell] - lowest) / span) : 0f;
+                    var height = span != 0f ? Maths.Clamp01((cells[cell] - land.Lowest) / span) : 0f;
                     for (var k = 0; k < paints.Length; k++)
                     {
                         var rule = paints[k];
@@ -1210,11 +1219,123 @@ namespace Moonwell.Procgen
                 return toColumn >= fromColumn && toRow >= fromRow ? (toColumn - fromColumn + 1) * (toRow - fromRow + 1) : 0;
             }
 
-            /// <summary>The height of a point of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
+            /// <summary>
+            /// The height of a point of the world, counted in corners from (0, 0): each biome's hills there, by its share of the
+            /// point, which it leaves in the weights.
+            /// </summary>
             private float Height(float column, float row)
             {
-                var noise = Noise.Layered(seed, column / featureCells, row / featureCells, layers, roughness);
-                return lowest + (highest - lowest) * Maths.Clamp01(0.5f + (noise - 0.5f) * spread);
+                if (lands.Length == 1)
+                {
+                    return lands[0].Height(seed, column, row);
+                }
+
+                Weigh(column * TileSize, row * TileSize);
+                var height = 0f;
+                for (var b = 0; b < lands.Length; b++)
+                {
+                    if (weights[b] > 0f)
+                    {
+                        height += weights[b] * lands[b].Height(seed, column, row);
+                    }
+                }
+
+                return height;
+            }
+
+            /// <summary>
+            /// Each land's share of a point of the world, in the weights: the generator's own under every call, and each Use and
+            /// Mix in order over what came before, full inside its area and fading out over the blend past it; a Mix shares its
+            /// part between its biomes by their patches' noise, the highest whole and the others fading out over a margin.
+            /// </summary>
+            private void Weigh(float x, float y)
+            {
+                weights[0] = 1f;
+                for (var b = 1; b < weights.Length; b++)
+                {
+                    weights[b] = 0f;
+                }
+
+                for (var k = 0; k < spots.Length; k++)
+                {
+                    var spot = spots[k];
+                    var share = spot.Share(x, y, blend);
+                    if (!(share > 0f))
+                    {
+                        continue;
+                    }
+
+                    for (var b = 0; b < weights.Length; b++)
+                    {
+                        weights[b] *= 1f - share;
+                    }
+
+                    var named = spotLands[k];
+                    if (named.Length == 1)
+                    {
+                        weights[named[0]] += share;
+                        continue;
+                    }
+
+                    var scale = MixPatch / spot.Size;
+                    var top = 0f;
+                    for (var i = 0; i < named.Length; i++)
+                    {
+                        scores[i] = Noise.Layered(spot.Seed + 7919 * i, x * scale, y * scale, 2, 0.5f);
+                        top = Math.Max(top, scores[i]);
+                    }
+
+                    var margin = MixSlope * blend * scale;
+                    var sum = 0f;
+                    for (var i = 0; i < named.Length; i++)
+                    {
+                        var t = margin > 0f ? Maths.Clamp01(1f - (top - scores[i]) / margin) : scores[i] >= top ? 1f : 0f;
+                        scores[i] = t * t * (3f - 2f * t);
+                        sum += scores[i];
+                    }
+
+                    for (var i = 0; i < named.Length; i++)
+                    {
+                        weights[named[i]] += share * scores[i] / sum;
+                    }
+                }
+            }
+
+            /// <summary>
+            /// The land a corner of the world takes its rules from, by the weights Height left: the only one, or where they
+            /// blend, one picked by noise against their shares, so the border is ragged and each side keeps its own rules.
+            /// </summary>
+            private int Pick(int column, int row)
+            {
+                var pick = -1f;
+                var sum = 0f;
+                var last = 0;
+                for (var b = 0; b < weights.Length; b++)
+                {
+                    if (!(weights[b] > 0f))
+                    {
+                        continue;
+                    }
+
+                    if (pick < 0f)
+                    {
+                        if (weights[b] >= 1f)
+                        {
+                            return b;
+                        }
+
+                        pick = Noise.At(seed + 49979687, column / PickSize, row / PickSize);
+                    }
+
+                    sum += weights[b];
+                    last = b;
+                    if (pick < sum)
+                    {
+                        return b;
+                    }
+                }
+
+                return last;
             }
 
             /// <summary>Runs a piece for each row's part of a range of corners, with its first corner and the one past its last.</summary>
@@ -1289,8 +1410,144 @@ namespace Moonwell.Procgen
             }
         }
 
-        /// <summary>A tree rule: its kind and type, where it stands trees, and the heights, slopes and tile it fits.</summary>
-        private sealed class TreeRule
+        /// <summary>A biome as a plan takes it: its hill shape and its rules, ready to read.</summary>
+        private sealed class Land
+        {
+            internal readonly float Lowest;
+            internal readonly float Highest;
+            internal readonly int Layers;
+            internal readonly Fit[] Paints;
+            internal readonly Fit[] Blocks;
+            internal readonly TreeFit[] Trees;
+
+            /// <summary>What a corner's rules cost.</summary>
+            internal readonly float RulesCost;
+
+            private readonly float featureCells;
+            private readonly float roughness;
+
+            /// <summary>
+            /// How far the noise is stretched about its middle: layers added together stay nearer the middle than one does, so
+            /// this brings them back to one layer's spread, whatever the layers and roughness.
+            /// </summary>
+            private readonly float spread;
+
+            internal Land(Biome biome, int seed)
+            {
+                if (!(biome.FeatureSize > 0f) || biome.Layers < 1)
+                {
+                    throw new ArgumentException("TerrainGenerator.Plan takes biomes with a FeatureSize above 0 and 1 layer or more, not " + biome.FeatureSize + " and " + biome.Layers);
+                }
+
+                Lowest = biome.Lowest;
+                Highest = biome.Highest;
+                Layers = biome.Layers;
+                featureCells = biome.FeatureSize / TileSize;
+                roughness = biome.Roughness;
+                var sum = 0f;
+                var squares = 0f;
+                var strength = 1f;
+                for (var layer = 0; layer < Layers; layer++)
+                {
+                    sum += strength;
+                    squares += strength * strength;
+                    strength *= roughness;
+                }
+
+                spread = sum / Maths.Sqrt(squares);
+                Paints = new Fit[biome.PaintRules.Count];
+                for (var k = 0; k < Paints.Length; k++)
+                {
+                    var rule = biome.PaintRules[k];
+                    Paints[k] = new Fit(rule.Tile, rule, rule.Cover, seed + 7919 * rule.Number);
+                }
+
+                Blocks = new Fit[biome.BlockRules.Count];
+                for (var k = 0; k < Blocks.Length; k++)
+                {
+                    Blocks[k] = new Fit((int)biome.BlockRules[k].Kinds, biome.BlockRules[k], 1f, 0);
+                }
+
+                Trees = new TreeFit[biome.TreeRules.Count];
+                var treeCost = 0f;
+                for (var k = 0; k < Trees.Length; k++)
+                {
+                    var rule = biome.TreeRules[k];
+                    var ranges = new Fit(rule.OnTile, rule, 1f, 0);
+                    var treeSeed = seed + 104729 * rule.Number;
+                    if (rule is ForestRule forest)
+                    {
+                        Trees[k] = new TreeFit(TreeFit.Forest, rule.Type, rule.Variations, forest.Cover, forest.Density, 0f, treeSeed, ranges);
+                        treeCost += ForestCost;
+                    }
+                    else if (rule is WallRule wall)
+                    {
+                        Trees[k] = new TreeFit(TreeFit.Walls, rule.Type, rule.Variations, wall.Gaps, wall.Width * wall.Width / 4f, wall.Spacing / TileSize, treeSeed, ranges);
+                        treeCost += WallCost;
+                    }
+                    else
+                    {
+                        Trees[k] = new TreeFit(TreeFit.Single, rule.Type, rule.Variations, ((ScatterRule)rule).Chance, 0f, 0f, treeSeed, ranges);
+                        treeCost += ScatterCost;
+                    }
+                }
+
+                RulesCost = RuleCost * (2 + Paints.Length + Blocks.Length + Trees.Length) + PaintCost + treeCost;
+            }
+
+            /// <summary>The height of a point of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
+            internal float Height(int seed, float column, float row)
+            {
+                var noise = Noise.Layered(seed, column / featureCells, row / featureCells, Layers, roughness);
+                return Lowest + (Highest - Lowest) * Maths.Clamp01(0.5f + (noise - 0.5f) * spread);
+            }
+        }
+
+        /// <summary>A Use or Mix call: its area, its biomes, the size of their patches and the seed of their noise.</summary>
+        private sealed class Spot
+        {
+            internal readonly Biome[] Biomes;
+            internal readonly float Size;
+            internal readonly int Seed;
+            private readonly Bounds area;
+
+            internal Spot(Bounds area, Biome[] biomes, float size, int seed)
+            {
+                this.area = area;
+                Biomes = biomes;
+                Size = size;
+                Seed = seed;
+            }
+
+            /// <summary>Its share of a point: 1 inside its area, fading to 0 over the blend past its edge.</summary>
+            internal float Share(float x, float y, float blend)
+            {
+                var dx = Math.Max(Math.Max(area.Min.X - x, x - area.Max.X), 0f);
+                var dy = Math.Max(Math.Max(area.Min.Y - y, y - area.Max.Y), 0f);
+                if (dx == 0f && dy == 0f)
+                {
+                    return 1f;
+                }
+
+                var distance = Maths.Sqrt(dx * dx + dy * dy);
+                if (!(distance < blend))
+                {
+                    return 0f;
+                }
+
+                var t = 1f - distance / blend;
+                return t * t * (3f - 2f * t);
+            }
+
+            /// <summary>Whether it reaches an area grown by a margin.</summary>
+            internal bool Reaches(Bounds other, float margin)
+            {
+                return area.Min.X <= other.Max.X + margin && area.Max.X >= other.Min.X - margin && area.Min.Y <= other.Max.Y + margin && area.Max.Y >= other.Min.Y - margin;
+            }
+        }
+
+        /// <summary>A tree rule as a plan takes it: its kind and type, where it stands trees, and the heights, slopes and tile it fits.</summary>
+        private sealed class TreeFit
         {
             internal const int Forest = 0;
             internal const int Walls = 1;
@@ -1300,7 +1557,7 @@ namespace Moonwell.Procgen
             internal readonly int Type;
 
             /// <summary>The heights and slopes it fits, with the tile as its value (0 for any).</summary>
-            internal readonly Rule Ranges;
+            internal readonly Fit Ranges;
 
             private readonly int variations;
 
@@ -1315,13 +1572,8 @@ namespace Moonwell.Procgen
 
             private readonly int seed;
 
-            internal TreeRule(int kind, int type, int variations, float share, float spare, float spacing, int seed, Rule ranges)
+            internal TreeFit(int kind, int type, int variations, float share, float spare, float spacing, int seed, Fit ranges)
             {
-                if (type == 0 || variations < 1)
-                {
-                    throw new ArgumentException("TerrainGenerator's tree rules take a destructable type, not 0, and 1 variation or more, not " + type + " and " + variations);
-                }
-
                 Kind = kind;
                 Type = type;
                 this.variations = variations;
@@ -1361,8 +1613,8 @@ namespace Moonwell.Procgen
             }
         }
 
-        /// <summary>A paint or block rule: what it gives, and the heights and slopes it fits.</summary>
-        private sealed class Rule
+        /// <summary>A paint or block rule as a plan takes it: what it gives, and the heights and slopes it fits.</summary>
+        private sealed class Fit
         {
             /// <summary>The tile, or the kinds of pathing.</summary>
             internal readonly int Value;
@@ -1382,13 +1634,13 @@ namespace Moonwell.Procgen
             /// <summary>The most steepness, as fromSteep; below 0 for no limit.</summary>
             private readonly float toSteep;
 
-            internal Rule(int value, float fromHeight, float toHeight, float fromSlope, float toSlope, float cover, int seed)
+            internal Fit(int value, TerrainRule rule, float cover, int seed)
             {
                 Value = value;
-                this.fromHeight = fromHeight;
-                this.toHeight = toHeight;
-                fromSteep = Steepness(fromSlope);
-                toSteep = toSlope >= 90f ? -1f : Steepness(toSlope);
+                fromHeight = rule.FromHeight;
+                toHeight = rule.ToHeight;
+                fromSteep = Steepness(rule.FromSlope);
+                toSteep = rule.ToSlope >= 90f ? -1f : Steepness(rule.ToSlope);
                 Cover = cover;
                 Seed = seed;
             }

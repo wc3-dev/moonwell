@@ -91,6 +91,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.roads.ground", Run = PlacesAndRoadsCases.Ground });
             list.Add(new Case { Name = "procgen.roads.seams", Run = PlacesAndRoadsCases.Seams });
             list.Add(new Case { Name = "procgen.roads.network", Run = PlacesAndRoadsCases.Network });
+            list.Add(new Case { Name = "procgen.biomes.use", Run = BiomeCases.Use });
+            list.Add(new Case { Name = "procgen.biomes.mix", Run = BiomeCases.Mix });
+            list.Add(new Case { Name = "procgen.biomes.seams", Run = BiomeCases.Seams });
+            list.Add(new Case { Name = "procgen.biomes.everywhere", Run = BiomeCases.Everywhere });
+            list.Add(new Case { Name = "procgen.biomes.road", Run = BiomeCases.Road });
+            list.Add(new Case { Name = "procgen.biomes.make-in-steps", Run = BiomeCases.MakeInSteps });
+            list.Add(new Case { Name = "procgen.biomes.presets", Run = BiomeCases.Presets });
+            list.Add(new Case { Name = "procgen.biomes.refused", Run = BiomeCases.Refused });
             list.Add(new Case { Name = "procgen.grow.pieces", Run = GrowingWorldCases.Pieces });
             list.Add(new Case { Name = "procgen.grow.any-order", Run = GrowingWorldCases.AnyOrder });
             list.Add(new Case { Name = "procgen.grow.take-back", Run = GrowingWorldCases.TakeBack });
