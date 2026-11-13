@@ -89,6 +89,8 @@ namespace Moonwell
             host.LoadToc(MapTocFile);
             hud = new HudFrames(host);
             holding = false;
+            followers.Clear();
+            followingStarted = false;
             Moonwell.Events.LoadListener = Loaded;
             Cinematic.ScreenChanged = CinematicChanged;
 #if DEBUG
@@ -132,6 +134,7 @@ namespace Moonwell
             }
 
             slots = new Dictionary<framehandle, framehandle>();
+            keepsChildren = new Dictionary<framehandle, bool>();
             pool = new FramePool();
             events.Forget();
             drags.Loaded();
@@ -170,7 +173,7 @@ namespace Moonwell
         /// <summary>The game frame a frame added to the screen is made under: its root; for one added with Screen.AddTo, its game frame when that keeps it as a child, else the over root, with the game frame followed.</summary>
         internal static framehandle RootOf(Frame frame)
         {
-            frame.following = null;
+            frame.gameFrameFollowed = null;
             frame.gameShown = true;
             var game = frame.gameFrame?.Invoke();
             if (game == null)
@@ -183,7 +186,7 @@ namespace Moonwell
                 return game;
             }
 
-            frame.following = game;
+            frame.gameFrameFollowed = game;
             frame.gameShown = World.FrameShown(game);
             Follow(frame);
             return OverRoot;
@@ -228,12 +231,12 @@ namespace Moonwell
                         continue;
                     }
 
-                    if (follower.following == null || follower.handle == null)
+                    if (follower.gameFrameFollowed == null || follower.handle == null)
                     {
                         continue;
                     }
 
-                    var shown = World.FrameShown(follower.following);
+                    var shown = World.FrameShown(follower.gameFrameFollowed);
                     if (shown != follower.gameShown)
                     {
                         follower.gameShown = shown;
