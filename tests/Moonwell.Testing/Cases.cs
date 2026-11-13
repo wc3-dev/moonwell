@@ -83,6 +83,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.trees.seams", Run = TerrainGeneratorCases.TreeSeams });
             list.Add(new Case { Name = "procgen.trees.everywhere", Run = TerrainGeneratorCases.TreesEverywhere });
             list.Add(new Case { Name = "procgen.trees.make", Run = TerrainGeneratorCases.MakeTrees });
+            list.Add(new Case { Name = "procgen.places.picked", Run = PlacesAndRoadsCases.Picked });
+            list.Add(new Case { Name = "procgen.places.levelled", Run = PlacesAndRoadsCases.Levelled });
+            list.Add(new Case { Name = "procgen.places.made", Run = PlacesAndRoadsCases.Made });
+            list.Add(new Case { Name = "procgen.places.refused", Run = PlacesAndRoadsCases.Refused });
+            list.Add(new Case { Name = "procgen.roads.line", Run = PlacesAndRoadsCases.Line });
+            list.Add(new Case { Name = "procgen.roads.ground", Run = PlacesAndRoadsCases.Ground });
+            list.Add(new Case { Name = "procgen.roads.seams", Run = PlacesAndRoadsCases.Seams });
+            list.Add(new Case { Name = "procgen.roads.network", Run = PlacesAndRoadsCases.Network });
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>

@@ -21,6 +21,8 @@
     <InternalsVisibleTo Include="Moonwell.Testing" />
     <InternalsVisibleTo Include="Moonwell.Tests" />
     <InternalsVisibleTo Include="Moonwell.Physics" />
+    <InternalsVisibleTo Include="Moonwell.Pathing" />
+    <InternalsVisibleTo Include="Moonwell.Procgen" />
   </ItemGroup>
 
 </Project>
