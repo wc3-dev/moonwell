@@ -322,6 +322,40 @@ namespace Moonwell
             windowHeight = height;
             var half = 0.3f * width / height;
             World.SpanFrame(screenRoot, 0.4f - half, 0.0f, 0.4f + half, 0.6f);
+            foreach (var ui in gameUis.Values)
+            {
+                ui.WindowChanged();
+            }
+        }
+
+        /// <summary>Where a root is on this machine's screen: the whole-width root spans the window, the over root the 4:3 middle; false for any other frame, and for the whole-width root while the window has no size. With shapeOnly the whole-width root is taken as the 4:3 middle.</summary>
+        internal static bool RootPlace(framehandle frame, bool shapeOnly, out float left, out float bottom, out float right, out float top)
+        {
+            left = 0.0f;
+            bottom = 0.0f;
+            right = 0.8f;
+            top = 0.6f;
+            if (frame == overRoot || (shapeOnly && frame == screenRoot))
+            {
+                return true;
+            }
+
+            if (frame != screenRoot)
+            {
+                return false;
+            }
+
+            var width = World.ClientWidth();
+            var height = World.ClientHeight();
+            if (width <= 0 || height <= 0)
+            {
+                return false;
+            }
+
+            var half = 0.3f * width / height;
+            left = 0.4f - half;
+            right = 0.4f + half;
+            return true;
         }
 
         /// <summary>The over-the-HUD root, under the game UI, in the 4:3 middle; made at its first use.</summary>

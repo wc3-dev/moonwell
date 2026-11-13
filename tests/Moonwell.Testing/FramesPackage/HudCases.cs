@@ -129,6 +129,39 @@ namespace Moonwell.Testing
             Expect.True(world.Logged.Exists(line => line.Contains("no size")), "the selection icons refused: " + string.Join(" | ", world.Logged));
         }
 
+        /// <summary>The portrait fills a map's frame where Moonwell works it out to be, its x and width squeezed by 0.8 over the window's width (seen 11-13 and 14), and again when the window changes; a frame tied to a HUD piece is refused; another player's portrait is not touched here.</summary>
+        public static void PortraitFill(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = FrameCases.Installed();
+            frames.WindowWidth = 1600;
+            frames.WindowHeight = 900;
+            var ring = Screen.Add(new Panel { Width = 0.08f, Height = 0.08f }, Game.Instance);
+            var inner = ring.Add(new Panel { Width = 0.02f, Height = 0.02f, Anchor = FramePoint.TopRight });
+            var portrait = frames.GameFrames["origin 16 0"];
+            Player.One.GameUi().Portrait.Fill(ring);
+            Expect.Equal(1, portrait.Points.Count, "one point");
+            Expect.Near(0.4f, First(portrait)?.X ?? 0.0f, "the middle stays the middle");
+            Expect.Near(0.3f, First(portrait)?.Y ?? 0.0f, "at the frame's height");
+            Expect.Near(0.06f, portrait.Width, "its width squeezed by 0.75 in a 16:9 window");
+            Expect.Near(0.08f, portrait.Height, "its height as it is");
+            Expect.Equal(false, frames.AutoPlace, "the game no longer places the HUD");
+            Player.One.GameUi().Portrait.Fill(inner);
+            Expect.Near(0.4225f, First(portrait)?.X ?? 0.0f, "a frame inside another: its place worked out through its parent, squeezed");
+            Expect.Near(0.33f, First(portrait)?.Y ?? 0.0f, "up at the parent's top");
+            Expect.Near(0.015f, portrait.Width, "its width squeezed");
+            frames.WindowWidth = 1200;
+            world.Advance(0.6f);
+            Expect.Equal(1, portrait.Points.Count, "placed again, one point");
+            Expect.Near(0.43f, First(portrait)?.X ?? 0.0f, "in a 4:3 window, unsqueezed");
+            Expect.Near(0.02f, portrait.Width, "at the frame's width");
+            var tied = Screen.Add(new Panel { Width = 0.05f, Height = 0.05f }, Game.Instance);
+            tied.Attach(FramePoint.Center, Player.One.GameUi().Minimap, FramePoint.Center);
+            Player.One.GameUi().Portrait.Fill(tied);
+            Expect.True(world.Logged.Exists(line => line.Contains("cannot be worked out")), "a frame tied to a HUD piece refused: " + string.Join(" | ", world.Logged));
+            Expect.Near(0.43f, First(portrait)?.X ?? 0.0f, "and the portrait stays");
+        }
+
         /// <summary>A map's frame ties itself to a piece of the HUD, on each machine to that machine's own.</summary>
         public static void FrameToPiece(FakeWorld world)
         {
