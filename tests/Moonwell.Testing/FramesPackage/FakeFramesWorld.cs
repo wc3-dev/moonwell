@@ -440,12 +440,13 @@ namespace Moonwell.Testing
         /// <summary>Whether the game's HUD is hidden on this machine.</summary>
         public bool HudHidden;
 
-        /// <summary>A frame of the game's HUD by name, the same fake at each lookup.</summary>
-        public framehandle? GameFrame(string name)
+        /// <summary>A frame of the game's HUD by name, the same fake at each lookup; one at another create context than 0 is kept as "name context".</summary>
+        public framehandle? GameFrame(string name, int context = 0)
         {
             Lookups++;
-            Game(name);
-            return named[name];
+            var key = context == 0 ? name : name + " " + context;
+            Game(key);
+            return named[key];
         }
 
         /// <summary>The game's frame of a name, made at the first ask.</summary>

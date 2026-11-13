@@ -1,6 +1,6 @@
 namespace Moonwell
 {
-    /// <summary>A part of the game's selection panel or inventory that the game shows again by itself, hidden in a way it does not undo and set again every second on its player's machine: the unit details, the unit's name, the inventory's text and cover.</summary>
+    /// <summary>A part of the game's selection panel or inventory that the game shows again by itself, hidden in a way it does not undo and set again every second on its player's machine: the unit details, the unit's or building's name, a building's queue, the inventory's text and cover.</summary>
     internal sealed class HeldPiece : GamePiece
     {
         /// <summary>How a piece is hidden. None is Visible on these, as the game shows them again.</summary>
@@ -18,23 +18,23 @@ namespace Moonwell
 
         private readonly Way way;
 
-        /// <summary>For a String, the frame its top is tied to, as its .fdf ties it: SimpleNameValue's "Anchor TOP" in SimpleInfoPanelUnitDetail.</summary>
-        private framehandle? home;
+        /// <summary>For Strings, the frame each one's top is tied to, as its .fdf ties it: SimpleNameValue's "Anchor TOP" in SimpleInfoPanelUnitDetail, SimpleBuildingNameValue's in SimpleInfoPanelBuildingDetail.</summary>
+        private framehandle[]? homes;
 
         /// <summary>Whether this machine has the piece hidden now.</summary>
         private bool off;
 
-        internal HeldPiece(Player player, framehandle[] frames, Way way, framehandle? home)
+        internal HeldPiece(Player player, framehandle[] frames, Way way, framehandle[]? homes)
             : base(player, frames)
         {
             this.way = way;
-            this.home = home;
+            this.homes = homes;
         }
 
         internal override void Rebind(GamePiece fresh)
         {
             base.Rebind(fresh);
-            home = ((HeldPiece)fresh).home;
+            homes = ((HeldPiece)fresh).homes;
             off = false;
         }
 
@@ -74,7 +74,7 @@ namespace Moonwell
                         if (shown)
                         {
                             world.ClearFramePoints(frames[i]);
-                            world.PlaceFrame(frames[i], (int)FramePoint.Top, home!, (int)FramePoint.Top, 0.0f, 0.0f);
+                            world.PlaceFrame(frames[i], (int)FramePoint.Top, homes![i], (int)FramePoint.Top, 0.0f, 0.0f);
                         }
                         else
                         {

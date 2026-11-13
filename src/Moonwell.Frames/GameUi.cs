@@ -41,9 +41,10 @@ namespace Moonwell
             ItemButtons = Movable(hud.ItemButtons, hud.ItemHolders, false);
             SelectionIcons = Keep(new MovablePiece(player, hud.SelectionPanel, false, null, null, true));
             UnitDetails = Keep(new HeldPiece(player, hud.UnitDetailParts, HeldPiece.Way.Scale, null));
-            UnitName = Keep(new HeldPiece(player, new[] { hud.UnitName }, HeldPiece.Way.Points, hud.UnitDetail));
+            UnitName = Keep(new HeldPiece(player, new[] { hud.UnitName, hud.BuildingName }, HeldPiece.Way.Points, new[] { hud.UnitDetail, hud.BuildingDetail }));
             InventoryText = Keep(new HeldPiece(player, new[] { hud.InventoryText }, HeldPiece.Way.Alpha, null));
             InventoryCover = Keep(new HeldPiece(player, new[] { hud.InventoryCover }, HeldPiece.Way.Scale, null));
+            BuildQueue = Keep(new HeldPiece(player, new[] { hud.BuildingDetail }, HeldPiece.Way.Scale, null));
         }
 
         /// <summary>A saved game loaded: each piece takes its game frames, looked up again on every machine, before the map's frames are made again, so a frame tied to a piece finds it.</summary>
@@ -149,7 +150,7 @@ namespace Moonwell
         [LocalSafe]
         public GamePiece UnitDetails { get; }
 
-        /// <summary>One unit's name in the selection panel, with its class or level line and the hero's experience bar, which are tied to it.</summary>
+        /// <summary>The selected unit's name in the selection panel, with its class or level line and the hero's experience bar, which are tied to it; and a building's name over its queue (see BuildQueue), with the line under it.</summary>
         [LocalSafe]
         public GamePiece UnitName { get; }
 
@@ -160,6 +161,10 @@ namespace Moonwell
         /// <summary>The console's stone art over the slots of a unit with no inventory.</summary>
         [LocalSafe]
         public GamePiece InventoryCover { get; }
+
+        /// <summary>A building's panel in the selection panel while it trains or researches: its name, the "Training" line and bar, the icon in progress and the queued icons, which cancel when clicked. It moves with SelectionIcons, and hidden it takes the building's name with it; UnitName hides the name alone. An idle building shows UnitDetails instead (seen 11-13).</summary>
+        [LocalSafe]
+        public GamePiece BuildQueue { get; }
 
         /// <summary>Whether a piece shows now on its player's screen: set Visible, and the whole HUD shown or the piece set Visible over it.</summary>
         internal bool Shows(GamePiece piece)
