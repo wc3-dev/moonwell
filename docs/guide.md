@@ -1441,6 +1441,33 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 
   - Costs, inferred and not yet measured: a road near a plan about 15 µs a point and 1 µs a corner near it, a group
     about 0.3 ms a unit. `Make` works roads out first, as "Roads", and makes the groups last, as "Places".
+- A growing world makes the ground only near heroes, a chunk at a time, for a world too big to make at once:
+
+  ```csharp
+  var world = hills.Grow(Terrain.Playable, Game.Instance);   // chunks of 16 by 16 corners, 2048 across
+  world.Made += chunk => { /* chunk.Area, and chunk.Scope: what the map makes in it goes with it */ };
+  world.TakingBack += chunk => { /* just before its ground goes */ };
+  ```
+
+  - Every living hero, any player's, makes the chunks within `Near` of it (2048 unless set), nearest first; a made
+    chunk is taken back once every hero is farther than `Far` (4096). A dead hero holds none until it lives again.
+    `chunkSize:` in `Grow` sets the corners a chunk is across.
+  - A chunk's ground is its part of `Plan(area)`: each chunk holds its own corners, so chunks meet in any order, come
+    back the same, and the world's own edge fades by `EdgeFade` as a whole plan's does. Set the generator up before
+    `Grow`: a chunk is made from the settings as they are when it is made.
+  - Chunks are made one at a time in steps of 4 ms, as `Make` makes ground, and taken back one a step, so no frame
+    does more than one.
+  - Once a chunk is made, a unit by one of its new trees or blocked corners is put back through the game's pathing at
+    its own place (`MoveTo`): the game finds the nearest free spot, and the unit's order ends. Flying, hidden and dead
+    units are left as they are. Then `Made` runs. Taking a chunk back traps nobody, and moves nobody.
+  - Taking a chunk back removes its heights, tiles, blocked corners and trees, cut and dead ones too, and what the map
+    made in `chunk.Scope`. A cut tree stands again when its chunk is made again.
+  - A camp is made the first time its chunk is, and is held by the world, not the chunk: it stays while the chunk is
+    gone, on level ground that never changes, so a cleared camp stays cleared.
+  - Ending the scope the world was grown in takes all of it back, camps too, with no `TakingBack`.
+  - Each tree made and taken back leaves about 5 KB and a handle id behind (3.0.1.24371), so a chunk of 50 trees taken
+    back and made again 100 times grows the game by about 25 MB. The gap between `Near` and `Far` keeps a hero walking
+    along a chunk's edge from making it again and again; keep it at least a chunk wide.
 - `Noise` and `Field` are the numbers under it, for a map's own generators: `Noise.At(seed, x, y)` is smooth noise
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.

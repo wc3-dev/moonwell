@@ -91,6 +91,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.roads.ground", Run = PlacesAndRoadsCases.Ground });
             list.Add(new Case { Name = "procgen.roads.seams", Run = PlacesAndRoadsCases.Seams });
             list.Add(new Case { Name = "procgen.roads.network", Run = PlacesAndRoadsCases.Network });
+            list.Add(new Case { Name = "procgen.grow.pieces", Run = GrowingWorldCases.Pieces });
+            list.Add(new Case { Name = "procgen.grow.any-order", Run = GrowingWorldCases.AnyOrder });
+            list.Add(new Case { Name = "procgen.grow.take-back", Run = GrowingWorldCases.TakeBack });
+            list.Add(new Case { Name = "procgen.grow.units", Run = GrowingWorldCases.Units });
+            list.Add(new Case { Name = "procgen.grow.camps", Run = GrowingWorldCases.Camps });
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>
