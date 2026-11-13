@@ -6,7 +6,7 @@ namespace Moonwell.Testing
         /// <summary>The frame's point, as the game numbers them: 0 top left to 8 bottom right.</summary>
         public int Point;
 
-        /// <summary>The frame it is tied to.</summary>
+        /// <summary>The frame it is tied to; null for a point put on the screen itself.</summary>
         public FakeFrame Other = null!;
 
         /// <summary>The other frame's point.</summary>

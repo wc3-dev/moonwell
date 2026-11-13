@@ -7,12 +7,12 @@ namespace Moonwell.Testing
         public static void LookedUpAtInstall(FakeWorld world)
         {
             var frames = FrameCases.Installed();
-            Expect.Equal(36, frames.Lookups, "four by name, 32 by origin");
+            Expect.Equal(66, frames.Lookups, "27 by name, 39 by origin");
             Expect.True(frames.GameFrames.ContainsKey("MiniMapFrame"), "the minimap by its name");
             Expect.Equal(0, frames.Frames.Count, "no frame made");
             Player.One.GameUi();
             Player.Two.GameUi();
-            Expect.Equal(36, frames.Lookups, "no lookup at a player's first use");
+            Expect.Equal(66, frames.Lookups, "no lookup at a player's first use");
             Expect.Same(Player.One.GameUi(), Player.One.GameUi(), "one view per player");
         }
 
@@ -99,6 +99,155 @@ namespace Moonwell.Testing
             Expect.Equal(1, fake.Points.Count, "one point");
             Expect.Same(frames.GameFrames["MiniMapFrame"], fake.Points[0].Other, "tied to the minimap");
             Expect.Equal(1, fake.Points[0].OtherPoint, "its top");
+        }
+
+        /// <summary>A moved command or item button puts the game's button it sat in off the screen at no size, as it takes clicks where it was (seen 11-13), and the first move stops the game placing its HUD again; another player's move changes nothing here.</summary>
+        public static void MovedButtonLeavesNothing(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = FrameCases.Installed();
+            var panel = Screen.Add(new Panel(), Game.Instance);
+            Player.Two.GameUi().CommandButtons[4].Attach(FramePoint.Center, panel, FramePoint.Center);
+            Expect.Equal(0, frames.GameFrames["CommandButton_4"].Points.Count, "another player's: nothing here");
+            Expect.Equal(true, frames.AutoPlace, "the game still places the HUD here");
+            Player.One.GameUi().CommandButtons[4].Attach(FramePoint.Center, panel, FramePoint.Center);
+            Off(frames.GameFrames["CommandButton_4"], true, "the command button's holder");
+            Expect.Same(frames.FrameOf(panel.Handle!), First(frames.GameFrames["origin 1 4"])?.Other, "the button tied to the panel");
+            Expect.Equal(false, frames.AutoPlace, "the game no longer places the HUD");
+            Player.One.GameUi().ItemButtons[5].Attach(FramePoint.Center, panel, FramePoint.Center);
+            Off(frames.GameFrames["InventoryButton_5"], true, "the item button's holder");
+            Expect.Equal(0, frames.GameFrames["InventoryButton_4"].Points.Count, "an item button not moved keeps its holder");
+            frames.GameFrames["CommandButton_4"].Points.Clear();
+            world.Advance(1.05f);
+            Off(frames.GameFrames["CommandButton_4"], true, "put off again a second later, as the game puts it back");
+        }
+
+        /// <summary>The whole HUD hidden hides the command card's click blocker and puts it off the screen, every second; shown again, the blocker shows (seen 11-13).</summary>
+        public static void HiddenHudHidesBlocker(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = FrameCases.Installed();
+            Player.Two.GameUi().Visible = false;
+            var blocker = frames.GameFrames["ConsoleUI child 5"];
+            Expect.Equal(true, blocker.Shown, "another player's HUD: nothing here");
+            Player.One.GameUi().Visible = false;
+            Expect.Equal(false, blocker.Shown, "hidden");
+            Off(blocker, true, "the blocker");
+            blocker.Shown = true;
+            world.Advance(1.05f);
+            Expect.Equal(false, blocker.Shown, "hidden again a second later");
+            Player.One.GameUi().Visible = true;
+            Expect.Equal(true, blocker.Shown, "shown with the HUD");
+        }
+
+        /// <summary>With the whole HUD hidden, item buttons set Visible show alone: their first holder is shown, the inventory's text and cover stay hidden until set Visible too.</summary>
+        public static void ItemButtonsAlone(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var ui = Player.One.GameUi();
+            ui.Visible = false;
+            frames.GameFrames["InventoryButton_0"].Shown = false;
+            ui.ItemButtons[3].Visible = true;
+            Expect.Equal(true, frames.GameFrames["InventoryButton_0"].Shown, "the first holder shown, which shows the buttons");
+            Expect.Equal(0, frames.GameFrames["InventoryText"].Alpha, "the inventory's text see-through");
+            Expect.Near(0.00001f, frames.GameFrames["SimpleInventoryCover"].Scale, "the cover scaled to nothing");
+            Expect.Equal(true, ui.InventoryText.Visible, "the text reads as set");
+            ui.InventoryText.Visible = true;
+            Expect.Equal(255, frames.GameFrames["InventoryText"].Alpha, "the text set Visible over the HUD shows");
+            ui.InventoryCover.Visible = false;
+            ui.Visible = true;
+            Expect.Near(0.00001f, frames.GameFrames["SimpleInventoryCover"].Scale, "the cover the map hid stays hidden with the HUD shown");
+            ui.InventoryCover.Visible = true;
+            Expect.Near(1.0f, frames.GameFrames["SimpleInventoryCover"].Scale, "and shows when set");
+        }
+
+        /// <summary>A hero button hidden, or the whole HUD, puts its glow off the screen, as hiding it does not hold (seen 11-12), every second; set Visible again, the glow is put back on its button.</summary>
+        public static void GlowsWithHeroButtons(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var ui = Player.One.GameUi();
+            ui.HeroButtons[1].Visible = false;
+            Off(frames.GameFrames["origin 6 1"], false, "the hidden button's glow");
+            Expect.Equal(0, frames.GameFrames["origin 6 0"].Points.Count, "a shown button's glow left alone");
+            ui.Visible = false;
+            Off(frames.GameFrames["origin 6 0"], false, "every glow with the HUD hidden");
+            ui.HeroButtons[0].Visible = true;
+            var back = First(frames.GameFrames["origin 6 0"]);
+            Expect.Same(frames.GameFrames["origin 3 0"], back?.Other, "the glow put back on its hero button");
+            Expect.Equal(4, back?.Point ?? -1, "by its centre");
+            frames.GameFrames["origin 6 1"].Points.Clear();
+            world.Advance(1.05f);
+            Off(frames.GameFrames["origin 6 1"], false, "put off again a second later");
+        }
+
+        /// <summary>The selection icons shown over the hidden HUD show the panel alone, moved at no size; one unit's details and name stay hidden until set Visible, the name put back by its .fdf's point.</summary>
+        public static void SelectionIconsAlone(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var ui = Player.One.GameUi();
+            var panel = frames.GameFrames["parent of SimpleInfoPanelUnitDetail"];
+            var spot = Screen.Add(new Panel(), Game.Instance);
+            ui.Visible = false;
+            panel.Shown = false;
+            ui.SelectionIcons.Visible = true;
+            Expect.Equal(true, panel.Shown, "the panel shown over the hidden HUD");
+            ui.SelectionIcons.Attach(FramePoint.TopLeft, spot, FramePoint.TopRight);
+            Expect.Near(0.0001f, panel.Width, "moved at no size");
+            Expect.Same(frames.FrameOf(spot.Handle!), First(panel)?.Other, "tied to the map's frame");
+            Expect.Near(0.00001f, frames.GameFrames["SimpleInfoPanelUnitDetail child 13"].Scale, "the details hidden");
+            Expect.Equal(14, frames.GameFrames["SimpleInfoPanelUnitDetail"].Children.Count, "all 14 looked up");
+            var name = frames.GameFrames["SimpleNameValue"];
+            Off(name, false, "the name, a String, moved off");
+            Expect.Near(0.0f, name.Width, "never sized");
+            Expect.Near(1.0f, name.Scale, "never scaled");
+            ui.UnitName.Visible = true;
+            Expect.Same(frames.GameFrames["SimpleInfoPanelUnitDetail"], First(name)?.Other, "the name put back in the unit details");
+            Expect.Equal(1, First(name)?.Point ?? -1, "by its top");
+            panel.Points.Clear();
+            panel.Shown = false;
+            world.Advance(1.05f);
+            Expect.Equal(true, panel.Shown, "shown again a second later");
+            Expect.Equal(1, panel.Points.Count, "tied again");
+            ui.SelectionIcons.Visible = false;
+            Expect.Equal(false, panel.Shown, "hidden when set");
+        }
+
+        /// <summary>The -frames command writes the game's frame tree to the log: each frame's index, name, size, whether it shows and its children.</summary>
+        public static void FrameTreeCommand(FakeWorld world)
+        {
+            world.SetSlot(0, SlotState.Playing, Controller.User);
+            var frames = FrameCases.Installed();
+            frames.GameChildCounts["origin 0 0"] = 2;
+            var console = frames.FrameOf(frames.ChildAt(frames.GameFrame("origin 0 0")!, 1));
+            console.Name = "ConsoleUI";
+            console.Width = 0.8f;
+            console.Shown = false;
+            world.Chat(Player.Get(0), "-frames");
+            Expect.True(world.Logged.Exists(line => line == "frames: game UI"), "the root named: " + string.Join(" | ", world.Logged));
+            Expect.True(world.Logged.Exists(line => line == "    1 ConsoleUI 0.8 by 0 hidden"), "a child, indented under its root");
+            Expect.True(world.Logged.Exists(line => line.StartsWith("frames: ") && line.EndsWith(" written")), "the count");
+        }
+
+        /// <summary>A frame's first point; null when it has none, as at a machine where the piece is not moved.</summary>
+        private static FakePoint? First(FakeFrame frame)
+        {
+            return frame.Points.Count > 0 ? frame.Points[0] : null;
+        }
+
+        /// <summary>Checks a game frame was put off the screen: one point far above it, at no size when sized.</summary>
+        private static void Off(FakeFrame frame, bool sized, string what)
+        {
+            Expect.Equal(1, frame.Points.Count, what + ": one point");
+            if (frame.Points.Count != 1)
+            {
+                return;
+            }
+
+            Expect.True(frame.Points[0].Other == null && frame.Points[0].Y > 1.0f, what + ": off the screen");
+            if (sized)
+            {
+                Expect.Near(0.0001f, frame.Width, what + ": at no size");
+            }
         }
     }
 }

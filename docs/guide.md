@@ -1739,14 +1739,23 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   frame is made by its type instead.
 - `player.GameUi()` is the player's own view of the game's HUD: what is set on it changes only that player's screen,
   and lasts until set again, as a camera's does. `Visible = false` hides the whole HUD: the console's art goes, clicks
-  reach the world down to the window's bottom, the map's frames still draw, and the command buttons and life bars stay,
-  as the game leaves them. Its pieces, `Minimap`, `MinimapButtons`, `Portrait`, `HeroBar`, `HeroButtons`, `TopBar`,
-  `CommandButtons` and `ItemButtons`, each have `Visible`; with the whole HUD hidden, a piece set `Visible` shows again,
-  but the item buttons do not come back (seen). The minimap, the command buttons and the item buttons also move,
-  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`. A map's frame ties itself to a piece with
-  `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`, with the label added by
-  `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The info panel, the chat and the game's
-  messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong (seen).
+  reach the world down to the window's bottom with nothing left behind taking them, the map's frames still draw, and
+  the command buttons and life bars stay, as the game leaves them; the hero buttons' glows go too. Its pieces,
+  `Minimap`, `MinimapButtons`, `Portrait`, `HeroBar`, `HeroButtons`, `TopBar`, `CommandButtons`, `ItemButtons`,
+  `SelectionIcons` (the selection panel: a group's icons), `UnitDetails` (one unit's damage, armour and stat boxes),
+  `UnitName` (one unit's name with its class or level line), `InventoryText` and `InventoryCover` (the stone over the
+  slots of a unit with no inventory), each have `Visible`. With the whole HUD hidden, a piece set `Visible` shows
+  alone: item buttons come without the inventory's text and cover, and the selection icons without one unit's details
+  and name, unless those are set `Visible` too. What the game shows or places again by itself is set again every second
+  on the player's machine. The minimap, the command buttons, the item buttons and the selection icons also move,
+  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; a moved button leaves nothing behind taking
+  clicks, and the first move stops the game placing its HUD again when the window changes. The selection icons move at
+  no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name on it. A map's frame
+  ties itself to a piece with `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`,
+  with the label added by `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The chat and the
+  game's messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong
+  (seen). In a development build, `-frames` writes the game's frame tree to the log: each frame's index under its
+  parent, name, size, whether it shows and how many children it has.
 - A window from the map's own `.fdf` comes whole: put the `.fdf` files in `assets/`, and the build lists them in a TOC
   the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
   of the map's, as a label with the font and size its `.fdf` gives. `window.Child<Label>("ShopTitle")` finds a part of
