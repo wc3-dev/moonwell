@@ -99,6 +99,18 @@ namespace Moonwell.Build.Tests
             Assert.Contains("(is the game or World Editor using it?)", error);
         }
 
+        [Fact]
+        public async Task a_second_build_of_the_map_waits_for_the_first()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+
+            var builds = await Task.WhenAll(Task.Run(() => Run("build", folder)), Task.Run(() => Run("build", folder)));
+
+            Assert.All(builds, build => Assert.True(build.ExitCode == 0, build.Error + build.Output));
+            Assert.Single(builds, build => build.Output.Contains("moonwell: another build of this map is running; waiting for it to end"));
+            Assert.False(File.Exists(Path.Combine(folder, "build", ".lock")));
+        }
+
         [Theory]
         [InlineData]
         [InlineData("deploy")]
