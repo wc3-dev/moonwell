@@ -1383,7 +1383,7 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 - Roads join places with path data a map can send units along:
 
   ```csharp
-  hills.RoadTile = Tile.LordaeronSummerDirtRough;
+  hills.RoadTile = Tile.LordaeronSummerRoughDirt;
   var top = hills.Road(west, east, through: new Vector2(-6000f, 6000f));     // three lanes between two bases
   var middle = hills.Road(west, east, width: 384f);
   var bottom = hills.Road(west, east, through: new Vector2(6000f, -6000f));
