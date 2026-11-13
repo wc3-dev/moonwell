@@ -27,7 +27,7 @@ namespace Moonwell.Testing
             return new TerrainGenerator(seed) { Lowest = 0f, Highest = 600f, FeatureSize = 1024f, EdgeFade = 0f };
         }
 
-        private static FakeTerrainWorld Flat()
+        internal static FakeTerrainWorld Flat()
         {
             var fake = new FakeTerrainWorld();
             var text = new StringBuilder();
@@ -372,7 +372,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>The ground at each corner of the cases' area: its height, its tile, and whether units can walk and build by it.</summary>
-        private static float[] Ground()
+        internal static float[] Ground()
         {
             var ground = new float[Side * Side * 4];
             for (var k = 0; k < Side * Side; k++)

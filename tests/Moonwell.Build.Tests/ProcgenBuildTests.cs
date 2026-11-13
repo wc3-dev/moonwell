@@ -25,6 +25,7 @@ namespace Moonwell.Build.Tests
             lua.DoString(script);
             lua.DoString("main()");
             Assert.Contains("TerrainGenerator", script);
+            Assert.Contains("SnowyForest", script);
             Assert.Contains("Moonwell.Procgen", script);
         }
 
