@@ -512,7 +512,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The unit's facing in degrees, within 0 to 360 (400 reads 40, -90 reads 270). Setting it makes the unit turn at its turn rate (SetUnitFacing), so a read just after still gives the old facing; FaceNow turns at once. Once the game has removed the unit, the last facing read or set, and setting does nothing.</summary>
+        /// <summary>The unit's facing in degrees, within 0 to 360 (400 reads 40, -90 reads 270). Setting it makes the unit turn over time (SetUnitFacing), at the speed its type's OrientationInterpolation gives, so a read just after still gives the old facing; FaceNow turns at once. Once the game has removed the unit, the last facing read or set, and setting does nothing.</summary>
         [LocalSafe]
         public float Facing
         {

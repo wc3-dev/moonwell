@@ -253,6 +253,23 @@ To see a standard object's values, go to its class: Go to Definition on `Paladin
 language server do). Its constructor sets each value of the base tables, World Editor's
 Default. A map on another data set plays that set's values for the fields it leaves unset.
 
+### Turning
+
+Four fields of a unit's class set how it turns. Measured in the game (3.0.1, classic graphics):
+
+| | |
+|---|---|
+| `TurnRate` (0.1 to 3) | how soon the unit sets off toward a place it doesn't face; higher is sooner. For a place straight behind: 0.66 s at 0.1, 0.14 s at 0.6, 0.06 s at 3. It doesn't set how fast the model turns |
+| `OrientationInterpolation` (0 to 8) | how fast the unit's facing, and so its model, comes round. Not a ramp. A half turn, fastest first: 6 0.5 s (the fastest start), 0 0.5 s, 2 0.7 s, 1 1 s, 5 1 s and 4 1.2 s (both most of the way round in 0.6 s, then a long ease), 3 1.6 s, 7 2 s, 8 3.3 s |
+| `PropulsionWindowDegrees` (1 to 180) | how far off its heading the unit may be and still walk. A wider one lets a slow-turning unit set off sooner, turning as it goes: at `TurnRate` 0.3, 0.38 s at 1, 0.26 s at 60 and at once at 180 |
+| `AnimationBlendTimeSeconds` (0 to 1) | the time the model takes to blend from one animation into the next, as from walking into standing. Looks only: nothing about turning or walking changes |
+
+- For a snappy turn, set `TurnRate = 3` and `OrientationInterpolation = 6` (or 0). At `TurnRate` 3 the unit sets
+  off at once, so the window adds nothing.
+- With a high `TurnRate` and a slow interpolation the unit walks off before its facing has come round.
+- `Facing = 180` (and `SetUnitFacing`) turns at the interpolation's speed whatever the `TurnRate`.
+- `FaceNow` toward an order's place from `OnOrdered` turns the unit's facing at once, and it sets off at once.
+
 ### Setup that classes share
 
 Classes with different bases cannot share a base class. What their constructors have in common goes in a method that
@@ -502,7 +519,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `Life`, `MaxLife`, `Mana`, `MaxMana` | read and set; a `Life` of 0.405 or less kills, above the most it clamps; the most are whole numbers |
 | `Owner` | read and set; the player the unit belongs to; setting gives the unit the new owner's colour |
 | `X`, `Y` | read; `MoveTo(x, y)` through the game's pathing, `PlaceAt(x, y)` with none, not even the map's edge |
-| `Facing` | read and set (the unit turns, so a read at once gives the old one); `FaceNow(degrees)` turns at once, a walking unit turns back |
+| `Facing` | read and set (the unit turns over time, [as its type's fields say](#turning), so a read at once gives the old one); `FaceNow(degrees)` turns at once, a walking unit turns back |
 | `Level` | read; a hero's hero level; a unit's level is set only in its declared class's constructor |
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run |
 | `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
