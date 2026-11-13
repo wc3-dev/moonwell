@@ -146,8 +146,8 @@ public sealed class Champion : Human.Units.Paladin
   `this.Damage(target, 10f, sound: Attack1WeaponSound)`.
 - A field that a `Unit`, `Hero`, `Item` or `Destructable` also has as a live value has one name for both. In the
   constructor it sets what every object of the class starts with; anywhere else it is this object (`MaxLife += 10` in
-  `OnKill`). The names are `MaxLife`, `MaxMana`, `Mana` (what it starts with), `Scale`, `FlyHeight` and `Name` on a unit
-  and hero, `Level` on a unit that is not a hero, `Strength`, `Agility` and `Intelligence` on a hero, `Charges` on an
+  `OnKill`). The names are `MaxLife`, `MaxMana`, `Mana` (what it starts with), `Scale`, `FlyHeight`, `Name` and `Icon` on a
+  unit and hero, `Level` on a unit that is not a hero, `Strength`, `Agility` and `Intelligence` on a hero, `Charges` on an
   item, and `MaxLife` on a destructable. They were `HitPoints`, `ManaPoints`, `ManaInitialAmount`, `ScalingValue`,
   `Height`, `UnitLevel`, `StartingStrength`, `StartingAgility`, `StartingIntelligence`, `NumberOfCharges` and a
   destructable's `HitPoints`, which are gone. Outside the constructor the old names read the declared value; write
@@ -525,6 +525,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
+| `Icon` | its type's icon path, read inside `Local.For` only, as the game picks a type's icon by each player's graphics mode (the game's Phoenix names one icon for Reforged and another for the other modes); set only in its declared class's constructor, as the game has no icon per unit |
 | `Tint(red, green, blue, alpha)` | colours the model, each value clamped to 0-255; an alpha of 0 makes the unit's portrait black too, where a `Scale` of 0.01 hides the model and keeps the portrait |
 | `SetTeamColor(PlayerColor.Blue)` | draws the model's team-coloured parts in that colour, whoever owns the unit; nothing to read back; a new `Owner`, or a set of the owner's `Color`, gives it that player's colour again |
 | `PlayAnimation(name)`, `QueueAnimation(name)` | as an effect's ([below](#special-effects)); it plays once, then an idle unit stands; a walking unit keeps walking and only stutters; a name the model lacks plays its stand, and a name picks no variant (`"attack 2"` is any attack) |

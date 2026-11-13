@@ -19,6 +19,7 @@ public static class SharedFields
             ["usca"] = "Scale",
             ["umvh"] = "FlyHeight",
             ["unam"] = "Name",
+            ["uico"] = "Icon",
             ["ustr"] = "Strength",
             ["uagi"] = "Agility",
             ["uint"] = "Intelligence",
