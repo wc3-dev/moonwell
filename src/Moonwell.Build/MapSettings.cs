@@ -12,7 +12,8 @@ namespace Moonwell.Build
     /// <param name="SaveKey">The private text every save's check covers; required when the map has a save class.</param>
     /// <param name="Slots">The slots the map class sets up, in its order; none keeps World Editor's players and forces.</param>
     /// <param name="Teams">The teams the slots name, numbered in the order the slots first name them.</param>
-    public sealed record MapSettings(string TypeName, string Name, string Author, string Description, string RecommendedPlayers, int DataSet = 0, int DataVersion = 2, string SaveFolder = "", string SaveKey = "", IReadOnlyList<SlotSetting>? Slots = null, IReadOnlyList<TeamSetting>? Teams = null);
+    /// <param name="Tiles">The ground tiles the map class declares, as their ids, in its order; none keeps World Editor's tile list.</param>
+    public sealed record MapSettings(string TypeName, string Name, string Author, string Description, string RecommendedPlayers, int DataSet = 0, int DataVersion = 2, string SaveFolder = "", string SaveKey = "", IReadOnlyList<SlotSetting>? Slots = null, IReadOnlyList<TeamSetting>? Teams = null, IReadOnlyList<int>? Tiles = null);
 
     /// <summary>A slot the map class sets up, read on .NET (decision 198).</summary>
     /// <param name="Number">The slot, from 0.</param>
