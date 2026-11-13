@@ -716,7 +716,7 @@ namespace Moonwell.Objects
             set { Fields.Put("ubld", value); }
         }
 
-        /// <summary>Animation - Blend Time (seconds) (uble), 0 to 1.</summary>
+        /// <summary>Animation - Blend Time (seconds) (uble), 0 to 1. The time the model takes to blend from one animation into the next, as from walking into standing; looks only.</summary>
         [global::Moonwell.Objects.Field("uble", Label = "Animation - Blend Time (seconds)")]
         [global::Moonwell.Objects.Limits(0, 1)]
         public float AnimationBlendTimeSeconds
@@ -1516,7 +1516,7 @@ namespace Moonwell.Objects
             set { Fields.Put("umvf", value); }
         }
 
-        /// <summary>Turn Rate (umvr), 0.1 to 3.</summary>
+        /// <summary>Turn Rate (umvr), 0.1 to 3. How soon the unit sets off toward a place it doesn't face: higher is sooner (about 0.66 s at 0.1, 0.14 s at 0.6 and 0.06 s at 3 for a place behind it). How fast the model comes round is Orientation Interpolation's.</summary>
         [global::Moonwell.Objects.Field("umvr", Label = "Turn Rate")]
         [global::Moonwell.Objects.Limits(0.1, 3)]
         [global::Moonwell.Objects.NonNegative]
@@ -1605,7 +1605,7 @@ namespace Moonwell.Objects
             set { Fields.Put("uoct", value); }
         }
 
-        /// <summary>Orientation Interpolation (uori), 0 to 8.</summary>
+        /// <summary>Orientation Interpolation (uori), 0 to 8. How fast the unit's facing and model come round, and not a ramp: a half turn takes 0.5 s at 0 and 6 (6 starts fastest), 1 s at 1 and over 3 s at 8.</summary>
         [global::Moonwell.Objects.Field("uori", Label = "Orientation Interpolation")]
         [global::Moonwell.Objects.Limits(0, 8)]
         public int OrientationInterpolation
@@ -1707,7 +1707,7 @@ namespace Moonwell.Objects
             set { Fields.Put("upru", value); }
         }
 
-        /// <summary>Propulsion Window (degrees) (uprw), 1 to 180.</summary>
+        /// <summary>Propulsion Window (degrees) (uprw), 1 to 180. How far off its heading the unit may be and still walk: with a wider window a slow-turning unit sets off sooner, turning as it goes.</summary>
         [global::Moonwell.Objects.Field("uprw", Label = "Propulsion Window (degrees)")]
         [global::Moonwell.Objects.Limits(1, 180)]
         [global::Moonwell.Objects.NonNegative]
