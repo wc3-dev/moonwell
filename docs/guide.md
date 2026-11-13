@@ -2287,7 +2287,9 @@ which is in each player's language. The build rejects, as compile errors:
   `[LocalSafe]` or `[MachineLocal]` (below). .NET's own classes need no mark.
 - A machine-local read outside it (MW0002): the local player, the camera, the mouse's screen position, frame text,
   localised names, `RealTime.LocalNow`, `PlayerFile.Read`, and .NET's own clock and addresses (`DateTime.Now`, `Environment.TickCount`, a `Stopwatch`'s
-  reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text).
+  reading, `GetHashCode` of a handle or of a class without its own, a handle turned into text). A frame's parent and
+  children (`BlzFrameGetParent`, `BlzFrameGetChild`, `BlzFrameGetChildrenCount`) are the same on every machine: read
+  them outside it, as `BlzGetFrameByName` is.
 - A change inside it to something every machine shares (MW0048), in the block or in what it calls: a field or
   auto-property of your map, a local or parameter from outside the block, an event of your map, or a collection held in
   one of those (`Scores.Add(x)`, `Scores[i] = x`, on .NET's collections, arrays, `StringBuilder`, `Random`, `OrderedMap`,
