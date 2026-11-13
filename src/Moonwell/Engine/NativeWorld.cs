@@ -779,6 +779,12 @@ namespace Moonwell.Engine
             return Natives.CreateDestructable(typeId, x, y, facing, scale, variation);
         }
 
+        /// <summary>Creates a destructable of a type at a place and a height, with a facing, a scale and a variation.</summary>
+        public destructable SpawnDestructableAt(int typeId, float x, float y, float z, float facing, float scale, int variation)
+        {
+            return Natives.CreateDestructableZ(typeId, x, y, z, facing, scale, variation);
+        }
+
         /// <summary>Kills a destructable through the game: KillDestructable.</summary>
         public void SlayDestructable(destructable destructable)
         {

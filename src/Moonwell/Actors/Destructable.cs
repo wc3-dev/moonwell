@@ -201,7 +201,18 @@ namespace Moonwell
         /// <summary>Creates a destructable of a type at a place, in a scope, which removes it when it ends, with a facing (270 degrees without one), a scale and a variation (its type's first model without one). The game puts it on its own grid, which X and Y read: a tree asked at 1000 stands at 960. Throws a MoonwellException naming the id when the game makes no destructable of the type.</summary>
         public static Destructable Create(int typeId, float x, float y, Scope scope, float facing = DefaultFacing, float scale = 1.0f, int variation = 0)
         {
-            var handle = Runtime.World.SpawnDestructable(typeId, x, y, facing, scale, variation);
+            return TakeInMade(Runtime.World.SpawnDestructable(typeId, x, y, facing, scale, variation), typeId, scope);
+        }
+
+        /// <summary>Creates a destructable as <c>Create</c> does, standing at a height (CreateDestructableZ): the game draws one made without a height at the ground as it was, sunk into ground raised since (probe 11-13), so give a tree on a hill the ground's height, <c>Terrain.Height(x, y)</c>.</summary>
+        public static Destructable Create(int typeId, float x, float y, float z, Scope scope, float facing = DefaultFacing, float scale = 1.0f, int variation = 0)
+        {
+            return TakeInMade(Runtime.World.SpawnDestructableAt(typeId, x, y, z, facing, scale, variation), typeId, scope);
+        }
+
+        /// <summary>Takes in a destructable just made, in a scope; throws naming the type when the game made none.</summary>
+        private static Destructable TakeInMade(destructable handle, int typeId, Scope scope)
+        {
             if (handle == null)
             {
                 throw new MoonwellException("Destructable.Create: the game made no destructable of type " + Names.IdText(typeId));
@@ -223,6 +234,13 @@ namespace Moonwell
             where T : Destructable
         {
             return (T)Create(ObjectTypes.IdOf<T>(), x, y, scope, facing, scale, variation);
+        }
+
+        /// <summary>Creates a destructable of a registered class at a place and a height, as <c>Create(typeId, x, y, z, scope)</c> does.</summary>
+        public static T Create<T>(float x, float y, float z, Scope scope, float facing = DefaultFacing, float scale = 1.0f, int variation = 0)
+            where T : Destructable
+        {
+            return (T)Create(ObjectTypes.IdOf<T>(), x, y, z, scope, facing, scale, variation);
         }
 
         /// <summary>Kills the destructable through the game (KillDestructable): OnDeath runs once, inside this call. It stays in the game, dead, until it is removed or restored. Does nothing to a dead destructable, and once it is gone.</summary>

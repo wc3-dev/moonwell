@@ -1,8 +1,8 @@
 namespace Moonwell.Procgen
 {
     /// <summary>
-    /// Ground worked out and not yet made: for each corner of a grid, 128 apart, how far to move it, the tile to paint
-    /// and the pathing to take. A <c>TerrainGenerator</c> gives one; a map may change it, and <c>Apply</c> makes it.
+    /// Ground worked out and not yet made: for each corner of a grid, 128 apart, how far to move it, the tile to paint,
+    /// the pathing to take and the tree to stand on it. A <c>TerrainGenerator</c> gives one; a map may change it, and <c>Apply</c> makes it.
     /// </summary>
     public sealed class TerrainPlan
     {
@@ -14,6 +14,8 @@ namespace Moonwell.Procgen
             Heights = new Field(columns, rows);
             Tiles = new int[columns * rows];
             Blocked = new Pathing[columns * rows];
+            Trees = new int[columns * rows];
+            TreeVariations = new int[columns * rows];
         }
 
         /// <summary>The x of the first corner, the lower left.</summary>
@@ -44,10 +46,19 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public Pathing[] Blocked { get; }
 
+        /// <summary>The destructable type of the tree on each corner, laid out as <c>Tiles</c>; 0 for none.</summary>
+        [LocalSafe]
+        public int[] Trees { get; }
+
+        /// <summary>Each tree's variation, the model of its type it is made with, laid out as <c>Tiles</c>.</summary>
+        [LocalSafe]
+        public int[] TreeVariations { get; }
+
         /// <summary>
         /// Makes the plan's ground for as long as the scope holds it (<c>Game.Instance</c> for the whole game): the heights,
         /// the tiles and the blocked corners, each one terrain change over the grid, whose first corner is the map's corner
-        /// nearest (X, Y). A part with nothing in it makes no change. Ending the scope takes the ground back.
+        /// nearest (X, Y), then the trees, standing on the ground as it is then. A part with nothing in it makes no change.
+        /// Ending the scope takes the ground back and removes the trees, cut and dead ones too.
         /// </summary>
         [ChangesState]
         public void Apply(Scope scope)
@@ -75,6 +86,22 @@ namespace Moonwell.Procgen
             if (blocked)
             {
                 Terrain.Block(X, Y, Columns, Blocked, scope);
+            }
+
+            MakeTrees(0, Trees.Length, scope);
+        }
+
+        /// <summary>Makes the trees of the corners in a range, each at the ground's height there.</summary>
+        internal void MakeTrees(int from, int to, Scope scope)
+        {
+            for (var at = from; at < to; at++)
+            {
+                if (Trees[at] != 0)
+                {
+                    var x = X + at % Columns * 128f;
+                    var y = Y + at / Columns * 128f;
+                    Destructable.Create(Trees[at], x, y, Terrain.Height(x, y), scope, variation: TreeVariations[at]);
+                }
             }
         }
     }

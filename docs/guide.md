@@ -1271,8 +1271,8 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
 
 ## Procedural terrain
 
-Add the `Moonwell.Procgen` package to make ground from a seed while the game runs: hills, the tiles on them, and where
-units can't walk. It brings `Moonwell.Terrain` and `Moonwell.Maths` with it.
+Add the `Moonwell.Procgen` package to make ground from a seed while the game runs: hills, the tiles on them, where
+units can't walk, and trees. It brings `Moonwell.Terrain` and `Moonwell.Maths` with it.
 
 ```csharp
 using Moonwell.Procgen;
@@ -1302,7 +1302,7 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   Every(0.1f, () =>
   {
       bar.Value = making.Progress;   // 0 to 1
-      label.Text = making.Step;      // "Heights", "Tiles", "Blocked"
+      label.Text = making.Step;      // "Heights", "Tiles", "Blocked", "Trees"
   });
   making.Done += StartPlay;
   ```
@@ -1323,6 +1323,37 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 - The game makes no cliffs, ramps or water while it runs, so the ground is slopes, and tiles come from the map's own
   list: declare the ones `Paint` uses in the map class's `Tiles`. A height changes no pathing by itself: `Block` rules do.
 - Level places are not promised a way to each other; `unit.CanReach` (`Moonwell.Pathing`) can check.
+- Trees are real destructables: they block, peasants cut them for lumber, they die and `Regrow` brings them back. Three
+  rules stand them, each limited by height, slope and tile as `Paint` is:
+
+  ```csharp
+  var tree = ObjectTypes.FourCC("LTlt");                              // Summer Tree Wall
+  hills.Forest(tree, cover: 0.4f, density: 0.8f, toSlope: 30f);       // patches about 1024 across
+  hills.Wall(tree, spacing: 2048f, width: 2f, gaps: 0.15f);           // winding walls, with openings
+  hills.Scatter(tree, chance: 0.02f, onTile: Tile.LordaeronSummerGrass); // single trees
+  ```
+
+  - `Forest`'s `cover` is as `Paint`'s, and `density` is the share of a patch's corners with a tree. `Wall` stands
+    lines through the world about `spacing` apart and `width` trees thick, so they edge open ground and channel
+    movement; `gaps` is the share of their length left open, in gaps about 512 across. `Scatter`'s `chance` is the share
+    of the corners that get one.
+  - A corner has one tree at most, at the corner itself, and a later tree rule takes a corner from an earlier one.
+    `onTile` is a tile this generator paints there, so put the `Paint` rules first; 0 (the default) is any corner.
+    Trees keep off `Level` places.
+  - `variations` is how many models the type has (10 unless set, as the game's tree walls have); each tree takes one
+    of them from the seed.
+  - The plan holds them as `plan.Trees` (a type for each corner, 0 for none) and `plan.TreeVariations`. `Apply` and
+    `Make` stand them after the ground, at its height, so they stand on the hills; `Destructable.Create` with a height
+    (`Destructable.Create(type, x, y, Terrain.Height(x, y), scope)`) does the same for a map's own trees, as the game
+    draws a destructable made without one at the ground as it was, sunk into a hill. Ending the scope removes every
+    tree, cut and dead ones too.
+  - Like the ground, the trees follow the world: plans of one generator stand the same trees on a shared edge. To
+    make a world in pieces with no tree twice, let each corner belong to one piece (one ends a corner before the next
+    starts).
+  - Costs (3.0.1.24371): about 45 µs a tree to make and 30 to remove (200 trees in 9 ms and 6 ms). Each tree made and
+    removed leaves about 5 KB and a handle id that the game does not give back, and its death registration stays,
+    which slows Moonwell's death trigger a little, so a game that makes and takes back forests again and again grows:
+    about 20 MB per 10,000 trees. A path search (`FindPath`) round a long wall took about 100 ms.
 - `Noise` and `Field` are the numbers under it, for a map's own generators: `Noise.At(seed, x, y)` is smooth noise
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.
