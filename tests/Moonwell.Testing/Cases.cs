@@ -1483,6 +1483,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.pause", Run = UnitCases.Pause });
             list.Add(new Case { Name = "units.scale", Run = UnitCases.Scale });
             list.Add(new Case { Name = "units.tint", Run = UnitCases.Tint });
+            list.Add(new Case { Name = "units.team-color", Run = UnitCases.TeamColor });
             list.Add(new Case { Name = "units.fly-height", Run = UnitCases.FlyHeight });
             list.Add(new Case { Name = "units.gone-reads-last", Run = UnitCases.GoneReadsLast });
             list.Add(new Case { Name = "units.fly-height-ground", Run = UnitCases.FlyHeightGroundUnit });

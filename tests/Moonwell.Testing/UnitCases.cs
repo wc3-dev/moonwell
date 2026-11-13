@@ -375,6 +375,20 @@ namespace Moonwell.Testing
             Expect.Near(1.75f, world.ScaleOf(handle), "the game's scale");
         }
 
+        /// <summary>SetTeamColor hands the player colour's number to the game, and nothing once the unit is gone.</summary>
+        public static void TeamColor(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var unit = Unit.Of(handle)!;
+
+            unit.SetTeamColor(PlayerColor.Blue);
+            Expect.Equal((int)PlayerColor.Blue, world.TeamColors[handle], "the game's colour");
+
+            unit.Remove();
+            unit.SetTeamColor(PlayerColor.Red);
+            Expect.Equal((int)PlayerColor.Blue, world.TeamColors[handle], "nothing asked once gone");
+        }
+
         /// <summary>Tint hands the four values to the game; the alpha is opaque when left out.</summary>
         public static void Tint(FakeWorld world)
         {

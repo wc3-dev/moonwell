@@ -1527,6 +1527,12 @@ namespace Moonwell.Engine
             Natives.SetUnitVertexColor(unit, red, green, blue, alpha);
         }
 
+        /// <summary>Draws a unit's team-coloured parts in a player colour: SetUnitColor.</summary>
+        public void SetUnitTeamColor(unit unit, int color)
+        {
+            Natives.SetUnitColor(unit, Natives.ConvertPlayerColor(color));
+        }
+
         /// <summary>Plays an animation of a unit by name (SetUnitAnimation), or queues it (QueueUnitAnimation).</summary>
         public void AnimateUnit(unit unit, string name, bool queued)
         {
