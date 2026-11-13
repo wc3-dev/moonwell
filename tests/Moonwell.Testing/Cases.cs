@@ -59,6 +59,7 @@ namespace Moonwell.Testing
             AddPlaced(list);
             AddProcgen(list);
             AddAI(list);
+            AddAITrees(list);
             return list;
         }
 
@@ -81,6 +82,28 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+        }
+
+        /// <summary>Adds the cases for the AI package's behaviour trees: each node, the watching of When, and the tree's Run and Stop.</summary>
+        private static void AddAITrees(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.trees.sequence", Run = TreeNodeCases.Sequence });
+            list.Add(new Case { Name = "ai.trees.select", Run = TreeNodeCases.Select });
+            list.Add(new Case { Name = "ai.trees.when-cuts-in", Run = TreeNodeCases.WhenCutsIn });
+            list.Add(new Case { Name = "ai.trees.when-ends-its-branch", Run = TreeNodeCases.WhenEndsItsBranch });
+            list.Add(new Case { Name = "ai.trees.only-a-select-watches", Run = TreeNodeCases.OnlyASelectWatches });
+            list.Add(new Case { Name = "ai.trees.parallel", Run = TreeNodeCases.Parallel });
+            list.Add(new Case { Name = "ai.trees.repeat", Run = TreeNodeCases.Repeat });
+            list.Add(new Case { Name = "ai.trees.invert-and-succeed", Run = TreeNodeCases.InvertAndSucceed });
+            list.Add(new Case { Name = "ai.trees.facts", Run = TreeNodeCases.Facts });
+            list.Add(new Case { Name = "ai.trees.wait", Run = TreeNodeCases.Wait });
+            list.Add(new Case { Name = "ai.trees.cooldown", Run = TreeNodeCases.Cooldown });
+            list.Add(new Case { Name = "ai.trees.timeout", Run = TreeNodeCases.Timeout });
+            list.Add(new Case { Name = "ai.trees.pick", Run = TreeNodeCases.Pick });
+            list.Add(new Case { Name = "ai.trees.one-tree-per-node", Run = TreeNodeCases.OneTreePerNode });
+            list.Add(new Case { Name = "ai.trees.nested-run", Run = TreeNodeCases.NestedRun });
+            list.Add(new Case { Name = "ai.trees.stop", Run = TreeNodeCases.Stop });
+            list.Add(new Case { Name = "ai.trees.unit-brain", Run = TreeNodeCases.UnitBrainTree });
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>

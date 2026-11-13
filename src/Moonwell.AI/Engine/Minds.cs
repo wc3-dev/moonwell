@@ -80,6 +80,12 @@ namespace Moonwell.AI
             return Game.Time;
         }
 
+        /// <summary>Whether that many seconds have passed since a time, by Now, to half a millisecond, so that the float error of the game's time never costs a think.</summary>
+        internal static bool Passed(float since, float seconds)
+        {
+            return Now() - since >= seconds - 0.0005f;
+        }
+
         /// <summary>A number for a new blackboard.</summary>
         internal static int NextBoard()
         {
