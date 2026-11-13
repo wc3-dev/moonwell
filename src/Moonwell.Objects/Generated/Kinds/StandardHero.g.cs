@@ -1605,7 +1605,7 @@ namespace Moonwell.Objects
             set { Fields.Put("uoct", value); }
         }
 
-        /// <summary>Orientation Interpolation (uori), 0 to 8. How fast the unit's facing and model come round, and not a ramp: a half turn takes 0.5 s at 0 and 6 (6 starts fastest), 1 s at 1 and over 3 s at 8.</summary>
+        /// <summary>Orientation Interpolation (uori), 0 to 8. How fast the unit's facing and model come round, and not a ramp: a half turn takes 0.5 s at 6 (the fastest start) and 0, 0.7 s at 2, about 1 s at 1, 5 and 4, 1.6 s at 3, 2 s at 7 and 3.3 s at 8.</summary>
         [global::Moonwell.Objects.Field("uori", Label = "Orientation Interpolation")]
         [global::Moonwell.Objects.Limits(0, 8)]
         public int OrientationInterpolation

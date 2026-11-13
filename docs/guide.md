@@ -260,7 +260,7 @@ Four fields of a unit's class set how it turns. Measured in the game (3.0.1, cla
 | | |
 |---|---|
 | `TurnRate` (0.1 to 3) | how soon the unit sets off toward a place it doesn't face; higher is sooner. For a place straight behind: 0.66 s at 0.1, 0.14 s at 0.6, 0.06 s at 3. It doesn't set how fast the model turns |
-| `OrientationInterpolation` (0 to 8) | how fast the unit's facing, and so its model, comes round. Not a ramp: a half turn takes 0.5 s at 0 and at 6 (6 starts fastest and eases in), 1 s at 1, over 3 s at 8. By eye 4 and 5 are between 6 and 1, and 7 is nearly as slow as 8; 2 and 3 aren't measured |
+| `OrientationInterpolation` (0 to 8) | how fast the unit's facing, and so its model, comes round. Not a ramp. A half turn, fastest first: 6 0.5 s (the fastest start), 0 0.5 s, 2 0.7 s, 1 1 s, 5 1 s and 4 1.2 s (both most of the way round in 0.6 s, then a long ease), 3 1.6 s, 7 2 s, 8 3.3 s |
 | `PropulsionWindowDegrees` (1 to 180) | how far off its heading the unit may be and still walk. A wider one lets a slow-turning unit set off sooner, turning as it goes: at `TurnRate` 0.3, 0.38 s at 1, 0.26 s at 60 and at once at 180 |
 | `AnimationBlendTimeSeconds` (0 to 1) | the time the model takes to blend from one animation into the next, as from walking into standing. Looks only: nothing about turning or walking changes |
 
