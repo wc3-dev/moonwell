@@ -646,6 +646,29 @@ namespace Moonwell
             }
         }
 
+        /// <summary>The unit's icon: its type's (BlzGetAbilityIcon of TypeId), so a morph changes it, and once the game has removed the unit, the icon of the type it last had. A unit type's icon can differ by graphics mode (Art:sd, Art:hd and Art:de in the game's unitskin.txt) and each machine has its own, so it is read only inside Local.For. In a declared class's constructor, the icon the class declares (uico), set there; the game has no icon per unit, so a set on a unit in the game does nothing. On a default object, its type's.</summary>
+        public string Icon
+        {
+            [MachineLocal]
+            get
+            {
+                if (Handle == null)
+                {
+                    return DeclaredValue<string>("uico") ?? string.Empty;
+                }
+
+                return Runtime.World.IconOf(TypeId);
+            }
+
+            set
+            {
+                if (Handle == null)
+                {
+                    Declare("uico", value);
+                }
+            }
+        }
+
         /// <summary>Whether the unit is alive; false once the game has removed the unit.</summary>
         [LocalSafe]
         public bool IsAlive => !IsGone && Runtime.World.IsAlive(Handle);
