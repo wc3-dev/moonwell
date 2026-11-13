@@ -65,6 +65,7 @@ namespace Moonwell.Build
         {
             var project = MapProject.Find(path);
             log.WriteLine($"moonwell: {project.Name} ({(options.Release ? "release" : "development")} build)");
+            using var held = BuildLock.Take(project, log);
 
             // Placed and the Lua libraries' bindings are written before the compile, as the map's code names their members; the literal
             // names are checked first.
