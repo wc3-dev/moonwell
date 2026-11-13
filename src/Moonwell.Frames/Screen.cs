@@ -6,6 +6,25 @@ namespace Moonwell
     /// </summary>
     public static class Screen
     {
+        private static float designHeight = 0.6f;
+
+        /// <summary>The screen's height in the units frame.Add(child, x, y, width, height) takes: 0.6, the game's, unless set; 768 lets a layout made in pixels for a screen 768 high be written as it is. Set it once, before adding; a frame added already keeps its place. Refused unless above 0.</summary>
+        public static float DesignHeight
+        {
+            get { return designHeight; }
+            set
+            {
+                if (value > 0.0f)
+                {
+                    designHeight = value;
+                }
+                else
+                {
+                    Errors.Refuse("Screen.DesignHeight", value + " is not above 0: kept at " + designHeight);
+                }
+            }
+        }
+
         /// <summary>Adds a frame to the screen's whole width, beneath the HUD, in a scope, which ends it when it ends, and returns it. Given shownTo, only that player sees it: it is made on every machine and shown on that player's. In a scope that has ended it ends at once and nothing is made.</summary>
         public static T Add<T>(T frame, Scope scope, Player? shownTo = null)
             where T : Frame

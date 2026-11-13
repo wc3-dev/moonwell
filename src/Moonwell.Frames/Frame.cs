@@ -172,6 +172,10 @@ namespace Moonwell
                 if (handle != null)
                 {
                     FramesSystem.World.ScaleFrame(handle, value);
+                    if (this is Label)
+                    {
+                        Replace();
+                    }
                 }
             }
         }
@@ -753,6 +757,17 @@ namespace Moonwell
             return child;
         }
 
+        /// <summary>Adds a frame to this one as Add does, placed from this frame's top left, y down, with its size, all in the units Screen.DesignHeight sets (the game's unless set), so a layout copied from pixels is written as it is.</summary>
+        public T Add<T>(T child, float x, float y, float width, float height)
+            where T : Frame
+        {
+            var unit = 0.6f / Screen.DesignHeight;
+            child.Anchor = FramePoint.TopLeft;
+            child.Offset = new Vector2(x * unit, -y * unit);
+            child.Size(width * unit, height * unit);
+            return Add(child);
+        }
+
         /// <summary>
         /// A frame inside this one's template, found by its name in the .fdf at any depth, as a T: a window from the map's own
         /// .fdf comes whole, and its parts are reached this way, window.Child&lt;Label&gt;("ShopTitle"). It is the same object at
@@ -1316,7 +1331,24 @@ namespace Moonwell
                 return;
             }
 
-            world.PlaceFrame(handle!, (int)anchor, parentHandle!, (int)anchor, offset.X, offset.Y);
+            world.PlaceFrame(handle!, (int)anchor, parentHandle!, (int)anchor, offset.X / PlaceScale, offset.Y / PlaceScale);
+        }
+
+        /// <summary>What the frame's own offsets and size are divided by when given to the game: 1, but a label's Scale.</summary>
+        internal virtual float PlaceScale => 1.0f;
+
+        /// <summary>Gives the game the frame's points and size again, after a label's Scale changed what they are divided by.</summary>
+        private void Replace()
+        {
+            if (!foundInTemplate || PlacedByMap())
+            {
+                PlacePoints();
+            }
+
+            if (sized)
+            {
+                GiveSize();
+            }
         }
 
         /// <summary>Gives the game one tie, once the other frame is made.</summary>
@@ -1325,7 +1357,7 @@ namespace Moonwell
             var other = tie.Other != null ? tie.Other.handle : tie.Piece!.Handle;
             if (other != null)
             {
-                FramesSystem.World.PlaceFrame(handle!, (int)tie.Point, other, (int)tie.OtherPoint, tie.X, tie.Y);
+                FramesSystem.World.PlaceFrame(handle!, (int)tie.Point, other, (int)tie.OtherPoint, tie.X / PlaceScale, tie.Y / PlaceScale);
             }
         }
 
@@ -1362,7 +1394,7 @@ namespace Moonwell
         /// <summary>Gives the game the frame's size, a side left at 0 as its template made it.</summary>
         private void GiveSize()
         {
-            FramesSystem.World.SizeFrame(handle!, width != 0.0f ? width : madeWidth, height != 0.0f ? height : madeHeight);
+            FramesSystem.World.SizeFrame(handle!, (width != 0.0f ? width : madeWidth) / PlaceScale, (height != 0.0f ? height : madeHeight) / PlaceScale);
         }
 
         /// <summary>Runs when the map gives the frame a new size, or the frame it covers one: a progress bar refills here, and the frames covering this one that set no size of their own follow.</summary>

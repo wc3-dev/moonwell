@@ -3,7 +3,7 @@ using System;
 namespace Moonwell
 {
     /// <summary>
-    /// A line or block of text, in the game's font; Scale makes it bigger. A label lets clicks through to what is under it
+    /// A line or block of text, in the game's font; Scale makes its text bigger and leaves its place and box alone. A label lets clicks through to what is under it
     /// unless Enabled is set. A font of its own is not offered: BlzFrameSetFont on a TEXT by type changes neither its height
     /// nor its letters (seen 11-03).
     /// </summary>
@@ -104,6 +104,22 @@ namespace Moonwell
                 Write();
             }
         }
+
+        /// <summary>Shows a unit's name, called anywhere outside Local.For: each machine shows its own (a hero's proper name, else the unit's name), as the game gives them in each player's language, and Text reads the type's name, the same everywhere. It shows the name at the call; call it again after a rename. Does nothing once the label has ended.</summary>
+        public void ShowNameOf(Unit unit)
+        {
+            if (HasEnded)
+            {
+                return;
+            }
+
+            text = unit.Default.Name;
+            local = unit is Hero hero ? hero.ProperName : unit.Name;
+            Write();
+        }
+
+        /// <summary>A label's Scale sizes its text only: the game scales a TEXT's offset and box with it (seen 11-12), so they are given divided by it.</summary>
+        internal override float PlaceScale => scale;
 
         /// <summary>A label listened to takes the mouse: it is turned on for it, and Enabled reads so.</summary>
         internal override void PrepareMouse()
