@@ -1603,6 +1603,9 @@ A brain with several things it could do can score each one at every think and ru
 AI. An option's score comes from facts on the blackboard, each put through a curve.
 
 ```csharp
+using Moonwell.AI;
+using Moonwell.Interactions;                               // Find, from the Moonwell.Interactions package
+
 public sealed class Grunt : UnitBrain
 {
     static readonly Fact<float> Life = new Fact<float>("life", keep: 0.25f,

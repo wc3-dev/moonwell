@@ -244,15 +244,27 @@ namespace Moonwell.Testing
             board.Set(Alarm, true);
             Expect.Near(0.7071f, charge.Score(board), "not ruled out: the square root of 1 times 0.5");
             Expect.Equal(1, reads, "the worked-out fact read once");
+            Expect.Near(0.7071f, charge.lastScore, "the score is kept for the AI tools");
+            board.Set(Alarm, false);
+            charge.Score(board);
+            Expect.True(charge.lastScore == 0f, "a 0 is kept too");
 
+            var lateReads = 0;
+            var lateCostly = new Fact<float>("late costly", 0f, on =>
+            {
+                lateReads++;
+                return 0.5f;
+            });
             board.Set(Life, 0.6f);
             var late = new Option("late", Nothing)
             {
                 { Life, Curve.Rising },
                 { Enemies, 0, 6, Curve.Rising },
+                { lateCostly, Curve.Rising },
             };
             board.Set(Enemies, 0);
             Expect.True(late.Score(board) == 0f, "a zero after another input rules it out too");
+            Expect.Equal(0, lateReads, "and the facts after that zero are not read");
         }
 
         /// <summary>Pick gives the best, the first added of a tie, and null when every option scores 0 or there are none, setting Current to what it gives; foreach gives the options in the order added.</summary>
