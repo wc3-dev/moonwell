@@ -70,6 +70,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.field.basics", Run = NoiseCases.FieldBasics });
             list.Add(new Case { Name = "procgen.field.shaping", Run = NoiseCases.FieldShaping });
             list.Add(new Case { Name = "procgen.terrain.same-seed", Run = TerrainGeneratorCases.SameSeed });
+            list.Add(new Case { Name = "procgen.terrain.seams", Run = TerrainGeneratorCases.Seams });
+            list.Add(new Case { Name = "procgen.terrain.quarters", Run = TerrainGeneratorCases.Quarters });
             list.Add(new Case { Name = "procgen.terrain.range-and-fade", Run = TerrainGeneratorCases.RangeAndFade });
             list.Add(new Case { Name = "procgen.terrain.paint", Run = TerrainGeneratorCases.Paint });
             list.Add(new Case { Name = "procgen.terrain.block-and-level", Run = TerrainGeneratorCases.BlockAndLevel });
