@@ -36,7 +36,9 @@ public static partial class NativeTags
 {
     /// <summary>Natives whose answer differs per machine: the local player, the camera, the mouse and keyboard,
     /// frames, sounds, localised names and tooltips, heights and what a player may have changed locally. jassdoc's
-    /// <c>@async</c> natives are all here.</summary>
+    /// <c>@async</c> natives are all here. A frame's parent, children and child count are not: every machine builds
+    /// the game's frames from the same <c>.fdf</c> files, Classic and Reforged alike, and makes the map's own, so the
+    /// tree is the same everywhere (J20).</summary>
     private static readonly HashSet<string> MachineLocal = new(StringComparer.Ordinal)
     {
         "GetLocalPlayer", "GetLocalizedString", "GetLocalizedHotkey", "BlzGetLocale", "SkinManagerGetLocalPath",
@@ -54,8 +56,7 @@ public static partial class NativeTags
         "BlzGetMouseScreenPosY", "BlzGetMouseFocusUnit", "BlzGetLocalClientWidth", "BlzGetLocalClientHeight",
         "BlzIsLocalClientActive", "BlzIsSelectionEnabled", "BlzIsSelectionCircleEnabled",
         "BlzFrameIsVisible", "BlzFrameGetName", "BlzFrameGetText", "BlzFrameGetTextSizeLimit", "BlzFrameGetEnable",
-        "BlzFrameGetAlpha", "BlzFrameGetValue", "BlzFrameGetHeight", "BlzFrameGetWidth", "BlzFrameGetChildrenCount",
-        "BlzFrameGetParent", "BlzFrameGetChild",
+        "BlzFrameGetAlpha", "BlzFrameGetValue", "BlzFrameGetHeight", "BlzFrameGetWidth",
         "BlzFrameToPixelX", "BlzFrameToPixelY",
         "GetSoundDuration", "GetSoundFileDuration", "GetSoundIsPlaying", "GetSoundIsLoading",
         "IsCineFilterDisplayed", "IsMultiboardDisplayed", "IsMultiboardMinimized", "MultiboardGetTitleText",
@@ -135,7 +136,7 @@ public static partial class NativeTags
         "UnitAlive", "UnitItemInSlot", "FirstOfGroup", "BlzGroupUnitAt", "BlzGroupGetSize", "UnitInventorySize",
         "RectContainsCoords", "TimerGetElapsed", "TimerGetRemaining", "TimerGetTimeout", "UnitItemInBagSlot",
         "UnitItemInEquipmentSlot", "VersionGet", "PlayerGetLeaderboard",
-        "BlzUnitIsAlive", "BlzUnitItemInBagSlot", "BlzUnitItemInEquipmentSlot",
+        "BlzUnitIsAlive", "BlzUnitItemInBagSlot", "BlzUnitItemInEquipmentSlot", "BlzFrameGetChildrenCount",
     };
 
     /// <summary>Natives that change state and return a handle that already existed.</summary>
