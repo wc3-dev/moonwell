@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Moonwell.Procgen
 {
     /// <summary>
@@ -54,11 +56,18 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public int[] TreeVariations { get; }
 
+        /// <summary>The generator's places whose centre is nearest one of its corners, in the order made: each place is held by the one plan of touching plans that holds that corner.</summary>
+        [LocalSafe]
+        public IReadOnlyList<Place> Places => places;
+
+        private readonly List<Place> places = new List<Place>();
+
         /// <summary>
         /// Makes the plan's ground for as long as the scope holds it (<c>Game.Instance</c> for the whole game): the heights,
         /// the tiles and the blocked corners, each one terrain change over the grid, whose first corner is the map's corner
-        /// nearest (X, Y), then the trees, standing on the ground as it is then. A part with nothing in it makes no change.
-        /// Ending the scope takes the ground back and removes the trees, cut and dead ones too.
+        /// nearest (X, Y), then the trees, standing on the ground as it is then, then the units and buildings of its places. A
+        /// part with nothing in it makes no change. Ending the scope takes the ground back and removes the trees, cut and dead
+        /// ones too, and the units and buildings.
         /// </summary>
         [ChangesState]
         public void Apply(Scope scope)
@@ -89,6 +98,21 @@ namespace Moonwell.Procgen
             }
 
             MakeTrees(0, Trees.Length, scope);
+            MakePlaces(0, places.Count, scope);
+        }
+
+        internal void Hold(Place place)
+        {
+            places.Add(place);
+        }
+
+        /// <summary>Makes the units and buildings of the places in a range.</summary>
+        internal void MakePlaces(int from, int to, Scope scope)
+        {
+            for (var k = from; k < to; k++)
+            {
+                places[k].Make(scope);
+            }
         }
 
         /// <summary>Makes the trees of the corners in a range, each at the ground's height there.</summary>

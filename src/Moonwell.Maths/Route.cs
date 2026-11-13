@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Moonwell
 {
-    /// <summary>A route a unit of some size can walk, as FindPath gives it: its turns from the start to the end, how long it is, and whether it reaches the place asked for. A path that does not reach ends at the reachable spot nearest that place, where the game's own walker would stop.</summary>
+    /// <summary>A route a unit of some size can walk, as FindPath gives it, or along roads, as Moonwell.Procgen gives it: its turns from the start to the end, how long it is, and whether it reaches the place asked for. A path that does not reach ends at the reachable spot nearest that place, where the game's own walker would stop.</summary>
     public sealed class Route
     {
         internal Route(List<Vector2> points, bool reaches)

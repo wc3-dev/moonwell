@@ -5,7 +5,8 @@ namespace Moonwell.Procgen
 {
     /// <summary>
     /// Makes ground from a seed: rolling heights from layered noise, tiles, blocked corners and trees by rules on height
-    /// and slope, and level places for bases. Set it up, then <c>Plan(area)</c> works the ground out and the plan's
+    /// and slope, level places for bases and camps with what is made at them, and roads between places, with routes along
+    /// them. Set it up, then <c>Plan(area)</c> works the ground out and the plan's
     /// <c>Apply</c> makes it. The same seed, settings and area give the same ground on every machine; a seed from
     /// <c>Game.Random</c> gives new ground every game. The game makes no cliffs, ramps or water while it runs, so the
     /// ground is slopes. Slopes are read from the heights the plan adds, so the rules fit ground that starts flat.
@@ -41,7 +42,43 @@ namespace Moonwell.Procgen
         private const float WallCost = 14f;
         private const float ScatterCost = 1f;
 
+        // Inferred, not measured: a corner looked at near a stretch of road, a place's level read at a road's point, and a
+        // unit or building made at a place (decision 220 measured 0.34 to 0.44 ms to make and remove a unit).
+        private const float StampCost = 1f;
+        private const float PlaceCost = 0.5f;
+        private const float UnitCost = 300f;
+
+        /// <summary>The distance between a road's points.</summary>
+        private const float RoadSpacing = 256f;
+
+        /// <summary>How far a road bends off the straight line, as a share of a leg's length, and at most.</summary>
+        private const float RoadBend = 0.25f;
+
+        private const float RoadBendMost = 768f;
+
+        /// <summary>How far along a road its bends are apart.</summary>
+        private const float RoadWave = 3072f;
+
+        /// <summary>The steepest a road is levelled to, as rise over run (about 8 degrees).</summary>
+        private const float RoadSlope = 0.14f;
+
+        /// <summary>How far past a road's edge the ground blends back to the hills.</summary>
+        private const float RoadBlend = 256f;
+
+        /// <summary>The road's points on each side of one that its heights are averaged over, before the slope is limited.</summary>
+        private const int RoadSmooth = 3;
+
+        /// <summary>How far past a road's edge no corner is blocked (a blocked corner takes the cells 64 round it) and no tree stands.</summary>
+        private const float RoadUnblocked = 64f;
+
+        private const float RoadNoTrees = 128f;
+
+        /// <summary>How many spots Places tries for each place asked.</summary>
+        private const int PlaceTries = 30;
+
         /// <summary>The names of Make's steps, as <c>TerrainMaking.Step</c> gives them.</summary>
+        private const string RoadsStep = "Roads";
+
         private const string HeightsStep = "Heights";
 
         private const string TilesStep = "Tiles";
@@ -50,12 +87,19 @@ namespace Moonwell.Procgen
 
         private const string TreesStep = "Trees";
 
+        private const string PlacesStep = "Places";
+
         private readonly List<Rule> paints = new List<Rule>();
         private readonly List<Rule> blocks = new List<Rule>();
         private readonly List<TreeRule> trees = new List<TreeRule>();
 
-        /// <summary>The level places: x, y, radius and blend each.</summary>
-        private readonly List<float[]> levels = new List<float[]>();
+        /// <summary>Every place, from Level, Places and Exit, in the order made.</summary>
+        private readonly List<Place> places = new List<Place>();
+
+        private readonly List<Road> roads = new List<Road>();
+
+        /// <summary>The Places and Exit calls so far, each one's seed apart.</summary>
+        private int placeCalls;
 
         /// <summary>A generator for a seed.</summary>
         public TerrainGenerator(int seed)
@@ -149,20 +193,291 @@ namespace Moonwell.Procgen
             trees.Add(new TreeRule(TreeRule.Single, type, variations, chance, 0f, 0f, TreeSeed(), new Rule(onTile, fromHeight, toHeight, fromSlope, toSlope, 1f, 0)));
         }
 
+        /// <summary>The tile painted along roads, one of <c>Tile</c>'s; 0 (as it starts) leaves the tiles the rules paint.</summary>
+        public int RoadTile { get; set; }
+
         /// <summary>
-        /// A level place, for a base or a spawn: the ground within a radius of a point (the game's coordinates) is level
-        /// at the height of its centre, and blends back to the hills over <paramref name="blend"/> past it. It is never
-        /// blocked and has no trees. A place nearer the area's edge than <c>EdgeFade</c> is tilted by the fade. A radius of 0 or less throws
-        /// ArgumentException.
+        /// A level place at a point (the game's coordinates), for a base, a hub or a spawn: the ground within the radius is
+        /// level at the ground as it was, never raised, so buildings and items made there stand on it, and blends back to
+        /// the hills over <paramref name="blend"/> past it. It is never blocked and has no trees. A radius of 0 or less
+        /// throws ArgumentException.
         /// </summary>
-        public void Level(float x, float y, float radius, float blend = 256f)
+        public Place Level(float x, float y, float radius, float blend = 256f)
         {
-            if (!(radius > 0f))
+            CheckRadius(radius);
+            var place = new Place("", x, y, radius, blend > 0f ? blend : 0f, null);
+            places.Add(place);
+            return place;
+        }
+
+        /// <summary>
+        /// Level places picked in an area from the seed, for camps, shops, shrines or entrances: up to
+        /// <paramref name="count"/> spots, each at least <paramref name="spacing"/> from every other place and never
+        /// overlapping one, the whole place inside the area. Fewer come back when no more fit. With a place to spread them
+        /// <paramref name="from"/>, the nearest share are difficulty 1 and the farthest <paramref name="difficulties"/>, in
+        /// even shares; groups added to the list are made at them when their plan is made, owned by
+        /// <paramref name="owner"/> (Neutral Hostile unless set). The same seed and calls pick the same spots. A radius of 0
+        /// or less, a count below 0 or fewer than 1 difficulty throws ArgumentException.
+        /// </summary>
+        public PlaceList Places(string name, Bounds area, int count, float radius = 256f, float spacing = 0f, Place? from = null, int difficulties = 1, Player? owner = null, float blend = 256f)
+        {
+            CheckRadius(radius);
+            if (count < 0 || difficulties < 1)
             {
-                throw new ArgumentException("TerrainGenerator.Level takes a radius above 0, not " + radius);
+                throw new ArgumentException("TerrainGenerator.Places takes a count of 0 or more and 1 difficulty or more, not " + count + " and " + difficulties);
             }
 
-            levels.Add(new[] { x, y, radius, blend > 0f ? blend : 0f });
+            blend = blend > 0f ? blend : 0f;
+            var list = new PlaceList(PlaceSeed(), difficulties, owner);
+            var margin = radius + blend;
+            var spanX = area.Size.X - 2f * margin;
+            var spanY = area.Size.Y - 2f * margin;
+            for (var k = 0; k < count * PlaceTries && list.Count < count && spanX >= 0f && spanY >= 0f; k++)
+            {
+                var x = area.Min.X + margin + Noise.Hash(list.Seed, k, 0) * spanX;
+                var y = area.Min.Y + margin + Noise.Hash(list.Seed, k, 1) * spanY;
+                if (IsClear(x, y, radius, blend, spacing))
+                {
+                    var place = new Place(name, x, y, radius, blend, list);
+                    list.Take(place);
+                    places.Add(place);
+                }
+            }
+
+            if (from != null && difficulties > 1)
+            {
+                var order = new List<int>();
+                var distances = new float[list.Count];
+                for (var k = 0; k < list.Count; k++)
+                {
+                    order.Add(k);
+                    var dx = list[k].X - from.X;
+                    var dy = list[k].Y - from.Y;
+                    distances[k] = dx * dx + dy * dy;
+                }
+
+                order.Sort((a, b) => distances[a] != distances[b] ? distances[a].CompareTo(distances[b]) : a.CompareTo(b));
+                for (var rank = 0; rank < order.Count; rank++)
+                {
+                    list[order[rank]].Difficulty = 1 + rank * difficulties / order.Count;
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// A level place on one side of an area, where it joins the next: its centre on the side, at a spot along it picked
+        /// from the seed, kept a radius and blend from the corners. Roads join it as any place; the map puts what leads on
+        /// (a gate, a way to the next area) there. A radius of 0 or less throws ArgumentException.
+        /// </summary>
+        public Place Exit(string name, Bounds area, Side side, float radius = 384f, float blend = 256f)
+        {
+            CheckRadius(radius);
+            blend = blend > 0f ? blend : 0f;
+            var upright = side == Side.Left || side == Side.Right;
+            var min = upright ? area.Min.Y : area.Min.X;
+            var max = upright ? area.Max.Y : area.Max.X;
+            var margin = Math.Min(radius + blend, (max - min) / 2f);
+            var along = min + margin + Noise.Hash(PlaceSeed(), 0, 0) * (max - min - 2f * margin);
+            var x = side == Side.Left ? area.Min.X : side == Side.Right ? area.Max.X : along;
+            var y = side == Side.Bottom ? area.Min.Y : side == Side.Top ? area.Max.Y : along;
+            var place = new Place(name, x, y, radius, blend, null);
+            places.Add(place);
+            return place;
+        }
+
+        /// <summary>
+        /// A road from one place to another, through the points given in order: a line bent from the seed, cut and filled
+        /// to an easy slope along it, painted with <c>RoadTile</c>, and clear of trees and blocked corners, wherever a plan of
+        /// this generator holds it. Several roads between the same places are several lanes. The same seed and calls give the
+        /// same road. One place for both ends, or a width of 0 or less, throws ArgumentException.
+        /// </summary>
+        public Road Road(Place from, Place to, float width = 256f, params Vector2[] through)
+        {
+            if (from == null || to == null || from == to || !(width > 0f))
+            {
+                throw new ArgumentException("TerrainGenerator.Road takes two places and a width above 0");
+            }
+
+            var seed = Seed + 1299709 * (roads.Count + 1);
+            var stops = new List<Vector2> { new Vector2(from.X, from.Y) };
+            if (through != null)
+            {
+                stops.AddRange(through);
+            }
+
+            stops.Add(new Vector2(to.X, to.Y));
+            var points = new List<Vector2> { stops[0] };
+            for (var leg = 1; leg < stops.Count; leg++)
+            {
+                var a = stops[leg - 1];
+                var b = stops[leg];
+                var length = a.DistanceTo(b);
+                if (!(length > 0f))
+                {
+                    continue;
+                }
+
+                var steps = Math.Max(1, (int)(length / RoadSpacing + 0.5f));
+                var side = new Vector2(a.Y - b.Y, b.X - a.X) / length;
+                var bend = Math.Min(length * RoadBend, RoadBendMost);
+                for (var k = 1; k <= steps; k++)
+                {
+                    var t = k / (float)steps;
+                    var off = k < steps ? bend * (2f * Noise.At(seed, t * length / RoadWave, leg) - 1f) * Angles.Sin(180f * t) : 0f;
+                    points.Add(k < steps ? Vector2.Lerp(a, b, t) + side * off : b);
+                }
+            }
+
+            var road = new Road(from, to, width, points);
+            roads.Add(road);
+            return road;
+        }
+
+        /// <summary>
+        /// Adds roads until every place is reached from every other along roads: the shortest straight gap between places not
+        /// yet joined first, each a road 256 wide. Gives the roads it added, none when every place is joined.
+        /// </summary>
+        public IReadOnlyList<Road> Join()
+        {
+            var count = places.Count;
+            var group = new int[count];
+            for (var k = 0; k < count; k++)
+            {
+                group[k] = k;
+            }
+
+            foreach (var road in roads)
+            {
+                var a = places.IndexOf(road.From);
+                var b = places.IndexOf(road.To);
+                if (a >= 0 && b >= 0)
+                {
+                    group[Root(group, a)] = Root(group, b);
+                }
+            }
+
+            var froms = new List<int>();
+            var tos = new List<int>();
+            var gaps = new List<float>();
+            var order = new List<int>();
+            for (var a = 0; a < count; a++)
+            {
+                for (var b = a + 1; b < count; b++)
+                {
+                    var dx = places[a].X - places[b].X;
+                    var dy = places[a].Y - places[b].Y;
+                    order.Add(order.Count);
+                    froms.Add(a);
+                    tos.Add(b);
+                    gaps.Add(dx * dx + dy * dy);
+                }
+            }
+
+            order.Sort((p, q) => gaps[p] != gaps[q] ? gaps[p].CompareTo(gaps[q]) : p.CompareTo(q));
+            var added = new List<Road>();
+            foreach (var pair in order)
+            {
+                var a = Root(group, froms[pair]);
+                var b = Root(group, tos[pair]);
+                if (a != b)
+                {
+                    group[a] = b;
+                    added.Add(Road(places[froms[pair]], places[tos[pair]]));
+                }
+            }
+
+            return added;
+        }
+
+        /// <summary>
+        /// The shortest way from one place to another along the roads so far, as a route through every road's points; the
+        /// route is the start alone, with <c>Reaches</c> false, when no roads join them.
+        /// </summary>
+        [LocalSafe]
+        public Route Route(Place from, Place to)
+        {
+            var start = new List<Vector2> { new Vector2(from.X, from.Y) };
+            var a = places.IndexOf(from);
+            var b = places.IndexOf(to);
+            if (a < 0 || b < 0)
+            {
+                return new Route(start, false);
+            }
+
+            if (a == b)
+            {
+                return new Route(start, true);
+            }
+
+            var count = places.Count;
+            var best = new float[count];
+            var via = new Road?[count];
+            var done = new bool[count];
+            for (var k = 0; k < count; k++)
+            {
+                best[k] = float.MaxValue;
+            }
+
+            best[a] = 0f;
+            while (true)
+            {
+                var at = -1;
+                for (var k = 0; k < count; k++)
+                {
+                    if (!done[k] && best[k] < float.MaxValue && (at < 0 || best[k] < best[at]))
+                    {
+                        at = k;
+                    }
+                }
+
+                if (at < 0 || at == b)
+                {
+                    break;
+                }
+
+                done[at] = true;
+                foreach (var road in roads)
+                {
+                    var other = road.From == places[at] ? road.To : road.To == places[at] ? road.From : null;
+                    var next = other == null ? -1 : places.IndexOf(other);
+                    if (next >= 0 && best[at] + road.Length < best[next])
+                    {
+                        best[next] = best[at] + road.Length;
+                        via[next] = road;
+                    }
+                }
+            }
+
+            if (via[b] == null)
+            {
+                return new Route(start, false);
+            }
+
+            var chain = new List<Road>();
+            for (var here = to; here != from;)
+            {
+                var road = via[places.IndexOf(here)]!;
+                chain.Add(road);
+                here = road.From == here ? road.To : road.From;
+            }
+
+            chain.Reverse();
+            var points = start;
+            var on = from;
+            foreach (var road in chain)
+            {
+                var forward = road.From == on;
+                for (var k = 1; k < road.Points.Count; k++)
+                {
+                    points.Add(road.Points[forward ? k : road.Points.Count - 1 - k]);
+                }
+
+                on = forward ? road.To : road.From;
+            }
+
+            return new Route(points, true);
         }
 
         /// <summary>
@@ -175,6 +490,7 @@ namespace Moonwell.Procgen
         public TerrainPlan Plan(Bounds area)
         {
             var ground = new Groundwork(this, area, null);
+            ground.Roads(0, ground.RoadCount);
             ground.Hills(0, ground.Cells);
             ground.Levels(0, ground.Places);
             ground.Fade(0, ground.Cells);
@@ -200,6 +516,11 @@ namespace Moonwell.Procgen
 
             var ground = new Groundwork(this, area, scope);
             var work = new Work();
+            if (ground.RoadCount > 0)
+            {
+                work.Add(RoadsStep, ground.RoadCount, ground.RoadsCost / ground.RoadCount, ground.Roads, ground.RoadCostOf);
+            }
+
             work.Add(HeightsStep, ground.Cells, NoiseCost * Layers, ground.Hills);
             work.Add(HeightsStep, ground.Places, LevelCost * ground.PlaceCorners, ground.Levels);
             if (EdgeFade > 0f)
@@ -221,7 +542,55 @@ namespace Moonwell.Procgen
                 work.Add(TreesStep, ground.Corners, ScanCost + TreeCost / 8f, ground.Trees, ground.TreeCostOf, ground.TreesCost);
             }
 
+            if (ground.PlacesCost > ScanCost * ground.Plan.Places.Count)
+            {
+                work.Add(PlacesStep, ground.Plan.Places.Count, ground.PlacesCost / ground.Plan.Places.Count, ground.MakePlaces, ground.PlaceCostOf);
+            }
+
             return new TerrainMaking(work, msPerStep * 1000f, scope);
+        }
+
+        private static void CheckRadius(float radius)
+        {
+            if (!(radius > 0f))
+            {
+                throw new ArgumentException("TerrainGenerator's places take a radius above 0, not " + radius);
+            }
+        }
+
+        /// <summary>The root of a place's group of joined places.</summary>
+        private static int Root(int[] group, int place)
+        {
+            while (group[place] != place)
+            {
+                place = group[place];
+            }
+
+            return place;
+        }
+
+        /// <summary>A seed for the next Places or Exit call, apart from the other rules' seeds.</summary>
+        private int PlaceSeed()
+        {
+            placeCalls++;
+            return Seed + 15485863 * placeCalls;
+        }
+
+        /// <summary>Whether a place there would keep its spacing from every place so far, and its level ground off theirs.</summary>
+        private bool IsClear(float x, float y, float radius, float blend, float spacing)
+        {
+            foreach (var place in places)
+            {
+                var need = Math.Max(spacing, radius + place.Radius + Math.Max(blend, place.Blend));
+                var dx = place.X - x;
+                var dy = place.Y - y;
+                if (dx * dx + dy * dy < need * need)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -273,8 +642,8 @@ namespace Moonwell.Procgen
             return count;
         }
 
-        /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it, and marks the level ones.</summary>
-        private static void LevelPlace(float[] cells, bool[] level, int columns, int rows, float x, float y, float radius, float blend, float target)
+        /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it but not those on a road, which keep the road's easy slope, and marks the level ones.</summary>
+        private static void LevelPlace(float[] cells, bool[] level, float[] roadGap, int columns, int rows, float x, float y, float radius, float blend, float target)
         {
             var reach = radius + blend;
             var lastColumn = Math.Min(Noise.Floor((x + reach) / TileSize) + 1, columns - 1);
@@ -292,7 +661,7 @@ namespace Moonwell.Procgen
                         cells[at] = target;
                         level[at] = true;
                     }
-                    else if (distance < reach)
+                    else if (distance < reach && roadGap[at] > 0f)
                     {
                         var t = (distance - radius) / blend;
                         cells[at] = target + (cells[at] - target) * (t * t * (3f - 2f * t));
@@ -321,7 +690,14 @@ namespace Moonwell.Procgen
             private readonly Rule[] paints;
             private readonly Rule[] blocks;
             private readonly TreeRule[] trees;
-            private readonly float[][] places;
+            private readonly Place[] places;
+            private readonly int roadTile;
+
+            /// <summary>The roads that come near the cells.</summary>
+            private readonly Road[] roads;
+
+            /// <summary>What working each road out costs.</summary>
+            private readonly float[] roadCosts;
             private readonly int firstColumn;
             private readonly int firstRow;
             private readonly int columns;
@@ -332,6 +708,11 @@ namespace Moonwell.Procgen
 
             private readonly float[] cells;
             private readonly bool[] level;
+
+            /// <summary>How far each cell is past the edge of the nearest road (below 0 on it), and that road's height there.</summary>
+            private readonly float[] roadGap;
+
+            private readonly float[] roadHeight;
 
             /// <summary>The kinds of pathing the rules have taken so far, over every corner.</summary>
             private int kindsBlocked;
@@ -358,7 +739,8 @@ namespace Moonwell.Procgen
                 paints = generator.paints.ToArray();
                 blocks = generator.blocks.ToArray();
                 trees = generator.trees.ToArray();
-                places = generator.levels.ToArray();
+                places = generator.places.ToArray();
+                roadTile = generator.RoadTile;
                 var size = area.Size;
                 columns = (int)(size.X / TileSize + 0.5f) + 1;
                 rows = (int)(size.Y / TileSize + 0.5f) + 1;
@@ -368,6 +750,40 @@ namespace Moonwell.Procgen
                 wide = columns + 2;
                 cells = new float[wide * (rows + 2)];
                 level = new bool[cells.Length];
+                roadGap = new float[cells.Length];
+                roadHeight = new float[cells.Length];
+                for (var at = 0; at < cells.Length; at++)
+                {
+                    roadGap[at] = float.MaxValue;
+                }
+
+                var near = new List<Road>();
+                var costs = new List<float>();
+                foreach (var road in generator.roads)
+                {
+                    var cost = 0f;
+                    var points = road.Points;
+                    for (var k = 1; k < points.Count; k++)
+                    {
+                        cost += StampCost * Reach(road, points[k - 1], points[k], out _, out _, out _, out _);
+                    }
+
+                    if (cost > 0f)
+                    {
+                        near.Add(road);
+                        costs.Add(cost + points.Count * (NoiseCost * layers + PlaceCost * places.Length));
+                    }
+                }
+
+                roads = near.ToArray();
+                roadCosts = costs.ToArray();
+                foreach (var place in places)
+                {
+                    if (place.Column >= firstColumn && place.Column < firstColumn + columns && place.Row >= firstRow && place.Row < firstRow + rows)
+                    {
+                        Plan.Hold(place);
+                    }
+                }
             }
 
             /// <summary>The cells: the area's corners and one more on every side.</summary>
@@ -379,6 +795,39 @@ namespace Moonwell.Procgen
             /// <summary>The level places.</summary>
             internal int Places => places.Length;
 
+            /// <summary>The roads that come near the area.</summary>
+            internal int RoadCount => roads.Length;
+
+            /// <summary>What working out every road near the area costs.</summary>
+            internal float RoadsCost
+            {
+                get
+                {
+                    var sum = 0f;
+                    foreach (var cost in roadCosts)
+                    {
+                        sum += cost;
+                    }
+
+                    return sum;
+                }
+            }
+
+            /// <summary>What making the units and buildings at every place the plan holds costs.</summary>
+            internal float PlacesCost
+            {
+                get
+                {
+                    var sum = 0f;
+                    for (var k = 0; k < Plan.Places.Count; k++)
+                    {
+                        sum += PlaceCostOf(k);
+                    }
+
+                    return sum;
+                }
+            }
+
             /// <summary>The most corners a level place reaches.</summary>
             internal float PlaceCorners
             {
@@ -387,7 +836,7 @@ namespace Moonwell.Procgen
                     var most = 0f;
                     for (var k = 0; k < places.Length; k++)
                     {
-                        var across = 2f * (places[k][2] + places[k][3]) / TileSize + 3f;
+                        var across = 2f * (places[k].Radius + places[k].Blend) / TileSize + 3f;
                         most = Math.Max(most, across * across);
                     }
 
@@ -395,13 +844,48 @@ namespace Moonwell.Procgen
                 }
             }
 
-            /// <summary>The hills of the cells in a range, from the noise.</summary>
+            /// <summary>The hills of the cells in a range, from the noise, cut and filled to the roads' heights along them.</summary>
             internal void Hills(int from, int to)
             {
                 for (var at = from; at < to; at++)
                 {
-                    cells[at] = Height(firstColumn - 1 + at % wide, firstRow - 1 + at / wide);
+                    var height = Height(firstColumn - 1 + at % wide, firstRow - 1 + at / wide);
+                    var gap = roadGap[at];
+                    if (gap < RoadBlend)
+                    {
+                        var t = gap > 0f ? gap / RoadBlend : 0f;
+                        height = roadHeight[at] + (height - roadHeight[at]) * (t * t * (3f - 2f * t));
+                    }
+
+                    cells[at] = height;
                 }
+            }
+
+            /// <summary>Works out the roads in a range, each's heights along it and the cells near it.</summary>
+            internal void Roads(int from, int to)
+            {
+                for (var k = from; k < to; k++)
+                {
+                    Stamp(roads[k], Profile(roads[k]));
+                }
+            }
+
+            /// <summary>What working out a road costs.</summary>
+            internal float RoadCostOf(int k)
+            {
+                return roadCosts[k];
+            }
+
+            /// <summary>Makes the units and buildings of the places in a range.</summary>
+            internal void MakePlaces(int from, int to)
+            {
+                Plan.MakePlaces(from, to, scope!);
+            }
+
+            /// <summary>What making a place's units and buildings costs.</summary>
+            internal float PlaceCostOf(int k)
+            {
+                return ScanCost + UnitCost * Plan.Places[k].UnitsToMake();
             }
 
             /// <summary>Levels the places in a range, in order.</summary>
@@ -410,8 +894,7 @@ namespace Moonwell.Procgen
                 for (var k = from; k < to; k++)
                 {
                     var place = places[k];
-                    var target = Height(Noise.Floor(place[0] / TileSize + 0.5f), Noise.Floor(place[1] / TileSize + 0.5f));
-                    LevelPlace(cells, level, wide, rows + 2, place[0] - (firstColumn - 1) * TileSize, place[1] - (firstRow - 1) * TileSize, place[2], place[3], target);
+                    LevelPlace(cells, level, roadGap, wide, rows + 2, place.X - (firstColumn - 1) * TileSize, place.Y - (firstRow - 1) * TileSize, place.Radius, place.Blend, 0f);
                 }
             }
 
@@ -473,7 +956,12 @@ namespace Moonwell.Procgen
                         }
                     }
 
-                    if (level[cell])
+                    if (roadTile != 0 && roadGap[cell] <= 0f)
+                    {
+                        Plan.Tiles[at] = roadTile;
+                    }
+
+                    if (level[cell] || roadGap[cell] < RoadUnblocked)
                     {
                         continue;
                     }
@@ -489,6 +977,11 @@ namespace Moonwell.Procgen
 
                     Plan.Blocked[at] = (Pathing)kinds;
                     kindsBlocked += Kinds((Pathing)kinds);
+                    if (roadGap[cell] < RoadNoTrees)
+                    {
+                        continue;
+                    }
+
                     var column = firstColumn + at % columns;
                     var row = firstRow + at / columns;
                     for (var k = trees.Length - 1; k >= 0; k--)
@@ -552,8 +1045,132 @@ namespace Moonwell.Procgen
                 return (at / columns + 1) * wide + at % columns + 1;
             }
 
-            /// <summary>The height of a corner of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
-            private float Height(int column, int row)
+            /// <summary>The ground at a point of the world before roads: the hills, and the places levelled.</summary>
+            private float GroundAt(float x, float y)
+            {
+                var height = Height(x / TileSize, y / TileSize);
+                foreach (var place in places)
+                {
+                    var dx = x - place.X;
+                    var dy = y - place.Y;
+                    var distance = Maths.Sqrt(dx * dx + dy * dy);
+                    if (distance <= place.Radius)
+                    {
+                        height = 0f;
+                    }
+                    else if (distance < place.Radius + place.Blend)
+                    {
+                        var t = (distance - place.Radius) / place.Blend;
+                        height *= t * t * (3f - 2f * t);
+                    }
+                }
+
+                return height;
+            }
+
+            /// <summary>
+            /// A road's height at each of its points: the ground there, averaged over a few points each side, kept within an easy
+            /// slope of every place's level edge, so it comes down to the places it meets and passes, then kept to an easy slope
+            /// from point to point, forward and back.
+            /// </summary>
+            private float[] Profile(Road road)
+            {
+                var points = road.Points;
+                var count = points.Count;
+                var ground = new float[count];
+                for (var k = 0; k < count; k++)
+                {
+                    ground[k] = GroundAt(points[k].X, points[k].Y);
+                }
+
+                var heights = new float[count];
+                for (var k = 0; k < count; k++)
+                {
+                    var sum = 0f;
+                    var first = Math.Max(k - RoadSmooth, 0);
+                    var last = Math.Min(k + RoadSmooth, count - 1);
+                    for (var j = first; j <= last; j++)
+                    {
+                        sum += ground[j];
+                    }
+
+                    var cap = float.MaxValue;
+                    foreach (var place in places)
+                    {
+                        var dx = points[k].X - place.X;
+                        var dy = points[k].Y - place.Y;
+                        cap = Math.Min(cap, RoadSlope * Math.Max(Maths.Sqrt(dx * dx + dy * dy) - place.Radius, 0f));
+                    }
+
+                    heights[k] = Maths.Clamp(sum / (last - first + 1), -cap, cap);
+                }
+
+                for (var k = 1; k < count; k++)
+                {
+                    var rise = RoadSlope * points[k - 1].DistanceTo(points[k]);
+                    heights[k] = Maths.Clamp(heights[k], heights[k - 1] - rise, heights[k - 1] + rise);
+                }
+
+                for (var k = count - 2; k >= 0; k--)
+                {
+                    var rise = RoadSlope * points[k].DistanceTo(points[k + 1]);
+                    heights[k] = Maths.Clamp(heights[k], heights[k + 1] - rise, heights[k + 1] + rise);
+                }
+
+                return heights;
+            }
+
+            /// <summary>Marks the cells near a road with how far past its edge they are and its height there, where it is the nearest road so far.</summary>
+            private void Stamp(Road road, float[] heights)
+            {
+                var half = road.Width / 2f;
+                var points = road.Points;
+                for (var k = 1; k < points.Count; k++)
+                {
+                    var a = points[k - 1];
+                    var b = points[k];
+                    if (Reach(road, a, b, out var fromColumn, out var toColumn, out var fromRow, out var toRow) == 0)
+                    {
+                        continue;
+                    }
+
+                    var alongX = b.X - a.X;
+                    var alongY = b.Y - a.Y;
+                    var lengthSquared = alongX * alongX + alongY * alongY;
+                    for (var row = fromRow; row <= toRow; row++)
+                    {
+                        for (var column = fromColumn; column <= toColumn; column++)
+                        {
+                            var x = (firstColumn - 1 + column) * TileSize;
+                            var y = (firstRow - 1 + row) * TileSize;
+                            var t = lengthSquared > 0f ? Maths.Clamp01(((x - a.X) * alongX + (y - a.Y) * alongY) / lengthSquared) : 0f;
+                            var dx = x - (a.X + alongX * t);
+                            var dy = y - (a.Y + alongY * t);
+                            var gap = Maths.Sqrt(dx * dx + dy * dy) - half;
+                            var at = row * wide + column;
+                            if (gap < roadGap[at])
+                            {
+                                roadGap[at] = gap;
+                                roadHeight[at] = heights[k - 1] + (heights[k] - heights[k - 1]) * t;
+                            }
+                        }
+                    }
+                }
+            }
+
+            /// <summary>The cells a stretch of road reaches (its half width and the blend past it), clipped to the cells: their first and last column and row, and how many.</summary>
+            private int Reach(Road road, Vector2 a, Vector2 b, out int fromColumn, out int toColumn, out int fromRow, out int toRow)
+            {
+                var reach = road.Width / 2f + RoadBlend;
+                fromColumn = Math.Max(Noise.Floor((Math.Min(a.X, b.X) - reach) / TileSize) - firstColumn + 1, 0);
+                toColumn = Math.Min(Noise.Floor((Math.Max(a.X, b.X) + reach) / TileSize) - firstColumn + 2, wide - 1);
+                fromRow = Math.Max(Noise.Floor((Math.Min(a.Y, b.Y) - reach) / TileSize) - firstRow + 1, 0);
+                toRow = Math.Min(Noise.Floor((Math.Max(a.Y, b.Y) + reach) / TileSize) - firstRow + 2, rows + 1);
+                return toColumn >= fromColumn && toRow >= fromRow ? (toColumn - fromColumn + 1) * (toRow - fromRow + 1) : 0;
+            }
+
+            /// <summary>The height of a point of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
+            private float Height(float column, float row)
             {
                 var noise = Noise.Layered(seed, column / featureCells, row / featureCells, layers, roughness);
                 return lowest + (highest - lowest) * Maths.Clamp01(0.5f + (noise - 0.5f) * spread);
