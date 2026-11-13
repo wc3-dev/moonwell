@@ -39,6 +39,46 @@ namespace Moonwell
             return Put(frame, scope, shownTo, true);
         }
 
+        /// <summary>
+        /// Adds a frame to one of the game's HUD frames, by its name in the game's .fdf files, so it shows only while that
+        /// frame shows: "EscMenuMainPanel" (the F10 menu), "SimpleInfoPanelUnitDetail" (one unit selected); otherwise as
+        /// Add does. Under the F10 menu's panel, the minimap or the portrait the frame is the game frame's own child, placed
+        /// from it. The rest of the HUD is simple frames, under which the game gives a map's frame another parent and it
+        /// never draws (seen 11-13), so there the frame is added over the HUD, placed as AddOver places it, and shown and
+        /// hidden with the game frame, checked every 0.03 s on each player's machine. A name the game does not have is
+        /// reported, and the frame added over the HUD. A String or Texture by name is error MW0057, as the check crashes the
+        /// game on one.
+        /// </summary>
+        public static T AddTo<T>(T frame, string gameFrame, Scope scope, Player? shownTo = null)
+            where T : Frame
+        {
+            if (frame.Parent == null && FramesSystem.World.GameFrame(gameFrame) == null)
+            {
+                Errors.Refuse("Screen.AddTo", "the game has no frame named " + gameFrame + ": " + Names.NameOf(frame) + " added over the HUD");
+                return AddOver(frame, scope, shownTo);
+            }
+
+            return Under(frame, () => FramesSystem.World.GameFrame(gameFrame), scope, shownTo);
+        }
+
+        /// <summary>Adds a frame to a piece of the game's HUD, from player.GameUi(), as AddTo by name does: the minimap and the portrait keep it as their child, and with any other piece it shows and hides, checked every 0.03 s.</summary>
+        public static T AddTo<T>(T frame, GamePiece piece, Scope scope, Player? shownTo = null)
+            where T : Frame
+        {
+            return Under(frame, () => piece.Handle, scope, shownTo);
+        }
+
+        private static T Under<T>(T frame, System.Func<framehandle?> gameFrame, Scope scope, Player? shownTo)
+            where T : Frame
+        {
+            if (frame.Parent == null)
+            {
+                frame.gameFrame = gameFrame;
+            }
+
+            return Put(frame, scope, shownTo, true);
+        }
+
         private static T Put<T>(T frame, Scope scope, Player? shownTo, bool over)
             where T : Frame
         {
@@ -51,7 +91,7 @@ namespace Moonwell
 
             frame.player = shownTo;
             frame.over = over;
-            frame.MakeTree(over ? FramesSystem.OverRoot : FramesSystem.ScreenRoot, shownTo);
+            frame.MakeTree(FramesSystem.RootOf(frame), shownTo);
             FramesSystem.Rooted(frame);
             if (over && Cinematic.LetterboxHere() != null)
             {

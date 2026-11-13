@@ -162,6 +162,47 @@ namespace Moonwell.Testing
             Expect.Near(0.43f, First(portrait)?.X ?? 0.0f, "and the portrait stays");
         }
 
+        /// <summary>AddTo makes a frame the child of a game frame that keeps one, as the F10 menu's panel does; under a simple frame, where the game would give it another parent, the frame goes over the HUD and shows and hides with the game frame on each machine, checked every 0.03 s (seen 11-13).</summary>
+        public static void AddToGameFrame(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = FrameCases.Installed();
+            var menu = Screen.AddTo(new Panel { Width = 0.1f, Height = 0.1f }, "EscMenuMainPanel", Game.Instance);
+            Expect.Same(frames.GameFrames["EscMenuMainPanel"], frames.FrameOf(menu.Handle!).Parent, "the menu panel's own child");
+            var detail = frames.GameFrames["SimpleInfoPanelUnitDetail"];
+            detail.Shown = false;
+            var ring = Screen.AddTo(new Panel { Width = 0.1f, Height = 0.1f }, "SimpleInfoPanelUnitDetail", Game.Instance);
+            var fake = frames.FrameOf(ring.Handle!);
+            Expect.Equal("GameUI", Root(fake).Under, "over the HUD, not under the simple frame");
+            Expect.Equal(false, fake.Shown, "hidden while the panel is");
+            detail.Shown = true;
+            world.Advance(0.05f);
+            Expect.Equal(true, fake.Shown, "shown with it a moment later");
+            ring.Visible = false;
+            Expect.Equal(false, fake.Shown, "hidden when set");
+            detail.Shown = false;
+            world.Advance(0.05f);
+            detail.Shown = true;
+            world.Advance(0.05f);
+            Expect.Equal(false, fake.Shown, "still hidden as set");
+            ring.Visible = true;
+            Expect.Equal(true, fake.Shown, "shown again");
+            var other = Screen.AddTo(new Panel(), "SimpleInfoPanelUnitDetail", Game.Instance, Player.Two);
+            Expect.Equal(false, frames.FrameOf(other.Handle!).Shown, "another player's frame stays hidden here");
+            var portrait = Screen.AddTo(new Panel(), Player.One.GameUi().Portrait, Game.Instance);
+            Expect.Same(frames.GameFrames["origin 16 0"], frames.FrameOf(portrait.Handle!).Parent, "the portrait's own child");
+        }
+
+        private static FakeFrame Root(FakeFrame frame)
+        {
+            while (frame.Parent != null)
+            {
+                frame = frame.Parent;
+            }
+
+            return frame;
+        }
+
         /// <summary>A map's frame ties itself to a piece of the HUD, on each machine to that machine's own.</summary>
         public static void FrameToPiece(FakeWorld world)
         {
