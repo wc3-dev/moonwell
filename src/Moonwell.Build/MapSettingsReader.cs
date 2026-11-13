@@ -95,7 +95,8 @@ namespace Moonwell.Build
                 ReadSetting(map, "SaveFolder"),
                 ReadSetting(map, "SaveKey"),
                 slots,
-                teams);
+                teams,
+                ((IEnumerable<int>?)SettingOf(map, "Tiles", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(map) ?? Enumerable.Empty<int>()).ToList());
         }
 
         // The map's Slots, a protected list, each read across the load context by its properties; teams in the order the slots first name them.

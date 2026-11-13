@@ -387,7 +387,7 @@ namespace Moonwell
                 }
             }
 
-            Dev.Report("Terrain.SetTile", "the map's tiles (" + mapTiles + ") lack " + id + ": the game paints it but draws one of the map's own");
+            Dev.Report("Terrain.SetTile", "the map's tiles (" + mapTiles + ") lack " + id + ": the game paints it but draws one of the map's own; add it to the map class's Tiles");
         }
 
         /// <summary>A scope Spread and Trail make each piece in.</summary>
