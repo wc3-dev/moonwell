@@ -397,10 +397,254 @@ namespace Moonwell.Testing
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1) { Layers = 0 }.Make(Area(), Game.Instance), "a making with no layers");
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Paint(0), "a tile of 0");
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Level(0f, 0f, 0f), "a level radius of 0");
+            Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Forest(0), "a tree type of 0");
+            Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Scatter(Tree, variations: 0), "no variations");
+            Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Wall(Tree, spacing: 0f), "a wall spacing of 0");
+            Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Wall(Tree, width: 0f), "a wall width of 0");
             Expect.Throws<ArgumentException>(() => new TerrainPlan(0f, 0f, 0, 1), "a plan with no columns");
             var point = new TerrainGenerator(1).Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(10f, 10f)));
             Expect.Equal(1, point.Columns * point.Rows, "an area smaller than a tile is one corner");
             Expect.Near(0f, point.Heights[0, 0], "which the edge fade leaves as it was");
+        }
+
+        /// <summary>A tree type for the cases: Summer Tree Wall.</summary>
+        private const int Tree = 0x4C546C74;
+
+        /// <summary>Another, Ashenvale Tree Wall.</summary>
+        private const int OtherTree = 0x41547472;
+
+        /// <summary>The trees of a plan.</summary>
+        private static int TreesIn(TerrainPlan plan)
+        {
+            var count = 0;
+            foreach (var type in plan.Trees)
+            {
+                count += type != 0 ? 1 : 0;
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Scatter stands trees on its share of the corners that fit its height, slope and tile, and none on a level place;
+        /// a later rule takes a corner; Forest's patches hold together and a thinner one is a part of the thick one; Wall's
+        /// lines are thin, and gaps leave part of them open; variations stay below the count.
+        /// </summary>
+        public static void TreeRules(FakeWorld world)
+        {
+            var low = Steep(3);
+            low.Scatter(Tree, chance: 1f, toHeight: 0.5f);
+            var plan = low.Plan(Area());
+            var misplaced = 0;
+            for (var k = 0; k < Side * Side; k++)
+            {
+                misplaced += (plan.Trees[k] != 0) != (plan.Heights.Cells[k] <= 300f) ? 1 : 0;
+            }
+
+            Expect.Equal(0, misplaced, "a tree on every corner in the lower half, and none above");
+            Expect.True(TreesIn(plan) > 20 && TreesIn(plan) < Side * Side - 20, "hills with both: " + TreesIn(plan));
+
+            var rocky = Steep(3);
+            rocky.Paint(Tile.LordaeronSummerGrass);
+            rocky.Paint(Tile.LordaeronSummerRock, fromSlope: 20f);
+            rocky.Scatter(Tree, chance: 1f, onTile: Tile.LordaeronSummerRock);
+            rocky.Level(1280f, 1280f, 400f);
+            plan = rocky.Plan(Area());
+            misplaced = 0;
+            var levelTrees = 0;
+            for (var k = 0; k < Side * Side; k++)
+            {
+                var dx = k % Side * 128f - 1280f;
+                var dy = k / Side * 128f - 1280f;
+                var level = dx * dx + dy * dy <= 400f * 400f;
+                levelTrees += level && plan.Trees[k] != 0 ? 1 : 0;
+                misplaced += !level && (plan.Trees[k] != 0) != (plan.Tiles[k] == Tile.LordaeronSummerRock) ? 1 : 0;
+            }
+
+            Expect.Equal(0, misplaced, "a tree on every rock corner and none on grass");
+            Expect.Equal(0, levelTrees, "none on the level place");
+            Expect.True(TreesIn(plan) > 10, "some rock: " + TreesIn(plan));
+
+            var two = Steep(3);
+            two.Scatter(Tree, chance: 1f);
+            two.Scatter(OtherTree, chance: 1f, fromHeight: 0.5f);
+            plan = two.Plan(Area());
+            misplaced = 0;
+            for (var k = 0; k < Side * Side; k++)
+            {
+                misplaced += plan.Trees[k] != (plan.Heights.Cells[k] >= 300f ? OtherTree : Tree) ? 1 : 0;
+            }
+
+            Expect.Equal(0, misplaced, "the later rule takes the upper half, one tree a corner");
+
+            var some = new TerrainGenerator(4);
+            some.Scatter(Tree, chance: 0.1f);
+            var scattered = TreesIn(some.Plan(Area()));
+            Expect.True(scattered > 20 && scattered < 75, "about a tenth scattered: " + scattered);
+
+            var big = Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(8192f, 8192f));
+            var thick = new TerrainGenerator(5);
+            thick.Forest(Tree, cover: 0.5f);
+            var thin = new TerrainGenerator(5);
+            thin.Forest(Tree, cover: 0.5f, density: 0.5f);
+            var thickPlan = thick.Plan(big);
+            var thinPlan = thin.Plan(big);
+            var outside = 0;
+            var together = 0;
+            var corners = thickPlan.Trees.Length;
+            for (var k = 0; k < corners; k++)
+            {
+                outside += thinPlan.Trees[k] != 0 && thickPlan.Trees[k] == 0 ? 1 : 0;
+                together += thickPlan.Trees[k] != 0 && k % thickPlan.Columns < thickPlan.Columns - 1 && thickPlan.Trees[k + 1] != 0 ? 1 : 0;
+            }
+
+            var forest = TreesIn(thickPlan);
+            Expect.True(forest > corners / 5 && forest < corners * 4 / 5, "a forest on part of the ground: " + forest + " of " + corners);
+            Expect.True(together > forest * 3 / 4, "in patches: " + together + " of " + forest + " have a tree beside them");
+            Expect.Equal(0, outside, "a thinner forest is a part of the thick one");
+            Expect.True(TreesIn(thinPlan) > forest / 3 && TreesIn(thinPlan) < forest * 2 / 3, "about half: " + TreesIn(thinPlan));
+
+            var walled = new TerrainGenerator(6);
+            walled.Wall(Tree, gaps: 0f);
+            var open = new TerrainGenerator(6);
+            open.Wall(Tree, gaps: 0.5f);
+            var walledPlan = walled.Plan(big);
+            var openPlan = open.Plan(big);
+            var walls = TreesIn(walledPlan);
+            outside = 0;
+            var variations = 0;
+            var top = 0;
+            for (var k = 0; k < corners; k++)
+            {
+                outside += openPlan.Trees[k] != 0 && walledPlan.Trees[k] == 0 ? 1 : 0;
+                variations |= walledPlan.Trees[k] != 0 ? 1 << walledPlan.TreeVariations[k] : 0;
+                top = Math.Max(top, walledPlan.TreeVariations[k]);
+            }
+
+            Expect.True(walls > corners / 40 && walls < corners / 4, "walls are lines: " + walls + " of " + corners);
+            Expect.Equal(0, outside, "gaps only take trees away");
+            Expect.True(TreesIn(openPlan) > walls / 4 && TreesIn(openPlan) < walls * 3 / 4, "gaps of half leave about half: " + TreesIn(openPlan) + " of " + walls);
+            Expect.True(top <= 9 && variations > 1 && (variations & 1) != 0, "variations 0 to 9, several used");
+        }
+
+        /// <summary>
+        /// Two plans of one generator sharing an edge have the same trees on it, and plans that only touch stand the trees
+        /// of one plan over both, each once.
+        /// </summary>
+        public static void TreeSeams(FakeWorld world)
+        {
+            var generator = Hills(31);
+            generator.EdgeFade = 0f;
+            generator.Forest(Tree, cover: 0.4f, density: 0.8f);
+            generator.Wall(OtherTree, spacing: 1024f);
+            generator.Scatter(Tree, chance: 0.05f);
+            var left = generator.Plan(Bounds.FromCorners(new Vector2(-2560f, 0f), new Vector2(0f, 2560f)));
+            var right = generator.Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(2560f, 2560f)));
+            var mismatches = 0;
+            for (var row = 0; row < Side; row++)
+            {
+                mismatches += left.Trees[row * Side + Side - 1] != right.Trees[row * Side] || left.TreeVariations[row * Side + Side - 1] != right.TreeVariations[row * Side] ? 1 : 0;
+            }
+
+            Expect.Equal(0, mismatches, "the shared edge has the same trees");
+
+            var whole = generator.Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(5120f, 2560f)));
+            var first = generator.Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(2432f, 2560f)));
+            var second = generator.Plan(Bounds.FromCorners(new Vector2(2560f, 0f), new Vector2(5120f, 2560f)));
+            mismatches = 0;
+            for (var k = 0; k < whole.Trees.Length; k++)
+            {
+                var column = k % whole.Columns;
+                var row = k / whole.Columns;
+                var part = column < first.Columns ? first.Trees[row * first.Columns + column] : second.Trees[row * second.Columns + column - first.Columns];
+                mismatches += part != whole.Trees[k] ? 1 : 0;
+            }
+
+            Expect.Equal(whole.Trees.Length, first.Trees.Length + second.Trees.Length, "touching plans cover each corner once");
+            Expect.Equal(0, mismatches, "and stand the whole plan's trees");
+            Expect.True(TreesIn(whole) > 50, "of which there are many: " + TreesIn(whole));
+        }
+
+        /// <summary>A plan's trees from a seed are the ones worked out in .NET, also in Lua.</summary>
+        public static void TreesEverywhere(FakeWorld world)
+        {
+            var generator = Hills(41);
+            generator.Forest(Tree, cover: 0.4f, density: 0.8f, toSlope: 30f);
+            generator.Wall(OtherTree, spacing: 1024f);
+            generator.Scatter(Tree, chance: 0.05f, onTile: Tile.LordaeronSummerDirt);
+            var plan = generator.Plan(Bounds.FromCorners(new Vector2(-1280f, 640f), new Vector2(3840f, 5760f)));
+            var sum = 0;
+            for (var k = 0; k < plan.Trees.Length; k++)
+            {
+                sum = (sum * 31 + (plan.Trees[k] == Tree ? 1 : plan.Trees[k] == OtherTree ? 2 : 0) * 16 + plan.TreeVariations[k]) % 1000003;
+            }
+
+            Expect.Equal(TreesEverywhereCount, TreesIn(plan), "the trees");
+            Expect.Equal(TreesEverywhereSum, sum, "their places, types and variations");
+        }
+
+        private const int TreesEverywhereCount = 471;
+        private const int TreesEverywhereSum = 408741;
+
+        /// <summary>
+        /// Apply makes the plan's trees after the ground, each at the ground's height; made in steps they are the same trees,
+        /// in a step of their own; ending the scope removes every one, cut and dead ones too.
+        /// </summary>
+        public static void MakeTrees(FakeWorld world)
+        {
+            Flat();
+            var generator = Hills(8);
+            generator.Forest(Tree, cover: 0.5f);
+            generator.Scatter(OtherTree, chance: 0.05f);
+            var plan = generator.Plan(Area());
+            var holder = Game.Instance.Add(new Holder());
+            plan.Apply(holder);
+            var whole = world.DestructableSpawns.ToArray();
+            Expect.Equal(TreesIn(plan), whole.Length, "a tree for each in the plan");
+            var raised = 0;
+            var wrong = 0;
+            foreach (var spawn in whole)
+            {
+                raised += spawn.Z > 50f ? 1 : 0;
+                wrong += Math.Abs(spawn.Z - Terrain.Height(spawn.X, spawn.Y)) > 0.01f ? 1 : 0;
+            }
+
+            Expect.True(whole.Length > 20, "a forest: " + whole.Length);
+            Expect.Equal(0, wrong, "each at the ground's height");
+            Expect.True(raised > 0, "on hills");
+            world.SlayDestructable(whole[0].Made!);
+            world.PutDestructableLife(whole[1].Made!, 5f);
+            holder.End();
+            var removed = 0;
+            foreach (var spawn in whole)
+            {
+                removed += world.RemovedDestructables.Contains(spawn.Made!) ? 1 : 0;
+            }
+
+            Expect.Equal(whole.Length, removed, "ending the scope removes every tree, the dead ones too");
+
+            world.DestructableSpawns.Clear();
+            var stepped = Game.Instance.Add(new Holder());
+            var making = generator.Make(Area(), stepped, msPerStep: 0.2f);
+            var steps = making.Step;
+            for (var k = 0; k < 20000 && !making.IsDone; k++)
+            {
+                world.Advance(0.02f);
+                steps += making.Step != steps.Substring(steps.LastIndexOf(',') + 1) ? "," + making.Step : "";
+            }
+
+            Expect.Equal("Heights,Tiles,Blocked,Trees", steps, "trees are a step of their own, the last");
+            Expect.Equal(whole.Length, world.DestructableSpawns.Count, "made in steps, the same number of trees");
+            var differ = 0;
+            for (var k = 0; k < whole.Length; k++)
+            {
+                var a = whole[k];
+                var b = world.DestructableSpawns[k];
+                differ += a.TypeId != b.TypeId || a.X != b.X || a.Y != b.Y || a.Z != b.Z || a.Variation != b.Variation ? 1 : 0;
+            }
+
+            Expect.Equal(0, differ, "the same trees at the same heights");
+            stepped.End();
         }
 
         /// <summary>Hills with a rule of each kind, for the cases that compare plans.</summary>
