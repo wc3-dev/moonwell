@@ -1354,6 +1354,52 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
     removed leaves about 5 KB and a handle id that the game does not give back, and its death registration stays,
     which slows Moonwell's death trigger a little, so a game that makes and takes back forests again and again grows:
     about 20 MB per 10,000 trees. A path search (`FindPath`) round a long wall took about 100 ms.
+- Biomes give parts of the world their own hill shape, tiles, trees and blocking. A `Biome` takes the generator's
+  settings (`Lowest`, `Highest`, `FeatureSize`, `Layers`, `Roughness`) and rule calls, and the generator's own are the
+  ground outside every biome:
+
+  ```csharp
+  var snow = new Biome { Lowest = -50f, Highest = 300f };
+  snow.Paint(Tile.LordaeronWinterSnow);
+  snow.Paint(Tile.LordaeronWinterRock, fromSlope: 22f);
+  snow.Forest(ObjectTypes.FourCC("WTst"), cover: 0.5f);
+
+  hills.Use(snow, north);                                       // one kind of land in an area
+  hills.Mix(south, 4096f, new Grassland(), new RockyHills());   // several, in patches about 4096 across
+  ```
+
+  - `Use` puts one biome in an area. `Mix` puts several in patches about the size across, picked from the seed; a
+    biome listed twice covers about twice the ground. Later calls lie over earlier ones.
+  - Borders blend over `BiomeBlend` (512 unless set): past the edge of a `Use`'s or `Mix`'s area into what lies under
+    it, and across the borders of a `Mix`'s patches. The heights blend smoothly; each corner takes its tiles, trees and
+    blocking from one biome, so the border is ragged and each side keeps its own rules. 0 gives sharp borders.
+  - A rule's heights are a share of its own biome's range. Level places, roads, `RoadTile` and the edge fade are the
+    generator's and work across biomes: a road over a border keeps its easy slope.
+  - Borders come from the world, so plans of one generator agree on a border across their edge. A plan reads each
+    biome as it is when the plan starts (for `Make`, at the call).
+  - Cost, inferred and not measured: a corner reads the hills of every biome with a share of it, and a `Mix` two layers
+    of noise for each of its biomes, so a border or a mix of three costs about three times the heights alone.
+- Presets are biomes to start from: `Grassland` and `RockyHills` (Lordaeron Summer), `SnowyForest` (Lordaeron Winter)
+  and `Desert` (Barrens). Each names its rules, and a map changes them one by one:
+
+  ```csharp
+  var north = new SnowyForest();
+  north.Highest = 250f;                                       // the hill shape
+  north.Trees.Density = 0.4f;                                 // a rule's setting
+  north.Trees.Type = ObjectTypes.FourCC("NTtw");
+  north.Remove(north.Rock);                                   // drop a rule
+  north.Scatter(ObjectTypes.FourCC("NTtw"), chance: 0.02f);   // add one
+  hills.Use(north, northArea);
+  ```
+
+  - Every rule call (`Paint`, `Block`, `Forest`, `Wall`, `Scatter`), on a biome or the generator, gives its rule, with
+    its settings as fields to change later: `FromHeight`, `ToHeight`, `FromSlope`, `ToSlope`, and `Tile` and `Cover`,
+    `Kinds`, or `Type`, `OnTile`, `Variations` and the kind's own (`Density`, `Spacing`, `Chance` and so on).
+  - The rules each preset names: `Grassland` `Grass`, `DarkGrass`, `Rock`, `Groves`, `Trees`; `RockyHills` `Dirt`,
+    `Grass`, `Rock`, `Cliffs` (blocks steep ground), `Trees`; `SnowyForest` `Snow`, `GrassySnow`, `Rock`, `Trees`,
+    `Single`; `Desert` `Sand`, `DarkSand`, `Pebbles`, `Rock`, `Trees`.
+  - A preset's tiles go in the map's tile list: `Tiles.AddRange(new SnowyForest().Tiles);` in the map class. A map's own
+    presets are classes of its own deriving from `Biome`, setting their rules in the constructor as these do.
 - Places are level ground for bases, camps, shops and exits: level at the ground as it was, never raised, as the game
   draws buildings and items sunk on raised ground; never blocked, with no trees. A map sets its own with `Level` and has
   the generator pick more from the seed:
