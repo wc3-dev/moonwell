@@ -1897,11 +1897,15 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   ```
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
-  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` sizes its
-  text, as the game takes no other font or height for a label (seen), and leaves its place and box alone: the game
-  scales a label's offset and box with it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`; a piece, a colour or a round cut of one is a copy the
-  build makes ([Assets](#assets)). A map's own panel
-  inherits `Panel` and keeps its frames in fields.
+  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set). `Size` sets the
+  text's height in the units `Screen.DesignHeight` sets (12 is the game's own at 768), `Font` a `.ttf` in the map's
+  assets by its path in the map (`"war3mapImported\\Fonts\\Title.ttf"`), and `Shadow` a black shadow. They are read when
+  the label is made, so set them before adding it: the game takes a label's font and height only from a template, and
+  changing them later does nothing (seen). The build writes a template for each height from 0.005 to 0.04 of the
+  game's units, in steps of 0.0005, for the game's font and each `.ttf` in the assets, and a label takes the nearest.
+  `Scale` sizes the text too, and leaves the label's place and box alone: the game scales a label's offset and box with
+  it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`; a piece, a colour or a round cut of one
+  is a copy the build makes ([Assets](#assets)). A map's own panel inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
   Labels, images and empty panels let clicks through, until they are listened to for the mouse.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
@@ -1983,7 +1987,10 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   hidden it takes the building's name with it. What the game shows or places again by itself is set again every second
   on the player's machine, and at the end of a cinematic with a letterbox, which brings back the portrait and the
   selection panel. The minimap, the command buttons, the item buttons and the selection icons also move,
-  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; a moved button leaves nothing behind taking
+  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; they keep their own size between two
+  `Attach` points. `Fill(frame)` puts one centred on a map's frame at the frame's size: a command button (0.039 square)
+  or an item button (0.031) takes the size, and the minimap, which draws at one size, about 0.139 square, whatever size
+  it is given, is scaled to fit inside the frame (seen). A moved button leaves nothing behind taking
   clicks, and the first move stops the game placing its HUD again when the window changes. The selection icons move at
   no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name hangs from it. The
   inventory's bar sits in the selection panel, so moving the icons moves the inventory's text, and the item buttons not

@@ -107,7 +107,7 @@ namespace Moonwell.Build.Tests
             var project = fixtures.Of("Frames").Folder;
 
             var toc = File.ReadAllBytes(Path.Combine(project, "build", "Frames", "MoonwellMap.toc"));
-            Assert.Equal(System.Text.Encoding.ASCII.GetBytes("UI\\Shop.fdf\r\n\r\n"), toc);
+            Assert.Equal(System.Text.Encoding.ASCII.GetBytes("MoonwellText.fdf\r\nUI\\Shop.fdf\r\n\r\n"), toc);
             Assert.True(File.Exists(Path.Combine(project, "build", "Frames", "UI", "Shop.fdf")));
         }
 

@@ -20,7 +20,7 @@ namespace Moonwell.Build.Tests
             {
                 FramesToc.Write(staged, assets, kit: true);
 
-                Assert.Equal(Encoding.ASCII.GetBytes("MoonwellKit.fdf\r\nUI\\Shop.fdf\r\n\r\n"), File.ReadAllBytes(Path.Combine(staged, "MoonwellMap.toc")));
+                Assert.Equal(Encoding.ASCII.GetBytes("MoonwellText.fdf\r\nMoonwellKit.fdf\r\nUI\\Shop.fdf\r\n\r\n"), File.ReadAllBytes(Path.Combine(staged, "MoonwellMap.toc")));
                 var templates = File.ReadAllText(Path.Combine(staged, "MoonwellKit.fdf"));
                 foreach (var race in new[] { "Human", "Orc", "NightElf", "Undead" })
                 {
@@ -37,20 +37,48 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void a_map_with_the_kit_and_no_fdf_of_its_own_still_has_a_maps_toc()
+        public void a_map_with_no_fdf_of_its_own_still_has_a_maps_toc_with_the_text_templates()
         {
             var root = Path.Combine(Path.GetTempPath(), "moonwell-toc-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try
             {
                 FramesToc.Write(root, Path.Combine(root, "no-assets"), kit: true);
-                Assert.Equal(Encoding.ASCII.GetBytes("MoonwellKit.fdf\r\n\r\n"), File.ReadAllBytes(Path.Combine(root, "MoonwellMap.toc")));
+                Assert.Equal(Encoding.ASCII.GetBytes("MoonwellText.fdf\r\nMoonwellKit.fdf\r\n\r\n"), File.ReadAllBytes(Path.Combine(root, "MoonwellMap.toc")));
 
                 File.Delete(Path.Combine(root, "MoonwellMap.toc"));
                 File.Delete(Path.Combine(root, "MoonwellKit.fdf"));
                 FramesToc.Write(root, Path.Combine(root, "no-assets"), kit: false);
-                Assert.False(File.Exists(Path.Combine(root, "MoonwellMap.toc")));
+                Assert.Equal(Encoding.ASCII.GetBytes("MoonwellText.fdf\r\n\r\n"), File.ReadAllBytes(Path.Combine(root, "MoonwellMap.toc")));
                 Assert.False(File.Exists(Path.Combine(root, "MoonwellKit.fdf")));
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+        }
+
+        [Fact]
+        public void the_text_templates_cover_each_size_with_and_without_a_shadow_for_the_games_font_and_each_ttf_in_the_assets()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "moonwell-toc-" + Guid.NewGuid().ToString("N"));
+            var staged = Path.Combine(root, "staged");
+            var assets = Path.Combine(root, "assets");
+            Directory.CreateDirectory(staged);
+            Directory.CreateDirectory(Path.Combine(assets, "war3mapImported"));
+            File.WriteAllText(Path.Combine(assets, "war3mapImported", "ProbeComic.ttf"), "");
+            try
+            {
+                FramesToc.Write(staged, assets, kit: false);
+
+                var text = File.ReadAllText(Path.Combine(staged, "MoonwellText.fdf"));
+                Assert.Contains("Frame \"TEXT\" \"MoonwellText_Game_10\" {\r\n    FrameFont \"Fonts\\FRIZQT__.TTF\", 0.005, \"\",\r\n    FontColor 1.0 1.0 1.0 1.0,\r\n}\r\n", text);
+                Assert.Contains("Frame \"TEXT\" \"MoonwellText_Game_80S\" {\r\n    FrameFont \"Fonts\\FRIZQT__.TTF\", 0.04, \"\",\r\n    FontColor 1.0 1.0 1.0 1.0,\r\n    FontShadowColor 0.0 0.0 0.0 1.0,\r\n    FontShadowOffset 0.002 -0.002,\r\n}\r\n", text);
+                Assert.Contains("Frame \"TEXT\" \"MoonwellText_war3mapimported_probecomic_ttf_30S\" {\r\n    FrameFont \"war3mapImported\\ProbeComic.ttf\", 0.015, \"\",\r\n", text);
+                Assert.DoesNotContain("_9\"", text);
+                Assert.DoesNotContain("_81", text);
+                Assert.Equal(2 * 71 * 2, text.Split("Frame \"TEXT\"").Length - 1);
+                Assert.DoesNotContain("\n", text.Replace("\r\n", ""));
             }
             finally
             {

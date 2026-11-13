@@ -1575,6 +1575,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.show-name-of", Run = FrameCases.ShowNameOf });
             list.Add(new Case { Name = "frames.label-scale-keeps-place", Run = FrameCases.LabelScaleKeepsPlace });
             list.Add(new Case { Name = "frames.add-placed", Run = FrameCases.AddPlaced });
+            list.Add(new Case { Name = "frames.label-text-template", Run = FrameCases.LabelTextTemplate });
+            list.Add(new Case { Name = "frames.label-text-template-pool", Run = FrameCases.LabelTextTemplatePool });
             list.Add(new Case { Name = "frames.image", Run = FrameCases.Image });
             list.Add(new Case { Name = "frames.panel-look", Run = FrameCases.PanelLook });
             list.Add(new Case { Name = "frames.panel-empty", Run = FrameCases.PanelEmpty });
@@ -1655,6 +1657,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "hud.command-button-by-scale", Run = HudCases.CommandButtonByScale });
             list.Add(new Case { Name = "hud.whole-hud", Run = HudCases.WholeHud });
             list.Add(new Case { Name = "hud.move-piece", Run = HudCases.MovePiece });
+            list.Add(new Case { Name = "hud.fill-piece", Run = HudCases.FillPiece });
             list.Add(new Case { Name = "hud.frame-to-piece", Run = HudCases.FrameToPiece });
             list.Add(new Case { Name = "hud.moved-button-leaves-nothing", Run = HudCases.MovedButtonLeavesNothing });
             list.Add(new Case { Name = "hud.hidden-hud-hides-blocker", Run = HudCases.HiddenHudHidesBlocker });

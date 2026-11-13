@@ -365,6 +365,50 @@ namespace Moonwell.Testing
             }
         }
 
+        /// <summary>Size, Font and Shadow make a label from the build's text template for them: Size in Screen.DesignHeight's units, snapped to 0.0005 of the game's and kept within the sizes; a Font or Shadow alone takes the game's height; none of them, or a Template, makes it as before.</summary>
+        public static void LabelTextTemplate(FakeWorld world)
+        {
+            var frames = Installed();
+            Expect.Equal("", frames.FrameOf(Screen.Add(new Label(), Game.Instance).Handle!).Template, "none set: by its type");
+            Expect.Equal("MoonwellText_Game_30", frames.FrameOf(Screen.Add(new Label { Size = 0.015f }, Game.Instance).Handle!).Template, "0.015 in the game's units");
+            Expect.Equal("MoonwellText_Game_19S", frames.FrameOf(Screen.Add(new Label { Shadow = true }, Game.Instance).Handle!).Template, "a shadow at the game's height");
+            var comic = Screen.Add(new Label { Font = "war3mapImported\\ProbeComic.ttf", Size = 0.015f, Shadow = true }, Game.Instance);
+            Expect.Equal("MoonwellText_war3mapimported_probecomic_ttf_30S", frames.FrameOf(comic.Handle!).Template, "the font's templates, as the build names them");
+            Expect.Equal("Own", frames.FrameOf(Screen.Add(new Label { Template = "Own", Size = 0.015f }, Game.Instance).Handle!).Template, "a Template wins");
+            Screen.DesignHeight = 768f;
+            try
+            {
+                Expect.Equal("MoonwellText_Game_19", frames.FrameOf(Screen.Add(new Label { Size = 12f }, Game.Instance).Handle!).Template, "12 of 768 is the game's 0.0094, nearest 0.0095");
+                Expect.Equal("MoonwellText_Game_80", frames.FrameOf(Screen.Add(new Label { Size = 200f }, Game.Instance).Handle!).Template, "kept within the sizes");
+                Expect.True(world.Logged.Exists(line => line.Contains("Size")), "reported: " + string.Join(" | ", world.Logged));
+            }
+            finally
+            {
+                Screen.DesignHeight = 0.6f;
+            }
+
+            world.Logged.Clear();
+            comic.Size = 0.02f;
+            comic.Font = "";
+            comic.Shadow = false;
+            Expect.Near(0.015f, comic.Size, "Size kept once made");
+            Expect.Equal("war3mapImported\\ProbeComic.ttf", comic.Font, "Font kept once made");
+            Expect.True(comic.Shadow, "Shadow kept once made");
+            Expect.Equal(3, world.Logged.FindAll(line => line.Contains("read when the label is made")).Count, "each reported: " + string.Join(" | ", world.Logged));
+        }
+
+        /// <summary>An ended label is given again only to a label of the same text template.</summary>
+        public static void LabelTextTemplatePool(FakeWorld world)
+        {
+            var frames = Installed();
+            var old = Screen.Add(new Label { Size = 0.015f }, Game.Instance);
+            var oldHandle = old.Handle;
+            old.End();
+            Expect.True(Screen.Add(new Label(), Game.Instance).Handle != oldHandle, "not to a label made by its type");
+            Expect.True(Screen.Add(new Label { Size = 0.02f }, Game.Instance).Handle != oldHandle, "not to another size");
+            Expect.Same(oldHandle, Screen.Add(new Label { Size = 0.015f }, Game.Instance).Handle, "to the same size");
+        }
+
         /// <summary>An image is a BACKDROP painted with its texture.</summary>
         public static void Image(FakeWorld world)
         {
