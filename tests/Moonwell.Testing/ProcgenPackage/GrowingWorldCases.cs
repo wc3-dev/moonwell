@@ -296,31 +296,28 @@ namespace Moonwell.Testing
             var plan = land.Plan(World());
             var trapped = -1;
             var open = -1;
-            for (var row = 2; row < 6; row++)
+            var chunk = 0;
+            for (; chunk < 25 && (trapped < 0 || open < 0); chunk++)
             {
-                for (var column = 2; column < 6; column++)
+                trapped = -1;
+                open = -1;
+                for (var k = 0; k < 36; k++)
                 {
-                    var at = row * Side + column;
-                    if (trapped < 0 && plan.Trees[at] != 0)
-                    {
-                        trapped = at;
-                    }
-
+                    var at = (chunk / 5 * 8 + 1 + k / 6) * Side + chunk % 5 * 8 + 1 + k % 6;
+                    trapped = trapped < 0 && plan.Trees[at] != 0 ? at : trapped;
                     var clear = true;
-                    for (var k = 0; k < 9; k++)
+                    for (var n = 0; n < 9; n++)
                     {
-                        var near = at + (k / 3 - 1) * Side + k % 3 - 1;
+                        var near = at + (n / 3 - 1) * Side + n % 3 - 1;
                         clear = clear && plan.Trees[near] == 0 && (plan.Blocked[near] & Pathing.Walk) == 0;
                     }
 
-                    if (open < 0 && clear)
-                    {
-                        open = at;
-                    }
+                    open = open < 0 && clear ? at : open;
                 }
             }
 
-            Expect.True(trapped >= 0 && open >= 0, "a tree and open ground in the first chunk");
+            chunk--;
+            Expect.True(trapped >= 0 && open >= 0, "a chunk with a tree and open ground");
             var footman = world.NewUnit(ObjectTypes.FourCC("hfoo"));
             world.PlaceUnit(footman, trapped % Side * 128f + 40f, trapped / Side * 128f);
             var walker = world.NewUnit(ObjectTypes.FourCC("hfoo"));
@@ -337,8 +334,8 @@ namespace Moonwell.Testing
             grown.Near = 0f;
             var before = world.UnitCalls.Count;
             var movesAtMade = -1;
-            grown.Made += chunk => movesAtMade = Moves(world, before);
-            Hero(world, 512f, 512f);
+            grown.Made += made => movesAtMade = Moves(world, before);
+            Hero(world, chunk % 5 * 1024f + 448f, chunk / 5 * 1024f + 448f);
             world.Advance(1f);
             Expect.Equal(1, Moves(world, before), "one unit put back");
             Expect.Equal(1, movesAtMade, "before Made");
