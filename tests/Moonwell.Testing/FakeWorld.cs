@@ -862,6 +862,9 @@ namespace Moonwell.Testing
             PrintedSeconds.Add(seconds);
         }
 
+        /// <summary>Whether the log file is written at every line; true until set, as in a development build.</summary>
+        public bool LogAtOnce { get; set; } = true;
+
         /// <summary>Records a line appended to the log.</summary>
         public void Log(string text)
         {

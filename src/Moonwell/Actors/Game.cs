@@ -32,6 +32,14 @@ namespace Moonwell
             Runtime.World.Log(text);
         }
 
+        /// <summary>Whether the log file is written at every line, so a crash to the desktop loses none of it. True in a development build, where a line costs 6.5 to 23 ms (the more lines the log holds, up to its 200, the more): a map that logs many lines a second sets it false, and the file is then written at most once a second, as in a release build. A release build can set it true to find a crash.</summary>
+        [LocalSafe]
+        public static bool LogAtOnce
+        {
+            get => Runtime.World.LogAtOnce;
+            set => Runtime.World.LogAtOnce = value;
+        }
+
         /// <summary>The seconds since the game started, on Moonwell's clock: in a development build it halts and changes speed with the debug mode, as timers do.</summary>
         [LocalSafe]
         public static float Time => Runtime.World.Now();
