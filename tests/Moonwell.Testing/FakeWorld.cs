@@ -1235,6 +1235,15 @@ namespace Moonwell.Testing
             return created;
         }
 
+        /// <summary>Makes a destructable as SpawnDestructable does, recording the height asked.</summary>
+        public destructable SpawnDestructableAt(int typeId, float x, float y, float z, float facing, float scale, int variation)
+        {
+            var made = SpawnDestructable(typeId, x, y, facing, scale, variation);
+            DestructableSpawns[DestructableSpawns.Count - 1].Z = z;
+            DestructableSpawns[DestructableSpawns.Count - 1].Made = made;
+            return made;
+        }
+
         /// <summary>Kills a destructable as KillDestructable does: life 0 and its death inside the call when watched; nothing for one already dead (seen 11-02).</summary>
         public void SlayDestructable(destructable destructable)
         {
@@ -3875,6 +3884,12 @@ namespace Moonwell.Testing
 
             /// <summary>The y asked for.</summary>
             public float Y;
+
+            /// <summary>The height asked for; NaN for one made without a height.</summary>
+            public float Z = float.NaN;
+
+            /// <summary>The destructable made at a height; null for one made without.</summary>
+            public destructable? Made;
 
             /// <summary>The facing asked for.</summary>
             public float Facing;
