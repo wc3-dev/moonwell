@@ -43,6 +43,18 @@ namespace Moonwell
         /// <summary>How often each player's HUD is set again where the game puts back what the map set, in seconds: as often as the map that found what it puts back did it (TheProject's WoW UI, 11-13).</summary>
         internal const float HoldEvery = 1.0f;
 
+        /// <summary>Whether a map's frame made under each game frame keeps it as its parent, by the game frame, found once: the game gives a frame another parent under a simple frame, and it never draws there (seen 11-13).</summary>
+        private static Dictionary<framehandle, bool> keepsChildren = new Dictionary<framehandle, bool>();
+
+        /// <summary>The frames added with Screen.AddTo that follow a game frame, in the order added, checked every FollowEvery.</summary>
+        private static readonly List<Frame> followers = new List<Frame>();
+
+        /// <summary>How often a frame following a game frame checks it, in seconds: as often as the portrait's flash after a cinematic stopped being seen (11-13).</summary>
+        private const float FollowEvery = 0.03f;
+
+        /// <summary>Whether the timer that checks the followed game frames is running.</summary>
+        private static bool followingStarted;
+
         /// <summary>Whether the timer that sets each player's HUD again is running.</summary>
         private static bool holding;
 
@@ -66,6 +78,7 @@ namespace Moonwell
             screenRoot = null;
             overRoot = null;
             slots = new Dictionary<framehandle, framehandle>();
+            keepsChildren = new Dictionary<framehandle, bool>();
             pool = new FramePool();
             events = new FrameEvents();
             drags = new Drags();
@@ -145,13 +158,89 @@ namespace Moonwell
 
             for (var i = 0; i < roots.Count; i++)
             {
-                roots[i].MakeTree(roots[i].over ? OverRoot : ScreenRoot, roots[i].player);
+                roots[i].MakeTree(RootOf(roots[i]), roots[i].player);
             }
 
             foreach (var ui in gameUis.Values)
             {
                 ui.Restore();
             }
+        }
+
+        /// <summary>The game frame a frame added to the screen is made under: its root; for one added with Screen.AddTo, its game frame when that keeps it as a child, else the over root, with the game frame followed.</summary>
+        internal static framehandle RootOf(Frame frame)
+        {
+            frame.following = null;
+            frame.gameShown = true;
+            var game = frame.gameFrame?.Invoke();
+            if (game == null)
+            {
+                return frame.over ? OverRoot : ScreenRoot;
+            }
+
+            if (KeepsChildren(game))
+            {
+                return game;
+            }
+
+            frame.following = game;
+            frame.gameShown = World.FrameShown(game);
+            Follow(frame);
+            return OverRoot;
+        }
+
+        /// <summary>Whether a map's frame made under a game frame keeps it as its parent: found once, by a hidden frame made under it, on every machine, as the game's frames are one set everywhere.</summary>
+        private static bool KeepsChildren(framehandle game)
+        {
+            if (!keepsChildren.TryGetValue(game, out var keeps))
+            {
+                var test = World.MakeFrame("BACKDROP", "", game)!;
+                World.ShowFrame(test, false);
+                keeps = World.ParentOf(test) == game;
+                keepsChildren[game] = keeps;
+            }
+
+            return keeps;
+        }
+
+        /// <summary>Starts checking a frame's game frame every FollowEvery, on every machine, each showing or hiding the frame on its own screen.</summary>
+        private static void Follow(Frame frame)
+        {
+            if (!followers.Contains(frame))
+            {
+                followers.Add(frame);
+            }
+
+            if (followingStarted)
+            {
+                return;
+            }
+
+            followingStarted = true;
+            Game.Instance.Every(FollowEvery, () =>
+            {
+                for (var i = followers.Count - 1; i >= 0; i--)
+                {
+                    var follower = followers[i];
+                    if (follower.HasEnded)
+                    {
+                        followers.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (follower.following == null || follower.handle == null)
+                    {
+                        continue;
+                    }
+
+                    var shown = World.FrameShown(follower.following);
+                    if (shown != follower.gameShown)
+                    {
+                        follower.gameShown = shown;
+                        follower.Reshow();
+                    }
+                }
+            });
         }
 
         /// <summary>A cinematic's letterbox came or went on this machine: the frames over the HUD hide or show again.</summary>
