@@ -32,7 +32,7 @@ namespace Moonwell.Build
 
         /// <summary>
         /// Builds the map, then writes the built object files into the source map, so that World Editor lists the declared
-        /// objects (decision 275). No build calls this: decision 4 keeps the build out of the source map. The build has
+        /// objects (decision 275), and the files from the assets with the list that names them, so that it shows them (decision 278). No build calls this: decision 4 keeps the build out of the source map. The build has
         /// just merged the source map's own objects in, so they are kept as they are now. Moonwell's own helper objects
         /// are left out, as the build refuses a source map that defines their ids.
         /// </summary>
@@ -81,20 +81,73 @@ namespace Moonwell.Build
                         continue;
                     }
 
-                    try
-                    {
-                        File.WriteAllBytes(target, bytes);
-                    }
-                    catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-                    {
-                        throw new BuildException($@"cannot write map\{name}: {failure.Message} (is World Editor using it?)");
-                    }
-
+                    Put(project, name, bytes);
                     written.Add(name);
                 }
             }
 
+            WriteAssets(project, written);
             return written;
+        }
+
+        // The files from assets/ as the build packed them, and the list that names them, so that World Editor shows a placed
+        // unit's model and icon (decision 278). The grey copies the build makes are left out: one in map/ would stop the build
+        // making it anew from a changed icon.
+        private static void WriteAssets(MapProject project, List<string> written)
+        {
+            var stagedList = Path.Combine(project.StagedFolder, ImportList.FileName);
+            if (!Directory.Exists(project.AssetsFolder) || !File.Exists(stagedList))
+            {
+                return;
+            }
+
+            // An asset the built list does not name replaces a file of the map that is no import (war3map.wts), and stays out.
+            var listed = ImportList.Paths(stagedList).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var assets = Directory.GetFiles(project.AssetsFolder, "*", SearchOption.AllDirectories)
+                .Select(file => Images.PackedName(Path.GetRelativePath(project.AssetsFolder, file)))
+                .Where(listed.Contains)
+                .OrderBy(file => file, StringComparer.Ordinal)
+                .ToList();
+            foreach (var name in assets)
+            {
+                var bytes = File.ReadAllBytes(Path.Combine(project.StagedFolder, name));
+                var target = Path.Combine(project.MapFolder, name);
+                if (!File.Exists(target) || !File.ReadAllBytes(target).AsSpan().SequenceEqual(bytes))
+                {
+                    Put(project, name, bytes);
+                    written.Add(name);
+                }
+            }
+
+            var list = Path.Combine(project.MapFolder, ImportList.FileName);
+            var before = File.Exists(list) ? File.ReadAllBytes(list) : null;
+            try
+            {
+                ImportList.Write(project.MapFolder, assets);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                throw new BuildException($@"cannot write map\{ImportList.FileName}: {failure.Message} (is World Editor using it?)");
+            }
+
+            if (File.Exists(list) && (before == null || !before.AsSpan().SequenceEqual(File.ReadAllBytes(list))))
+            {
+                written.Add(ImportList.FileName);
+            }
+        }
+
+        private static void Put(MapProject project, string name, byte[] bytes)
+        {
+            try
+            {
+                var target = Path.Combine(project.MapFolder, name);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.WriteAllBytes(target, bytes);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                throw new BuildException($@"cannot write map\{name}: {failure.Message} (is World Editor using it?)");
+            }
         }
     }
 }

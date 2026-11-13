@@ -272,6 +272,75 @@ namespace Moonwell.Build.Tests
             Assert.Contains(@"put one at assets\ReplaceableTextures\CommandButtonsDisabled\DISBTNBroken.blp yourself", log.ToString());
         }
 
+        [Fact]
+        public void the_import_list_names_each_asset_and_made_copy_but_no_file_of_the_map()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            Directory.Delete(project.AssetsFolder, true);
+            CopyImage("red-64x32.png", project, @"Icons\BTNRed.png");
+            CopyImage("glass-32.png", project, @"war3mapImported\Glass.png");
+            File.WriteAllText(Path.Combine(project.AssetsFolder, "war3map.wts"), "STRING 1 { replaced }");
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            Assert.Equal(
+                new[] { @"Icons\BTNRed.blp", @"ReplaceableTextures\CommandButtonsDisabled\DISBTNRed.blp", @"war3mapImported\Glass.blp" },
+                ImportList.Paths(Path.Combine(project.StagedFolder, "war3map.imp")));
+
+            // Version 1, then flag 13 and the whole path: a file at its own path, which World Editor keeps (game facts, 10-31).
+            var bytes = File.ReadAllBytes(Path.Combine(project.StagedFolder, "war3map.imp"));
+            Assert.Equal((1, 3, 13), (BitConverter.ToInt32(bytes, 0), BitConverter.ToInt32(bytes, 4), bytes[8]));
+        }
+
+        [Fact]
+        public void the_import_list_keeps_the_source_maps_entries_and_adds_only_what_they_lack()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            Directory.Delete(project.AssetsFolder, true);
+            CopyImage("glass-32.png", project, @"war3mapImported\Old.png");
+            CopyImage("glass-32.png", project, @"war3mapImported\Glass.png");
+            CopyImage("glass-32.png", project, @"war3mapImported\New.png");
+
+            // As World Editor writes them: 24 with the folder left out, 29 at a path of its own, 13 with the folder in the path.
+            var before = new MemoryStream();
+            using (var writer = new BinaryWriter(before, System.Text.Encoding.UTF8, true))
+            {
+                writer.Write(1);
+                writer.Write(3);
+                foreach (var (flags, path) in new[] { (24, "old.blp"), (29, @"Sounds\Gone.wav"), (13, @"war3mapImported\Glass.blp") })
+                {
+                    writer.Write((byte)flags);
+                    writer.Write(System.Text.Encoding.UTF8.GetBytes(path));
+                    writer.Write((byte)0);
+                }
+            }
+
+            File.WriteAllBytes(Path.Combine(project.MapFolder, "war3map.imp"), before.ToArray());
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            var after = File.ReadAllBytes(Path.Combine(project.StagedFolder, "war3map.imp"));
+            Assert.Equal(4, BitConverter.ToInt32(after, 4));
+            Assert.Equal(before.ToArray()[8..], after[8..(int)before.Length]);
+            Assert.Equal(
+                new[] { @"war3mapImported\old.blp", @"Sounds\Gone.wav", @"war3mapImported\Glass.blp", @"war3mapImported\New.blp" },
+                ImportList.Paths(Path.Combine(project.StagedFolder, "war3map.imp")));
+        }
+
+        [Fact]
+        public void a_map_with_no_assets_gets_no_import_list()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            Directory.Delete(project.AssetsFolder, true);
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            Assert.False(File.Exists(Path.Combine(project.StagedFolder, "war3map.imp")));
+        }
+
         [Theory]
         [InlineData("assets", @"Ljud\Hälsning.txt", "ä")]
         [InlineData("assets", "Pris€.txt", "€")]
