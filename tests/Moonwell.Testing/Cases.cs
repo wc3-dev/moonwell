@@ -99,6 +99,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.biomes.make-in-steps", Run = BiomeCases.MakeInSteps });
             list.Add(new Case { Name = "procgen.biomes.presets", Run = BiomeCases.Presets });
             list.Add(new Case { Name = "procgen.biomes.refused", Run = BiomeCases.Refused });
+            list.Add(new Case { Name = "procgen.grow.pieces", Run = GrowingWorldCases.Pieces });
+            list.Add(new Case { Name = "procgen.grow.any-order", Run = GrowingWorldCases.AnyOrder });
+            list.Add(new Case { Name = "procgen.grow.take-back", Run = GrowingWorldCases.TakeBack });
+            list.Add(new Case { Name = "procgen.grow.units", Run = GrowingWorldCases.Units });
+            list.Add(new Case { Name = "procgen.grow.camps", Run = GrowingWorldCases.Camps });
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>

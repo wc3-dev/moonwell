@@ -458,7 +458,14 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public TerrainPlan Plan(Bounds area)
         {
-            var ground = new Groundwork(this, area, null);
+            return Plan(area, area);
+        }
+
+        /// <summary>As Plan, with the heights faded at the edge of a whole the area is a piece of, so the pieces of a whole are the whole's plan.</summary>
+        [LocalSafe]
+        internal TerrainPlan Plan(Bounds area, Bounds whole)
+        {
+            var ground = new Groundwork(this, area, whole, null);
             ground.Roads(0, ground.RoadCount);
             ground.Hills(0, ground.Cells);
             ground.Levels(0, ground.Places);
@@ -483,7 +490,33 @@ namespace Moonwell.Procgen
                 throw new ArgumentException("TerrainGenerator.Make takes milliseconds a step above 0, not " + msPerStep);
             }
 
-            var ground = new Groundwork(this, area, scope);
+            return new TerrainMaking(Steps(area, area, scope, true, out _), msPerStep * 1000f, scope);
+        }
+
+        /// <summary>
+        /// Makes a world from this generator chunk by chunk as heroes come near, for as long as the scope holds it: each
+        /// chunk the ground <c>Plan(area)</c> gives there, made in steps, and taken back when every hero is far. Set the
+        /// generator up first: a chunk is made from the settings as they are when it is made. A chunk size below 1, or the
+        /// settings <c>Plan</c> refuses, throw ArgumentException.
+        /// </summary>
+        [ChangesState]
+        public GrowingWorld Grow(Bounds area, Scope scope, int chunkSize = 16)
+        {
+            if (chunkSize < 1)
+            {
+                throw new ArgumentException("TerrainGenerator.Grow takes a chunk size of 1 or more, not " + chunkSize);
+            }
+
+            // A plan of one corner refuses now what a chunk's plan would refuse later, inside a step.
+            Plan(Bounds.FromCorners(area.Min, area.Min), area);
+            return new GrowingWorld(this, area, scope, chunkSize);
+        }
+
+        /// <summary>The work of making an area in a scope, step by step, its heights faded at the edge of the whole it is a piece of; the units and buildings of its places too when asked.</summary>
+        internal Work Steps(Bounds area, Bounds whole, Scope scope, bool withPlaces, out TerrainPlan plan)
+        {
+            var ground = new Groundwork(this, area, whole, scope);
+            plan = ground.Plan;
             var work = new Work();
             if (ground.RoadCount > 0)
             {
@@ -511,12 +544,12 @@ namespace Moonwell.Procgen
                 work.Add(TreesStep, ground.Corners, ScanCost + TreeCost / 8f, ground.Trees, ground.TreeCostOf, ground.TreesCost);
             }
 
-            if (ground.PlacesCost > ScanCost * ground.Plan.Places.Count)
+            if (withPlaces && ground.PlacesCost > ScanCost * ground.Plan.Places.Count)
             {
                 work.Add(PlacesStep, ground.Plan.Places.Count, ground.PlacesCost / ground.Plan.Places.Count, ground.MakePlaces, ground.PlaceCostOf);
             }
 
-            return new TerrainMaking(work, msPerStep * 1000f, scope);
+            return work;
         }
 
         private static void CheckRadius(float radius)
@@ -660,7 +693,13 @@ namespace Moonwell.Procgen
             /// <summary>The trees the rules have stood so far.</summary>
             private int treesStood;
 
-            internal Groundwork(TerrainGenerator generator, Bounds area, Scope? scope)
+            /// <summary>The whole the area is a piece of, whose edge the heights fade at: its corners across and up, and the area's first corner in it.</summary>
+            private readonly int wholeColumns;
+            private readonly int wholeRows;
+            private readonly int inWholeColumn;
+            private readonly int inWholeRow;
+
+            internal Groundwork(TerrainGenerator generator, Bounds area, Bounds whole, Scope? scope)
             {
                 this.scope = scope;
                 seed = generator.Seed;
@@ -705,6 +744,10 @@ namespace Moonwell.Procgen
                 Plan = new TerrainPlan(area.Min.X, area.Min.Y, columns, rows);
                 firstColumn = Noise.Floor(area.Min.X / TileSize + 0.5f);
                 firstRow = Noise.Floor(area.Min.Y / TileSize + 0.5f);
+                wholeColumns = (int)(whole.Size.X / TileSize + 0.5f) + 1;
+                wholeRows = (int)(whole.Size.Y / TileSize + 0.5f) + 1;
+                inWholeColumn = firstColumn - Noise.Floor(whole.Min.X / TileSize + 0.5f);
+                inWholeRow = firstRow - Noise.Floor(whole.Min.Y / TileSize + 0.5f);
                 wide = columns + 2;
                 cells = new float[wide * (rows + 2)];
                 level = new bool[cells.Length];
@@ -902,8 +945,8 @@ namespace Moonwell.Procgen
             }
 
             /// <summary>
-            /// Fades the heights of the cells in a range to the ground as it was at the area's edge, over the fade's corners in, as
-            /// <c>Field.FadeEdges</c> does; the cells outside the area become the ground as it was. No fade does nothing.
+            /// Fades the heights of the cells in a range to the ground as it was at the whole's edge, over the fade's corners in, as
+            /// <c>Field.FadeEdges</c> does; the cells outside the whole become the ground as it was. No fade does nothing.
             /// </summary>
             internal void Fade(int from, int to)
             {
@@ -914,9 +957,9 @@ namespace Moonwell.Procgen
 
                 for (var at = from; at < to; at++)
                 {
-                    var row = at / wide - 1;
-                    var column = at % wide - 1;
-                    var edge = Math.Min(Math.Min(column, columns - 1 - column), Math.Min(row, rows - 1 - row));
+                    var row = at / wide - 1 + inWholeRow;
+                    var column = at % wide - 1 + inWholeColumn;
+                    var edge = Math.Min(Math.Min(column, wholeColumns - 1 - column), Math.Min(row, wholeRows - 1 - row));
                     if (edge < fade)
                     {
                         var t = edge > 0 ? edge / fade : 0f;
