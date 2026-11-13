@@ -273,11 +273,128 @@ namespace Moonwell.Testing
             Expect.Near(0f, Terrain.Height(256f, 1280f), "its faded edge meets the ground as it was");
         }
 
-        /// <summary>A feature size of 0, no layers, a tile of 0, a level radius of 0 and a plan below 1 by 1 each throw.</summary>
+        /// <summary>
+        /// Made in steps, the ground is the one-go plan's, corner for corner: heights, tiles and blocked pathing. The share
+        /// never goes back and is 1 only once made, Done runs once, and the steps come in order.
+        /// </summary>
+        public static void MakeInSteps(FakeWorld world)
+        {
+            Flat();
+            var generator = Hills(8);
+            generator.Level(1200f, 1300f, 300f);
+            var holder = Game.Instance.Add(new Holder());
+            var making = generator.Make(Area(), holder, msPerStep: 0.2f);
+            var dones = 0;
+            making.Done += () => dones++;
+            Expect.Near(0f, making.Progress, "nothing made before the first step");
+            Expect.Near(0f, Terrain.Height(1280f, 1280f), "nor any ground");
+            var steps = making.Step;
+            var step = making.Step;
+            var last = 0f;
+            var backwards = 0;
+            var early = 0;
+            var ticks = 0;
+            while (!making.IsDone && ticks < 20000)
+            {
+                world.Advance(0.02f);
+                ticks++;
+                backwards += making.Progress < last ? 1 : 0;
+                early += making.Progress >= 1f && !making.IsDone ? 1 : 0;
+                last = making.Progress;
+                if (making.Step != step)
+                {
+                    step = making.Step;
+                    steps += "," + step;
+                }
+            }
+
+            Expect.True(making.IsDone, "the ground is made");
+            Expect.True(ticks > 50, "over many steps");
+            Expect.Equal(0, backwards, "the share never goes back");
+            Expect.Equal(0, early, "and is 1 only once made");
+            Expect.Near(1f, making.Progress, "1 once made");
+            Expect.Equal(1, dones, "Done runs");
+            Expect.Equal("Heights,Tiles,Blocked", steps, "the steps in order");
+            world.Advance(1f);
+            Expect.Equal(1, dones, "once");
+
+            var stepped = Ground();
+            holder.End();
+            Expect.Near(0f, Terrain.Height(1280f, 1280f), "ending the scope takes the ground back");
+            generator.Plan(Area()).Apply(Game.Instance);
+            var whole = Ground();
+            var differ = 0;
+            var moved = 0;
+            for (var k = 0; k < whole.Length; k++)
+            {
+                differ += whole[k] == stepped[k] ? 0 : 1;
+                moved += k % 4 == 0 && whole[k] != 0f ? 1 : 0;
+            }
+
+            Expect.Equal(0, differ, "the ground made in steps is the one-go plan's, corner for corner");
+            Expect.True(moved > Side * Side / 2, "ground that has hills");
+        }
+
+        /// <summary>Ending the scope stops a making: no more steps, no Done, and the ground made so far taken back.</summary>
+        public static void MakeStopped(FakeWorld world)
+        {
+            Flat();
+            var holder = Game.Instance.Add(new Holder());
+            var making = Hills(8).Make(Area(), holder, msPerStep: 0.5f);
+            var dones = 0;
+            making.Done += () => dones++;
+            for (var k = 0; k < 1000 && making.Step != "Tiles"; k++)
+            {
+                world.Advance(0.02f);
+            }
+
+            var share = making.Progress;
+            Expect.True(share > 0f && share < 1f, "stopped part made, in the tiles");
+            Expect.True(Moved() > 0, "with hills made");
+            holder.End();
+            world.Advance(5f);
+            Expect.True(!making.IsDone && dones == 0, "stopped, with no Done");
+            Expect.Near(share, making.Progress, "where it stopped");
+            Expect.Equal(0, Moved(), "the ground made so far taken back");
+        }
+
+        /// <summary>The corners of the cases' area the ground is moved at.</summary>
+        private static int Moved()
+        {
+            var moved = 0;
+            var ground = Ground();
+            for (var k = 0; k < ground.Length; k += 4)
+            {
+                moved += ground[k] != 0f ? 1 : 0;
+            }
+
+            return moved;
+        }
+
+        /// <summary>The ground at each corner of the cases' area: its height, its tile, and whether units can walk and build by it.</summary>
+        private static float[] Ground()
+        {
+            var ground = new float[Side * Side * 4];
+            for (var k = 0; k < Side * Side; k++)
+            {
+                var x = k % Side * 128f;
+                var y = k / Side * 128f;
+                ground[k * 4] = Terrain.Height(x, y);
+                ground[k * 4 + 1] = Terrain.Tile(x, y);
+                ground[k * 4 + 2] = Terrain.IsWalkable(x + 16f, y + 16f) ? 1f : 0f;
+                ground[k * 4 + 3] = Terrain.IsBuildable(x - 48f, y - 48f) ? 1f : 0f;
+            }
+
+            return ground;
+        }
+
+        /// <summary>A feature size of 0, no layers, a tile of 0, a level radius of 0 a plan below 1 by 1 and a making of 0 ms a step each throw.</summary>
         public static void Refused(FakeWorld world)
         {
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1) { FeatureSize = 0f }.Plan(Area()), "a feature size of 0");
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1) { Layers = 0 }.Plan(Area()), "no layers");
+            Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Make(Area(), Game.Instance, msPerStep: 0f), "a making of 0 ms a step");
+            Expect.Throws<ArgumentException>(() => new TerrainGenerator(1) { Layers = 0 }.Make(Area(), Game.Instance), "a making with no layers");
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Paint(0), "a tile of 0");
             Expect.Throws<ArgumentException>(() => new TerrainGenerator(1).Level(0f, 0f, 0f), "a level radius of 0");
             Expect.Throws<ArgumentException>(() => new TerrainPlan(0f, 0f, 0, 1), "a plan with no columns");

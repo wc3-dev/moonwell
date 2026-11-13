@@ -18,6 +18,24 @@ namespace Moonwell.Procgen
         /// <summary>How many corners across a patch of a rule's cover is.</summary>
         private const float PatchSize = 4f;
 
+        // What the work costs in the game's Lua, in microseconds, from the timings of 11-11 (game facts): fixed numbers, so a
+        // step of Make does the same corners on every machine.
+        private const float NoiseCost = 4.5f;   // a corner's noise, a layer
+        private const float LevelCost = 1.5f;   // a corner in a level place's reach
+        private const float FadeCost = 0.5f;    // a corner faded
+        private const float RuleCost = 1f;      // a corner, a rule
+        private const float RaiseCost = 5.5f;   // a corner's crater
+        private const float PaintCost = 3.5f;   // a corner painted
+        private const float ScanCost = 0.5f;    // a corner looked at for blocking
+        private const float BlockCost = 150f;   // a blocked corner, a kind
+
+        /// <summary>The names of Make's steps, as <c>TerrainMaking.Step</c> gives them.</summary>
+        private const string HeightsStep = "Heights";
+
+        private const string TilesStep = "Tiles";
+
+        private const string BlockedStep = "Blocked";
+
         private readonly List<Rule> paints = new List<Rule>();
         private readonly List<Rule> blocks = new List<Rule>();
 
@@ -104,80 +122,48 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public TerrainPlan Plan(Bounds area)
         {
-            if (!(FeatureSize > 0f) || Layers < 1)
+            var ground = new Groundwork(this, area, null);
+            ground.Hills(0, ground.Cells);
+            ground.Levels(0, ground.Places);
+            ground.Fade(0, ground.Cells);
+            ground.Heights(0, ground.Corners);
+            ground.Rules(0, ground.Corners);
+            return ground.Plan;
+        }
+
+        /// <summary>
+        /// Makes the ground for an area in steps over frames, for as long as the scope holds it: the same ground as
+        /// <c>Plan(area).Apply(scope)</c>, from the settings as they are now. Each step does about
+        /// <paramref name="msPerStep"/> of work, a fixed amount counted in corners, so every machine makes the same corners at
+        /// the same moment; a step comes about every frame, the first one after this call. The <c>TerrainMaking</c> it gives
+        /// tells how far it is, for a bar. Throws as <c>Plan</c> does, and for <paramref name="msPerStep"/> of 0 or less.
+        /// </summary>
+        [ChangesState]
+        public TerrainMaking Make(Bounds area, Scope scope, float msPerStep = 4f)
+        {
+            if (!(msPerStep > 0f))
             {
-                throw new ArgumentException("TerrainGenerator.Plan takes a FeatureSize above 0 and 1 layer or more, not " + FeatureSize + " and " + Layers);
+                throw new ArgumentException("TerrainGenerator.Make takes milliseconds a step above 0, not " + msPerStep);
             }
 
-            var size = area.Size;
-            var columns = (int)(size.X / TileSize + 0.5f) + 1;
-            var rows = (int)(size.Y / TileSize + 0.5f) + 1;
-            var plan = new TerrainPlan(area.Min.X, area.Min.Y, columns, rows);
-            var firstColumn = Noise.Floor(area.Min.X / TileSize + 0.5f);
-            var firstRow = Noise.Floor(area.Min.Y / TileSize + 0.5f);
-            var spread = Spread();
-
-            // One corner more on every side, so a slope at the edge is read as the neighbouring plan reads it.
-            var wide = columns + 2;
-            var high = rows + 2;
-            var cells = new float[wide * high];
-            for (var row = 0; row < high; row++)
+            var ground = new Groundwork(this, area, scope);
+            var work = new Work();
+            work.Add(HeightsStep, ground.Cells, NoiseCost * Layers, ground.Hills);
+            work.Add(HeightsStep, ground.Places, LevelCost * ground.PlaceCorners, ground.Levels);
+            if (EdgeFade > 0f)
             {
-                for (var column = 0; column < wide; column++)
-                {
-                    cells[row * wide + column] = Height(firstColumn - 1 + column, firstRow - 1 + row, spread);
-                }
+                work.Add(HeightsStep, ground.Cells, FadeCost, ground.Fade);
             }
 
-            var level = new bool[cells.Length];
-            for (var k = 0; k < levels.Count; k++)
+            work.Add(HeightsStep, ground.Corners, RaiseCost, ground.Heights);
+            work.Add(TilesStep, ground.Corners, RuleCost * (2 + paints.Count + blocks.Count) + PaintCost, ground.Rules);
+            if (blocks.Count > 0)
             {
-                var place = levels[k];
-                var target = Height(Noise.Floor(place[0] / TileSize + 0.5f), Noise.Floor(place[1] / TileSize + 0.5f), spread);
-                LevelPlace(cells, level, wide, high, place[0] - (firstColumn - 1) * TileSize, place[1] - (firstRow - 1) * TileSize, place[2], place[3], target);
+                // shortcut: a guess of one blocked corner in eight until the rules have run, when the bar's speed changes to fit.
+                work.Add(BlockedStep, ground.Corners, ScanCost + BlockCost / 8f, ground.Blocks, ground.BlockCostOf, ground.BlocksCost);
             }
 
-            FadeEdges(cells, columns, rows, EdgeFade / TileSize);
-            var span = Highest - Lowest;
-            for (var row = 0; row < rows; row++)
-            {
-                for (var column = 0; column < columns; column++)
-                {
-                    var at = row * columns + column;
-                    var from = (row + 1) * wide + column + 1;
-                    plan.Heights.Cells[at] = cells[from];
-                    var alongX = (cells[from + 1] - cells[from - 1]) / (2f * TileSize);
-                    var alongY = (cells[from + wide] - cells[from - wide]) / (2f * TileSize);
-                    var steep = alongX * alongX + alongY * alongY;
-                    var height = span != 0f ? Maths.Clamp01((cells[from] - Lowest) / span) : 0f;
-                    for (var k = 0; k < paints.Count; k++)
-                    {
-                        var rule = paints[k];
-                        if (rule.Fits(height, steep) && (rule.Cover >= 1f || Noise.Layered(rule.Seed, (firstColumn + column) / PatchSize, (firstRow + row) / PatchSize, 2, 0.5f) < rule.Cover))
-                        {
-                            plan.Tiles[at] = rule.Value;
-                        }
-                    }
-
-                    if (level[from])
-                    {
-                        continue;
-                    }
-
-                    var kinds = 0;
-                    for (var k = 0; k < blocks.Count; k++)
-                    {
-                        if (blocks[k].Fits(height, steep))
-                        {
-                            kinds |= blocks[k].Value;
-                        }
-                    }
-
-                    plan.Blocked[at] = (Pathing)kinds;
-                }
-            }
-
-            return plan;
+            return new TerrainMaking(work, msPerStep * 1000f, scope);
         }
 
         /// <summary>
@@ -199,39 +185,16 @@ namespace Moonwell.Procgen
             return sum / Maths.Sqrt(squares);
         }
 
-        /// <summary>The height of a corner of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
-        private float Height(int column, int row, float spread)
+        /// <summary>The kinds in a set of pathing.</summary>
+        private static int Kinds(Pathing kinds)
         {
-            var cells = FeatureSize / TileSize;
-            var noise = Noise.Layered(Seed, column / cells, row / cells, Layers, Roughness);
-            return Lowest + (Highest - Lowest) * Maths.Clamp01(0.5f + (noise - 0.5f) * spread);
-        }
-
-        /// <summary>
-        /// Fades the area's heights to the ground as it was at its edge, over <paramref name="fade"/> corners in, as
-        /// <c>Field.FadeEdges</c> does. The cells have one corner more on every side, outside the area, which become the
-        /// ground as it was. 0 or less does nothing.
-        /// </summary>
-        private static void FadeEdges(float[] cells, int columns, int rows, float fade)
-        {
-            if (!(fade > 0f))
+            var count = 0;
+            for (var bits = (int)kinds; bits != 0; bits &= bits - 1)
             {
-                return;
+                count++;
             }
 
-            var wide = columns + 2;
-            for (var row = -1; row <= rows; row++)
-            {
-                for (var column = -1; column <= columns; column++)
-                {
-                    var edge = Math.Min(Math.Min(column, columns - 1 - column), Math.Min(row, rows - 1 - row));
-                    if (edge < fade)
-                    {
-                        var t = edge > 0 ? edge / fade : 0f;
-                        cells[(row + 1) * wide + column + 1] *= t * t * (3f - 2f * t);
-                    }
-                }
-            }
+            return count;
         }
 
         /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it, and marks the level ones.</summary>
@@ -259,6 +222,300 @@ namespace Moonwell.Procgen
                         cells[at] = target + (cells[at] - target) * (t * t * (3f - 2f * t));
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// One area's ground being worked out, and made when a scope is given, in passes over ranges of units, so Plan runs
+        /// each whole and Make a step at a time. It takes the generator's settings as they are when it starts.
+        /// </summary>
+        private sealed class Groundwork
+        {
+            internal readonly TerrainPlan Plan;
+
+            private readonly Scope? scope;
+            private readonly int seed;
+            private readonly float featureCells;
+            private readonly int layers;
+            private readonly float roughness;
+            private readonly float lowest;
+            private readonly float highest;
+            private readonly float spread;
+            private readonly float fade;
+            private readonly Rule[] paints;
+            private readonly Rule[] blocks;
+            private readonly float[][] places;
+            private readonly int firstColumn;
+            private readonly int firstRow;
+            private readonly int columns;
+            private readonly int rows;
+
+            /// <summary>The cells across: the area's corners and one more on each side, so a slope at the edge is read as the neighbouring plan reads it.</summary>
+            private readonly int wide;
+
+            private readonly float[] cells;
+            private readonly bool[] level;
+
+            /// <summary>The kinds of pathing the rules have taken so far, over every corner.</summary>
+            private int kindsBlocked;
+
+            internal Groundwork(TerrainGenerator generator, Bounds area, Scope? scope)
+            {
+                if (!(generator.FeatureSize > 0f) || generator.Layers < 1)
+                {
+                    throw new ArgumentException("TerrainGenerator.Plan takes a FeatureSize above 0 and 1 layer or more, not " + generator.FeatureSize + " and " + generator.Layers);
+                }
+
+                this.scope = scope;
+                seed = generator.Seed;
+                featureCells = generator.FeatureSize / TileSize;
+                layers = generator.Layers;
+                roughness = generator.Roughness;
+                lowest = generator.Lowest;
+                highest = generator.Highest;
+                spread = generator.Spread();
+                fade = generator.EdgeFade / TileSize;
+                paints = generator.paints.ToArray();
+                blocks = generator.blocks.ToArray();
+                places = generator.levels.ToArray();
+                var size = area.Size;
+                columns = (int)(size.X / TileSize + 0.5f) + 1;
+                rows = (int)(size.Y / TileSize + 0.5f) + 1;
+                Plan = new TerrainPlan(area.Min.X, area.Min.Y, columns, rows);
+                firstColumn = Noise.Floor(area.Min.X / TileSize + 0.5f);
+                firstRow = Noise.Floor(area.Min.Y / TileSize + 0.5f);
+                wide = columns + 2;
+                cells = new float[wide * (rows + 2)];
+                level = new bool[cells.Length];
+            }
+
+            /// <summary>The cells: the area's corners and one more on every side.</summary>
+            internal int Cells => cells.Length;
+
+            /// <summary>The area's corners.</summary>
+            internal int Corners => columns * rows;
+
+            /// <summary>The level places.</summary>
+            internal int Places => places.Length;
+
+            /// <summary>The most corners a level place reaches.</summary>
+            internal float PlaceCorners
+            {
+                get
+                {
+                    var most = 0f;
+                    for (var k = 0; k < places.Length; k++)
+                    {
+                        var across = 2f * (places[k][2] + places[k][3]) / TileSize + 3f;
+                        most = Math.Max(most, across * across);
+                    }
+
+                    return most;
+                }
+            }
+
+            /// <summary>The hills of the cells in a range, from the noise.</summary>
+            internal void Hills(int from, int to)
+            {
+                for (var at = from; at < to; at++)
+                {
+                    cells[at] = Height(firstColumn - 1 + at % wide, firstRow - 1 + at / wide);
+                }
+            }
+
+            /// <summary>Levels the places in a range, in order.</summary>
+            internal void Levels(int from, int to)
+            {
+                for (var k = from; k < to; k++)
+                {
+                    var place = places[k];
+                    var target = Height(Noise.Floor(place[0] / TileSize + 0.5f), Noise.Floor(place[1] / TileSize + 0.5f));
+                    LevelPlace(cells, level, wide, rows + 2, place[0] - (firstColumn - 1) * TileSize, place[1] - (firstRow - 1) * TileSize, place[2], place[3], target);
+                }
+            }
+
+            /// <summary>
+            /// Fades the heights of the cells in a range to the ground as it was at the area's edge, over the fade's corners in, as
+            /// <c>Field.FadeEdges</c> does; the cells outside the area become the ground as it was. No fade does nothing.
+            /// </summary>
+            internal void Fade(int from, int to)
+            {
+                if (!(fade > 0f))
+                {
+                    return;
+                }
+
+                for (var at = from; at < to; at++)
+                {
+                    var row = at / wide - 1;
+                    var column = at % wide - 1;
+                    var edge = Math.Min(Math.Min(column, columns - 1 - column), Math.Min(row, rows - 1 - row));
+                    if (edge < fade)
+                    {
+                        var t = edge > 0 ? edge / fade : 0f;
+                        cells[at] *= t * t * (3f - 2f * t);
+                    }
+                }
+            }
+
+            /// <summary>Puts the heights of the corners in a range in the plan, and raises them when making.</summary>
+            internal void Heights(int from, int to)
+            {
+                for (var at = from; at < to; at++)
+                {
+                    Plan.Heights.Cells[at] = cells[Cell(at)];
+                }
+
+                if (scope != null)
+                {
+                    InRows(from, to, RaisePiece);
+                }
+            }
+
+            /// <summary>Works out the tile and the blocked pathing of the corners in a range by the rules, and paints them when making.</summary>
+            internal void Rules(int from, int to)
+            {
+                var span = highest - lowest;
+                for (var at = from; at < to; at++)
+                {
+                    var cell = Cell(at);
+                    var alongX = (cells[cell + 1] - cells[cell - 1]) / (2f * TileSize);
+                    var alongY = (cells[cell + wide] - cells[cell - wide]) / (2f * TileSize);
+                    var steep = alongX * alongX + alongY * alongY;
+                    var height = span != 0f ? Maths.Clamp01((cells[cell] - lowest) / span) : 0f;
+                    for (var k = 0; k < paints.Length; k++)
+                    {
+                        var rule = paints[k];
+                        if (rule.Fits(height, steep) && (rule.Cover >= 1f || Noise.Layered(rule.Seed, (firstColumn + at % columns) / PatchSize, (firstRow + at / columns) / PatchSize, 2, 0.5f) < rule.Cover))
+                        {
+                            Plan.Tiles[at] = rule.Value;
+                        }
+                    }
+
+                    if (level[cell])
+                    {
+                        continue;
+                    }
+
+                    var kinds = 0;
+                    for (var k = 0; k < blocks.Length; k++)
+                    {
+                        if (blocks[k].Fits(height, steep))
+                        {
+                            kinds |= blocks[k].Value;
+                        }
+                    }
+
+                    Plan.Blocked[at] = (Pathing)kinds;
+                    kindsBlocked += Kinds((Pathing)kinds);
+                }
+
+                if (scope != null)
+                {
+                    InRows(from, to, PaintPiece);
+                }
+            }
+
+            /// <summary>Blocks the corners in a range.</summary>
+            internal void Blocks(int from, int to)
+            {
+                InRows(from, to, BlockPiece);
+            }
+
+            /// <summary>What blocking a corner costs.</summary>
+            internal float BlockCostOf(int at)
+            {
+                return ScanCost + BlockCost * Kinds(Plan.Blocked[at]);
+            }
+
+            /// <summary>What blocking every corner costs, once the rules have run.</summary>
+            internal float BlocksCost()
+            {
+                return ScanCost * Corners + BlockCost * kindsBlocked;
+            }
+
+            /// <summary>The cell of a corner of the area.</summary>
+            private int Cell(int at)
+            {
+                return (at / columns + 1) * wide + at % columns + 1;
+            }
+
+            /// <summary>The height of a corner of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
+            private float Height(int column, int row)
+            {
+                var noise = Noise.Layered(seed, column / featureCells, row / featureCells, layers, roughness);
+                return lowest + (highest - lowest) * Maths.Clamp01(0.5f + (noise - 0.5f) * spread);
+            }
+
+            /// <summary>Runs a piece for each row's part of a range of corners, with its first corner and the one past its last.</summary>
+            private void InRows(int from, int to, Action<int, int> piece)
+            {
+                while (from < to)
+                {
+                    var end = Math.Min(to, (from / columns + 1) * columns);
+                    piece(from, end);
+                    from = end;
+                }
+            }
+
+            private void RaisePiece(int from, int to)
+            {
+                var by = new float[to - from];
+                var any = false;
+                for (var at = from; at < to; at++)
+                {
+                    by[at - from] = Plan.Heights.Cells[at];
+                    any = any || by[at - from] != 0f;
+                }
+
+                if (any)
+                {
+                    Terrain.Raise(X(from), Y(from), by.Length, by, scope!);
+                }
+            }
+
+            private void PaintPiece(int from, int to)
+            {
+                var tiles = new int[to - from];
+                var any = false;
+                for (var at = from; at < to; at++)
+                {
+                    tiles[at - from] = Plan.Tiles[at];
+                    any = any || tiles[at - from] != 0;
+                }
+
+                if (any)
+                {
+                    Terrain.SetTile(X(from), Y(from), tiles.Length, tiles, scope!);
+                }
+            }
+
+            private void BlockPiece(int from, int to)
+            {
+                var kinds = new Pathing[to - from];
+                var any = false;
+                for (var at = from; at < to; at++)
+                {
+                    kinds[at - from] = Plan.Blocked[at];
+                    any = any || kinds[at - from] != Pathing.None;
+                }
+
+                if (any)
+                {
+                    Terrain.Block(X(from), Y(from), kinds.Length, kinds, scope!);
+                }
+            }
+
+            /// <summary>The x of a corner of the area.</summary>
+            private float X(int at)
+            {
+                return Plan.X + at % columns * TileSize;
+            }
+
+            /// <summary>The y of a corner of the area.</summary>
+            private float Y(int at)
+            {
+                return Plan.Y + at / columns * TileSize;
             }
         }
 

@@ -76,6 +76,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.terrain.paint", Run = TerrainGeneratorCases.Paint });
             list.Add(new Case { Name = "procgen.terrain.block-and-level", Run = TerrainGeneratorCases.BlockAndLevel });
             list.Add(new Case { Name = "procgen.terrain.apply", Run = TerrainGeneratorCases.Apply });
+            list.Add(new Case { Name = "procgen.terrain.make-in-steps", Run = TerrainGeneratorCases.MakeInSteps });
+            list.Add(new Case { Name = "procgen.terrain.make-stopped", Run = TerrainGeneratorCases.MakeStopped });
             list.Add(new Case { Name = "procgen.terrain.refused", Run = TerrainGeneratorCases.Refused });
         }
 
