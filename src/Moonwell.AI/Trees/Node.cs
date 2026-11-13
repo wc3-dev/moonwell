@@ -116,6 +116,12 @@ namespace Moonwell.AI
             tree = owner;
         }
 
+        /// <summary>Whether that many seconds have passed since a time, by the brains' time, to half a millisecond, so that the float error of the game's time never costs a think.</summary>
+        internal static bool Passed(float since, float seconds)
+        {
+            return Minds.Now() - since >= seconds - 0.0005f;
+        }
+
         /// <summary>The unit brain that runs the tree; null, reported and refused, when a player or game brain runs it.</summary>
         private UnitBrain? Brain(string member)
         {

@@ -30,7 +30,7 @@ namespace Moonwell.AI
         /// <summary>Succeeded once the seconds have passed.</summary>
         protected override Status Run()
         {
-            return Minds.Passed(startedAt, wait) ? Status.Succeeded : Status.Running;
+            return Passed(startedAt, wait) ? Status.Succeeded : Status.Running;
         }
     }
 }

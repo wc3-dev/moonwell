@@ -28,7 +28,7 @@ namespace Moonwell.AI
         {
             if (cooling)
             {
-                if (!Minds.Passed(endedAt, seconds))
+                if (!Passed(endedAt, seconds))
                 {
                     return Status.Failed;
                 }

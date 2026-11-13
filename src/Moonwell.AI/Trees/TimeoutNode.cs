@@ -29,7 +29,7 @@ namespace Moonwell.AI
         /// <summary>Runs the child until the time is up; then halts it and fails.</summary>
         protected override Status Run()
         {
-            if (Minds.Passed(startedAt, seconds))
+            if (Passed(startedAt, seconds))
             {
                 child.Halt();
                 return Status.Failed;
