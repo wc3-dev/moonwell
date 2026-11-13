@@ -137,6 +137,9 @@ namespace Moonwell.Hosting
         /// <summary>Creates a destructable of a type at a place, with a facing, a scale and a variation; null for a type the game makes none of.</summary>
         destructable SpawnDestructable(int typeId, float x, float y, float facing, float scale, int variation);
 
+        /// <summary>Creates a destructable as SpawnDestructable does, standing at a height (CreateDestructableZ).</summary>
+        destructable SpawnDestructableAt(int typeId, float x, float y, float z, float facing, float scale, int variation);
+
         /// <summary>Kills a destructable through the game (KillDestructable); the game delivers its death before the call returns, and nothing for one already dead.</summary>
         void SlayDestructable(destructable destructable);
 
