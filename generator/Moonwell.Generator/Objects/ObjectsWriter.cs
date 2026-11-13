@@ -19,6 +19,15 @@ namespace Moonwell.Generator.Objects;
 public static class ObjectsWriter
 {
     private const string Root = "global::Moonwell.Objects";
+
+    // What a field does, added to its hover where World Editor's label doesn't say; from docs/game-facts.md only.
+    private static readonly Dictionary<string, string> FieldNotes = new Dictionary<string, string>
+    {
+        ["umvr"] = "How soon the unit sets off toward a place it doesn't face: higher is sooner (about 0.66 s at 0.1, 0.14 s at 0.6 and 0.06 s at 3 for a place behind it). How fast the model comes round is Orientation Interpolation's.",
+        ["uori"] = "How fast the unit's facing and model come round, and not a ramp: a half turn takes 0.5 s at 0 and 6 (6 starts fastest), 1 s at 1 and over 3 s at 8.",
+        ["uprw"] = "How far off its heading the unit may be and still walk: with a wider window a slow-turning unit sets off sooner, turning as it goes.",
+        ["uble"] = "The time the model takes to blend from one animation into the next, as from walking into standing; looks only.",
+    };
     private const string Runtime = "global::Moonwell";
 
     /// <summary>The line that makes CSharp.lua leave a type out of the map's script.</summary>
@@ -633,7 +642,8 @@ public static class ObjectsWriter
             allowed.Add($"at most {rules.MaxEntries.Value.ToString(CultureInfo.InvariantCulture)} entries");
         }
 
-        return string.Join(", ", new[] { summary }.Concat(allowed)) + ".";
+        var note = FieldNotes.TryGetValue(field.Id, out var what) ? " " + Xml(what) : "";
+        return string.Join(", ", new[] { summary }.Concat(allowed)) + "." + note;
     }
 
     // A range as the build's errors write it; a field with neither end has no range to write.
