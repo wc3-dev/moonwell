@@ -12576,7 +12576,7 @@ namespace Moonwell
         public static extern void BlzFrameSetParent(framehandle frame, framehandle parent);
 
         /// @CSharpLua.Template = "BlzFrameGetParent({0})"
-        [MachineLocal, CreatesHandle]
+        [CreatesHandle]
         public static extern framehandle BlzFrameGetParent(framehandle frame);
 
         /// @CSharpLua.Template = "BlzFrameGetHeight({0})"
@@ -12594,11 +12594,10 @@ namespace Moonwell
         public static extern void BlzFrameSetTextAlignment(framehandle frame, textaligntype vert, textaligntype horz);
 
         /// @CSharpLua.Template = "BlzFrameGetChildrenCount({0})"
-        [MachineLocal]
         public static extern int BlzFrameGetChildrenCount(framehandle frame);
 
         /// @CSharpLua.Template = "BlzFrameGetChild({0}, {1})"
-        [MachineLocal, CreatesHandle]
+        [CreatesHandle]
         public static extern framehandle BlzFrameGetChild(framehandle frame, int index);
 
         /// @CSharpLua.Template = "BlzTriggerRegisterFrameEvent({0}, {1}, {2})"

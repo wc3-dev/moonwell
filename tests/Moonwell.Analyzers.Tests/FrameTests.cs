@@ -70,6 +70,22 @@ public class FrameTests
     }
 
     [Fact]
+    public void a_game_frames_parent_and_children_are_read_outside_local_for()
+    {
+        var found = MapCode.Check("""
+            var items = Natives.BlzGetFrameByName("InventoryButton_0", 0);
+            var parent = Natives.BlzFrameGetParent(items);
+            var first = Natives.BlzFrameGetChild(parent, 0);
+            var count = Natives.BlzFrameGetChildrenCount(parent);
+            Local.For(p, () => { var mine = Natives.BlzFrameGetParent(items); });
+            Local.For(p, () => { var mine = Natives.BlzFrameGetChild(items, 0); });
+            Local.For(p, () => { var mine = Natives.BlzFrameGetChildrenCount(items); });
+            """);
+
+        Assert.Equal(new[] { "MW0001: Natives.BlzFrameGetParent(items)", "MW0001: Natives.BlzFrameGetChild(items, 0)" }, found);
+    }
+
+    [Fact]
     public void show_local_runs_only_inside_local_for()
     {
         var found = MapCode.Check("""
