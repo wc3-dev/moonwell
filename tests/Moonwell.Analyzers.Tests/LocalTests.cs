@@ -293,6 +293,34 @@ public class LocalTests
     }
 
     [Fact]
+    public void ai_package_changes_are_rejected_inside_and_its_readers_allowed()
+    {
+        var found = MapCode.Check("""
+            var unit = Unit.Of(u)!;
+            var brain = unit.Add(new Guard());
+            Local.For(p, () =>
+            {
+                var every = brain.ThinkEvery;
+                var board = brain.Blackboard;
+                brain.Wake();
+                board.Set(Food, 1);
+                brain.OrderAt(Orders.Move, 0f, 0f);
+            });
+            """, """
+            public static readonly Moonwell.AI.Fact<int> Food = new Moonwell.AI.Fact<int>("food");
+
+            public sealed class Guard : Moonwell.AI.UnitBrain
+            {
+                protected override void Think()
+                {
+                }
+            }
+            """);
+
+        Assert.Equal(new[] { "MW0001: brain.Wake()", "MW0001: board.Set(Food, 1)", "MW0001: brain.OrderAt(Orders.Move, 0f, 0f)" }, found);
+    }
+
+    [Fact]
     public void terrain_package_readers_are_allowed_inside()
     {
         Assert.Empty(MapCode.Check("""

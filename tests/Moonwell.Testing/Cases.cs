@@ -58,7 +58,29 @@ namespace Moonwell.Testing
             AddDebug(list);
             AddPlaced(list);
             AddProcgen(list);
+            AddAI(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, and brain orders.</summary>
+        private static void AddAI(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.brains.think-on-each-actor", Run = BrainCases.ThinkOnEachActor });
+            list.Add(new Case { Name = "ai.brains.ticks", Run = BrainCases.Ticks });
+            list.Add(new Case { Name = "ai.brains.spread", Run = BrainCases.Spread });
+            list.Add(new Case { Name = "ai.brains.spread-at-a-steady-rate", Run = BrainCases.SpreadAtASteadyRate });
+            list.Add(new Case { Name = "ai.brains.woken-by-another", Run = BrainCases.WokenByAnother });
+            list.Add(new Case { Name = "ai.brains.ticks-leave-their-step", Run = BrainCases.TicksLeaveTheirStep });
+            list.Add(new Case { Name = "ai.brains.wake-once", Run = BrainCases.WakeOnce });
+            list.Add(new Case { Name = "ai.brains.throwing-think", Run = BrainCases.ThrowingThink });
+            list.Add(new Case { Name = "ai.brains.due-order", Run = BrainCases.DueOrder });
+            list.Add(new Case { Name = "ai.facts.written", Run = FactCases.Written });
+            list.Add(new Case { Name = "ai.facts.worked-out", Run = FactCases.WorkedOut });
+            list.Add(new Case { Name = "ai.facts.owner-change", Run = FactCases.OwnerChange });
+            list.Add(new Case { Name = "ai.orders.point", Run = BrainOrderCases.PointOrders });
+            list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
+            list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
+            list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
