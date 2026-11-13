@@ -1013,11 +1013,12 @@ namespace Moonwell
             var old = FramesSystem.Pool.Take(this, parent);
             if (old == null)
             {
-                var made = FramesSystem.World.MakeFrame(GameType, Template, parent);
-                madeTemplate = Template;
+                var template = MakeTemplate;
+                var made = FramesSystem.World.MakeFrame(GameType, template, parent);
+                madeTemplate = template;
                 if (made == null)
                 {
-                    Errors.Refuse(Names.NameOf(this) + ".Template", "the game has no frame template named " + Template + " (one from an .fdf needs its TOC loaded): made by its type instead");
+                    Errors.Refuse(Names.NameOf(this) + ".Template", "the game has no frame template named " + template + " (one from an .fdf needs its TOC loaded): made by its type instead");
                     made = FramesSystem.World.MakeFrame(GameType, "", parent)!;
                     madeTemplate = "";
                 }
@@ -1333,6 +1334,9 @@ namespace Moonwell
 
             world.PlaceFrame(handle!, (int)anchor, parentHandle!, (int)anchor, offset.X / PlaceScale, offset.Y / PlaceScale);
         }
+
+        /// <summary>The template the frame is made from: its Template, but a label's text template for its Size, Font and Shadow.</summary>
+        internal virtual string MakeTemplate => Template;
 
         /// <summary>What the frame's own offsets and size are divided by when given to the game: 1, but a label's Scale.</summary>
         internal virtual float PlaceScale => 1.0f;
