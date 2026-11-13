@@ -17,11 +17,17 @@ namespace Moonwell
         /// <summary>The selection panel's way: moved at no size, as given a size it takes clicks over all of it (seen 11-13), and placed again every second, with Visible set again while it shows over the hidden HUD.</summary>
         private readonly bool atNoSize;
 
-        /// <summary>The size the piece draws at whatever size it is given, so Fill scales it: the minimap's, about 0.139 square (seen 11-12 and 13); 0 for a piece that takes a size.</summary>
-        private readonly float drawnSize;
+        /// <summary>The size the piece draws at whatever size it is given, so Fill scales it: the minimap's, 0.139375 by 0.138125 (read 11-13); 0 for a piece that takes a size.</summary>
+        private readonly float drawnWidth, drawnHeight;
 
         /// <summary>The map frame the piece fills, centred on it at its size; null unless Fill was called.</summary>
         private Frame? filling;
+
+        /// <summary>How long after a scale change the minimap is tied again: scaled in the instant it was tied, it drew only a white dot, and tied a 0.1 s later it drew whole (seen 11-13 and 14).</summary>
+        private const float RetieAfter = 0.1f;
+
+        /// <summary>The game time after which the minimap is tied again on this machine; 0 when it need not be.</summary>
+        private float retieAt;
 
         /// <summary>The scale Fill gave the minimap on this machine, from a size the game may give only here; 0 until then, and after a load. Scale reads what the map set, the same everywhere.</summary>
         private float fitted;
@@ -34,17 +40,18 @@ namespace Moonwell
         /// <summary>Whether the piece has been moved on this machine; written on its player's machine only, and again after a load.</summary>
         private bool moved;
 
-        internal MovablePiece(Player player, framehandle frame, bool hiddenByScale, framehandle? movedUnder, framehandle? holder = null, bool atNoSize = false, float drawnSize = 0.0f)
+        internal MovablePiece(Player player, framehandle frame, bool hiddenByScale, framehandle? movedUnder, framehandle? holder = null, bool atNoSize = false, float drawnWidth = 0.0f, float drawnHeight = 0.0f)
             : base(player, new[] { frame })
         {
-            this.drawnSize = drawnSize;
+            this.drawnWidth = drawnWidth;
+            this.drawnHeight = drawnHeight;
             this.hiddenByScale = hiddenByScale;
             this.movedUnder = movedUnder;
             this.holder = holder;
             this.atNoSize = atNoSize;
         }
 
-        /// <summary>The piece's scale, which sizes it; 1 unless set. A moved piece is tied again after it, as the minimap scaled where it was tied drew only a white dot (seen 11-13).</summary>
+        /// <summary>The piece's scale, which sizes it; 1 unless set. A moved minimap is tied again a moment after, as scaled in the instant it was tied it draws only a white dot (seen 11-13 and 14).</summary>
         [LocalSafe]
         public float Scale
         {
@@ -55,16 +62,17 @@ namespace Moonwell
                 if (Here() && (visible || !hiddenByScale))
                 {
                     FramesSystem.World.ScaleFrame(frames[0], value);
-                    if (moved)
-                    {
-                        FramesSystem.World.ClearFramePoints(frames[0]);
-                        TieAll();
-                    }
+                    RetieLater();
+                }
+
+                if (drawnWidth > 0.0f)
+                {
+                    Game.Instance.After(RetieAfter, Retie);
                 }
             }
         }
 
-        /// <summary>Puts the piece on a map's frame, centred, at the frame's size, in place of its ties: a command or item button takes the size, and the minimap, which draws at one size (about 0.139 square) and only scales, is scaled to the frame's smaller side. The size is the frame's Width and Height, or what the game gives it when they are not set, and is taken again every second. The selection icons move at no size, so Fill is refused for them; as Attach, the frame must be added first.</summary>
+        /// <summary>Puts the piece on a map's frame, centred, at the frame's size, in place of its ties: a command or item button takes the size, and the minimap, which draws at one size (about 0.139 square) and only scales, is scaled to fit inside the frame. The size is the frame's Width and Height, or what the game gives it when they are not set, and is taken again every second. The selection icons move at no size, so Fill is refused for them; as Attach, the frame must be added first.</summary>
         public void Fill(Frame other)
         {
             if (atNoSize)
@@ -86,6 +94,11 @@ namespace Moonwell
                 Fit(true);
             }
 
+            if (drawnWidth > 0.0f)
+            {
+                Game.Instance.After(RetieAfter, Retie);
+            }
+
             FramesSystem.GameUiOf(player).Held();
         }
 
@@ -95,13 +108,14 @@ namespace Moonwell
             var world = FramesSystem.World;
             var width = filling!.width > 0.0f ? filling.width : world.FrameWidth(filling.handle!);
             var height = filling.height > 0.0f ? filling.height : world.FrameHeight(filling.handle!);
-            if (drawnSize > 0.0f)
+            if (drawnWidth > 0.0f)
             {
-                var fits = System.Math.Min(width, height) / drawnSize;
+                var fits = System.Math.Min(width / drawnWidth, height / drawnHeight);
                 if (fits > 0.0f && fits != fitted)
                 {
                     fitted = fits;
                     world.ScaleFrame(frames[0], fits);
+                    RetieLater();
                     tie = true;
                 }
             }
@@ -169,6 +183,31 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Marks the minimap, on this machine, to be tied again once RetieAfter has passed.</summary>
+        private void RetieLater()
+        {
+            if (drawnWidth > 0.0f)
+            {
+                retieAt = Game.Time + RetieAfter;
+            }
+        }
+
+        /// <summary>Ties the minimap again on its player's machine once its time has come: from a timer made on every machine after a scale set or Fill, and from the hold every second, after a load or a frame filled that changed size.</summary>
+        private void Retie()
+        {
+            if (retieAt <= 0.0f || Game.Time < retieAt || !Here())
+            {
+                return;
+            }
+
+            retieAt = 0.0f;
+            if (moved)
+            {
+                FramesSystem.World.ClearFramePoints(frames[0]);
+                TieAll();
+            }
+        }
+
         /// <summary>Takes the piece's game frame and the parent it is moved under, looked up again.</summary>
         internal override void Rebind(GamePiece fresh)
         {
@@ -189,6 +228,7 @@ namespace Moonwell
             moved = false;
             fitted = 0.0f;
             TieAll();
+            RetieLater();
             if (filling != null && !filling.HasEnded && filling.handle != null)
             {
                 Fit(false);
@@ -214,6 +254,7 @@ namespace Moonwell
                 Fit(false);
             }
 
+            Retie();
             if (!atNoSize)
             {
                 return;

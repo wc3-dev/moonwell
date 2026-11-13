@@ -89,7 +89,7 @@ namespace Moonwell.Testing
             Expect.True(world.Logged.Exists(line => line.Contains("not added")), "refused: " + string.Join(" | ", world.Logged));
         }
 
-        /// <summary>Fill puts a piece centred on a map's frame at its size: a button by its size, taken again every second, the minimap by a scale to the frame's smaller side; the selection icons are refused; a scale set after a tie ties the piece again (the minimap drew a white dot otherwise, seen 11-13).</summary>
+        /// <summary>Fill puts a piece centred on a map's frame at its size: a button by its size, taken again every second, the minimap by a scale that fits it inside the frame; the selection icons are refused; the minimap is tied again a moment after its scale changes (tied in that instant it drew a white dot, seen 11-13 and 14).</summary>
         public static void FillPiece(FakeWorld world)
         {
             world.LocalSlot = 0;
@@ -108,16 +108,22 @@ namespace Moonwell.Testing
             Expect.Near(0.04f, button.Width, "the slot's new width a second later");
             Player.Two.GameUi().ItemButtons[0].Fill(slot);
             Expect.Equal(0, frames.GameFrames["origin 7 0"].Points.Count, "another player's piece: nothing here");
-            var ring = Screen.Add(new Panel { Width = 0.1f, Height = 0.0695f }, Game.Instance);
+            var ring = Screen.Add(new Panel { Width = 0.1f, Height = 0.0690625f }, Game.Instance);
             var minimap = Player.One.GameUi().Minimap;
             minimap.Fill(ring);
             var fake = frames.GameFrames["MiniMapFrame"];
-            Expect.Near(0.5f, fake.Scale, "scaled to the smaller side");
+            Expect.Near(0.5f, fake.Scale, "scaled to fit, by its height here");
             Expect.Near(1.0f, minimap.Scale, "Scale reads what the map set, the same on every machine");
             Expect.Near(0.0f, fake.Width, "never sized");
             Expect.Same(frames.FrameOf(ring.Handle!), First(fake)?.Other, "tied to the frame");
+            fake.Points.Clear();
+            world.Advance(0.15f);
+            Expect.Equal(1, fake.Points.Count, "tied again a moment after Fill");
             minimap.Scale = 0.6f;
-            Expect.Equal(1, fake.Points.Count, "tied again after the scale, one point");
+            Expect.Near(0.6f, fake.Scale, "a scale set after");
+            fake.Points.Clear();
+            world.Advance(0.15f);
+            Expect.Equal(1, fake.Points.Count, "tied again a moment after the scale, one point");
             Expect.Same(frames.FrameOf(ring.Handle!), First(fake)?.Other, "to the frame");
             Player.One.GameUi().SelectionIcons.Fill(ring);
             Expect.True(world.Logged.Exists(line => line.Contains("no size")), "the selection icons refused: " + string.Join(" | ", world.Logged));
