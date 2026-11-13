@@ -6,7 +6,7 @@ namespace Moonwell.Procgen
     /// <summary>
     /// Makes ground from a seed: rolling heights from layered noise, tiles and blocked corners by rules on height and
     /// slope, and level places for bases. Set it up, then <c>Plan(area)</c> works the ground out and the plan's
-    /// <c>Apply</c> makes it. The same seed, settings and area size give the same ground on every machine; a seed from
+    /// <c>Apply</c> makes it. The same seed, settings and area give the same ground on every machine; a seed from
     /// <c>Game.Random</c> gives new ground every game. The game makes no cliffs, ramps or water while it runs, so the
     /// ground is slopes. Slopes are read from the heights the plan adds, so the rules fit ground that starts flat.
     /// </summary>
@@ -35,13 +35,14 @@ namespace Moonwell.Procgen
         public int Seed { get; }
 
         /// <summary>
-        /// How far the lowest corner is moved from the ground as it was, in the game's units; below 0 digs. With a range
+        /// How far below the ground as it was the ground goes at most, in the game's units; below 0 digs. The same for
+        /// every area, so plans of one generator meet. With a range
         /// around 0, as it starts, the ground stays at its level on the whole and the edge fade is gentle; a range all above
         /// 0 makes a plateau, with a steep rim where it fades.
         /// </summary>
         public float Lowest { get; set; } = -150f;
 
-        /// <summary>How far the highest corner is moved from the ground as it was.</summary>
+        /// <summary>How far above the ground as it was the ground goes at most. Most areas reach close to Lowest and Highest, and a few corners sit flat on them.</summary>
         public float Highest { get; set; } = 150f;
 
         /// <summary>How far across a hill is, in the game's units.</summary>
@@ -53,7 +54,7 @@ namespace Moonwell.Procgen
         /// <summary>How strong each layer is beside the one before, from 0 (smooth) to 1 (rough).</summary>
         public float Roughness { get; set; } = 0.5f;
 
-        /// <summary>How far in from the area's edge the heights fade to the ground as it was, so the area has no seam; 0 for no fade.</summary>
+        /// <summary>How far in from the area's edge the heights fade to the ground as it was, so an area inside a hand-made map has no seam; 0 for no fade, for areas that meet each other.</summary>
         public float EdgeFade { get; set; } = 512f;
 
         /// <summary>
@@ -96,8 +97,9 @@ namespace Moonwell.Procgen
 
         /// <summary>
         /// Works out the ground for an area: a corner every 128 from its lower left. It reads only the settings, so it
-        /// changes nothing and gives the same plan each time. A <c>FeatureSize</c> of 0 or less, or fewer than 1 layer,
-        /// throws ArgumentException.
+        /// changes nothing and gives the same plan each time. The ground comes from the corners' places in the world, so
+        /// plans of one generator meet where their areas touch when <c>EdgeFade</c> is 0, and an area's ground depends on
+        /// where it is. A <c>FeatureSize</c> of 0 or less, or fewer than 1 layer, throws ArgumentException.
         /// </summary>
         [LocalSafe]
         public TerrainPlan Plan(Bounds area)
@@ -111,43 +113,53 @@ namespace Moonwell.Procgen
             var columns = (int)(size.X / TileSize + 0.5f) + 1;
             var rows = (int)(size.Y / TileSize + 0.5f) + 1;
             var plan = new TerrainPlan(area.Min.X, area.Min.Y, columns, rows);
-            var noise = Field.FromNoise(Seed, columns, rows, FeatureSize / TileSize, Layers, Roughness);
-            noise.Normalize();
-            var heights = plan.Heights;
-            var cells = heights.Cells;
-            for (var k = 0; k < cells.Length; k++)
+            var firstColumn = Noise.Floor(area.Min.X / TileSize + 0.5f);
+            var firstRow = Noise.Floor(area.Min.Y / TileSize + 0.5f);
+            var spread = Spread();
+
+            // One corner more on every side, so a slope at the edge is read as the neighbouring plan reads it.
+            var wide = columns + 2;
+            var high = rows + 2;
+            var cells = new float[wide * high];
+            for (var row = 0; row < high; row++)
             {
-                cells[k] = Lowest + (Highest - Lowest) * noise.Cells[k];
+                for (var column = 0; column < wide; column++)
+                {
+                    cells[row * wide + column] = Height(firstColumn - 1 + column, firstRow - 1 + row, spread);
+                }
             }
 
             var level = new bool[cells.Length];
             for (var k = 0; k < levels.Count; k++)
             {
                 var place = levels[k];
-                LevelPlace(heights, level, place[0] - plan.X, place[1] - plan.Y, place[2], place[3]);
+                var target = Height(Noise.Floor(place[0] / TileSize + 0.5f), Noise.Floor(place[1] / TileSize + 0.5f), spread);
+                LevelPlace(cells, level, wide, high, place[0] - (firstColumn - 1) * TileSize, place[1] - (firstRow - 1) * TileSize, place[2], place[3], target);
             }
 
-            heights.FadeEdges(EdgeFade / TileSize);
+            FadeEdges(cells, columns, rows, EdgeFade / TileSize);
             var span = Highest - Lowest;
             for (var row = 0; row < rows; row++)
             {
                 for (var column = 0; column < columns; column++)
                 {
                     var at = row * columns + column;
-                    var alongX = Rise(cells, at, 1, column, columns);
-                    var alongY = Rise(cells, at, columns, row, rows);
+                    var from = (row + 1) * wide + column + 1;
+                    plan.Heights.Cells[at] = cells[from];
+                    var alongX = (cells[from + 1] - cells[from - 1]) / (2f * TileSize);
+                    var alongY = (cells[from + wide] - cells[from - wide]) / (2f * TileSize);
                     var steep = alongX * alongX + alongY * alongY;
-                    var height = span != 0f ? Maths.Clamp01((cells[at] - Lowest) / span) : 0f;
+                    var height = span != 0f ? Maths.Clamp01((cells[from] - Lowest) / span) : 0f;
                     for (var k = 0; k < paints.Count; k++)
                     {
                         var rule = paints[k];
-                        if (rule.Fits(height, steep) && (rule.Cover >= 1f || Noise.Layered(rule.Seed, column / PatchSize, row / PatchSize, 2, 0.5f) < rule.Cover))
+                        if (rule.Fits(height, steep) && (rule.Cover >= 1f || Noise.Layered(rule.Seed, (firstColumn + column) / PatchSize, (firstRow + row) / PatchSize, 2, 0.5f) < rule.Cover))
                         {
                             plan.Tiles[at] = rule.Value;
                         }
                     }
 
-                    if (level[at])
+                    if (level[from])
                     {
                         continue;
                     }
@@ -169,26 +181,62 @@ namespace Moonwell.Procgen
         }
 
         /// <summary>
-        /// How fast the heights rise along a column or a row at a cell, as rise over run: from the cell before to the
-        /// cell after, or from the cell itself at an edge. <paramref name="step"/> is how far apart the cells are in the
-        /// array, <paramref name="index"/> the cell's place along the line and <paramref name="count"/> the line's length.
+        /// How far the noise is stretched about its middle: layers added together stay nearer the middle than one does, so
+        /// this brings them back to one layer's spread, whatever the layers and roughness.
         /// </summary>
-        private static float Rise(float[] cells, int at, int step, int index, int count)
+        private float Spread()
         {
-            var before = index > 0 ? at - step : at;
-            var after = index < count - 1 ? at + step : at;
-            return after == before ? 0f : (cells[after] - cells[before]) / ((after - before) / step * TileSize);
+            var sum = 0f;
+            var squares = 0f;
+            var strength = 1f;
+            for (var layer = 0; layer < Layers; layer++)
+            {
+                sum += strength;
+                squares += strength * strength;
+                strength *= Roughness;
+            }
+
+            return sum / Maths.Sqrt(squares);
         }
 
-        /// <summary>Levels the corners within a radius of a point (from the plan's first corner) at its centre's height, blends the ones in the rim past it, and marks the level ones.</summary>
-        private static void LevelPlace(Field heights, bool[] level, float x, float y, float radius, float blend)
+        /// <summary>The height of a corner of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
+        private float Height(int column, int row, float spread)
         {
-            var cells = heights.Cells;
-            var columns = heights.Columns;
-            var rows = heights.Rows;
-            var centreColumn = Math.Min(Math.Max(Noise.Floor(x / TileSize + 0.5f), 0), columns - 1);
-            var centreRow = Math.Min(Math.Max(Noise.Floor(y / TileSize + 0.5f), 0), rows - 1);
-            var target = cells[centreRow * columns + centreColumn];
+            var cells = FeatureSize / TileSize;
+            var noise = Noise.Layered(Seed, column / cells, row / cells, Layers, Roughness);
+            return Lowest + (Highest - Lowest) * Maths.Clamp01(0.5f + (noise - 0.5f) * spread);
+        }
+
+        /// <summary>
+        /// Fades the area's heights to the ground as it was at its edge, over <paramref name="fade"/> corners in, as
+        /// <c>Field.FadeEdges</c> does. The cells have one corner more on every side, outside the area, which become the
+        /// ground as it was. 0 or less does nothing.
+        /// </summary>
+        private static void FadeEdges(float[] cells, int columns, int rows, float fade)
+        {
+            if (!(fade > 0f))
+            {
+                return;
+            }
+
+            var wide = columns + 2;
+            for (var row = -1; row <= rows; row++)
+            {
+                for (var column = -1; column <= columns; column++)
+                {
+                    var edge = Math.Min(Math.Min(column, columns - 1 - column), Math.Min(row, rows - 1 - row));
+                    if (edge < fade)
+                    {
+                        var t = edge > 0 ? edge / fade : 0f;
+                        cells[(row + 1) * wide + column + 1] *= t * t * (3f - 2f * t);
+                    }
+                }
+            }
+        }
+
+        /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it, and marks the level ones.</summary>
+        private static void LevelPlace(float[] cells, bool[] level, int columns, int rows, float x, float y, float radius, float blend, float target)
+        {
             var reach = radius + blend;
             var lastColumn = Math.Min(Noise.Floor((x + reach) / TileSize) + 1, columns - 1);
             var lastRow = Math.Min(Noise.Floor((y + reach) / TileSize) + 1, rows - 1);
