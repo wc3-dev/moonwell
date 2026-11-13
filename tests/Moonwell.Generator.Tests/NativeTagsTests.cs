@@ -55,6 +55,8 @@ public class NativeTagsTests
         native BlzGetAbilityResearchTooltip takes integer abilCode, integer level returns string
         native GetAllyColorFilterState takes nothing returns integer
         native BlzFrameGetParent takes framehandle frame returns framehandle
+        native BlzFrameGetChild takes framehandle frame, integer index returns framehandle
+        native BlzFrameGetChildrenCount takes framehandle frame returns integer
         """;
 
     private const string Blizzard = """
@@ -155,7 +157,9 @@ public class NativeTagsTests
     [InlineData("BlzGetItemTooltip", NativeTag.MachineLocal)]
     [InlineData("BlzGetAbilityResearchTooltip", NativeTag.MachineLocal)]
     [InlineData("GetAllyColorFilterState", NativeTag.MachineLocal)]
-    [InlineData("BlzFrameGetParent", NativeTag.MachineLocal | NativeTag.CreatesHandle)]
+    [InlineData("BlzFrameGetParent", NativeTag.CreatesHandle)]
+    [InlineData("BlzFrameGetChild", NativeTag.CreatesHandle)]
+    [InlineData("BlzFrameGetChildrenCount", NativeTag.None)]
     [InlineData("BlzUnitIsAlive", NativeTag.None)]
     [InlineData("BlzUnitItemInBagSlot", NativeTag.None)]
     [InlineData("BlzUnitItemInEquipmentSlot", NativeTag.None)]
