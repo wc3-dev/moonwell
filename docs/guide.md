@@ -1758,6 +1758,12 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   set on them. A template that inherits one of the game's (`INHERITS "EscMenuBackdrop"`) is made empty (seen), so the `.fdf`
   gives its look in full; a `SIMPLEFRAME` template is not made, as no kind is one (seen).
 - `Handle` is the game's frame, for anything Moonwell does not do yet.
+- Some of the HUD's parts that `Natives.BlzGetFrameByName` finds are a String or a Texture of a simple frame in the
+  game's `.fdf` files, not frames of their own: `SimpleNameValue`, `SimpleClassValue`, `InventoryCoverTexture` and the
+  info panel's texts among them. The game crashes to the desktop given one to `BlzFrameSetVisible`, `IsVisible`,
+  `SetAlpha`, `SetLevel`, `SetEnable`, `SetScale`, `SetParent`, `GetParent` or `BlzDestroyFrame`, so that is error
+  MW0057 when the name is written as text. Clearing its points, absolute points, a size and its text took one with no
+  crash (seen).
 - A game saved with the game's own Save Game and loaded loses every frame the map made: they keep their handles but
   show nothing, and setting them does nothing (seen). So Moonwell makes every frame on the screen again at the load,
   with all it keeps: text, colour, values, checks, visibility, size, places, tooltips, the frames found in a window's
