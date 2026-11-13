@@ -351,6 +351,7 @@ namespace Moonwell.Engine
             var c1 = paths.ColumnOf(change.MaxX);
             var r0 = paths.RowOf(change.MinY);
             var r1 = paths.RowOf(change.MaxY);
+            var meeting = Meeting(change);
             for (var row = r0; row <= r1; row++)
             {
                 var y = paths.CentreY(row);
@@ -371,10 +372,10 @@ namespace Moonwell.Engine
                     }
 
                     var touched = false;
-                    for (var k = 0; k < held.Count; k++)
+                    for (var k = 0; k < meeting.Count; k++)
                     {
-                        var other = held[k];
-                        if (other.Kind == TerrainChange.Paths && other.Contains(x, y))
+                        var other = meeting[k];
+                        if (other.Contains(x, y))
                         {
                             var kinds = other.ValueAt(x, y);
                             flags = other.On ? flags | kinds : flags & ~kinds;
@@ -406,6 +407,7 @@ namespace Moonwell.Engine
             var grid = Terrain.Grid;
             Corners(change.MinX, change.MaxX, grid.Left, grid.Columns, out var i0, out var i1);
             Corners(change.MinY, change.MaxY, grid.Bottom, grid.Rows, out var j0, out var j1);
+            var meeting = Meeting(change);
             for (var j = j0; j <= j1; j++)
             {
                 var y = grid.Bottom + j * TileSize;
@@ -428,10 +430,10 @@ namespace Moonwell.Engine
 
                     var variation = variationsBefore[key];
                     var touched = false;
-                    for (var k = 0; k < held.Count; k++)
+                    for (var k = 0; k < meeting.Count; k++)
                     {
-                        var other = held[k];
-                        if (other.Kind == TerrainChange.Tiles && other.Contains(x, y))
+                        var other = meeting[k];
+                        if (other.Contains(x, y))
                         {
                             tile = other.ValueAt(x, y);
                             variation = -1;
@@ -451,6 +453,22 @@ namespace Moonwell.Engine
                     }
                 }
             }
+        }
+
+        /// <summary>The changes held of a change's kind whose boxes meet its box, oldest first: the only ones that can hold its cells or corners, so many small changes, as procgen makes in steps, stay quick.</summary>
+        private static List<TerrainChange> Meeting(TerrainChange change)
+        {
+            var meeting = new List<TerrainChange>();
+            for (var k = 0; k < held.Count; k++)
+            {
+                var other = held[k];
+                if (other.Kind == change.Kind && other.MinX <= change.MaxX && other.MaxX >= change.MinX && other.MinY <= change.MaxY && other.MaxY >= change.MinY)
+                {
+                    meeting.Add(other);
+                }
+            }
+
+            return meeting;
         }
 
         /// <summary>Adds or takes off a blight change's blight over its circle or rect.</summary>

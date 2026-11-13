@@ -1295,6 +1295,24 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 - `Plan(area)` only works the ground out: a `TerrainPlan` with a height, a tile and blocked pathing for each 128
   corner. A map may change it (`plan.Heights[column, row]`, `plan.Tiles`, `plan.Blocked`) before `Apply`.
 - `Apply(scope)` makes it as terrain changes held in the scope: ending the scope takes the ground back.
+- `Make(area, scope)` makes the same ground in steps over frames, for an area that would freeze the game in one go, and
+  gives a `TerrainMaking` to draw a bar from (the bar is the map's own):
+
+  ```csharp
+  var making = hills.Make(Terrain.Playable, Game.Instance);
+  Every(0.1f, () =>
+  {
+      bar.Value = making.Progress;   // 0 to 1
+      label.Text = making.Step;      // "Heights", "Tiles", "Blocked"
+  });
+  making.Done += StartPlay;
+  ```
+
+  `Progress` never goes back and is 1 only once the ground is made; `Done` runs once, then. Each step does a fixed
+  amount of work counted in corners, never timed, so every machine makes the same corners at the same moment.
+  `msPerStep` (4 unless set) is how much: more finishes sooner and costs smooth frames, as suits a loading screen that
+  holds play. It takes the settings as they are at the call, so a plan made this way cannot be changed before it is
+  made. Ending the scope stops it and takes back what was made so far.
 - Heights stay between `Lowest` and `Highest` (150 below to 150 above, unless set), measured from the ground as it
   was; most areas reach close to both, and a few corners sit flat on them. A range all above 0 makes a plateau with
   a steep rim. `EdgeFade` (512 unless set) brings the heights back to the ground at the area's edge, so an area
@@ -1310,6 +1328,8 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.
 - A plan of 53 by 53 corners took 62 ms to work out in the game, and its 2,601 craters 14 ms to make (3.0.1.24371).
+  Planned and made in one go with tiles and blocked corners it took 132 ms, a frozen frame; made in steps of 1 to
+  8 ms no frame was longer than the game's own (about 30 ms), and at 4 ms a step it took 1 s (3.0.1.24371).
 
 ## Interactions and finding
 
