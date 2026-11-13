@@ -171,23 +171,30 @@ namespace Moonwell
             }
 
             // The letterbox's end brings back the portrait and the selection panel the map hid, by the end of its fade (seen
-            // 11-13), so each player's HUD is set again now and every tenth of a second through the fade and past it: set once
-            // after the fade, the portrait flashed (seen 11-13).
+            // 11-13), so each player's HUD is set again now and every 0.03 s through the fade and past it: set once after the
+            // fade the portrait flashed, and set every tenth of a second it still flashed, shorter (seen 11-13).
             RestoreHuds();
-            for (var i = 1; i <= AfterLetterboxSteps; i++)
+            var left = AfterLetterboxSteps;
+            Timer? again = null;
+            again = Game.Instance.OwnEvery(AfterLetterboxEvery, () =>
             {
-                Game.Instance.OwnAfter(i * 0.1f, () =>
+                if (--left <= 0)
                 {
-                    if (Cinematic.LetterboxHere() == null)
-                    {
-                        RestoreHuds();
-                    }
-                });
-            }
+                    again?.End();
+                }
+
+                if (Cinematic.LetterboxHere() == null)
+                {
+                    RestoreHuds();
+                }
+            });
         }
 
-        /// <summary>How many tenths of a second after a cinematic's end each player's HUD is set again: past the letterbox's fade of 0.5 s.</summary>
-        internal const int AfterLetterboxSteps = 10;
+        /// <summary>How often each player's HUD is set again after a cinematic's end, in seconds.</summary>
+        internal const float AfterLetterboxEvery = 0.03f;
+
+        /// <summary>How many times each player's HUD is set again after a cinematic's end: for a second, past the letterbox's fade of 0.5 s.</summary>
+        internal const int AfterLetterboxSteps = 34;
 
         private static void RestoreHuds()
         {

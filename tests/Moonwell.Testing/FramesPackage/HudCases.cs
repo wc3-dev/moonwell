@@ -236,7 +236,7 @@ namespace Moonwell.Testing
             Expect.Near(0.00001f, panel.Scale, "hidden when set");
         }
 
-        /// <summary>A letterboxed cinematic's end brings back what the map hid of the HUD (seen 11-13), so each player's HUD is set again at its end and every tenth of a second for a second; a cinematic still playing is left alone.</summary>
+        /// <summary>A letterboxed cinematic's end brings back what the map hid of the HUD (seen 11-13), so each player's HUD is set again at its end and every 0.03 s for a second; a cinematic still playing is left alone.</summary>
         public static void AfterCinematic(FakeWorld world)
         {
             var frames = FrameCases.Installed();
@@ -255,7 +255,7 @@ namespace Moonwell.Testing
             Expect.Equal(false, frames.GameFrames["origin 16 0"].Shown, "the portrait the map hid, hidden again");
             frames.GameFrames["origin 16 0"].Shown = true;
             world.Advance(0.1f);
-            Expect.Equal(false, frames.GameFrames["origin 16 0"].Shown, "and again a tenth of a second later, through the fade");
+            Expect.Equal(false, frames.GameFrames["origin 16 0"].Shown, "and again soon after, through the fade");
             world.Advance(0.6f);
             frames.GameFrames["origin 16 0"].Shown = true;
             world.Advance(0.1f);
