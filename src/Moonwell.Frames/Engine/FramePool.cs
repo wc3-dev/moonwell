@@ -31,7 +31,7 @@ namespace Moonwell.Engine
 
             for (var i = frames.Count - 1; i >= 0; i--)
             {
-                if (frames[i].parentHandle == parent && frames[i].madeTemplate == frame.Template && frame.Fits(frames[i]))
+                if (frames[i].parentHandle == parent && frames[i].madeTemplate == frame.MakeTemplate && frame.Fits(frames[i]))
                 {
                     var old = frames[i];
                     frames.RemoveAt(i);
