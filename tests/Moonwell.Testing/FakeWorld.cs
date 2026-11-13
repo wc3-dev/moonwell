@@ -334,6 +334,8 @@ namespace Moonwell.Testing
         /// <summary>The name of each unit, "" until set.</summary>
         private readonly Dictionary<unit, string> unitNames = new Dictionary<unit, string>();
 
+        private readonly Dictionary<int, string> unitIcons = new Dictionary<int, string>();
+
         /// <summary>The proper name of each hero, "" until set.</summary>
         private readonly Dictionary<unit, string> properNames = new Dictionary<unit, string>();
 
@@ -859,6 +861,9 @@ namespace Moonwell.Testing
             PrintedTexts.Add(text);
             PrintedSeconds.Add(seconds);
         }
+
+        /// <summary>Whether the log file is written at every line; true until set, as in a development build.</summary>
+        public bool LogAtOnce { get; set; } = true;
 
         /// <summary>Records a line appended to the log.</summary>
         public void Log(string text)
@@ -2781,6 +2786,18 @@ namespace Moonwell.Testing
             NoteGone(unit);
             UnitCalls.Add("rename");
             unitNames[unit] = name;
+        }
+
+        /// <summary>The icon of a unit type; "" until set with <see cref="SetIcon"/>.</summary>
+        public string IconOf(int typeId)
+        {
+            return unitIcons.TryGetValue(typeId, out var icon) ? icon : "";
+        }
+
+        /// <summary>Sets the icon the game gives for a unit type.</summary>
+        public void SetIcon(int typeId, string icon)
+        {
+            unitIcons[typeId] = icon;
         }
 
         /// <summary>The proper name of a hero; "" until set.</summary>

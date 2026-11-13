@@ -353,6 +353,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "log.file-splits-between-letters", Run = LogCases.SplitsBetweenLetters });
             list.Add(new Case { Name = "log.file-splits-letters-of-two-bytes", Run = LogCases.SplitsLettersOfTwoBytes });
             list.Add(new Case { Name = "log.file-splits-with-no-letter-start", Run = LogCases.SplitsWithNoLetterStart });
+            list.Add(new Case { Name = "log.file-written-at-once", Run = LogCases.WritesAtOnce });
             list.Add(new Case { Name = "log.file-writes-at-most-once-a-second", Run = LogCases.WritesAtMostOnceASecond });
             list.Add(new Case { Name = "log.ring-slots", Run = LogCases.RingSlots });
         }
@@ -1501,6 +1502,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
             list.Add(new Case { Name = "units.order-gone", Run = UnitCases.OrderGone });
             list.Add(new Case { Name = "units.name", Run = UnitCases.NameReadAndSet });
+            list.Add(new Case { Name = "units.icon", Run = UnitCases.IconRead });
             list.Add(new Case { Name = "units.level-set-with-handle", Run = UnitCases.LevelSetWithHandleDoesNothing });
             list.Add(new Case { Name = "units.shared-without-handle", Run = UnitCases.SharedWithoutHandle });
             list.Add(new Case { Name = "defaults.reads-type-values", Run = UnitCases.DefaultReadsTypeValues });

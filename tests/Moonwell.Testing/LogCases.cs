@@ -83,7 +83,7 @@ namespace Moonwell.Testing
         /// <summary>A line is written at once when the file was last written a second ago or more; within the second it waits, and is due once the second is up.</summary>
         public static void WritesAtMostOnceASecond(FakeWorld world)
         {
-            var file = new LogFile();
+            var file = new LogFile { AtOnce = false };
             Expect.Equal(true, file.Add("first", 5.0f), "the first line is written at once");
             file.Written(5.0f);
             Expect.Equal(false, file.Add("second", 5.2f), "a line 0.2 s later waits");
@@ -93,6 +93,30 @@ namespace Moonwell.Testing
             file.Written(6.0f);
             Expect.Equal(false, file.Due(7.5f), "nothing waits after the write");
             Expect.Equal(true, file.Add("fourth", 7.5f), "a line 1.5 s after the write is written at once");
+        }
+
+        /// <summary>In a development build every line is written at once, and a line that waited is due at once when that is set; Game.LogAtOnce reads and sets the world's.</summary>
+        public static void WritesAtOnce(FakeWorld world)
+        {
+#if DEBUG
+            Expect.Equal(true, new LogFile().AtOnce, "at once in a development build");
+#else
+            Expect.Equal(false, new LogFile().AtOnce, "once a second in a release build");
+#endif
+            var file = new LogFile { AtOnce = true };
+            Expect.Equal(true, file.Add("first", 5.0f), "the first line is written at once");
+            file.Written(5.0f);
+            Expect.Equal(true, file.Add("second", 5.0f), "a line in the same instant is written at once");
+            file.Written(5.0f);
+
+            file.AtOnce = false;
+            Expect.Equal(false, file.Add("third", 5.2f), "once a second when set false");
+            file.AtOnce = true;
+            Expect.Equal(true, file.Due(5.3f), "the waiting line is due once set true again");
+
+            Expect.Equal(true, Game.LogAtOnce, "the world's, true until set");
+            Game.LogAtOnce = false;
+            Expect.Equal(false, world.LogAtOnce, "the world's after the set");
         }
 
         /// <summary>With the replay guard started, the file waits for this machine's value to come back; in a replay it is never written.</summary>

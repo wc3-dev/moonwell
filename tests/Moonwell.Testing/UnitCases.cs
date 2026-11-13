@@ -551,6 +551,36 @@ namespace Moonwell.Testing
             Expect.Equal("", seen, "a gone unit whose name was only read");
         }
 
+        /// <summary>A unit's icon is its type's, read inside Local.For: a morph changes it, a set on a unit in the game calls nothing, and a gone unit gives its last type's.</summary>
+        public static void IconRead(FakeWorld world)
+        {
+            var footman = ObjectTypes.FourCC("hfoo");
+            var knight = ObjectTypes.FourCC("hkni");
+            world.SetIcon(footman, "BTNFootman");
+            world.SetIcon(knight, "BTNKnight");
+            var handle = world.NewUnit(footman);
+            var unit = Unit.Of(handle)!;
+            world.UnitCalls.Clear();
+            var seen = "";
+
+            Local.For(Player.Get(0), () => seen = unit.Icon);
+            Expect.Equal("BTNFootman", seen, "the type's icon");
+
+            unit.Icon = "BTNOther";
+            Local.For(Player.Get(0), () => seen = unit.Icon);
+            Expect.Equal("BTNFootman", seen, "a set on a unit in the game changes nothing");
+            Expect.Equal(0, world.UnitCalls.Count, "the set called nothing");
+
+            world.MorphUnit(handle, knight);
+            Local.For(Player.Get(0), () => seen = unit.Icon);
+            Expect.Equal("BTNKnight", seen, "the morphed type's icon");
+            Expect.Equal(knight, unit.TypeId, "the morphed type, read outside Local.For");
+
+            unit.Remove();
+            Local.For(Player.Get(0), () => seen = unit.Icon);
+            Expect.Equal("BTNKnight", seen, "a gone unit's last type's icon");
+        }
+
         /// <summary>A unit the game has removed, found by the sweep or removed by Remove, gives the values it last read, ignores setters and actions, and the game is not asked.</summary>
         public static void GoneReadsLast(FakeWorld world)
         {

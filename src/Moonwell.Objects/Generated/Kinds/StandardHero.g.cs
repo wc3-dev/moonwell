@@ -10,6 +10,7 @@ namespace Moonwell.Objects
     /// @CSharpLua.Ignore
     [global::Moonwell.Objects.SharedField("uagi", "Agility", Label = "Starting Agility", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
     [global::Moonwell.Objects.SharedField("uhpm", "MaxLife", Label = "Hit Points Maximum (Base)", Min = 1, Max = 500000, HasLimits = true, Holds = typeof(int))]
+    [global::Moonwell.Objects.SharedField("uico", "Icon", Label = "Icon - Game Interface", Holds = typeof(string))]
     [global::Moonwell.Objects.SharedField("uint", "Intelligence", Label = "Starting Intelligence", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
     [global::Moonwell.Objects.SharedField("ulev", "Level", Label = "Level", Min = 1, Max = 100, HasLimits = true, Holds = typeof(int))]
     [global::Moonwell.Objects.SharedField("umpi", "Mana", Label = "Mana Initial Amount", Min = 0, Max = 100000, HasLimits = true, Holds = typeof(int))]
@@ -1254,14 +1255,6 @@ namespace Moonwell.Objects
         {
             get { return Fields.Get<bool>(this, "uibo"); }
             set { Fields.Put("uibo", value); }
-        }
-
-        /// <summary>Icon - Game Interface (uico).</summary>
-        [global::Moonwell.Objects.Field("uico", Label = "Icon - Game Interface")]
-        public string Icon
-        {
-            get { return Fields.Get<string>(this, "uico"); }
-            set { Fields.Put("uico", value); }
         }
 
         /// <summary>Projectile Impact - Z (uimz), -1000 to 1000.</summary>

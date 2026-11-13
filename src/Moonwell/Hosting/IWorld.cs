@@ -35,6 +35,9 @@ namespace Moonwell.Hosting
         /// <summary>Appends a line to CustomMapData\Moonwell\log.txt.</summary>
         void Log(string text);
 
+        /// <summary>Whether the log file is written at every line, rather than at most once a second.</summary>
+        bool LogAtOnce { get; set; }
+
         /// <summary>Sends a sharing message from this machine to every machine; at most 255 bytes arrive.</summary>
         void SendSync(string text);
 
@@ -400,6 +403,9 @@ namespace Moonwell.Hosting
 
         /// <summary>Sets the name of one unit.</summary>
         void RenameUnit(unit unit, string name);
+
+        /// <summary>The icon of a unit type, as this machine's graphics mode reads it.</summary>
+        string IconOf(int typeId);
 
         /// <summary>A hero's proper name.</summary>
         string ProperNameOf(unit hero);

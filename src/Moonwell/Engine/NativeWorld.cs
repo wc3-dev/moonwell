@@ -406,6 +406,13 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>Whether the log file is written at every line, rather than at most once a second.</summary>
+        public bool LogAtOnce
+        {
+            get => log.AtOnce;
+            set => log.AtOnce = value;
+        }
+
         private void LogCheckAction()
         {
             if (log.Due(GameNow()))
@@ -1361,6 +1368,12 @@ namespace Moonwell.Engine
         public void RenameUnit(unit unit, string name)
         {
             Natives.BlzSetUnitName(unit, name);
+        }
+
+        /// <summary>The icon of a unit type, from the game: BlzGetAbilityIcon, which takes a unit type too.</summary>
+        public string IconOf(int typeId)
+        {
+            return Natives.BlzGetAbilityIcon(typeId);
         }
 
         /// <summary>A hero's proper name, from the game: GetHeroProperName.</summary>
