@@ -1999,6 +1999,13 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   game's messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong
   (seen). In a development build, `-frames` writes the game's frame tree to `CustomMapData\Moonwell\frames.txt`:
   each frame's index under its parent, name, size, whether it shows and how many children it has.
+- `Screen.AddTo(frame, gameFrame, scope)` adds a frame that shows only while one of the game's HUD frames shows, named
+  as in the game's `.fdf` files (`"EscMenuMainPanel"`, the F10 menu; `"SimpleInfoPanelUnitDetail"`, one unit
+  selected) or given as a piece (`player.GameUi().Portrait`). Under the F10 menu's panel, the minimap or the portrait
+  the frame is the game frame's own child, placed from it. The rest of the HUD is simple frames, under which the game
+  gives a map's frame another parent and it never draws (seen), so there Moonwell adds it over the HUD, placed as
+  `AddOver` places it, and shows and hides it with the game frame, checked every 0.03 s on each player's machine. A
+  String or Texture by name is error MW0057, as reading whether it shows crashes the game.
 - A window from the map's own `.fdf` comes whole: put the `.fdf` files in `assets/`, and the build lists them in a TOC
   the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
   of the map's, as a label with the font and size its `.fdf` gives. `window.Child<Label>("ShopTitle")` finds a part of
