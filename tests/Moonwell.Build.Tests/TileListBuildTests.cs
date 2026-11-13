@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using War3Net.Build.Environment;
 using War3Net.Build.Extensions;
 using Moonwell.Tool;
@@ -5,7 +6,7 @@ using Xunit;
 
 namespace Moonwell.Build.Tests
 {
-    /// <summary>The tiles a map class declares join the end of the built map's tile list, past the game's limit an error (decision 282).</summary>
+    /// <summary>The tiles a map class declares join the end of the built map's tile list, past the game's limit an error (decision 283).</summary>
     [Collection("Sample")]
     public sealed class TileListBuildTests : IDisposable
     {
@@ -51,14 +52,46 @@ namespace Moonwell.Build.Tests
             Assert.Equal(source, built);
         }
 
-        [Theory]
-        [InlineData(
-            "Tiles.Add(Tile.LordaeronFallDirt, Tile.LordaeronFallRoughDirt, Tile.LordaeronFallGrassyDirt, Tile.LordaeronFallRock, Tile.LordaeronFallGrass, Tile.LordaeronFallDarkGrass, Tile.LordaeronWinterDirt, Tile.LordaeronWinterRoughDirt, Tile.LordaeronWinterGrassySnow, Tile.LordaeronWinterRock, Tile.LordaeronWinterGrass);",
-            "TerrainFixture.TerrainMap.Tiles: the map's tile list would hold 17 tiles, past the game's 16: 6 from map\\war3map.w3e and 11 declared (Fdrt, Fdro, Fdrg, Frok, Fgrs, Fgrd, Wdrt, Wdro, Wsng, Wrok, Wgrs); declare fewer, or remove tiles the map does not use in World Editor")]
-        [InlineData("Tiles.Add(1234);", "TerrainFixture.TerrainMap.Tiles: 1234 is no ground tile; use the Tile constants")]
-        public void a_list_the_game_cannot_take_is_an_error(string tiles, string message)
+        [Fact]
+        public void a_list_past_64_is_an_error()
         {
-            var project = WithTiles(tiles);
+            // The fixture's w3e is format 12, whose corners hold 64 places; 59 tiles more make 65.
+            var more = Enum.GetValues<TerrainType>().Select(type => Moonwell.MapFiles.Rawcodes.TextOf((int)type)).Distinct().Except(FixtureTiles).Take(59).ToList();
+            var ids = more.Select(id => BinaryPrimitives.ReverseEndianness(Moonwell.MapFiles.Rawcodes.IdOf(id)));
+
+            AssertFails(
+                WithTiles("Tiles.AddRange(new[] { " + string.Join(", ", ids) + " });"),
+                "TerrainFixture.TerrainMap.Tiles: the map's tile list would hold 65 tiles, past the 64 its w3e format holds: 6 from map\\war3map.w3e and 59 declared (" + string.Join(", ", more) + ")");
+        }
+
+        [Fact]
+        public void a_list_past_16_is_an_error_in_the_old_format()
+        {
+            var project = WithTiles("Tiles.Add(Tile.LordaeronFallDirt, Tile.LordaeronFallRoughDirt, Tile.LordaeronFallGrassyDirt, Tile.LordaeronFallRock, Tile.LordaeronFallGrass, Tile.LordaeronFallDarkGrass, Tile.LordaeronWinterDirt, Tile.LordaeronWinterRoughDirt, Tile.LordaeronWinterGrassySnow, Tile.LordaeronWinterRock, Tile.LordaeronWinterGrass);");
+            var w3e = Path.Combine(project, "map", "war3map.w3e");
+            MapEnvironment ground;
+            using (var reader = new BinaryReader(File.OpenRead(w3e)))
+            {
+                ground = reader.ReadMapEnvironment();
+            }
+
+            ground.FormatVersion = MapEnvironmentFormatVersion.v11;
+            using (var writer = new BinaryWriter(File.Create(w3e)))
+            {
+                writer.Write(ground);
+            }
+
+            AssertFails(project, "TerrainFixture.TerrainMap.Tiles: the map's tile list would hold 17 tiles, past the 16 its w3e format holds: 6 from map\\war3map.w3e and 11 declared (Fdrt, Fdro, Fdrg, Frok, Fgrs, Fgrd, Wdrt, Wdro, Wsng, Wrok, Wgrs); declare fewer, or remove tiles the map does not use in World Editor");
+        }
+
+        [Fact]
+        public void a_number_that_is_no_tile_is_an_error()
+        {
+            AssertFails(WithTiles("Tiles.Add(1234);"), "TerrainFixture.TerrainMap.Tiles: 1234 is no ground tile; use the Tile constants");
+        }
+
+        private static void AssertFails(string project, string message)
+        {
             var output = new StringWriter();
             var error = new StringWriter();
 

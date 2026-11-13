@@ -1223,9 +1223,10 @@ Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and 
   before `OnGameLoaded`, so the ground comes back as it was; pathing lasts by itself. Craters and tiles a map makes
   with natives are not looked after.
 - Pathing changes are per 32 cell, and the reads see them at once. A tile is painted per 128 corner; the game draws only
-  the map's own tiles (at most 16), so a development build reports another. The map class lists the tiles its code
-  paints, `Tiles.Add(Tile.LordaeronWinterSnow, Tile.BarrensDesert);`, and the build adds those World Editor's list lacks
-  to its end, painted ground unchanged; past 16 the build fails.
+  the map's own tiles, so a development build reports another. The map class lists the tiles its code paints,
+  `Tiles.Add(Tile.LordaeronWinterSnow, Tile.BarrensDesert);`, and the build adds those World Editor's list lacks to its
+  end, painted ground unchanged. The game draws up to 64 (16 in a map saved before patch 2.0.3); past that the build
+  fails.
 - `Raise`, `SetTile` and `Block` also take a grid of corners as one change: `Terrain.Raise(x, y, columns, amounts,
   scope)` moves each corner by its own amount, from the map's corner nearest `(x, y)`, row by row from the bottom
   left. An amount or tile of 0, or `Pathing.None`, leaves a corner. A blocked corner takes the 16 cells around it.

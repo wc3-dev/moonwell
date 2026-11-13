@@ -14,9 +14,6 @@ namespace Moonwell.Build
     /// </summary>
     public static class MapSetup
     {
-        // The most tiles a map's list may hold (decision 282).
-        private const int TileLimit = 16;
-
         // Moonwell.Race 0 to 3 as the info file's races.
         private static readonly PlayerRace[] Races = { PlayerRace.Human, PlayerRace.Orc, PlayerRace.Undead, PlayerRace.NightElf };
 
@@ -100,7 +97,7 @@ namespace Moonwell.Build
 
         /// <summary>
         /// Adds the tiles the map class declares and war3map.w3e does not list to the end of the map's tile list, in the class's
-        /// order, so the game draws them; the w3e's own tiles keep their places, so no painted corner changes (decision 282).
+        /// order, so the game draws them; the w3e's own tiles keep their places, so no painted corner changes (decision 283).
         /// </summary>
         /// <param name="map">The opened map, with its ground.</param>
         /// <param name="settings">The map class's settings.</param>
@@ -131,11 +128,14 @@ namespace Moonwell.Build
                 }
             }
 
-            if (types.Count > TileLimit)
+            // A corner keeps its tile's place in the list in 6 bits since format 12 (patch 2.0.3), in 4 before; the game draws
+            // the 64th (probe, 11-13).
+            var limit = ground.FormatVersion >= MapEnvironmentFormatVersion.v12 ? 64 : 16;
+            if (types.Count > limit)
             {
                 var added = string.Join(", ", types.Skip(had).Select(type => Rawcodes.TextOf((int)type)));
                 throw new BuildException(
-                    $@"{settings.TypeName}.Tiles: the map's tile list would hold {types.Count} tiles, past the game's {TileLimit}: {had} from map\war3map.w3e and {types.Count - had} declared ({added}); declare fewer, or remove tiles the map does not use in World Editor");
+                    $@"{settings.TypeName}.Tiles: the map's tile list would hold {types.Count} tiles, past the {limit} its w3e format holds: {had} from map\war3map.w3e and {types.Count - had} declared ({added}); declare fewer, or remove tiles the map does not use in World Editor");
             }
         }
     }

@@ -137,7 +137,7 @@ namespace Moonwell.Build
             }
         }
 
-        // The w3e is copied as it is unless the map class added tiles to its list (decision 282); then War3Net writes it, which
+        // The w3e is copied as it is unless the map class added tiles to its list (decision 283); then War3Net writes it, which
         // keeps every corner's bytes.
         private static void WriteGround(MapProject project, War3Net.Build.Map map)
         {
