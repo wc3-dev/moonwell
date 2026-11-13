@@ -2,7 +2,7 @@
 
 namespace Moonwell
 {
-    /// <summary>The game's ground tiles, for <c>Terrain.SetTile</c> and <c>Terrain.Tile</c>: each its four-letter id as a number. The game draws only the tiles in the map's own list of up to 16.</summary>
+    /// <summary>The game's ground tiles, for <c>Terrain.SetTile</c> and <c>Terrain.Tile</c>: each its four-letter id as a number. The game draws only the tiles in the map's own list, which the map class's Tiles adds to.</summary>
     public static class Tile
     {
         /// <summary>Lordaeron Summer: Dirt (<c>Ldrt</c>).</summary>

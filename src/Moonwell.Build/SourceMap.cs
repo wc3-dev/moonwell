@@ -62,6 +62,7 @@ namespace Moonwell.Build
             }
 
             MapSetup.Apply(map, settings, log);
+            MapSetup.ApplyTiles(map, settings);
 
             return map;
         }
