@@ -1302,7 +1302,7 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   Every(0.1f, () =>
   {
       bar.Value = making.Progress;   // 0 to 1
-      label.Text = making.Step;      // "Heights", "Tiles", "Blocked", "Trees"
+      label.Text = making.Step;      // "Roads", "Heights", "Tiles", "Blocked", "Trees", "Places"
   });
   making.Done += StartPlay;
   ```
@@ -1316,13 +1316,12 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   was; most areas reach close to both, and a few corners sit flat on them. A range all above 0 makes a plateau with
   a steep rim. `EdgeFade` (512 unless set) brings the heights back to the ground at the area's edge, so an area
   inside a hand-made map has no seam; set it to 0 for pieces that meet each other.
-- Since 0.15, the same seed gives other ground than in 0.13 and 0.14: the ground follows the world, and an area's
-  heights are no longer stretched to its own lowest and highest.
+- Since 0.15, the same seed gives other ground than in 0.13 and 0.14: the ground follows the world, an area's
+  heights are no longer stretched to its own lowest and highest, and a `Level` place is level at the ground as it was.
 - A rule's heights are a share of the range (0 lowest, 1 highest) and its slopes are degrees. Slopes are read from the
   heights the plan adds, so the rules fit ground that starts flat.
 - The game makes no cliffs, ramps or water while it runs, so the ground is slopes, and tiles come from the map's own
   list: declare the ones `Paint` uses in the map class's `Tiles`. A height changes no pathing by itself: `Block` rules do.
-- Level places are not promised a way to each other; `unit.CanReach` (`Moonwell.Pathing`) can check.
 - Trees are real destructables: they block, peasants cut them for lumber, they die and `Regrow` brings them back. Three
   rules stand them, each limited by height, slope and tile as `Paint` is:
 
@@ -1354,6 +1353,94 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
     removed leaves about 5 KB and a handle id that the game does not give back, and its death registration stays,
     which slows Moonwell's death trigger a little, so a game that makes and takes back forests again and again grows:
     about 20 MB per 10,000 trees. A path search (`FindPath`) round a long wall took about 100 ms.
+- Places are level ground for bases, camps, shops and exits: level at the ground as it was, never raised, as the game
+  draws buildings and items sunk on raised ground; never blocked, with no trees. A map sets its own with `Level` and has
+  the generator pick more from the seed:
+
+  ```csharp
+  var home = hills.Level(spawn.X, spawn.Y, 768f);                                  // the map's own spot
+  var camps = hills.Places("Camp", Terrain.Playable, 20, radius: 320f, spacing: 1500f, from: home, difficulties: 3);
+  camps.Add(1, ObjectTypes.FourCC("nkob"), ObjectTypes.FourCC("nkob"));           // a group for difficulty 1
+  camps.Add(1, ObjectTypes.FourCC("ngno"), ObjectTypes.FourCC("ngno"));           // another: each camp takes one
+  camps.Add(2, ObjectTypes.IdOf<Ogre>(), ObjectTypes.IdOf<Ogre>());               // a class of the map's
+  camps.Add(3, ObjectTypes.FourCC("nrdk"));
+  var shops = hills.Places("Shop", Terrain.Playable, 2, radius: 384f, owner: Player.NeutralPassive);
+  shops.Add(1, ObjectTypes.FourCC("ngme"));                                         // a building goes in the middle
+  var gate = hills.Exit("North gate", Terrain.Playable, Side.Top);                  // a spot on the top side
+  ```
+
+  - `Places` picks up to the count, each at least `spacing` from every other place and never overlapping one, the whole
+    place inside the area; fewer come back when no more fit. With `from`, the nearest share are difficulty 1 and the
+    farthest `difficulties`, in even shares; without it, all are 1. The same seed and calls pick the same spots.
+  - `Add(difficulty, types...)` adds a group; each place takes one group of its difficulty, picked from the seed, and
+    it is made when the place's plan is made: the first type at the centre, the rest in a ring round it facing in,
+    owned by Neutral Hostile unless `owner:` says. `place.Units` lists them; ending the scope removes them. A place
+    whose difficulty has no group, or one from `Level` or `Exit`, makes nothing.
+  - `Exit` puts a place on one side of an area, where it joins the next, at a spot from the seed; the map puts what
+    leads on (a gate, a way to the next area) there. Its centre is on the side itself, so on the edge of
+    `Terrain.Playable` its outer half is the map's boundary; give a zone's own area for an exit to the next zone.
+  - A place reads `Name`, `X`, `Y`, `Radius`, `Difficulty` and `Units`. It is made by the one plan holding the corner
+    nearest its centre (`plan.Places`), so in a world made in pieces each place is made once.
+- Roads join places with path data a map can send units along:
+
+  ```csharp
+  hills.RoadTile = Tile.LordaeronSummerRoughDirt;
+  var top = hills.Road(west, east, through: new Vector2(-6000f, 6000f));     // three lanes between two bases
+  var middle = hills.Road(west, east, width: 384f);
+  var bottom = hills.Road(west, east, through: new Vector2(6000f, -6000f));
+  hills.Join();                                                             // roads until every place is reached
+  ```
+
+  - A road runs from one place's centre to the other's, through the points given, bent a little from the seed. Where a
+    plan holds it, the ground along it is cut and filled to an easy slope (about 8 degrees), painted with `RoadTile` (0
+    leaves the tiles the rules paint), and kept clear of blocked corners and trees; past its edge the ground blends
+    back to the hills over 256. It goes over hills, not round them. `Width` is 256 unless set. `Join` adds roads 256
+    wide, the shortest gaps first, until every place reaches every other.
+  - Roads come from the seed and the calls, not from a plan, so plans of one generator (with `EdgeFade = 0`) agree on a
+    road that crosses their edge. They see only the generator's ground: the map's own cliffs, water and buildings are
+    not in them, and `unit.CanReach` (`Moonwell.Pathing`) checks the live ground.
+  - A road is path data: `Points` from `From` to `To`, a point about every 256 with straight lines down its middle,
+    `Length` and `Width`. `road.Toward(place)` gives it as a `Route`, the type `FindPath` gives, ending at that place,
+    and `hills.Route(a, b)` the shortest way over the roads (the start alone, with `Reaches` false, when no roads join
+    them). Several roads between two places are several lanes; read each one's own.
+  - A unit is sent along a route a point at a time, the next order when it is near the point it was sent to:
+
+    ```csharp
+    public sealed class FollowRoute : UnitComponent   // creep.Add(new FollowRoute(top.Toward(east)))
+    {
+        private readonly Route route;
+        private int next = 1;
+
+        public FollowRoute(Route route) { this.route = route; }
+
+        protected override void OnAdded()
+        {
+            Unit.OrderAt(Orders.Attack, route.Points[next].X, route.Points[next].Y);   // attack-move: fights on the way
+            Every(0.25f, () =>
+            {
+                if (next == route.Points.Count - 1 || new Vector2(Unit.X, Unit.Y).DistanceTo(route.Points[next]) > 192f) return;
+                next++;
+                Unit.OrderAt(Orders.Attack, route.Points[next].X, route.Points[next].Y);
+            });
+        }
+    }
+    ```
+
+  - `road.Outline(from, to)` is a `Polygon` of a stretch of it, from one length along it to another, as wide as the
+    road, for an area that hears units enter and leave that stretch (`Moonwell.Areas`); with no lengths, the whole road:
+
+    ```csharp
+    public sealed class LaneSection : Area
+    {
+        public LaneSection(Polygon stretch) { Shape = AreaShape.Polygon(stretch); }
+        public override void OnUnitEntered(Unit enteringUnit) { /* a creep wave reached this stretch */ }
+    }
+
+    Game.Instance.Add(new LaneSection(top.Outline(0f, top.Length / 3f)));
+    ```
+
+  - Costs, inferred and not yet measured: a road near a plan about 15 µs a point and 1 µs a corner near it, a group
+    about 0.3 ms a unit. `Make` works roads out first, as "Roads", and makes the groups last, as "Places".
 - `Noise` and `Field` are the numbers under it, for a map's own generators: `Noise.At(seed, x, y)` is smooth noise
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.

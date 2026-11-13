@@ -30,7 +30,7 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public float Progress => work.Progress;
 
-        /// <summary>The step being made: "Heights", "Tiles" or "Blocked"; the last one once the ground is made.</summary>
+        /// <summary>The step being made: "Roads", "Heights", "Tiles", "Blocked", "Trees" or "Places", in that order, each only when there is work for it; the last one once the ground is made.</summary>
         [LocalSafe]
         public string Step => work.Step;
 
