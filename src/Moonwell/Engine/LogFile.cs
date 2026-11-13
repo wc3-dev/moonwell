@@ -3,8 +3,9 @@ using System.Collections.Generic;
 namespace Moonwell.Engine
 {
     /// <summary>
-    /// The lines of the log file and when it is due to be written. Rewriting the file costs 6.5 to 23 ms (game facts), so it
-    /// is written at once only when it was last written a second ago or more; a line within the second waits for it.
+    /// The lines of the log file and when it is due to be written. Rewriting the file costs 6.5 to 23 ms (game facts), so
+    /// unless <see cref="AtOnce"/> it is written at once only when it was last written a second ago or more; a line within
+    /// the second waits for it.
     /// </summary>
     internal sealed class LogFile
     {
@@ -27,6 +28,14 @@ namespace Moonwell.Engine
         internal const string CacheName = "Moonwell.w3v";
 
         private float writtenAt = -Interval;
+
+#if DEBUG
+        /// <summary>Whether every line is written at once, so a crash to the desktop loses none: in a development build until the map sets Game.LogAtOnce (J17).</summary>
+        internal bool AtOnce = true;
+#else
+        /// <summary>Whether every line is written at once, so a crash to the desktop loses none: not in a release build until the map sets Game.LogAtOnce (J17).</summary>
+        internal bool AtOnce;
+#endif
         private bool waiting;
         private bool indexWritten;
 
@@ -76,7 +85,7 @@ namespace Moonwell.Engine
                 Keep(pieces[i]);
             }
 
-            if (now - writtenAt < Interval || !ReplayGuard.MayWrite)
+            if ((!AtOnce && now - writtenAt < Interval) || !ReplayGuard.MayWrite)
             {
                 waiting = true;
                 return false;
@@ -85,10 +94,10 @@ namespace Moonwell.Engine
             return true;
         }
 
-        /// <summary>Whether lines wait, the second since the last write is up, and the replay guard lets the file be written: watching a replay never writes it.</summary>
+        /// <summary>Whether lines wait, the second since the last write is up or every line is written at once, and the replay guard lets the file be written: watching a replay never writes it.</summary>
         internal bool Due(float now)
         {
-            return waiting && now - writtenAt >= Interval && ReplayGuard.MayWrite;
+            return waiting && (AtOnce || now - writtenAt >= Interval) && ReplayGuard.MayWrite;
         }
 
         /// <summary>Notes that the file was written.</summary>
