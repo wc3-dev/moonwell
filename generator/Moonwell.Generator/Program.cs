@@ -9,12 +9,13 @@ const string Usage = """
       Moonwell.Generator objects <repository root> [--install <game folder>]
       Moonwell.Generator objects <repository root> --export <war3.w3mod folder> <game version>
       Moonwell.Generator tiles <repository root> [--install <game folder>]
+      Moonwell.Generator frames <repository root> [--install <game folder>]
 
     Without --install, the install is the folder MOONWELL_WAR3 names, else the usual folder. The game version is the
     install's own.
     """;
 
-if (args.Length < 2 || (args[0] != "natives" && args[0] != "objects" && args[0] != "tiles"))
+if (args.Length < 2 || (args[0] != "natives" && args[0] != "objects" && args[0] != "tiles" && args[0] != "frames"))
 {
     Console.Error.WriteLine(Usage);
     return 2;
@@ -57,6 +58,17 @@ if (command == "tiles")
     Directory.CreateDirectory(Path.GetDirectoryName(target)!);
     File.WriteAllText(target, TilesWriter.Write(terrain, files.Build.Version));
     Console.WriteLine($"{terrain.Count} tiles");
+    return 0;
+}
+
+if (command == "frames")
+{
+    var fdf = files.List("UI/FrameDef/", "sd", ".fdf").Select(path => System.Text.Encoding.UTF8.GetString(files.Read(path)!));
+    var parts = FramePartsWriter.Read(fdf);
+    var target = Path.Combine(root, "src", "Moonwell.Analyzers", "Generated", "GameFrameParts.g.cs");
+    Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+    File.WriteAllText(target, FramePartsWriter.Write(parts, files.Build.Version));
+    Console.WriteLine($"{parts.Count} strings and textures");
     return 0;
 }
 

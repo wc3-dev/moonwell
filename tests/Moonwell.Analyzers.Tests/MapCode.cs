@@ -43,6 +43,12 @@ internal static class MapCode
         return Analyze(source, analyzers: ImmutableArray.Create<DiagnosticAnalyzer>(new IdAnalyzer())).Diagnostics.OrderBy(d => d.Location.SourceSpan.Start).Select(d => d.GetMessage()).ToList();
     }
 
+    /// <summary>The messages of the analyzer's diagnostics for a body run with a player p and a unit u, in source order.</summary>
+    public static List<string> Messages(string body, string members = "")
+    {
+        return Analyze(Wrap(body, members)).Diagnostics.OrderBy(d => d.Location.SourceSpan.Start).Select(d => d.GetMessage()).ToList();
+    }
+
     /// <summary>The messages of the analyzer's diagnostics for a whole file, in source order.</summary>
     public static List<string> MessagesOfFile(string source)
     {
@@ -133,7 +139,7 @@ internal static class MapCode
     private static (SyntaxTree Tree, ImmutableArray<Diagnostic> Diagnostics) Analyze(string source, bool broken = false, ImmutableArray<DiagnosticAnalyzer>? analyzers = null, string path = "", string library = "")
     {
         var (tree, compilation) = Compile(source, broken, path, library);
-        analyzers ??= ImmutableArray.Create<DiagnosticAnalyzer>(new SyncAnalyzer(), new LuaAnalyzer(), new NameAnalyzer(), new SyntaxAnalyzer(), new FieldRulesAnalyzer(), new MovedAnalyzer(), new BareDamageAnalyzer(), new DeclaredAnalyzer(), new ReactionAnalyzer(), new ScopeAnalyzer(), new BuildOnlyAnalyzer(), new SpellBuffAnalyzer(), new SaveAnalyzer(), new ItemRemoveAnalyzer());
+        analyzers ??= ImmutableArray.Create<DiagnosticAnalyzer>(new SyncAnalyzer(), new LuaAnalyzer(), new NameAnalyzer(), new SyntaxAnalyzer(), new FieldRulesAnalyzer(), new MovedAnalyzer(), new BareDamageAnalyzer(), new DeclaredAnalyzer(), new ReactionAnalyzer(), new ScopeAnalyzer(), new BuildOnlyAnalyzer(), new SpellBuffAnalyzer(), new SaveAnalyzer(), new ItemRemoveAnalyzer(), new FramePartAnalyzer());
         return (tree, compilation.WithAnalyzers(analyzers.Value).GetAnalyzerDiagnosticsAsync().Result);
     }
 }
