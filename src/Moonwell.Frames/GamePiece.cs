@@ -9,10 +9,13 @@ namespace Moonwell
     {
         internal readonly Player player;
 
-        /// <summary>The game's frames of the piece: one, or two for the top bar; looked up again when a saved game loads.</summary>
+        /// <summary>The game's frames of the piece: one, or several for the top bar and the unit details; looked up again when a saved game loads.</summary>
         internal framehandle[] frames;
 
         internal bool visible = true;
+
+        /// <summary>Whether the map set the piece Visible while the whole HUD was hidden, which shows it over the hidden HUD; cleared when the HUD is hidden again.</summary>
+        internal bool overHud;
 
         internal GamePiece(Player player, framehandle[] frames)
         {
@@ -24,7 +27,7 @@ namespace Moonwell
         [LocalSafe]
         public framehandle Handle => frames[0];
 
-        /// <summary>Whether the piece shows on its player's screen; true unless set. With the whole HUD hidden, setting it true shows the piece again: the minimap, the portrait and the hero bar and buttons come back, the item buttons do not (seen 11-05).</summary>
+        /// <summary>Whether the piece shows on its player's screen; true unless set. With the whole HUD hidden, setting it true shows the piece over it, with nothing else of the HUD coming along: the item buttons come without the inventory's text, cover and click blockers. What the game shows again by itself is set again every second.</summary>
         [LocalSafe]
         public bool Visible
         {
@@ -32,10 +35,18 @@ namespace Moonwell
             set
             {
                 visible = value;
+                var ui = FramesSystem.GameUiOf(player);
+                if (value && !ui.Visible)
+                {
+                    overHud = true;
+                }
+
                 if (Here())
                 {
                     Show(value);
                 }
+
+                ui.Held();
             }
         }
 
@@ -58,6 +69,10 @@ namespace Moonwell
             {
                 Show(false);
             }
+            else if (overHud)
+            {
+                Show(true);
+            }
         }
 
         /// <summary>Shows or hides the piece on this machine.</summary>
@@ -67,6 +82,11 @@ namespace Moonwell
             {
                 FramesSystem.World.ShowFrame(frames[i], shown);
             }
+        }
+
+        /// <summary>Sets again, on this machine, what the game shows or places again by itself; nothing for most pieces.</summary>
+        internal virtual void Hold(GameUi ui)
+        {
         }
     }
 }

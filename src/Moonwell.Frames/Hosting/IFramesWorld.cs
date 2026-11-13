@@ -107,8 +107,8 @@ namespace Moonwell.Hosting
         /// <summary>Whether the game shows a frame on this machine; a tooltip's while the mouse is on its frame, so it differs between machines.</summary>
         bool FrameShown(framehandle frame);
 
-        /// <summary>A frame of the game's HUD by its name; null when the game has none. The first lookup gives it a handle id, so it is done on every machine.</summary>
-        framehandle? GameFrame(string name);
+        /// <summary>A frame of the game's HUD by its name and create context (0 for most); null when the game has none. The first lookup gives it a handle id, so it is done on every machine.</summary>
+        framehandle? GameFrame(string name, int context = 0);
 
         /// <summary>A frame of the game's HUD by the game's ORIGIN_FRAME_ number and an index; null when the game has none, as for the minimap (seen 11-05).</summary>
         framehandle? OriginFrame(int kind, int index);
@@ -127,6 +127,15 @@ namespace Moonwell.Hosting
 
         /// <summary>A frame's name, as its .fdf gives it; the same on every machine.</summary>
         string NameOf(framehandle frame);
+
+        /// <summary>A frame's parent; the first time gives it a handle id, so it is asked on every machine.</summary>
+        framehandle ParentOf(framehandle frame);
+
+        /// <summary>Puts a point of a frame at a place on the screen, in the 4:3 middle's units.</summary>
+        void PinFrame(framehandle frame, int point, float x, float y);
+
+        /// <summary>Lets the game place its HUD's frames again when the window changes, or stops it, on this machine.</summary>
+        void AutoPlaceHud(bool on);
 
         /// <summary>Listens for every player slot's mouse releases, on one trigger; inside it EventPlayer is the player and EventLeftButton whether it was the left button.</summary>
         void ListenMouseUp(Action action);

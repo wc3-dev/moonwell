@@ -212,9 +212,9 @@ namespace Moonwell.Engine
         public bool FrameShown(framehandle frame) => Natives.BlzFrameIsVisible(frame);
 
         /// <summary>A frame of the game's HUD by its name: BlzGetFrameByName.</summary>
-        public framehandle? GameFrame(string name)
+        public framehandle? GameFrame(string name, int context = 0)
         {
-            return Natives.BlzGetFrameByName(name, 0);
+            return Natives.BlzGetFrameByName(name, context);
         }
 
         /// <summary>A frame of the game's HUD by origin: BlzGetOriginFrame.</summary>
@@ -251,6 +251,24 @@ namespace Moonwell.Engine
         public string NameOf(framehandle frame)
         {
             return Natives.BlzFrameGetName(frame);
+        }
+
+        /// <summary>A frame's parent: BlzFrameGetParent.</summary>
+        public framehandle ParentOf(framehandle frame)
+        {
+            return Natives.BlzFrameGetParent(frame);
+        }
+
+        /// <summary>Puts a point of a frame at a place on the screen: BlzFrameSetAbsPoint.</summary>
+        public void PinFrame(framehandle frame, int point, float x, float y)
+        {
+            Natives.BlzFrameSetAbsPoint(frame, Natives.ConvertFramePointType(point), x, y);
+        }
+
+        /// <summary>Lets the game place its HUD's frames again, or stops it: BlzEnableUIAutoPosition.</summary>
+        public void AutoPlaceHud(bool on)
+        {
+            Natives.BlzEnableUIAutoPosition(on);
         }
 
         /// <summary>Makes a BACKDROP painted blank under the game UI over the 4:3 middle, 0.8 by 0.6, which lets clicks through, as the screen root does.</summary>
