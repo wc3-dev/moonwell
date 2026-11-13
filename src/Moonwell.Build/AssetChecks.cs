@@ -195,7 +195,8 @@ namespace Moonwell.Build
                 return new List<string>();
             }
 
-            var mentions = staged.ToDictionary(file => file, file => Mentions(Path.Combine(project.StagedFolder, file)), StringComparer.OrdinalIgnoreCase);
+            // The import list names every asset, so it says nothing of which are used.
+            var mentions = staged.Where(file => !string.Equals(file, ImportList.FileName, StringComparison.OrdinalIgnoreCase)).ToDictionary(file => file, file => Mentions(Path.Combine(project.StagedFolder, file)), StringComparer.OrdinalIgnoreCase);
             var unused = new List<string>();
             foreach (var file in Directory.GetFiles(project.AssetsFolder, "*", SearchOption.AllDirectories)
                 .Select(file => Path.GetRelativePath(project.AssetsFolder, file).Replace('/', '\\'))
