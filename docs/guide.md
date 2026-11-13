@@ -1751,7 +1751,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   alone: item buttons come without the inventory's text and cover, and the selection icons without one unit's details,
   a building's queue and the name, unless those are set `Visible` too. The queue moves with the selection icons, and
   hidden it takes the building's name with it. What the game shows or places again by itself is set again every second
-  on the player's machine. The minimap, the command buttons, the item buttons and the selection icons also move,
+  on the player's machine, and at the end of a cinematic with a letterbox, which brings back the portrait and the
+  selection panel. The minimap, the command buttons, the item buttons and the selection icons also move,
   `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; a moved button leaves nothing behind taking
   clicks, and the first move stops the game placing its HUD again when the window changes. The selection icons move at
   no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name hangs from it. The

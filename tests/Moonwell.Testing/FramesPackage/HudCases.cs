@@ -236,6 +236,33 @@ namespace Moonwell.Testing
             Expect.Near(0.00001f, panel.Scale, "hidden when set");
         }
 
+        /// <summary>A letterboxed cinematic's end brings back what the map hid of the HUD (seen 11-13), so each player's HUD is set again at its end and once the letterbox's fade is over; a cinematic still playing is left alone.</summary>
+        public static void AfterCinematic(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var ui = Player.One.GameUi();
+            ui.Visible = false;
+            ui.Portrait.Visible = false;
+            var cine = Cinematic.Play(c => Short(), Game.Instance);
+            world.Advance(0.5f);
+            frames.HudHidden = false;
+            frames.GameFrames["origin 16 0"].Shown = true;
+            world.Advance(0.5f);
+            Expect.Equal(false, frames.HudHidden, "left alone while the cinematic plays");
+            world.Advance(1.05f);
+            Expect.Equal(true, cine.HasEnded, "the scene over");
+            Expect.Equal(true, frames.HudHidden, "the HUD hidden again at the end");
+            Expect.Equal(false, frames.GameFrames["origin 16 0"].Shown, "the portrait the map hid, hidden again");
+            frames.GameFrames["origin 16 0"].Shown = true;
+            world.Advance(0.65f);
+            Expect.Equal(false, frames.GameFrames["origin 16 0"].Shown, "and again once the fade is over");
+        }
+
+        private static System.Collections.Generic.IEnumerable<Wait> Short()
+        {
+            yield return Wait.Seconds(2f);
+        }
+
 #if DEBUG
         /// <summary>The -frames command writes the game's frame tree to its own file, as the log keeps too few lines: each frame's index, name, size, whether it shows and its children; the typer is told where.</summary>
         public static void FrameTreeCommand(FakeWorld world)

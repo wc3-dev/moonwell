@@ -164,6 +164,33 @@ namespace Moonwell
                     roots[i].Reshow();
                 }
             }
+
+            if (Cinematic.LetterboxHere() != null)
+            {
+                return;
+            }
+
+            // The letterbox's end brings back the portrait and the selection panel the map hid, by the end of its fade (seen
+            // 11-13), so each player's HUD is set again now and once the fade is over.
+            RestoreHuds();
+            Game.Instance.OwnAfter(AfterLetterbox, () =>
+            {
+                if (Cinematic.LetterboxHere() == null)
+                {
+                    RestoreHuds();
+                }
+            });
+        }
+
+        /// <summary>The seconds after a cinematic's end when each player's HUD is set again: past the letterbox's fade of 0.5 s.</summary>
+        internal const float AfterLetterbox = 0.6f;
+
+        private static void RestoreHuds()
+        {
+            foreach (var ui in gameUis.Values)
+            {
+                ui.Restore();
+            }
         }
 
         /// <summary>Keeps a frame added to the screen, to be made again when a saved game loads.</summary>
