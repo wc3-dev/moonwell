@@ -9,11 +9,12 @@ namespace ProcgenFixture
         public ProcgenMap()
         {
             Name = "Procgen";
+            Tiles.AddRange(new SnowyForest().Tiles);
             Components.Add(new Ground());
         }
     }
 
-    /// <summary>Hills over the playable area: grass with dirt on the upper half, steep ground blocked, a level place in the middle, and a road between two bases that a footman walks.</summary>
+    /// <summary>Hills over the playable area: grass with dirt on the upper half, steep ground blocked, a snowy forest in the north, a level place in the middle, and a road between two bases that a footman walks.</summary>
     public sealed class Ground : GameComponent
     {
         public override void OnGameStart()
@@ -22,6 +23,9 @@ namespace ProcgenFixture
             hills.Paint(Tile.LordaeronSummerGrass);
             hills.Paint(Tile.LordaeronSummerDirt, fromHeight: 0.5f);
             hills.Block(Pathing.Walk | Pathing.Build, fromSlope: 30f);
+            var north = new SnowyForest();
+            north.Trees.Density = 0.4f;
+            hills.Use(north, Bounds.FromCorners(new Vector2(-4000f, 1500f), new Vector2(4000f, 4000f)));
             hills.Level(0f, 0f, 384f);
             var west = hills.Level(-2000f, 0f, 384f);
             var east = hills.Level(2000f, 0f, 384f);
