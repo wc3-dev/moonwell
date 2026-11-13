@@ -2001,7 +2001,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   places the portrait across the whole window's width, not the 4:3 middle, so Moonwell works out where the frame is
   from how the map placed it and squeezes it for the window's shape, again every second and when the window changes
   (seen in classic and Reforged graphics). A frame tied to a piece of the HUD, or with no size, is refused, as its
-  place cannot be known; the game has one portrait, so it shows in one frame at a time. In a development build, `-frames` writes the game's frame tree to `CustomMapData\Moonwell\frames.txt`:
+  place cannot be known; the game has one portrait, so it shows in one frame at a time. In a
+  development build, `-frames` writes the game's frame tree to `CustomMapData\Moonwell\frames.txt`:
   each frame's index under its parent, name, size, whether it shows and how many children it has.
 - A window from the map's own `.fdf` comes whole: put the `.fdf` files in `assets/`, and the build lists them in a TOC
   the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
