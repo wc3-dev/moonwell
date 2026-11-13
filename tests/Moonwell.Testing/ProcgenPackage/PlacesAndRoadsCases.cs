@@ -401,7 +401,7 @@ namespace Moonwell.Testing
         }
 
         /// <summary>How far a point is past the road's edge, below 0 on it.</summary>
-        private static float Gap(Road road, float x, float y)
+        internal static float Gap(Road road, float x, float y)
         {
             var point = new Vector2(x, y);
             var nearest = float.MaxValue;
