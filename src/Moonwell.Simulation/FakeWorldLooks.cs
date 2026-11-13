@@ -1,4 +1,4 @@
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>A weather effect the runtime asked the fake world for.</summary>
     public sealed class FakeWeather
