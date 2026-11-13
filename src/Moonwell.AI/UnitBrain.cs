@@ -48,13 +48,22 @@ namespace Moonwell.AI
         /// <summary>The unit's owner when the last order was sent.</summary>
         internal Player? sentOwner;
 
+        /// <summary>Whether the last order to a place was sent again to the unit idle short of it, at retryX and retryY.</summary>
+        internal bool retried;
+
+        /// <summary>Where the unit stood when the last order to a place was sent again.</summary>
+        internal float retryX;
+
+        /// <summary>Where the unit stood when the last order to a place was sent again.</summary>
+        internal float retryY;
+
         /// <summary>Makes the brain; it starts thinking once added.</summary>
         protected UnitBrain()
         {
             mind = new Mind(this, Think);
         }
 
-        /// <summary>The seconds between thinks, rounded to whole steps of 0.02 s, a half up (a quarter second is 13 steps), and at least one step; 0, the default, and it thinks only when woken. Set it at any time, in OnAdded too: a change thinks within the new tick from now, then at every tick, and brains started together spread their first thinks over their tick.</summary>
+        /// <summary>The seconds between thinks, rounded to whole milliseconds, then to whole steps of 0.02 s, a half step up (a quarter second is 13 steps, 0.03 s is 2), and at least one step; 0, the default, and it thinks only when woken. Set it at any time, in OnAdded too: a change thinks within the new tick from now, then at every tick, and brains started together spread their first thinks over their tick.</summary>
         [LocalSafe]
         public float ThinkEvery
         {
@@ -66,7 +75,7 @@ namespace Moonwell.AI
         [LocalSafe]
         public Blackboard Blackboard => mind.Board;
 
-        /// <summary>Has the brain think at the next step, within 0.02 s: once in that step however many wakes come, a tick due then included. A wake from inside a step goes to the step after.</summary>
+        /// <summary>Has the brain think at the next step, within 0.02 s: once in that step however many wakes come, a tick due then included. A wake from inside a step goes to the step after, unless the brain still waits to think from a wake in this one.</summary>
         public void Wake()
         {
             mind.Wake();
@@ -87,8 +96,8 @@ namespace Moonwell.AI
         /// <summary>
         /// Gives the unit an order with no place and no target, as the unit's own <c>Order</c>, unless it repeats the last one
         /// the brain sent: then nothing reaches the game and it gives true. A repeat is dropped while the unit's
-        /// <c>CurrentOrder</c> is still what it read just after that order, or while the unit is idle; once the unit's owner
-        /// has changed, it is sent again.
+        /// <c>CurrentOrder</c> is still the order it read just after that one (not idle), or while the unit is idle; once the
+        /// unit's owner has changed, it is sent again.
         /// </summary>
         public bool Order(string order)
         {
@@ -98,8 +107,9 @@ namespace Moonwell.AI
         /// <summary>
         /// Gives the unit an order to a place, as the unit's own <c>OrderAt</c>, unless it repeats the last one the brain sent:
         /// the same order to a place within 32 of it. A repeat is dropped, giving true, while the unit's <c>CurrentOrder</c> is
-        /// still what it read just after that order, or while the unit is idle within 64 of that place; once the unit's owner
-        /// has changed, it is sent again.
+        /// still the order it read just after that one (not idle), or while the unit is idle within 64 of that place. A unit idle
+        /// short of it gets the repeat once; idle again within 32 of where it stood then, the repeat is dropped. Once the unit's
+        /// owner has changed, it is sent again.
         /// </summary>
         public bool OrderAt(string order, float x, float y)
         {
@@ -109,8 +119,8 @@ namespace Moonwell.AI
         /// <summary>
         /// Gives the unit an order on a unit, an item or a destructable, as the unit's own <c>OrderOn</c>, unless it repeats the
         /// last one the brain sent: the same order on the same target. A repeat is dropped, giving true, while the unit's
-        /// <c>CurrentOrder</c> is still what it read just after that order, or while the unit is idle and the target is dead or
-        /// gone; once the unit's owner has changed, it is sent again.
+        /// <c>CurrentOrder</c> is still the order it read just after that one (not idle), or while the unit is idle and the
+        /// target is dead or gone; once the unit's owner has changed, it is sent again.
         /// </summary>
         public bool OrderOn(string order, Widget target)
         {
@@ -141,13 +151,49 @@ namespace Moonwell.AI
             mind.End();
         }
 
-        /// <summary>Sends an order through the unit's own call unless it repeats the last, and remembers one the game took; one it refused is forgotten, so the next is sent.</summary>
+        /// <summary>
+        /// Sends an order through the unit's own call unless it repeats the last and the unit is still on it or has done it,
+        /// and remembers one the game took; one it refused is forgotten, so the next is sent. An idle unit is asked whether it
+        /// has done it even when it read idle just after the order, as when the order was cancelled in its own event. A unit
+        /// idle short of its place gets the repeat once: idle again within 32 of where it stood then, it has done it, as a
+        /// crowd jammed at one place would otherwise be ordered again at every think. An order that is no repeat, or a change
+        /// of owner, forgets that spot.
+        /// </summary>
         private bool Send(string order, int kind, float x, float y, Widget? target)
         {
             var unit = Unit;
-            if (Repeats(unit, order, kind, x, y, target))
+            var repeat = sentOrder == order && sentKind == kind && sentTarget == target
+                && (kind != AtPlace || Squared(x - sentX, y - sentY) <= SamePlace)
+                && unit.Owner == sentOwner;
+            var retry = false;
+            var standX = 0f;
+            var standY = 0f;
+            if (repeat)
             {
-                return true;
+                var current = unit.CurrentOrder;
+                if (current != "" && current == sentCurrent)
+                {
+                    return true;
+                }
+
+                if (current == "")
+                {
+                    if (kind == AtPlace)
+                    {
+                        standX = unit.X;
+                        standY = unit.Y;
+                        if (Squared(standX - sentX, standY - sentY) <= Reached || (retried && Squared(standX - retryX, standY - retryY) <= SamePlace))
+                        {
+                            return true;
+                        }
+
+                        retry = true;
+                    }
+                    else if (kind == Plain || Gone(target!))
+                    {
+                        return true;
+                    }
+                }
             }
 
             bool taken;
@@ -167,7 +213,19 @@ namespace Moonwell.AI
             if (!taken)
             {
                 sentOrder = null;
+                retried = false;
                 return false;
+            }
+
+            if (retry)
+            {
+                retried = true;
+                retryX = standX;
+                retryY = standY;
+            }
+            else if (!repeat)
+            {
+                retried = false;
             }
 
             sentOrder = order;
@@ -177,49 +235,6 @@ namespace Moonwell.AI
             sentTarget = target;
             sentCurrent = unit.CurrentOrder;
             sentOwner = unit.Owner;
-            return true;
-        }
-
-        /// <summary>Whether an order repeats the last one sent and the unit is still on it or has done it.</summary>
-        private bool Repeats(Unit unit, string order, int kind, float x, float y, Widget? target)
-        {
-            if (sentOrder != order || sentKind != kind || sentTarget != target)
-            {
-                return false;
-            }
-
-            if (kind == AtPlace && Squared(x - sentX, y - sentY) > SamePlace)
-            {
-                return false;
-            }
-
-            if (unit.Owner != sentOwner)
-            {
-                return false;
-            }
-
-            var current = unit.CurrentOrder;
-            if (current == sentCurrent)
-            {
-                return true;
-            }
-
-            return current == "" && Done(unit);
-        }
-
-        /// <summary>Whether an idle unit has done the last order: reached its place, seen its target dead or gone, or had neither.</summary>
-        private bool Done(Unit unit)
-        {
-            if (sentKind == AtPlace)
-            {
-                return Squared(unit.X - sentX, unit.Y - sentY) <= Reached;
-            }
-
-            if (sentKind == OnWidget)
-            {
-                return Gone(sentTarget!);
-            }
-
             return true;
         }
 

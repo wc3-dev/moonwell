@@ -13,8 +13,8 @@ namespace Moonwell.AI
         /// <summary>The seconds of a step.</summary>
         internal const float StepSeconds = 0.02f;
 
-        /// <summary>The steps in a second; a ThinkEvery is multiplied by it, which is exact for a quarter second where a division by 0.02 is not.</summary>
-        private const float StepsPerSecond = 50f;
+        /// <summary>The milliseconds of a step.</summary>
+        private const int StepMilliseconds = 20;
 
         /// <summary>The state of the game now; made on first use after an install or a runtime reset.</summary>
         private static Minds? current;
@@ -87,7 +87,7 @@ namespace Moonwell.AI
             return boardsMade;
         }
 
-        /// <summary>The steps a ThinkEvery is: rounded to whole steps, a half up, and at least 1; 0 for none.</summary>
+        /// <summary>The steps a ThinkEvery is: rounded to whole milliseconds, as the timers are, then to whole steps, a half step up, and at least 1; 0 for none. Through whole milliseconds a half step is the same in the game's floats and in Lua's doubles: 0.03 s is 2 steps in both.</summary>
         internal static int StepsOf(float seconds)
         {
             if (!(seconds > 0f))
@@ -95,13 +95,14 @@ namespace Moonwell.AI
                 return 0;
             }
 
-            // shortcut: past 1,000,000 s a tick is as good as none, and the steps then still fit an int in the game.
+            // shortcut: past 1,000,000 s a tick is as good as none, and its 10^9 milliseconds still fit an int in the game.
             if (seconds > 1000000f)
             {
                 seconds = 1000000f;
             }
 
-            var steps = (int)(seconds * StepsPerSecond + 0.5f);
+            var milliseconds = (int)(seconds * 1000f + 0.5f);
+            var steps = (milliseconds + StepMilliseconds / 2) / StepMilliseconds;
             return steps < 1 ? 1 : steps;
         }
 
@@ -164,10 +165,30 @@ namespace Moonwell.AI
             list.Add(mind);
         }
 
-        /// <summary>The step of a first tick: the next step, plus the count of first ticks placed so far modulo the tick, so brains started together spread over it.</summary>
+        /// <summary>Takes a brain's entry out of a step's list, leaving the list.</summary>
+        internal void Undue(Mind mind, int at)
+        {
+            if (due.TryGetValue(at, out var list))
+            {
+                list.Remove(mind);
+            }
+        }
+
+        /// <summary>How many entries wait in a step's list; for the cases.</summary>
+        internal int DueAt(int at)
+        {
+            return due.TryGetValue(at, out var list) ? list.Count : 0;
+        }
+
+        /// <summary>
+        /// The step of a first tick: the first from the next step whose number, modulo the tick, is the count of first ticks
+        /// placed so far. The phase is the step's own, not one counted from now, so brains started together spread over the
+        /// tick and so do brains started at a steady rate, which a phase from now would put on one step.
+        /// </summary>
         internal int FirstTick(int every)
         {
-            var at = Step + 1 + spread % every;
+            var next = Step + 1;
+            var at = next + ((spread % every) - next % every + every) % every;
             spread++;
             return at;
         }

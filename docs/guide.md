@@ -1547,11 +1547,11 @@ public sealed class Guard : UnitBrain
         var raider = Read(Alarm);
         if (Read(Hurt))
         {
-            OrderAt("move", HomeX, HomeY);
+            OrderAt(Orders.Move, HomeX, HomeY);
         }
         else if (raider != null)
         {
-            OrderOn("attack", raider);                            // reaches the game once, not every think
+            OrderOn(Orders.Attack, raider);                       // reaches the game once, not every think
         }
     }
 }
@@ -1561,13 +1561,16 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
 ```
 
 - A brain is a component, a `UnitBrain`, `PlayerBrain` or `GameBrain`: it is added like any other, hears its actor's
-  reactions, and ends with it. Its `Think` runs every `ThinkEvery` seconds, when woken, or both. `ThinkEvery` is rounded
-  to whole steps of 0.02 s, a half up (0.25 s is 13 steps), and is at least one step; 0, the default, thinks only when
-  woken. Set it in `OnAdded` or at any time: a change thinks within the new tick from then.
+  reactions, and ends with it. Its `Think` runs every `ThinkEvery` seconds, when woken, or both. `ThinkEvery` is
+  rounded to whole milliseconds, as timers are, then to whole steps of 0.02 s, a half step up (0.25 s is 13 steps,
+  0.03 s is 2), and is at least one step; 0, the default, thinks only when woken. Set it in `OnAdded` or at any time:
+  a change thinks within the new tick from then.
 - `Wake()` has the brain think at the next step: once, however many wakes come and with a tick due then too. A wake from
-  inside a `Think` goes to the step after.
-- One loop runs every brain: a timer of 0.02 s steps, on while any brain is. Brains started in one instant spread their
-  first thinks over their tick, so 1,000 brains at 0.25 s think about 77 a step, not 1,000 in one. Within a step, brains
+  inside a `Think` goes to the step after, unless the woken brain still waits to think from a wake in this one: then that
+  think answers it.
+- One loop runs every brain: a timer of 0.02 s steps, on while any brain is. Brains spread their first thinks over
+  their tick, each on a phase of its own among the step numbers, so 1,000 brains started at once at 0.25 s think about
+  77 a step, not 1,000 in one, and neither do brains started at a steady rate land on one step. Within a step, brains
   think in the order they became due. A `Think` that fails is reported, and the other brains still think. The time is
   read once a step, and facts written and aged in a `Think` use it.
 - A fact is a typed key made once, as a static readonly field. A written fact is set with `blackboard.Set(fact, value)`,
@@ -1583,12 +1586,15 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
   function: a unit brain's `Player` is the unit's owner now.
 - A unit given to another player (`unit.Owner = other`) has its brain read the new owner's blackboard from then on,
   with its own facts kept. The brain is not woken.
-- A unit brain's `Order`, `OrderAt` and `OrderOn` reach the game only when the order is new. A repeat, the same order on
-  the same target or to a place within 32 of the last, gives true and is dropped while the unit's `CurrentOrder` is
-  still what it read just after the last one was sent, or while the unit is idle and has done it: within 64 of the
-  place, its target dead or gone, or neither. It is sent again once another order took over, when the unit is idle short
-  of it, and after its owner changed, as the game stops a unit it gives away. An order the game refused is not kept, so
-  the next is sent. The unit's own `Order`, `OrderAt` and `OrderOn` send every time.
+- A unit brain's `Order`, `OrderAt` and `OrderOn` reach the game only when the order is new. A repeat, the same order
+  on the same target or to a place within 32 of the last, gives true and is dropped while the unit still carries out
+  the order its `CurrentOrder` read just after the last one was sent, or while the unit is idle and has done it:
+  within 64 of the place, its target dead or gone, or neither. It is sent again once another order took over, when the
+  unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives away. A unit idle
+  short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd jammed at one
+  place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends it again. An
+  order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and `OrderOn` send every
+  time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
 ## Interactions and finding

@@ -23,8 +23,8 @@ namespace Moonwell.AI
         /// <summary>The steps of the tick; 0 for none.</summary>
         private int every;
 
-        /// <summary>The step the next tick is due at, while there is a tick.</summary>
-        private int tickAt;
+        /// <summary>The step the next tick is due at, while there is a tick; internal for the cases.</summary>
+        internal int TickAt;
 
         /// <summary>The step a wake is due at; 0 for none.</summary>
         private int wokenAt;
@@ -78,18 +78,23 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>Takes the tick's steps and places its first one.</summary>
+        /// <summary>Takes the tick's steps and places its first one, taking out the entry of the tick it replaces unless a wake is due at that step too.</summary>
         private void Tick(int steps)
         {
+            if (every > 0 && wokenAt != TickAt)
+            {
+                loop!.Undue(this, TickAt);
+            }
+
             every = steps;
             if (every > 0)
             {
-                tickAt = loop!.FirstTick(every);
-                loop.Due(this, tickAt);
+                TickAt = loop!.FirstTick(every);
+                loop.Due(this, TickAt);
             }
         }
 
-        /// <summary>Has the brain think at the next step, once however many wakes come.</summary>
+        /// <summary>Has the brain think at the next step, once however many wakes come; one during a step in which the brain still waits to think from a wake is that think.</summary>
         internal void Wake()
         {
             if (ended)
@@ -104,7 +109,7 @@ namespace Moonwell.AI
             }
 
             var at = loop.Step + 1;
-            if (wokenAt == at)
+            if (wokenAt == at || (wokenAt == loop.Step && thoughtAt != loop.Step))
             {
                 return;
             }
@@ -121,7 +126,7 @@ namespace Moonwell.AI
                 return;
             }
 
-            var ticked = every > 0 && tickAt == step;
+            var ticked = every > 0 && TickAt == step;
             if (!ticked && wokenAt != step)
             {
                 return;
@@ -130,8 +135,8 @@ namespace Moonwell.AI
             thoughtAt = step;
             if (ticked)
             {
-                tickAt = step + every;
-                loop!.Due(this, tickAt);
+                TickAt = step + every;
+                loop!.Due(this, TickAt);
             }
 
             try
@@ -144,7 +149,7 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>The brain ended: its blackboard ends, and the loop counts it out. Its entries are dropped as the loop meets them.</summary>
+        /// <summary>The brain ended: its blackboard ends, its tick's entry leaves its step, and the loop counts it out. A wake's entry, a step away at most, is dropped as the loop meets it.</summary>
         internal void End()
         {
             if (ended)
@@ -156,6 +161,11 @@ namespace Moonwell.AI
             Board.End();
             if (loop != null)
             {
+                if (every > 0)
+                {
+                    loop.Undue(this, TickAt);
+                }
+
                 loop.Ended();
             }
         }
