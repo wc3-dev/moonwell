@@ -158,5 +158,24 @@ namespace Moonwell.Testing
             BrainCases.Steps(world, 5);
             Expect.Equal(0, brain.Thought.Count, "not woken");
         }
+
+        /// <summary>Facts from a file whose name sorts before Fact.cs: the script loads, and they are set, read, aged and worked out as any others (K11).</summary>
+        public static void FromAnEarlyFile(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var brain = unit.Add(new StepBrain());
+            var board = Game.Instance.Blackboard();
+            Expect.Equal(false, brain.Read(EarlyFacts.Ready), "false when nothing holds it");
+            board.Set(EarlyFacts.Ready, true);
+            board.Set(EarlyFacts.Target, unit);
+            Expect.Equal(true, brain.Read(EarlyFacts.Ready), "read up the chain");
+            Expect.Same(unit, brain.Read(EarlyFacts.Target), "a unit");
+            Expect.Near(0f, brain.Age(EarlyFacts.Ready), "written now");
+            Expect.Equal(7, brain.Read(EarlyFacts.Seven), "worked out");
+            Expect.Near(0f, brain.Age(EarlyFacts.Seven), "and kept");
+            board.Remove(EarlyFacts.Ready);
+            board.Remove(EarlyFacts.Target);
+            Expect.Equal(false, brain.Read(EarlyFacts.Ready), "removed");
+        }
     }
 }
