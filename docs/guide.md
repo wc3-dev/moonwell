@@ -2735,7 +2735,9 @@ An error in a reaction shows on the screen with its C# file and line, and is wri
 `Documents\Warcraft III\CustomMapData\Moonwell\log.txt`. A release build leaves the message off the screen and keeps
 the file and line. An error that repeats shows and goes to the log at its 1st, 10th, 100th time and so on, with its
 count ("failed 10 times"); past a hundred different errors, the new ones share one count. The log keeps its last 200
-lines.
+lines. A development build writes it at once on every line, so a crash to the desktop loses none of them; a
+release build writes it at most once a second. Each write costs 6.5 to 23 ms, more as the log fills, so a map that
+logs many lines a second sets `Game.LogAtOnce = false`, and a release build hunting a crash sets it `true`.
 
 A loop that never ends freezes the game for every player, and nothing in the game stops it. A development build counts
 the turns of your loops (`while`, `do`, `for`, `foreach`) and stops one with an error at its line, as any other error

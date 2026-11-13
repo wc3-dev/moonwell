@@ -406,6 +406,13 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>Whether the log file is written at every line, rather than at most once a second.</summary>
+        public bool LogAtOnce
+        {
+            get => log.AtOnce;
+            set => log.AtOnce = value;
+        }
+
         private void LogCheckAction()
         {
             if (log.Due(GameNow()))
