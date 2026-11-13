@@ -5,7 +5,8 @@ namespace Moonwell.Procgen
 {
     /// <summary>
     /// Makes ground from a seed: rolling heights from layered noise, tiles, blocked corners and trees by rules on height
-    /// and slope, and level places for bases. Set it up, then <c>Plan(area)</c> works the ground out and the plan's
+    /// and slope, level places for bases and camps with what is made at them, and roads between places, with routes along
+    /// them. Set it up, then <c>Plan(area)</c> works the ground out and the plan's
     /// <c>Apply</c> makes it. The same seed, settings and area give the same ground on every machine; a seed from
     /// <c>Game.Random</c> gives new ground every game. The game makes no cliffs, ramps or water while it runs, so the
     /// ground is slopes. Slopes are read from the heights the plan adds, so the rules fit ground that starts flat.
