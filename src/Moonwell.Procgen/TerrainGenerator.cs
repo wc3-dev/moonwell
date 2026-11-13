@@ -26,8 +26,8 @@ namespace Moonwell.Procgen
         private const float RuleCost = 1f;      // a corner, a rule
         private const float RaiseCost = 5.5f;   // a corner's crater
         private const float PaintCost = 3.5f;   // a corner painted
-        private const float ScanCost = 0.5f;    // a corner looked at for blocking
-        private const float BlockCost = 150f;   // a blocked corner, a kind
+        private const float ScanCost = 6.5f;    // a corner's 16 cells looked at for blocking
+        private const float BlockCost = 115f;   // a blocked corner, a kind
 
         /// <summary>The names of Make's steps, as <c>TerrainMaking.Step</c> gives them.</summary>
         private const string HeightsStep = "Heights";
