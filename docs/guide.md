@@ -1597,6 +1597,97 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
   time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
+## AI: choosing by scores
+
+A brain with several things it could do can score each one at every think and run the best, which is called utility
+AI. An option's score comes from facts on the blackboard, each put through a curve.
+
+```csharp
+using Moonwell.AI;
+using Moonwell.Interactions;                               // Find, from the Moonwell.Interactions package
+
+public sealed class Grunt : UnitBrain
+{
+    static readonly Fact<float> Life = new Fact<float>("life", keep: 0.25f,
+        read: board => board.Unit!.Life / board.Unit!.MaxLife);
+    static readonly Fact<int> EnemiesNear = new Fact<int>("enemies near", keep: 0.5f, read: board =>
+        Find.InRange<Unit>(board.Unit!.X, board.Unit!.Y, 600f, u => board.Player!.IsEnemy(u.Owner)).Count);
+
+    public float HomeX, HomeY, GoalX, GoalY;
+    readonly Choice choice;
+
+    public Grunt()
+    {
+        choice = new Choice
+        {
+            new Option("flee", Flee)
+            {
+                { Life, Curve.Falling },                     // life is 0..1 already
+                { EnemiesNear, 0, 6, Curve.Rising },         // 0 to 6 enemies, scaled to 0..1
+            },
+            new Option("fight", Fight) { { Life, Curve.S(0.3f, 10f) } },
+            new Option("rest", Rest, weight: 0.2f),          // no inputs: scores its weight
+        };
+    }
+
+    protected override void OnAdded() => ThinkEvery = 0.25f;
+
+    protected override void Think() => choice.Run(Blackboard);   // scores the options and runs the best
+
+    void Flee() => OrderAt(Orders.Move, HomeX, HomeY);
+    void Fight() => OrderAt(Orders.Attack, GoalX, GoalY);       // attacks what it meets on the way
+    void Rest() => Order(Orders.Stop);
+}
+
+unit.Add(new Grunt { HomeX = unit.X, HomeY = unit.Y, GoalX = camp.X, GoalY = camp.Y });
+```
+
+- An option is a name, the method it runs and a `weight`, 1 unless given; a weight below 0 throws `ArgumentException`,
+  in the constructor or when `Weight` is set. Its inputs go in braces after it, each a fact and a curve.
+- An input reads its fact as `Read` does: up the chain, and worked out when the fact is. A `float` fact with no range is
+  taken as 0..1 already. With a range, the value is scaled from min..max to 0..1, as (value - min) / (max - min), and
+  clamped: 4 enemies of 0 to 6 is 0.67, and 9 is 1. A max below the min turns the range round, and a min equal to the
+  max throws `ArgumentException` when the input is added. An `int` fact always has a range, and a `bool` fact none:
+  false is 0, true is 1.
+- An option's score is its inputs' scores multiplied, evened out over how many there are (the n-th root: the square
+  root for two), times its weight. With life at 0.2 and 4 enemies near, flee's inputs give 0.8 (0.2 through `Falling`)
+  and 0.67 (4 of 0 to 6 through `Rising`): 0.8 × 0.67 = 0.53, evened over two inputs 0.73. Fight scores 0.27 and rest
+  0.2, so the grunt flees. One input's score is taken as it is, and an option with no inputs scores its weight.
+- Inputs are read in the order added, and once one scores 0 the option scores 0 and the facts after it are not read:
+  put a fact that rules an option out first, and a costly worked-out one last.
+- `choice.Run(board)` scores every option once and runs the best, on a tie the one added first. The option it picked
+  stays `Current` until another scores more than its score times 1 + `Keep`; then the best of those wins. `Keep` is
+  0.1, so 10% (below 0 throws `ArgumentException`): flee at 0.73 stays against fight at 0.80 and gives way to 0.81.
+  This stops a unit flipping between two options that score about the same: a brain's orders drop only a repeat of
+  the same order, and every new one holds the unit up.
+- An option scoring 0 never wins: a current one at 0 gives way to anything above 0, and when every option scores 0, or
+  there are none, nothing runs and `Current` is null.
+- `Pick(board)` gives the winner, or null, without running it, and `Current` is what the last `Pick` gave; `Run` is a
+  `Pick`, then the winner's `Run()`. `option.Score(board)` gives one option's score. A `Choice` belongs to one brain,
+  as it keeps `Current`: make it in the brain's constructor, where the options' methods are the brain's own.
+- A curve turns an input of 0..1 into a score of 0..1, and `curve.Of(x)` gives it. The input is clamped to 0..1 first,
+  and so is the result.
+
+| Curve | Gives |
+|---|---|
+| `Curve.Rising` | x |
+| `Curve.Falling` | 1 - x |
+| `Curve.Line(from, to)` | from + (to - from) × x: `from` at 0, `to` at 1, a straight line between |
+| `Curve.Power(exponent)` | x to the power `exponent`: above 1 it rises late, below 1 early; 0 or less throws `ArgumentException` |
+| `Curve.S(middle, steepness)` | 1 / (1 + e^(-steepness × (x - middle))): 0.5 at `middle`, sharper the higher `steepness`; a negative one falls |
+| `Curve.Step(at)` | 0 below `at`, 1 from `at` on |
+| `Curve.Points(x, y, x, y, ...)` | straight lines between the points |
+
+- `Points` takes x, y pairs, x never going down: below the first x it gives the first y, past the last x the last y,
+  and two points at the same x make a jump, the later y at exactly that x. No points, an odd count or an x below the
+  one before throws `ArgumentException`. A map makes no curve of its own: `Points` draws any shape.
+- Weights, ranges and whole curves can come from a CSV in `data` ([Data files](#data-files)), a curve as its `Points`
+  in one list column. With `data\grunt.csv` holding the header `Id,Weight,Enemies,Curve:float` and the row
+  `Flee,1,6,0;1;0.5;0.6;1;0`, the constructor reads `var flee = Data.Grunt.Flee;` and gives `weight: flee.Weight`,
+  `{ Life, Curve.Points(flee.Curve) }` and `{ EnemiesNear, 0, flee.Enemies, Curve.Rising }`. The `:float` keeps a
+  curve of whole numbers, such as `0;1;1;0`, a list of `float`s, as `Points` takes. `Keep` can be set from data too.
+- An option's action is a plain method, so it can run anything, a behavior tree included.
+
 ## Interactions and finding
 
 Add the `Moonwell.Interactions` package (the template's `.csproj` has the line, commented) for things that react to what
