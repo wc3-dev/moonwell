@@ -273,6 +273,54 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_looks_table_makes_its_copies_beside_the_texture_and_is_not_packed()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            CopyImage("red-64x32.png", project, @"war3mapImported\Bar.png");
+            File.WriteAllText(Path.Combine(project.AssetsFolder, @"war3mapImported\Bar.looks.csv"), "Name,Left,Top,Right,Bottom,Color,Bar\nHalf,0,0,0.5,1,,\nGreen,,,,,00ff00,yes\n");
+            var log = new StringWriter();
+
+            Stage.WriteWithoutObjects(project, map, log);
+
+            var staged = Path.Combine(project.StagedFolder, "war3mapImported");
+            Assert.False(File.Exists(Path.Combine(staged, "Bar.looks.csv")));
+            Assert.Equal(64, Directory.GetFiles(staged, "Bar.Green.Bar*.blp").Length);
+            using (var half = new War3Net.Drawing.Blp.BlpFile(File.OpenRead(Path.Combine(staged, "Bar.Half.blp"))))
+            {
+                half.GetPixels(0, out var width, out var height);
+                Assert.Equal((32, 32), (width, height));
+            }
+
+            Assert.Contains(@"war3mapImported\Bar.Green.Bar17.blp", ImportList.Paths(Path.Combine(project.StagedFolder, "war3map.imp")));
+            Assert.Contains("moonwell: made 65 copies from 1 looks table", log.ToString());
+        }
+
+        [InstallFact]
+        public void a_looks_table_with_no_texture_is_flat_colours_and_one_at_a_game_icon_copies_it()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            Directory.CreateDirectory(Path.Combine(project.AssetsFolder, @"ReplaceableTextures\CommandButtons"));
+            File.WriteAllText(Path.Combine(project.AssetsFolder, "Flat.looks.csv"), "Name,Color\nBacking,000000\n");
+            File.WriteAllText(Path.Combine(project.AssetsFolder, @"ReplaceableTextures\CommandButtons\BTNFootman.looks.csv"), "Name,Round\nRound,yes\n");
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            using (var flat = new War3Net.Drawing.Blp.BlpFile(File.OpenRead(Path.Combine(project.StagedFolder, "Flat.Backing.blp"))))
+            {
+                var pixels = flat.GetPixels(0, out var width, out var height);
+                Assert.Equal((8, 8), (width, height));
+                Assert.InRange(pixels[2], 0, 8);
+            }
+
+            using var round = new War3Net.Drawing.Blp.BlpFile(File.OpenRead(Path.Combine(project.StagedFolder, @"ReplaceableTextures\CommandButtons\BTNFootman.Round.blp")));
+            var icon = round.GetPixels(0, out var side, out _);
+            Assert.Equal(0, icon[3]);
+            Assert.Equal(255, icon[(((side / 2 * side) + (side / 2)) * 4) + 3]);
+        }
+
+        [Fact]
         public void the_import_list_names_each_asset_and_made_copy_but_no_file_of_the_map()
         {
             var project = MapProject.Find(folders.TemporaryCopyOfSample());

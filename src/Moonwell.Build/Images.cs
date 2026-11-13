@@ -65,6 +65,29 @@ namespace Moonwell.Build
             Write(greyPath, width, height, pixels);
         }
 
+        /// <summary>A PNG's or a BLP's pixels as blue, green, red and alpha.</summary>
+        /// <exception cref="BuildException">The file cannot be read as one, or a PNG's side is not a power of two.</exception>
+        internal static (int Width, int Height, byte[] Pixels) Read(string path, string name)
+        {
+            return IsPng(path) ? ReadPng(path, name) : ReadBlp(File.ReadAllBytes(path), name);
+        }
+
+        /// <summary>A BLP's pixels, from its bytes, as blue, green, red and alpha.</summary>
+        /// <exception cref="BuildException">The bytes are not a BLP the build can read.</exception>
+        internal static (int Width, int Height, byte[] Pixels) ReadBlp(byte[] bytes, string name)
+        {
+            try
+            {
+                using var blp = new BlpFile(new MemoryStream(bytes));
+                var pixels = blp.GetPixels(0, out var width, out var height);
+                return (width, height, pixels);
+            }
+            catch (Exception failure)
+            {
+                throw new BuildException($"{name} is not a BLP the build can read ({failure.Message})");
+            }
+        }
+
         // The image's pixels as blue, green, red and alpha.
         private static (int Width, int Height, byte[] Pixels) ReadPng(string pngPath, string name)
         {
@@ -107,7 +130,8 @@ namespace Moonwell.Build
             }
         }
 
-        private static void Write(string blpPath, int width, int height, byte[] pixels)
+        /// <summary>Writes pixels, blue, green, red and alpha, as a BLP1 of JPEG mipmaps, with its alpha when a pixel is not opaque.</summary>
+        internal static void Write(string blpPath, int width, int height, byte[] pixels)
         {
             var transparent = false;
             for (var i = 3; i < pixels.Length && !transparent; i += 4)

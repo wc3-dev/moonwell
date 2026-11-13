@@ -4,7 +4,8 @@ namespace Moonwell
     /// A bar that fills from the left: its Texture drawn over the share of its width that Value is of the range from Min to
     /// Max. The bar itself draws nothing. The fill is as high as the bar, and its width is the map's: the bar's Width, or that
     /// of the frame it covers with Fill, as the game reads a size from points late (seen 11-05). It is two images, not the
-    /// game's status bar, which follows no parent (seen 10-14).
+    /// game's status bar, which follows no parent (seen 10-14). A bar's look from a .looks.csv (its path ends in .Bar.blp) is
+    /// cut, not squashed: the fill shows the build's copy of the look's left part nearest its share, in 64ths (decision 322).
     /// </summary>
     public class ProgressBar : Frame
     {
@@ -15,6 +16,9 @@ namespace Moonwell
         internal float value;
 
         internal string texture = "";
+
+        /// <summary>The 64ths of a bar's look the fill shows; -1 until painted.</summary>
+        internal int step = -1;
 
         /// <summary>The image that draws the filled share; null until the bar is made.</summary>
         internal framehandle? fill;
@@ -75,7 +79,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The texture of the filled share, as ReplaceableTextures\TeamColor\TeamColor00.blp; empty unless set, which draws nothing.</summary>
+        /// <summary>The texture of the filled share, as ReplaceableTextures\TeamColor\TeamColor00.blp, squashed over it; a bar's look (Looks.UIStatusBar.Green) is cut instead. Empty unless set, which draws nothing.</summary>
         [LocalSafe]
         public string Texture
         {
@@ -90,7 +94,7 @@ namespace Moonwell
                 texture = value;
                 if (fill != null)
                 {
-                    FramesSystem.World.PaintFrame(fill, value.Length > 0 ? value : Image.Blank);
+                    Paint(true);
                 }
             }
         }
@@ -123,7 +127,7 @@ namespace Moonwell
         /// <summary>Gives the game the fill's texture and size, then the points and looks.</summary>
         internal override void Place()
         {
-            FramesSystem.World.PaintFrame(fill!, texture.Length > 0 ? texture : Image.Blank);
+            Paint(true);
             Refill();
             base.Place();
         }
@@ -158,8 +162,39 @@ namespace Moonwell
                 size = size.filled;
             }
 
-            var share = max == min ? 0.0f : (value - min) / (max - min);
-            FramesSystem.World.SizeFrame(fill, size.width * share, size.height);
+            FramesSystem.World.SizeFrame(fill, size.width * Share(), size.height);
+            Paint(false);
+        }
+
+        private float Share()
+        {
+            return max == min ? 0.0f : (value - min) / (max - min);
+        }
+
+        // Paints the fill: a bar's look its step copy nearest the share (the build's LookFiles.StepPath), again only when the step
+        // changes unless always; any other texture whole, only when always.
+        private void Paint(bool always)
+        {
+            const string barEnd = ".Bar.blp";
+            const int steps = 64;
+            var shown = texture.Length > 0 ? texture : Image.Blank;
+            if (texture.Length > barEnd.Length && texture.Substring(texture.Length - barEnd.Length) == barEnd)
+            {
+                var at = (int)((Share() * steps) + 0.5f);
+                if (!always && at == step)
+                {
+                    return;
+                }
+
+                step = at;
+                shown = at == 0 ? Image.Blank : at >= steps ? texture : texture.Substring(0, texture.Length - ".blp".Length) + at + ".blp";
+            }
+            else if (!always)
+            {
+                return;
+            }
+
+            FramesSystem.World.PaintFrame(fill!, shown);
         }
     }
 }
