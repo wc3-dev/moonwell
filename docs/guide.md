@@ -1750,12 +1750,14 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   on the player's machine. The minimap, the command buttons, the item buttons and the selection icons also move,
   `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; a moved button leaves nothing behind taking
   clicks, and the first move stops the game placing its HUD again when the window changes. The selection icons move at
-  no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name on it. A map's frame
+  no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name hangs from it. The
+  inventory's bar sits in the selection panel, so moving the icons moves the inventory's text, and the item buttons not
+  moved, with them. A map's frame
   ties itself to a piece with `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`,
   with the label added by `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The chat and the
   game's messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong
-  (seen). In a development build, `-frames` writes the game's frame tree to the log: each frame's index under its
-  parent, name, size, whether it shows and how many children it has.
+  (seen). In a development build, `-frames` writes the game's frame tree to `CustomMapData\Moonwell\frames.txt`:
+  each frame's index under its parent, name, size, whether it shows and how many children it has.
 - A window from the map's own `.fdf` comes whole: put the `.fdf` files in `assets/`, and the build lists them in a TOC
   the package loads after the game's. `new Panel { Template = "ShopWindow" }` makes one, and any kind takes a template
   of the map's, as a label with the font and size its `.fdf` gives. `window.Child<Label>("ShopTitle")` finds a part of

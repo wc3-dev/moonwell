@@ -212,10 +212,12 @@ namespace Moonwell.Testing
             Expect.Equal(false, panel.Shown, "hidden when set");
         }
 
-        /// <summary>The -frames command writes the game's frame tree to the log: each frame's index, name, size, whether it shows and its children.</summary>
+#if DEBUG
+        /// <summary>The -frames command writes the game's frame tree to its own file, as the log keeps too few lines: each frame's index, name, size, whether it shows and its children; the typer is told where.</summary>
         public static void FrameTreeCommand(FakeWorld world)
         {
             world.SetSlot(0, SlotState.Playing, Controller.User);
+            var debug = FakeDebugWorld.Install(world);
             var frames = FrameCases.Installed();
             frames.GameChildCounts["origin 0 0"] = 2;
             var console = frames.FrameOf(frames.ChildAt(frames.GameFrame("origin 0 0")!, 1));
@@ -223,10 +225,12 @@ namespace Moonwell.Testing
             console.Width = 0.8f;
             console.Shown = false;
             world.Chat(Player.Get(0), "-frames");
-            Expect.True(world.Logged.Exists(line => line == "frames: game UI"), "the root named: " + string.Join(" | ", world.Logged));
-            Expect.True(world.Logged.Exists(line => line == "    1 ConsoleUI 0.8 by 0 hidden"), "a child, indented under its root");
-            Expect.True(world.Logged.Exists(line => line.StartsWith("frames: ") && line.EndsWith(" written")), "the count");
+            var file = debug.Files.TryGetValue("Moonwell\\frames.txt", out var lines) ? lines : new System.Collections.Generic.List<string>();
+            Expect.Equal("game UI", file.Count > 0 ? file[0] : "(no file)", "the root named first");
+            Expect.True(file.Contains("    1 ConsoleUI 0.8 by 0 hidden"), "a child, indented under its root: " + string.Join(" | ", file));
+            Expect.True(world.PrintedTexts.Exists(line => line.Contains("frames written to CustomMapData\\Moonwell\\frames.txt")), "the typer told where: " + string.Join(" | ", world.PrintedTexts));
         }
+#endif
 
         /// <summary>A frame's first point; null when it has none, as at a machine where the piece is not moved.</summary>
         private static FakePoint? First(FakeFrame frame)

@@ -141,7 +141,7 @@ namespace Moonwell
         [LocalSafe]
         public IReadOnlyList<MovablePiece> ItemButtons { get; }
 
-        /// <summary>The selection panel: a group's icons, with life and mana. Moved, it takes no clicks: tied at no size, a group's icons draw from 0.079 left of its point to it and from 0.071 to 0.108 above it, and one unit's name and class line are centred on it (seen 11-13). It shows one unit's details too, unless UnitDetails and UnitName are hidden.</summary>
+        /// <summary>The selection panel: a group's icons, with life and mana. Moved, it takes no clicks: tied at no size, a group's icons draw up and left of its point (three icons with their bars from about 0.093 to 0.002 left of it and 0.064 to 0.099 above it), and one unit's name and class line hang centred from it (seen 11-13). It shows one unit's details too, unless UnitDetails and UnitName are hidden. The inventory's bar sits in the panel, so moving the icons moves the inventory's text with them (seen 11-13), and the item buttons not moved too.</summary>
         [LocalSafe]
         public MovablePiece SelectionIcons { get; }
 

@@ -79,7 +79,7 @@ namespace Moonwell
             Moonwell.Events.LoadListener = Loaded;
             Cinematic.ScreenChanged = CinematicChanged;
 #if DEBUG
-            DebugMode.Command("frames", "writes the game's frame tree to the log: names, sizes, shown or not, children", (player, rest) => FrameTree.Write(host));
+            DebugMode.Command("frames", "writes the game's frame tree to CustomMapData\\Moonwell\\frames.txt: names, sizes, shown or not, children", (player, rest) => FrameTree.Write(host, player));
 #endif
         }
 
