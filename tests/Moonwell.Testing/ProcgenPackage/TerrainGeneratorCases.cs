@@ -206,7 +206,7 @@ namespace Moonwell.Testing
             Expect.Equal(0, none, "a cover of 0 paints none");
         }
 
-        /// <summary>Block rules take pathing from the corners in their ranges and add up; a level place is level at its centre's height, blends back past its radius, and is never blocked.</summary>
+        /// <summary>Block rules take pathing from the corners in their ranges and add up; a level place is level at the ground as it was, blends back past its radius, and is never blocked.</summary>
         public static void BlockAndLevel(FakeWorld world)
         {
             var generator = Steep(8);
@@ -231,8 +231,8 @@ namespace Moonwell.Testing
 
             generator.Level(1280f, 1280f, 300f);
             var plan = generator.Plan(Area());
-            var centre = open.Heights[10, 10];
-            Expect.Near(centre, plan.Heights[10, 10], "level at its centre's height");
+            var centre = 0f;
+            Expect.Near(centre, plan.Heights[10, 10], "level at the ground as it was");
             Expect.Near(centre, plan.Heights[12, 10], "out to the radius");
             Expect.Near(centre, plan.Heights[10, 8], "on every side");
             Expect.Equal(true, plan.Blocked[10 * Side + 10] == Pathing.None && plan.Blocked[10 * Side + 12] == Pathing.None && plan.Blocked[8 * Side + 10] == Pathing.None, "never blocked");
