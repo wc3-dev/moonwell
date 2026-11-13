@@ -14,10 +14,9 @@ namespace Moonwell.Engine
         private const int MostWritten = 5000;
 
         /// <summary>
-        /// Walks the game UI, the world frame and the simple UI's parent (or ConsoleUI's, when the game gives no origin frame for
-        /// it), writing each frame's index under its parent, name, size, whether it shows and its count of children, and tells
-        /// the typer where. A frame's children are asked for by index, which
-        /// gives frames only, never the Strings and Textures the game crashes on (Tasyen's "UI: OriginFrames"; walks of 11-08 and
+        /// Walks the game UI, the world frame and ConsoleUI, writing each frame's index under its parent, name, size, whether it
+        /// shows and its count of children, and tells the typer where. A frame's children are asked for by index, which gives
+        /// frames only, never the Strings and Textures the game crashes on (Tasyen's "UI: OriginFrames"; walks of 11-08 and
         /// 11-13 read every one with no crash). Heard on every machine, so each asks for the same frames and the handle ids stay
         /// the same everywhere; each machine writes its own file.
         /// </summary>
@@ -27,10 +26,9 @@ namespace Moonwell.Engine
             Root(world, lines, "game UI", world.OriginFrame(0, 0));
             Root(world, lines, "world frame", world.OriginFrame(17, 0));
 
-            // The game gave nil for the simple UI's parent by its origin (seen 11-13), so ConsoleUI's parent stands in.
-            var simple = world.OriginFrame(18, 0);
-            var console = simple == null ? world.GameFrame("ConsoleUI") : null;
-            Root(world, lines, "simple UI parent", console != null ? world.ParentOf(console) : simple);
+            // The game gave nil for the simple UI's parent by its origin, and ConsoleUI's parent counted no children (seen 11-13),
+            // so the HUD's simple frames are walked from ConsoleUI.
+            Root(world, lines, "ConsoleUI", world.GameFrame("ConsoleUI"));
             var count = lines.Count - 3;
             DebugSession.WriteFile(FilePath, lines);
             typer.Print("-frames: " + count + " frames written to CustomMapData\\" + FilePath + (count >= MostWritten ? ", stopped at the most" : string.Empty));

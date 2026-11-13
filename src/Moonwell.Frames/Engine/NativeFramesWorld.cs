@@ -212,9 +212,9 @@ namespace Moonwell.Engine
         public bool FrameShown(framehandle frame) => Natives.BlzFrameIsVisible(frame);
 
         /// <summary>A frame of the game's HUD by its name: BlzGetFrameByName.</summary>
-        public framehandle? GameFrame(string name)
+        public framehandle? GameFrame(string name, int context = 0)
         {
-            return Natives.BlzGetFrameByName(name, 0);
+            return Natives.BlzGetFrameByName(name, context);
         }
 
         /// <summary>A frame of the game's HUD by origin: BlzGetOriginFrame.</summary>

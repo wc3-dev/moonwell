@@ -1627,6 +1627,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "hud.item-buttons-alone", Run = HudCases.ItemButtonsAlone });
             list.Add(new Case { Name = "hud.glows-with-hero-buttons", Run = HudCases.GlowsWithHeroButtons });
             list.Add(new Case { Name = "hud.selection-icons-alone", Run = HudCases.SelectionIconsAlone });
+            list.Add(new Case { Name = "hud.build-queue-alone", Run = HudCases.BuildQueueAlone });
 #if DEBUG
             list.Add(new Case { Name = "debug.hud.frame-tree", Run = HudCases.FrameTreeCommand });
 #endif

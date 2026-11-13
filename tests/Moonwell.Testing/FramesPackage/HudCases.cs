@@ -7,12 +7,12 @@ namespace Moonwell.Testing
         public static void LookedUpAtInstall(FakeWorld world)
         {
             var frames = FrameCases.Installed();
-            Expect.Equal(66, frames.Lookups, "27 by name, 39 by origin");
+            Expect.Equal(68, frames.Lookups, "29 by name, 39 by origin");
             Expect.True(frames.GameFrames.ContainsKey("MiniMapFrame"), "the minimap by its name");
             Expect.Equal(0, frames.Frames.Count, "no frame made");
             Player.One.GameUi();
             Player.Two.GameUi();
-            Expect.Equal(66, frames.Lookups, "no lookup at a player's first use");
+            Expect.Equal(68, frames.Lookups, "no lookup at a player's first use");
             Expect.Same(Player.One.GameUi(), Player.One.GameUi(), "one view per player");
         }
 
@@ -210,6 +210,30 @@ namespace Moonwell.Testing
             Expect.Equal(1, panel.Points.Count, "tied again");
             ui.SelectionIcons.Visible = false;
             Expect.Equal(false, panel.Shown, "hidden when set");
+        }
+
+        /// <summary>A building's queue: hidden with the HUD by a scale of nothing on the whole building panel, shown when set Visible over it; the building's name goes with UnitName, put back by its .fdf's point in the building panel.</summary>
+        public static void BuildQueueAlone(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var ui = Player.One.GameUi();
+            var panel = frames.GameFrames["SimpleInfoPanelBuildingDetail 1"];
+            var name = frames.GameFrames["SimpleBuildingNameValue 1"];
+            ui.Visible = false;
+            Expect.Near(0.00001f, panel.Scale, "the building panel hidden with the HUD");
+            Off(name, false, "the building's name, a String, moved off");
+            ui.BuildQueue.Visible = true;
+            Expect.Near(1.0f, panel.Scale, "the queue set Visible over the HUD");
+            Expect.Equal(1, name.Points.Count, "the name still off, with UnitName hidden");
+            ui.UnitName.Visible = true;
+            Expect.Same(panel, First(name)?.Other, "the name put back in the building panel");
+            Expect.Equal(1, First(name)?.Point ?? -1, "by its top");
+            Expect.Near(1.0f, name.Scale, "the String never scaled");
+            panel.Scale = 0.5f;
+            world.Advance(1.05f);
+            Expect.Near(0.5f, panel.Scale, "a shown queue left as the game has it");
+            ui.BuildQueue.Visible = false;
+            Expect.Near(0.00001f, panel.Scale, "hidden when set");
         }
 
 #if DEBUG

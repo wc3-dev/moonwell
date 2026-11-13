@@ -47,6 +47,12 @@ namespace Moonwell.Engine
         /// <summary>SimpleNameValue, a String: the game crashes on most natives given it (seen 11-13); its points and size are safe, and the unit's class line is tied to it.</summary>
         internal readonly framehandle UnitName;
 
+        /// <summary>SimpleInfoPanelBuildingDetail, the selection panel's child 1, found at create context 1 from the game's start: a building's queue or research, with its name, "Training" line and bar (seen 11-13).</summary>
+        internal readonly framehandle BuildingDetail;
+
+        /// <summary>SimpleBuildingNameValue, a String in the building panel, "Anchor TOP" in its .fdf as SimpleNameValue is in the unit panel; looked up only, never touched but by its points.</summary>
+        internal readonly framehandle BuildingName;
+
         /// <summary>InventoryText, a TEXT frame, not a String: it takes an alpha (seen 11-13).</summary>
         internal readonly framehandle InventoryText;
 
@@ -78,6 +84,8 @@ namespace Moonwell.Engine
             }
 
             UnitName = world.GameFrame("SimpleNameValue")!;
+            BuildingDetail = world.GameFrame("SimpleInfoPanelBuildingDetail", 1)!;
+            BuildingName = world.GameFrame("SimpleBuildingNameValue", 1)!;
             InventoryText = world.GameFrame("InventoryText")!;
             InventoryCover = world.GameFrame("SimpleInventoryCover")!;
         }
