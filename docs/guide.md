@@ -1981,7 +1981,10 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   hidden it takes the building's name with it. What the game shows or places again by itself is set again every second
   on the player's machine, and at the end of a cinematic with a letterbox, which brings back the portrait and the
   selection panel. The minimap, the command buttons, the item buttons and the selection icons also move,
-  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; a moved button leaves nothing behind taking
+  `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; they keep their own size between two
+  `Attach` points. `Fill(frame)` puts one centred on a map's frame at the frame's size: a command button (0.039 square)
+  or an item button (0.031) takes the size, and the minimap, which draws at one size, about 0.139 square, whatever size
+  it is given, is scaled to the frame's smaller side (seen). A moved button leaves nothing behind taking
   clicks, and the first move stops the game placing its HUD again when the window changes. The selection icons move at
   no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name hangs from it. The
   inventory's bar sits in the selection panel, so moving the icons moves the inventory's text, and the item buttons not
