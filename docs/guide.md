@@ -1522,6 +1522,75 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   Planned and made in one go with tiles and blocked corners it took 132 ms, a frozen frame; made in steps of 1 to
   8 ms no frame was longer than the game's own (about 30 ms), and at 4 ms a step it took 1 s (3.0.1.24371).
 
+## AI: brains and blackboards
+
+Add the `Moonwell.AI` package for units, players and the game that think on their own: brains that think on a tick or
+when woken, and blackboards of facts they read.
+
+```csharp
+using Moonwell.AI;
+
+public sealed class Guard : UnitBrain
+{
+    public static readonly Fact<Unit?> Alarm = new Fact<Unit?>("alarm");          // written by the map
+    static readonly Fact<bool> Hurt = new Fact<bool>("hurt", keep: 0.5f,          // worked out when read
+        read: board => board.Unit!.Life < board.Unit!.MaxLife / 2f);
+
+    public float HomeX, HomeY;
+
+    protected override void OnAdded() => ThinkEvery = 0.25f;
+
+    public override void OnDamaged(Damage damage) => Wake();    // think now, not at the next tick
+
+    protected override void Think()
+    {
+        var raider = Read(Alarm);
+        if (Read(Hurt))
+        {
+            OrderAt("move", HomeX, HomeY);
+        }
+        else if (raider != null)
+        {
+            OrderOn("attack", raider);                            // reaches the game once, not every think
+        }
+    }
+}
+
+unit.Add(new Guard { HomeX = unit.X, HomeY = unit.Y });
+player.Blackboard().Set(Guard.Alarm, raider);                    // every guard of the player reads it
+```
+
+- A brain is a component, a `UnitBrain`, `PlayerBrain` or `GameBrain`: it is added like any other, hears its actor's
+  reactions, and ends with it. Its `Think` runs every `ThinkEvery` seconds, when woken, or both. `ThinkEvery` is rounded
+  to whole steps of 0.02 s, a half up (0.25 s is 13 steps), and is at least one step; 0, the default, thinks only when
+  woken. Set it in `OnAdded` or at any time: a change thinks within the new tick from then.
+- `Wake()` has the brain think at the next step: once, however many wakes come and with a tick due then too. A wake from
+  inside a `Think` goes to the step after.
+- One loop runs every brain: a timer of 0.02 s steps, on while any brain is. Brains started in one instant spread their
+  first thinks over their tick, so 1,000 brains at 0.25 s think about 77 a step, not 1,000 in one. Within a step, brains
+  think in the order they became due. A `Think` that fails is reported, and the other brains still think. The time is
+  read once a step, and facts written and aged in a `Think` use it.
+- A fact is a typed key made once, as a static readonly field. A written fact is set with `blackboard.Set(fact, value)`,
+  and `Remove` takes it off. `Read` gives `default` (0, false, null) when nothing holds it, and `Age` the seconds since
+  the value found was written, `float.MaxValue` when there is none.
+- A worked-out fact has a `read` function instead, run for the blackboard the read starts on: its value is kept there
+  and given again until it is older than `keep` seconds (0 works it out once an instant). It never looks up the chain.
+  `Set` on one is reported and refused, in a release build too, and a `keep` below 0 throws.
+- Each brain has a blackboard of its own, which ends with it; each player has one (`player.Blackboard()`), and so has the
+  game (`Game.Instance.Blackboard()`). A read goes up a chain, and the first blackboard holding the fact wins: a unit
+  brain's, then its unit's owner's, then the game's; a player brain's, then its player's, then the game's; a game
+  brain's, then the game's; a player's, then the game's. A blackboard's `Unit` and `Player` say whose it is, for a read
+  function: a unit brain's `Player` is the unit's owner now.
+- A unit given to another player (`unit.Owner = other`) has its brain read the new owner's blackboard from then on,
+  with its own facts kept. The brain is not woken.
+- A unit brain's `Order`, `OrderAt` and `OrderOn` reach the game only when the order is new. A repeat, the same order on
+  the same target or to a place within 32 of the last, gives true and is dropped while the unit's `CurrentOrder` is
+  still what it read just after the last one was sent, or while the unit is idle and has done it: within 64 of the
+  place, its target dead or gone, or neither. It is sent again once another order took over, when the unit is idle short
+  of it, and after its owner changed, as the game stops a unit it gives away. An order the game refused is not kept, so
+  the next is sent. The unit's own `Order`, `OrderAt` and `OrderOn` send every time.
+- Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
+
 ## Interactions and finding
 
 Add the `Moonwell.Interactions` package (the template's `.csproj` has the line, commented) for things that react to what

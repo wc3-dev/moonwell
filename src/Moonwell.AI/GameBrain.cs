@@ -17,6 +17,7 @@ namespace Moonwell.AI
         }
 
         /// <summary>The seconds between thinks, rounded to whole steps of 0.02 s, a half up (a quarter second is 13 steps), and at least one step; 0, the default, and it thinks only when woken. Set it at any time, in OnAdded too: a change thinks within the new tick from now, then at every tick, and brains started together spread their first thinks over their tick.</summary>
+        [LocalSafe]
         public float ThinkEvery
         {
             get { return mind.ThinkEvery; }
@@ -24,6 +25,7 @@ namespace Moonwell.AI
         }
 
         /// <summary>The brain's own blackboard, the first of its chain: then the game's. It ends with the brain.</summary>
+        [LocalSafe]
         public Blackboard Blackboard => mind.Board;
 
         /// <summary>Has the brain think at the next step, within 0.02 s: once in that step however many wakes come, a tick due then included. A wake from inside a step goes to the step after.</summary>

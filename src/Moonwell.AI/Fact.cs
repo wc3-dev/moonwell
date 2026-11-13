@@ -43,6 +43,7 @@ namespace Moonwell.AI
         }
 
         /// <summary>The fact's name.</summary>
+        [LocalSafe]
         public string Name { get; }
 
         /// <summary>A read starting on a blackboard: a worked-out fact on that one only, a written one up the chain.</summary>

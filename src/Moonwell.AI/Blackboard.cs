@@ -46,9 +46,11 @@ namespace Moonwell.AI
         }
 
         /// <summary>The unit of a unit brain's blackboard; null for any other. A worked-out fact's read function reads it.</summary>
+        [LocalSafe]
         public Unit? Unit => unit;
 
         /// <summary>The player: for a unit brain's blackboard the unit's owner now, for a player brain's or a player's that player, and null for a game brain's or the game's. A worked-out fact's read function reads it.</summary>
+        [LocalSafe]
         public Player? Player => unit != null ? unit.Owner : player;
 
         /// <summary>The value of a fact: a written one from the first blackboard up the chain that holds it, a worked-out one as its read function gives it for this blackboard; <c>default</c> (0, false or null) when nothing holds it.</summary>
