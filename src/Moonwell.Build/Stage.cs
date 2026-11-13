@@ -91,6 +91,7 @@ namespace Moonwell.Build
                 infoStream.CopyTo(staged);
             }
 
+            WriteGround(project, map);
             File.WriteAllText(Path.Combine(project.StagedFolder, "war3map.lua"), script);
             writeObjectFiles(project.StagedFolder);
 
@@ -134,6 +135,30 @@ namespace Moonwell.Build
 
                 ImportList.Write(project.StagedFolder, imported.Concat(WriteGreyCopies(project, packed, log)));
             }
+        }
+
+        // The w3e is copied as it is unless the map class added tiles to its list (decision 282); then War3Net writes it, which
+        // keeps every corner's bytes.
+        private static void WriteGround(MapProject project, War3Net.Build.Map map)
+        {
+            var staged = Path.Combine(project.StagedFolder, "war3map.w3e");
+            if (map.Environment is not { } ground || !File.Exists(staged))
+            {
+                return;
+            }
+
+            using (var reader = new BinaryReader(File.OpenRead(staged)))
+            {
+                if (reader.ReadMapEnvironment().TerrainTypes.Count == ground.TerrainTypes.Count)
+                {
+                    return;
+                }
+            }
+
+            using var file = map.GetEnvironmentFile()!;
+            using var stream = file.MpqStream;
+            using var written = File.Create(staged);
+            stream.CopyTo(written);
         }
 
         // An icon named BTN or PASBTN gets the grey copy a disabled button shows, unless the map or its assets have one (decision 250).
