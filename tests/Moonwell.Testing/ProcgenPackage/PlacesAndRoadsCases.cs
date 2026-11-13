@@ -258,7 +258,7 @@ namespace Moonwell.Testing
             Expect.Throws<ArgumentException>(() => land.Road(a, b, width: 0f), "a width of 0");
         }
 
-        /// <summary>Along a road the ground is painted with RoadTile, never blocked, treeless, and levelled to an easy slope, where the hills beside it are steep.</summary>
+        /// <summary>Along a road the ground is painted with RoadTile, never blocked, treeless, and levelled to an easy slope up to the places it joins, where the hills beside it are steep.</summary>
         public static void Ground(FakeWorld world)
         {
             var land = Land(9);
@@ -286,8 +286,7 @@ namespace Moonwell.Testing
                     wrong += gap <= 0f && plan.Tiles[at] != Tile.LordaeronSummerDirt ? 1 : 0;
                     wrong += gap < 64f && plan.Blocked[at] != Pathing.None ? 1 : 0;
                     wrong += gap < 128f && plan.Trees[at] != 0 ? 1 : 0;
-                    var nearPlace = Math.Max(Math.Abs(column * 128f - 640f), Math.Abs(row * 128f - 640f)) < 640f || Math.Max(Math.Abs(column * 128f - 4480f), Math.Abs(row * 128f - 4480f)) < 640f;
-                    if (gap <= 0f && Gap(road, (column - 1) * 128f, row * 128f) <= 0f && !nearPlace)
+                    if (gap <= 0f && Gap(road, (column - 1) * 128f, row * 128f) <= 0f)
                     {
                         steepest = Math.Max(steepest, Math.Abs(plan.Heights[column, row] - plan.Heights[column - 1, row]));
                         hillsSteepest = Math.Max(hillsSteepest, Math.Abs(bare.Heights[column, row] - bare.Heights[column - 1, row]));

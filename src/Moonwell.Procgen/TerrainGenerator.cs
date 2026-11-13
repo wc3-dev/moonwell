@@ -642,8 +642,8 @@ namespace Moonwell.Procgen
             return count;
         }
 
-        /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it, and marks the level ones.</summary>
-        private static void LevelPlace(float[] cells, bool[] level, int columns, int rows, float x, float y, float radius, float blend, float target)
+        /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it but not those on a road, which keep the road's easy slope, and marks the level ones.</summary>
+        private static void LevelPlace(float[] cells, bool[] level, float[] roadGap, int columns, int rows, float x, float y, float radius, float blend, float target)
         {
             var reach = radius + blend;
             var lastColumn = Math.Min(Noise.Floor((x + reach) / TileSize) + 1, columns - 1);
@@ -661,7 +661,7 @@ namespace Moonwell.Procgen
                         cells[at] = target;
                         level[at] = true;
                     }
-                    else if (distance < reach)
+                    else if (distance < reach && roadGap[at] > 0f)
                     {
                         var t = (distance - radius) / blend;
                         cells[at] = target + (cells[at] - target) * (t * t * (3f - 2f * t));
@@ -894,7 +894,7 @@ namespace Moonwell.Procgen
                 for (var k = from; k < to; k++)
                 {
                     var place = places[k];
-                    LevelPlace(cells, level, wide, rows + 2, place.X - (firstColumn - 1) * TileSize, place.Y - (firstRow - 1) * TileSize, place.Radius, place.Blend, 0f);
+                    LevelPlace(cells, level, roadGap, wide, rows + 2, place.X - (firstColumn - 1) * TileSize, place.Y - (firstRow - 1) * TileSize, place.Radius, place.Blend, 0f);
                 }
             }
 
@@ -1069,8 +1069,9 @@ namespace Moonwell.Procgen
             }
 
             /// <summary>
-            /// A road's height at each of its points: the ground there, averaged over a few points each side, then kept to an easy
-            /// slope from its start, and from its end, so it meets both places at their level.
+            /// A road's height at each of its points: the ground there, averaged over a few points each side, kept within an easy
+            /// slope of every place's level edge, so it comes down to the places it meets and passes, then kept to an easy slope
+            /// from point to point, forward and back.
             /// </summary>
             private float[] Profile(Road road)
             {
@@ -1093,17 +1094,23 @@ namespace Moonwell.Procgen
                         sum += ground[j];
                     }
 
-                    heights[k] = sum / (last - first + 1);
+                    var cap = float.MaxValue;
+                    foreach (var place in places)
+                    {
+                        var dx = points[k].X - place.X;
+                        var dy = points[k].Y - place.Y;
+                        cap = Math.Min(cap, RoadSlope * Math.Max(Maths.Sqrt(dx * dx + dy * dy) - place.Radius, 0f));
+                    }
+
+                    heights[k] = Maths.Clamp(sum / (last - first + 1), -cap, cap);
                 }
 
-                heights[0] = ground[0];
                 for (var k = 1; k < count; k++)
                 {
                     var rise = RoadSlope * points[k - 1].DistanceTo(points[k]);
                     heights[k] = Maths.Clamp(heights[k], heights[k - 1] - rise, heights[k - 1] + rise);
                 }
 
-                heights[count - 1] = ground[count - 1];
                 for (var k = count - 2; k >= 0; k--)
                 {
                     var rise = RoadSlope * points[k].DistanceTo(points[k + 1]);

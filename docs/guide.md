@@ -1377,7 +1377,8 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
     owned by Neutral Hostile unless `owner:` says. `place.Units` lists them; ending the scope removes them. A place
     whose difficulty has no group, or one from `Level` or `Exit`, makes nothing.
   - `Exit` puts a place on one side of an area, where it joins the next, at a spot from the seed; the map puts what
-    leads on (a gate, a way to the next area) there.
+    leads on (a gate, a way to the next area) there. Its centre is on the side itself, so on the edge of
+    `Terrain.Playable` its outer half is the map's boundary; give a zone's own area for an exit to the next zone.
   - A place reads `Name`, `X`, `Y`, `Radius`, `Difficulty` and `Units`. It is made by the one plan holding the corner
     nearest its centre (`plan.Places`), so in a world made in pieces each place is made once.
 - Roads join places with path data a map can send units along:
