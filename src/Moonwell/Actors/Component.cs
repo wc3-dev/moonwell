@@ -48,8 +48,8 @@ namespace Moonwell
         {
         }
 
-        /// <summary>Runs OnAdded; Actor calls it, since a map overrides the hook as protected.</summary>
-        internal void CallAdded()
+        /// <summary>Runs OnAdded; Actor calls it, since a map overrides the hook as protected. Virtual, so the AI package's brains start after their OnAdded.</summary>
+        internal virtual void CallAdded()
         {
             OnAdded();
         }

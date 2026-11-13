@@ -22,6 +22,8 @@
     <!-- <PackageReference Include="Moonwell.Pathing" Version="MOONWELL_VERSION" /> -->
     <!-- For ground made from a seed while the game runs (hills, tiles and blocked ground), and noise, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Procgen" Version="MOONWELL_VERSION" /> -->
+    <!-- For brains that units, players and the game think with, and blackboards of facts, take the comment off the next line. -->
+    <!-- <PackageReference Include="Moonwell.AI" Version="MOONWELL_VERSION" /> -->
     <!-- For missiles, knockback, walls and ballistics, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Physics" Version="MOONWELL_VERSION" /> -->
     <!-- For parts of the map that units enter and leave, take the comment off the next line. -->
