@@ -97,6 +97,9 @@ namespace Moonwell.Build
             if (Directory.Exists(project.AssetsFolder))
             {
                 var packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                // A file that replaces one of the map's is listed already, or is no import (war3map.wts).
+                var imported = new List<string>();
                 foreach (var file in RelativeFiles(project.AssetsFolder))
                 {
                     var name = Images.PackedName(file);
@@ -106,9 +109,11 @@ namespace Moonwell.Build
                     }
 
                     packed[name] = file;
-                    if (File.Exists(Path.Combine(project.StagedFolder, name)))
+                    var target = Path.Combine(project.StagedFolder, name);
+                    var replaced = File.Exists(target) ? File.ReadAllBytes(target) : null;
+                    if (replaced == null)
                     {
-                        log.WriteLine($@"note: assets\{file} replaces the map's file");
+                        imported.Add(name);
                     }
 
                     if (Images.IsPng(file))
@@ -119,14 +124,21 @@ namespace Moonwell.Build
                     {
                         Copy(project.AssetsFolder, file, project.StagedFolder);
                     }
+
+                    // The same file in both is a copy `moonwell objects --to-map` put in the map, and needs no note.
+                    if (replaced != null && !replaced.AsSpan().SequenceEqual(File.ReadAllBytes(target)))
+                    {
+                        log.WriteLine($@"note: assets\{file} replaces the map's file");
+                    }
                 }
 
-                WriteGreyCopies(project, packed, log);
+                ImportList.Write(project.StagedFolder, imported.Concat(WriteGreyCopies(project, packed, log)));
             }
         }
 
         // An icon named BTN or PASBTN gets the grey copy a disabled button shows, unless the map or its assets have one (decision 250).
-        private static void WriteGreyCopies(MapProject project, Dictionary<string, string> packed, TextWriter log)
+        // Gives the copies it made.
+        private static IReadOnlyCollection<string> WriteGreyCopies(MapProject project, Dictionary<string, string> packed, TextWriter log)
         {
             var madeFrom = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var (name, file) in packed)
@@ -158,6 +170,8 @@ namespace Moonwell.Build
                     log.WriteLine($"warning: {failure.Message}");
                 }
             }
+
+            return madeFrom.Keys;
         }
 
         // War3Net packs a file under a hash of its name's UTF-16 letters, and Storm, the game's archive reader, hashes the name's bytes:

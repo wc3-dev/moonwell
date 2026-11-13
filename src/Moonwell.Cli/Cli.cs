@@ -82,8 +82,8 @@ namespace Moonwell.Tool
                     case "objects" when options.ToMap:
                         var written = MapObjects.WriteToMap(options.Folder, output);
                         output.WriteLine(written.Count > 0
-                            ? $@"moonwell: wrote {string.Join(", ", written)} into map\"
-                            : @"moonwell: map\ already holds the built objects");
+                            ? $@"moonwell: wrote {string.Join(", ", written.Take(8))}{(written.Count > 8 ? $" and {written.Count - 8} more" : string.Empty)} into map\"
+                            : @"moonwell: map\ already holds the built objects and assets");
                         break;
                     case "objects":
                         Objects(options.Folder, output);
