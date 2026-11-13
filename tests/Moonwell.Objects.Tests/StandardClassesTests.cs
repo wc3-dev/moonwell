@@ -131,6 +131,7 @@ namespace Moonwell.Objects.Tests
             Level = 4;
             Scale = 1.25f;
             FlyHeight = 50f;
+            Icon = @"ReplaceableTextures\CommandButtons\BTNCommander.blp";
             Tooltip = Name + " leads";
         }
     }
@@ -323,8 +324,9 @@ namespace Moonwell.Objects.Tests
             Assert.Equal(4, commander.Level);
             Assert.Equal(1.25f, commander.Scale);
             Assert.Equal(50f, commander.FlyHeight);
+            Assert.Equal(@"ReplaceableTextures\CommandButtons\BTNCommander.blp", commander.Icon);
             Assert.Equal("Commander leads", commander.Tooltip);
-            Assert.Equal(new[] { "ulev", "umpi", "umpm", "umvh", "unam", "usca", "utip" }, DeclaredOf(commander).Keys.OrderBy(k => k, StringComparer.Ordinal));
+            Assert.Equal(new[] { "uico", "ulev", "umpi", "umpm", "umvh", "unam", "usca", "utip" }, DeclaredOf(commander).Keys.OrderBy(k => k, StringComparer.Ordinal));
             // A float put into an int field is truncated, as the live setter does.
             Assert.Equal(300, DeclaredOf(commander)["umpm"]);
             Assert.Equal(3, new BigPotion().Charges);

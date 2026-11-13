@@ -28,7 +28,7 @@ public sealed class DeclaredAnalyzer : DiagnosticAnalyzer
     // they are the class's declared values.
     private static readonly Dictionary<string, HashSet<string>> SharedMembers = new()
     {
-        ["Unit"] = new HashSet<string> { "MaxLife", "MaxMana", "Mana", "Level", "Scale", "FlyHeight", "Name" },
+        ["Unit"] = new HashSet<string> { "MaxLife", "MaxMana", "Mana", "Level", "Scale", "FlyHeight", "Name", "Icon" },
         ["Hero"] = new HashSet<string> { "Strength", "Agility", "Intelligence" },
         ["Item"] = new HashSet<string> { "Charges" },
         ["Destructable"] = new HashSet<string> { "MaxLife", "Name" },

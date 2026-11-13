@@ -1370,6 +1370,12 @@ namespace Moonwell.Engine
             Natives.BlzSetUnitName(unit, name);
         }
 
+        /// <summary>The icon of a unit type, from the game: BlzGetAbilityIcon, which takes a unit type too.</summary>
+        public string IconOf(int typeId)
+        {
+            return Natives.BlzGetAbilityIcon(typeId);
+        }
+
         /// <summary>A hero's proper name, from the game: GetHeroProperName.</summary>
         public string ProperNameOf(unit hero)
         {
