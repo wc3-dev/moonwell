@@ -128,6 +128,15 @@ namespace Moonwell.Hosting
         /// <summary>A frame's name, as its .fdf gives it; the same on every machine.</summary>
         string NameOf(framehandle frame);
 
+        /// <summary>A frame's parent; the first time gives it a handle id, so it is asked on every machine.</summary>
+        framehandle ParentOf(framehandle frame);
+
+        /// <summary>Puts a point of a frame at a place on the screen, in the 4:3 middle's units.</summary>
+        void PinFrame(framehandle frame, int point, float x, float y);
+
+        /// <summary>Lets the game place its HUD's frames again when the window changes, or stops it, on this machine.</summary>
+        void AutoPlaceHud(bool on);
+
         /// <summary>Listens for every player slot's mouse releases, on one trigger; inside it EventPlayer is the player and EventLeftButton whether it was the left button.</summary>
         void ListenMouseUp(Action action);
 

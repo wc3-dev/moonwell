@@ -229,13 +229,62 @@ namespace Moonwell.Testing
         /// <summary>How many children a frame has.</summary>
         public int ChildCount(framehandle frame)
         {
-            return Live(frame).Children.Count;
+            var fake = Live(frame);
+            if (GameChildCounts.TryGetValue(fake.Under, out var count))
+            {
+                GameChildren(fake, count);
+            }
+
+            return fake.Children.Count;
+        }
+
+        /// <summary>How many children the game's frames have, by name, for those that have any; their children are made at the first ask, named "name child i".</summary>
+        public Dictionary<string, int> GameChildCounts = new Dictionary<string, int> { ["ConsoleUI"] = 6, ["SimpleInfoPanelUnitDetail"] = 14 };
+
+        /// <summary>Gives a game frame children up to a count, each a game frame of its own.</summary>
+        private void GameChildren(FakeFrame fake, int count)
+        {
+            while (fake.Children.Count < count)
+            {
+                var child = Game(fake.Under + " child " + fake.Children.Count);
+                child.Parent = fake;
+                fake.Children.Add(child);
+            }
         }
 
         /// <summary>A frame's child by index.</summary>
         public framehandle ChildAt(framehandle frame, int index)
         {
-            return handles[frames[frame].Children[index]];
+            var fake = frames[frame];
+            if (GameFrames.ContainsValue(fake))
+            {
+                GameChildren(fake, index + 1);
+            }
+
+            return handles[fake.Children[index]];
+        }
+
+        /// <summary>A frame's parent; a game frame with none is given one, a game frame named "parent of name".</summary>
+        public framehandle ParentOf(framehandle frame)
+        {
+            var fake = Live(frame);
+            fake.Parent ??= Game("parent of " + fake.Under);
+            return handles[fake.Parent];
+        }
+
+        /// <summary>Puts a point of a frame at a place on the screen: a point with no other frame.</summary>
+        public void PinFrame(framehandle frame, int point, float x, float y)
+        {
+            Asked(frame).Points.Add(new FakePoint { Point = point, Other = null!, X = x, Y = y });
+        }
+
+        /// <summary>Whether the game places its HUD's frames again when the window changes; true unless turned off.</summary>
+        public bool AutoPlace = true;
+
+        /// <summary>Lets the game place its HUD's frames again, or stops it.</summary>
+        public void AutoPlaceHud(bool on)
+        {
+            AutoPlace = on;
         }
 
         /// <summary>A frame's name.</summary>
@@ -395,15 +444,23 @@ namespace Moonwell.Testing
         public framehandle? GameFrame(string name)
         {
             Lookups++;
+            Game(name);
+            return named[name];
+        }
+
+        /// <summary>The game's frame of a name, made at the first ask.</summary>
+        private FakeFrame Game(string name)
+        {
             if (!named.TryGetValue(name, out var found))
             {
                 found = new framehandle();
                 named[name] = found;
                 frames[found] = new FakeFrame { Under = name };
+                handles[frames[found]] = found;
                 GameFrames[name] = frames[found];
             }
 
-            return found;
+            return frames[found];
         }
 
         private readonly Dictionary<string, framehandle> named = new Dictionary<string, framehandle>();

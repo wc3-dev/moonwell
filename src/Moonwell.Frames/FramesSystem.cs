@@ -40,6 +40,12 @@ namespace Moonwell
         /// <summary>How often the window is checked for a new size, in seconds.</summary>
         internal const float WindowCheck = 0.5f;
 
+        /// <summary>How often each player's HUD is set again where the game puts back what the map set, in seconds: as often as the map that found what it puts back did it (TheProject's WoW UI, 11-13).</summary>
+        internal const float HoldEvery = 1.0f;
+
+        /// <summary>Whether the timer that sets each player's HUD again is running.</summary>
+        private static bool holding;
+
         /// <summary>The TOC the build writes into the map, listing the game's template files the kinds are made from.</summary>
         internal const string TocFile = "MoonwellFrames.toc";
 
@@ -69,8 +75,30 @@ namespace Moonwell
             host.LoadToc(TocFile);
             host.LoadToc(MapTocFile);
             hud = new HudFrames(host);
+            holding = false;
             Moonwell.Events.LoadListener = Loaded;
             Cinematic.ScreenChanged = CinematicChanged;
+#if DEBUG
+            DebugMode.Command("frames", "writes the game's frame tree to CustomMapData\\Moonwell\\frames.txt: names, sizes, shown or not, children", (player, rest) => FrameTree.Write(host, player));
+#endif
+        }
+
+        /// <summary>Starts setting every player's HUD again every second, on each player's own machine, at the first change of a GameUi; started on every machine, as the change is made on every machine.</summary>
+        internal static void HoldHud()
+        {
+            if (holding)
+            {
+                return;
+            }
+
+            holding = true;
+            Game.Instance.Every(HoldEvery, () =>
+            {
+                foreach (var ui in gameUis.Values)
+                {
+                    ui.Hold();
+                }
+            });
         }
 
         /// <summary>

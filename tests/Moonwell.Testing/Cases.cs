@@ -1622,6 +1622,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "hud.whole-hud", Run = HudCases.WholeHud });
             list.Add(new Case { Name = "hud.move-piece", Run = HudCases.MovePiece });
             list.Add(new Case { Name = "hud.frame-to-piece", Run = HudCases.FrameToPiece });
+            list.Add(new Case { Name = "hud.moved-button-leaves-nothing", Run = HudCases.MovedButtonLeavesNothing });
+            list.Add(new Case { Name = "hud.hidden-hud-hides-blocker", Run = HudCases.HiddenHudHidesBlocker });
+            list.Add(new Case { Name = "hud.item-buttons-alone", Run = HudCases.ItemButtonsAlone });
+            list.Add(new Case { Name = "hud.glows-with-hero-buttons", Run = HudCases.GlowsWithHeroButtons });
+            list.Add(new Case { Name = "hud.selection-icons-alone", Run = HudCases.SelectionIconsAlone });
+#if DEBUG
+            list.Add(new Case { Name = "debug.hud.frame-tree", Run = HudCases.FrameTreeCommand });
+#endif
             list.Add(new Case { Name = "frames.load-makes-again", Run = FramesLoadCases.MakesAgain });
             list.Add(new Case { Name = "frames.load-events", Run = FramesLoadCases.Events });
             list.Add(new Case { Name = "frames.load-ended-stay-gone", Run = FramesLoadCases.EndedStayGone });
