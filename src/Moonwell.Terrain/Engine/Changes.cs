@@ -343,22 +343,48 @@ namespace Moonwell.Engine
             return tiles < last ? tiles : last;
         }
 
-        /// <summary>Works out every cell whose centre a pathing change holds, from what it was before and the changes held, after the change was made or ended.</summary>
+        /// <summary>
+        /// Works out every cell whose centre a pathing change holds, from what it was before and the changes held, after the
+        /// change was made or ended. A grid change walks only its corners that take something, so a large grid with few
+        /// blocked corners costs little.
+        /// </summary>
         private static void EachCell(TerrainChange change)
         {
-            var paths = Terrain.Paths;
-            var c0 = paths.ColumnOf(change.MinX);
-            var c1 = paths.ColumnOf(change.MaxX);
-            var r0 = paths.RowOf(change.MinY);
-            var r1 = paths.RowOf(change.MaxY);
             var meeting = Meeting(change);
+            if (change.Across > 0)
+            {
+                var values = change.Values!;
+                for (var at = 0; at < values.Length; at++)
+                {
+                    if (values[at] != 0)
+                    {
+                        var x0 = change.MinX + at % change.Across * 128f;
+                        var y0 = change.MinY + at / change.Across * 128f;
+                        EachCellIn(change, meeting, x0, y0, x0 + 128f, y0 + 128f, at);
+                    }
+                }
+
+                return;
+            }
+
+            EachCellIn(change, meeting, change.MinX, change.MinY, change.MaxX, change.MaxY, -1);
+        }
+
+        /// <summary>Works out the cells in a box whose centres the change holds: for a grid, those of its entry <paramref name="entry"/> alone.</summary>
+        private static void EachCellIn(TerrainChange change, List<TerrainChange> meeting, float minX, float minY, float maxX, float maxY, int entry)
+        {
+            var paths = Terrain.Paths;
+            var c0 = paths.ColumnOf(minX);
+            var c1 = paths.ColumnOf(maxX);
+            var r0 = paths.RowOf(minY);
+            var r1 = paths.RowOf(maxY);
             for (var row = r0; row <= r1; row++)
             {
                 var y = paths.CentreY(row);
                 for (var column = c0; column <= c1; column++)
                 {
                     var x = paths.CentreX(column);
-                    if (!change.Contains(x, y))
+                    if (entry >= 0 ? change.Index(x, y) != entry : !change.Contains(x, y))
                     {
                         continue;
                     }

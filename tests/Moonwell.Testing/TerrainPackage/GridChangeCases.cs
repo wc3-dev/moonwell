@@ -91,6 +91,86 @@ namespace Moonwell.Testing
             Expect.Equal(64, fake.PathSets, "and the game told again");
         }
 
+        /// <summary>
+        /// A grid block, which walks only its blocked corners, gives every cell what one rect block a corner gives, the walk
+        /// over every cell of an area: over pathing other changes hold, with a grid off the map's edge, made and taken back.
+        /// </summary>
+        public static void SparseBlock(FakeWorld world)
+        {
+            var asGrid = Sparse(true);
+            var asRects = Sparse(false);
+            var differ = 0;
+            for (var k = 0; k < asGrid.Length; k++)
+            {
+                differ += asGrid[k] == asRects[k] ? 0 : 1;
+            }
+
+            Expect.Equal(0, differ, "every cell the same, made and taken back");
+            var blocked = 0;
+            for (var k = 0; k < asGrid.Length / 2; k++)
+            {
+                blocked += asGrid[k] != 7 ? 1 : 0;
+            }
+
+            Expect.True(blocked > 200, "with cells blocked to compare");
+        }
+
+        /// <summary>Every cell's walk, fly and build (bits 1, 2, 4) with sparse blocked corners made, then again once they are taken back.</summary>
+        private static int[] Sparse(bool grid)
+        {
+            Flat();
+            var others = Game.Instance.Add(new Holder());
+            Terrain.Block(Bounds.FromCorners(new Vector2(500f, 500f), new Vector2(1500f, 900f)), Pathing.Fly, others);
+            Terrain.Block(1200f, 1300f, 300f, Pathing.Walk, others);
+            var holder = Game.Instance.Add(new Holder());
+            Place(grid, 640f, 640f, 12, holder, 0);
+            Place(grid, 2304f, 2304f, 4, holder, 1);
+            Terrain.Allow(Bounds.FromCorners(new Vector2(700f, 700f), new Vector2(1000f, 1000f)), Pathing.Walk, others);
+            var cells = new int[2 * 76 * 76];
+            Read(cells, 0);
+            holder.End();
+            Read(cells, 76 * 76);
+            others.End();
+            return cells;
+        }
+
+        /// <summary>A square of corners from a point, every third or so blocked with a kind by its place, as one grid or as a rect a corner.</summary>
+        private static void Place(bool grid, float x, float y, int side, Scope scope, int seed)
+        {
+            var kinds = new Pathing[side * side];
+            for (var k = 0; k < kinds.Length; k++)
+            {
+                var pick = (k * 7 + seed * 3 + k / side) % 9;
+                kinds[k] = pick == 0 ? Pathing.Walk : pick == 4 ? Pathing.Walk | Pathing.Build : pick == 6 ? Pathing.Fly : Pathing.None;
+            }
+
+            if (grid)
+            {
+                Terrain.Block(x, y, side, kinds, scope);
+                return;
+            }
+
+            for (var k = 0; k < kinds.Length; k++)
+            {
+                if (kinds[k] != Pathing.None)
+                {
+                    var cx = x + k % side * 128f;
+                    var cy = y + k / side * 128f;
+                    Terrain.Block(Bounds.FromCorners(new Vector2(cx - 64f, cy - 64f), new Vector2(cx + 64f, cy + 64f)), kinds[k], scope);
+                }
+            }
+        }
+
+        private static void Read(int[] cells, int from)
+        {
+            for (var k = 0; k < 76 * 76; k++)
+            {
+                var x = k % 76 * 32f + 16f;
+                var y = k / 76 * 32f + 16f;
+                cells[from + k] = (Terrain.IsWalkable(x, y) ? 1 : 0) + (Terrain.IsFlyable(x, y) ? 2 : 0) + (Terrain.IsBuildable(x, y) ? 4 : 0);
+            }
+        }
+
         /// <summary>A save stops a grid raise's craters, one a corner, and the next moment or a load makes them again; a load paints a grid of tiles again; Height stays as it was (game facts, 11-11).</summary>
         public static void SaveAndLoad(FakeWorld world)
         {
