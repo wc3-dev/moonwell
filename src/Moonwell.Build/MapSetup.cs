@@ -1,5 +1,8 @@
+using System.Buffers.Binary;
 using System.Numerics;
+using Moonwell.MapFiles;
 using War3Net.Build.Common;
+using War3Net.Build.Environment;
 using War3Net.Build.Extensions;
 using War3Net.Build.Info;
 
@@ -90,6 +93,50 @@ namespace Moonwell.Build
             }
 
             info.MapFlags |= MapFlags.UseCustomForces | MapFlags.FixedPlayerSettingsForCustomForces;
+        }
+
+        /// <summary>
+        /// Adds the tiles the map class declares and war3map.w3e does not list to the end of the map's tile list, in the class's
+        /// order, so the game draws them; the w3e's own tiles keep their places, so no painted corner changes (decision 283).
+        /// </summary>
+        /// <param name="map">The opened map, with its ground.</param>
+        /// <param name="settings">The map class's settings.</param>
+        /// <exception cref="BuildException">A declared number is no ground tile, or the list would pass the game's limit.</exception>
+        public static void ApplyTiles(War3Net.Build.Map map, MapSettings settings)
+        {
+            var declared = settings.Tiles;
+            if (declared == null || declared.Count == 0)
+            {
+                return;
+            }
+
+            var ground = map.Environment ?? throw new BuildException($@"{settings.TypeName}.Tiles: the map has no map\war3map.w3e to add them to");
+            var types = ground.TerrainTypes;
+            var had = types.Count;
+            foreach (var id in declared)
+            {
+                // A Tile constant is the id as the game's scripts read it, its first letter highest; the w3e's lowest.
+                var type = (TerrainType)BinaryPrimitives.ReverseEndianness(id);
+                if (!Enum.IsDefined(type))
+                {
+                    throw new BuildException($"{settings.TypeName}.Tiles: {id} is no ground tile; use the Tile constants");
+                }
+
+                if (!types.Contains(type))
+                {
+                    types.Add(type);
+                }
+            }
+
+            // A corner keeps its tile's place in the list in 6 bits since format 12 (patch 2.0.3), in 4 before; the game draws
+            // the 64th (probe, 11-13).
+            var limit = ground.FormatVersion >= MapEnvironmentFormatVersion.v12 ? 64 : 16;
+            if (types.Count > limit)
+            {
+                var added = string.Join(", ", types.Skip(had).Select(type => Rawcodes.TextOf((int)type)));
+                throw new BuildException(
+                    $@"{settings.TypeName}.Tiles: the map's tile list would hold {types.Count} tiles, past the {limit} its w3e format holds: {had} from map\war3map.w3e and {types.Count - had} declared ({added}); declare fewer, or remove tiles the map does not use in World Editor");
+            }
         }
     }
 }

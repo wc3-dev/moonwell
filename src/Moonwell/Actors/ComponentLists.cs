@@ -29,6 +29,17 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Adds the tiles to the end of the map's list, in the order given: <c>Tiles.Add(Tile.LordaeronSummerDirt, Tile.LordaeronSummerGrass);</c>.</summary>
+        public static void Add(this List<int> list, int first, int second, params int[] more)
+        {
+            list.Add(first);
+            list.Add(second);
+            for (var i = 0; i < more.Length; i++)
+            {
+                list.Add(more[i]);
+            }
+        }
+
         /// <summary>Adds the makers of player components to the end of the list, in the order given: <c>PlayerComponents.Add(() => new Aim(), () => new Score());</c>.</summary>
         public static void Add(this List<Func<PlayerComponent>> list, Func<PlayerComponent> first, Func<PlayerComponent> second, params Func<PlayerComponent>[] more)
         {

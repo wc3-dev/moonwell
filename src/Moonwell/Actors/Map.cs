@@ -46,6 +46,13 @@ namespace Moonwell
         /// </summary>
         protected List<Slot> Slots { get; set; } = new List<Slot>();
 
+        /// <summary>
+        /// The ground tiles the map's code paints, as <c>Tile</c> constants: the build adds the ones war3map.w3e does not list
+        /// to the end of the map's tile list, so the game draws them, and fails past the game's limit. Tiles World Editor
+        /// listed stay where they are, and so does every painted corner.
+        /// </summary>
+        protected List<int> Tiles { get; set; } = new List<int>();
+
         /// <summary>The slots the map sets up, in the order they were listed.</summary>
         internal List<Slot> StartSlots => Slots;
 
