@@ -98,8 +98,12 @@ namespace Moonwell.Testing
         /// <summary>In a development build every line is written at once, and a line that waited is due at once when that is set; Game.LogAtOnce reads and sets the world's.</summary>
         public static void WritesAtOnce(FakeWorld world)
         {
-            var file = new LogFile();
-            Expect.Equal(true, file.AtOnce, "at once in a development build");
+#if DEBUG
+            Expect.Equal(true, new LogFile().AtOnce, "at once in a development build");
+#else
+            Expect.Equal(false, new LogFile().AtOnce, "once a second in a release build");
+#endif
+            var file = new LogFile { AtOnce = true };
             Expect.Equal(true, file.Add("first", 5.0f), "the first line is written at once");
             file.Written(5.0f);
             Expect.Equal(true, file.Add("second", 5.0f), "a line in the same instant is written at once");
