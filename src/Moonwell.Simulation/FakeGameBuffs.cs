@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>
     /// The game buffs of a fake world, as seen 11-03: a spell's, an aura's or an attack's buff reads level 1 while it is on,

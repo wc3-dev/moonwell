@@ -1094,23 +1094,7 @@ namespace Moonwell
                 return false;
             }
 
-            widget? handle = null;
-            var unit = target as Unit;
-            var item = target as Item;
-            var destructable = target as Destructable;
-            if (unit != null)
-            {
-                handle = unit.Handle;
-            }
-            else if (item != null)
-            {
-                handle = item.Handle;
-            }
-            else if (destructable != null)
-            {
-                handle = destructable.Handle;
-            }
-
+            var handle = WidgetHandle(target);
             if (handle == null)
             {
                 return false;
@@ -1120,6 +1104,73 @@ namespace Moonwell
             var taken = Runtime.World.OrderUnitOn(Handle, order, handle);
             Inbound.CodeOrders--;
             return taken;
+        }
+
+        /// <summary>Has the unit use an item it carries, with no place and no target, as a click on the item does, and returns the game's answer. False, and no call to the game, once the unit or the item is gone.</summary>
+        public bool UseItem(Item item)
+        {
+            if (IsGone || item.IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.UseItem(Handle, item.Handle);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>Has the unit use an item it carries at a place, and returns the game's answer. False, and no call to the game, once the unit or the item is gone.</summary>
+        public bool UseItemAt(Item item, float x, float y)
+        {
+            if (IsGone || item.IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.UseItemAt(Handle, item.Handle, x, y);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>Has the unit use an item it carries on a unit, an item or a destructable, and returns the game's answer. False, and no call to the game, once the unit, the item or the target is gone.</summary>
+        public bool UseItemOn(Item item, Widget target)
+        {
+            if (IsGone || item.IsGone || target.IsGone)
+            {
+                return false;
+            }
+
+            var handle = WidgetHandle(target);
+            if (handle == null)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.UseItemOn(Handle, item.Handle, handle);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>The game's handle of a unit, an item or a destructable; null for any other widget.</summary>
+        private static widget? WidgetHandle(Widget target)
+        {
+            var unit = target as Unit;
+            if (unit != null)
+            {
+                return unit.Handle;
+            }
+
+            var item = target as Item;
+            if (item != null)
+            {
+                return item.Handle;
+            }
+
+            var destructable = target as Destructable;
+            return destructable != null ? destructable.Handle : null;
         }
 
         /// <summary>

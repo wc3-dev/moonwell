@@ -533,6 +533,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `AnimationSpeed` | read and set, 1 unless set; 0.5 plays at half speed, 0 holds the unit still mid-animation |
 | `AddAnimationTag(tag)`, `RemoveAnimationTag(tag)` | `AnimationTag.Defend`, `Alternate`, `Gold`, `Lumber`, `Work`, or any tag the game takes (`"upgrade first"`): the unit's animations play with it until it is removed |
 | `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
+| `UseItem(item)`, `UseItemAt(item, x, y)`, `UseItemOn(item, target)` | use an item the unit carries, as a click on it does, giving the game's answer; false once the unit, the item or the target is gone |
 | `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
@@ -1589,12 +1590,12 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
 - A unit brain's `Order`, `OrderAt` and `OrderOn` reach the game only when the order is new. A repeat, the same order
   on the same target or to a place within 32 of the last, gives true and is dropped while the unit still carries out
   the order its `CurrentOrder` read just after the last one was sent, or while the unit is idle and has done it:
-  within 64 of the place, its target dead or gone, or neither. It is sent again once another order took over, when the
-  unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives away. A unit idle
-  short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd jammed at one
-  place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends it again. An
-  order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and `OrderOn` send every
-  time.
+  within 64 of the place asked for, its target dead or gone, or neither. It is sent again once another order took
+  over, when the unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives
+  away. A unit idle short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd
+  jammed at one place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends
+  it again. An order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and
+  `OrderOn` send every time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
 ### Full control
@@ -1723,6 +1724,207 @@ unit.Add(new Grunt { HomeX = unit.X, HomeY = unit.Y, GoalX = camp.X, GoalY = cam
   `{ Life, Curve.Points(flee.Curve) }` and `{ EnemiesNear, 0, flee.Enemies, Curve.Rising }`. The `:float` keeps a
   curve of whole numbers, such as `0;1;1;0`, a list of `float`s, as `Points` takes. `Keep` can be set from data too.
 - An option's action is a plain method, so it can run anything, a behavior tree included.
+
+## AI: behaviour trees
+
+A brain can think with a behaviour tree: nodes built once, run from the root at each think, going on where the last
+pass left off.
+
+```csharp
+using Moonwell.AI;
+using static Moonwell.AI.Nodes;
+
+public sealed class Guard : UnitBrain
+{
+    public static readonly Fact<Unit?> Alarm = new Fact<Unit?>("alarm");
+    static readonly Fact<bool> Hurt = new Fact<bool>("hurt", keep: 0.5f,
+        read: board => board.Unit!.Life < board.Unit!.MaxLife * Data.Guards.Gate.FleeBelow);
+
+    public float HomeX, HomeY;
+    public Route? Out, Back;
+    readonly Tree tree;
+
+    public Guard()
+    {
+        tree = new Tree(this,
+            Select(
+                When(Hurt, MoveTo(() => HomeX, () => HomeY)),   // cuts in when Hurt turns true
+                When(Alarm, Attack(Alarm)),
+                Repeat(Sequence(FollowRoute(() => Out), FollowRoute(() => Back)))));
+    }
+
+    protected override void OnAdded() => ThinkEvery = 0.25f;
+    protected override void Think() => tree.Run();
+}
+```
+
+- A brain makes its tree in its constructor, `new Tree(this, root)`, from the helpers of `Nodes`, and runs it in
+  `Think`: each `tree.Run()` is one pass from the root, giving `Status.Running`, `Succeeded` or `Failed`. A node that
+  gives Running goes on at the next pass, and a root that ended starts again. A node is in one tree, at one place, so
+  each brain builds its own: a node put in a second place throws. `tree.Stop()` cuts off every running node; called
+  from a node during a pass, it waits for the pass to end. A `Run` from inside a `Run` of the same tree is reported
+  and refused.
+- Control: `Sequence` runs its children in order until one fails, `Select` until one succeeds; `Parallel` runs every
+  child at each pass, failing as soon as one fails; `Repeat(child, times)` starts the child anew each time it
+  succeeds, forever without `times`; `Invert` swaps success and failure, and `Succeed` succeeds however its child ends.
+- Checks and waits: `If(condition)` checks once, as a sequence's guard, and `When(condition, child)` runs the child
+  while the condition holds, checked at every pass; both also take a fact, a `Fact<bool>` holding when true and a fact
+  of a class when not null. `Wait(seconds)` waits; `Cooldown(seconds, child)` fails without starting the child until
+  that long after it ended; `Timeout(seconds, child)` halts a child that has run that long and fails. `Do(() => ...)`
+  is a leaf of your own function.
+- Unit actions order the unit through its brain, so a repeat it carries out never reaches the game. Each fails for a
+  dead or removed unit and a refused order, and on a player or game brain's tree is reported and fails.
+  - `MoveTo(() => x, () => y)` succeeds within 64 of the place, read at every pass so a moving place is followed.
+  - `Attack(target)`, a function or a `Fact<Unit?>`, follows a new target, succeeds once it dies, and fails when the
+    unit stands idle with it alive, as one that can't see or reach it.
+  - `Cast(order)`, at a place or on a target, runs while the unit carries the order out and succeeds once it stops: a
+    stun reads the same as a spell that went off. A second cast of the same spell is sent, and so is one on another
+    target; a cast the unit still carries out as its brain last gave it is only watched.
+  - `FollowRoute(() => route)` walks a `Route`'s points from the one after the nearest;
+    `FollowRoute(() => route, Orders.Attack)` attack-moves. A route has no loop, so a patrol is a way out and a way
+    back, repeated. A map gets a `Route` from `unit.FindPath(x, y)` (Moonwell.Pathing) or a procgen road's
+    `road.Toward(place)`.
+  - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does, and a use of the item the unit
+    still carries out is only watched. A potion leaves no order to watch, so it succeeds at once.
+  - `MoveTo` and `FollowRoute` also fail when the unit is idle short of the place just after the order, as one jammed in
+    a crowd after its one more try.
+- Utility AI: `Pick(Scored(() => score, child), ...)` runs the option with the best score, re-scored at each pass; 0 or
+  less is never picked. A running option is kept unless another beats it by more than a tenth or its own score drops
+  to 0 or less, and with none above 0 it fails.
+- Interrupts: a `When` directly in a `Select` is watched. While a child below it runs on, the first `When` above it
+  whose condition holds and whose child does not fail at once cuts in: its branch takes over, then the child that ran
+  is stopped, so that child's `Stop` runs after the new branch has started. A `When` whose child fails at once, as an
+  attack on a dead target, leaves the running child alone. A running `When` whose condition no longer holds fails, and
+  the select goes on to the next child in the same pass. Nothing outside the select is watched, and an `If` never is.
+- Thresholds and timings are numbers to tune: keep them in a `data` file and read them through `Data`, as
+  `Data.Guards.Gate.FleeBelow` above comes from `data\guards.csv` ([Data files](#data-files)).
+
+A map's own node derives from `Node`:
+
+```csharp
+public sealed class Chop : Node
+{
+    protected override void Start() => OrderOn(Orders.Harvest, Read(TreeNear)!);
+    protected override Status Run() => Read(TreeNear)!.IsAlive ? Status.Running : Status.Succeeded; // until it falls
+    protected override void Stop() { }   // cut off by an interrupt
+}
+```
+
+- `Start` runs when the node starts, at the first pass that reaches it and again after it ended; `Run` gives its status
+  at each pass; `Stop` runs only when it is cut off while running, by an interrupt, its parent ending or `tree.Stop()`,
+  never when it ends by itself.
+- It reads `Unit`, `Blackboard` and `Read(fact)` (here `TreeNear`, a map's `Fact<Destructable?>`) and orders the unit
+  through the brain with `Order`, `OrderAt` and `OrderOn`, so repeats are dropped as the actions' are.
+
+## Fast simulation
+
+The `Moonwell.Simulation` package runs a map's own code in .NET on a fake of the game, faster than real time: its
+components, brains, reactions and timers, with units that walk, chase and fight by their object data. A test plays a
+map's AI through a fight or a long game and checks what it decided. The same seed gives the same run.
+
+It goes in a test project beside the map project, not in its folder: the build compiles every `.cs` under the map
+project into the map. Only the test project references `Moonwell.Simulation`; a package the map project uses goes into
+the map's Lua.
+
+```
+MyMap\MyMap.csproj                the map
+MyMap.Tests\MyMap.Tests.csproj    the tests
+MyMap.Tests\GuardTests.cs
+```
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyMap\MyMap.csproj" />
+    <PackageReference Include="Moonwell.Simulation" Version="0.16.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>
+```
+
+`dotnet test MyMap.Tests` runs them. A map whose code names `Data`, `Placed` or `Lua` needs a `moonwell build` first,
+which writes those classes for the compile.
+
+```csharp
+using Moonwell;
+using MyMap;
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)] // one simulation at a time
+
+public class GuardTests
+{
+    [Fact]
+    public void AGuardAnswersTheAlarmOnce()
+    {
+        var sim = Simulation.Start(new Settings(), seed: 7);     // the map's start, as the game runs it
+        var guard = Unit.Create(ObjectTypes.FourCC("hfoo"), Player.One, 0f, 0f, Game.Instance);
+        guard.Add(new Guard { HomeX = 0f, HomeY = 0f });
+        var raider = Unit.Create(ObjectTypes.FourCC("ogru"), Player.Two, 1500f, 0f, Game.Instance);
+        Player.One.Blackboard().Set(Guard.Alarm, raider);
+
+        sim.Run(1f);                                             // the guard's brain thinks on its own meanwhile
+        Assert.Equal(1, sim.OrdersOf(guard));                    // one attack reached the game, not one a think
+        Assert.InRange(sim.StoodOf(guard), 0.15f, 0.17f);        // held once, at that order
+        Assert.True(guard.X > 0f);                               // and on its way
+    }
+
+    [Fact]
+    public void TheRaidsAreBeaten()
+    {
+        var sim = Simulation.Start(new Settings());
+        Assert.True(sim.RunUntil(() => sim.Alive(Player.Two) == 0, 600f));   // ten minutes of the map's own raids
+        Assert.True(sim.Alive(Player.One) > 0);
+    }
+}
+```
+
+- `Simulation.Start(map)` starts the map as the game would: its slots playing on their teams (slot 0 as a person when
+  it lists none), its object classes registered, its `Components`, its `PlayerComponents` on each playing slot, then
+  every `OnGameStart`. `Simulation.Start()` starts an empty game, with nothing of the map's, for units and brains the
+  test makes by id. Either takes a `seed`: it gives the dice of the attacks, and the seed after it the map's own random
+  numbers (`Game.Random` and a `Dice` made without a seed).
+- `Run(seconds)` plays steps of 0.02 s, the seconds rounded to whole steps, a half step up. `RunUntil(check, seconds)`
+  stops at the first step its check holds and gives true, or false when it never did. In each step Moonwell's timers
+  run first, the brains' own 0.02 s step among them, so brains think as in the game; then each unit acts, in the order
+  made. `sim.World.Advance` moves the fake's time without the play, so units neither walk nor fight: use `Run`.
+- `Alive(player)` counts the player's units alive and not removed, Moonwell's dummies left out. `OrdersOf(unit)` counts
+  the orders the unit was given, repeats included, and `StoodOf(unit)` the seconds it stood at their holds. `Time` is
+  the game's seconds so far.
+- A unit plays by its type's numbers: on .NET those of its object data (the map's class for the type, else the standard
+  object), or those `SetNumbers(typeId, new UnitNumbers { ... })` gives for units made from then on. A unit takes its
+  attack range, cooldown, damage, dice and acquisition range when it is made; its life, move speed and armor start from
+  them and count as they are at each step. A unit of a type with no numbers never moves, and its orders are neither
+  counted nor held.
+- Every order holds the unit 0.16 s (8 steps) before it starts, a repeat of the same order too, as the game holds a
+  unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
+  to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
+  anything else. An attack to a point fights the nearest enemy within acquisition range on the way, then walks on. Hold
+  position never moves and swings at an enemy within range. `stop` leaves the unit idle, patrol stands, and any other
+  order (a spell, `attackground`) ends after its hold.
+- The fake knows orders by name from a short list: `smart`, `stop`, `move`, `attack`, `attackground`, `patrol`,
+  `holdposition`, `defend`, `undefend`, `holybolt`, `immolation` and `unimmolation`. Any other name leaves the unit idle
+  at once, and is neither counted nor held.
+- A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
+  a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
+  damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
+  not counted or held.
+- Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
+  through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
+  3.0.1.24371); turning, vision, buffs, and spells and their effects; an attack's damage point and a missile's flight
+  (a swing lands at once); heroes' attributes (a hero fights on its base numbers); units placed in World Editor; and the
+  Damage, Terrain, Areas, Input and Physics systems. A simulation shows how the map's own logic decides, not exactly how
+  a fight goes in the game.
+- The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit
+  from running tests side by side.
 
 ## Interactions and finding
 
