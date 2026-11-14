@@ -1328,6 +1328,12 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   was; most areas reach close to both, and a few corners sit flat on them. A range all above 0 makes a plateau with
   a steep rim. `EdgeFade` (512 unless set) brings the heights back to the ground at the area's edge, so an area
   inside a hand-made map has no seam; set it to 0 for pieces that meet each other.
+- Flat land skips the heights: when every biome the plan reads, at its corners and along its roads, has `Lowest` and
+  `Highest` at 0, no hills, fade or craters are worked out, so `Make` goes from the roads to the tiles, with at most a
+  short "Heights" step to level its places. A flat biome `Use`d over the whole area hides the generator's own hills, as
+  the cells past the area's edge fade to 0 (with an `EdgeFade` of 0 they are read, and hills there bring the heights
+  back). A whole 480 by 480 map of flat `SnowyForest` with a road takes 411 steps instead of 986, about 8 s instead of
+  20 at 20 ms a step (counted in .NET).
 - An area of up to 20,000 corners is raised a crater a corner. A bigger one, as a whole 480 by 480 map, would need
   more craters than the game can hold (see Terrain), so `Plan`, `Make` and `Apply` raise it with one wide crater every
   4 by 4 corners, fitted to the hills, and the plan's heights are what those craters make, so tiles, blocking and trees
