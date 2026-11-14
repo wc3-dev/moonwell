@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 
 namespace Moonwell.Testing
@@ -47,6 +48,44 @@ namespace Moonwell.Testing
             Expect.Equal(6, fake.Craters.Count, "the end asks no crater");
             Expect.Equal(5, fake.Stopped.Count, "it stops its five");
             hill.End();
+        }
+
+        /// <summary>
+        /// A grid raise with craters apart (decision 343): a crater every spacing corners of the radius and its own amount, 0
+        /// making none; a corner moves by the sum of the craters in reach, each by its amount x cos(90 x distance / radius),
+        /// nothing at the radius or past it; the end takes it all back exactly.
+        /// </summary>
+        public static void WideRaise(FakeWorld world)
+        {
+            var fake = Flat();
+            var holder = Game.Instance.Add(new Holder());
+            Terrain.Raise(1280f, 1280f, 2, new[] { 100f, 50f, 0f, 20f }, holder, spacing: 4, radius: 512f);
+            Expect.Equal(3, fake.Craters.Count, "a crater each but the one of 0");
+            Expect.Near(1792f, fake.Craters[1][0], "4 corners apart");
+            Expect.Near(1792f, fake.Craters[2][1], "the second row 4 corners up");
+            Expect.Near(512f, fake.Craters[0][2], "of the radius");
+            Expect.Near(-50f, fake.Craters[1][3], "a raise is a crater of negative depth");
+            Expect.Near(100f, Terrain.Height(1280f, 1280f), "a crater's centre: the next is at its radius, which moves nothing");
+            var half = (float)Math.Cos(Math.PI / 4);
+            Expect.Near(150f * half, Terrain.Height(1536f, 1280f), "halfway between two: the sum of both");
+            Expect.Near(70f * half, Terrain.Height(1792f, 1536f), "a corner a row from two craters, beside them");
+            Expect.Near(0f, Terrain.Height(1280f, 1792f), "the crater of 0 makes nothing, and the others are at their radius");
+            Expect.Near(0f, Terrain.Height(768f, 1280f), "at the radius past the edge");
+            holder.End();
+            Expect.Equal(3, fake.Stopped.Count, "the end stops its three");
+            var flat = true;
+            for (var j = 0; j < 20; j++)
+            {
+                for (var i = 0; i < 20; i++)
+                {
+                    flat = flat && Terrain.Height(i * 128f, j * 128f) == 0f;
+                }
+            }
+
+            Expect.True(flat, "and the ground is exactly as before");
+            Expect.True(Terrain.Raise(1280f, 1280f, 1, new[] { 1f }, Game.Instance, spacing: 0, radius: 512f).HasEnded, "a spacing of 0 is refused");
+            Expect.True(Terrain.Raise(1280f, 1280f, 1, new[] { 1f }, Game.Instance, spacing: 4, radius: 0f).HasEnded, "a radius of 0 is refused");
+            Expect.Equal(3, fake.Craters.Count, "and asks the game nothing");
         }
 
         /// <summary>A grid of tiles paints a tile a corner and leaves a corner of 0; a change on top wins and its end shows the grid's tile; the grid's end shows the ground before.</summary>

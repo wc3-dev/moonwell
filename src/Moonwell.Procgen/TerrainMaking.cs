@@ -43,14 +43,45 @@ namespace Moonwell.Procgen
 
         private void Next()
         {
+#if DEBUG
+            var step = work.Step;
+            var started = DebugSession.Clock();
+            var finished = work.Run(budget);
+            Slow(step, DebugSession.Clock() - started);
+            if (!finished)
+            {
+                return;
+            }
+#else
             if (!work.Run(budget))
             {
                 return;
             }
+#endif
 
             IsDone = true;
             timer.End();
             Done?.Invoke();
         }
+
+#if DEBUG
+        /// <summary>A step longer than this, in real seconds, is reported once a making (decision 344).</summary>
+        private const float SlowStep = 1f;
+
+        private bool reportedSlow;
+
+        /// <summary>Reports, in a development build, the first step that took longer than a second of real time: a making that seems to have stopped.</summary>
+        private void Slow(string step, float seconds)
+        {
+            if (reportedSlow || !(seconds > SlowStep))
+            {
+                return;
+            }
+
+            reportedSlow = true;
+            var craters = work.Craters != null ? work.Craters() : 0;
+            Dev.Report("TerrainGenerator.Make", "a step of \"" + step + "\" took " + DebugPanel.Tenths(seconds) + " s of real time, with " + DebugPanel.Count(craters) + " craters made; the game makes each crater slower the more it holds, so make less at once, or grow the world (Grow)");
+        }
+#endif
     }
 }
