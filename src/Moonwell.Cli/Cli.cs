@@ -9,13 +9,14 @@ namespace Moonwell.Tool
     internal static class Cli
     {
         private const string Usage =
-            "usage: moonwell build [folder] [--release]\n" +
-            "       moonwell run [folder] [--release] [--game <exe>]\n" +
-            "       moonwell watch [folder] [--release] [--run] [--game <exe>]\n" +
+            "usage: moonwell build [folder] [--release] [--verbose]\n" +
+            "       moonwell run [folder] [--release] [--verbose] [--game <exe>]\n" +
+            "       moonwell watch [folder] [--release] [--verbose] [--run] [--game <exe>]\n" +
             "       moonwell new <name>\n" +
             "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
             "       moonwell objects [folder] [--to-map]\n" +
+            "       moonwell mdx <model> [--mode sd|hd|de] [--game <folder>]\n" +
             "       moonwell game find <path> [--mode sd|hd|de] [--game <folder>]\n" +
             "       moonwell game extract <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
 
@@ -32,10 +33,27 @@ namespace Moonwell.Tool
         /// <returns>0 when it worked, 1 for an error, 2 for arguments it does not understand.</returns>
         public static int Run(string[] args, TextWriter output, TextWriter error, Action<string, string> start, Action? stop = null, CancellationToken cancel = default)
         {
+            // moonwell alone, in a terminal, asks which command to run.
+            if (args.Length == 0 && CommandPicker.Ask(output) is { } picked)
+            {
+                args = picked;
+            }
+
             if (args.Length == 1 && args[0] == "--version")
             {
                 output.WriteLine(Version());
                 return 0;
+            }
+
+            if (args.Length > 0 && args[0] == "mdx")
+            {
+                if (!TryParseGame(args, out var model))
+                {
+                    error.WriteLine(Usage);
+                    return 2;
+                }
+
+                return Report(error, () => ModelView.Show(model.Path, model.Mode, model.Install, output));
             }
 
             if (args.Length > 0 && args[0] == "game")
@@ -92,7 +110,7 @@ namespace Moonwell.Tool
                         Watch(options, output, error, start, stop ?? (() => { }), cancel);
                         break;
                     default:
-                        Build(options, output, start);
+                        Build(options, output, error, start);
                         break;
                 }
             });
@@ -105,6 +123,10 @@ namespace Moonwell.Tool
             {
                 command();
                 return 0;
+            }
+            catch (ReportedException)
+            {
+                return 1;
             }
             catch (BuildException failure)
             {
@@ -119,14 +141,15 @@ namespace Moonwell.Tool
             }
         }
 
-        private static void Build(Options options, TextWriter output, Action<string, string> start)
+        private static void Build(Options options, TextWriter output, TextWriter error, Action<string, string> start)
         {
             if (options.Launch && !File.Exists(options.Game))
             {
                 throw new BuildException($"the game is not at {options.Game}");
             }
 
-            var archive = MapBuild.Run(options.Folder, new BuildOptions { Release = options.Release }, output);
+            var archive = BuildView.Show(output, error, options.Verbose, (log, step) => MapBuild.Run(options.Folder, new BuildOptions { Release = options.Release, Step = step }, log))
+                ?? throw new ReportedException();
             if (options.Launch)
             {
                 start(options.Game, $"-launch -windowmode windowed -loadfile \"{archive}\"");
@@ -164,8 +187,9 @@ namespace Moonwell.Tool
             watcher.EnableRaisingEvents = true;
             while (true)
             {
-                Report(error, () => Build(options, output, start));
-                output.WriteLine("moonwell: watching for changes; Ctrl+C stops");
+                Report(error, () => Build(options, output, error, start));
+                output.WriteLine();
+                output.WriteLine("Watching for changes; Ctrl+C stops");
                 try
                 {
                     changed.Wait(cancel);
@@ -316,14 +340,16 @@ namespace Moonwell.Tool
 
         private static bool TryParseGame(string[] args, out GameOptions options)
         {
-            options = new GameOptions();
-            if (args.Length < 2 || args[1] is not ("find" or "extract"))
+            // mdx takes its model and the same options as game find, its paths looked for in HD art unless told.
+            var model = args.Length > 0 && args[0] == "mdx";
+            options = new GameOptions { Mode = model ? "hd" : "sd" };
+            if (!model && (args.Length < 2 || args[1] is not ("find" or "extract")))
             {
                 return false;
             }
 
-            options.Extract = args[1] == "extract";
-            for (var i = 2; i < args.Length; i++)
+            options.Extract = !model && args[1] == "extract";
+            for (var i = model ? 1 : 2; i < args.Length; i++)
             {
                 var argument = args[i];
                 var next = i + 1 < args.Length ? args[i + 1] : null;
@@ -383,6 +409,10 @@ namespace Moonwell.Tool
                 {
                     options.Release = true;
                 }
+                else if (argument == "--verbose" && builds)
+                {
+                    options.Verbose = true;
+                }
                 else if (argument == "--run" && options.Command == "watch")
                 {
                     options.Launch = true;
@@ -422,6 +452,11 @@ namespace Moonwell.Tool
             return (!gameGiven || options.Launch) && (options.Command != "new" || positionals.Count == 1) && (options.Command != "import" || positionals.Count == 2);
         }
 
+        // A build failure the build view has shown already.
+        private sealed class ReportedException : Exception
+        {
+        }
+
         private sealed class GameOptions
         {
             public bool Extract { get; set; }
@@ -449,6 +484,9 @@ namespace Moonwell.Tool
             public string Source { get; set; } = string.Empty;
 
             public bool Release { get; set; }
+
+            // build, run and watch --verbose: every line of the build's log, dotnet's whole output among them, beside the checklist.
+            public bool Verbose { get; set; }
 
             // run, and watch --run: start the game with the map.
             public bool Launch { get; set; }
