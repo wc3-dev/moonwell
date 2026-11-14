@@ -112,7 +112,7 @@ namespace Moonwell.Testing
             Expect.Same(small, Check(world, weakest), "80 life of 100 before 100 of 500: the least life left, not the least share");
         }
 
-        /// <summary>A rule scoring 0 rules an enemy out, a weight of 0 too; a map's score is clamped to 0..1; with every enemy ruled out there is no target, though the enemies are counted; By(null) throws.</summary>
+        /// <summary>A rule scoring 0 rules an enemy out, a weight of 0 too; a map's score is clamped to 0..1; with every enemy ruled out there is no target, though the enemies are counted, and no spot is kept; By(null) throws.</summary>
         public static void RuledOut(FakeWorld world)
         {
             var fighter = Brain(world, 0f, 0f, 1000f).Fighter;
@@ -129,6 +129,13 @@ namespace Moonwell.Testing
             fighter.Targets.Add(Target.By(u => u == near ? 0f : 1f).Weight(0f));
             Expect.Same(far, Check(world, fighter), "a rule of weight 0 still rules an enemy out");
             Expect.Throws<ArgumentNullException>(() => Target.By(null!), "By(null)");
+
+            var picky = Brain(world, 5000f, 0f, 1000f).Fighter;
+            picky.Route = Through(0f, 0f, 10000f, 0f);
+            picky.Targets.Add(Target.By(u => 0f));
+            At(world, 1, 5300f, 0f);
+            Expect.True(Check(world, picky) == null, "its only enemy ruled out");
+            Expect.True(!picky.hasSpot, "with no target, no spot is kept for the leash");
         }
 
         /// <summary>Weights are powers: the score is the rules' scores, each to its weight, multiplied, to 1 over the weights' sum; Weight gives a new rule and leaves the old; below 0 throws; MostDangerous reads damage over cooldown, below 1 a second counted as 1.</summary>
@@ -163,7 +170,7 @@ namespace Moonwell.Testing
             Expect.Same(harmless, Check(world, danger), "no attack counts as 1 a second: scored, never ruled out");
         }
 
-        /// <summary>The fight attacks its target, casts the first spell whose aim has someone, whose condition holds and that is ready, watches the cast while the unit carries it, then goes back to the attack; a spell the unit lacks, on cooldown or short of mana is skipped; each aim; and the class overloads read the class's id.</summary>
+        /// <summary>The fight attacks its target, casts the first spell whose aim has someone, whose condition holds and that is ready, watches the cast while the unit carries it, then goes back to the attack; a spell the unit lacks, on cooldown or short of mana is skipped; each aim, its own unit too; a spell with no target cast again once over; and the class overloads read the class's id.</summary>
         public static void Spells(FakeWorld world)
         {
             var brain = Brain(world, 0f, 0f, 800f);
@@ -261,11 +268,35 @@ namespace Moonwell.Testing
             tree.Run();
             Expect.Equal("target attack", Given(world), "nobody hurt: no ally to aim at, so it attacks");
 
+            fighter.Spells.Clear();
+            fighter.Spells.Add(Spell.OnSelf(HealId, "holybolt", when: f => f.EnemiesNear >= 3));
+            tree.Run();
+            Expect.Equal(1, world.Orders.Count, "OnSelf's condition does not hold with two enemies near: the attack goes on");
+            fighter.Spells.Clear();
+            fighter.Spells.Add(Spell.OnSelf(HealId, "holybolt", when: f => f.EnemiesNear >= 2));
+            world.OrderTargets.Clear();
+            tree.Run();
+            Expect.Equal("target attack, target holybolt", Given(world), "OnSelf: a cast on a unit");
+            Expect.Same(unit.Handle, world.OrderTargets[0], "on its own unit");
+
+            world.SetCurrentOrder(unit.Handle, 0);
+            fighter.Spells.Clear();
+            fighter.Spells.Add(Spell.Self(ClapId, "immolation"));
+            world.Orders.Clear();
+            tree.Run();
+            Expect.Equal("immediate immolation", Given(world), "a spell with no target");
+            tree.Run();
+            Expect.Equal(1, world.Orders.Count, "not again while the unit carries it out");
+            world.SetCurrentOrder(unit.Handle, 0);
+            tree.Run();
+            Expect.Equal("immediate immolation, immediate immolation", Given(world), "over and ready, the same spell again: the repeat reaches the game");
+
             ObjectTypes.Id<TestBolt>(ObjectTypes.FourCC("A0cb"));
             var typed = Spell.On<TestBolt>("thunderbolt");
             Expect.Equal(ObjectTypes.FourCC("A0cb"), typed.AbilityId, "On with a class reads its id");
             Expect.Equal("thunderbolt", typed.Order, "and keeps the order string");
             Expect.Equal(ObjectTypes.FourCC("A0cb"), Spell.Self<TestBolt>("thunderbolt").AbilityId, "Self with a class");
+            Expect.Equal(ObjectTypes.FourCC("A0cb"), Spell.OnSelf<TestBolt>("thunderbolt").AbilityId, "OnSelf with a class");
             Expect.Equal(ObjectTypes.FourCC("A0cb"), Spell.Ally<TestBolt>("thunderbolt").AbilityId, "Ally with a class");
             Expect.Equal(ObjectTypes.FourCC("A0cb"), Spell.At<TestBolt>("thunderbolt").AbilityId, "At with a class");
         }
@@ -316,36 +347,69 @@ namespace Moonwell.Testing
             Expect.Equal("immediate immolation", world.Orders[world.Orders.Count - 1], "a refused spell gives way to the next");
         }
 
-        /// <summary>It pulls back below 30% of its life or outnumbered two to one, its unit counted and structures on neither side, and comes back at 70% and not outnumbered; a Below and an Outnumbered of 0 turn them off; the node walks back along the route from the point before the nearest to the start and stands there on hold, or goes to its To.</summary>
+        /// <summary>It pulls back below 30% of its life or outnumbered two to one, its unit counted and structures on neither side, and walks all the way back before it judges again (decision 357): there it comes back when its own reason is gone, hurt at 70%, outnumbered once no longer outnumbered where it stands, at any life; a step out of the meet range on the way changes nothing; a Below and an Outnumbered of 0 turn them off; the node walks back along the route from the point before the nearest to the start and stands there on hold, or goes to its To, and stands as near as it gets when the brain finds its move done short of it.</summary>
         public static void PullingBack(FakeWorld world)
         {
-            var brain = Brain(world, 0f, 0f, 600f);
+            var brain = Brain(world, 500f, 0f, 600f);
             var unit = brain.Unit;
             var fighter = brain.Fighter;
-            var foe = At(world, 1, 300f, 0f);
+            fighter.Route = Through(0f, 0f, 1000f, 0f);
+            var foe = At(world, 1, 800f, 0f);
             BrainCases.Steps(world, 1);
             Expect.True(!fighter.ShouldPullBack(), "whole, one to one");
             unit.Life = 29f;
             BrainCases.Steps(world, 1);
             Expect.True(fighter.ShouldPullBack(), "below 30% of its life");
             Expect.True(fighter.PullingBack, "it pulls back");
+            unit.Life = 100f;
+            BrainCases.Steps(world, 1);
+            Expect.True(fighter.ShouldPullBack(), "whole again on the way, it still walks all the way back");
+            world.PlaceUnit(unit.Handle, 30f, 0f);
             unit.Life = 69f;
             BrainCases.Steps(world, 1);
-            Expect.True(fighter.ShouldPullBack(), "below 70%, it stays back");
+            Expect.True(fighter.ShouldPullBack(), "at its route's start below 70%, it stays back");
             unit.Life = 70f;
             BrainCases.Steps(world, 1);
-            Expect.True(!fighter.ShouldPullBack(), "at 70%, not outnumbered: it comes back");
+            Expect.True(!fighter.ShouldPullBack(), "at 70%, it comes back");
             Expect.True(!fighter.PullingBack, "no longer pulling back");
             unit.Life = 31f;
             BrainCases.Steps(world, 1);
             Expect.True(!fighter.ShouldPullBack(), "at 31%, coming from the fight, it fights on");
 
             unit.Life = 100f;
-            var second = At(world, 1, 0f, 300f);
+            world.PlaceUnit(unit.Handle, 500f, 0f);
+            var second = At(world, 1, 500f, 550f);
             BrainCases.Steps(world, 1);
             Expect.True(fighter.ShouldPullBack(), "two enemies to its one: outnumbered");
             Expect.Equal(2, fighter.EnemiesNear, "two enemies");
             Expect.Equal(1, fighter.AlliesNear, "its own unit");
+            world.PlaceUnit(unit.Handle, 450f, -100f);
+            BrainCases.Steps(world, 1);
+            Expect.True(fighter.ShouldPullBack(), "whole and no longer outnumbered a step back, yet it walks on back: no swing at the range's edge");
+            Expect.Equal(1, fighter.EnemiesNear, "the step took one out of its meet range");
+            world.PlaceUnit(unit.Handle, 0f, 0f);
+            world.PlaceUnit(foe.Handle, 300f, 0f);
+            world.PlaceUnit(second.Handle, 0f, 300f);
+            BrainCases.Steps(world, 1);
+            Expect.True(fighter.ShouldPullBack(), "at its start, both followed: still outnumbered, it stays");
+            world.PlaceUnit(second.Handle, 0f, 900f);
+            BrainCases.Steps(world, 1);
+            Expect.True(!fighter.ShouldPullBack(), "one gone from its meet range: it comes back");
+
+            fighter.PullBack.Below = 0f;
+            unit.Life = 50f;
+            world.PlaceUnit(second.Handle, 0f, 300f);
+            BrainCases.Steps(world, 1);
+            Expect.True(fighter.ShouldPullBack(), "outnumbered at half its life, with Below 0");
+            world.PlaceUnit(second.Handle, 0f, 900f);
+            BrainCases.Steps(world, 1);
+            Expect.True(!fighter.ShouldPullBack(), "at its start, no longer outnumbered: it comes back at 50%, as only a pull-back for life waits for 70%");
+
+            fighter.PullBack.Below = 0.3f;
+            unit.Life = 100f;
+            world.PlaceUnit(second.Handle, 0f, 300f);
+            BrainCases.Steps(world, 1);
+            Expect.True(fighter.ShouldPullBack(), "outnumbered again");
             var friend = At(world, 0, -100f, 0f);
             var tower = At(world, 1, 0f, -300f);
             world.MakeStructure(tower.Handle);
@@ -393,9 +457,26 @@ namespace Moonwell.Testing
             back.Fighter.Route = null;
             tree.Run();
             Expect.Equal("immediate holdposition", world.Orders[4], "no route, no To and no fight: it stands where it is");
+
+            var crowded = Brain(world, 3000f, 5000f, 600f);
+            crowded.Fighter.PullBack.To = new Vector2(3500f, 5000f);
+            crowded.Unit.Life = 10f;
+            var crowd = new Tree(crowded, CombatNodes.PullBack(crowded.Fighter));
+            BrainCases.Steps(world, 1);
+            Expect.True(crowded.Fighter.ShouldPullBack(), "hurt: it pulls back");
+            crowd.Run();
+            world.PlaceUnit(crowded.Unit.Handle, 3400f, 5000f);
+            world.SetCurrentOrder(crowded.Unit.Handle, 0);
+            crowd.Run();
+            world.SetCurrentOrder(crowded.Unit.Handle, 0);
+            crowd.Run();
+            Expect.Equal("point move, point move, immediate holdposition", Given(world), "idle 100 short of its To, sent once more, idle again where it stood: as near as it gets, it stands");
+            crowded.Unit.Life = 70f;
+            BrainCases.Steps(world, 1);
+            Expect.True(!crowded.Fighter.ShouldPullBack(), "back as near as it gets, at 70% it comes back");
         }
 
-        /// <summary>The spot where the walker leaves its route is kept, and an enemy farther than the leash from it is dropped, while one within it is fought; the spot is forgotten once the unit is back within 64 of a route point with none met; with no route it walks back to the spot and forgets it there.</summary>
+        /// <summary>The spot where the walker leaves its route is kept, and an enemy farther than the leash from it is dropped, while one within it is fought; the spot is forgotten once the unit is back within 64 of its route, anywhere along it, with no target; with no route it walks back to the spot and forgets it there.</summary>
         public static void Leash(FakeWorld world)
         {
             var brain = Brain(world, 500f, 0f, 600f);
@@ -417,7 +498,7 @@ namespace Moonwell.Testing
             other.Kill();
             world.PlaceUnit(unit.Handle, 1000f, 40f);
             Expect.True(Check(world, fighter) == null, "none met");
-            Expect.True(!fighter.hasSpot, "back within 64 of a point of its route with none met: the spot is forgotten");
+            Expect.True(!fighter.hasSpot, "back within 64 of its route with no target: the spot is forgotten");
             world.PlaceUnit(runner.Handle, 1000f, 600f);
             Expect.Same(runner, Check(world, fighter), "the runner comes into its meet range: met again");
             Expect.Near(40f, fighter.spotY, "the leash now from where it stands");
@@ -440,6 +521,77 @@ namespace Moonwell.Testing
             Check(world, guard.Fighter);
             Expect.True(!guard.Fighter.hasSpot, "within 64 of the spot: forgotten");
             Is(Status.Failed, walk.Run(), "and nothing is left to walk");
+
+            var lane = Brain(world, 1000f, 10000f, 600f);
+            lane.Fighter.Route = Through(0f, 10000f, 6000f, 10000f);
+            lane.Fighter.Leash = 1000f;
+            var first = At(world, 1, 1000f, 10400f);
+            Expect.Same(first, Check(world, lane.Fighter), "a fight on a straight lane");
+            first.Kill();
+            world.PlaceUnit(lane.Unit.Handle, 3000f, 10030f);
+            Expect.True(Check(world, lane.Fighter) == null, "over, the walker on at x 3,000");
+            Expect.True(!lane.Fighter.hasSpot, "30 from its lane, 3,000 from either of its two points: back, so the spot is forgotten");
+            var second = At(world, 1, 3200f, 10300f);
+            Expect.Same(second, Check(world, lane.Fighter), "an enemy 2,200 from the first fight's spot, beyond the leash of 1,000, is fought");
+        }
+
+        /// <summary>A target the unit left alive, idle after the brain's attack on it, is set aside for 3 s and the next best attacked in the same pass, still counted near; a target whose attack the game refuses is set aside too, and with every target refused the fight fails.</summary>
+        public static void SetAside(FakeWorld world)
+        {
+            var brain = Brain(world, 0f, 0f, 800f);
+            var unit = brain.Unit;
+            var fighter = brain.Fighter;
+            var cliff = At(world, 1, 200f, 0f);
+            var next = At(world, 1, 400f, 0f);
+            var tree = new Tree(brain, CombatNodes.Fight(fighter));
+            Expect.Same(cliff, Check(world, fighter), "the nearest");
+            tree.Run();
+            world.SetCurrentOrder(unit.Handle, 0);
+            Check(world, fighter);
+            Is(Status.Running, tree.Run(), "it fights on");
+            Expect.Equal("target attack, target attack", Given(world), "idle with its target alive, it can't reach it: the next best is attacked at once");
+            Expect.Same(next.Handle, world.OrderTargets[1], "the next");
+            Expect.Same(next, fighter.Target, "now the target");
+            Expect.Equal(2, fighter.EnemiesNear, "the one set aside still counted near");
+            Expect.Same(next, Check(world, fighter), "and skipped at the next check");
+            BrainCases.Steps(world, 140);
+            Expect.Same(next, Check(world, fighter), "still set aside 2.86 s after");
+            BrainCases.Steps(world, 10);
+            Expect.Same(cliff, Check(world, fighter), "met again 3 s after");
+
+            var walled = Brain(world, 5000f, 0f, 800f);
+            At(world, 1, 5200f, 0f);
+            At(world, 1, 5400f, 0f);
+            var fight = new Tree(walled, CombatNodes.Fight(walled.Fighter));
+            Check(world, walled.Fighter);
+            world.OrderAnswer = false;
+            Is(Status.Failed, fight.Run(), "every attack refused: it fails");
+            world.OrderAnswer = true;
+            Expect.Equal("target attack, target attack", Given(world), "each target tried once, the nearest first");
+            Expect.True(walled.Fighter.Target == null, "both set aside");
+            Expect.True(!walled.Fighter.Meets(), "so it meets none to fight");
+        }
+
+        /// <summary>After a kill the unit picks its next target by itself, which full control holds; the hold wakes the walker, which attacks its next target at the next step, not at its next think.</summary>
+        public static void AfterAKill(FakeWorld world)
+        {
+            var unit = At(world, 0, 0f, 0f);
+            var walker = unit.Add(new LaneWalker { MeetRange = 600f, PullBack = { Outnumbered = 0f } });
+            walker.ThinkEvery = 0f;
+            var first = At(world, 1, 200f, 0f);
+            var second = At(world, 1, 400f, 0f);
+            world.Orders.Clear();
+            world.OrderTargets.Clear();
+            walker.Wake();
+            BrainCases.Steps(world, 1);
+            Expect.Equal("target attack", Given(world), "woken, it attacks the nearest");
+            first.Kill();
+            world.SetCurrentOrder(unit.Handle, 0);
+            world.Acquire(unit.Handle);
+            Expect.Equal("target attack, immediate holdposition", Given(world), "its own pick of the next is held at once");
+            BrainCases.Steps(world, 1);
+            Expect.Equal("target attack, immediate holdposition, target attack", Given(world), "and the walker, woken, attacks the next at the next step");
+            Expect.Same(second.Handle, world.OrderTargets[1], "the next");
         }
 
         /// <summary>An enemy that damages the unit is met however far, for 3 s after its last hit, but not counted near; a new attacker wakes the brain once; an ally's hit is not noted; Attacker scores 1 for one that hit, 0.5 for another.</summary>

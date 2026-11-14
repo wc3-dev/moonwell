@@ -5,10 +5,10 @@ namespace Moonwell.AI
 {
     /// <summary>
     /// A unit under full control (decisions 330 to 332), while any of its brains has FullControl. A target it picks by
-    /// itself with no order is answered with hold position inside the acquire event. Any other order not from code, the
-    /// game's, an AI script's or a person's, is answered with hold position at the loop's next step, not inside its event,
-    /// which would not hold, and for a computer's attack back closes the game (game facts, 11-14). Its sleep is off while
-    /// under control.
+    /// itself with no order is answered with hold position inside the acquire event, and its brains are woken. Any other
+    /// order not from code, the game's, an AI script's or a person's, is answered with hold position at the loop's next
+    /// step, not inside its event, which would not hold, and for a computer's attack back closes the game (game facts,
+    /// 11-14). Its sleep is off while under control.
     /// </summary>
     internal sealed class Control
     {
@@ -99,17 +99,7 @@ namespace Moonwell.AI
                 }
 
                 control.Hold();
-                var components = unit.components;
-                for (var k = 0; k < components.Count; k++)
-                {
-                    var brain = components[k] as UnitBrain;
-                    if (brain != null)
-                    {
-                        brain.sentOrder = null;
-                        brain.retried = false;
-                        brain.Wake();
-                    }
-                }
+                Wake(unit, true);
             }
 
             waiting.Clear();
@@ -166,12 +156,33 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>A unit picks a target by itself: held at once when under control with no order, idle or on a hold not from code, both of which read 0. A unit code put on hold holds already.</summary>
+        /// <summary>A unit picks a target by itself: held at once when under control with no order, idle or on a hold not from code, both of which read 0, and its brains woken, as after a kill. A unit code put on hold holds already.</summary>
         private static void Acquired(Unit unit)
         {
             if (units.TryGetValue(unit, out var control) && !control.codeHold && Runtime.World.CurrentOrderOf(unit.Handle) == 0)
             {
                 control.Hold();
+                Wake(unit, false);
+            }
+        }
+
+        /// <summary>Wakes the unit's brains, having them forget the order they last sent first when asked.</summary>
+        private static void Wake(Unit unit, bool forget)
+        {
+            var components = unit.components;
+            for (var k = 0; k < components.Count; k++)
+            {
+                var brain = components[k] as UnitBrain;
+                if (brain != null)
+                {
+                    if (forget)
+                    {
+                        brain.sentOrder = null;
+                        brain.retried = false;
+                    }
+
+                    brain.Wake();
+                }
             }
         }
 

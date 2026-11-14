@@ -335,10 +335,11 @@ public class LocalTests
                 var rule = Moonwell.AI.Combat.Target.Weakest.Weight(2f);
                 fighter.Meets();
                 walker.MeetRange = 300f;
+                walker.Targets.Add(Moonwell.AI.Combat.Target.Nearest);
             });
             """);
 
-        Assert.Equal(new[] { "MW0001: fighter.Meets()", "MW0001: walker.MeetRange" }, found);
+        Assert.Equal(new[] { "MW0001: fighter.Meets()", "MW0001: walker.MeetRange", "MW0048: walker.Targets", "MW0001: walker.Targets" }, found);
     }
 
     [Fact]

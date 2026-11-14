@@ -614,6 +614,9 @@ namespace Moonwell.Hosting
         /// <summary>The units within a radius of a place, as the game finds them, in a new list.</summary>
         List<unit> UnitsInRange(float x, float y, float radius);
 
+        /// <summary>The units within a radius of a place, as the game finds them, into a list the caller keeps, cleared first.</summary>
+        void UnitsInRange(float x, float y, float radius, List<unit> into);
+
         /// <summary>The area of an ability a unit has, at its level; 0 when it has none.</summary>
         float AbilityArea(unit unit, int abilityId);
 

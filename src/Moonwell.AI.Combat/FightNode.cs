@@ -5,8 +5,9 @@ namespace Moonwell.AI.Combat
     /// that is ready is cast, then watched as <c>Cast</c> watches it, Running while the unit's order id is the one read just
     /// after, and the brain is woken when it changes; otherwise, and once the cast is over, it attacks the target. A spell
     /// the game refuses gives way to the next, and a refused cast leaves the attack the unit carries out alone. Every order
-    /// goes through the brain, so a repeat the unit carries out never reaches the game. Failed with no target, for a dead or
-    /// removed unit, and when the attack is refused.
+    /// goes through the brain, so a repeat the unit carries out never reaches the game. A target whose attack the game
+    /// refuses, or that the unit left alive, idle after the brain's attack on it, is set aside and the next best fought.
+    /// Failed with no target, and for a dead or removed unit.
     /// </summary>
     internal sealed class FightNode : Node
     {
@@ -38,7 +39,7 @@ namespace Moonwell.AI.Combat
             attacked = null;
         }
 
-        /// <summary>Watches a cast under way, else casts the first ready spell, else attacks.</summary>
+        /// <summary>Watches a cast under way, else casts the first ready spell, else attacks; a target it can't attack is set aside and the next tried.</summary>
         protected override Status Run()
         {
             var unit = Unit;
@@ -63,6 +64,14 @@ namespace Moonwell.AI.Combat
                 casting = false;
             }
 
+            // Idle after the brain's attack on a living target: the unit can't reach or see it.
+            var brain = tree!.unitBrain!;
+            if (brain.sentOrder == Orders.Attack && brain.sentTarget == target && unit.CurrentOrder == "")
+            {
+                fighter.SetAside(target);
+                return Run();
+            }
+
             refused = false;
             if (CastFirstReady(unit, target))
             {
@@ -77,7 +86,8 @@ namespace Moonwell.AI.Combat
 
             if (!OrderOn(Orders.Attack, target))
             {
-                return Status.Failed;
+                fighter.SetAside(target);
+                return Run();
             }
 
             attacked = target;
@@ -92,12 +102,14 @@ namespace Moonwell.AI.Combat
             {
                 var spell = spells[i];
                 Unit? aim = target;
-                if (spell.aim == Spell.NoTarget)
+                if (spell.aim == Spell.NoTarget || spell.aim == Spell.OnItself)
                 {
                     if (spell.whenFighter != null && !spell.whenFighter(fighter))
                     {
                         continue;
                     }
+
+                    aim = unit;
                 }
                 else if (spell.aim == Spell.OnAlly)
                 {
@@ -117,13 +129,13 @@ namespace Moonwell.AI.Combat
                     continue;
                 }
 
-                if (!Give(spell, aim))
+                if (!Give(spell, unit, aim))
                 {
                     refused = true;
                     continue;
                 }
 
-                castId = Runtime.World.CurrentOrderOf(unit.Handle);
+                castId =Runtime.World.CurrentOrderOf(unit.Handle);
                 casting = castId != 0;
                 if (casting)
                 {
@@ -136,17 +148,29 @@ namespace Moonwell.AI.Combat
             return false;
         }
 
-        /// <summary>Gives the cast through the brain: on the aim, at its place, or with no target; whether the game took it.</summary>
-        private bool Give(Spell spell, Unit aim)
+        /// <summary>Gives the cast through the brain, as <c>Cast</c> does: on the aim, at its place, or with no target; whether the game took it. A unit still carrying it out as the brain last gave it is left on it; otherwise the brain forgets its last order, so a cast just like the last is sent.</summary>
+        private bool Give(Spell spell, Unit unit, Unit aim)
         {
-            if (spell.aim == Spell.NoTarget)
+            var kind = spell.aim == Spell.NoTarget ? UnitBrain.Plain : spell.aim == Spell.AtPlace ? UnitBrain.AtPlace : UnitBrain.OnWidget;
+            var x = kind == UnitBrain.AtPlace ? aim.X : 0f;
+            var y = kind == UnitBrain.AtPlace ? aim.Y : 0f;
+            var on = kind == UnitBrain.OnWidget ? aim : null;
+            var brain = tree!.unitBrain!;
+            var current = unit.CurrentOrder;
+            if (current != "" && current == brain.sentCurrent && brain.Repeats(spell.Order, kind, x, y, on))
+            {
+                return true;
+            }
+
+            brain.sentOrder = null;
+            if (kind == UnitBrain.Plain)
             {
                 return Order(spell.Order);
             }
 
-            if (spell.aim == Spell.AtPlace)
+            if (kind == UnitBrain.AtPlace)
             {
-                return OrderAt(spell.Order, aim.X, aim.Y);
+                return OrderAt(spell.Order, x, y);
             }
 
             return OrderOn(spell.Order, aim);

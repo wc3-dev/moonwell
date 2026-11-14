@@ -1635,7 +1635,8 @@ protected override void OnAdded()
 ```
 
 - A target the unit picks by itself while it carries no order, idle or on Moonwell's hold, is answered at once with
-  hold position. A unit that code put on hold position already holds, and gets nothing.
+  hold position, and the unit's brains are woken to think at the next step, so a unit that killed its target is
+  ordered on within 0.02 s. A unit that code put on hold position already holds, and gets nothing.
 - Every order not from code, the game's own, an AI script's or a person's click, is answered with hold position at the
   loop's next step, within 0.02 s. The unit's brains forget the order they last sent, so their next one reaches the
   game, and are woken to think in that step. It is not answered inside its event: there hold position doesn't hold,
@@ -1853,6 +1854,7 @@ unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen 
     {
         Spell.On(StormBolt, "thunderbolt", when: t => t is Hero),               // on its target
         Spell.Self(ThunderClap, "thunderclap", when: f => f.EnemiesNear >= 3),  // no target
+        Spell.OnSelf(FrostArmor, "frostarmor", when: f => f.EnemiesNear >= 2),  // on itself
         Spell.Ally(HolyLight, "holybolt", when: a => a.Life < a.MaxLife / 2),   // a hurt ally, itself counted
         Spell.At(Blizzard, "blizzard"),                                         // at its target's place
     },
@@ -1866,11 +1868,14 @@ unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen 
   map's own `OnAdded` changes them after `base.OnAdded()`. Its tree, built at its first think, pulls back while it
   should, else fights while it meets an enemy, else walks its route.
 - It meets, at each think, a living enemy unit its owner sees (an order at an unseen unit is refused), structures too,
-  within its meet range, and one that damaged it in the last 3 s however far. It keeps the spot where it left its
-  route, and an enemy farther than `Leash` from it is not fought: 2,100, the default, about the game's own chase limit.
-  That limit ends only a chase of a target the unit picked itself; an `attack` from code chased 3,960 in 15 s
-  (3.0.1.24371), so the leash is the walker's only one. A fleeing enemy that crosses it is dropped and the walker goes
-  back. Once back within 64 of a point of its route with no enemy met, it forgets the spot.
+  within its meet range, and one that damaged it in the last 3 s however far. It keeps the spot where it stood at the
+  first think with a target, and an enemy farther than `Leash` from it is not fought: 2,100, the default, about the
+  game's own chase limit. That limit ends only a chase of a target the unit picked itself; an `attack` from code chased
+  3,960 in 15 s (3.0.1.24371), so the leash is the walker's only one. A fleeing enemy that crosses it is dropped and the
+  walker goes back. Once back on its route, within 64 of it anywhere along it, with no target, it forgets the spot.
+- An enemy it can't attack is set aside for 3 s, and the next best is fought at once: one whose attack the game
+  refuses, or one still alive when the unit is found idle after its attack on it, as it can't reach or see it. It
+  still counts near.
 - It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
   `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
   and walks back to where its fight started.
@@ -1890,28 +1895,31 @@ the best of them scores 1 and none scores 0:
   weights: (s1^w1 × s2^w2)^(1 / (w1 + w2)). `Weight(2f)` counts a rule twice, and 0 leaves its score out but still
   rules out at 0; a weight below 0 throws `ArgumentException`. With no rules, `Nearest`.
 - With `Nearest` and `Weakest`, an enemy 200 away at full life and one 400 away at half life both score
-  (1 × 0.5)^(1/2) = 0.71, and the first met wins. With `Weakest.Weight(2f)` the far one scores (0.5 × 1²)^(1/3) = 0.79
-  against (1 × 0.5²)^(1/3) = 0.63.
-- The best wins, the first met among equals, and stays the target until another scores more than its score times 1.1,
-  10% more, so a walker does not flip between two enemies. A target that died, can't be seen or is no longer met is
-  dropped.
+  (1 × 0.5)^(1/2) = 0.71, and the first in the game's list of units in range wins. With `Weakest.Weight(2f)` the far
+  one scores (0.5 × 1²)^(1/3) = 0.79 against (1 × 0.5²)^(1/3) = 0.63.
+- The best wins, among equals the first in the game's list of units in range (an attacker met from beyond it comes
+  after them), and stays the target until another scores more than its score times 1.1, 10% more, so a walker does
+  not flip between two enemies. A target that died, can't be seen or is no longer met is dropped.
 - Casting: at each think in a fight, the first spell in `Spells` whose aim has someone, whose condition holds and that
   is ready is cast through the brain: ready, the unit has the ability, its cooldown is over and its mana is at least
   the ability's mana cost now, all read from the game. The walker watches the cast as `Cast` does, while the unit's
   order id is the one read just after it, then goes back to the attack. At a cast's end the game leaves the unit idle,
-  and the target it picks by itself 0.01 s later is held by full control without a wake, so the brain is woken once
-  the unit's order id changes and attacks again within 0.04 s, not at its next think. A cast on a target out of range
-  walks up to it first.
+  so the brain is woken once the unit's order id changes and attacks again within 0.04 s, not at its next think. A cast
+  on a target out of range walks up to it first. The brain forgets its last order before a cast, as `Cast` does, so
+  the same spell cast again once the last is over reaches the game.
 - A spell the game refuses gives way to the next, and then the attack, in the same pass. A refused cast leaves the
   attack the unit carries out alone (3.0.1.24371), so that attack is not sent again.
-- `On` and `At` take a condition on the target, `Self` one on the fighter, and `Ally` one on each ally in meet range,
-  its own unit counted, checked from the most hurt (the least share of its most life) until it holds. With no
-  condition, `Ally` takes the most hurt whose life is below its most, and the others always cast when ready.
+- `On` and `At` take a condition on the target, `Self` and `OnSelf` (a spell on a unit, cast at the walker itself)
+  one on the fighter, and `Ally` one on each ally in meet range, its own unit counted, checked from the most hurt (the
+  least share of its most life) until it holds. With no condition, `Ally` takes the most hurt whose life is below its
+  most, and the others always cast when ready.
 - Pulling back: below 30% of its life (`Below`), or outnumbered, with at least 2 (`Outnumbered`) enemies in its meet
   range to each allied unit there, its own counted, structures on neither side and attackers beyond its meet range not
   counted. It walks back with `move` along its route to the start, from the point before the one nearest it, or to
-  `To`, and stands there on hold position. It comes back at or above 70% (`ComeBackAt`) and no longer outnumbered. A
-  `Below` and an `Outnumbered` of 0 never pull back.
+  `To`, and stands there on hold position, or as near as it gets in a crowd. Only there does it judge again, and it
+  comes back when its own reason is gone: pulled back hurt, at or above 70% of its life (`ComeBackAt`); outnumbered,
+  once no longer outnumbered in its meet range where it stands, at any life. Then it is judged afresh. A `Below` and an
+  `Outnumbered` of 0 never pull back.
 
 A map's own brain makes a `Fighter` and builds a tree of its own from the same nodes:
 
@@ -1945,6 +1953,8 @@ public sealed class CampGuard : UnitBrain
 
 - `fighter.Meets()` and `fighter.ShouldPullBack()` check once an instant, whichever comes first: they find the enemies
   met and pick the target. `Target`, `EnemiesNear`, `AlliesNear` and `PullingBack` read what the last check found.
+  Once it pulls back, `ShouldPullBack` holds until the unit is within 64 of where `PullBack` takes it.
+- `Targets` and `Spells` are lists every machine shares: change them outside `Local.For` (MW0001).
 - `fighter.Hurt(damage)` in `OnDamaged` notes the attacker and wakes the brain when it is new; a lane walker does it.
 - `Fight(fighter)` casts or attacks the target and fails with none; `PullBack(fighter)` walks back and stands;
   `WalkLane(fighter)` walks the fighter's `Route`. A class that inherits `LaneWalker` overrides `Root()` for its own

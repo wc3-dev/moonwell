@@ -77,6 +77,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.combat.refused", Run = CombatCases.Refused });
             list.Add(new Case { Name = "ai.combat.pull-back", Run = CombatCases.PullingBack });
             list.Add(new Case { Name = "ai.combat.leash", Run = CombatCases.Leash });
+            list.Add(new Case { Name = "ai.combat.set-aside", Run = CombatCases.SetAside });
+            list.Add(new Case { Name = "ai.combat.after-a-kill", Run = CombatCases.AfterAKill });
             list.Add(new Case { Name = "ai.combat.attacker", Run = CombatCases.Attacker });
             list.Add(new Case { Name = "ai.combat.unseen", Run = CombatCases.Unseen });
             list.Add(new Case { Name = "ai.combat.meet-range", Run = CombatCases.MeetRange });

@@ -50,11 +50,9 @@ namespace Moonwell.AI.Combat
         }
 
         /// <summary>The rules its target is picked by, the fighter's <c>Targets</c>; with none, the nearest.</summary>
-        [LocalSafe]
         public List<Target> Targets => Fighter.Targets;
 
         /// <summary>The spells it casts while it fights, the fighter's <c>Spells</c>.</summary>
-        [LocalSafe]
         public List<Spell> Spells => Fighter.Spells;
 
         /// <summary>When it pulls back and comes back, the fighter's <c>PullBack</c>, set in braces: <c>PullBack = { Below = 0.25f }</c>.</summary>

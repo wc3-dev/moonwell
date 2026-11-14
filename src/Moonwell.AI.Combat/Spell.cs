@@ -23,13 +23,16 @@ namespace Moonwell.AI.Combat
         /// <summary>The aim of a spell at the target's place.</summary>
         internal const int AtPlace = 3;
 
+        /// <summary>The aim of a spell on the fighter's own unit.</summary>
+        internal const int OnItself = 4;
+
         /// <summary>Its aim.</summary>
         internal readonly int aim;
 
         /// <summary>The condition on a unit, for a spell aimed at a unit or its place; null holds always.</summary>
         internal readonly Func<Unit, bool>? whenUnit;
 
-        /// <summary>The condition on the fighter, for a spell with no target; null holds always.</summary>
+        /// <summary>The condition on the fighter, for a spell with no target or on the fighter's own unit; null holds always.</summary>
         internal readonly Func<Fighter, bool>? whenFighter;
 
         /// <summary>Makes a spell.</summary>
@@ -72,6 +75,19 @@ namespace Moonwell.AI.Combat
             where T : Ability
         {
             return Self(ObjectTypes.IdOf<T>(), order, when);
+        }
+
+        /// <summary>A spell cast on the fighter's own unit, as a spell on a unit, when the condition holds for the fighter: <c>Spell.OnSelf(FrostArmorId, "frostarmor", when: f =&gt; f.EnemiesNear &gt;= 2)</c>.</summary>
+        public static Spell OnSelf(int abilityId, string order, Func<Fighter, bool>? when = null)
+        {
+            return new Spell(abilityId, order, OnItself, null, when);
+        }
+
+        /// <summary>A spell of a registered ability class cast on the fighter's own unit, as <c>OnSelf</c> with its id.</summary>
+        public static Spell OnSelf<T>(string order, Func<Fighter, bool>? when = null)
+            where T : Ability
+        {
+            return OnSelf(ObjectTypes.IdOf<T>(), order, when);
         }
 
         /// <summary>A spell cast on an ally in meet range, the fighter's unit counted: of those for whom the condition holds, the one with the least share of its most life, the condition checked from the most hurt. Without a condition, an ally whose life is below its most.</summary>

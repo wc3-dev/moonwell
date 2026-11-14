@@ -12,8 +12,9 @@ namespace Moonwell.AI.Combat
         /// Fights the fighter's target, read at every pass: casts the first of its spells whose aim has someone, whose
         /// condition holds and that is ready, Running while the unit carries the cast out, as <c>Cast</c> watches it, and
         /// wakes the brain when the cast ends, as the game then leaves the unit idle; then it goes back to attacking the
-        /// target. A spell the game refuses gives way to the next, and the attack the unit carries out is left alone. Failed
-        /// with no target, for a dead or removed unit, and when the attack is refused. Put it under
+        /// target. A spell the game refuses gives way to the next, and the attack the unit carries out is left alone. A
+        /// target whose attack the game refuses, or that the unit left alive, idle after the attack, is set aside for 3 s
+        /// and the next best fought. Failed with no target left, and for a dead or removed unit. Put it under
         /// <c>When(fighter.Meets, ...)</c>, whose check picks the target.
         /// </summary>
         public static Node Fight(Fighter fighter)
@@ -24,8 +25,9 @@ namespace Moonwell.AI.Combat
         /// <summary>
         /// Pulls the fighter back with move orders, which never fight on the way: to its PullBack's <c>To</c>, else back
         /// along its route point by point to the start, from the point before the one nearest the unit, else to where its
-        /// fight started. There, or with nowhere to go, it stands on hold position. Running while the unit lives; Failed for
-        /// a dead or removed unit and a refused order. Put it under <c>When(fighter.ShouldPullBack, ...)</c>.
+        /// fight started. There, as near as it gets, or with nowhere to go, it stands on hold position. Running while the
+        /// unit lives; Failed for a dead or removed unit and a refused order. Put it under
+        /// <c>When(fighter.ShouldPullBack, ...)</c>, which holds until the unit is there.
         /// </summary>
         public static Node PullBack(Fighter fighter)
         {

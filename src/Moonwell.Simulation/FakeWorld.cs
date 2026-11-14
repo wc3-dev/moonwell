@@ -670,6 +670,14 @@ namespace Moonwell
         public List<unit> UnitsInRange(float x, float y, float radius)
         {
             var found = new List<unit>();
+            UnitsInRange(x, y, radius, found);
+            return found;
+        }
+
+        /// <summary>The units UnitsInRange gives, into a list, cleared first.</summary>
+        public void UnitsInRange(float x, float y, float radius, List<unit> into)
+        {
+            into.Clear();
             foreach (var made in madeUnits)
             {
                 if (unitTypes[made] == 0 || RemovedUnits.Contains(made))
@@ -681,11 +689,9 @@ namespace Moonwell
                 var dy = UnitY(made) - y;
                 if (dx * dx + dy * dy <= radius * radius)
                 {
-                    found.Add(made);
+                    into.Add(made);
                 }
             }
-
-            return found;
         }
         /// <summary>The game seconds since the world was made; in a development build, Moonwell's time on its clock (Runtime.Clock), as NativeWorld's.</summary>
         public float Now()

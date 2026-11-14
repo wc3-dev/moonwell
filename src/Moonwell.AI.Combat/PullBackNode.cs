@@ -5,8 +5,9 @@ namespace Moonwell.AI.Combat
     /// <summary>
     /// Pulls the fighter back with move orders, which never fight on the way: to its PullBack's place when it has one, else
     /// back along its route, from the point before the one nearest the unit to the start, else to where its fight started.
-    /// Within 64 of where it goes, or with nowhere to go, it stands on hold position. Running while the unit lives; Failed
-    /// for a dead or removed unit and a refused order.
+    /// Within 64 of where it goes, as near as it gets when the brain finds its last move done short of it, or with nowhere
+    /// to go, it stands on hold position. Running while the unit lives; Failed for a dead or removed unit and a refused
+    /// order.
     /// </summary>
     internal sealed class PullBackNode : Node
     {
@@ -46,6 +47,7 @@ namespace Moonwell.AI.Combat
             var route = fighter.Route;
             float toX;
             float toY;
+            var last = true;
             if (settings.To != null)
             {
                 var to = settings.To.Value;
@@ -77,6 +79,7 @@ namespace Moonwell.AI.Combat
 
                 toX = points[back].X;
                 toY = points[back].Y;
+                last = back == 0;
             }
             else if (fighter.hasSpot)
             {
@@ -88,12 +91,24 @@ namespace Moonwell.AI.Combat
                 return Stand();
             }
 
-            if (Squared(toX - x, toY - y) <= Fighter.Reached)
+            if (fighter.home || Squared(toX - x, toY - y) <= Fighter.Reached)
             {
                 return Stand();
             }
 
-            return OrderAt(Orders.Move, toX, toY) ? Status.Running : Status.Failed;
+            if (!OrderAt(Orders.Move, toX, toY))
+            {
+                return Status.Failed;
+            }
+
+            // Idle just after: the brain found its move done short of the last place, as near as the unit gets, as in a crowd.
+            if (last && unit.CurrentOrder == "")
+            {
+                fighter.home = true;
+                return Stand();
+            }
+
+            return Status.Running;
         }
 
         /// <summary>Stands the unit on hold position, which the brain drops while it holds.</summary>
