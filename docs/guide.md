@@ -2516,10 +2516,15 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   ```
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
-  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` sizes its
-  text, as the game takes no other font or height for a label (seen), and leaves its place and box alone: the game
-  scales a label's offset and box with it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`. A map's own panel
-  inherits `Panel` and keeps its frames in fields.
+  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set). `Size` sets the
+  text's height in the units `Screen.DesignHeight` sets (12 is the game's own at 768), `Font` a `.ttf` in the map's
+  assets by its path in the map (`"war3mapImported\\Fonts\\Title.ttf"`), and `Shadow` a black shadow. They are read when
+  the label is made, so set them before adding it: the game takes a label's font and height only from a template, and
+  changing them later does nothing (seen). The build writes a template for each height from 0.005 to 0.04 of the
+  game's units, in steps of 0.0005, for the game's font and each `.ttf` in the assets, and a label takes the nearest.
+  `Scale` sizes the text too, and leaves the label's place and box alone: the game scales a label's offset and box with
+  it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`. A map's own panel inherits `Panel` and
+  keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
   Labels, images and empty panels let clicks through, until they are listened to for the mouse.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
