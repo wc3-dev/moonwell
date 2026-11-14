@@ -31,7 +31,7 @@ namespace Moonwell
             this.player = player;
             this.hud = hud;
             glowsOff = new bool[hud.Glows.Length];
-            Minimap = Keep(new MovablePiece(player, hud.Minimap, false, hud.ConsoleBackdrop));
+            Minimap = Keep(new MovablePiece(player, hud.Minimap, false, hud.ConsoleBackdrop, null, false, 0.139375f, 0.138125f));
             MinimapButtons = Plain(hud.MinimapButtons);
             Portrait = Keep(new GamePiece(player, new[] { hud.Portrait }));
             HeroBar = Keep(new GamePiece(player, new[] { hud.HeroBar }));
