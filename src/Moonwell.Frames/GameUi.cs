@@ -7,8 +7,8 @@ namespace Moonwell
     /// A player's own view of the game's HUD, from player.GameUi(): each piece set here changes only that player's screen,
     /// and lasts until set again, as a camera's does. Reads give what was set, the same on every machine; setting is not
     /// allowed inside Local.For. What the game shows or places again by itself is set again every second on the player's
-    /// machine. The chat, the game's messages and moving the portrait or the hero buttons are left out, as the game crashes
-    /// or draws them wrong (seen 10-15 and 11-05).
+    /// machine. The chat, the game's messages and moving the hero buttons are left out, as the game crashes or draws them
+    /// wrong (seen 10-15 and 11-05).
     /// </summary>
     public sealed class GameUi
     {
@@ -33,7 +33,7 @@ namespace Moonwell
             glowsOff = new bool[hud.Glows.Length];
             Minimap = Keep(new MovablePiece(player, hud.Minimap, false, hud.ConsoleBackdrop, null, false, 0.139375f, 0.138125f));
             MinimapButtons = Plain(hud.MinimapButtons);
-            Portrait = Keep(new GamePiece(player, new[] { hud.Portrait }));
+            Portrait = Keep(new PortraitPiece(player, hud.Portrait));
             HeroBar = Keep(new GamePiece(player, new[] { hud.HeroBar }));
             HeroButtons = Plain(hud.HeroButtons);
             TopBar = Keep(new GamePiece(player, hud.TopBar));
@@ -118,9 +118,9 @@ namespace Moonwell
         [LocalSafe]
         public IReadOnlyList<GamePiece> MinimapButtons { get; }
 
-        /// <summary>The portrait of the selected unit.</summary>
+        /// <summary>The portrait of the first unit selected, which can be put in a map's frame with Fill.</summary>
         [LocalSafe]
-        public GamePiece Portrait { get; }
+        public PortraitPiece Portrait { get; }
 
         /// <summary>The bar of hero icons at the top left, with its buttons.</summary>
         [LocalSafe]
@@ -170,6 +170,15 @@ namespace Moonwell
         internal bool Shows(GamePiece piece)
         {
             return piece.visible && (visible || piece.overHud);
+        }
+
+        /// <summary>This machine's window changed size: the portrait, placed by the window's shape, is placed again.</summary>
+        internal void WindowChanged()
+        {
+            if (Runtime.World.IsLocal(player.Handle))
+            {
+                Portrait.Place();
+            }
         }
 
         /// <summary>Sets the HUD on this machine as the map left it, and starts setting again every second what the game puts back.</summary>
