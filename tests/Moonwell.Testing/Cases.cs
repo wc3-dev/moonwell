@@ -59,7 +59,34 @@ namespace Moonwell.Testing
             AddPlaced(list);
             AddProcgen(list);
             AddAI(list);
+            AddSimulation(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds and the read-outs.</summary>
+        private static void AddSimulation(List<Case> list)
+        {
+            list.Add(new Case { Name = "simulation.steps", Run = SimulationCases.StepsInOrder });
+            list.Add(new Case { Name = "simulation.hold", Run = SimulationCases.Hold });
+            list.Add(new Case { Name = "simulation.seeded", Run = SimulationCases.Seeded });
+            list.Add(new Case { Name = "simulation.walk", Run = SimulationCases.Walk });
+            list.Add(new Case { Name = "simulation.duel", Run = SimulationCases.Duel });
+            list.Add(new Case { Name = "simulation.armor", Run = SimulationCases.Armor });
+            list.Add(new Case { Name = "simulation.seed", Run = SimulationCases.Seed });
+            list.Add(new Case { Name = "simulation.acquire", Run = SimulationCases.Acquire });
+            list.Add(new Case { Name = "simulation.attack-move", Run = SimulationCases.AttackMove });
+            list.Add(new Case { Name = "simulation.hold-position", Run = SimulationCases.HoldPosition });
+            list.Add(new Case { Name = "simulation.stop", Run = SimulationCases.Stop });
+            list.Add(new Case { Name = "simulation.alive", Run = SimulationCases.Alive });
+            list.Add(new Case { Name = "simulation.map-start", Run = SimulationCases.MapStart });
+            list.Add(new Case { Name = "simulation.smart", Run = SimulationCases.Smart });
+            list.Add(new Case { Name = "simulation.removed-target", Run = SimulationCases.RemovedTarget });
+            list.Add(new Case { Name = "simulation.reaction-order", Run = SimulationCases.ReactionOrder });
+            list.Add(new Case { Name = "simulation.many-attackers", Run = SimulationCases.ManyAttackers });
+            list.Add(new Case { Name = "simulation.map-draws", Run = SimulationCases.MapDraws });
+            list.Add(new Case { Name = "simulation.spell-ends", Run = SimulationCases.SpellEnds });
+            list.Add(new Case { Name = "simulation.no-dummy", Run = SimulationCases.NoDummy });
+            list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
         }
 
         /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, and utility AI.</summary>
@@ -92,6 +119,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.utility.keep", Run = UtilityCases.Keep });
             list.Add(new Case { Name = "ai.utility.run", Run = UtilityCases.Run });
             list.Add(new Case { Name = "ai.utility.in-a-brain", Run = UtilityCases.InABrain });
+            list.Add(new Case { Name = "ai.simulation.brains-win", Run = SimulationBrainCases.BrainsWin });
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>

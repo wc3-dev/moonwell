@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>The fake world's placed things: the units, items, destructables and sounds an editor placed, by World Editor's names without gg_.</summary>
     public sealed partial class FakeWorld

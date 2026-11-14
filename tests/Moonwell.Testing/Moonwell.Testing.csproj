@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Moonwell.Physics\Moonwell.Physics.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Pathing\Moonwell.Pathing.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Procgen\Moonwell.Procgen.csproj" />
+    <ProjectReference Include="..\..\src\Moonwell.Simulation\Moonwell.Simulation.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Terrain\Moonwell.Terrain.csproj" />
   </ItemGroup>
 
