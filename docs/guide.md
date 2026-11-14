@@ -1323,6 +1323,8 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   heights the plan adds, so the rules fit ground that starts flat.
 - The game makes no cliffs, ramps or water while it runs, so the ground is slopes, and tiles come from the map's own
   list: declare the ones `Paint` uses in the map class's `Tiles`. A height changes no pathing by itself: `Block` rules do.
+- The minimap keeps the ground World Editor saved (`war3mapMap.blp`): with a whole map made into snowy forest it still
+  showed the old tiles and no trees (3.0.1.24371). That nothing redraws it while the game runs is inferred.
 - Trees are real destructables: they block, peasants cut them for lumber, they die and `Regrow` brings them back. Three
   rules stand them, each limited by height, slope and tile as `Paint` is:
 
