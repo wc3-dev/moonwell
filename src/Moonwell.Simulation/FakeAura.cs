@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>An aura of the game a fake world runs.</summary>
     public sealed class FakeAura

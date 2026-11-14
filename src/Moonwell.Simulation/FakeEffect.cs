@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>A special effect the runtime asked the fake world for, and everything it set on it since.</summary>
     public sealed class FakeEffect

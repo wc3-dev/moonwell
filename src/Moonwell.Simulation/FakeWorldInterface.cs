@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Moonwell.Hosting;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>The fake world's quest log, cinematic screen and Esc key.</summary>
     public sealed partial class FakeWorld
