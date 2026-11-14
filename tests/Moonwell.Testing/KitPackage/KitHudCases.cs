@@ -11,6 +11,11 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>A buff whose icon the build registers from its object data, as for a declared buff.</summary>
+    public sealed class DataIconBuff : Buff
+    {
+    }
+
     /// <summary>A buff with no icon and no game buff, which a BuffRow leaves out.</summary>
     public sealed class PlainBuff : Buff
     {
@@ -104,6 +109,8 @@ namespace Moonwell.Testing
             var frame = Screen.Add(new UnitFrame(), Game.Instance);
             Expect.Equal(false, frames.FrameOf(frame.Handle!).Shown, "hidden until shown a unit");
             Expect.Equal("EscMenuControlBackdropTemplate", frames.FrameOf(frame.Handle!).Template, "the theme's Hud border");
+            Expect.Equal(Image.Blank, frames.FrameOf(frame.Art.Handle!).Texture, "the empty art painted blank, not the game's green");
+            Expect.Equal("", frame.Art.Texture, "and reading empty");
             frame.Show(unit);
             Expect.Equal(true, frames.FrameOf(frame.Handle!).Shown, "shown");
             Expect.Equal(@"ReplaceableTextures\CommandButtons\BTNFootman.blp", frames.FrameOf(frame.Portrait.Handle!).Texture, "this machine's icon");
@@ -159,6 +166,7 @@ namespace Moonwell.Testing
             var frames = FrameCases.Installed();
             var cast = Screen.Add(new CastBar(), Game.Instance);
             Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "hidden until started");
+            Expect.Near(cast.Height, cast.Icon.Height, "the icon covers the left end whole");
             cast.Start("Fireball", 1f, @"ReplaceableTextures\CommandButtons\BTNFireBolt.blp");
             Expect.Equal(true, frames.FrameOf(cast.Handle!).Shown, "shown");
             Expect.Equal("Fireball", frames.FrameOf(cast.Label.Handle!).Text, "the name");
@@ -202,6 +210,11 @@ namespace Moonwell.Testing
             Expect.Equal("4", frames.FrameOf(slot.Time.Handle!).Text, "counting down");
             world.Advance(4.1f);
             Expect.Equal(false, frames.FrameOf(slot.Handle!).Shown, "hidden once it ends");
+            ObjectTypes.BuffIcon<DataIconBuff>(@"ReplaceableTextures\CommandButtons\BTNSlow.blp");
+            unit.Apply(new DataIconBuff());
+            world.Advance(0.06f);
+            Expect.Equal(@"ReplaceableTextures\CommandButtons\BTNSlow.blp", frames.FrameOf(row.slots[0].Icon.Handle!).Texture, "a declared buff's icon, from the build");
+            Expect.Equal("", frames.FrameOf(row.slots[0].Time.Handle!).Text, "no expiry, no time");
             Expect.Equal("2m", BuffSlot.TimeLeft(61f), "minutes from a minute on");
             Expect.Equal("", BuffSlot.TimeLeft(0f), "nothing with no expiry");
         }
@@ -221,6 +234,13 @@ namespace Moonwell.Testing
             Expect.Same(first, list.Entries[0].Unit, "in the order selected");
             Expect.Same(second, list.Entries[1].Unit, "the second");
             Expect.Near(0.14f, list.Entries[0].Width, "Kit's small unit frame");
+            var entry = frames.FrameOf(list.entries[0].Handle!);
+            Expect.Equal(true, entry.Shown, "the entry shown");
+            Expect.Equal(true, frames.FrameOf(list.Handle!).Shown, "the list shown");
+            Expect.Equal(1, entry.Points.Count, "placed by one point: " + entry.Points.Count);
+            Expect.Near(2f * 0.036f + 0.004f, list.Height, "as high as its two entries");
+            Expect.Near(0.14f, list.Width, "as wide as one");
+            Expect.Equal(0, world.Printed.Count, "nothing reported: " + string.Join(" | ", world.Printed.ToArray()));
             world.PlayerSelects(first.Handle, 0, false);
             world.Advance(0.01f);
             Expect.Equal(1, list.Entries.Count, "one left");

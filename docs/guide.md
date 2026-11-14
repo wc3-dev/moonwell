@@ -1883,7 +1883,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 - `panel.Add(child, x, y, width, height)` places a child from the panel's top left, y down, with its size, so a layout
   copied from pixels is written as it is. The numbers are in the units `Screen.DesignHeight` sets, the screen's height:
   0.6, the game's, unless set. Set it once, before adding (`Screen.DesignHeight = 768` for a layout made for a screen
-  768 high); a frame added already keeps its place. `Offset`, `Width` and `Height` still read the game's units.
+  768 high); a frame added already keeps its place. `Offset`, `Width` and `Height` still read the game's units. Given a
+  frame already added to the panel, it places it again, as a kit part's pieces are moved.
 - Tweens move a value over time: `MoveTo(offset, seconds)`, `SizeTo(width, height, seconds)`, `ScaleTo`, `FadeTo` (an
   alpha) and a label's `ColorTo`, each with an ease from `Ease` (linear unless given), and `Tween(seconds, ease, t =>
   ...)` for anything else, given how far along it is, eased, ending with 1. A tween steps 32 times a second on every
@@ -2274,7 +2275,8 @@ size or give another texture.
 ```csharp
 var frame = Screen.Add(new UnitFrame { Anchor = FramePoint.TopLeft }, this, shownTo: player);
 frame.Show(hero);                               // icon, name, level, life, mana and buffs, followed from now on
-frame.Add(frame.Life, 90, 45, 119, 12);         // a piece placed again, in Screen.DesignHeight units
+frame.Add(frame.Life, 90, 45, 119, 12);         // a piece placed again, in Screen.DesignHeight units: Add with a place
+                                                // moves a frame already added to this one
 frame.Life.Bar.Texture = Looks.Wow.HealthFill;  // and given the map's own art
 frame.Art.Texture = Looks.Wow.PlayerFrame;      // over the bars, under the texts
 
@@ -2323,9 +2325,9 @@ party.Follow(player);
   second. A `Start` replaces a cast running or fading. It does not follow a unit's own game casts.
 - `BuffRow.Show(unit)` shows the unit's buffs that have an icon, in the order they came on, with the seconds left under
   each (`2m` from a minute on, nothing for a buff with no expiry). The icon is the buff class's `HudIcon`, set in its
-  constructor; with none, a buff that stands for a game buff (one a spell puts on, or a declared buff) shows that game
-  buff's icon. A buff with neither is left out, and so are the game's own buffs that have no Moonwell class. Eight to a
-  line unless `Columns` says otherwise.
+  constructor; with none, a declared buff class shows its object data's `Icon`, which the build writes into the map, as
+  the game gives no buff's icon while it runs. A buff with neither is left out, and so are the game's own buffs that
+  have no Moonwell class. Eight to a line unless `Columns` says otherwise.
 
   ```csharp
   public sealed class Burning : Buff
@@ -2340,8 +2342,9 @@ party.Follow(player);
 
 - `SelectionList.Follow(player)` shows one small `UnitFrame` (icon, name, life and mana) for each unit the player has
   selected, up to 24, in the order selected, one column down unless `Columns` is set. It changes with
-  `OnSelectionChanged` and drops a unit that dies or goes at once. A click on an entry selects that unit alone, for the
-  player who clicked; frames do not see Shift, so there is no Shift-click. `Entry = () => new PartyFrame()` makes a
+  `OnSelectionChanged` and drops a unit that dies or goes at once. It is as high as the entries showing, so it is best
+  placed by its top (`Anchor = FramePoint.TopLeft`). A click on an entry selects that unit alone, for the player who
+  clicked; frames do not see Shift, so there is no Shift-click. `Entry = () => new PartyFrame()` makes a
   map's own `UnitFrame` class for each, set before `Follow`. The game's active subgroup (Tab) is not shown: no native
   reads it.
 

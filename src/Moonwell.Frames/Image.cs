@@ -129,13 +129,17 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Gives the game the texture, then the points and looks.</summary>
+        /// <summary>Gives the game the texture, or the blank one for an image with none, as a BACKDROP never painted draws the game's green missing texture (seen 11-14); then the points and looks.</summary>
         internal override void Place()
         {
             var shown = local ?? texture;
             if (shown.Length > 0)
             {
                 FramesSystem.World.PaintFrame(handle!, shown);
+            }
+            else if (!foundInTemplate)
+            {
+                FramesSystem.World.PaintFrame(handle!, Blank);
             }
 
             base.Place();

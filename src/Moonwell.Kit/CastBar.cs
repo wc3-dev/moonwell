@@ -3,9 +3,9 @@ namespace Moonwell
     /// <summary>
     /// A cast's bar of the UI kit's HUD (decision 339), driven by the map: Start(name, seconds, icon) shows it and fills it
     /// over the time in the theme's CastBar texture, then hides it; Interrupt() fills it in the theme's Interrupted texture
-    /// with InterruptedText and fades it out over half a second. An Icon at its left, a Bar and a Label over the bar, in the
-    /// theme's Hud border; each a frame a map may place, size or re-texture. Hidden until started. 0.2 by 0.026 unless
-    /// sized.
+    /// with InterruptedText and fades it out over half a second. A Bar inside the theme's Hud border, a Label over it and
+    /// an Icon covering the left end; each a frame a map may place, size or re-texture. Hidden until started. 0.2 by 0.028
+    /// unless sized.
     /// </summary>
     public class CastBar : Panel
     {
@@ -33,11 +33,12 @@ namespace Moonwell
             theme = Kit.Theme;
             Template = theme.Hud;
             width = 0.2f;
-            height = 0.026f;
+            height = 0.028f;
             sized = true;
             Visible = false;
-            icon = KitTicks.Place(this, new Image(), 0.004f, 0.004f, 0.018f, 0.018f);
-            bar = KitTicks.Place(this, new ProgressBar { Texture = theme.CastBar }, 0.026f, 0.004f, 0.17f, 0.018f);
+            // Inside the border's edge, 0.0065 deep in the game's control border; the icon covers the left end whole.
+            bar = KitTicks.Place(this, new ProgressBar { Texture = theme.CastBar }, 0.0345f, 0.0065f, 0.159f, 0.015f);
+            icon = KitTicks.Place(this, new Image(), 0.0f, 0.0f, 0.028f, 0.028f);
             label = Add(new Label { Alignment = FramePoint.Center, Color = theme.Text });
             label.Fill(bar);
         }

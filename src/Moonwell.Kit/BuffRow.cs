@@ -6,8 +6,9 @@ namespace Moonwell
     /// <summary>
     /// A row of a unit's buffs, of the UI kit's HUD (decision 340): each of the unit's Moonwell buffs that has an icon, in
     /// the order they came on, with its time left under it (12, or 2m from a minute on; nothing for one with no expiry).
-    /// The icon is the buff's HudIcon, or with none set, the icon of the game buff it stands for (one a spell put on, or
-    /// a class shown with BuffDisplay), each machine its own. Read 20 times a second. Eight to a line unless Columns says otherwise, each 0.02 square.
+    /// The icon is the buff's HudIcon, or with none set, a declared buff class's object data Icon, which the build writes
+    /// as the game gives none while it runs (decision 351). Read 20 times a second. Eight to a line unless Columns says
+    /// otherwise, each 0.02 square.
     /// </summary>
     public class BuffRow : Grid
     {
@@ -27,6 +28,7 @@ namespace Moonwell
             CellWidth = IconSize;
             CellHeight = IconSize + TimeHeight;
             Gap = 0.003f;
+            KitTicks.Fit(this, 0);
         }
 
         /// <summary>The unit whose buffs show; null when none.</summary>
@@ -72,8 +74,8 @@ namespace Moonwell
                 for (var i = 0; i < buffs.Count; i++)
                 {
                     var buff = buffs[i];
-                    var gameBuff = buff.HudIcon.Length > 0 ? 0 : buff.gameBuff != 0 ? buff.gameBuff : ObjectTypes.BuffIdOf(buff);
-                    if (buff.HudIcon.Length == 0 && gameBuff == 0)
+                    var icon = buff.HudIcon.Length > 0 ? buff.HudIcon : ObjectTypes.BuffIconOf(buff);
+                    if (icon.Length == 0)
                     {
                         continue;
                     }
@@ -83,15 +85,17 @@ namespace Moonwell
                         slots.Add(Add(new BuffSlot()));
                     }
 
-                    slots[shown].Show(buff, gameBuff);
+                    slots[shown].Show(buff, icon);
                     shown++;
                 }
             }
 
             for (var i = shown; i < slots.Count; i++)
             {
-                slots[i].Show(null, 0);
+                slots[i].Show(null, "");
             }
+
+            KitTicks.Fit(this, shown);
         }
     }
 
@@ -126,20 +130,16 @@ namespace Moonwell
         [LocalSafe]
         public Buff? Buff => buff;
 
-        /// <summary>Shows a buff, its icon given anew only when it is another buff; null hides the slot.</summary>
-        internal void Show(Buff? shown, int gameBuff)
+        /// <summary>Shows a buff with its icon, given anew only when it is another buff; null hides the slot.</summary>
+        internal void Show(Buff? shown, string iconPath)
         {
             if (shown != buff)
             {
                 buff = shown;
                 Visible = shown != null;
-                if (shown != null && shown.HudIcon.Length > 0)
+                if (shown != null)
                 {
-                    icon.Texture = shown.HudIcon;
-                }
-                else if (shown != null)
-                {
-                    icon.ShowLocal("", Runtime.World.IconOf(gameBuff));
+                    icon.Texture = iconPath;
                 }
             }
 

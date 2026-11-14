@@ -8,7 +8,7 @@ namespace Moonwell
     /// selected, up to 24 (the game's most), in the order selected, one column down unless Columns says otherwise. It
     /// changes when the selection does, with OnSelectionChanged (decision 341), and drops a unit that dies or goes. A click
     /// on an entry selects that unit alone, for the player who clicked. Entry makes a map's own UnitFrame class for each;
-    /// Kit's small UnitFrame unless set.
+    /// Kit's small UnitFrame unless set. It is as high as the entries showing, at least one, and best placed by its top.
     /// </summary>
     public class SelectionList : Grid
     {
@@ -32,6 +32,9 @@ namespace Moonwell
         public SelectionList()
         {
             Gap = 0.004f;
+            CellWidth = 0.14f;
+            CellHeight = 0.036f;
+            KitTicks.Fit(this, 0);
         }
 
         /// <summary>Makes each entry: a map's own UnitFrame class, as () => new PartyFrame(); Kit's small UnitFrame (icon, name, life and mana) unless set. Set it before Follow: entries made already stay.</summary>
@@ -133,6 +136,8 @@ namespace Moonwell
             {
                 entries[i].Show(null);
             }
+
+            KitTicks.Fit(this, count);
         }
 
         /// <summary>The entry at a place, made with a click that selects its unit, and the cells sized to the first.</summary>

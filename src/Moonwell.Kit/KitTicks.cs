@@ -59,7 +59,15 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Puts a frame at a place and size inside its parent, from the parent's top left, y down, in the game's units whatever Screen.DesignHeight is.</summary>
+        /// <summary>Sizes a grid to its columns and to the lines its shown items take, at least one: a list of no size showed none of its entries in the game (11-14).</summary>
+        internal static void Fit(Grid grid, int shown)
+        {
+            var lines = shown < 1 ? 1 : (shown + grid.columns - 1) / grid.columns;
+            grid.Width = (2.0f * grid.padding) + (grid.columns * grid.cellWidth) + ((grid.columns - 1) * grid.gap);
+            grid.Height = (2.0f * grid.padding) + (lines * grid.cellHeight) + ((lines - 1) * grid.gap);
+        }
+
+        /// <summary>Puts a frame at a place and size inside its parent, from the parent's top left, y down, in the game's units whatever Screen.DesignHeight is; adds it unless it is the parent's already.</summary>
         internal static T Place<T>(Frame parent, T child, float x, float y, float width, float height)
             where T : Frame
         {
@@ -67,7 +75,7 @@ namespace Moonwell
             child.Offset = new Vector2(x, -y);
             child.Width = width;
             child.Height = height;
-            return parent.Add(child);
+            return child.Parent == parent ? child : parent.Add(child);
         }
     }
 }

@@ -56,9 +56,16 @@ namespace Moonwell
                 var now = watchers.ToArray();
                 for (var i = 0; i < now.Length; i++)
                 {
-                    if (!now[i](player))
+                    try
                     {
-                        watchers.Remove(now[i]);
+                        if (!now[i](player))
+                        {
+                            watchers.Remove(now[i]);
+                        }
+                    }
+                    catch (Exception error)
+                    {
+                        Errors.Report(player, ".OnSelectionChanged", error);
                     }
                 }
             }
