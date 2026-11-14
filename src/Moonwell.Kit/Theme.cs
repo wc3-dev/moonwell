@@ -1,7 +1,7 @@
 namespace Moonwell
 {
     /// <summary>
-    /// The UI kit's look (decision 212): the template its windows and rich tooltips are made from, and its text colours. The
+    /// The UI kit's look (decision 212): the template its windows and rich tooltips are made from, its text colours, and its HUD parts' border and bar textures (decision 334). The
     /// four races' looks are the game's art; PlayersRace is the game's own window, which draws each player's race on their
     /// screen. A map's own theme names a template of its own .fdf.
     /// </summary>
@@ -36,5 +36,29 @@ namespace Moonwell
         /// <summary>The colour of other text; white unless set.</summary>
         [LocalSafe]
         public Color Text { get; set; } = Color.White;
+
+        /// <summary>The template the HUD parts with a border (UnitFrame, CastBar) are drawn in: the game's thin control border, EscMenuControlBackdropTemplate, unless set; "" draws none.</summary>
+        [LocalSafe]
+        public string Hud { get; set; } = "EscMenuControlBackdropTemplate";
+
+        /// <summary>What a StatusBar draws under its fill: the game's black, seen through, unless set.</summary>
+        [LocalSafe]
+        public string Backing { get; set; } = @"Textures\Black32.blp";
+
+        /// <summary>A life bar's fill: the game's green team colour unless set.</summary>
+        [LocalSafe]
+        public string LifeBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor06.blp";
+
+        /// <summary>A mana bar's fill: the game's blue team colour unless set.</summary>
+        [LocalSafe]
+        public string ManaBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor01.blp";
+
+        /// <summary>A cast bar's fill: the game's yellow team colour unless set.</summary>
+        [LocalSafe]
+        public string CastBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor04.blp";
+
+        /// <summary>A cast bar's fill once interrupted: the game's red team colour unless set.</summary>
+        [LocalSafe]
+        public string Interrupted { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor00.blp";
     }
 }

@@ -31,6 +31,9 @@ namespace Moonwell
         /// <summary>The game buff each registered buff class shows, keyed by the class; a lookup only.</summary>
         private static Dictionary<object, int> buffIds = new Dictionary<object, int>();
 
+        /// <summary>Each declared buff class's icon, by class (BuffIcon).</summary>
+        private static Dictionary<object, string> buffIcons = new Dictionary<object, string>();
+
         /// <summary>The hidden ability that carries each registered buff class on its unit, keyed by the class; a lookup only.</summary>
         private static Dictionary<object, int> carriers = new Dictionary<object, int>();
 
@@ -256,6 +259,20 @@ namespace Moonwell
 
             buffIds[key] = buffId;
             carriers[key] = carrierId;
+        }
+
+        /// <summary>Registers a declared buff class's icon, its object data's, which a kit BuffRow shows when the class sets no HudIcon (decision 351).</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void BuffIcon<T>(string icon)
+            where T : Buff
+        {
+            buffIcons[Names.ClassOfType(typeof(T))] = icon;
+        }
+
+        /// <summary>A buff's class's icon from its object data; empty for a class with none registered.</summary>
+        internal static string BuffIconOf(Buff buff)
+        {
+            return buffIcons.TryGetValue(Names.ClassOf(buff), out var icon) ? icon : string.Empty;
         }
 
         /// <summary>Registers a buff class that an ability lists, by its game buff, so that a buff the game puts on runs its code (decision 152).</summary>
@@ -658,6 +675,7 @@ namespace Moonwell
             upgrades = new Dictionary<int, Moonwell.Upgrade>();
             ids = new Dictionary<Type, int>();
             buffIds = new Dictionary<object, int>();
+            buffIcons = new Dictionary<object, string>();
             carriers = new Dictionary<object, int>();
             castOrders = new Dictionary<int, string>();
             landsOnCaster = new HashSet<int>();

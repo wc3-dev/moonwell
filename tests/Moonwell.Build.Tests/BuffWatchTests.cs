@@ -89,5 +89,17 @@ namespace Moonwell.Build.Tests
 
             Assert.Contains(Lists("A050", "Bslo", false), lines);
         }
+
+        [Fact]
+        public void a_declared_buffs_icon_is_registered_for_the_kits_buff_row_and_one_with_none_is_not()
+        {
+            var burning = Declared("Map.Burning", "buff", "BPSE");
+            ((Dictionary<string, object?>)burning.Changed)["fart"] = @"ReplaceableTextures\CommandButtons\BTNImmolationOn.blp";
+            var declared = new[] { burning, Declared("Map.Plain", "buff", "Bxxx"), Declared("Map.Bolt", "ability", "AHtb") };
+
+            var lines = BuffWatch.IconLines(declared, StandardData.Empty, null);
+
+            Assert.Equal(new[] { @"global::Moonwell.ObjectTypes.BuffIcon<global::Map.Burning>(""ReplaceableTextures\\CommandButtons\\BTNImmolationOn.blp"");" }, lines);
+        }
     }
 }

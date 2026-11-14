@@ -40,7 +40,7 @@ namespace Moonwell.Build
         /// <summary>The races Moonwell.Kit's Theme has a window look for, as the game's art folders name them.</summary>
         private static readonly string[] KitRaces = { "Human", "Orc", "NightElf", "Undead" };
 
-        /// <summary>Writes the TOCs into the staged map: the game's, and the map's, by their paths in the map: the labels' text templates, then the kit's when the map uses the kit, then the .fdf files in its assets.</summary>
+        /// <summary>Writes the TOCs into the staged map: the game's, and the map's, by their paths in the map: the labels' text templates, then the kit's when the map uses the kit (with its cooldown sweep's images), then the .fdf files in its assets.</summary>
         internal static void Write(string stagedFolder, string assetsFolder, bool kit)
         {
             WriteToc(Path.Combine(stagedFolder, FileName), GameFiles);
@@ -52,6 +52,7 @@ namespace Moonwell.Build
             {
                 File.WriteAllBytes(Path.Combine(stagedFolder, KitFileName), Encoding.ASCII.GetBytes(KitTemplates()));
                 own.Insert(0, KitFileName);
+                KitSweep.Write(stagedFolder);
             }
 
             var fonts = (Directory.Exists(assetsFolder) ? Directory.GetFiles(assetsFolder, "*.ttf", SearchOption.AllDirectories) : Array.Empty<string>())

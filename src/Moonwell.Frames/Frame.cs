@@ -766,7 +766,7 @@ namespace Moonwell
             return child;
         }
 
-        /// <summary>Adds a frame to this one as Add does, placed from this frame's top left, y down, with its size, all in the units Screen.DesignHeight sets (the game's unless set), so a layout copied from pixels is written as it is.</summary>
+        /// <summary>Adds a frame to this one as Add does, placed from this frame's top left, y down, with its size, all in the units Screen.DesignHeight sets (the game's unless set), so a layout copied from pixels is written as it is. A frame already added to this one is placed again, as a kit part's pieces are.</summary>
         public T Add<T>(T child, float x, float y, float width, float height)
             where T : Frame
         {
@@ -774,7 +774,7 @@ namespace Moonwell
             child.Anchor = FramePoint.TopLeft;
             child.Offset = new Vector2(x * unit, -y * unit);
             child.Size(width * unit, height * unit);
-            return Add(child);
+            return child.Parent == this ? child : Add(child);
         }
 
         /// <summary>

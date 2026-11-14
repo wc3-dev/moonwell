@@ -80,6 +80,27 @@ namespace Moonwell.Build
             return lines;
         }
 
+        /// <summary>The icon of each declared buff class, for a kit BuffRow (decision 351): its Icon (fart) as the class declares it, else its standard root's, as the game gives no buff's icon while it runs (BlzGetAbilityIcon reads BTNTemp, seen 11-14); none for a class with no icon.</summary>
+        /// <param name="declared">The declared objects.</param>
+        /// <param name="standard">The game's standard objects.</param>
+        /// <param name="set">The data set the map is built for.</param>
+        public static IReadOnlyList<string> IconLines(IReadOnlyList<DeclaredObject> declared, StandardData standard, string? set)
+        {
+            var lines = new List<string>();
+            foreach (var one in declared.Where(one => one.Kind == "buff").OrderBy(one => one.ClassName, StringComparer.Ordinal))
+            {
+                var icon = one.Changed.TryGetValue("fart", out var changed) && changed != null
+                    ? Convert.ToString(changed, System.Globalization.CultureInfo.InvariantCulture)
+                    : standard.Value(one.StandardRoot, "fart", 0, set);
+                if (!string.IsNullOrEmpty(icon))
+                {
+                    lines.Add($"{Types}.BuffIcon<global::{one.ClassName}>(\"{icon.Replace("\\", "\\\\").Replace("\"", "\\\"")}\");");
+                }
+            }
+
+            return lines;
+        }
+
         /// <summary>The buffs each standard ability lists, from the game's data; empty when the map declares no buff, as nothing would be watched.</summary>
         public static IReadOnlyDictionary<string, IReadOnlyList<string>> StandardLists(StandardData standard, string? set, IReadOnlyList<DeclaredObject> declared)
         {
