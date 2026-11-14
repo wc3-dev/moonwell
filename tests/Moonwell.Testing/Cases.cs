@@ -89,7 +89,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
         }
 
-        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, and brain orders.</summary>
+        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, and utility AI.</summary>
         private static void AddAI(List<Case> list)
         {
             list.Add(new Case { Name = "ai.brains.think-on-each-actor", Run = BrainCases.ThinkOnEachActor });
@@ -104,10 +104,21 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.facts.written", Run = FactCases.Written });
             list.Add(new Case { Name = "ai.facts.worked-out", Run = FactCases.WorkedOut });
             list.Add(new Case { Name = "ai.facts.owner-change", Run = FactCases.OwnerChange });
+            list.Add(new Case { Name = "ai.facts.from-an-early-file", Run = FactCases.FromAnEarlyFile });
             list.Add(new Case { Name = "ai.orders.point", Run = BrainOrderCases.PointOrders });
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.utility.curves", Run = UtilityCases.Curves });
+            list.Add(new Case { Name = "ai.utility.points", Run = UtilityCases.Points });
+            list.Add(new Case { Name = "ai.utility.scores", Run = UtilityCases.Scores });
+            list.Add(new Case { Name = "ai.utility.ranges", Run = UtilityCases.Ranges });
+            list.Add(new Case { Name = "ai.utility.chain", Run = UtilityCases.Chain });
+            list.Add(new Case { Name = "ai.utility.ruled-out", Run = UtilityCases.RuledOut });
+            list.Add(new Case { Name = "ai.utility.pick", Run = UtilityCases.Pick });
+            list.Add(new Case { Name = "ai.utility.keep", Run = UtilityCases.Keep });
+            list.Add(new Case { Name = "ai.utility.run", Run = UtilityCases.Run });
+            list.Add(new Case { Name = "ai.utility.in-a-brain", Run = UtilityCases.InABrain });
             list.Add(new Case { Name = "ai.simulation.brains-win", Run = SimulationBrainCases.BrainsWin });
         }
 
