@@ -38,6 +38,20 @@ namespace Moonwell.Procgen
         private const float BlockCost = 130f;   // a blocked corner, a kind
         private const float TreeCost = 45f;     // a tree made at the ground's height (200 in 9 ms)
 
+        // The game makes each crater slower the more it holds: 9.6 us with none, 24 at 10,000, 54 at 25,000, 106 at 45,000
+        // (game facts, 11-14), about 0.002 us more for each crater held.
+        private const float RaiseGrowth = 0.002f;
+
+        // Inferred, not measured: a corner's height copied with no crater, a wide crater's pass of the fit (about 110 cells),
+        // a cell's pass of it, and a wide crater made with Moonwell's grid moved under it.
+        private const float CopyCost = 0.5f;
+        private const float FitCost = 16f;
+        private const float CellCost = 0.2f;
+        private const float WideCraterCost = 60f;
+
+        /// <summary>The most corners an area raises a crater each; past it, wide craters fitted to the plan (decision 343).</summary>
+        private const int WideCorners = 20000;
+
         // Inferred from NoiseCost, not measured: deciding a corner's tree, a rule.
         private const float ForestCost = 8f;
         private const float WallCost = 14f;
@@ -470,6 +484,7 @@ namespace Moonwell.Procgen
             ground.Hills(0, ground.Cells);
             ground.Levels(0, ground.Places);
             ground.Fade(0, ground.Cells);
+            ground.Fit();
             ground.Heights(0, ground.Corners);
             ground.Rules(0, ground.Corners);
             return ground.Plan;
@@ -531,7 +546,25 @@ namespace Moonwell.Procgen
                 work.Add(HeightsStep, ground.Cells, FadeCost, ground.Fade);
             }
 
-            work.Add(HeightsStep, ground.Corners, RaiseCost, ground.Heights);
+            var craters = ground.Craters;
+            if (craters != null)
+            {
+                for (var step = 0; step < WideCraters.FitSteps; step++)
+                {
+                    var at = step;
+                    work.Add(HeightsStep, craters.Count, FitCost, (from, to) => craters.Gather(at, from, to));
+                    work.Add(HeightsStep, craters.Count, FitCost, craters.Scatter);
+                    work.Add(HeightsStep, ground.Cells, CellCost, craters.Measure);
+                    work.Add(HeightsStep, ground.Cells, CellCost, (from, to) => craters.Update(at, from, to));
+                }
+
+                work.Add(HeightsStep, craters.Count, FitCost, craters.Sum);
+                work.Add(HeightsStep, ground.Corners, CellCost, ground.Settle);
+                work.Add(HeightsStep, craters.Up, (WideCraterCost + RaiseGrowth * craters.Count / 2f) * craters.Across, ground.RaiseWide);
+            }
+
+            // The cost of a corner's crater grows with the craters held (decision 344).
+            work.Add(HeightsStep, ground.Corners, RaiseCost, ground.Heights, ground.HeightCostOf);
             work.Add(TilesStep, ground.Corners, ground.RulesCost, ground.Rules);
             if (ground.AnyBlocks)
             {
@@ -550,6 +583,7 @@ namespace Moonwell.Procgen
                 work.Add(PlacesStep, ground.Plan.Places.Count, ground.PlacesCost / ground.Plan.Places.Count, ground.MakePlaces, ground.PlaceCostOf);
             }
 
+            work.Craters = ground.CratersMade;
             return work;
         }
 
@@ -694,6 +728,9 @@ namespace Moonwell.Procgen
             /// <summary>The trees the rules have stood so far.</summary>
             private int treesStood;
 
+            /// <summary>The craters asked of the game so far.</summary>
+            private int cratersMade;
+
             /// <summary>The whole the area is a piece of, whose edge the heights fade at: its corners across and up, and the area's first corner in it.</summary>
             private readonly int wholeColumns;
             private readonly int wholeRows;
@@ -817,7 +854,19 @@ namespace Moonwell.Procgen
                         Plan.Hold(place);
                     }
                 }
+
+                // An area of its own past the most a crater each gets wide craters; a piece of a whole (a growing world's chunk) never.
+                if (Corners > WideCorners && wholeColumns == columns && wholeRows == rows && WideCraters.Fits(columns, rows))
+                {
+                    Craters = new WideCraters(columns, rows, cells);
+                    Plan.WideDepths = Craters.Depths;
+                    Plan.WideAcross = Craters.Across;
+                    Plan.Under = new float[Corners];
+                }
             }
+
+            /// <summary>The wide craters of an area too big for a crater a corner, fitted to its heights; null for a smaller one.</summary>
+            internal WideCraters? Craters { get; }
 
             /// <summary>The cells: the area's corners and one more on every side.</summary>
             internal int Cells => cells.Length;
@@ -969,18 +1018,107 @@ namespace Moonwell.Procgen
                 }
             }
 
-            /// <summary>Puts the heights of the corners in a range in the plan, and raises them when making.</summary>
+            /// <summary>Puts the heights of the corners in a range in the plan, and raises them when making: by wide craters' ground, the part the wide craters leave.</summary>
             internal void Heights(int from, int to)
             {
                 for (var at = from; at < to; at++)
                 {
                     Plan.Heights.Cells[at] = cells[Cell(at)];
+                    if (Craters != null)
+                    {
+                        Plan.Under![at] = Craters.Under[Cell(at)];
+                    }
                 }
 
                 if (scope != null)
                 {
                     InRows(from, to, RaisePiece);
                 }
+            }
+
+            /// <summary>What a corner's height costs: its crater's, more the more craters are held by then (counted as if every corner before it had one), or a copy for a corner left.</summary>
+            internal float HeightCostOf(int at)
+            {
+                var cell = Cell(at);
+                var by = cells[cell] - (Craters != null ? Craters.Under[cell] : 0f);
+                if (by == 0f)
+                {
+                    return CopyCost;
+                }
+
+                return RaiseCost + RaiseGrowth * ((Craters != null ? Craters.Count : 0) + at);
+            }
+
+            /// <summary>Works the wide craters out at once, for a plan; nothing for an area of a crater a corner.</summary>
+            internal void Fit()
+            {
+                if (Craters != null)
+                {
+                    Craters.All();
+                    Settle(0, Corners);
+                }
+            }
+
+            /// <summary>
+            /// Gives the corners in a range the ground the wide craters make, but for the corners of level places and roads,
+            /// which keep their heights, a crater each making up the rest; the cells round the area are the ground as it was, as
+            /// no crater reaches them.
+            /// </summary>
+            internal void Settle(int from, int to)
+            {
+                if (from == 0)
+                {
+                    for (var at = 0; at < cells.Length; at++)
+                    {
+                        var column = at % wide;
+                        var row = at / wide;
+                        if (column == 0 || row == 0 || column == wide - 1 || row == rows + 1)
+                        {
+                            cells[at] = 0f;
+                        }
+                    }
+                }
+
+                for (var at = from; at < to; at++)
+                {
+                    var cell = Cell(at);
+                    if (!level[cell] && !(roadGap[cell] < 0f))
+                    {
+                        cells[cell] = Craters!.Under[cell];
+                    }
+                }
+            }
+
+            /// <summary>Makes the wide craters of the rows in a range, a row each a change.</summary>
+            internal void RaiseWide(int from, int to)
+            {
+                var craters = Craters!;
+                for (var j = from; j < to; j++)
+                {
+                    var depths = new float[craters.Across];
+                    var any = false;
+                    for (var i = 0; i < depths.Length; i++)
+                    {
+                        depths[i] = craters.Depths[j * craters.Across + i];
+                        if (depths[i] != 0f)
+                        {
+                            any = true;
+                            cratersMade++;
+                        }
+                    }
+
+                    if (any)
+                    {
+                        var corner = (WideCraters.Inset + j * WideCraters.Spacing) * columns + WideCraters.Inset;
+                        Terrain.Raise(X(corner), Y(corner), depths.Length, depths, scope!, WideCraters.Spacing, WideCraters.Radius);
+                    }
+                }
+            }
+
+            /// <summary>The craters asked of the game so far.</summary>
+            internal int CratersMade()
+            {
+                return cratersMade;
             }
 
             /// <summary>Works out the tile and the blocked pathing of the corners in a range by the rules, and paints them when making.</summary>
@@ -1356,8 +1494,12 @@ namespace Moonwell.Procgen
                 var any = false;
                 for (var at = from; at < to; at++)
                 {
-                    by[at - from] = Plan.Heights.Cells[at];
-                    any = any || by[at - from] != 0f;
+                    by[at - from] = Plan.Heights.Cells[at] - (Plan.Under != null ? Plan.Under[at] : 0f);
+                    if (by[at - from] != 0f)
+                    {
+                        any = true;
+                        cratersMade++;
+                    }
                 }
 
                 if (any)
