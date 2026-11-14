@@ -546,7 +546,7 @@ namespace Moonwell.Build.Tests
 
             var csproj = Path.Combine(map, "Keep.csproj");
             var text = File.ReadAllText(csproj);
-            var uncommented = Regex.Replace(text, @"<!--\s*(<PackageReference Include=""Moonwell\.[A-Za-z]+"" [^>]*/>)\s*-->", "$1");
+            var uncommented = Regex.Replace(text, @"<!--\s*(<PackageReference Include=""Moonwell(\.[A-Za-z]+)+"" [^>]*/>)\s*-->", "$1");
             Assert.DoesNotContain("<!-- <PackageReference", uncommented);
             File.WriteAllText(csproj, uncommented);
 
