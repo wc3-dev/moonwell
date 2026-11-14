@@ -6,14 +6,18 @@ using System.Reflection;
 namespace Moonwell
 {
     /// <summary>
-    /// A unit type's numbers read from its object data, on .NET only: the default object of the map's class registered for
-    /// the type, else a new object of the Moonwell.Objects standard class of its id. Moonwell.Objects is found by name, as
-    /// this package does not reference it; without it, or for a type with neither, there are no numbers.
+    /// A unit type's numbers, and an ability type's, read from its object data, on .NET only: the default object of the map's
+    /// class registered for the type (for an ability, a new one), else a new object of the Moonwell.Objects standard class of its
+    /// id. Moonwell.Objects is found by name, as this package does not reference it; without it, or for a type with neither,
+    /// there are no numbers.
     /// </summary>
     internal static class ObjectNumbers
     {
         /// <summary>The standard unit and hero classes of Moonwell.Objects by id, read once.</summary>
         private static Dictionary<int, Type>? standards;
+
+        /// <summary>The standard ability classes of Moonwell.Objects by id, read once.</summary>
+        private static Dictionary<int, Type>? abilityStandards;
 
         /// <summary>The numbers of a unit type; null when its object data gives none.</summary>
         internal static UnitNumbers? Of(int typeId)
@@ -33,7 +37,8 @@ namespace Moonwell
 
             if (declared == null || !(standardUnit.IsInstanceOfType(declared) || standardHero.IsInstanceOfType(declared)))
             {
-                if (!StandardsOf(standardUnit, standardHero).TryGetValue(typeId, out var standard))
+                standards ??= StandardsOf(standardUnit, standardHero);
+                if (!standards.TryGetValue(typeId, out var standard))
                 {
                     return null;
                 }
@@ -55,18 +60,60 @@ namespace Moonwell
             };
         }
 
-        /// <summary>The unit and hero classes of Moonwell.Objects marked [Standard], by the id; the attribute is read by name.</summary>
-        private static Dictionary<int, Type> StandardsOf(Type standardUnit, Type standardHero)
+        /// <summary>An ability type's order string, and its cooldown and mana cost at each level, read from its object data as a unit type's numbers are; null when it has none.</summary>
+        internal static SpellNumbers? SpellOf(int abilityId)
         {
-            if (standards != null)
+            var standardAbility = Type.GetType("Moonwell.Objects.StandardAbility, Moonwell.Objects");
+            if (standardAbility == null)
             {
-                return standards;
+                return null;
             }
 
-            var found = new Dictionary<int, Type>();
-            foreach (var type in standardUnit.Assembly.GetTypes())
+            object? declared = ObjectTypes.AbilityMaker(abilityId)?.Invoke();
+            if (declared == null || !standardAbility.IsInstanceOfType(declared))
             {
-                if (type.IsAbstract || !(standardUnit.IsAssignableFrom(type) || standardHero.IsAssignableFrom(type)))
+                abilityStandards ??= StandardsOf(standardAbility, standardAbility);
+                if (!abilityStandards.TryGetValue(abilityId, out var standard))
+                {
+                    return null;
+                }
+
+                declared = Activator.CreateInstance(standard, true)!;
+            }
+
+            var levels = Math.Max(1, Convert.ToInt32(Value(declared, "LevelCount")));
+            var cooldown = Value(declared, "Cooldown");
+            var manaCost = Value(declared, "ManaCost");
+            var numbers = new SpellNumbers { Order = Value(declared, "Order") as string ?? "", Cooldowns = new float[levels], ManaCosts = new int[levels] };
+            for (var level = 1; level <= levels; level++)
+            {
+                numbers.Cooldowns[level - 1] = Convert.ToSingle(At(cooldown, level));
+                numbers.ManaCosts[level - 1] = Convert.ToInt32(At(manaCost, level));
+            }
+
+            return numbers;
+        }
+
+        /// <summary>A Levels value at a level counted from 1, a counted one's last level past its count; null for none.</summary>
+        private static object? At(object? levels, int level)
+        {
+            if (levels == null)
+            {
+                return null;
+            }
+
+            var type = levels.GetType();
+            var count = (int)type.GetProperty("Count")!.GetValue(levels)!;
+            return type.GetProperty("Item")!.GetValue(levels, new object[] { count > 0 && level > count ? count : level });
+        }
+
+        /// <summary>The classes of Moonwell.Objects under either base marked [Standard], by the id; the attribute is read by name.</summary>
+        private static Dictionary<int, Type> StandardsOf(Type first, Type second)
+        {
+            var found = new Dictionary<int, Type>();
+            foreach (var type in first.Assembly.GetTypes())
+            {
+                if (type.IsAbstract || !(first.IsAssignableFrom(type) || second.IsAssignableFrom(type)))
                 {
                     continue;
                 }
@@ -80,7 +127,6 @@ namespace Moonwell
                 }
             }
 
-            standards = found;
             return found;
         }
 
@@ -97,6 +143,25 @@ namespace Moonwell
             }
 
             return null;
+        }
+    }
+
+    /// <summary>An ability type's numbers from its object data, on .NET only: its order string, and its cooldown and mana cost at each level.</summary>
+    internal sealed class SpellNumbers
+    {
+        /// <summary>The order string it is cast with.</summary>
+        internal string Order = "";
+
+        /// <summary>The full cooldown at each level, from level 1.</summary>
+        internal float[] Cooldowns = Array.Empty<float>();
+
+        /// <summary>The mana cost at each level, from level 1.</summary>
+        internal int[] ManaCosts = Array.Empty<int>();
+
+        /// <summary>The index a level index reads, kept within the levels: the last past them.</summary>
+        internal static int Index(int count, int levelIndex)
+        {
+            return levelIndex < 0 ? 0 : levelIndex >= count ? count - 1 : levelIndex;
         }
     }
 }

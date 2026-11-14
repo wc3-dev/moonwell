@@ -5,10 +5,10 @@ namespace Moonwell
 {
     /// <summary>
     /// A game run flat out on the fake world, in steps of 0.02 s. Units of a type with numbers walk straight at their move
-    /// speed, chase and swing at what they attack, attack the nearest enemy in reach when idle, and stand 0.16 s at each
-    /// order, while Moonwell's timers and reactions run as in the game. The same seed gives the same run. Pathing,
-    /// collision, missiles' flight, spells, buffs, vision and turning are left to the game, and heroes fight on their base
-    /// numbers: their attributes add no life, damage or armor.
+    /// speed, chase and swing at what they attack, attack the nearest enemy in reach when idle, cast, spending the cooldown
+    /// and mana, and stand 0.16 s at each order, while Moonwell's timers and reactions run as in the game. The same seed
+    /// gives the same run. Pathing, collision, missiles' flight, what spells do, buffs, vision and turning are left to the
+    /// game, and heroes fight on their base numbers: their attributes add no life, damage or armor.
     /// </summary>
     public sealed class Simulation
     {

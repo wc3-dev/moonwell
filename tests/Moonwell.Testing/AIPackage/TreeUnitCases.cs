@@ -155,8 +155,8 @@ namespace Moonwell.Testing
             world.SetCurrentOrder(unit.Handle, 851986);
             Is(Status.Succeeded, watch.Run(), "another order took over");
 
-            Is(Status.Succeeded, new Tree(brain, Nodes.Cast("blizzard", () => 100f, () => 0f)).Run(), "an order the unit reads 0 just after succeeds at once");
-            Expect.Equal("point blizzard", world.Orders[2], "at the place");
+            Is(Status.Succeeded, new Tree(brain, Nodes.Cast("nosuchorder", () => 100f, () => 0f)).Run(), "an order the unit reads 0 just after succeeds at once");
+            Expect.Equal("point nosuchorder", world.Orders[2], "at the place");
 
             Unit? aim = null;
             var bolt = new Tree(brain, Nodes.Cast("holybolt", () => aim));
@@ -229,8 +229,8 @@ namespace Moonwell.Testing
             world.Orders.Clear();
             Is(Status.Running, new Tree(brain, Nodes.FollowRoute(() => east, Orders.Attack)).Run(), "an attack-move");
             Expect.Equal("point attack", world.Orders[0], "with the attack order");
-            // The fake knows no "blink", so the unit reads idle at once after it, as after an order cancelled in its event.
-            Is(Status.Failed, new Tree(brain, Nodes.FollowRoute(() => east, "blink")).Run(), "idle short of the point just after the order");
+            // The fake knows no "nosuchorder", so the unit reads idle at once after it, as after an order cancelled in its event.
+            Is(Status.Failed, new Tree(brain, Nodes.FollowRoute(() => east, "nosuchorder")).Run(), "idle short of the point just after the order");
 
             RefusedOnAGameBrain(world, Nodes.FollowRoute(() => east), "FollowRouteNode");
         }

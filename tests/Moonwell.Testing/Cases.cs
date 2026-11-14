@@ -60,12 +60,32 @@ namespace Moonwell.Testing
             AddProcgen(list);
             AddAI(list);
             AddAITrees(list);
+            AddCombat(list);
             AddAITools(list);
             AddSimulation(list);
             return list;
         }
 
-        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds and the read-outs.</summary>
+        /// <summary>Adds the cases for the AI combat package: meeting, target choice, casting, pulling back, the leash and the lane walker.</summary>
+        private static void AddCombat(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.combat.targets", Run = CombatCases.Targets });
+            list.Add(new Case { Name = "ai.combat.ruled-out", Run = CombatCases.RuledOut });
+            list.Add(new Case { Name = "ai.combat.weights", Run = CombatCases.Weights });
+            list.Add(new Case { Name = "ai.combat.spells", Run = CombatCases.Spells });
+            list.Add(new Case { Name = "ai.combat.cast-ends", Run = CombatCases.CastEnds });
+            list.Add(new Case { Name = "ai.combat.refused", Run = CombatCases.Refused });
+            list.Add(new Case { Name = "ai.combat.pull-back", Run = CombatCases.PullingBack });
+            list.Add(new Case { Name = "ai.combat.leash", Run = CombatCases.Leash });
+            list.Add(new Case { Name = "ai.combat.set-aside", Run = CombatCases.SetAside });
+            list.Add(new Case { Name = "ai.combat.after-a-kill", Run = CombatCases.AfterAKill });
+            list.Add(new Case { Name = "ai.combat.attacker", Run = CombatCases.Attacker });
+            list.Add(new Case { Name = "ai.combat.unseen", Run = CombatCases.Unseen });
+            list.Add(new Case { Name = "ai.combat.meet-range", Run = CombatCases.MeetRange });
+            list.Add(new Case { Name = "ai.combat.lane-walker", Run = CombatCases.LaneWalkerSettings });
+        }
+
+        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds, the read-outs, the order names and casts.</summary>
         private static void AddSimulation(List<Case> list)
         {
             list.Add(new Case { Name = "simulation.steps", Run = SimulationCases.StepsInOrder });
@@ -87,6 +107,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.many-attackers", Run = SimulationCases.ManyAttackers });
             list.Add(new Case { Name = "simulation.map-draws", Run = SimulationCases.MapDraws });
             list.Add(new Case { Name = "simulation.spell-ends", Run = SimulationCases.SpellEnds });
+            list.Add(new Case { Name = "simulation.order-names", Run = SimulationCases.OrderNames });
+            list.Add(new Case { Name = "simulation.cast", Run = SimulationCases.Cast });
+            list.Add(new Case { Name = "simulation.cast-refused", Run = SimulationCases.CastRefused });
             list.Add(new Case { Name = "simulation.no-dummy", Run = SimulationCases.NoDummy });
             list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
         }
