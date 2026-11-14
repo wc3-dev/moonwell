@@ -212,7 +212,7 @@ namespace Moonwell.AI
         /// watches the unit's current order id as <c>Cast</c> does. A unit already carrying out a use of the item, its current
         /// order id 852008 plus the item's slot (the first slot's seen, the others unmeasured), is not ordered again, only
         /// watched. Failed for a null or gone item, a use the game refused, or a dead or removed unit. Succeeded means the unit
-        /// stopped carrying the use out, not that the item took effect.
+        /// stopped carrying the use out, not that the item took effect; a potion, which leaves no order, succeeds at once.
         /// </summary>
         public static Node UseItem(Func<Item?> item)
         {

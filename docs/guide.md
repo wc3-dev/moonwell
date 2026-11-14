@@ -1749,7 +1749,7 @@ public sealed class Guard : UnitBrain
     back, repeated. A map gets a `Route` from `unit.FindPath(x, y)` (Moonwell.Pathing) or a procgen road's
     `road.Toward(place)`.
   - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does, and a use of the item the unit
-    still carries out is only watched.
+    still carries out is only watched. A potion leaves no order to watch, so it succeeds at once.
   - `MoveTo` and `FollowRoute` also fail when the unit is idle short of the place just after the order, as one jammed in
     a crowd after its one more try.
 - Utility AI: `Pick(Scored(() => score, child), ...)` runs the option with the best score, re-scored at each pass; 0 or

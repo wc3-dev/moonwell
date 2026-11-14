@@ -4,8 +4,9 @@ namespace Moonwell.AI
 {
     /// <summary>
     /// Has the unit use an item, with no target, at a place or on a widget, through the unit's own UseItem calls, and watches
-    /// it as OrderWatch does. A unit whose current order id is the use of that item's slot, 852008 for the first slot (seen)
-    /// and one more for each slot after (unmeasured), is not ordered again, only watched.
+    /// it as OrderWatch does. A potion's use reads no order right after it (probe 11-14), so the node succeeds at once. A unit
+    /// whose current order id is the use of that item's slot, 852008 for the first slot (seen) and one more for each slot
+    /// after (unmeasured), is not ordered again, only watched.
     /// </summary>
     internal sealed class UseItemNode : OrderWatch
     {
