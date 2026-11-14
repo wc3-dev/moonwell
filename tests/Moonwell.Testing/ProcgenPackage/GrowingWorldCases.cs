@@ -406,11 +406,14 @@ namespace Moonwell.Testing
             {
                 var holder = Game.Instance.Add(new Holder());
                 var grown = land.Grow(World(), holder, chunkSize: 8);
-                grown.Near = 0f;
+                grown.Near = 100f;
                 var chunks = new List<Chunk>();
                 grown.Made += chunks.Add;
                 Hero(world, 960f, 960f);
-                world.Advance(4f);
+                for (var k = 0; k < 2000 && chunks.Count < 4; k++)
+                {
+                    world.Advance(0.02f);
+                }
                 var made = 0;
                 foreach (var chunk in chunks)
                 {
