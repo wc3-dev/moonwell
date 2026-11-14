@@ -378,6 +378,47 @@ namespace Moonwell.Testing
             Expect.True(chain.Route(a, a).Reaches && chain.Route(a, a).Points.Count == 1, "a place to itself");
         }
 
+        /// <summary>A place from Level(Bounds) is a rectangle (decisions 358 to 360): level, unblocked and treeless out to its corners, blended over an even band with round corners, and kept clear by Places.</summary>
+        public static void Rectangle(FakeWorld world)
+        {
+            var land = Land(8);
+            land.Block(Pathing.Walk);
+            land.Forest(Tree, cover: 1f);
+            var clearing = land.Level(Bounds.FromCorners(new Vector2(640f, 640f), new Vector2(1920f, 1408f)));
+            Expect.True(clearing.IsRectangle && clearing.Width == 1280f && clearing.Height == 768f && clearing.Radius == 384f, "its size, the radius half the shorter side");
+            Expect.True(clearing.X == 1280f && clearing.Y == 1024f && clearing.Name == "", "centred on the area");
+            var plan = land.Plan(Small());
+            var wrong = 0;
+            for (var row = 5; row <= 11; row++)
+            {
+                for (var column = 5; column <= 15; column++)
+                {
+                    var at = row * 21 + column;
+                    wrong += Math.Abs(plan.Heights[column, row]) > 0.001f || plan.Blocked[at] != Pathing.None || plan.Trees[at] != 0 ? 1 : 0;
+                }
+            }
+
+            Expect.Equal(0, wrong, "level, never blocked and treeless out to its corners");
+            Expect.True(plan.Blocked[11 * 21 + 18] == Pathing.Walk && plan.Blocked[14 * 21 + 18] == Pathing.Walk, "blocked past the band");
+
+            var bare = Land(8).Plan(Small());
+            Expect.True(Math.Abs(plan.Heights[16, 8] - 0.5f * bare.Heights[16, 8]) < 0.5f, "half a blend past an edge, half the hills: " + plan.Heights[16, 8] + " of " + bare.Heights[16, 8]);
+            var t = Maths.Sqrt(2f) / 2f;
+            Expect.True(Math.Abs(plan.Heights[16, 12] - t * t * (3f - 2f * t) * bare.Heights[16, 12]) < 0.5f, "a corner blended by its distance, so the band is round there");
+
+            var spots = land.Places("Camp", Small(), 6, radius: 128f, blend: 128f);
+            var over = 0;
+            foreach (var spot in spots)
+            {
+                var dx = Math.Max(Math.Abs(spot.X - 1280f) - 640f, 0f);
+                var dy = Math.Max(Math.Abs(spot.Y - 1024f) - 384f, 0f);
+                over += Maths.Sqrt(dx * dx + dy * dy) < 384f ? 1 : 0;
+            }
+
+            Expect.Equal(0, over, "Places keeps its spots off the rectangle and its band");
+            Expect.Throws<ArgumentException>(() => land.Level(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(512f, 0f))), "a side of 0");
+        }
+
         /// <summary>Places and groups refuse what makes no place.</summary>
         public static void Refused(FakeWorld world)
         {
