@@ -1590,12 +1590,12 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
 - A unit brain's `Order`, `OrderAt` and `OrderOn` reach the game only when the order is new. A repeat, the same order
   on the same target or to a place within 32 of the last, gives true and is dropped while the unit still carries out
   the order its `CurrentOrder` read just after the last one was sent, or while the unit is idle and has done it:
-  within 64 of the place, its target dead or gone, or neither. It is sent again once another order took over, when the
-  unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives away. A unit idle
-  short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd jammed at one
-  place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends it again. An
-  order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and `OrderOn` send every
-  time.
+  within 64 of the place asked for, its target dead or gone, or neither. It is sent again once another order took
+  over, when the unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives
+  away. A unit idle short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd
+  jammed at one place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends
+  it again. An order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and
+  `OrderOn` send every time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
 ## AI: choosing by scores

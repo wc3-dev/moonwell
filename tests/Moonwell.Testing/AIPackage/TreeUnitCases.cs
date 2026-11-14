@@ -43,7 +43,7 @@ namespace Moonwell.Testing
             Expect.Equal(orders, world.Orders.Count, "and no order given");
         }
 
-        /// <summary>MoveTo orders a move once while the unit carries it, follows a place that moves beyond 32, succeeds within 64 with no order, fails once a jammed unit has had its one more try or the order is refused, and fails for a dead unit.</summary>
+        /// <summary>MoveTo orders a move once while the unit carries it, follows a place that moves beyond 32, succeeds within 64 with no order, sends the repeat to a unit idle short of a place that moved within 32, fails once a jammed unit has had its one more try or the order is refused, and fails for a dead unit.</summary>
         public static void MoveTo(FakeWorld world)
         {
             var brain = BrainAt(world, 0f, 0f);
@@ -66,13 +66,19 @@ namespace Moonwell.Testing
             Is(Status.Succeeded, tree.Run(), "within 64");
             Expect.Equal(2, world.Orders.Count, "with no order");
 
+            toX = 630f;
+            world.SetCurrentOrder(unit.Handle, 0);
+            Is(Status.Running, tree.Run(), "the place moved within 32, and the unit stopped within 64 of the old one but short of the new");
+            Expect.Equal(3, world.Orders.Count, "the repeat is sent, as the brain measures from the place asked for");
+            Expect.Near(630f, world.OrderPoints[4], "to the new place");
+
             world.PlaceUnit(unit.Handle, 0f, 0f);
             world.SetCurrentOrder(unit.Handle, 0);
             Is(Status.Running, tree.Run(), "idle far from the place, the brain sends the repeat once");
-            Expect.Equal(3, world.Orders.Count, "sent");
+            Expect.Equal(4, world.Orders.Count, "sent");
             world.SetCurrentOrder(unit.Handle, 0);
             Is(Status.Failed, tree.Run(), "idle again where it stood, jammed: the repeat is dropped and the unit is idle just after");
-            Expect.Equal(3, world.Orders.Count, "nothing sent");
+            Expect.Equal(4, world.Orders.Count, "nothing sent");
 
             world.OrderAnswer = false;
             toX = 2000f;
@@ -80,7 +86,7 @@ namespace Moonwell.Testing
             world.OrderAnswer = true;
             unit.Kill();
             Is(Status.Failed, tree.Run(), "a dead unit");
-            Expect.Equal(4, world.Orders.Count, "and no order from a dead unit");
+            Expect.Equal(5, world.Orders.Count, "and no order from a dead unit");
 
             RefusedOnAGameBrain(world, Nodes.MoveTo(() => 0f, () => 0f), "MoveToNode");
         }

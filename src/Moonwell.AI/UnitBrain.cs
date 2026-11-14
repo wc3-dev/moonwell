@@ -107,9 +107,9 @@ namespace Moonwell.AI
         /// <summary>
         /// Gives the unit an order to a place, as the unit's own <c>OrderAt</c>, unless it repeats the last one the brain sent:
         /// the same order to a place within 32 of it. A repeat is dropped, giving true, while the unit's <c>CurrentOrder</c> is
-        /// still the order it read just after that one (not idle), or while the unit is idle within 64 of that place. A unit idle
-        /// short of it gets the repeat once; idle again within 32 of where it stood then, the repeat is dropped. Once the unit's
-        /// owner has changed, it is sent again.
+        /// still the order it read just after that one (not idle), or while the unit is idle within 64 of the place asked for. A
+        /// unit idle short of it gets the repeat once; idle again within 32 of where it stood then, the repeat is dropped. Once
+        /// the unit's owner has changed, it is sent again.
         /// </summary>
         public bool OrderAt(string order, float x, float y)
         {
@@ -182,7 +182,7 @@ namespace Moonwell.AI
                     {
                         standX = unit.X;
                         standY = unit.Y;
-                        if (Squared(standX - sentX, standY - sentY) <= Reached || (retried && Squared(standX - retryX, standY - retryY) <= SamePlace))
+                        if (Squared(standX - x, standY - y) <= Reached || (retried && Squared(standX - retryX, standY - retryY) <= SamePlace))
                         {
                             return true;
                         }
