@@ -1,7 +1,7 @@
 # Making a map with Moonwell
 
-This guide describes Moonwell 0.15.0; the guide for 0.13.4 is at the
-[`v0.13.4` tag](https://github.com/wc3-dev/moonwell/blob/v0.13.4/docs/guide.md).
+This guide describes Moonwell 0.15.1; the guide for 0.15.0 is at the
+[`v0.15.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.15.0/docs/guide.md).
 
 ## Start a map
 
@@ -1233,6 +1233,12 @@ Terrain.Ripple(x, y, 400f, 30f, 2f);                                // Wave and 
 - `Raise`, `SetTile` and `Block` also take a grid of corners as one change: `Terrain.Raise(x, y, columns, amounts,
   scope)` moves each corner by its own amount, from the map's corner nearest `(x, y)`, row by row from the bottom
   left. An amount or tile of 0, or `Pathing.None`, leaves a corner. A blocked corner takes the 16 cells around it.
+- A raise is the game's lasting crater, and the game makes each new one slower the more it holds: about 10 µs with
+  none, 50 µs at 25,000 and 500 µs at 85,000 (3.0.1.24371), so a grid raise of a corner each stalls past some tens of
+  thousands. `Terrain.Raise(x, y, columns, amounts, scope, spacing: 4, radius: 768f)` raises with fewer, wider craters:
+  one every `spacing` corners, an amount each, each moving the corners within its radius by its amount x cos(90 degrees
+  x distance / radius), so a corner moves by the sum of the craters that reach it. Ending craters gives back neither
+  their cost nor their memory at once: with 85,000 made and all ended, a new one still cost 110 µs.
 - The game can't take off blight a building made, and a development build reports a `Cleanse` whose centre stays
   blighted. Blight the map was made with goes under an ended `Blight` too.
 - The water can't be made, moved or raised at runtime. `WaterTint` multiplies its colour: white leaves it.
@@ -1314,17 +1320,29 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   amount of work counted in corners, never timed, so every machine makes the same corners at the same moment.
   `msPerStep` (4 unless set) is how much: more finishes sooner and costs smooth frames, as suits a loading screen that
   holds play. It takes the settings as they are at the call, so a plan made this way cannot be changed before it is
-  made. Ending the scope stops it and takes back what was made so far.
+  made. Ending the scope stops it and takes back what was made so far. A crater counts as costlier the more are held,
+  as the game makes them, so late steps of the heights stay near `msPerStep`. A development build reports the first
+  step that took over a second of real time, with how many craters the making had asked for by then.
 - Heights stay between `Lowest` and `Highest` (150 below to 150 above, unless set), measured from the ground as it
   was; most areas reach close to both, and a few corners sit flat on them. A range all above 0 makes a plateau with
   a steep rim. `EdgeFade` (512 unless set) brings the heights back to the ground at the area's edge, so an area
   inside a hand-made map has no seam; set it to 0 for pieces that meet each other.
+- An area of up to 20,000 corners is raised a crater a corner. A bigger one, as a whole 480 by 480 map, would need
+  more craters than the game can hold (see Terrain), so `Plan`, `Make` and `Apply` raise it with one wide crater every
+  4 by 4 corners, fitted to the hills, and the plan's heights are what those craters make, so tiles, blocking and trees
+  follow the ground as it is. Its hills are a little smoother than a small area's: on `SnowyForest`'s settings typically
+  16 to 18 off, and most of the steep rocky corners gone. Level places and roads keep their heights exactly, with a
+  crater a corner. Its heights come down to the ground as it was at its edge, whatever `EdgeFade` is, so big areas
+  don't meet seamlessly. A whole 480 by 480 map of `SnowyForest` with a road was made at 20 ms a step in 19 s
+  (3.0.1.24371). For every bump of the plan over a map that size, grow the world instead (`Grow`).
 - Since 0.15, the same seed gives other ground than in 0.13 and 0.14: the ground follows the world, an area's
   heights are no longer stretched to its own lowest and highest, and a `Level` place is level at the ground as it was.
 - A rule's heights are a share of the range (0 lowest, 1 highest) and its slopes are degrees. Slopes are read from the
   heights the plan adds, so the rules fit ground that starts flat.
 - The game makes no cliffs, ramps or water while it runs, so the ground is slopes, and tiles come from the map's own
   list: declare the ones `Paint` uses in the map class's `Tiles`. A height changes no pathing by itself: `Block` rules do.
+- The minimap keeps the ground World Editor saved (`war3mapMap.blp`): with a whole map made into snowy forest it still
+  showed the old tiles and no trees (3.0.1.24371). That nothing redraws it while the game runs is inferred.
 - Trees are real destructables: they block, peasants cut them for lumber, they die and `Regrow` brings them back. Three
   rules stand them, each limited by height, slope and tile as `Paint` is:
 
@@ -1517,6 +1535,9 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   - Each tree made and taken back leaves about 5 KB and a handle id behind (3.0.1.24371), so a chunk of 50 trees taken
     back and made again 100 times grows the game by about 25 MB. The gap between `Near` and `Far` keeps a hero walking
     along a chunk's edge from making it again and again; keep it at least a chunk wide.
+  - It holds only the craters of the chunks near heroes, a crater a corner, so the game stays quick over a long game:
+    holding 8 chunks of 16 by 16 and making and taking back 100,000 craters cost 20 to 27 µs a crater the whole way
+    (3.0.1.24371). Chunks never take a big area's wide craters.
 - `Noise` and `Field` are the numbers under it, for a map's own generators: `Noise.At(seed, x, y)` is smooth noise
   from 0 to 1, `Noise.Layered` adds finer layers, and a `Field` is a grid of numbers to fill (`Field.FromNoise`),
   `Normalize`, `FadeEdges` and `Smooth`.
