@@ -187,6 +187,12 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.ai-tools.fact", Run = BrainToolsCases.SetFact });
             list.Add(new Case { Name = "debug.ai-tools.wake", Run = BrainToolsCases.Wake });
             list.Add(new Case { Name = "debug.ai-tools.off-and-map-commands", Run = BrainToolsCases.OffAndMapCommands });
+            list.Add(new Case { Name = "debug.ai-tools.enum-and-nullable-facts", Run = BrainToolsCases.EnumAndNullableFacts });
+            list.Add(new Case { Name = "debug.ai-tools.before-any-brain", Run = BrainToolsCases.BeforeAnyBrain });
+            list.Add(new Case { Name = "debug.ai-tools.force-pick", Run = BrainToolsCases.ForcePick });
+            list.Add(new Case { Name = "debug.ai-tools.log-two-brains", Run = BrainToolsCases.LogTwoBrains });
+            list.Add(new Case { Name = "debug.ai-tools.negative-fact", Run = BrainToolsCases.NegativeFact });
+            list.Add(new Case { Name = "debug.ai-tools.ending-while-logged-and-forced", Run = BrainToolsCases.EndingWhileLoggedAndForced });
 #endif
         }
 

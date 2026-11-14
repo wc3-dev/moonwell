@@ -13,9 +13,6 @@ namespace Moonwell.AI
         /// <summary>Every fact made, in the order made, for -fact; kept for the whole run, as facts are static fields.</summary>
         private static readonly List<IHeldFact> facts = new List<IHeldFact>();
 
-        /// <summary>The nodes and options -force has counted so far in a walk.</summary>
-        private static int counted;
-
         /// <summary>Adds the view, the log's lines and the commands to the debug mode, and forgets the log; a new game state calls it, as Runtime.Reset clears them.</summary>
         internal static void Install()
         {
@@ -68,36 +65,42 @@ namespace Moonwell.AI
             return found;
         }
 
-        /// <summary>How many lines a brain numbers: the nodes of its trees, then its choices' options.</summary>
-        internal static int Entries(Mind mind)
+        /// <summary>The numbered lines of some brains, line n at n - 1: each brain's trees depth-first in the order made, then its choices' options, brain after brain.</summary>
+        internal static List<BrainLine> LinesOf(List<Mind> minds)
         {
-            var count = 0;
-            var trees = mind.Board.trees;
-            for (var i = 0; trees != null && i < trees.Count; i++)
+            var lines = new List<BrainLine>();
+            for (var m = 0; m < minds.Count; m++)
             {
-                count += Size(trees[i].Root);
+                var mind = minds[m];
+                var trees = mind.Board.trees;
+                for (var t = 0; trees != null && t < trees.Count; t++)
+                {
+                    AddLines(mind, trees[t].Root, null, 0, 0, lines);
+                }
+
+                var choices = mind.Board.choices;
+                for (var c = 0; choices != null && c < choices.Count; c++)
+                {
+                    for (var o = 0; o < choices[c].options.Count; o++)
+                    {
+                        lines.Add(new BrainLine(mind, choices[c], c + 1, o));
+                    }
+                }
             }
 
-            var choices = mind.Board.choices;
-            for (var i = 0; choices != null && i < choices.Count; i++)
+            return lines;
+        }
+
+        /// <summary>How many nodes below a node's line follow it: the lines of its subtree.</summary>
+        internal static int Below(List<BrainLine> lines, int at)
+        {
+            var count = 0;
+            while (at + count + 1 < lines.Count && lines[at + count + 1].Node != null && lines[at + count + 1].Depth > lines[at].Depth)
             {
-                count += choices[i].options.Count;
+                count++;
             }
 
             return count;
-        }
-
-        /// <summary>How many nodes a node is, with every node below it.</summary>
-        internal static int Size(Node node)
-        {
-            var size = 1;
-            var branch = node as Branch;
-            for (var i = 0; branch != null && i < branch.children.Length; i++)
-            {
-                size += Size(branch.children[i]);
-            }
-
-            return size;
         }
 
         /// <summary>The place of the child of a node that runs; -1 for none.</summary>
@@ -139,7 +142,7 @@ namespace Moonwell.AI
             return (value < 0.0f && hundredths > 0 ? "-" : "") + DebugPanel.Count(hundredths / 100) + "." + (rest < 10 ? "0" : "") + rest;
         }
 
-        /// <summary>A value of a fact that is no number or bool, as the view and the log show it: "none" for null, a string as it is, an object by the panel's name for it, anything else by its class.</summary>
+        /// <summary>A value of a fact that is no int, float, bool or enum, as the view and the log show it: "none" for null, a Moonwell object by the panel's name for it, anything else as its text, which Lua writes for a number or a boolean too.</summary>
         internal static string Text(object? value)
         {
             if (value == null)
@@ -147,14 +150,8 @@ namespace Moonwell.AI
                 return "none";
             }
 
-            var text = value as string;
-            if (text != null)
-            {
-                return text;
-            }
-
             var scope = value as Scope;
-            return scope != null ? DebugPanel.NameOf(scope) : Names.NameOf(value);
+            return scope != null ? DebugPanel.NameOf(scope) : "" + value;
         }
 
         /// <summary>A number of chat text as DebugSession.Number reads it, with a minus in front for one below 0.</summary>
@@ -168,6 +165,17 @@ namespace Moonwell.AI
             }
 
             return DebugSession.Number(text, out value);
+        }
+
+        /// <summary>Adds the line of a node and those of the nodes below it.</summary>
+        private static void AddLines(Mind mind, Node node, Branch? parent, int index, int depth, List<BrainLine> lines)
+        {
+            lines.Add(new BrainLine(mind, node, parent, index, depth));
+            var branch = node as Branch;
+            for (var i = 0; branch != null && i < branch.children.Length; i++)
+            {
+                AddLines(mind, branch.children[i], branch, i, depth + 1, lines);
+            }
         }
 
         /// <summary>"1 brain", "3 brains".</summary>
@@ -190,7 +198,7 @@ namespace Moonwell.AI
             return minds;
         }
 
-        /// <summary>-brain Guard: how many brains of a class there are, and selects the next object after the selected one holding one, in the order the brains started.</summary>
+        /// <summary>-brain Guard: how many brains of a class there are, and selects the next object after the selected one holding one, as -find does: the units, then the players, then the game.</summary>
         private static void SelectBrain(string name)
         {
             if (name.Length == 0)
@@ -200,46 +208,56 @@ namespace Moonwell.AI
             }
 
             var wanted = name.ToLower();
-            var found = new List<Mind>();
-            var started = Minds.Current().started;
-            for (var i = 0; i < started.Count; i++)
+            var found = new List<Actor>();
+            var count = 0;
+            for (var i = 0; i < KnownUnits.Live.Count; i++)
             {
-                var mind = started[i];
-                if (!mind.brain.HasEnded && mind.brain.actor != null && mind.ClassName() == wanted)
+                var unit = KnownUnits.Live[i];
+                if (!unit.HasEnded)
                 {
-                    found.Add(mind);
+                    count += Holding(unit, wanted, found);
                 }
             }
 
-            if (found.Count == 0)
+            var players = Player.Playing;
+            for (var i = 0; i < players.Count; i++)
+            {
+                count += Holding(players[i], wanted, found);
+            }
+
+            count += Holding(Game.Instance, wanted, found);
+            if (count == 0)
             {
                 Game.Print("No brains of the class " + name + ".");
                 return;
             }
 
             var selected = DebugSession.Selected;
-            var at = -1;
-            for (var i = 0; i < found.Count; i++)
-            {
-                if (found[i].brain.actor == selected)
-                {
-                    at = i;
-                }
-            }
-
-            var next = found[0].brain.actor!;
-            for (var k = 1; k <= found.Count; k++)
-            {
-                var actor = found[(at + k) % found.Count].brain.actor!;
-                if (actor != selected)
-                {
-                    next = actor;
-                    break;
-                }
-            }
-
+            var at = selected != null ? found.IndexOf(selected) : -1;
+            var next = found[(at + 1) % found.Count];
             DebugSession.Select(next);
-            Game.Print(name + ": " + Brains(found.Count) + "; selected " + DebugPanel.NameOf(next) + ".");
+            Game.Print(name + ": " + Brains(count) + "; selected " + DebugPanel.NameOf(next) + ".");
+        }
+
+        /// <summary>How many brains of a class, in lower case, an actor holds; one that holds any is added to the list.</summary>
+        private static int Holding(Actor actor, string wanted, List<Actor> found)
+        {
+            var minds = MindsOf(actor);
+            var count = 0;
+            for (var i = 0; i < minds.Count; i++)
+            {
+                if (minds[i].ClassName() == wanted)
+                {
+                    count++;
+                }
+            }
+
+            if (count > 0)
+            {
+                found.Add(actor);
+            }
+
+            return count;
         }
 
         /// <summary>-brainlog: stops the log when it runs; otherwise starts it for a class, or for the selected object's brains.</summary>
@@ -274,11 +292,12 @@ namespace Moonwell.AI
             }
 
             var name = DebugPanel.NameOf(DebugSession.Selected!);
+            var lines = LinesOf(minds);
             if (rest.Length == 0)
             {
-                for (var i = 0; i < minds.Count; i++)
+                for (var i = 0; i < lines.Count; i++)
                 {
-                    LetGo(minds[i]);
+                    LetGo(lines[i]);
                 }
 
                 Game.Print("Every force let go on " + name + ".");
@@ -291,123 +310,61 @@ namespace Moonwell.AI
                 return;
             }
 
-            var line = (int)value;
-            if (!ForceLine(minds, line))
+            var number = (int)value;
+            if (number > lines.Count || !ForceLine(lines[number - 1]))
             {
-                Game.Print("Line " + line + " of " + name + " has nothing to force: a Select's or Pick's child, a When or a choice's option.");
+                Game.Print("Line " + number + " of " + name + " has nothing to force: a Select's or Pick's child, a When or a choice's option.");
                 return;
             }
 
-            Game.Print("Line " + line + " of " + name + " forced: -force alone lets go.");
+            Game.Print("Line " + number + " of " + name + " forced: -force alone lets go.");
         }
 
-        /// <summary>Forces the node or option at a line, counted as the view numbers them; false when the line names nothing forceable or nothing at all.</summary>
-        private static bool ForceLine(List<Mind> minds, int line)
+        /// <summary>Forces a line: a Select's or Pick's child has the parent run only it, a When has its condition read true, and an option wins; false for a line with nothing to force.</summary>
+        private static bool ForceLine(BrainLine line)
         {
-            counted = 0;
-            for (var m = 0; m < minds.Count; m++)
+            if (line.Option != null)
             {
-                var board = minds[m].Board;
-                var trees = board.trees;
-                for (var t = 0; trees != null && t < trees.Count; t++)
-                {
-                    var forced = ForceNode(trees[t].Root, null, 0, line);
-                    if (counted >= line)
-                    {
-                        return forced;
-                    }
-                }
-
-                var choices = board.choices;
-                for (var c = 0; choices != null && c < choices.Count; c++)
-                {
-                    var options = choices[c].options;
-                    for (var o = 0; o < options.Count; o++)
-                    {
-                        counted++;
-                        if (counted == line)
-                        {
-                            choices[c].Force(options[o]);
-                            return true;
-                        }
-                    }
-                }
+                line.Choice!.Force(line.Option);
+                return true;
             }
 
-            return false;
+            var forced = false;
+            if (line.Parent is SelectNode || line.Parent is PickNode)
+            {
+                line.Parent!.forcedChild = line.Index;
+                forced = true;
+            }
+
+            var when = line.Node as WhenNode;
+            if (when != null)
+            {
+                when.forced = true;
+                forced = true;
+            }
+
+            return forced;
         }
 
-        /// <summary>Counts a node and those below it until the line: a Select's or Pick's child there has the parent run only it, and a When there has its condition read true.</summary>
-        private static bool ForceNode(Node node, Branch? parent, int index, int line)
+        /// <summary>Lets go of every force on a line.</summary>
+        private static void LetGo(BrainLine line)
         {
-            counted++;
-            if (counted == line)
+            if (line.Choice != null)
             {
-                var forced = false;
-                if (parent is SelectNode || parent is PickNode)
-                {
-                    parent!.forcedChild = index;
-                    forced = true;
-                }
-
-                var when = node as WhenNode;
-                if (when != null)
-                {
-                    when.forced = true;
-                    forced = true;
-                }
-
-                return forced;
+                line.Choice.Force(null);
+                return;
             }
 
-            var branch = node as Branch;
-            for (var i = 0; branch != null && i < branch.children.Length; i++)
+            var branch = line.Node as Branch;
+            if (branch != null)
             {
-                var found = ForceNode(branch.children[i], branch, i, line);
-                if (counted >= line)
-                {
-                    return found;
-                }
+                branch.forcedChild = -1;
             }
 
-            return false;
-        }
-
-        /// <summary>Lets go of every force in a brain's trees and choices.</summary>
-        private static void LetGo(Mind mind)
-        {
-            var trees = mind.Board.trees;
-            for (var i = 0; trees != null && i < trees.Count; i++)
-            {
-                LetGoNode(trees[i].Root);
-            }
-
-            var choices = mind.Board.choices;
-            for (var i = 0; choices != null && i < choices.Count; i++)
-            {
-                choices[i].Force(null);
-            }
-        }
-
-        /// <summary>Lets go of every force on a node and below it.</summary>
-        private static void LetGoNode(Node node)
-        {
-            var when = node as WhenNode;
+            var when = line.Node as WhenNode;
             if (when != null)
             {
                 when.forced = false;
-            }
-
-            var branch = node as Branch;
-            if (branch == null)
-            {
-                return;
-            }
-
-            branch.forcedChild = -1;
-            for (var i = 0; i < branch.children.Length; i++)
-            {
-                LetGoNode(branch.children[i]);
             }
         }
 

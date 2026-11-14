@@ -51,8 +51,8 @@ namespace Moonwell.AI
         /// <summary>What the log follows, as its head says it: "Footman 3", "every Guard".</summary>
         private static string shown = string.Empty;
 
-        /// <summary>The number the walk of a brain's trees last gave.</summary>
-        private static int number;
+        /// <summary>The brains on the thinking brain's object as its think began, so its lines keep the view's numbers if it ends in its think.</summary>
+        private static List<Mind> thinkers = new List<Mind>();
 
         /// <summary>The names of the facts read in the think, the first 8.</summary>
         private static List<string> readNames = new List<string>();
@@ -71,6 +71,7 @@ namespace Moonwell.AI
             followed = null;
             className = string.Empty;
             shown = string.Empty;
+            thinkers = new List<Mind>();
             readNames = new List<string>();
             reads = new List<string>();
         }
@@ -100,7 +101,7 @@ namespace Moonwell.AI
             }
 
             DebugSession.WriteFile(FilePath, lines);
-            Game.Print("Brain log stopped: " + DebugPanel.Count(lines.Count) + " lines written to CustomMapData\\" + FilePath + ".");
+            Game.Print("Brain log stopped: " + Lines(lines.Count) + " written to CustomMapData\\" + FilePath + ".");
         }
 
         /// <summary>Whether the log follows a brain.</summary>
@@ -122,27 +123,28 @@ namespace Moonwell.AI
                 return;
             }
 
-            lines.Add("BRAIN LOG  " + shown + " · " + (count == 1 ? "1 line" : DebugPanel.Count(count) + " lines"));
+            lines.Add("BRAIN LOG  " + shown + " · " + Lines(count));
             for (var i = count > PanelLines ? count - PanelLines : 0; i < count; i++)
             {
                 lines.Add(kept[(first + i) % MostLines]);
             }
         }
 
-        /// <summary>A logged brain is to think: at its first think in this run, what runs and wins is noted, so only a change makes a line; then the facts it reads are noted.</summary>
+        /// <summary>A logged brain is to think: the brains on its object are kept, and at its first think in this run what runs and wins is noted, so only a change makes a line; then the facts it reads are noted.</summary>
         internal static void Before(Mind mind)
         {
-            if (mind.logRun != run)
+            try
             {
-                mind.logRun = run;
-                try
+                thinkers = BrainTools.MindsOf(mind.brain.actor!);
+                if (mind.logRun != run)
                 {
+                    mind.logRun = run;
                     Note(mind);
                 }
-                catch (Exception error)
-                {
-                    Errors.Report("Moonwell.Debug", error);
-                }
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Debug", error);
             }
 
             readNames.Clear();
@@ -180,45 +182,49 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>Notes what runs in a brain's trees and what its choices picked, as they are now.</summary>
+        /// <summary>"1 line", "37 lines".</summary>
+        private static string Lines(int number)
+        {
+            return number == 1 ? "1 line" : DebugPanel.Count(number) + " lines";
+        }
+
+        /// <summary>Notes what runs in a brain's trees, the child of each Select and Pick and whether each When runs, and what its choices picked, as they are now.</summary>
         private static void Note(Mind mind)
         {
-            var trees = mind.Board.trees;
-            for (var i = 0; trees != null && i < trees.Count; i++)
+            var numbered = BrainTools.LinesOf(thinkers);
+            for (var i = 0; i < numbered.Count; i++)
             {
-                NoteNode(trees[i].Root);
-            }
+                var line = numbered[i];
+                if (line.Mind != mind)
+                {
+                    continue;
+                }
 
-            var choices = mind.Board.choices;
-            for (var i = 0; choices != null && i < choices.Count; i++)
-            {
-                choices[i].logged = choices[i].Current;
-            }
-        }
+                if (line.Choice != null)
+                {
+                    line.Choice.logged = line.Choice.Current;
+                    continue;
+                }
 
-        /// <summary>Notes the child that runs of each Select and Pick, and whether each When runs, from a node down.</summary>
-        private static void NoteNode(Node node)
-        {
-            var branch = node as Branch;
-            if (branch == null)
-            {
-                return;
-            }
+                var branch = line.Node as Branch;
+                if (branch != null)
+                {
+                    branch.loggedChild = BrainTools.RunningChild(branch);
+                }
 
-            branch.loggedChild = BrainTools.RunningChild(branch);
-            var when = node as WhenNode;
-            if (when != null)
-            {
-                when.loggedRunning = when.running;
-            }
-
-            for (var i = 0; i < branch.children.Length; i++)
-            {
-                NoteNode(branch.children[i]);
+                var when = line.Node as WhenNode;
+                if (when != null)
+                {
+                    when.loggedRunning = when.running;
+                }
             }
         }
 
-        /// <summary>"choice 1: flee 0.61 (was fight 0.40)" for each choice whose Current changed, then "tree: line 2 When hurt cut in" with every change in the trees.</summary>
+        /// <summary>
+        /// "choice 1: flee 0.61 (was fight 0.40)" for each choice whose Current changed, then one line with every change in the
+        /// trees, numbered as the view numbers them: a Select or Pick running another child ("line 4 Repeat runs", or for a When
+        /// above the child that ran, "line 2 When hurt cut in"), and a When that ran and has ended ("line 2 When hurt ended").
+        /// </summary>
         private static void Changes(Mind mind)
         {
             var choices = mind.Board.choices;
@@ -232,95 +238,69 @@ namespace Moonwell.AI
                 }
             }
 
-            var trees = mind.Board.trees;
-            if (trees == null)
+            if (mind.Board.trees == null)
             {
                 return;
             }
 
-            var changes = new List<string>();
-            number = FirstNumber(mind);
-            for (var i = 0; i < trees.Count; i++)
+            var numbered = BrainTools.LinesOf(thinkers);
+            var text = string.Empty;
+            for (var i = 0; i < numbered.Count; i++)
             {
-                Walk(trees[i].Root, null, 0, changes);
-            }
-
-            if (changes.Count > 0)
-            {
-                var text = "tree: " + changes[0];
-                for (var i = 1; i < changes.Count; i++)
+                var line = numbered[i];
+                if (line.Mind != mind || line.Node == null)
                 {
-                    text = text + ", " + changes[i];
+                    continue;
                 }
 
-                Add(mind, text);
-            }
-        }
-
-        /// <summary>How many lines the brains on a brain's object before it number, so the log's lines are the view's.</summary>
-        private static int FirstNumber(Mind mind)
-        {
-            var minds = BrainTools.MindsOf(mind.brain.actor!);
-            var before = 0;
-            for (var i = 0; i < minds.Count && minds[i] != mind; i++)
-            {
-                before += BrainTools.Entries(minds[i]);
-            }
-
-            return before;
-        }
-
-        /// <summary>
-        /// Numbers a node and those below it as the view does, and notes the changes since the last think: a Select or Pick
-        /// running another child ("line 4 Repeat runs", or for a When above the child that ran, "line 2 When hurt cut in"),
-        /// and a When that ran and has ended ("line 2 When hurt ended").
-        /// </summary>
-        private static void Walk(Node node, Branch? parent, int index, List<string> changes)
-        {
-            number++;
-            var at = number;
-            var branch = node as Branch;
-            if (branch == null)
-            {
-                return;
-            }
-
-            var when = node as WhenNode;
-            if (when != null)
-            {
-                if (when.loggedRunning && !when.running)
+                var when = line.Node as WhenNode;
+                if (when != null)
                 {
-                    changes.Add("line " + at + " " + BrainTools.Label(when) + " ended");
-                    if (parent != null && parent.loggedChild == index)
+                    if (when.loggedRunning && !when.running)
                     {
-                        parent.loggedChild = -1;
+                        text = Joined(text, "line " + (i + 1) + " " + BrainTools.Label(when) + " ended");
+                        if (line.Parent != null && line.Parent.loggedChild == line.Index)
+                        {
+                            line.Parent.loggedChild = -1;
+                        }
                     }
+
+                    when.loggedRunning = when.running;
                 }
 
-                when.loggedRunning = when.running;
-            }
+                var branch = line.Node as Branch;
+                if (!(line.Node is SelectNode || line.Node is PickNode) || branch == null)
+                {
+                    continue;
+                }
 
-            if (node is SelectNode || node is PickNode)
-            {
                 var now = BrainTools.RunningChild(branch);
-                if (now >= 0 && now != branch.loggedChild)
+                if (now < 0 || now == branch.loggedChild)
                 {
-                    var child = branch.children[now];
-                    var line = at + 1;
-                    for (var i = 0; i < now; i++)
-                    {
-                        line += BrainTools.Size(branch.children[i]);
-                    }
-
-                    changes.Add("line " + line + " " + BrainTools.Label(child) + (child is WhenNode && branch.loggedChild > now ? " cut in" : " runs"));
-                    branch.loggedChild = now;
+                    continue;
                 }
+
+                var child = i + 1;
+                while (numbered[child].Parent != branch || numbered[child].Index != now)
+                {
+                    child++;
+                }
+
+                var cut = branch.children[now] is WhenNode && branch.loggedChild > now;
+                text = Joined(text, "line " + (child + 1) + " " + BrainTools.Label(branch.children[now]) + (cut ? " cut in" : " runs"));
+                branch.loggedChild = now;
             }
 
-            for (var i = 0; i < branch.children.Length; i++)
+            if (text.Length > 0)
             {
-                Walk(branch.children[i], branch, i, changes);
+                Add(mind, "tree: " + text);
             }
+        }
+
+        /// <summary>Two parts of a line joined by a comma; the first alone when there is none before it.</summary>
+        private static string Joined(string before, string part)
+        {
+            return before.Length > 0 ? before + ", " + part : part;
         }
 
         /// <summary>"flee 0.61" for an option and its last score, "none" for null.</summary>
@@ -329,12 +309,11 @@ namespace Moonwell.AI
             return option != null ? option.Name + " " + BrainTools.Hundredths(option.lastScore) : "none";
         }
 
-        /// <summary>Keeps a line: "12.25 Footman 3  choice 1: flee 0.61 (was fight 0.40)  life 0.31 0.2s", the brain's class after its object when the object holds more than one brain.</summary>
+        /// <summary>Keeps a line: "12.25 Footman 3  choice 1: flee 0.61 (was fight 0.40)  life 0.31 0.2s", the brain's class after its object when the object held more than one brain as the think began.</summary>
         private static void Add(Mind mind, string change)
         {
-            var actor = mind.brain.actor!;
-            var name = DebugPanel.NameOf(actor);
-            if (BrainTools.MindsOf(actor).Count > 1)
+            var name = DebugPanel.NameOf(mind.brain.actor!);
+            if (thinkers.Count > 1)
             {
                 name = name + " " + Names.NameOf(mind.brain);
             }

@@ -40,6 +40,12 @@ namespace Moonwell.Testing
         /// <summary>The other fact named "twin".</summary>
         public static readonly Fact<float> TwinNumber = new Fact<float>("twin");
 
+        /// <summary>A written enum, which Lua keeps as a bare number.</summary>
+        public static readonly Fact<ToolMood> Mood = new Fact<ToolMood>("mood");
+
+        /// <summary>A written nullable count.</summary>
+        public static readonly Fact<int?> Spare = new Fact<int?>("spare");
+
         /// <summary>The guard's tree of 7 nodes, numbered as the view counts them: 1 Select, 2 When hurt, 3 its child, 4 Sequence, 5 a child that succeeds, 6 one that runs, 7 the Select's last child, which runs.</summary>
         public static Node Guard()
         {
@@ -189,6 +195,102 @@ namespace Moonwell.Testing
         protected override void Think()
         {
             big.Run();
+        }
+    }
+
+    /// <summary>A mood, for the enum fact.</summary>
+    public enum ToolMood
+    {
+        /// <summary>The first, 0.</summary>
+        Calm,
+
+        /// <summary>The second, 1.</summary>
+        Angry,
+    }
+
+    /// <summary>A unit brain thinking every step that reads the enum and the nullable facts, then picks fight or rest as StanceBrain does.</summary>
+    public sealed class MoodBrain : UnitBrain
+    {
+        /// <summary>Fight or rest.</summary>
+        private readonly Choice stances;
+
+        /// <summary>Makes the brain and its choice.</summary>
+        public MoodBrain()
+        {
+            stances = new Choice
+            {
+                new Option("fight", Nothing) { { ToolFacts.Morale, Curve.Rising } },
+                new Option("rest", Nothing, 0.5f) { { ToolFacts.Tired, Curve.Falling } },
+            };
+        }
+
+        protected override void OnAdded()
+        {
+            ThinkEvery = 0.02f;
+        }
+
+        protected override void Think()
+        {
+            Read(ToolFacts.Mood);
+            Read(ToolFacts.Spare);
+            stances.Run(Blackboard);
+        }
+
+        private static void Nothing()
+        {
+        }
+    }
+
+    /// <summary>A unit brain thinking every step with a Pick of two options: 1 Pick, 2 the first option (0.9) and 3 its child, 4 the second (0.2) and 5 its child, each child running.</summary>
+    public sealed class PickBrain : UnitBrain
+    {
+        /// <summary>The tree.</summary>
+        private readonly Tree pick;
+
+        /// <summary>Makes the brain and its tree.</summary>
+        public PickBrain()
+        {
+            pick = new Tree(this, Pick(Scored(() => 0.9f, Do(() => Status.Running)), Scored(() => 0.2f, Do(() => Status.Running))));
+        }
+
+        protected override void OnAdded()
+        {
+            ThinkEvery = 0.02f;
+        }
+
+        protected override void Think()
+        {
+            pick.Run();
+        }
+    }
+
+    /// <summary>A unit brain thinking every step with the guard's tree, which ends itself after a pass once Quit is set.</summary>
+    public sealed class QuitBrain : UnitBrain
+    {
+        /// <summary>Whether the next think ends the brain, after its pass.</summary>
+        public bool Quit;
+
+        /// <summary>The guard's tree.</summary>
+        private readonly Tree guard;
+
+        /// <summary>Makes the brain and its tree.</summary>
+        public QuitBrain()
+        {
+            guard = new Tree(this, ToolFacts.Guard());
+        }
+
+        protected override void OnAdded()
+        {
+            ThinkEvery = 0.02f;
+        }
+
+        protected override void Think()
+        {
+            guard.Run();
+            if (Quit)
+            {
+                End();
+            }
         }
     }
 

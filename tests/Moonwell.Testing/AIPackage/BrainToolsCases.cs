@@ -751,6 +751,149 @@ namespace Moonwell.Testing
             world.Chat(Player.Get(0), "-wake");
             Expect.Equal(1, heard, "the map's -wake runs");
         }
+
+        /// <summary>An enum fact shows by its number, as Lua keeps it, and an int? fact by its number, in the view and among the log's facts read; in Lua neither stops the view, the log or the brain's own reads.</summary>
+        public static void EnumAndNullableFacts(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var brain = unit.Add(new MoodBrain());
+            brain.Blackboard.Set(ToolFacts.Mood, ToolMood.Angry);
+            brain.Blackboard.Set(ToolFacts.Spare, 5);
+            brain.Blackboard.Set(ToolFacts.Morale, 0.9f);
+            var debug = On(world);
+            DebugMode.Select(unit);
+            debug.Chat(0, "-brainlog");
+            Steps(debug, 1);
+            var lines = Panel(debug);
+            // The view's facts give their age as "0.0 s", the log's as "0.0s".
+            Expect.True(Find(lines, "mood 1 0.0 s") != null, "the view shows the enum by its number, Angry's 1: " + debug.PanelText);
+            Expect.True(Find(lines, "spare 5 0.0 s") != null, "and the int? by its number: " + debug.PanelText);
+            debug.Chat(0, "-brainlog");
+            var written = Written(debug);
+            Expect.True(written.Count == 1 && Holds(written[0], "mood 1") && Holds(written[0], "spare 5"), "the log's line names both as read: " + string.Join(" | ", written));
+            Expect.Equal(0, Logged(world, "Moonwell.Debug"), "the tools report no error");
+            Expect.Equal(0, Logged(world, "MoodBrain.Think"), "the brain's think goes on");
+        }
+
+        /// <summary>With the package installed as a map's Main installs it, -help lists the commands and -brainlog of a class starts before any brain is made, then follows the first one made.</summary>
+        public static void BeforeAnyBrain(FakeWorld world)
+        {
+            AISystem.Install();
+            var debug = On(world);
+            debug.Chat(0, "-help");
+            var help = debug.PanelLines();
+            Expect.True(Find(help, "-brainlog") != null && Find(help, "-force") != null && Find(help, "-fact") != null, "-help lists the commands before any brain: " + debug.PanelText);
+            debug.Chat(0, "-help");
+            var printed = world.PrintedTexts.Count;
+            debug.Chat(0, "-brainlog StanceBrain");
+            Expect.True(Printed(world, printed, "StanceBrain"), "-brainlog of a class starts before any brain: " + Last(world));
+            var unit = UnitOf(world);
+            var brain = unit.Add(new StanceBrain());
+            brain.Blackboard.Set(ToolFacts.Morale, 0.9f);
+            Steps(debug, 2);
+            debug.Chat(0, "-brainlog");
+            var lines = Written(debug);
+            Expect.True(lines.Count == 1 && Holds(lines[0], "fight"), "the brain made after it is followed: " + string.Join(" | ", lines));
+        }
+
+        /// <summary>-force on a Pick's option runs it and no other, whatever the scores, with its child; -force alone lets the best run again.</summary>
+        public static void ForcePick(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            unit.Add(new PickBrain());
+            var debug = On(world);
+            DebugMode.Select(unit);
+            Steps(debug, 1);
+            var lines = Panel(debug);
+            Expect.True(Holds(Numbered(lines, 2), ">") && !Holds(Numbered(lines, 4), ">"), "2, the best option, runs: " + debug.PanelText);
+            debug.Chat(0, "-force 4");
+            Steps(debug, 1);
+            lines = Panel(debug);
+            Expect.True(Holds(Numbered(lines, 4), ">") && Holds(Numbered(lines, 4), "forced") && Holds(Numbered(lines, 5), ">"), "4 runs, forced, and its child: " + debug.PanelText);
+            Expect.True(!Holds(Numbered(lines, 2), ">"), "2 no longer runs: " + Numbered(lines, 2));
+            debug.Chat(0, "-force");
+            Steps(debug, 1);
+            lines = Panel(debug);
+            Expect.True(Holds(Numbered(lines, 2), ">") && Find(lines, "forced") == null, "let go, the best runs again: " + debug.PanelText);
+        }
+
+        /// <summary>Two brains on one unit, both logged: each line names its brain's class, and the guard's tree lines carry the view's numbers, after the stance's two options: its When at 4 cuts in, then ends as its Sequence at 6 runs.</summary>
+        public static void LogTwoBrains(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var stance = unit.Add(new StanceBrain());
+            var guard = unit.Add(new GuardBrain());
+            stance.Blackboard.Set(ToolFacts.Morale, 0.9f);
+            guard.Blackboard.Set(ToolFacts.Hurt, false);
+            var debug = On(world);
+            DebugMode.Select(unit);
+            debug.Chat(0, "-brainlog");
+            Steps(debug, 1);
+            var lines = Panel(debug);
+            Expect.True(Holds(Numbered(lines, 4), "When hurt") && Holds(Numbered(lines, 6), "Sequence"), "the view numbers the When 4 and the Sequence 6: " + debug.PanelText);
+            guard.Blackboard.Set(ToolFacts.Hurt, true);
+            Steps(debug, 1);
+            guard.Blackboard.Set(ToolFacts.Hurt, false);
+            Steps(debug, 1);
+            debug.Chat(0, "-brainlog");
+            var written = Written(debug);
+            var all = string.Join(" | ", written);
+            Expect.True(FindBoth(written, "fight", "StanceBrain") != null, "the stance's line names its class: " + all);
+            Expect.True(FindBoth(written, "line 6 Sequence runs", "GuardBrain") != null, "the guard's first line, numbered as the view: " + all);
+            Expect.True(FindBoth(written, "line 4 When hurt cut in", "GuardBrain") != null, "the When cuts in at 4: " + all);
+            var ended = FindBoth(written, "line 4 When hurt ended", "GuardBrain");
+            Expect.True(ended != null && Holds(ended, "line 6 Sequence runs"), "then ends, and the Sequence runs again: " + all);
+        }
+
+        /// <summary>-fact reads a value below 0, for an int and for a float.</summary>
+        public static void NegativeFact(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var brain = unit.Add(new ToolBrain());
+            var debug = On(world);
+            DebugMode.Select(unit);
+            debug.Chat(0, "-fact ammo -3");
+            Expect.Equal(-3, brain.Read(ToolFacts.Ammo), "an int below 0");
+            debug.Chat(0, "-fact morale -0.5");
+            Expect.Near(-0.5f, brain.Read(ToolFacts.Morale), "a float below 0");
+        }
+
+        /// <summary>
+        /// A logged brain that ends in its own think, before another brain of its unit, keeps the view's numbers in its last
+        /// line. Its unit removed while logged and while the other brain's option is forced, nothing is reported, -force says
+        /// nothing is selected, and -brainlog still stops and writes.
+        /// </summary>
+        public static void EndingWhileLoggedAndForced(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var quitter = unit.Add(new QuitBrain());
+            var stance = unit.Add(new StanceBrain());
+            quitter.Blackboard.Set(ToolFacts.Hurt, false);
+            stance.Blackboard.Set(ToolFacts.Morale, 0.9f);
+            var debug = On(world);
+            DebugMode.Select(unit);
+            debug.Chat(0, "-brainlog");
+            Steps(debug, 1);
+            quitter.Blackboard.Set(ToolFacts.Hurt, true);
+            quitter.Quit = true;
+            Steps(debug, 1);
+            Expect.True(quitter.HasEnded, "the brain ended in its think");
+            debug.Chat(0, "-force 2");
+            Steps(debug, 1);
+            Expect.True(Holds(Numbered(Panel(debug), 2), "forced"), "the stance's rest, now line 2, is forced: " + debug.PanelText);
+            unit.Remove();
+            Steps(debug, 2);
+            var printed = world.PrintedTexts.Count;
+            debug.Chat(0, "-force");
+            Expect.True(Printed(world, printed, "Select"), "-force with the unit gone says to select one: " + Last(world));
+            debug.Chat(0, "-brainlog");
+            var written = Written(debug);
+            var all = string.Join(" | ", written);
+            Expect.True(FindBoth(written, "line 2 When hurt cut in", "QuitBrain") != null, "the ended brain's line keeps the view's number, 2: " + all);
+            Expect.True(FindBoth(written, "rest", "was fight") != null, "the forced option's line: " + all);
+            Expect.Equal(0, Logged(world, "Moonwell.Debug"), "the tools report no error");
+            Expect.Equal(0, Logged(world, ".Think"), "no think fails");
+        }
     }
 }
 #endif

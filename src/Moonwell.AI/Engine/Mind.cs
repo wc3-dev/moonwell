@@ -63,9 +63,6 @@ namespace Moonwell.AI
 
             loop = Minds.Current();
             loop.Started();
-#if DEBUG
-            loop.started.Add(this);
-#endif
             Tick(Minds.StepsOf(ThinkEvery));
             if (wakeAsked)
             {
@@ -190,9 +187,6 @@ namespace Moonwell.AI
                     loop.Undue(this, TickAt);
                 }
 
-#if DEBUG
-                loop.started.Remove(this);
-#endif
                 loop.Ended();
             }
         }

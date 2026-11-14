@@ -51,11 +51,6 @@ namespace Moonwell.AI
 
         /// <summary>The time the running step read once, at its start.</summary>
         private float now;
-#if DEBUG
-
-        /// <summary>The brains started and not ended, in the order they started, for the AI tools.</summary>
-        internal readonly List<Mind> started = new List<Mind>();
-#endif
 
         private Minds(Game game)
         {

@@ -1845,7 +1845,7 @@ facts
 - Its choices, each one picked on the brain's blackboard: the options with their last scores, `>` on `Current`, and the
   current one's inputs with their last values.
 - Its facts: every fact held on its blackboard and up its chain, with its value and age; one from up the chain says
-  whose.
+  whose. An enum shows as its number, as the game's Lua keeps it.
 - Nodes and options are numbered for `-force`, through the object's brains in the order added: each brain's trees
   depth first, then its choices' options. A brain whose lines don't fit shows each subtree that isn't running as one
   line ending in `+n`, the nodes it folds, and the numbers skip them.

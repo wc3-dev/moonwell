@@ -125,6 +125,9 @@ namespace Moonwell.Build.Tests
                 Assert.Contains(marker, development);
             }
 
+            // The Main installs the package, which adds the tools before the first brain.
+            Assert.Contains("Moonwell.AISystem.Install()", development);
+
             var release = Build(project, true);
             foreach (var marker in tools)
             {

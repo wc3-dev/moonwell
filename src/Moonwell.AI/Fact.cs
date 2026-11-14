@@ -240,23 +240,38 @@ namespace Moonwell.AI
             return value;
         }
 
-        /// <summary>A value as the AI tools show it: a float to hundredths, an int with commas, a bool as true or false, the rest as BrainTools.Text shows it. T is tested, not the value, as Lua's numbers pass for any number type.</summary>
+        /// <summary>
+        /// A value as the AI tools show it: "none" for null, a float to hundredths, an int with commas, a bool as true or false
+        /// (nullable ones too), an enum by its number, the rest as BrainTools.Text shows it. T is tested, not the value, as in
+        /// Lua a number passes for any number type; CSharp.lua writes an enum type argument as int, so an enum shows as the
+        /// number Lua has, in .NET too.
+        /// </summary>
         private static string Text(T value)
         {
             object? boxed = value;
-            if (typeof(T) == typeof(float))
+            if (boxed == null)
+            {
+                return "none";
+            }
+
+            if (typeof(T) == typeof(float) || typeof(T) == typeof(float?))
             {
                 return boxed is float number ? BrainTools.Hundredths(number) : "out of range";
             }
 
-            if (typeof(T) == typeof(int))
+            if (typeof(T) == typeof(int) || typeof(T) == typeof(int?))
             {
-                return DebugPanel.Count((int)boxed!);
+                return DebugPanel.Count((int)boxed);
             }
 
-            if (typeof(T) == typeof(bool))
+            if (typeof(T) == typeof(bool) || typeof(T) == typeof(bool?))
             {
-                return (bool)boxed! ? "true" : "false";
+                return (bool)boxed ? "true" : "false";
+            }
+
+            if (boxed is Enum)
+            {
+                return DebugPanel.Count(Convert.ToInt32(boxed));
             }
 
             return BrainTools.Text(boxed);
