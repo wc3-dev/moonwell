@@ -104,6 +104,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.trees.nested-run", Run = TreeNodeCases.NestedRun });
             list.Add(new Case { Name = "ai.trees.stop", Run = TreeNodeCases.Stop });
             list.Add(new Case { Name = "ai.trees.unit-brain", Run = TreeNodeCases.UnitBrainTree });
+            list.Add(new Case { Name = "ai.trees.move-to", Run = TreeUnitCases.MoveTo });
+            list.Add(new Case { Name = "ai.trees.attack", Run = TreeUnitCases.Attack });
+            list.Add(new Case { Name = "ai.trees.cast", Run = TreeUnitCases.Cast });
+            list.Add(new Case { Name = "ai.trees.follow-route", Run = TreeUnitCases.FollowRoute });
+            list.Add(new Case { Name = "ai.trees.use-item", Run = TreeUnitCases.UseItem });
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
@@ -1576,6 +1581,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
             list.Add(new Case { Name = "units.order-gone", Run = UnitCases.OrderGone });
+            list.Add(new Case { Name = "units.use-item", Run = UnitCases.UseItem });
             list.Add(new Case { Name = "units.name", Run = UnitCases.NameReadAndSet });
             list.Add(new Case { Name = "units.icon", Run = UnitCases.IconRead });
             list.Add(new Case { Name = "units.level-set-with-handle", Run = UnitCases.LevelSetWithHandleDoesNothing });

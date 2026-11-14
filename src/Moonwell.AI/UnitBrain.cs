@@ -21,8 +21,8 @@ namespace Moonwell.AI
         /// <summary>How near a place is the same place, squared: 32.</summary>
         private const float SamePlace = 32f * 32f;
 
-        /// <summary>How near the unit is to have reached a place, squared: 64.</summary>
-        private const float Reached = 64f * 64f;
+        /// <summary>How near the unit is to have reached a place, squared: 64. The unit-action nodes reach a place by it too.</summary>
+        internal const float Reached = 64f * 64f;
 
         /// <summary>The brain's tick, wakes and blackboard. Internal, not private, for the reason Scope gives.</summary>
         internal readonly Mind mind;

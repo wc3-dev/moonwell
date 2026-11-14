@@ -1643,6 +1643,24 @@ namespace Moonwell.Engine
             return Natives.IssueTargetOrder(unit, order, target);
         }
 
+        /// <summary>Has a unit use an item with no place and no target: UnitUseItem.</summary>
+        public bool UseItem(unit unit, item item)
+        {
+            return Natives.UnitUseItem(unit, item);
+        }
+
+        /// <summary>Has a unit use an item at a place: UnitUseItemPoint.</summary>
+        public bool UseItemAt(unit unit, item item, float x, float y)
+        {
+            return Natives.UnitUseItemPoint(unit, item, x, y);
+        }
+
+        /// <summary>Has a unit use an item on a widget: UnitUseItemTarget.</summary>
+        public bool UseItemOn(unit unit, item item, widget target)
+        {
+            return Natives.UnitUseItemTarget(unit, item, target);
+        }
+
         /// <summary>The order a unit carries out now: GetUnitCurrentOrder.</summary>
         public int CurrentOrderOf(unit unit)
         {
