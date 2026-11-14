@@ -17,6 +17,9 @@ namespace Moonwell.AI
         /// <summary>Whether a Run is going on, so that a Run from inside it is refused.</summary>
         private bool running;
 
+        /// <summary>Whether Stop was called during a Run, so the root is halted once that pass is done.</summary>
+        private bool stopAfter;
+
         /// <summary>A tree a unit brain runs: its nodes read the brain's blackboard and give the unit orders. A node already in a tree throws an ArgumentException.</summary>
         public Tree(UnitBrain brain, Node root)
             : this(brain.Blackboard, brain, root)
@@ -66,14 +69,25 @@ namespace Moonwell.AI
             finally
             {
                 running = false;
+                if (stopAfter)
+                {
+                    stopAfter = false;
+                    Root.Halt();
+                }
             }
 
             return status;
         }
 
-        /// <summary>Cuts the tree off: every running node stops, so the next Run starts from the root afresh.</summary>
+        /// <summary>Cuts the tree off: every running node stops, so the next Run starts from the root afresh. During a Run of the tree, as from one of its nodes, it is put off to the end of that pass: the pass goes on as it would and gives its status, then every node still running stops.</summary>
         public void Stop()
         {
+            if (running)
+            {
+                stopAfter = true;
+                return;
+            }
+
             Root.Halt();
         }
     }

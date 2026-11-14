@@ -1725,8 +1725,9 @@ public sealed class Guard : UnitBrain
 - A brain makes its tree in its constructor, `new Tree(this, root)`, from the helpers of `Nodes`, and runs it in
   `Think`: each `tree.Run()` is one pass from the root, giving `Status.Running`, `Succeeded` or `Failed`. A node that
   gives Running goes on at the next pass, and a root that ended starts again. A node is in one tree, at one place, so
-  each brain builds its own: a node put in a second place throws. `tree.Stop()` cuts off every running node, and a
-  `Run` from inside a `Run` of the same tree is reported and refused.
+  each brain builds its own: a node put in a second place throws. `tree.Stop()` cuts off every running node; called
+  from a node during a pass, it waits for the pass to end. A `Run` from inside a `Run` of the same tree is reported
+  and refused.
 - Control: `Sequence` runs its children in order until one fails, `Select` until one succeeds; `Parallel` runs every
   child at each pass, failing as soon as one fails; `Repeat(child, times)` starts the child anew each time it
   succeeds, forever without `times`; `Invert` swaps success and failure, and `Succeed` succeeds however its child ends.

@@ -448,6 +448,64 @@ namespace Moonwell.Testing
             Logged("d start, d run", log, "a root that ended is not stopped");
         }
 
+        /// <summary>Tree.Stop from a node in its Run is put off to the end of the pass: the pass runs on and gives its status, then nothing in the tree is running.</summary>
+        public static void StopDuringRun(FakeWorld world)
+        {
+            var log = new List<string>();
+            var a = new LogNode("a", log);
+            var c = new LogNode("c", log);
+            Tree tree = null!;
+            var root = Nodes.Parallel(a, Do(() =>
+            {
+                tree.Stop();
+                log.Add("stop asked");
+                return Status.Running;
+            }), c);
+            tree = TreeOf(root);
+
+            Is(Status.Running, tree.Run(), "the pass gives its status");
+            Logged("a start, a run, stop asked, c start, c run, a stop, c stop", log, "c still runs in the pass, then every running node is stopped");
+            Expect.True(!root.IsRunning && !a.IsRunning && !c.IsRunning, "nothing runs after the pass");
+            Is(Status.Running, tree.Run(), "the next Run");
+            Logged("a start, a run, stop asked, c start, c run, a stop, c stop", log, "starts afresh");
+        }
+
+        /// <summary>A map's own node with methods and fields named as the engine's internal members (Tick, Halt, Bind, Brain, Passed, tree, running) runs as any other through starts, passes, a cut-off and Tree.Stop: the engine never calls its methods, and its fields keep their values. In Lua the names must stay apart.</summary>
+        public static void NamesApart(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var brain = unit.Add(new StepBrain());
+            var alarm = false;
+            var log = new List<string>();
+            var x = new LogNode("x", log);
+            var node = new ClashNode();
+            var tree = new Tree(brain, Nodes.Select(When(() => alarm, x), node));
+
+            Is(Status.Running, tree.Run(), "it runs");
+            Expect.Equal("1 1 0", node.Counts(), "started and run");
+            Expect.True(node.IsRunning, "running");
+            Expect.Same(unit, node.Seen, "its Unit, read through the brain");
+            Is(Status.Running, tree.Run(), "it runs on");
+            Expect.Equal("1 2 0", node.Counts(), "run again, not started");
+            alarm = true;
+            Is(Status.Running, tree.Run(), "x cuts in");
+            Expect.Equal("1 2 1", node.Counts(), "stopped once");
+            Expect.True(!node.IsRunning, "not running");
+            alarm = false;
+            Is(Status.Running, tree.Run(), "it runs again");
+            Expect.Equal("2 3 1", node.Counts(), "started again");
+            tree.Stop();
+            Expect.Equal("2 3 2", node.Counts(), "Tree.Stop stops it once");
+            tree.Stop();
+            Expect.Equal("2 3 2", node.Counts(), "and not again");
+            node.Gives = Status.Succeeded;
+            Is(Status.Succeeded, tree.Run(), "it ends by itself");
+            Expect.Equal("3 4 2", node.Counts(), "started afresh, run, not stopped");
+            Expect.True(!node.IsRunning, "not running after it ended");
+            Expect.Equal(0, node.OwnCalls, "the engine never ran its own Tick, Halt, Bind, Brain or Passed");
+            Expect.Equal("own tree, running", node.Own(), "its own fields kept their values");
+        }
+
         /// <summary>A unit brain's tree, made in its constructor before the brain is added, reads the unit when a node asks and orders it through the brain, a repeat dropped; on a game brain's tree, Unit and the orders are reported and refused.</summary>
         public static void UnitBrainTree(FakeWorld world)
         {

@@ -115,6 +115,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.trees.one-tree-per-node", Run = BehaviourTreeCases.OneTreePerNode });
             list.Add(new Case { Name = "ai.trees.nested-run", Run = BehaviourTreeCases.NestedRun });
             list.Add(new Case { Name = "ai.trees.stop", Run = BehaviourTreeCases.Stop });
+            list.Add(new Case { Name = "ai.trees.stop-during-run", Run = BehaviourTreeCases.StopDuringRun });
+            list.Add(new Case { Name = "ai.trees.names-apart", Run = BehaviourTreeCases.NamesApart });
             list.Add(new Case { Name = "ai.trees.unit-brain", Run = BehaviourTreeCases.UnitBrainTree });
             list.Add(new Case { Name = "ai.trees.move-to", Run = TreeUnitCases.MoveTo });
             list.Add(new Case { Name = "ai.trees.attack", Run = TreeUnitCases.Attack });

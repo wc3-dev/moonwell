@@ -55,6 +55,105 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>
+    /// A map's own node with methods and fields named as the tree engine's internal members. In Lua an object's members
+    /// share one table with its base classes', so each must stay apart from the engine's: the engine never calls these
+    /// methods, and the fields keep their values, which would break the engine if they were its own.
+    /// </summary>
+    public sealed class ClashNode : Node
+    {
+        // A map cannot see the engine's internal members, so these hide nothing there; the tests can see them, and C# warns.
+#pragma warning disable CS0108, CS0114
+
+        /// <summary>Its own tree: as the engine's, the node would read as in a tree already when one is made with it.</summary>
+        private string tree = "own tree";
+
+        /// <summary>Its own flag: as the engine's, the node would read as running before it started.</summary>
+        private bool running = true;
+
+        /// <summary>How many times one of its own methods named as the engine's ran; 0 while the names stay apart.</summary>
+        public int OwnCalls;
+
+        /// <summary>How many times it started.</summary>
+        public int Starts;
+
+        /// <summary>How many times it ran.</summary>
+        public int Runs;
+
+        /// <summary>How many times it was stopped.</summary>
+        public int Stops;
+
+        /// <summary>The unit it read at its last run.</summary>
+        public Unit? Seen;
+
+        /// <summary>What Run gives; Running unless a case sets it.</summary>
+        public Status Gives = Status.Running;
+
+        /// <summary>Named as the engine's pass of a node.</summary>
+        public Status Tick()
+        {
+            OwnCalls++;
+            return Status.Failed;
+        }
+
+        /// <summary>Named as the engine's cut-off of a node.</summary>
+        public void Halt()
+        {
+            OwnCalls++;
+        }
+
+        /// <summary>Named as the engine's putting of a node in a tree.</summary>
+        public void Bind(Tree owner)
+        {
+            OwnCalls++;
+        }
+
+        /// <summary>Named as the engine's reading of the brain that runs the tree.</summary>
+        public UnitBrain? Brain(string member)
+        {
+            OwnCalls++;
+            return null;
+        }
+
+        /// <summary>Named as the engine's check of the time.</summary>
+        public bool Passed(float since, float seconds)
+        {
+            OwnCalls++;
+            return true;
+        }
+
+#pragma warning restore CS0108, CS0114
+
+        /// <summary>Its starts, runs and stops, as "1 2 0".</summary>
+        public string Counts()
+        {
+            return Starts + " " + Runs + " " + Stops;
+        }
+
+        /// <summary>Its own fields, as one line.</summary>
+        public string Own()
+        {
+            return tree + ", " + (running ? "running" : "not running");
+        }
+
+        protected override void Start()
+        {
+            Starts++;
+        }
+
+        protected override Status Run()
+        {
+            Runs++;
+            Seen = Unit;
+            return Gives;
+        }
+
+        protected override void Stop()
+        {
+            Stops++;
+        }
+    }
+
     /// <summary>A unit brain that makes its tree in its constructor, as a map's does, before it is added, and runs it at each think.</summary>
     public sealed class TreeBrain : UnitBrain
     {
