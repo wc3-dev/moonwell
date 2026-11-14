@@ -1635,7 +1635,8 @@ protected override void OnAdded()
 ```
 
 - A target the unit picks by itself while it carries no order, idle or on Moonwell's hold, is answered at once with
-  hold position. A unit that code put on hold position already holds, and gets nothing.
+  hold position, and the unit's brains are woken to think at the next step, so a unit that killed its target is
+  ordered on within 0.02 s. A unit that code put on hold position already holds, and gets nothing.
 - Every order not from code, the game's own, an AI script's or a person's click, is answered with hold position at the
   loop's next step, within 0.02 s. The unit's brains forget the order they last sent, so their next one reaches the
   game, and are woken to think in that step. It is not answered inside its event: there hold position doesn't hold,
@@ -1837,6 +1838,131 @@ public sealed class Chop : Node
 - It reads `Unit`, `Blackboard` and `Read(fact)` (here `TreeNear`, a map's `Fact<Destructable?>`) and orders the unit
   through the brain with `Order`, `OrderAt` and `OrderOn`, so repeats are dropped as the actions' are.
 
+## AI: combat
+
+Add the `Moonwell.AI.Combat` package, on `Moonwell.AI`, for units that walk a lane and fight what they meet: a ready
+`LaneWalker` brain, and the fighter and tree nodes it is built of, for a map's own brain.
+
+```csharp
+using Moonwell.AI.Combat;
+
+unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen road, or unit.FindPath(x, y)
+{
+    MeetRange = 600f,                                     // 0, the default: the unit's acquisition range
+    Targets = { Target.Nearest, Target.Weakest.Weight(2f), Target.By(u => u is Hero ? 1f : 0.3f) },
+    Spells =
+    {
+        Spell.On(StormBolt, "thunderbolt", when: t => t is Hero),               // on its target
+        Spell.Self(ThunderClap, "thunderclap", when: f => f.EnemiesNear >= 3),  // no target
+        Spell.OnSelf(FrostArmor, "frostarmor", when: f => f.EnemiesNear >= 2),  // on itself
+        Spell.Ally(HolyLight, "holybolt", when: a => a.Life < a.MaxLife / 2),   // a hurt ally, itself counted
+        Spell.At(Blizzard, "blizzard"),                                         // at its target's place
+    },
+    PullBack = { Below = 0.25f },                         // the rest stay at their defaults
+});
+```
+
+- `StormBolt` and the others are ability ids, `ObjectTypes.FourCC("AHtb")`; `Spell.On<StormBolt>("thunderbolt")`
+  takes a registered ability class instead. The order string is the one the game casts the ability with.
+- A lane walker thinks every 0.25 s with full control ([Full control](#full-control)), both set in its `OnAdded`; a
+  map's own `OnAdded` changes them after `base.OnAdded()`. Its tree, built at its first think, pulls back while it
+  should, else fights while it meets an enemy, else walks its route.
+- It meets, at each think, a living enemy unit its owner sees (an order at an unseen unit is refused), structures too,
+  within its meet range, and one that damaged it in the last 3 s however far. It keeps the spot where it stood at the
+  first think with a target, and an enemy farther than `Leash` from it is not fought: 2,100, the default, about the
+  game's own chase limit. That limit ends only a chase of a target the unit picked itself; an `attack` from code chased
+  3,960 in 15 s (3.0.1.24371), so the leash is the walker's only one. A fleeing enemy that crosses it is dropped and the
+  walker goes back. Once back on its route, within 64 of it anywhere along it, with no target, it forgets the spot.
+- An enemy it can't attack is set aside for 3 s, and the next best is fought at once: one whose attack the game
+  refuses, or one still alive when the unit is found idle after its attack on it, as it can't reach or see it. It
+  still counts near.
+- It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
+  `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
+  and walks back to where its fight started.
+
+The target is picked by rules, each scoring every enemy met from 0 to 1 against the others met at the same think, so
+the best of them scores 1 and none scores 0:
+
+| Rule | Scores an enemy |
+|---|---|
+| `Target.Nearest` | the nearest distance over its distance, a distance below 16 counted as 16 |
+| `Target.Weakest` | the least life left over its life left, as amounts, not shares of the most |
+| `Target.MostDangerous` | its damage a second over the most: the middle of its white damage over its attack cooldown, below 1 counted as 1 |
+| `Target.Attacker` | 1 when it damaged the walker in the last 3 s, else 0.5 |
+| `Target.By(u => ...)` | the function's value, clamped to 0..1; 0 rules the enemy out |
+
+- An enemy's score is its rules' scores, each to the power of its weight, multiplied, then to 1 over the sum of the
+  weights: (s1^w1 × s2^w2)^(1 / (w1 + w2)). `Weight(2f)` counts a rule twice, and 0 leaves its score out but still
+  rules out at 0; a weight below 0 throws `ArgumentException`. With no rules, `Nearest`.
+- With `Nearest` and `Weakest`, an enemy 200 away at full life and one 400 away at half life both score
+  (1 × 0.5)^(1/2) = 0.71, and the first in the game's list of units in range wins. With `Weakest.Weight(2f)` the far
+  one scores (0.5 × 1²)^(1/3) = 0.79 against (1 × 0.5²)^(1/3) = 0.63.
+- The best wins, among equals the first in the game's list of units in range (an attacker met from beyond it comes
+  after them), and stays the target until another scores more than its score times 1.1, 10% more, so a walker does
+  not flip between two enemies. A target that died, can't be seen or is no longer met is dropped.
+- Casting: at each think in a fight, the first spell in `Spells` whose aim has someone, whose condition holds and that
+  is ready is cast through the brain: ready, the unit has the ability, its cooldown is over and its mana is at least
+  the ability's mana cost now, all read from the game. The walker watches the cast as `Cast` does, while the unit's
+  order id is the one read just after it, then goes back to the attack. At a cast's end the game leaves the unit idle,
+  so the brain is woken once the unit's order id changes and attacks again within 0.04 s, not at its next think. A cast
+  on a target out of range walks up to it first. The brain forgets its last order before a cast, as `Cast` does, so
+  the same spell cast again once the last is over reaches the game.
+- A spell the game refuses gives way to the next, and then the attack, in the same pass. A refused cast leaves the
+  attack the unit carries out alone (3.0.1.24371), so that attack is not sent again.
+- `On` and `At` take a condition on the target, `Self` and `OnSelf` (a spell on a unit, cast at the walker itself)
+  one on the fighter, and `Ally` one on each ally in meet range, its own unit counted, checked from the most hurt (the
+  least share of its most life) until it holds. With no condition, `Ally` takes the most hurt whose life is below its
+  most, and the others always cast when ready.
+- Pulling back: below 30% of its life (`Below`), or outnumbered, with at least 2 (`Outnumbered`) enemies in its meet
+  range to each allied unit there, its own counted, structures on neither side and attackers beyond its meet range not
+  counted. It walks back with `move` along its route to the start, from the point before the one nearest it, or to
+  `To`, and stands there on hold position, or as near as it gets in a crowd. Only there does it judge again, and it
+  comes back when its own reason is gone: pulled back hurt, at or above 70% of its life (`ComeBackAt`); outnumbered,
+  once no longer outnumbered in its meet range where it stands, at any life. Then it is judged afresh. A `Below` and an
+  `Outnumbered` of 0 never pull back.
+
+A map's own brain makes a `Fighter` and builds a tree of its own from the same nodes:
+
+```csharp
+using Moonwell.AI;
+using Moonwell.AI.Combat;
+using static Moonwell.AI.Nodes;
+using static Moonwell.AI.Combat.CombatNodes;
+
+public sealed class CampGuard : UnitBrain
+{
+    public float HomeX, HomeY;
+    readonly Fighter fighter;
+    readonly Tree tree;
+
+    public CampGuard()
+    {
+        fighter = new Fighter(this) { MeetRange = 800f, Targets = { Target.MostDangerous } };
+        tree = new Tree(this,
+            Select(
+                When(fighter.ShouldPullBack, PullBack(fighter)),
+                When(fighter.Meets, Fight(fighter)),
+                MoveTo(() => HomeX, () => HomeY)));
+    }
+
+    protected override void OnAdded() => ThinkEvery = 0.25f;
+    public override void OnDamaged(Damage damage) => fighter.Hurt(damage);   // notes the attacker
+    protected override void Think() => tree.Run();
+}
+```
+
+- `fighter.Meets()` and `fighter.ShouldPullBack()` check once an instant, whichever comes first: they find the enemies
+  met and pick the target. `Target`, `EnemiesNear`, `AlliesNear` and `PullingBack` read what the last check found.
+  Once it pulls back, `ShouldPullBack` holds until the unit is within 64 of where `PullBack` takes it.
+- `Targets` and `Spells` are lists every machine shares: change them outside `Local.For` (MW0001).
+- `fighter.Hurt(damage)` in `OnDamaged` notes the attacker and wakes the brain when it is new; a lane walker does it.
+- `Fight(fighter)` casts or attacks the target and fails with none; `PullBack(fighter)` walks back and stands;
+  `WalkLane(fighter)` walks the fighter's `Route`. A class that inherits `LaneWalker` overrides `Root()` for its own
+  tree.
+- In a fast simulation a walker meets, walks, fights, casts and pulls back. A cast is held as any order, then its
+  cooldown starts and its mana is spent, and the walker attacks again; what the spell does stays the game's (see
+  [Fast simulation](#fast-simulation)).
+
 ## AI: tools
 
 In a development build, the [debug mode](#debug-mode) shows what a brain thinks and lets you push it from chat. Select
@@ -1989,10 +2115,18 @@ public class GuardTests
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
   anything else. An attack to a point fights the nearest enemy within acquisition range on the way, then walks on. Hold
   position never moves and swings at an enemy within range, its `CurrentOrder` reading "" as in the game. `stop` leaves
-  the unit idle, patrol stands, and any other order (a spell, `attackground`) ends after its hold.
-- The fake knows orders by name from a short list: `smart`, `stop`, `move`, `attack`, `attackground`, `patrol`,
-  `holdposition`, `defend`, `undefend`, `holybolt`, `immolation` and `unimmolation`. Any other name leaves the unit idle
-  at once, and is neither counted nor held.
+  the unit idle, patrol stands, and any other order that is no cast (`attackground`, `harvest`) ends after its hold.
+- The fake knows the game's id of every order string in its ability data and of its base orders, in any case of the
+  string. A name the game has no id for leaves the unit idle at once, and is neither counted nor held.
+- A spell's order casts the unit's ability whose order string it is, read from the ability's object data on .NET (a
+  test can give one with `sim.World.SetAbilityOrder(abilityId, "thunderbolt")`). The cast is taken, with its order
+  event, and held as any order; then it goes off: the ability's cooldown starts and its mana cost is spent, those of
+  the unit's level, and the unit is left idle, as the game leaves it at a cast's end. The cooldown and cost are the
+  unit's own (`LiveCooldown`, `LiveManaCost`), from the object data unless code changed them. While the cooldown runs, or
+  with less mana than the cost, the order is refused as the game refuses it: false, no order event, and the unit's
+  attack goes on. A spell's order of an ability the unit lacks is taken as a name the fake does not know.
+- A cast goes off where the unit stands, whatever its range, at once after its hold, with no cast or backswing time; it
+  fires no spell events, deals no damage and gives no buff.
 - A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
   a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
   damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
@@ -2000,7 +2134,7 @@ public class GuardTests
   game.
 - Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
   through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
-  3.0.1.24371); turning, vision, buffs, and spells and their effects; an attack's damage point and a missile's flight
+  3.0.1.24371); turning, vision, buffs, and what spells do; an attack's damage point and a missile's flight
   (a swing lands at once); heroes' attributes (a hero fights on its base numbers); units placed in World Editor; and the
   Damage, Terrain, Areas, Input and Physics systems. A simulation shows how the map's own logic decides, not exactly how
   a fight goes in the game.

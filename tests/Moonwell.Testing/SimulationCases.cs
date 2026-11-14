@@ -108,8 +108,8 @@ namespace Moonwell.Testing
     }
 
     /// <summary>
-    /// Cases for the fast simulation (decisions 312 to 314): its steps, the hold, walking, fighting, acquiring, seeds and the
-    /// read-outs. Each case starts its own simulation, which installs a fresh fake world, and makes its units with
+    /// Cases for the fast simulation (decisions 312 to 314 and 355): its steps, the hold, walking, fighting, acquiring, seeds,
+    /// the read-outs, the order names and casts. Each case starts its own simulation, which installs a fresh fake world, and makes its units with
     /// Unit.Create so the play seeds them. Every expected number follows the play's rules: an order is stamped with the next
     /// play step and stands the unit 8 steps from it; a walk of d at speed s takes ceil(d x 50 / s) steps.
     /// </summary>
@@ -121,6 +121,8 @@ namespace Moonwell.Testing
         private static readonly int Attacker = ObjectTypes.FourCC("s0at");
         private static readonly int Target = ObjectTypes.FourCC("s0tg");
         private static readonly int OtherTarget = ObjectTypes.FourCC("s0ot");
+        private static readonly int Bolt = ObjectTypes.FourCC("A0sb");
+        private static readonly int Flames = ObjectTypes.FourCC("A0sf");
 
         /// <summary>The type of the map-start case's Marcher.</summary>
         public static readonly int MarcherType = ObjectTypes.FourCC("s0mr");
@@ -194,7 +196,7 @@ namespace Moonwell.Testing
             Expect.Near(0.5f, sim.Time, "after its 5 steps"); // step 25
         }
 
-        /// <summary>An order stands the unit 8 steps (0.15 s rounded as brain ticks are) and is counted; a repeat restarts the hold and is counted too; an order string the fake does not know (id 0) is neither.</summary>
+        /// <summary>An order stands the unit 8 steps (0.15 s rounded as brain ticks are) and is counted; a repeat restarts the hold and is counted too; an order the fake does not know, as a spell's order of an ability the unit lacks, is neither.</summary>
         public static void Hold(FakeWorld world)
         {
             var sim = Simulation.Start();
@@ -217,9 +219,9 @@ namespace Moonwell.Testing
 
             var walked = first.X;
             Expect.Near(500.0f * 36.0f / 93.0f, walked, "first walks on"); // steps 9 to 44
-            first.OrderAt("blink", 0.0f, 0.0f); // the fake knows no "blink": id 0, which leaves the unit idle
+            first.OrderAt("blink", 0.0f, 0.0f); // the unit has no ability cast with "blink": an order the fake does not know, which leaves the unit idle
             Steps(sim, 10);
-            Expect.Equal(1, sim.OrdersOf(first), "an order of id 0 is not counted");
+            Expect.Equal(1, sim.OrdersOf(first), "an order the fake does not know is not counted");
             Expect.Near(0.16f, sim.StoodOf(first), "nor held");
             Expect.Equal("", first.CurrentOrder, "the unit is idle");
             Expect.Near(walked, first.X, "and stands");
@@ -685,13 +687,15 @@ namespace Moonwell.Testing
             return drawn;
         }
 
-        /// <summary>A spell order is counted and held, ends at the unit's first ready step, and the unit then acquires an enemy.</summary>
+        /// <summary>A cast with no target is counted and held, ends at the unit's first ready step, and the unit then acquires an enemy.</summary>
         public static void SpellEnds(FakeWorld world)
         {
             var sim = Simulation.Start();
             sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10, AcquisitionRange = 500.0f });
             sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            sim.World.SetAbilityOrder(Flames, "immolation");
             var caster = Make(Attacker, Player.One, 0.0f, 0.0f);
+            caster.AddAbility(Flames);
             caster.Order("immolation"); // stamped 1, ready at 9
             Make(Target, Player.Two, 300.0f, 0.0f);
             Steps(sim, 8);
@@ -702,6 +706,110 @@ namespace Moonwell.Testing
             Expect.Equal("attack", caster.CurrentOrder, "then the unit acquires");
             Expect.Equal(1, sim.OrdersOf(caster), "the spell is counted");
             Expect.Near(0.16f, sim.StoodOf(caster), "and held");
+        }
+
+        /// <summary>The fake's order ids are the game's (seen 11-14): its OrderId in any case, 0 for a string the game read 0 for and for one it does not know, "challengingcall" giving taunt's id; its OrderId2String the game's name. Off the play, an order of any string is the unit's current one.</summary>
+        public static void OrderNames(FakeWorld world)
+        {
+            var unit = world.NewUnit(Numbered);
+            Expect.Equal(851971, Ordered(world, unit, "smart"), "the first base order");
+            Expect.Equal(852711, Ordered(world, unit, "witheringfire"), "the last spell order");
+            Expect.Equal(852095, Ordered(world, unit, "ThunderBolt"), "in any case");
+            Expect.Equal(852551, Ordered(world, unit, "Carrionscarabs"), "as the ability data writes it");
+            Expect.Equal("carrionscarabs", world.OrderName(852551), "named in lower case");
+            Expect.Equal(852520, Ordered(world, unit, "challengingcall"), "taunt's id");
+            Expect.Equal("taunt", world.OrderName(852520), "named taunt");
+            Expect.Equal(0, Ordered(world, unit, "manashield"), "a string the game read 0 for");
+            Expect.Equal(0, Ordered(world, unit, "mvoe"), "a string the game does not know");
+            Expect.Equal("holybolt", world.OrderName(852092), "a spell's name");
+            Expect.Equal("", world.OrderName(0), "no name for 0");
+        }
+
+        /// <summary>The id a unit reads after an order with no target.</summary>
+        private static int Ordered(FakeWorld world, unit unit, string order)
+        {
+            world.OrderUnit(unit, order);
+            return world.CurrentOrderOf(unit);
+        }
+
+        /// <summary>
+        /// A cast of an ability the unit has, by its order string in any case, is taken with its order event, counted and held 8
+        /// steps like any order (decision 314); at its first ready step its cooldown starts and its mana cost is spent, those of
+        /// the ability's level on the unit, and the unit is left idle, as the game leaves it at a cast's end (seen 11-14); it
+        /// acquires the step after. What the spell does is the game's.
+        /// </summary>
+        public static void Cast(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10, AcquisitionRange = 500.0f });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            sim.World.SetAbilityOrder(Bolt, "thunderbolt");
+            var heard = Game.Instance.Add(new OrderedGame());
+            var caster = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var foe = Make(Target, Player.Two, 300.0f, 0.0f);
+            caster.MaxMana = 200.0f;
+            caster.Mana = 120.0f;
+            caster.AddAbility(Bolt);
+            var bolt = caster.AbilityOf(Bolt);
+            bolt.LiveCooldown = 9.0f;
+            bolt.LiveManaCost = 75;
+            bolt.Level = 2;
+            bolt.LiveCooldown = 6.0f;
+            bolt.LiveManaCost = 50;
+
+            Expect.True(caster.OrderOn("ThunderBolt", foe), "taken"); // stamped 1, ready at 9
+            Expect.Equal("thunderbolt", caster.CurrentOrder, "the unit carries the cast");
+            Expect.Equal("thunderbolt", heard.Heard == null ? "" : heard.Heard.Name, "with its order event");
+            Steps(sim, 8);
+            Expect.Equal("thunderbolt", caster.CurrentOrder, "held to step 8");
+            Expect.Near(120.0f, caster.Mana, "nothing spent in the hold");
+            Expect.Near(0.0f, bolt.CooldownLeft, "nor its cooldown started");
+            Steps(sim, 1); // step 9
+            Expect.Equal("", caster.CurrentOrder, "it goes off at its first ready step, leaving the unit idle");
+            Expect.Near(70.0f, caster.Mana, "the cost of its level 2 spent"); // 120 - 50
+            Expect.Near(6.0f, bolt.CooldownLeft, "the cooldown of its level 2 started");
+            Expect.Equal(1, sim.OrdersOf(caster), "the cast is counted");
+            Expect.Near(0.16f, sim.StoodOf(caster), "and held");
+            Steps(sim, 1); // step 10
+            Expect.Equal("attack", caster.CurrentOrder, "then the unit acquires");
+            Expect.Near(1000.0f, foe.Life, "and the spell did nothing to the foe");
+        }
+
+        /// <summary>A cast while its ability's cooldown runs, or with mana below its cost, is refused as the game refuses it (seen 11-14): false, with no order event, not counted or held, and the unit's attack goes on; with mana at the cost it is taken.</summary>
+        public static void CastRefused(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 150.0f, AttackCooldown = 1.0f, Damage = 10 });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            sim.World.SetAbilityOrder(Bolt, "thunderbolt");
+            var caster = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var foe = Make(Target, Player.Two, 100.0f, 0.0f);
+            caster.MaxMana = 100.0f;
+            caster.Mana = 100.0f;
+            caster.AddAbility(Bolt);
+            var bolt = caster.AbilityOf(Bolt);
+            bolt.LiveManaCost = 50;
+            caster.OrderOn("attack", foe); // ready at 9, in range: swings at 9 and 59
+            Steps(sim, 20);
+            Expect.Near(990.0f, foe.Life, "one swing");
+            var heard = Game.Instance.Add(new OrderedGame());
+
+            bolt.StartCooldown(5.0f);
+            Expect.True(!caster.OrderOn("thunderbolt", foe), "refused while its cooldown runs");
+            bolt.ResetCooldown();
+            caster.Mana = 40.0f;
+            Expect.True(!caster.OrderOn("thunderbolt", foe), "refused with 40 mana for a cost of 50");
+            Expect.True(heard.Heard == null, "no order event");
+            Expect.Equal("attack", caster.CurrentOrder, "the attack goes on");
+            Expect.Equal(1, sim.OrdersOf(caster), "neither is counted");
+            Steps(sim, 39); // step 59
+            Expect.Near(980.0f, foe.Life, "nor held: the second swing at 59");
+            Expect.Near(0.16f, sim.StoodOf(caster), "the attack's hold alone");
+            Expect.Near(40.0f, caster.Mana, "and nothing spent");
+
+            caster.Mana = 50.0f;
+            Expect.True(caster.OrderOn("thunderbolt", foe), "taken with mana at its cost");
+            Expect.Equal(2, sim.OrdersOf(caster), "and counted");
         }
 
         /// <summary>Moonwell's casting dummy is never acquired, though nearest and played, and Alive leaves it out.</summary>

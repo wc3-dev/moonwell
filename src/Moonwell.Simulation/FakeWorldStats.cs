@@ -16,6 +16,13 @@ namespace Moonwell
 
         private readonly Dictionary<unit, float> manaRegens = new Dictionary<unit, float>();
 
+        private readonly Dictionary<unit, float> attackCooldowns = new Dictionary<unit, float>();
+
+        private readonly Dictionary<unit, float> acquireRanges = new Dictionary<unit, float>();
+
+        /// <summary>The units made structures.</summary>
+        private readonly HashSet<unit> structures = new HashSet<unit>();
+
         /// <summary>The bonus field set on each unit's abilities, by ability id.</summary>
         private readonly Dictionary<unit, Dictionary<int, float>> bonuses = new Dictionary<unit, Dictionary<int, float>>();
 
@@ -32,6 +39,30 @@ namespace Moonwell
         public void SetAverageDamage(unit unit, float damage)
         {
             averageDamages[unit] = damage;
+        }
+
+        /// <summary>The seconds between a unit's attacks.</summary>
+        public void SetAttackCooldown(unit unit, float seconds)
+        {
+            attackCooldowns[unit] = seconds;
+        }
+
+        /// <summary>A unit's acquisition range.</summary>
+        public void SetAcquireRange(unit unit, float range)
+        {
+            acquireRanges[unit] = range;
+        }
+
+        /// <summary>Makes a unit a structure.</summary>
+        public void MakeStructure(unit unit)
+        {
+            structures.Add(unit);
+        }
+
+        /// <summary>Whether a unit was made a structure.</summary>
+        public bool IsStructure(unit unit)
+        {
+            return structures.Contains(unit);
         }
 
         /// <summary>The bonus field a unit's ability holds; 0 until set.</summary>
@@ -59,6 +90,18 @@ namespace Moonwell
         public float AverageDamageOf(unit unit)
         {
             return Kept(averageDamages, unit);
+        }
+
+        /// <summary>The seconds between a unit's attacks; 0 until set.</summary>
+        public float AttackCooldownOf(unit unit)
+        {
+            return Kept(attackCooldowns, unit);
+        }
+
+        /// <summary>A unit's acquisition range; 0 until set.</summary>
+        public float AcquireRangeOf(unit unit)
+        {
+            return Kept(acquireRanges, unit);
         }
 
         /// <summary>The move speed of a unit; 0 until set.</summary>

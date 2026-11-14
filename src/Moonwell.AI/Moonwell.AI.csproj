@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Moonwell.AI.Combat" />
     <InternalsVisibleTo Include="Moonwell.Testing" />
     <InternalsVisibleTo Include="Moonwell.Tests" />
   </ItemGroup>

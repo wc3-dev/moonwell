@@ -936,6 +936,12 @@ namespace Moonwell.Engine
             return Natives.IsUnitIllusion(unit);
         }
 
+        /// <summary>Whether a unit is a structure: IsUnitType with UNIT_TYPE_STRUCTURE.</summary>
+        public bool IsStructure(unit unit)
+        {
+            return Natives.IsUnitType(unit, Natives.UNIT_TYPE_STRUCTURE);
+        }
+
         /// <summary>The player that owns a unit.</summary>
         public player OwnerOf(unit unit)
         {
@@ -1278,6 +1284,18 @@ namespace Moonwell.Engine
         public float AverageDamageOf(unit unit)
         {
             return Natives.BlzGetUnitBaseDamage(unit, 0) + Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
+        }
+
+        /// <summary>The cooldown of a unit's first weapon: BlzGetUnitAttackCooldown.</summary>
+        public float AttackCooldownOf(unit unit)
+        {
+            return Natives.BlzGetUnitAttackCooldown(unit, 0);
+        }
+
+        /// <summary>A unit's acquisition range: GetUnitAcquireRange.</summary>
+        public float AcquireRangeOf(unit unit)
+        {
+            return Natives.GetUnitAcquireRange(unit);
         }
 
         /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>
@@ -1767,17 +1785,24 @@ namespace Moonwell.Engine
         /// <summary>The units within a radius of a place: GroupEnumUnitsInRange.</summary>
         public List<unit> UnitsInRange(float x, float y, float radius)
         {
+            var units = new List<unit>();
+            UnitsInRange(x, y, radius, units);
+            return units;
+        }
+
+        /// <summary>The units within a radius of a place, into a list, cleared first: GroupEnumUnitsInRange.</summary>
+        public void UnitsInRange(float x, float y, float radius, List<unit> into)
+        {
             rangeGroup ??= Natives.CreateGroup();
             Natives.GroupEnumUnitsInRange(rangeGroup, x, y, radius, null);
-            var units = new List<unit>();
+            into.Clear();
             var count = Natives.BlzGroupGetSize(rangeGroup);
             for (var i = 0; i < count; i++)
             {
-                units.Add(Natives.BlzGroupUnitAt(rangeGroup, i));
+                into.Add(Natives.BlzGroupUnitAt(rangeGroup, i));
             }
 
             Natives.GroupClear(rangeGroup);
-            return units;
         }
 
         /// <summary>The area of an ability a unit has, at its level: BlzGetAbilityRealLevelField of ABILITY_RLF_AREA_OF_EFFECT; 0 when it has none.</summary>
