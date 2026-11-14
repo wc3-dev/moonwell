@@ -1050,6 +1050,49 @@ namespace Moonwell.Testing
             Expect.Equal("y", fake.Text, "white again");
         }
 
+        /// <summary>A label's Effect is drawn on its text from when it is set and redrawn by itself: Text reads the words, ShowLocal's text takes it too, Color is not drawn while it runs, and null draws the colour again. An ended label's effect leaves its game frame to the next label.</summary>
+        public static void LabelEffect(FakeWorld world)
+        {
+            var frames = Installed();
+            var label = Screen.Add(new Label { Text = "Victory", Color = Color.Red }, Game.Instance);
+            var fake = frames.FrameOf(label.Handle!);
+            var since = Game.Time;
+            label.Effect = TextEffect.Sweep(Color.TooltipGold, Color.White, speed: 10f);
+            Expect.Equal(Text.Sweep("Victory", Color.TooltipGold, Color.White, 0f), fake.Text, "the band coming in, with no red code");
+            world.Advance(1f);
+            Expect.Equal(Text.Sweep("Victory", Color.TooltipGold, Color.White, (Game.Time - since) / 2f), fake.Text, "redrawn by itself, 10 letters a second");
+            Expect.Equal("Victory", label.Text, "Text reads the words");
+            label.ShowLocal("Seger");
+            Expect.Equal(Text.Sweep("Seger", Color.TooltipGold, Color.White, (Game.Time - since) / 2f), fake.Text, "this machine's own text takes it");
+            label.Effect = null;
+            Expect.Equal("|cffff0000Seger|r", fake.Text, "its colour again");
+            label.Effect = TextEffect.Rainbow();
+            label.End();
+            var next = Screen.Add(new Label { Text = "y" }, Game.Instance);
+            Expect.Same(label.Handle, next.Handle, "the same game frame");
+            world.Advance(0.1f);
+            Expect.Equal("y", fake.Text, "not drawn over by the ended label");
+        }
+
+        /// <summary>Every moving text, labels and floating texts, is redrawn on one timer, which ends with the last of them.</summary>
+        public static void TextEffectsShareTimer(FakeWorld world)
+        {
+            Installed();
+            var a = Screen.Add(new Label { Text = "a" }, Game.Instance);
+            var b = Screen.Add(new Label { Text = "b" }, Game.Instance);
+            var c = FloatingText.Create("c", 0f, 0f, Game.Instance);
+            var before = Game.Instance.ChildCount;
+            a.Effect = TextEffect.Rainbow();
+            b.Effect = TextEffect.Rainbow(4f);
+            c.Effect = TextEffect.Sweep(Color.Red, Color.White);
+            Expect.Equal(before + 1, Game.Instance.ChildCount, "one timer for three");
+            a.End();
+            b.End();
+            c.End();
+            world.Advance(0.1f);
+            Expect.Equal(before - 3, Game.Instance.ChildCount, "the timer gone with the last");
+        }
+
         /// <summary>A tooltip is a bordered panel with its text, made in the frame's slot on its layer for the frame's player, shown by the game while the mouse is on the frame, above it; the frame takes the mouse for it, and is registered for no event, as that makes the tooltip and the cursor flicker (seen).</summary>
         public static void Tooltip(FakeWorld world)
         {

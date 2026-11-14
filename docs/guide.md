@@ -936,6 +936,7 @@ label.Color = Color.Red;
 var sign = FloatingText.Create("Shop", x, y, Game.Instance);
 sign.Duration = 3f;                                                         // goes after 3 s,
 sign.FadeOut = 1f;                                                          // fading over the last 1
+sign.Effect = TextEffect.Rainbow();                                         // its colours turning by themselves
 ```
 
 | FloatingText | |
@@ -944,6 +945,7 @@ sign.FadeOut = 1f;                                                          // f
 | `Height`, `PlaceAt(x, y)` | read and set; above the ground at a place, above the health bar on a unit (0 is just over it); `PlaceAt` does nothing on a unit |
 | `Speed`, `Angle` | read and set; how fast it moves by itself, a second, and which way in degrees (90, the default, is up the screen) |
 | `Duration`, `FadeOut` | read and set; the seconds from when it was made to when it ends by itself (0, the default, lasts until ended), and the seconds before that end over which it fades |
+| `Effect` | read and set; a `TextEffect` that moves its colours by itself, null unless set ([Colours and text](#colours-and-text)) |
 | `Unit`, `IsShownTo(player)` | read |
 
 - `FloatingText.Pop(text, x, y)` and `unit.PopText(text)` play one once: it rises 64 a second, lasts 2 s and fades over
@@ -2565,7 +2567,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   gives a size from points too late to read), and a bar's look from a `.looks.csv` is cut over that share, not
   squashed ([Assets](#assets)); a label's `Color` colours its text, white unless set, as a colour code
   around it: a label lets clicks through by being turned off, and the game draws a turned-off label's text colour grey
-  (seen). Codes in the text draw over it, and its alpha is not drawn, so fade a label with `Alpha`.
+  (seen). Codes in the text draw over it, and its alpha is not drawn, so fade a label with `Alpha`. A label's `Effect`
+  moves its colours by itself ([Colours and text](#colours-and-text)).
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
   mouse rests on it, on that machine alone and with no event sent; the frame takes the mouse for it. It is made for the
   frame's player, on the frame's layer (beneath the HUD for a frame added with `Screen.Add`, over it for one added with
@@ -2957,14 +2960,31 @@ the named ones (`Color.Red`, and `Color.TooltipGold` for the game's own gold) an
 one too.
 
 `"Gold".Colored(Color.TooltipGold)` colours text, and `player.ColoredName` is a player's name in their colour. Letter by
-letter: `Rainbow()` (a shift turns it round, for text that is redrawn), `Gradient(a, b)` through two colours or more,
-`Alternate(a, b)` and `Confetti()`; `Highlight("Stun", Color.Red)` colours a word wherever it appears.
-`"Victory".Sweep(Color.Gold, Color.White, Game.Time)` moves a band of white through gold, 20 letters a second, in text
-that is redrawn, such as floating text set every 0.05 s; `SweepShape.Wide`, `Sharp`, `Comet` and `Repeating` (a new
-band every second) change its shape. A screen line shows 1,023 characters, and a colour code takes 10: `Rainbow` and
-`Gradient` share codes on a long text to keep within them, while `Alternate` and `Confetti` fit about 90 letters. The
-game shows no alpha in text, and `|r` goes back to white, not to an outer colour. `Text.Clock(125f)` writes "2:05", and
-`Text.TimeOfDay(6.5f)` "06:30".
+letter: `Rainbow()` (a shift turns it round), `Gradient(a, b)` through two colours or more, `Alternate(a, b)` and
+`Confetti()`; `Highlight("Stun", Color.Red)` colours a word wherever it appears.
+`"Victory".Sweep(Color.Gold, Color.White, time)` draws a band of white in gold where it is at that time, moving 20
+letters a second; `SweepShape.Wide`, `Sharp`, `Comet` and `Repeating` (a new band every second) change its shape. A
+screen line shows 1,023 characters, and a colour code takes 10: `Rainbow` and `Gradient` share codes on a long text to
+keep within them, while `Alternate` and `Confetti` fit about 90 letters. The game shows no alpha in text, and `|r` goes
+back to white, not to an outer colour. `Text.Clock(125f)` writes "2:05", and `Text.TimeOfDay(6.5f)` "06:30".
+
+A label or floating text moves its colours by itself with an `Effect`: `TextEffect.Rainbow()` turns the rainbow, its
+colours flowing along the text, once round in 2 s unless `seconds:` is set, and `TextEffect.Sweep(main, sweep, shape)`
+passes a band again and again, 20 letters a second unless `speed:` is set.
+
+```csharp
+var title = Screen.Add(new Label { Text = "Victory" }, this);
+title.Effect = TextEffect.Rainbow();                                        // turns by itself
+var sign = FloatingText.Create("Shop", x, y, this);
+sign.Effect = TextEffect.Sweep(Color.TooltipGold, Color.White, SweepShape.Comet, speed: 10f);
+title.Effect = null;                                                        // stands still again
+```
+
+Moonwell redraws every moving text 32 times a second on one timer, counting from when the effect is set, until the
+`Effect` is set to null or the text ends. `Text` reads the words as set, and a new `Text` keeps the effect; `Color` is
+not drawn while it runs (a floating text's alpha and fade are). A label's `ShowLocal` and `ShowNameOf` text take it too.
+A redraw is mostly the colouring in Lua: about 0.1 ms for 13 letters and 0.2 to 0.4 ms for 53 (seen), so each moving
+text of 13 letters takes about 3 ms of every game second, and one of 53 about 11.
 
 ## Random numbers
 

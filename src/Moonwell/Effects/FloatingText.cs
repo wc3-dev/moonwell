@@ -5,8 +5,9 @@ namespace Moonwell
     /// PopText play one once: it rises, fades and goes by itself. Create and a unit's AddText make one in a scope, which
     /// ends it when it ends, as End and its Duration do. Moonwell times and fades every text itself, on the timers' clock,
     /// and never lets the game free one: the game gives a freed text's id to the next one made (seen 11-06). Text on a unit
-    /// shows only to the players who see the unit. Given shownTo, a text is made on that player's machine only, as a text
-    /// takes no handle id (seen 11-06). Every read gives what was set, the same on every machine.
+    /// shows only to the players who see the unit. An Effect moves its colours by itself. Given shownTo, a text is made on
+    /// that player's machine only, as a text takes no handle id (seen 11-06). Every read gives what was set, the same on
+    /// every machine.
     /// </summary>
     public sealed class FloatingText : Scoped
     {
@@ -47,6 +48,14 @@ namespace Moonwell
         private float fadeOut;
 
         private Color color = Color.White;
+
+        private TextEffect? effect;
+
+        /// <summary>When the Effect was set, which it moves from.</summary>
+        private float effectSince;
+
+        /// <summary>Whether it is in MovingTexts' redraws.</summary>
+        private bool redrawing;
 
         /// <summary>The alpha last given to the game, which the fade lowers; -1 until it is first coloured.</summary>
         private int shownAlpha = -1;
@@ -121,6 +130,34 @@ namespace Moonwell
                 {
                     color = value;
                     Paint(true);
+                }
+            }
+        }
+
+        /// <summary>A colour effect Moonwell moves by itself, a rainbow turning or a sweep passing, from when it is set; null, the default, for none. Text reads the words as set, and Color's red, green and blue are not drawn while it runs; its alpha is.</summary>
+        [LocalSafe]
+        public TextEffect? Effect
+        {
+            get
+            {
+                return effect;
+            }
+
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                effect = value;
+                effectSince = Runtime.World.Now();
+                Write();
+                Paint(true);
+                if (effect != null && !redrawing)
+                {
+                    redrawing = true;
+                    MovingTexts.Join(Redraw);
                 }
             }
         }
@@ -357,8 +394,21 @@ namespace Moonwell
         {
             if (handle != null)
             {
-                Runtime.World.WriteText(handle, words, size * SizeToHeight);
+                Runtime.World.WriteText(handle, effect == null ? words : effect.Paint(words, Runtime.World.Now() - effectSince), size * SizeToHeight);
             }
+        }
+
+        /// <summary>A redraw of the Effect; answers false, and leaves the redraws, once it has ended or has none.</summary>
+        private bool Redraw()
+        {
+            if (HasEnded || effect == null)
+            {
+                redrawing = false;
+                return false;
+            }
+
+            Write();
+            return true;
         }
 
         /// <summary>Gives the game the colour, its alpha lowered by the fade; only a change of alpha unless forced.</summary>
@@ -382,7 +432,8 @@ namespace Moonwell
             if (force || alpha != shownAlpha)
             {
                 shownAlpha = alpha;
-                Runtime.World.ColorText(handle, color.R, color.G, color.B, alpha);
+                var shown = effect == null ? color : Color.White;
+                Runtime.World.ColorText(handle, shown.R, shown.G, shown.B, alpha);
             }
         }
 
