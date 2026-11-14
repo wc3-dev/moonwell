@@ -15,7 +15,7 @@ namespace Moonwell
     internal static class DebugPanel
     {
         /// <summary>The most lines the panel shows; past it the last says how many more there are.</summary>
-        private const int MostLines = 30;
+        internal const int MostLines = 30;
 
         /// <summary>The game seconds between two runs of the refresher.</summary>
         private const float RefreshEvery = 1.0f / 32.0f;
@@ -285,7 +285,7 @@ namespace Moonwell
             draw.End();
         }
 
-        /// <summary>The panel's text: the status; the selected object's line, the views' lines and the IDebugShown lines, or an ended object's line; with -stats the statistics; at most 30 lines.</summary>
+        /// <summary>The panel's text: the status; the selected object's line, the views' lines and the IDebugShown lines, or an ended object's line; the views' lines shown whatever is selected; with -stats the statistics; at most 30 lines.</summary>
         private static string Text()
         {
             var lines = new DebugLines();
@@ -312,6 +312,19 @@ namespace Moonwell
             else if (endedLine != null)
             {
                 lines.Add(endedLine);
+            }
+
+            var always = DebugViews.Always;
+            for (var i = 0; i < always.Count; i++)
+            {
+                try
+                {
+                    always[i](lines);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report("Moonwell.Debug", error);
+                }
             }
 
             if (statsShown)

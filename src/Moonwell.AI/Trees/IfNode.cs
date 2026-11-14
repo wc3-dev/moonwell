@@ -17,7 +17,11 @@ namespace Moonwell.AI
         /// <summary>Checks the condition.</summary>
         protected override Status Run()
         {
-            return condition(Blackboard) ? Status.Succeeded : Status.Failed;
+            var holds = condition(Blackboard);
+#if DEBUG
+            lastHeld = holds;
+#endif
+            return holds ? Status.Succeeded : Status.Failed;
         }
     }
 }
