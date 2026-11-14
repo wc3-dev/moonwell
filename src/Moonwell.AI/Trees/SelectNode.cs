@@ -27,6 +27,12 @@ namespace Moonwell.AI
         /// <summary>Lets a When above a child that runs on cut in, then runs the child it is at, and the next ones in the same pass while they fail.</summary>
         protected override Status Run()
         {
+#if DEBUG
+            if (forcedChild >= 0)
+            {
+                return RunForced();
+            }
+#endif
             if (at < children.Length && children[at].IsRunning)
             {
                 for (var i = 0; i < at; i++)
@@ -61,5 +67,19 @@ namespace Moonwell.AI
 
             return Status.Failed;
         }
+#if DEBUG
+
+        /// <summary>-force: runs only the forced child, halting the one it was at.</summary>
+        private Status RunForced()
+        {
+            if (at != forcedChild && at < children.Length)
+            {
+                children[at].Halt();
+            }
+
+            at = forcedChild;
+            return children[at].Tick();
+        }
+#endif
     }
 }
