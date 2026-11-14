@@ -503,7 +503,7 @@ namespace Moonwell.Build
         }
 
         // A C# name from a file name, column, key or row name: each word with a capital, other characters left out ("hit points" is HitPoints).
-        private static string Name(string text, string where, string what)
+        internal static string Name(string text, string where, string what)
         {
             var name = new StringBuilder();
             var capital = true;
@@ -594,7 +594,7 @@ namespace Moonwell.Build
         }
 
         /// <summary>The lines of a CSV file, each with its cells; a quoted cell may hold commas, quotes ("") and line breaks.</summary>
-        private static class CsvTable
+        internal static class CsvTable
         {
             public static List<(int Line, List<string> Cells)> Parse(string text, string shown)
             {

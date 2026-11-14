@@ -65,6 +65,75 @@ namespace Moonwell.Build
             Write(greyPath, width, height, pixels);
         }
 
+        /// <summary>A PNG's or a BLP's pixels as blue, green, red and alpha.</summary>
+        /// <exception cref="BuildException">The file cannot be read as one, or a PNG's side is not a power of two.</exception>
+        internal static (int Width, int Height, byte[] Pixels) Read(string path, string name)
+        {
+            return IsPng(path) ? ReadPng(path, name) : ReadBlp(File.ReadAllBytes(path), name);
+        }
+
+        /// <summary>One of the game's textures, a BLP or a DDS (as Reforged stores even its Classic ones), from its bytes, as blue, green, red and alpha.</summary>
+        /// <exception cref="BuildException">The bytes are neither a BLP nor a DDS the build can read.</exception>
+        internal static (int Width, int Height, byte[] Pixels) ReadGame(byte[] bytes, string name)
+        {
+            if (bytes.Length < 4 || bytes[0] != 'D' || bytes[1] != 'D' || bytes[2] != 'S' || bytes[3] != ' ')
+            {
+                return ReadBlp(bytes, name);
+            }
+
+            try
+            {
+                using var image = Pfim.Dds.Create(bytes, new Pfim.PfimConfig());
+                if (image.Compressed)
+                {
+                    image.Decompress();
+                }
+
+                var size = image.Format switch
+                {
+                    Pfim.ImageFormat.Rgba32 => 4,
+                    Pfim.ImageFormat.Rgb24 => 3,
+                    _ => throw new BuildException($"{name} is a DDS of {image.Format}, which the build does not read"),
+                };
+
+                // Pfim gives blue, green, red (and alpha) rows, each Stride bytes long.
+                var pixels = new byte[image.Width * image.Height * 4];
+                for (var y = 0; y < image.Height; y++)
+                {
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var from = (y * image.Stride) + (x * size);
+                        var to = ((y * image.Width) + x) * 4;
+                        (pixels[to], pixels[to + 1], pixels[to + 2]) = (image.Data[from], image.Data[from + 1], image.Data[from + 2]);
+                        pixels[to + 3] = size == 4 ? image.Data[from + 3] : (byte)255;
+                    }
+                }
+
+                return (image.Width, image.Height, pixels);
+            }
+            catch (Exception failure) when (failure is not BuildException)
+            {
+                // Pfim says a file is damaged with a plain Exception.
+                throw new BuildException($"{name} is not a DDS the build can read ({failure.Message})");
+            }
+        }
+
+        /// <summary>A BLP's pixels, from its bytes, as blue, green, red and alpha.</summary>
+        /// <exception cref="BuildException">The bytes are not a BLP the build can read.</exception>
+        internal static (int Width, int Height, byte[] Pixels) ReadBlp(byte[] bytes, string name)
+        {
+            try
+            {
+                using var blp = new BlpFile(new MemoryStream(bytes));
+                var pixels = blp.GetPixels(0, out var width, out var height);
+                return (width, height, pixels);
+            }
+            catch (Exception failure)
+            {
+                throw new BuildException($"{name} is not a BLP the build can read ({failure.Message})");
+            }
+        }
+
         // The image's pixels as blue, green, red and alpha.
         private static (int Width, int Height, byte[] Pixels) ReadPng(string pngPath, string name)
         {
@@ -107,7 +176,8 @@ namespace Moonwell.Build
             }
         }
 
-        private static void Write(string blpPath, int width, int height, byte[] pixels)
+        /// <summary>Writes pixels, blue, green, red and alpha, as a BLP1 of JPEG mipmaps, with its alpha when a pixel is not opaque.</summary>
+        internal static void Write(string blpPath, int width, int height, byte[] pixels)
         {
             var transparent = false;
             for (var i = 3; i < pixels.Length && !transparent; i += 4)

@@ -8,10 +8,11 @@
     <Compile Remove="build/**" />
   </ItemGroup>
 
-  <!-- But for Placed, the data files' classes and the Lua libraries' bindings, which the build writes before the compile, as the map's code names them. -->
+  <!-- But for Placed, the data files' classes, the looks' names and the Lua libraries' bindings, which the build writes before the compile, as the map's code names them. -->
   <ItemGroup>
     <Compile Include="build/generated/Placed.g.cs" Condition="Exists('build/generated/Placed.g.cs')" />
     <Compile Include="build/generated/Data.g.cs" Condition="Exists('build/generated/Data.g.cs')" />
+    <Compile Include="build/generated/Looks.g.cs" Condition="Exists('build/generated/Looks.g.cs')" />
     <Compile Include="build/generated/LuaLibraries.g.cs" Condition="Exists('build/generated/LuaLibraries.g.cs')" />
   </ItemGroup>
 

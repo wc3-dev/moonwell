@@ -1004,6 +1004,26 @@ namespace Moonwell.Testing
             Expect.Near(0.1f, fill.Width, "a new range");
         }
 
+        /// <summary>A bar's look (its path ends in .Bar.blp) is cut: the fill shows the build's step copy nearest its share in 64ths, the look itself when full and nothing when empty, painted again only when the step changes (decision 322); any other texture is squashed whole.</summary>
+        public static void ProgressBarCutsABarLook(FakeWorld world)
+        {
+            var frames = Installed();
+            var bar = Screen.Add(new ProgressBar { Width = 0.2f, Height = 0.02f, Texture = "w\\Bar.Green.Bar.blp", Value = 0.25f }, Game.Instance);
+            var fb = frames.FrameOf(bar.Handle!);
+            var fill = frames.Frames.Find(f => f.Parent == fb && f.Type == "BACKDROP")!;
+            Expect.Equal("w\\Bar.Green.Bar16.blp", fill.Texture, "a quarter: 16 of 64");
+            Expect.Near(0.05f, fill.Width, "sized as before");
+            bar.Value = 0.26f;
+            Expect.Equal("w\\Bar.Green.Bar17.blp", fill.Texture, "the nearest step");
+            bar.Value = 1.0f;
+            Expect.Equal("w\\Bar.Green.Bar.blp", fill.Texture, "full: the look itself");
+            bar.Value = 0.0f;
+            Expect.Equal(Moonwell.Image.Blank, fill.Texture, "empty: nothing");
+            bar.Texture = "w\\Plain.blp";
+            bar.Value = 0.5f;
+            Expect.Equal("w\\Plain.blp", fill.Texture, "any other texture whole");
+        }
+
         /// <summary>A label's colour is a colour code around its text, as a label turned off (so clicks pass) draws the game's text colour grey (seen 11-07, I39); the label's own codes keep theirs, its machine's own text takes the colour, and a label given out again by the pool is white unless set.</summary>
         public static void LabelColour(FakeWorld world)
         {

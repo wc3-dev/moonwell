@@ -1810,6 +1810,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.turned-off-then-listened", Run = FrameCases.TurnedOffThenListened });
             list.Add(new Case { Name = "frames.one-side-keeps-template", Run = FrameCases.OneSideKeepsTemplate });
             list.Add(new Case { Name = "frames.progress-bar-follows-resize", Run = FrameCases.ProgressBarFollowsResize });
+            list.Add(new Case { Name = "frames.progress-bar-cuts-a-bar-look", Run = FrameCases.ProgressBarCutsABarLook });
             list.Add(new Case { Name = "frames.fill-loop-refused", Run = FrameCases.FillLoopRefused });
             list.Add(new Case { Name = "frames.tied-inside-ended", Run = FrameCases.TiedInsideEnded });
             list.Add(new Case { Name = "frames.tie-to-ended-refused", Run = FrameCases.TieToEndedRefused });
