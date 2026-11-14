@@ -3400,12 +3400,10 @@ namespace Moonwell
                     slots[i] = slots[slot];
                     slots[slot] = item;
 
-                    // The game fires 852005 on the item (seen 11-03), an instant order: the unit goes on with its own.
-                    var carrying = CurrentOrderOf(unit);
-                    DeliverOrder(unit, 852005, OrderKind.Target, 0f, 0f, null, item);
-                    if (CurrentOrderOf(unit) == 852005)
+                    // The game fires 852005 on the item (seen 11-03), an instant order: the unit goes on with its own, in play too.
+                    if (Listening.Contains(GameEvent.Order))
                     {
-                        currentOrders[unit] = carrying;
+                        Inbound.Ordered(unit, 852005, OrderKind.Target, 0f, 0f, null, item, null, 1);
                     }
 
                     return true;

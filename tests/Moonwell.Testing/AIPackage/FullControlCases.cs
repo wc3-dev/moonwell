@@ -10,6 +10,30 @@ namespace Moonwell.Testing
         /// <summary>The type id of the cases' units.</summary>
         private static readonly int Footman = ObjectTypes.FourCC("hfoo");
 
+        /// <summary>The type of the play cases' guards, given numbers that fight.</summary>
+        private static readonly int Guard = ObjectTypes.FourCC("s0fg");
+
+        /// <summary>The type of the play cases' enemies, which walk and never fight.</summary>
+        private static readonly int Foe = ObjectTypes.FourCC("s0ff");
+
+        /// <summary>Starts a simulation whose guards fight: range 100, a swing of 10 each second, acquiring within 500.</summary>
+        private static Simulation Play()
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Guard, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10, AcquisitionRange = 500.0f });
+            sim.SetNumbers(Foe, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            return sim;
+        }
+
+        /// <summary>Runs a simulation one 0.02 s step at a time.</summary>
+        private static void Steps(Simulation sim, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                sim.Run(0.02f);
+            }
+        }
+
         /// <summary>The orders given through the world so far, in one line.</summary>
         private static string Given(FakeWorld world)
         {
@@ -329,6 +353,43 @@ namespace Moonwell.Testing
             world.Orders.Clear();
             second.End();
             Expect.Equal("immediate stop", Given(world), "the last one ending gives the unit back");
+        }
+
+        /// <summary>In the simulation's play, a full-control brain's unit with an enemy within its acquisition range is held when it picks it, at its first step, and stays, swinging only at an enemy right beside it.</summary>
+        public static void InPlay(FakeWorld world)
+        {
+            var sim = Play();
+            var guard = Unit.Create(Guard, Player.One, 0.0f, 0.0f, Game.Instance);
+            guard.Add(new StepBrain { FullControl = true });
+            var away = Unit.Create(Foe, Player.Two, 400.0f, 0.0f, Game.Instance);
+
+            Steps(sim, 60);
+            Expect.True(guard.X == 0.0f && guard.Y == 0.0f, "it stays, though an enemy is within its acquisition range");
+            Expect.Near(1000.0f, away.Life, "and swings at nothing beyond its range");
+            Expect.Equal("immediate holdposition", Given(sim.World), "held once, when it picked the enemy");
+            Expect.Equal("", guard.CurrentOrder, "its order reads 0 on hold");
+
+            var beside = Unit.Create(Foe, Player.Two, 0.0f, 80.0f, Game.Instance);
+            Steps(sim, 1);
+            Expect.Near(990.0f, beside.Life, "an enemy right beside it is still hit");
+            Expect.True(guard.X == 0.0f && guard.Y == 0.0f, "and it still stands where it stood");
+        }
+
+        /// <summary>In the simulation's play, a lean-on brain's unit acquires the enemy and fights it as before, with no order from Moonwell.</summary>
+        public static void LeanOnInPlay(FakeWorld world)
+        {
+            var sim = Play();
+            var guard = Unit.Create(Guard, Player.One, 0.0f, 0.0f, Game.Instance);
+            guard.Add(new StepBrain());
+            var near = Unit.Create(Foe, Player.Two, 400.0f, 0.0f, Game.Instance);
+
+            Steps(sim, 1);
+            Expect.Equal("attack", guard.CurrentOrder, "it acquires the enemy");
+            // It chases 6 a step from step 2, is in range at step 51, and swings at step 52.
+            Steps(sim, 51);
+            Expect.Near(300.0f, guard.X, "it chased it to its range");
+            Expect.Near(990.0f, near.Life, "and swung");
+            Expect.Equal(0, sim.World.Orders.Count, "with no order from Moonwell");
         }
 
         /// <summary>FullControl set in OnAdded, and set before the brain is added, takes effect once the brain is added; set off and on again, the unit's picks are still watched once.</summary>

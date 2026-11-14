@@ -122,6 +122,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
             list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
             list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
+            list.Add(new Case { Name = "ai.full-control.in-play", Run = FullControlCases.InPlay });
+            list.Add(new Case { Name = "ai.full-control.lean-on-in-play", Run = FullControlCases.LeanOnInPlay });
             list.Add(new Case { Name = "ai.utility.curves", Run = UtilityCases.Curves });
             list.Add(new Case { Name = "ai.utility.points", Run = UtilityCases.Points });
             list.Add(new Case { Name = "ai.utility.scores", Run = UtilityCases.Scores });

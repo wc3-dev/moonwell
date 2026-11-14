@@ -1908,15 +1908,16 @@ public class GuardTests
   unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
   anything else. An attack to a point fights the nearest enemy within acquisition range on the way, then walks on. Hold
-  position never moves and swings at an enemy within range. `stop` leaves the unit idle, patrol stands, and any other
-  order (a spell, `attackground`) ends after its hold.
+  position never moves and swings at an enemy within range, its `CurrentOrder` reading "" as in the game. `stop` leaves
+  the unit idle, patrol stands, and any other order (a spell, `attackground`) ends after its hold.
 - The fake knows orders by name from a short list: `smart`, `stop`, `move`, `attack`, `attackground`, `patrol`,
   `holdposition`, `defend`, `undefend`, `holybolt`, `immolation` and `unimmolation`. Any other name leaves the unit idle
   at once, and is neither counted nor held.
 - A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
   a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
   damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
-  not counted or held.
+  not counted or held. A unit under a brain's full control is put on hold position at that moment instead, as in the
+  game.
 - Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
   through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
   3.0.1.24371); turning, vision, buffs, and spells and their effects; an attack's damage point and a missile's flight
