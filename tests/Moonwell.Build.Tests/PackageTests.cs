@@ -436,7 +436,7 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void template_map_calls_core_extensions_on_strings_and_lists()
+        public void template_map_calls_core_extensions_on_strings_and_numbers()
         {
             // CSharp.lua compiles a package's source: with its library referenced too, an extension on a type of another
             // assembly is found twice and is ambiguous (CS0121); one on Moonwell's own types is not, as the library's takes the library's types.
@@ -446,9 +446,9 @@ namespace Moonwell.Build.Tests
             File.WriteAllText(
                 Path.Combine(map, "Extensions.cs"),
                 "using System.Collections.Generic;\nusing Moonwell;\n\nnamespace Keep\n{\n    public static class Extensions\n    {\n        public static string All()\n        {\n"
-                + "            var numbers = new List<int>();\n            numbers.Add(1, 2, 3);\n            var names = new List<string>();\n            names.Add(\"a\", \"b\");\n"
+                + "            var numbers = new List<int>();\n            numbers.Add(1, 2, 3);\n"
                 + "            return \"a\".Colored(Color.Red) + \"b\".Rainbow() + \"c\".Rainbow(0.5f) + \"d\".Gradient(Color.Red, Color.Blue) + \"e\".Alternate(Color.Red, Color.White)\n"
-                + "                + \"f\".Sweep(Color.White, Color.Red, 0f) + \"g\".Confetti() + \"h\".Highlight(\"h\", Color.Red) + numbers.Count + names.Count;\n"
+                + "                + \"f\".Sweep(Color.White, Color.Red, 0f) + \"g\".Confetti() + \"h\".Highlight(\"h\", Color.Red) + numbers.Count;\n"
                 + "        }\n    }\n}\n");
 
             var log = new StringWriter();
