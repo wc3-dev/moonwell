@@ -490,7 +490,8 @@ namespace Moonwell.Procgen
                 throw new ArgumentException("TerrainGenerator.Make takes milliseconds a step above 0, not " + msPerStep);
             }
 
-            return new TerrainMaking(Steps(area, area, scope, true, out _), msPerStep * 1000f, scope);
+            var ground = new GroundScope(scope);
+            return new TerrainMaking(Steps(area, area, ground, true, out _), msPerStep * 1000f, ground);
         }
 
         /// <summary>
