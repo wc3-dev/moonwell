@@ -6,7 +6,8 @@ namespace Moonwell
     /// A line or block of text, in the game's font unless Font names another, at the game's height unless Size is set; Scale
     /// makes its text bigger and leaves its place and box alone. A label lets clicks through to what is under it unless
     /// Enabled is set. The game takes a TEXT's font and height only from its template, by path, and BlzFrameSetFont
-    /// changes nothing (seen 11-13), so Size, Font and Shadow pick one of the text templates the build writes.
+    /// changes nothing (seen 11-13), so Size, Font and Shadow pick one of the text templates the build writes. An Effect
+    /// moves its colours by itself.
     /// </summary>
     public class Label : Frame
     {
@@ -15,6 +16,14 @@ namespace Moonwell
         internal FramePoint alignment = FramePoint.TopLeft;
 
         internal Color color = Color.White;
+
+        internal TextEffect? effect;
+
+        /// <summary>When the Effect was set, which it moves from.</summary>
+        internal float effectSince;
+
+        /// <summary>Whether it is in MovingTexts' redraws.</summary>
+        internal bool redrawing;
 
         /// <summary>The text ShowLocal shows on this machine, until Text is set; null for the shared text.</summary>
         internal string? local;
@@ -73,6 +82,29 @@ namespace Moonwell
 
                 color = value;
                 Write();
+            }
+        }
+
+        /// <summary>A colour effect Moonwell moves by itself, a rainbow turning or a sweep passing, from when it is set, on the shared text and on what ShowLocal and ShowNameOf show; null, the default, for none. Text reads the words as set, and Color is not drawn while it runs.</summary>
+        [LocalSafe]
+        public TextEffect? Effect
+        {
+            get { return effect; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                effect = value;
+                effectSince = Game.Time;
+                Write();
+                if (effect != null && !redrawing)
+                {
+                    redrawing = true;
+                    MovingTexts.Join(Redraw);
+                }
             }
         }
 
@@ -284,13 +316,30 @@ namespace Moonwell
             }
 
             var shown = local ?? text;
-            if (!color.Equals(Color.White) && shown.Length > 0)
+            if (effect != null)
+            {
+                shown = effect.Paint(shown, Game.Time - effectSince);
+            }
+            else if (!color.Equals(Color.White) && shown.Length > 0)
             {
                 var code = "|cff" + color.ToHtml(false);
                 shown = code + shown.Replace("|r", "|r" + code).Replace("|R", "|R" + code) + "|r";
             }
 
             FramesSystem.World.WriteFrameText(handle, shown);
+        }
+
+        /// <summary>A redraw of the Effect; answers false, and leaves the redraws, once the label has ended or has none.</summary>
+        private bool Redraw()
+        {
+            if (HasEnded || effect == null)
+            {
+                redrawing = false;
+                return false;
+            }
+
+            Write();
+            return true;
         }
 
         /// <summary>Gives the game the alignment: the point's row is the vertical, its column the horizontal.</summary>

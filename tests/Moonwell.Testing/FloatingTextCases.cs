@@ -180,5 +180,32 @@ namespace Moonwell.Testing
             world.Advance(1.1f);
             Expect.Equal(true, theirs.HasEnded, "ended at its Duration");
         }
+
+        /// <summary>An Effect is drawn on the words from when it is set and redrawn by itself: Text reads the words, the colour's red, green and blue are not drawn while it runs, its alpha is, and null draws the words in their colour again. Ended, the text and the redraws' timer are gone.</summary>
+        public static void Effect(FakeWorld world)
+        {
+            var before = Game.Instance.ChildCount;
+            var text = FloatingText.Create("abc", 0f, 0f, Game.Instance);
+            text.Color = new Color(255, 0, 0, 128);
+            var made = world.Texts[0];
+            world.Advance(1f);
+            var since = Game.Time;
+            text.Effect = TextEffect.Rainbow();
+            Expect.Equal(Text.Rainbow("abc", 0f), made.Words, "drawn from its start");
+            Expect.Equal(255, made.Color![1], "white under the effect");
+            Expect.Equal(128, made.Color![3], "its alpha kept");
+            world.Advance(0.5f);
+            Expect.Equal(Text.Rainbow("abc", -(Game.Time - since) / 2f), made.Words, "redrawn by itself");
+            Expect.Equal("abc", text.Text, "Text reads the words");
+            text.Text = "xyz";
+            Expect.Equal(Text.Rainbow("xyz", -(Game.Time - since) / 2f), made.Words, "new words take it");
+            text.Effect = null;
+            Expect.Equal("xyz", made.Words, "plain again");
+            Expect.Equal(0, made.Color![1], "red again");
+            text.Effect = TextEffect.Rainbow();
+            text.End();
+            world.Advance(0.1f);
+            Expect.Equal(before, Game.Instance.ChildCount, "the text and the redraws' timer are gone");
+        }
     }
 }
