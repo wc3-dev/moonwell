@@ -21,7 +21,7 @@ namespace Moonwell
         private const int ScreenLine = 1023;
 
         // Letters a second a sweep moves, and so how far apart Repeating's bands are.
-        private const float SweepSpeed = 20.0f;
+        internal const float SweepSpeed = 20.0f;
 
         // Letters before the first a band comes in from, and after the last it goes out to, so a comet's trail leaves too.
         private const float SweepLead = 8.0f;

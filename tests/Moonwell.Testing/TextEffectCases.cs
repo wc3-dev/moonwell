@@ -165,6 +165,18 @@ namespace Moonwell.Testing
             Expect.True(comet.Length <= 1023, "a comet's length: " + comet.Length);
         }
 
+        /// <summary>A moving effect draws as Text's effect at its time: a rainbow a turn in its seconds, its shift falling so the colours flow along the text, a sweep at its letters a second; a still one is refused.</summary>
+        public static void MovingEffect(FakeWorld world)
+        {
+            Expect.Equal(Text.Rainbow("abc", 0f), TextEffect.Rainbow().Paint("abc", 0f), "a rainbow at its start");
+            Expect.Equal(Text.Rainbow("abc", -0.25f), TextEffect.Rainbow().Paint("abc", 0.5f), "a quarter turn in 0.5 s");
+            Expect.Equal(Text.Rainbow("abc", -0.125f), TextEffect.Rainbow(4f).Paint("abc", 0.5f), "an eighth, turning in 4 s");
+            Expect.Equal(Text.Sweep("abcdef", Color.Red, Color.White, 0.5f), TextEffect.Sweep(Color.Red, Color.White).Paint("abcdef", 0.5f), "20 letters a second, as Sweep");
+            Expect.Equal(Text.Sweep("abcdef", Color.Red, Color.White, 0.25f, SweepShape.Comet), TextEffect.Sweep(Color.Red, Color.White, SweepShape.Comet, 10f).Paint("abcdef", 0.5f), "10 letters a second, a comet");
+            Expect.Throws<ArgumentException>(() => TextEffect.Rainbow(0f), "a rainbow that never turns");
+            Expect.Throws<ArgumentException>(() => TextEffect.Sweep(Color.Red, Color.White, speed: -1f), "a sweep going back");
+        }
+
         // The colour of each letter, as hex.
         private static string[] Colours(string coloured)
         {
