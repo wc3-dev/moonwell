@@ -95,11 +95,11 @@ namespace Moonwell.Testing
             Logged("c start, c run", log, "a When false at its start fails without starting its child");
             second = true;
             Is(Status.Running, tree.Run(), "b runs");
-            Logged("c stop, b start, b run", log, "the When cuts in, and c is stopped");
+            Logged("b start, b run, c stop", log, "the When cuts in, and c is stopped after b started");
             Expect.True(!c.IsRunning && b.IsRunning, "b runs, c does not");
             first = true;
             Is(Status.Running, tree.Run(), "a runs");
-            Logged("b stop, a start, a run", log, "the When above cuts in on the running When");
+            Logged("a start, a run, b stop", log, "the When above cuts in on the running When");
 
             first = false;
             second = false;
@@ -108,7 +108,7 @@ namespace Moonwell.Testing
             first = true;
             second = true;
             Is(Status.Running, tree.Run(), "a runs");
-            Logged("c stop, a start, a run", log, "two hold: the top one cuts in");
+            Logged("a start, a run, c stop", log, "two hold: the top one cuts in");
         }
 
         /// <summary>A running When whose condition turns false stops its child and fails, and the Select goes on to the next child in the same pass.</summary>
@@ -127,6 +127,29 @@ namespace Moonwell.Testing
             alarm = false;
             Is(Status.Succeeded, tree.Run(), "b succeeds in the same pass");
             Logged("a stop, b start, b run", log, "a is stopped, then b runs");
+        }
+
+        /// <summary>A When that holds above a running child, but whose own child fails at once, does not cut in: the running child goes on, neither stopped nor started again, at every pass; once the When's child runs, it cuts in and the running child is stopped.</summary>
+        public static void WhenFailingAtOnce(FakeWorld world)
+        {
+            var log = new List<string>();
+            var alarm = false;
+            var a = new LogNode("a", log) { Gives = Status.Failed };
+            var b = new LogNode("b", log);
+            var tree = TreeOf(Nodes.Select(When(() => alarm, a), b));
+
+            Is(Status.Running, tree.Run(), "b runs");
+            Logged("b start, b run", log, "the When is false");
+            alarm = true;
+            Is(Status.Running, tree.Run(), "b runs on");
+            Logged("a start, a run, b run", log, "a fails at once: b is neither stopped nor started again");
+            Is(Status.Running, tree.Run(), "and on");
+            Logged("a start, a run, b run", log, "at the next pass too");
+            Expect.True(b.IsRunning, "b still runs");
+            a.Gives = Status.Running;
+            Is(Status.Running, tree.Run(), "a runs");
+            Logged("a start, a run, b stop", log, "a cuts in, and b is stopped after a started");
+            Expect.True(a.IsRunning && !b.IsRunning, "a runs, b does not");
         }
 
         /// <summary>Only a When directly in a Select is watched: one in a Sequence under it never cuts in, and an If is a one-time check.</summary>
@@ -306,7 +329,7 @@ namespace Moonwell.Testing
             Is(Status.Running, cut.Run(), "b runs");
             alarm = true;
             Is(Status.Succeeded, cut.Run(), "x cuts in");
-            Logged("b start, b run, b stop, x start, x run", log, "b is cut off");
+            Logged("b start, b run, x start, x run, b stop", log, "b is cut off");
             alarm = false;
             Is(Status.Failed, cut.Run(), "cooling after a cut-off");
             Logged("", log, "b is not started");

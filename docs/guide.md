@@ -1751,8 +1751,10 @@ public sealed class Guard : UnitBrain
   less is never picked. A running option is kept unless another beats it by more than a tenth or its own score drops
   to 0 or less, and with none above 0 it fails.
 - Interrupts: a `When` directly in a `Select` is watched. While a child below it runs on, the first `When` above it
-  whose condition holds cuts in, stopping that child; a running `When` whose condition no longer holds fails, and the
-  select goes on to the next child in the same pass. Nothing outside the select is watched, and an `If` never is.
+  whose condition holds and whose child does not fail at once cuts in: its branch takes over, then the child that ran
+  is stopped, so that child's `Stop` runs after the new branch has started. A `When` whose child fails at once, as an
+  attack on a dead target, leaves the running child alone. A running `When` whose condition no longer holds fails, and
+  the select goes on to the next child in the same pass. Nothing outside the select is watched, and an `If` never is.
 - Thresholds and timings are numbers to tune: keep them in a `data` file and read them through `Data`, as
   `Data.Guards.Gate.FleeBelow` above comes from `data\guards.csv` ([Data files](#data-files)).
 

@@ -102,6 +102,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.trees.select", Run = BehaviourTreeCases.Select });
             list.Add(new Case { Name = "ai.trees.when-cuts-in", Run = BehaviourTreeCases.WhenCutsIn });
             list.Add(new Case { Name = "ai.trees.when-ends-its-branch", Run = BehaviourTreeCases.WhenEndsItsBranch });
+            list.Add(new Case { Name = "ai.trees.when-failing-at-once", Run = BehaviourTreeCases.WhenFailingAtOnce });
             list.Add(new Case { Name = "ai.trees.only-a-select-watches", Run = BehaviourTreeCases.OnlyASelectWatches });
             list.Add(new Case { Name = "ai.trees.parallel", Run = BehaviourTreeCases.Parallel });
             list.Add(new Case { Name = "ai.trees.repeat", Run = BehaviourTreeCases.Repeat });

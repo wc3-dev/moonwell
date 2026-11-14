@@ -18,9 +18,11 @@ namespace Moonwell.AI
         /// <summary>
         /// Runs the children in order, going on at the next pass where it left off: Succeeded at the first that succeeds,
         /// Failed once all have failed (at once with none). A <c>When</c> among its children is watched: while a child below it
-        /// runs on from an earlier pass, the first <c>When</c> above it, top first, whose condition holds cuts in, stopping
-        /// the running child. A running <c>When</c> whose condition no longer holds fails, and the select goes on to the next
-        /// child in the same pass. Nothing outside the select is watched.
+        /// runs on from an earlier pass, each <c>When</c> above it whose condition holds runs, top first, and the first whose
+        /// child does not fail at once cuts in: its branch takes over, and the running child is stopped after it has started.
+        /// A <c>When</c> whose child fails at once leaves the running child to go on, neither stopped nor started again. A
+        /// running <c>When</c> whose condition no longer holds fails, and the select goes on to the next child in the same
+        /// pass. Nothing outside the select is watched.
         /// </summary>
         public static Node Select(params Node[] children)
         {

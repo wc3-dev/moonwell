@@ -2,8 +2,10 @@ namespace Moonwell.AI
 {
     /// <summary>
     /// Runs its children in order, going on at the next pass where it left off: Succeeded at the first that succeeds, Failed
-    /// once all have failed. A When among its children watches: while a child below it runs on from an earlier pass, the
-    /// first When above it whose condition holds cuts in, stopping it.
+    /// once all have failed. A When among its children watches: while a child below it runs on from an earlier pass, each
+    /// When above it whose condition holds, top first, runs; the first whose branch does not fail at once cuts in, and the
+    /// running child is stopped after that branch has started. A When whose branch fails at once leaves the running child
+    /// to go on, neither stopped nor started again.
     /// </summary>
     internal sealed class SelectNode : Branch
     {
@@ -30,11 +32,18 @@ namespace Moonwell.AI
                 for (var i = 0; i < at; i++)
                 {
                     var when = children[i] as WhenNode;
-                    if (when != null && when.Holds())
+                    if (when == null)
+                    {
+                        continue;
+                    }
+
+                    // A When whose condition is false gives Failed without starting its child.
+                    var cut = when.Tick();
+                    if (cut != Status.Failed)
                     {
                         children[at].Halt();
                         at = i;
-                        break;
+                        return cut;
                     }
                 }
             }
