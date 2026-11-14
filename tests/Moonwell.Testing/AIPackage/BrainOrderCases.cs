@@ -57,10 +57,10 @@ namespace Moonwell.Testing
             var brain = unit.Add(new StepBrain());
             world.Orders.Clear();
 
-            // The fake knows no "blink", so the unit reads idle at once after it, as after an order cancelled in its event.
-            Expect.True(brain.OrderAt("blink", 500f, 0f), "taken");
+            // The fake knows no "nosuchorder", so the unit reads idle at once after it, as after an order cancelled in its event.
+            Expect.True(brain.OrderAt("nosuchorder", 500f, 0f), "taken");
             Expect.Equal("", unit.CurrentOrder, "and idle at once");
-            brain.OrderAt("blink", 500f, 0f);
+            brain.OrderAt("nosuchorder", 500f, 0f);
             Expect.Equal(2, world.Orders.Count, "the repeat is sent, as the unit is idle far from the place");
         }
 

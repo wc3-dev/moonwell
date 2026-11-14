@@ -84,8 +84,9 @@ namespace Moonwell.AI
         /// <summary>
         /// Whether the brain has full control of its unit; false, the default, leaves the game's own unit AI on, as a unit
         /// picks targets, hits back and goes home by itself. True stops it: a target the unit picks by itself with no order
-        /// is answered at once with hold position, and every order not from code (the game's, an AI script's, a person's
-        /// click) with hold position at the next step, waking the unit's brains, whose next order then always reaches the game;
+        /// is answered at once with hold position, waking the unit's brains, and every order not from code (the game's, an
+        /// AI script's, a person's click) with hold position at the next step, waking the unit's brains, whose next order
+        /// then always reaches the game;
         /// the unit doesn't sleep. An enemy right beside it is still hit, as on hold position, and an order from code always
         /// goes through, a hold position too, which is left as it is. Set it at any time, in OnAdded
         /// too; the unit is under full control while any of its brains has it. Set false, or the last such brain ending,

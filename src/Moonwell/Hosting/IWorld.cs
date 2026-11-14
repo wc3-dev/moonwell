@@ -206,6 +206,9 @@ namespace Moonwell.Hosting
         /// <summary>Whether a unit is an illusion, as Mirror Image and a Wand of Illusion make.</summary>
         bool IsIllusion(unit unit);
 
+        /// <summary>Whether a unit is a structure.</summary>
+        bool IsStructure(unit unit);
+
         /// <summary>The player that owns a unit; null a while after the game has removed it.</summary>
         player OwnerOf(unit unit);
 
@@ -361,6 +364,12 @@ namespace Moonwell.Hosting
 
         /// <summary>The middle of a unit's white damage: its base damage and the middle of its dice, without bonuses.</summary>
         float AverageDamageOf(unit unit);
+
+        /// <summary>The seconds between a unit's attacks with its first weapon, without bonuses.</summary>
+        float AttackCooldownOf(unit unit);
+
+        /// <summary>How far a unit looks for an enemy to attack when idle, its acquisition range now.</summary>
+        float AcquireRangeOf(unit unit);
 
         /// <summary>The move speed of a unit.</summary>
         float MoveSpeedOf(unit unit);
@@ -604,6 +613,9 @@ namespace Moonwell.Hosting
 
         /// <summary>The units within a radius of a place, as the game finds them, in a new list.</summary>
         List<unit> UnitsInRange(float x, float y, float radius);
+
+        /// <summary>The units within a radius of a place, as the game finds them, into a list the caller keeps, cleared first.</summary>
+        void UnitsInRange(float x, float y, float radius, List<unit> into);
 
         /// <summary>The area of an ability a unit has, at its level; 0 when it has none.</summary>
         float AbilityArea(unit unit, int abilityId);

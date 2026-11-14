@@ -55,7 +55,7 @@ namespace Moonwell.Testing
             return count;
         }
 
-        /// <summary>A pick with the order reading 0 is held inside its event, as Moonwell's own order, and again on hold, whose order reads 0 too; one on the brain's attack-move is left; a brain that leans on the game answers nothing.</summary>
+        /// <summary>A pick with the order reading 0 is held inside its event, as Moonwell's own order, and again on hold, whose order reads 0 too, waking the unit's brains; one on the brain's attack-move is left; a brain that leans on the game answers nothing.</summary>
         public static void Acquire(FakeWorld world)
         {
             var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
@@ -71,6 +71,7 @@ namespace Moonwell.Testing
             Expect.Equal(2, world.Orders.Count, "so a pick on hold is held again");
             BrainCases.Steps(world, 2);
             Expect.Equal(2, world.Orders.Count, "and Moonwell's hold is never answered");
+            Expect.Equal("1", string.Join(" ", brain.Thought), "the picks wake the unit's brain, as after a kill, once in the step");
 
             brain.OrderAt(Orders.Attack, 500f, 0f);
             world.Orders.Clear();
