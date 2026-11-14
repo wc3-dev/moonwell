@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Moonwell.Hosting;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>How a fake spell is aimed: at a unit, at a place, or with no target.</summary>
     public enum SpellKind

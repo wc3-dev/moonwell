@@ -72,6 +72,7 @@ namespace Moonwell.Build.Tests
         [InlineData("Moonwell.Kit")]
         [InlineData("Moonwell.Spells")]
         [InlineData("Moonwell.Json")]
+        [InlineData("Moonwell.Simulation")]
         public void package_ships_xml_docs_beside_its_library(string id)
         {
             using var archive = ZipFile.OpenRead(Path.Combine(packed.Feed, id + "." + packed.Version + ".nupkg"));

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>The fake world's stats: armor, damage, move speed, regeneration and the bonus abilities' fields, as the probe of 11-08 saw them.</summary>
     public sealed partial class FakeWorld
