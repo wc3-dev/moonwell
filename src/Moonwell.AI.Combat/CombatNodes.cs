@@ -10,10 +10,11 @@ namespace Moonwell.AI.Combat
     {
         /// <summary>
         /// Fights the fighter's target, read at every pass: casts the first of its spells whose aim has someone, whose
-        /// condition holds and that is ready, Running while the unit carries the cast out, as <c>Cast</c> watches it, then
-        /// goes back to attacking the target. Failed with no target, for a dead or removed unit, and when the attack is
-        /// refused; a spell the game refuses gives way to the next. Put it under <c>When(fighter.Meets, ...)</c>, whose
-        /// check picks the target.
+        /// condition holds and that is ready, Running while the unit carries the cast out, as <c>Cast</c> watches it, and
+        /// wakes the brain when the cast ends, as the game then leaves the unit idle; then it goes back to attacking the
+        /// target. A spell the game refuses gives way to the next, and the attack the unit carries out is left alone. Failed
+        /// with no target, for a dead or removed unit, and when the attack is refused. Put it under
+        /// <c>When(fighter.Meets, ...)</c>, whose check picks the target.
         /// </summary>
         public static Node Fight(Fighter fighter)
         {

@@ -8,6 +8,7 @@ namespace Moonwell.Tests
         private static readonly int Walker = ObjectTypes.FourCC("s0lw");
         private static readonly int Grunt = ObjectTypes.FourCC("s0lg");
         private static readonly int Brute = ObjectTypes.FourCC("s0lb");
+        private static readonly int Runner = ObjectTypes.FourCC("s0lr");
 
         /// <summary>A lane walker that counts its thinks.</summary>
         private sealed class CountingWalker : LaneWalker
@@ -39,6 +40,7 @@ namespace Moonwell.Tests
             sim.SetNumbers(Walker, new UnitNumbers { Life = 400.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 25, AcquisitionRange = 500.0f });
             sim.SetNumbers(Grunt, new UnitNumbers { Life = 100.0f, MoveSpeed = 200.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 5, AcquisitionRange = 300.0f });
             sim.SetNumbers(Brute, new UnitNumbers { Life = 2000.0f, AttackRange = 150.0f, AttackCooldown = 0.5f, Damage = 20, AcquisitionRange = 500.0f });
+            sim.SetNumbers(Runner, new UnitNumbers { Life = 5000.0f, MoveSpeed = 200.0f });
             return sim;
         }
 
@@ -58,6 +60,28 @@ namespace Moonwell.Tests
             // A move to the end, the attack on the grunt, and the move on after the kill.
             Assert.Equal(3, sim.OrdersOf(walker));
             Assert.True(brain.Thinks > 30, "it thought " + brain.Thinks + " times");
+        }
+
+        /// <summary>A walker chases an enemy fleeing from its lane, as an attack from code has no chase limit of the game's (game facts, 11-14), until the enemy is beyond its leash of 2,100 from where it left the lane; then it drops it and walks on to the lane's end.</summary>
+        [Fact]
+        public void AWalkerDropsAFleeingEnemyAtItsLeash()
+        {
+            var sim = Start();
+            var walker = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var brain = walker.Add(new CountingWalker(Lane(0.0f, 3000.0f, 0.0f)));
+            var runner = Unit.Create(Runner, Player.Two, 600.0f, 0.0f, Game.Instance);
+            runner.OrderAt(Orders.Move, 600.0f, 10000.0f);
+
+            Assert.True(sim.RunUntil(() => brain.Fighter.Target == runner, 10.0f), "it meets the runner");
+            var fighter = brain.Fighter;
+            var farthest = 0.0f;
+            Assert.True(sim.RunUntil(() => { farthest = Math.Max(farthest, walker.Y); return fighter.Target == null; }, 30.0f), "it drops the runner");
+            Assert.True(runner.IsAlive, "which got away");
+            var dx = runner.X - fighter.spotX;
+            var dy = runner.Y - fighter.spotY;
+            Assert.True(dx * dx + dy * dy > 2100.0f * 2100.0f, "beyond the leash from where it left its lane");
+            Assert.True(farthest < 2200.0f, "it went no farther than its leash and its reach: " + farthest);
+            Assert.True(sim.RunUntil(() => walker.X == 3000.0f, 60.0f), "then it walks on to its lane's end, at " + walker.X);
         }
 
         /// <summary>A walker fighting a brute it cannot beat pulls back below 30% of its life, walks back to its lane's start with moves, and stands there, still pulled back below 70%.</summary>

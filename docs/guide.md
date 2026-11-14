@@ -1847,8 +1847,9 @@ unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen 
 - It meets, at each think, a living enemy unit its owner sees (an order at an unseen unit is refused), structures too,
   within its meet range, and one that damaged it in the last 3 s however far. It keeps the spot where it left its
   route, and an enemy farther than `Leash` from it is not fought: 2,100, the default, about the game's own chase limit.
-  A fleeing enemy that crosses the leash is dropped and the walker goes back. Once back within 64 of a point of its
-  route with no enemy met, it forgets the spot.
+  That limit ends only a chase of a target the unit picked itself; an `attack` from code chased 3,960 in 15 s
+  (3.0.1.24371), so the leash is the walker's only one. A fleeing enemy that crosses it is dropped and the walker goes
+  back. Once back within 64 of a point of its route with no enemy met, it forgets the spot.
 - It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
   `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
   and walks back to where its fight started.
@@ -1876,7 +1877,12 @@ the best of them scores 1 and none scores 0:
 - Casting: at each think in a fight, the first spell in `Spells` whose aim has someone, whose condition holds and that
   is ready is cast through the brain: ready, the unit has the ability, its cooldown is over and its mana is at least
   the ability's mana cost now, all read from the game. The walker watches the cast as `Cast` does, while the unit's
-  order id is the one read just after it, then goes back to the attack. A spell the game refuses gives way to the next.
+  order id is the one read just after it, then goes back to the attack. At a cast's end the game leaves the unit idle,
+  and the target it picks by itself 0.01 s later is held by full control without a wake, so the brain is woken once
+  the unit's order id changes and attacks again within 0.04 s, not at its next think. A cast on a target out of range
+  walks up to it first.
+- A spell the game refuses gives way to the next, and then the attack, in the same pass. A refused cast leaves the
+  attack the unit carries out alone (3.0.1.24371), so that attack is not sent again.
 - `On` and `At` take a condition on the target, `Self` one on the fighter, and `Ally` one on each ally in meet range,
   its own unit counted, checked from the most hurt (the least share of its most life) until it holds. With no
   condition, `Ally` takes the most hurt whose life is below its most, and the others always cast when ready.
@@ -1924,8 +1930,6 @@ public sealed class CampGuard : UnitBrain
   tree.
 - In a fast simulation a walker meets, walks, fights and pulls back, but the fake plays no spells yet: a cast ends at
   once, or after its hold for an order the fake knows.
-- Not yet seen in the game: what a unit does after a cast from code in the middle of an attack, and whether the game's
-  chase limit also ends a chase from code.
 
 ## Fast simulation
 

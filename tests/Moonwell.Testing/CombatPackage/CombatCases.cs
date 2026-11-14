@@ -270,6 +270,52 @@ namespace Moonwell.Testing
             Expect.Equal(ObjectTypes.FourCC("A0cb"), Spell.At<TestBolt>("thunderbolt").AbilityId, "At with a class");
         }
 
+        /// <summary>When the unit's order id leaves the cast's, the cast over, the brain is woken and attacks again within two steps, not at its next tick: the game leaves the unit idle after a cast, and full control holds the target it picks then without a wake.</summary>
+        public static void CastEnds(FakeWorld world)
+        {
+            var unit = At(world, 0, 0f, 0f);
+            unit.AddAbility(BoltId);
+            var walker = unit.Add(new LaneWalker { MeetRange = 600f, Spells = { Spell.On(BoltId, "holybolt") } });
+            walker.ThinkEvery = 0f;
+            At(world, 1, 300f, 0f);
+            world.Orders.Clear();
+            walker.Wake();
+            BrainCases.Steps(world, 1);
+            Expect.Equal("target holybolt", Given(world), "woken, it casts on its target");
+            unit.AbilityOf(BoltId).StartCooldown(10f);
+            BrainCases.Steps(world, 5);
+            Expect.Equal(1, world.Orders.Count, "nothing while the unit carries the cast out");
+            world.SetCurrentOrder(unit.Handle, 0);
+            BrainCases.Steps(world, 2);
+            Expect.Equal("target holybolt, target attack", Given(world), "the cast over, it is woken and attacks again");
+            BrainCases.Steps(world, 5);
+            Expect.Equal(2, world.Orders.Count, "one wake: the watch has ended");
+        }
+
+        /// <summary>A cast the game refuses falls through to the attack in the same pass; refused again, the attack the unit carries out is left alone, though the brain forgot its last order; a refused spell gives way to the next.</summary>
+        public static void Refused(FakeWorld world)
+        {
+            var brain = Brain(world, 0f, 0f, 800f);
+            var unit = brain.Unit;
+            var fighter = brain.Fighter;
+            At(world, 1, 300f, 0f);
+            unit.AddAbility(BoltId);
+            world.Dummies.Spell(BoltId, "thunderbolt", SpellKind.Target, (caster, target, x, y) => { });
+            world.Dummies.Refuse(BoltId);
+            fighter.Spells.Add(Spell.On(BoltId, "thunderbolt"));
+            var tree = new Tree(brain, CombatNodes.Fight(fighter));
+            Check(world, fighter);
+            Is(Status.Running, tree.Run(), "it fights");
+            Expect.Equal("target thunderbolt, target attack", Given(world), "the refused cast falls through to the attack in the same pass");
+            tree.Run();
+            Expect.Equal("target thunderbolt, target attack, target thunderbolt", Given(world), "refused again: the attack it carries out is not sent again");
+            Expect.Equal("attack", unit.CurrentOrder, "and goes on");
+            unit.AddAbility(ClapId);
+            fighter.Spells.Add(Spell.Self(ClapId, "immolation"));
+            tree.Run();
+            Expect.Equal("immediate immolation", world.Orders[world.Orders.Count - 1], "a refused spell gives way to the next");
+        }
+
         /// <summary>It pulls back below 30% of its life or outnumbered two to one, its unit counted and structures on neither side, and comes back at 70% and not outnumbered; a Below and an Outnumbered of 0 turn them off; the node walks back along the route from the point before the nearest to the start and stands there on hold, or goes to its To.</summary>
         public static void PullingBack(FakeWorld world)
         {

@@ -54,6 +54,9 @@ namespace Moonwell.AI.Combat
         /// <summary>The game's seconds at the last check; -1 before any.</summary>
         private float checkedAt = -1f;
 
+        /// <summary>The timer that wakes the brain once its unit stops carrying out a cast; null when none runs.</summary>
+        private Timer? castWatch;
+
         /// <summary>Whether the spot where the fight started is kept, which the leash counts from.</summary>
         internal bool hasSpot;
 
@@ -167,6 +170,27 @@ namespace Moonwell.AI.Combat
             }
 
             brain.Wake();
+        }
+
+        /// <summary>
+        /// Wakes the brain at the first 0.02 s step at which its unit's order id is no longer the cast's, so the fight attacks
+        /// again at once: at a cast's end the unit reads idle and picks a target by itself 0.01 s later, which full control
+        /// answers with hold position without waking the brain (game facts, 11-14). A new watch ends the one before.
+        /// </summary>
+        internal void WakeAfterCast(Unit unit, int castId)
+        {
+            castWatch?.End();
+            castWatch = brain.Every(0.02f, () =>
+            {
+                if (Runtime.World.CurrentOrderOf(unit.Handle) == castId)
+                {
+                    return;
+                }
+
+                castWatch?.End();
+                castWatch = null;
+                brain.Wake();
+            });
         }
 
         /// <summary>Whether a fighter with no route has a spot to go back to after its fight.</summary>
