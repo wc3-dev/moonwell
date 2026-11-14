@@ -1427,6 +1427,7 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
 
   ```csharp
   var home = hills.Level(spawn.X, spawn.Y, 768f);                                  // the map's own spot
+  var colony = hills.Level(Bounds.FromCenter(spawn, new Vector2(4096f, 4096f)));   // a clearing 32 by 32 tiles
   var camps = hills.Places("Camp", Terrain.Playable, 20, radius: 320f, spacing: 1500f, from: home, difficulties: 3);
   camps.Add(1, ObjectTypes.FourCC("nkob"), ObjectTypes.FourCC("nkob"));           // a group for difficulty 1
   camps.Add(1, ObjectTypes.FourCC("ngno"), ObjectTypes.FourCC("ngno"));           // another: each camp takes one
@@ -1447,7 +1448,11 @@ hills.Plan(Terrain.Playable).Apply(Game.Instance);
   - `Exit` puts a place on one side of an area, where it joins the next, at a spot from the seed; the map puts what
     leads on (a gate, a way to the next area) there. Its centre is on the side itself, so on the edge of
     `Terrain.Playable` its outer half is the map's boundary; give a zone's own area for an exit to the next zone.
-  - A place reads `Name`, `X`, `Y`, `Radius`, `Difficulty` and `Units`. It is made by the one plan holding the corner
+  - `Level(Bounds)` makes a rectangular place over an area (a region drawn in the editor works too), level, unblocked
+    and treeless out to its corners; past its nearest edge it blends back over `blend:`, so the band is as wide all
+    round and rounded at its corners. `Places` keeps its spots off it; `Places` and `Exit` themselves stay round.
+  - A place reads `Name`, `X`, `Y`, `Radius`, `Width`, `Height`, `IsRectangle`, `Difficulty` and `Units`; a
+    rectangle's `Radius` is half its shorter side. It is made by the one plan holding the corner
     nearest its centre (`plan.Places`), so in a world made in pieces each place is made once.
 - Roads join places with path data a map can send units along:
 

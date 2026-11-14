@@ -249,6 +249,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.places.picked", Run = PlacesAndRoadsCases.Picked });
             list.Add(new Case { Name = "procgen.places.levelled", Run = PlacesAndRoadsCases.Levelled });
             list.Add(new Case { Name = "procgen.places.made", Run = PlacesAndRoadsCases.Made });
+            list.Add(new Case { Name = "procgen.places.rectangle", Run = PlacesAndRoadsCases.Rectangle });
             list.Add(new Case { Name = "procgen.places.refused", Run = PlacesAndRoadsCases.Refused });
             list.Add(new Case { Name = "procgen.roads.line", Run = PlacesAndRoadsCases.Line });
             list.Add(new Case { Name = "procgen.roads.ground", Run = PlacesAndRoadsCases.Ground });
