@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Moonwell.Build\Moonwell.Build.csproj" />
+    <PackageReference Include="Spectre.Console" Version="0.50.0" />
   </ItemGroup>
 
   <!-- moonwell new writes the template's map project, as dotnet new moonwell does, from these. -->

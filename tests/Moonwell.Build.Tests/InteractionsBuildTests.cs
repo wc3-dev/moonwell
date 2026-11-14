@@ -62,7 +62,7 @@ namespace Moonwell.Build.Tests
             var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
             Assert.True(exitCode == 0, error.ToString() + output);
 
-            Assert.Contains("warning: the map uses Moonwell.Interactions without Moonwell.Objects: IsTree needs Moonwell.Objects", output.ToString() + error);
+            Assert.Contains("warning  the map uses Moonwell.Interactions without Moonwell.Objects: IsTree needs Moonwell.Objects", output.ToString() + error);
             Assert.DoesNotContain("MoonwellTrees = {", File.ReadAllText(Path.Combine(project, "build", "Maths", "war3map.lua")));
         }
 

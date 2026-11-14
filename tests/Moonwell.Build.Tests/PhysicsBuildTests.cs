@@ -115,7 +115,7 @@ namespace Moonwell.Build.Tests
             var error = new StringWriter();
             var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
             Assert.True(exitCode == 0, error.ToString() + output);
-            Assert.Contains("warning: war3map.doo places ITf1 variation 0, a walkable destructable with no deck shape", output.ToString() + error);
+            Assert.Contains("warning  war3map.doo places ITf1 variation 0, a walkable destructable with no deck shape", output.ToString() + error);
             var data = File.ReadAllText(Path.Combine(project, "build", "generated", "PhysicsData.g.cs"));
             Assert.DoesNotContain("ITf1", data);
             Assert.Contains("YT16 0 0 1280 270 1 0", data);
@@ -158,9 +158,9 @@ namespace Moonwell.Build.Tests
             var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
             Assert.True(exitCode == 0, error.ToString() + output);
             var log = output.ToString() + error;
-            Assert.Contains("warning: war3map.doo places B001 variation 0 (PhysicsFixture.PaintedSpan, based on YT16, its model or fixed rotation changed), a walkable destructable with no deck shape", log);
-            Assert.Contains("warning: war3map.doo places B003 variation 0 (based on YT16, its model or fixed rotation changed), a walkable destructable with no deck shape", log);
-            Assert.Contains("warning: war3map.doo places Zzz9, a type that is neither a standard object nor one of the map's own", log);
+            Assert.Contains("warning  war3map.doo places B001 variation 0 (PhysicsFixture.PaintedSpan, based on YT16, its model or fixed rotation changed), a walkable destructable with no deck shape", log);
+            Assert.Contains("warning  war3map.doo places B003 variation 0 (based on YT16, its model or fixed rotation changed), a walkable destructable with no deck shape", log);
+            Assert.Contains("warning  war3map.doo places Zzz9, a type that is neither a standard object nor one of the map's own", log);
             Assert.DoesNotContain("places B000", log);
             Assert.DoesNotContain("places B002", log);
 

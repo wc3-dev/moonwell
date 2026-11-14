@@ -11,13 +11,14 @@ namespace Moonwell.Build.Tests
     public sealed class CliTests : IDisposable
     {
         private const string Usage =
-            "usage: moonwell build [folder] [--release]\n" +
-            "       moonwell run [folder] [--release] [--game <exe>]\n" +
-            "       moonwell watch [folder] [--release] [--run] [--game <exe>]\n" +
+            "usage: moonwell build [folder] [--release] [--verbose]\n" +
+            "       moonwell run [folder] [--release] [--verbose] [--game <exe>]\n" +
+            "       moonwell watch [folder] [--release] [--verbose] [--run] [--game <exe>]\n" +
             "       moonwell new <name>\n" +
             "       moonwell import <map> <name>\n" +
             "       moonwell clean [folder]\n" +
             "       moonwell objects [folder] [--to-map]\n" +
+            "       moonwell mdx <model> [--mode sd|hd|de] [--game <folder>]\n" +
             "       moonwell game find <path> [--mode sd|hd|de] [--game <folder>]\n" +
             "       moonwell game extract <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
 
@@ -36,10 +37,13 @@ namespace Moonwell.Build.Tests
         {
             Assert.Equal(0, builds.Development.ExitCode);
             Assert.Equal(0, builds.Release.ExitCode);
-            Assert.EndsWith(@"moonwell: built build\Sample.w3x", builds.Development.Output.TrimEnd());
-            Assert.EndsWith(@"moonwell: built build\Sample.w3x", builds.Release.Output.TrimEnd());
-            Assert.StartsWith("moonwell: Sample (development build)", builds.Development.Output);
-            Assert.StartsWith("moonwell: Sample (release build)", builds.Release.Output);
+            Assert.Matches(@"(?m)^✓ Built build\\Sample\.w3x in \d+\.\ds\r?$", builds.Development.Output);
+            Assert.Matches(@"(?m)^✓ Built build\\Sample\.w3x in \d+\.\ds\r?$", builds.Release.Output);
+            Assert.StartsWith("Sample · development build", builds.Development.Output);
+            Assert.StartsWith("Sample · release build", builds.Release.Output);
+            Assert.Matches(@"(?m)^  ✓ Compile C#      \d+\.\ds\r?\n  ✓ Read objects    \d+\.\ds\r?\n  ✓ Compile to Lua  \d+\.\ds\r?\n  ✓ Pack the map    \d+\.\ds\r?$", builds.Development.Output);
+            Assert.DoesNotContain("Build succeeded", builds.Development.Output);
+            Assert.DoesNotContain("\u001b", builds.Development.Output);
             Assert.True(File.Exists(builds.Development.Archive));
             Assert.True(File.Exists(builds.Release.Archive));
 
@@ -57,7 +61,8 @@ namespace Moonwell.Build.Tests
             var (exitCode, _, error, _) = Run("build", TestFolders.Fixture("NoMap"));
 
             Assert.Equal(1, exitCode);
-            Assert.Equal(@"moonwell: no World Editor map: map\war3map.w3i is missing", error.Trim());
+            Assert.Contains(@"  error    no World Editor map: map\war3map.w3i is missing", error);
+            Assert.EndsWith("✗ Build failed: 1 error", error.TrimEnd());
         }
 
         [Fact]
@@ -95,7 +100,7 @@ namespace Moonwell.Build.Tests
             }
 
             Assert.Equal(1, exitCode);
-            Assert.StartsWith(@"moonwell: cannot write build\Sample.w3x", error);
+            Assert.Contains(@"  error    cannot write build\Sample.w3x", error);
             Assert.Contains("(is the game or World Editor using it?)", error);
         }
 
@@ -107,7 +112,7 @@ namespace Moonwell.Build.Tests
             var builds = await Task.WhenAll(Task.Run(() => Run("build", folder)), Task.Run(() => Run("build", folder)));
 
             Assert.All(builds, build => Assert.True(build.ExitCode == 0, build.Error + build.Output));
-            Assert.Single(builds, build => build.Output.Contains("moonwell: another build of this map is running; waiting for it to end"));
+            Assert.Single(builds, build => build.Output.Contains("note     another build of this map is running; waiting for it to end"));
             Assert.False(File.Exists(Path.Combine(folder, "build", ".lock")));
         }
 
