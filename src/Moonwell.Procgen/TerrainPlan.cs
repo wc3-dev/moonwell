@@ -72,6 +72,7 @@ namespace Moonwell.Procgen
         [ChangesState]
         public void Apply(Scope scope)
         {
+            var ground = new GroundScope(scope);
             var moved = false;
             var painted = false;
             var blocked = false;
@@ -84,21 +85,21 @@ namespace Moonwell.Procgen
 
             if (moved)
             {
-                Terrain.Raise(X, Y, Columns, Heights.Cells, scope);
+                Terrain.Raise(X, Y, Columns, Heights.Cells, ground);
             }
 
             if (painted)
             {
-                Terrain.SetTile(X, Y, Columns, Tiles, scope);
+                Terrain.SetTile(X, Y, Columns, Tiles, ground);
             }
 
             if (blocked)
             {
-                Terrain.Block(X, Y, Columns, Blocked, scope);
+                Terrain.Block(X, Y, Columns, Blocked, ground);
             }
 
-            MakeTrees(0, Trees.Length, scope);
-            MakePlaces(0, places.Count, scope);
+            MakeTrees(0, Trees.Length, ground);
+            MakePlaces(0, places.Count, ground);
         }
 
         internal void Hold(Place place)
