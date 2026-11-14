@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Combat for Moonwell maps' brains, on Moonwell.AI: a lane walker that walks a route and fights what it meets, target choice by scored rules, casting by condition, and pulling back, each a node a map's own tree can use.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets none, so that a map that references only Moonwell.AI.Combat still gets Moonwell's analyzer and Moonwell.AI. -->
+    <ProjectReference Include="..\Moonwell\Moonwell.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.Maths\Moonwell.Maths.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.AI\Moonwell.AI.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <!--
+    The package carries its C# source beside its library, like Moonwell (see Moonwell.csproj). A map without it
+    carries none of its code: CSharp.lua compiles only the packages a map references.
+  -->
+  <ItemGroup>
+    <Content Include="**/*.cs" Exclude="obj/**;bin/**" Pack="true" PackagePath="contentFiles/cs/net10.0/Moonwell.AI.Combat/" BuildAction="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Moonwell.Testing" />
+    <InternalsVisibleTo Include="Moonwell.Tests" />
+  </ItemGroup>
+
+</Project>

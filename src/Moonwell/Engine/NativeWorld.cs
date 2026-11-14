@@ -936,6 +936,12 @@ namespace Moonwell.Engine
             return Natives.IsUnitIllusion(unit);
         }
 
+        /// <summary>Whether a unit is a structure: IsUnitType with UNIT_TYPE_STRUCTURE.</summary>
+        public bool IsStructure(unit unit)
+        {
+            return Natives.IsUnitType(unit, Natives.UNIT_TYPE_STRUCTURE);
+        }
+
         /// <summary>The player that owns a unit.</summary>
         public player OwnerOf(unit unit)
         {
@@ -1278,6 +1284,18 @@ namespace Moonwell.Engine
         public float AverageDamageOf(unit unit)
         {
             return Natives.BlzGetUnitBaseDamage(unit, 0) + Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
+        }
+
+        /// <summary>The cooldown of a unit's first weapon: BlzGetUnitAttackCooldown.</summary>
+        public float AttackCooldownOf(unit unit)
+        {
+            return Natives.BlzGetUnitAttackCooldown(unit, 0);
+        }
+
+        /// <summary>A unit's acquisition range: GetUnitAcquireRange.</summary>
+        public float AcquireRangeOf(unit unit)
+        {
+            return Natives.GetUnitAcquireRange(unit);
         }
 
         /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>

@@ -321,6 +321,27 @@ public class LocalTests
     }
 
     [Fact]
+    public void ai_combat_package_changes_are_rejected_inside_and_its_readers_allowed()
+    {
+        var found = MapCode.Check("""
+            var unit = Unit.Of(u)!;
+            var walker = unit.Add(new Moonwell.AI.Combat.LaneWalker());
+            Local.For(p, () =>
+            {
+                var fighter = walker.Fighter;
+                var target = fighter.Target;
+                var near = fighter.EnemiesNear + fighter.AlliesNear;
+                var below = walker.PullBack.Below;
+                var rule = Moonwell.AI.Combat.Target.Weakest.Weight(2f);
+                fighter.Meets();
+                walker.MeetRange = 300f;
+            });
+            """);
+
+        Assert.Equal(new[] { "MW0001: fighter.Meets()", "MW0001: walker.MeetRange" }, found);
+    }
+
+    [Fact]
     public void terrain_package_readers_are_allowed_inside()
     {
         Assert.Empty(MapCode.Check("""

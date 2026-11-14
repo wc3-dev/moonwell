@@ -162,6 +162,8 @@ namespace Moonwell
             moveSpeeds[made] = numbers.MoveSpeed;
             armors[made] = numbers.Armor;
             averageDamages[made] = numbers.Damage + numbers.DamageDice * (numbers.DamageSides + 1) / 2.0f;
+            attackCooldowns[made] = numbers.AttackCooldown;
+            acquireRanges[made] = numbers.AcquisitionRange;
             var unitPlay = new PlayedUnit();
             unitPlay.AttackRange = numbers.AttackRange;
             unitPlay.CooldownSteps = Simulation.StepsOf(numbers.AttackCooldown);

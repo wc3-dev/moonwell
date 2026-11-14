@@ -106,7 +106,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
             shares = compilation.GetTypeByMetadataName("Moonwell.Scope")?.GetMembers("Share").OfType<IMethodSymbol>().ToArray() ?? Array.Empty<IMethodSymbol>();
             runtime = local?.ContainingAssembly;
             // Each package is found by one of its types.
-            packages = new[] { "Moonwell.DamageSystem", "Moonwell.Vector2", "Moonwell.Find", "Moonwell.Terrain", "Moonwell.Area", "Moonwell.Mouse", "Moonwell.Missile", "Moonwell.Frame", "Moonwell.AI.Blackboard" }
+            packages = new[] { "Moonwell.DamageSystem", "Moonwell.Vector2", "Moonwell.Find", "Moonwell.Terrain", "Moonwell.Area", "Moonwell.Mouse", "Moonwell.Missile", "Moonwell.Frame", "Moonwell.AI.Blackboard", "Moonwell.AI.Combat.Fighter" }
                 .Select(name => compilation.GetTypeByMetadataName(name)?.ContainingAssembly)
                 .Where(assembly => assembly != null)
                 .Select(assembly => assembly!)

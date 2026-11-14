@@ -60,8 +60,24 @@ namespace Moonwell.Testing
             AddProcgen(list);
             AddAI(list);
             AddAITrees(list);
+            AddCombat(list);
             AddSimulation(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the AI combat package: meeting, target choice, casting, pulling back, the leash and the lane walker.</summary>
+        private static void AddCombat(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.combat.targets", Run = CombatCases.Targets });
+            list.Add(new Case { Name = "ai.combat.ruled-out", Run = CombatCases.RuledOut });
+            list.Add(new Case { Name = "ai.combat.weights", Run = CombatCases.Weights });
+            list.Add(new Case { Name = "ai.combat.spells", Run = CombatCases.Spells });
+            list.Add(new Case { Name = "ai.combat.pull-back", Run = CombatCases.PullingBack });
+            list.Add(new Case { Name = "ai.combat.leash", Run = CombatCases.Leash });
+            list.Add(new Case { Name = "ai.combat.attacker", Run = CombatCases.Attacker });
+            list.Add(new Case { Name = "ai.combat.unseen", Run = CombatCases.Unseen });
+            list.Add(new Case { Name = "ai.combat.meet-range", Run = CombatCases.MeetRange });
+            list.Add(new Case { Name = "ai.combat.lane-walker", Run = CombatCases.LaneWalkerSettings });
         }
 
         /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds and the read-outs.</summary>
