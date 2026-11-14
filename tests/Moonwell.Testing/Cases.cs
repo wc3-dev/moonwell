@@ -104,6 +104,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.grow.take-back", Run = GrowingWorldCases.TakeBack });
             list.Add(new Case { Name = "procgen.grow.units", Run = GrowingWorldCases.Units });
             list.Add(new Case { Name = "procgen.grow.camps", Run = GrowingWorldCases.Camps });
+            list.Add(new Case { Name = "procgen.grow.ended", Run = GrowingWorldCases.Ended });
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>
@@ -571,6 +572,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.error-halts", Run = SessionCases.ErrorHalts });
             list.Add(new Case { Name = "debug.leaks.scope-grows", Run = ToolsCases.ScopeGrows });
             list.Add(new Case { Name = "debug.leaks.held", Run = ToolsCases.HeldCounted });
+            list.Add(new Case { Name = "debug.leaks.procgen-ground", Run = GrowingWorldCases.NoLeakReported });
             list.Add(new Case { Name = "debug.profile.timers-and-sections", Run = ToolsCases.ProfileTimersAndSections });
             list.Add(new Case { Name = "debug.profile.reactions", Run = ToolsCases.ProfileReactions });
             list.Add(new Case { Name = "debug.tools.map-command-wins", Run = ToolsCases.MapCommandWins });
