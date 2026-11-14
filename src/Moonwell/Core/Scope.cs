@@ -194,6 +194,14 @@ namespace Moonwell
 #endif
         }
 
+        /// <summary>Leaves this scope out of a development build's leak report, as it holds many things by design: Procgen's ground (decision 326).</summary>
+        internal void IgnoreLeaks()
+        {
+#if DEBUG
+            leakAt = int.MaxValue;
+#endif
+        }
+
         /// <summary>Takes a child out of the list of children, so it does not end with this scope.</summary>
         internal void Unlink(Scoped child)
         {
