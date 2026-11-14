@@ -10,8 +10,14 @@ namespace Moonwell.AI
     /// </summary>
     public sealed class Fact<T> : IHeldFact
     {
+        // The values and their times are two dictionaries of System types, not one of a Moonwell type: a generic class's
+        // body runs when a file makes Fact<X>, which can be before this file's own imports are filled (K11).
+
         /// <summary>The value kept for each blackboard, by its number; a lookup only.</summary>
-        private readonly Dictionary<int, Kept<T>> kept = new Dictionary<int, Kept<T>>();
+        private readonly Dictionary<int, T> values = new Dictionary<int, T>();
+
+        /// <summary>The time each value was written or worked out, by the blackboard's number; a lookup only.</summary>
+        private readonly Dictionary<int, float> times = new Dictionary<int, float>();
 
         /// <summary>The read function of a worked-out fact; null for a written one.</summary>
         private readonly Func<Blackboard, T>? read;
@@ -56,9 +62,9 @@ namespace Moonwell.AI
 
             for (Blackboard? on = board; on != null; on = on.Up())
             {
-                if (kept.TryGetValue(on.Number, out var found))
+                if (values.TryGetValue(on.Number, out var found))
                 {
-                    return found.Value;
+                    return found;
                 }
             }
 
@@ -69,22 +75,24 @@ namespace Moonwell.AI
         private T WorkOut(Blackboard board)
         {
             var now = Minds.Now();
-            if (kept.TryGetValue(board.Number, out var found))
+            if (times.TryGetValue(board.Number, out var time))
             {
-                if (now - found.Time <= keep)
+                if (now - time <= keep)
                 {
-                    return found.Value;
+                    return values[board.Number];
                 }
 
-                found.Value = read!(board);
-                found.Time = now;
-                return found.Value;
+                var fresh = read!(board);
+                values[board.Number] = fresh;
+                times[board.Number] = now;
+                return fresh;
             }
 
             var value = read!(board);
             if (!board.ended)
             {
-                kept[board.Number] = new Kept<T>(value, now);
+                values[board.Number] = value;
+                times[board.Number] = now;
                 board.Holds(this);
             }
 
@@ -96,9 +104,9 @@ namespace Moonwell.AI
         {
             for (Blackboard? on = board; on != null; on = on.Up())
             {
-                if (kept.TryGetValue(on.Number, out var found))
+                if (times.TryGetValue(on.Number, out var time))
                 {
-                    return Minds.Now() - found.Time;
+                    return Minds.Now() - time;
                 }
 
                 if (read != null)
@@ -124,22 +132,20 @@ namespace Moonwell.AI
                 return;
             }
 
-            var now = Minds.Now();
-            if (kept.TryGetValue(board.Number, out var found))
+            var held = times.ContainsKey(board.Number);
+            values[board.Number] = value;
+            times[board.Number] = Minds.Now();
+            if (!held)
             {
-                found.Value = value;
-                found.Time = now;
-                return;
+                board.Holds(this);
             }
-
-            kept[board.Number] = new Kept<T>(value, now);
-            board.Holds(this);
         }
 
         /// <summary>Forgets the value kept for a blackboard; false when there was none.</summary>
         bool IHeldFact.Forget(int board)
         {
-            return kept.Remove(board);
+            times.Remove(board);
+            return values.Remove(board);
         }
     }
 }
