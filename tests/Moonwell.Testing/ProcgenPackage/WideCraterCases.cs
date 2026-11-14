@@ -108,6 +108,73 @@ namespace Moonwell.Testing
         }
 
         /// <summary>
+        /// Flat land skips the heights (J51), as the map project makes it: the generator's own hills under a flat biome over the
+        /// whole area, faded at its edge. No hills, fade or wide craters, so no "Heights" step but a short one levelling its
+        /// places, no crater asked of the game, and its roads, tiles and the biome each corner takes as before. Hills the plan reads bring
+        /// the heights back: past the area's edge with no fade, or a biome with a range over part of it.
+        /// </summary>
+        public static void FlatSkipsHeights(FakeWorld world)
+        {
+            var fake = Big();
+            var land = new TerrainGenerator(1234) { RoadTile = Tile.LordaeronSummerDirt };
+            var flat = new Biome { Lowest = 0f, Highest = 0f };
+            flat.Paint(Tile.LordaeronSummerGrass);
+            land.Use(flat, Area());
+            var snow = new Biome { Lowest = 0f, Highest = 0f };
+            snow.Paint(Tile.LordaeronWinterSnow);
+            land.Use(snow, Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(40 * 128f, (Side - 1) * 128f)));
+            Expect.Equal("Tiles", Steps(world, land), "flat land with no places: tiles only");
+            Expect.Equal(0, fake.Craters.Count, "and no crater asked of the game");
+            land.EdgeFade = 0f;
+            Expect.Equal("Heights,Tiles", Steps(world, land), "with no fade the hills past the edge are read");
+            land.EdgeFade = 512f;
+            var before = fake.Craters.Count;
+
+            var colony = land.Level(75 * 128f, 75 * 128f, 512f);
+            land.Road(colony, land.Exit("Exit", Area(), Moonwell.Procgen.Side.Top));
+            var plan = land.Plan(Area());
+            Expect.True(plan.WideDepths == null, "no wide craters fitted");
+            var raised = 0;
+            var road = 0;
+            var snowy = 0;
+            for (var at = 0; at < Side * Side; at++)
+            {
+                raised += plan.Heights.Cells[at] != 0f ? 1 : 0;
+                road += plan.Tiles[at] == Tile.LordaeronSummerDirt ? 1 : 0;
+                snowy += plan.Tiles[at] == Tile.LordaeronWinterSnow ? 1 : 0;
+            }
+
+            Expect.Equal(0, raised, "every corner at 0");
+            Expect.True(road > 100, "the road is painted: " + road);
+            Expect.True(snowy > 30 * Side && snowy < 45 * Side, "the snow biome takes its part: " + snowy);
+            Expect.Equal("Roads,Tiles", Steps(world, land), "levelling the places, the one heights work left, ends in the roads' step");
+            Expect.Equal(before, fake.Craters.Count, "still no crater asked of the game");
+
+            var hills = new Biome { Lowest = -100f, Highest = 250f };
+            land.Use(hills, Bounds.FromCorners(new Vector2(100 * 128f, 100 * 128f), new Vector2(120 * 128f, 120 * 128f)));
+            Expect.True(land.Plan(Area()).WideDepths != null, "a biome with a range over part: wide craters again");
+            Expect.Equal("Roads,Heights,Tiles", Steps(world, land), "and the heights step");
+            Expect.True(fake.Craters.Count > before, "which raises ground");
+        }
+
+        /// <summary>Makes the land over the area and ends it, giving the steps it showed in order.</summary>
+        private static string Steps(FakeWorld world, TerrainGenerator land)
+        {
+            var holder = Game.Instance.Add(new Holder());
+            var making = land.Make(Area(), holder, msPerStep: 50f);
+            var steps = making.Step;
+            for (var k = 0; k < 5000 && !making.IsDone; k++)
+            {
+                world.Advance(0.02f);
+                steps += making.Step != steps.Substring(steps.LastIndexOf(',') + 1) ? "," + making.Step : "";
+            }
+
+            Expect.True(making.IsDone, "the ground is made");
+            holder.End();
+            return steps;
+        }
+
+        /// <summary>
         /// Made in steps, a big area asks far fewer craters than corners, and Moonwell's ground is the plan's at every corner,
         /// nothing past the area's edge; ending the scope stops every crater and leaves the ground exactly as before.
         /// </summary>

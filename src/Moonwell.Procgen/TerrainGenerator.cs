@@ -481,7 +481,15 @@ namespace Moonwell.Procgen
         {
             var ground = new Groundwork(this, area, whole, null);
             ground.Roads(0, ground.RoadCount);
-            ground.Hills(0, ground.Cells);
+            if (ground.Flat)
+            {
+                ground.Lands(0, ground.Cells);
+            }
+            else
+            {
+                ground.Hills(0, ground.Cells);
+            }
+
             ground.Levels(0, ground.Places);
             ground.Fade(0, ground.Cells);
             ground.Fit();
@@ -539,9 +547,25 @@ namespace Moonwell.Procgen
                 work.Add(RoadsStep, ground.RoadCount, ground.RoadsCost / ground.RoadCount, ground.Roads, ground.RoadCostOf);
             }
 
-            work.Add(HeightsStep, ground.Cells, ground.HillCost, ground.Hills);
-            work.Add(HeightsStep, ground.Places, LevelCost * ground.PlaceCorners, ground.Levels);
-            if (EdgeFade > 0f)
+            if (!ground.Flat)
+            {
+                work.Add(HeightsStep, ground.Cells, ground.HillCost, ground.Hills);
+            }
+
+            if (ground.Places > 0)
+            {
+                work.Add(HeightsStep, ground.Places, LevelCost * ground.PlaceCorners, ground.Levels);
+            }
+
+            if (ground.Flat)
+            {
+                // Flat land's hills, fade and craters are all 0 (J51): only the biome each cell takes its rules from is left.
+                if (ground.Mixed)
+                {
+                    work.Add(TilesStep, ground.Cells, ground.PickCost, ground.Lands);
+                }
+            }
+            else if (EdgeFade > 0f)
             {
                 work.Add(HeightsStep, ground.Cells, FadeCost, ground.Fade);
             }
@@ -563,8 +587,12 @@ namespace Moonwell.Procgen
                 work.Add(HeightsStep, craters.Up, (WideCraterCost + RaiseGrowth * craters.Count / 2f) * craters.Across, ground.RaiseWide);
             }
 
-            // The cost of a corner's crater grows with the craters held (decision 344).
-            work.Add(HeightsStep, ground.Corners, RaiseCost, ground.Heights, ground.HeightCostOf);
+            if (!ground.Flat)
+            {
+                // The cost of a corner's crater grows with the craters held (decision 344).
+                work.Add(HeightsStep, ground.Corners, RaiseCost, ground.Heights, ground.HeightCostOf);
+            }
+
             work.Add(TilesStep, ground.Corners, ground.RulesCost, ground.Rules);
             if (ground.AnyBlocks)
             {
@@ -808,6 +836,7 @@ namespace Moonwell.Procgen
                     if (spots[k].Reaches(area, blend + TileSize))
                     {
                         HillCost += mixCost;
+                        PickCost += mixCost;
                         foreach (var land in spotLands[k])
                         {
                             reaches[land] = true;
@@ -846,6 +875,7 @@ namespace Moonwell.Procgen
                 }
 
                 roads = near.ToArray();
+                Flat = IsFlat();
                 roadCosts = costs.ToArray();
                 foreach (var place in places)
                 {
@@ -856,7 +886,7 @@ namespace Moonwell.Procgen
                 }
 
                 // An area of its own past the most a crater each gets wide craters; a piece of a whole (a growing world's chunk) never.
-                if (Corners > WideCorners && wholeColumns == columns && wholeRows == rows && WideCraters.Fits(columns, rows))
+                if (!Flat && Corners > WideCorners && wholeColumns == columns && wholeRows == rows && WideCraters.Fits(columns, rows))
                 {
                     Craters = new WideCraters(columns, rows, cells);
                     Plan.WideDepths = Craters.Depths;
@@ -873,6 +903,15 @@ namespace Moonwell.Procgen
 
             /// <summary>What a cell's hills cost, with every biome that reaches the area.</summary>
             internal float HillCost { get; }
+
+            /// <summary>Whether every biome the plan reads is flat at 0, so its hills, fade and craters are 0 and are skipped, and its roads and places are at 0 too.</summary>
+            internal bool Flat { get; }
+
+            /// <summary>Whether the plan takes more than one biome, so each cell needs one picked.</summary>
+            internal bool Mixed => lands.Length > 1;
+
+            /// <summary>What picking a cell's biome costs, with every Mix that reaches the area.</summary>
+            internal float PickCost { get; } = CellCost;
 
             /// <summary>What a corner's rules cost, by the biome that reaches the area with the most.</summary>
             internal float RulesCost { get; }
@@ -954,6 +993,73 @@ namespace Moonwell.Procgen
                     }
 
                     cells[at] = height;
+                }
+            }
+
+            /// <summary>
+            /// Whether every biome the plan reads, at its cells and along its roads, is 0 from Lowest to Highest: a Use or Mix
+            /// whose area holds all of that hides the biomes before it, the generator's own too. A fade makes the cells past the
+            /// whole's edge 0, so then they are not read.
+            /// </summary>
+            private bool IsFlat()
+            {
+                var past = fade > 0f ? 0 : 1;
+                var wholeColumn = firstColumn - inWholeColumn;
+                var wholeRow = firstRow - inWholeRow;
+                var min = new Vector2(Math.Max(firstColumn - 1, wholeColumn - past) * TileSize, Math.Max(firstRow - 1, wholeRow - past) * TileSize);
+                var max = new Vector2(Math.Min(firstColumn + columns, wholeColumn + wholeColumns - 1 + past) * TileSize, Math.Min(firstRow + rows, wholeRow + wholeRows - 1 + past) * TileSize);
+                foreach (var road in roads)
+                {
+                    foreach (var point in road.Points)
+                    {
+                        min = new Vector2(Math.Min(min.X, point.X), Math.Min(min.Y, point.Y));
+                        max = new Vector2(Math.Max(max.X, point.X), Math.Max(max.Y, point.Y));
+                    }
+                }
+
+                var read = Bounds.FromCorners(min, max);
+                var first = -1;
+                for (var k = 0; k < spots.Length; k++)
+                {
+                    first = spots[k].Holds(read) ? k : first;
+                }
+
+                if (first < 0 && !lands[0].IsFlat)
+                {
+                    return false;
+                }
+
+                for (var k = Math.Max(first, 0); k < spots.Length; k++)
+                {
+                    if (spots[k].Reaches(read, blend))
+                    {
+                        foreach (var land in spotLands[k])
+                        {
+                            if (!lands[land].IsFlat)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            /// <summary>The biome each cell in a range takes its rules from, as Hills picks it, for flat land, whose hills are skipped.</summary>
+            internal void Lands(int from, int to)
+            {
+                if (!Mixed)
+                {
+                    return;
+                }
+
+                for (var at = from; at < to; at++)
+                {
+                    var column = firstColumn - 1 + at % wide;
+                    var row = firstRow - 1 + at / wide;
+                    Weigh(column * TileSize, row * TileSize);
+                    landOf[at] = Pick(column, row);
                 }
             }
 
@@ -1638,6 +1744,9 @@ namespace Moonwell.Procgen
                 RulesCost = RuleCost * (2 + Paints.Length + Blocks.Length + Trees.Length) + PaintCost + treeCost;
             }
 
+            /// <summary>Whether its hills are 0 everywhere.</summary>
+            internal bool IsFlat => Lowest == 0f && Highest == 0f;
+
             /// <summary>The height of a point of the world, counted in corners from (0, 0), from the noise at its place, between Lowest and Highest.</summary>
             internal float Height(int seed, float column, float row)
             {
@@ -1680,6 +1789,12 @@ namespace Moonwell.Procgen
 
                 var t = 1f - distance / blend;
                 return t * t * (3f - 2f * t);
+            }
+
+            /// <summary>Whether its area holds all of another, so it has the whole share there.</summary>
+            internal bool Holds(Bounds other)
+            {
+                return area.Min.X <= other.Min.X && area.Max.X >= other.Max.X && area.Min.Y <= other.Min.Y && area.Max.Y >= other.Max.Y;
             }
 
             /// <summary>Whether it reaches an area grown by a margin.</summary>
