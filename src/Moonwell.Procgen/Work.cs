@@ -34,6 +34,9 @@ namespace Moonwell.Procgen
         /// <summary>Whether every pass has run.</summary>
         internal bool IsDone => at >= passes.Count;
 
+        /// <summary>The craters the work has asked of the game so far, for a development build's report of a slow step.</summary>
+        internal Func<int>? Craters;
+
         /// <summary>The step of the pass running, or of the last once all have run; empty with no passes.</summary>
         internal string Step => passes.Count == 0 ? "" : passes[at < passes.Count ? at : passes.Count - 1].Step;
 

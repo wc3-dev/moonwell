@@ -63,6 +63,16 @@ namespace Moonwell.Procgen
         private readonly List<Place> places = new List<Place>();
 
         /// <summary>
+        /// For a plan too big for a crater a corner (decision 343): the wide craters' depths, row by row from the first
+        /// <c>WideCraters.Inset</c> corners in, <c>WideAcross</c> across, and the ground they make at each corner; null otherwise.
+        /// </summary>
+        internal float[]? WideDepths;
+
+        internal int WideAcross;
+
+        internal float[]? Under;
+
+        /// <summary>
         /// Makes the plan's ground for as long as the scope holds it (<c>Game.Instance</c> for the whole game): the heights,
         /// the tiles and the blocked corners, each one terrain change over the grid, whose first corner is the map's corner
         /// nearest (X, Y), then the trees, standing on the ground as it is then, then the units and buildings of its places. A
@@ -76,16 +86,28 @@ namespace Moonwell.Procgen
             var moved = false;
             var painted = false;
             var blocked = false;
+            var by = Heights.Cells;
+            if (WideDepths != null)
+            {
+                // The wide craters make Under; each corner's crater makes the rest, the plan's own and any change made to it since.
+                Terrain.Raise(X + WideCraters.Inset * 128f, Y + WideCraters.Inset * 128f, WideAcross, WideDepths, ground, WideCraters.Spacing, WideCraters.Radius);
+                by = new float[Tiles.Length];
+                for (var k = 0; k < by.Length; k++)
+                {
+                    by[k] = Heights.Cells[k] - Under![k];
+                }
+            }
+
             for (var k = 0; k < Tiles.Length; k++)
             {
-                moved = moved || Heights.Cells[k] != 0f;
+                moved = moved || by[k] != 0f;
                 painted = painted || Tiles[k] != 0;
                 blocked = blocked || Blocked[k] != Pathing.None;
             }
 
             if (moved)
             {
-                Terrain.Raise(X, Y, Columns, Heights.Cells, ground);
+                Terrain.Raise(X, Y, Columns, by, ground);
             }
 
             if (painted)

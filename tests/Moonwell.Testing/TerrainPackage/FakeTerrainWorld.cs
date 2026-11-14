@@ -142,10 +142,14 @@ namespace Moonwell.Testing
         /// <summary>The craters stopped, in order, each by its place in Craters.</summary>
         public readonly List<int> Stopped = new List<int>();
 
+        /// <summary>Runs as each crater is asked: a case's stand-in for the time the game takes.</summary>
+        public Action? Asked;
+
         /// <summary>Records a lasting crater, and gives its place in Craters to stop it by.</summary>
         public object Crater(float x, float y, float radius, float depth)
         {
             Craters.Add(new[] { x, y, radius, depth });
+            Asked?.Invoke();
             return Craters.Count - 1;
         }
 

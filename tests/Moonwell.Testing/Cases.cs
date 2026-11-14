@@ -78,6 +78,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.terrain.apply", Run = TerrainGeneratorCases.Apply });
             list.Add(new Case { Name = "procgen.terrain.make-in-steps", Run = TerrainGeneratorCases.MakeInSteps });
             list.Add(new Case { Name = "procgen.terrain.make-stopped", Run = TerrainGeneratorCases.MakeStopped });
+            list.Add(new Case { Name = "procgen.wide.plan", Run = WideCraterCases.Plan });
+            list.Add(new Case { Name = "procgen.wide.make", Run = WideCraterCases.Make });
+            list.Add(new Case { Name = "procgen.wide.apply", Run = WideCraterCases.Apply });
+            list.Add(new Case { Name = "procgen.wide.paced", Run = WideCraterCases.Paced });
+            list.Add(new Case { Name = "procgen.wide.slow-reported", Run = WideCraterCases.SlowReported });
             list.Add(new Case { Name = "procgen.terrain.refused", Run = TerrainGeneratorCases.Refused });
             list.Add(new Case { Name = "procgen.trees.rules", Run = TerrainGeneratorCases.TreeRules });
             list.Add(new Case { Name = "procgen.trees.seams", Run = TerrainGeneratorCases.TreeSeams });
@@ -1178,6 +1183,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.spread", Run = ChangeCases.Spread });
             list.Add(new Case { Name = "terrain.change.trail", Run = ChangeCases.Trail });
             list.Add(new Case { Name = "terrain.change.grid-raise", Run = GridChangeCases.Raise });
+            list.Add(new Case { Name = "terrain.change.grid-raise-wide", Run = GridChangeCases.WideRaise });
             list.Add(new Case { Name = "terrain.change.grid-tiles", Run = GridChangeCases.Tiles });
             list.Add(new Case { Name = "terrain.change.grid-block", Run = GridChangeCases.Block });
             list.Add(new Case { Name = "terrain.change.grid-block-sparse", Run = GridChangeCases.SparseBlock });
