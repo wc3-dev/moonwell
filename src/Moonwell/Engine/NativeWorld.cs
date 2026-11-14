@@ -40,6 +40,9 @@ namespace Moonwell.Engine
         /// <summary>The trigger that sees each watched destructable die, one each, destroyed as the destructable leaves, since a trigger's events cannot be taken off it.</summary>
         private readonly Dictionary<destructable, trigger> deathTriggers = new Dictionary<destructable, trigger>();
 
+        /// <summary>The trigger that sees each watched unit pick a target, one each, destroyed when the watch ends, since a trigger's events cannot be taken off it.</summary>
+        private readonly Dictionary<unit, trigger> acquireTriggers = new Dictionary<unit, trigger>();
+
         /// <summary>The lines of the log file and when it is next written.</summary>
         private readonly LogFile log = new LogFile();
 
@@ -1665,6 +1668,55 @@ namespace Moonwell.Engine
         public int CurrentOrderOf(unit unit)
         {
             return Natives.GetUnitCurrentOrder(unit);
+        }
+
+        /// <summary>Delivers a unit's picks of a target to Inbound, on a trigger of its own.</summary>
+        public void WatchAcquire(unit unit)
+        {
+            if (acquireTriggers.ContainsKey(unit))
+            {
+                return;
+            }
+
+            var watch = Natives.CreateTrigger();
+            Natives.TriggerRegisterUnitEvent(watch, unit, Natives.EVENT_UNIT_ACQUIRED_TARGET);
+            Natives.TriggerAddAction(watch, AcquireAction);
+            acquireTriggers[unit] = watch;
+        }
+
+        /// <summary>Stops delivering a unit's picks: its trigger is destroyed.</summary>
+        public void UnwatchAcquire(unit unit)
+        {
+            if (acquireTriggers.TryGetValue(unit, out var watch))
+            {
+                acquireTriggers.Remove(unit);
+                Natives.DestroyTrigger(watch);
+            }
+        }
+
+        /// <summary>UnitCanSleep.</summary>
+        public bool CanSleep(unit unit)
+        {
+            return Natives.UnitCanSleep(unit);
+        }
+
+        /// <summary>UnitAddSleep: false wakes a sleeping unit for good, where UnitWakeUp wakes it for a moment (game facts, 11-14).</summary>
+        public void SetSleep(unit unit, bool sleep)
+        {
+            Natives.UnitAddSleep(unit, sleep);
+        }
+
+        /// <summary>Hands a watched unit's pick of a target to Inbound.</summary>
+        private static void AcquireAction()
+        {
+            try
+            {
+                Inbound.Acquired(Natives.GetTriggerUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Acquired", error);
+            }
         }
 
         /// <summary>The game's string of an order id: OrderId2String.</summary>

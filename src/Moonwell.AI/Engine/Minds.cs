@@ -196,6 +196,7 @@ namespace Moonwell.AI
         /// <summary>One step: reads the time once, then each brain due thinks, in the order it became due. What becomes due while it runs goes to a later step.</summary>
         private void Run()
         {
+            Control.Answer();
             Step++;
             if (!due.TryGetValue(Step, out var list))
             {

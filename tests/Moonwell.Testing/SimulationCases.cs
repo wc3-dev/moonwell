@@ -464,7 +464,7 @@ namespace Moonwell.Testing
             Expect.Near(60.0f, close.Life, "the second swing at step 111"); // 80 - 20
             Expect.True(holder.X == 0.0f && holder.Y == 0.0f, "still where it stood");
             Expect.Near(100.0f, away.Life, "the one away is untouched");
-            Expect.Equal("holdposition", holder.CurrentOrder, "it keeps holding");
+            Expect.Equal("", holder.CurrentOrder, "it keeps holding, its order reading 0 as the game's does");
             Expect.Equal(1, sim.OrdersOf(holder), "one order");
         }
 
