@@ -49,6 +49,9 @@ namespace Moonwell.Procgen
         /// <summary>Whether the camps of each place of the grid are made: once, the first time its chunk is (decision 296).</summary>
         private readonly bool[] camped;
 
+        /// <summary>The units and buildings of the camps, made once and kept while the world stands.</summary>
+        private readonly GroundScope camps;
+
         /// <summary>The chunks of the grid, in the order they came.</summary>
         private readonly List<Chunk> live = new List<Chunk>();
 
@@ -74,6 +77,7 @@ namespace Moonwell.Procgen
             grid = new Chunk?[across * up];
             camped = new bool[across * up];
             scope.Adopt(this);
+            camps = new GroundScope(this);
             Every(LookEvery, Look);
         }
 
@@ -184,8 +188,7 @@ namespace Moonwell.Procgen
                     return;
                 }
 
-                var scope = new ChunkScope();
-                Adopt(scope);
+                var scope = new GroundScope(this);
                 making.Scope = scope;
                 making.Work = generator.Steps(making.Plot, area, scope, false, out var plan);
                 making.Plan = plan;
@@ -218,7 +221,7 @@ namespace Moonwell.Procgen
             if (!camped[at])
             {
                 camped[at] = true;
-                plan.MakePlaces(0, plan.Places.Count, this);
+                plan.MakePlaces(0, plan.Places.Count, camps);
             }
 
             try
@@ -324,11 +327,6 @@ namespace Moonwell.Procgen
         {
             return point.DistanceTo(bounds.Clamp(point)) <= distance;
         }
-
-        /// <summary>The scope of a chunk's ground, ended when it is taken back.</summary>
-        private sealed class ChunkScope : Scope
-        {
-        }
     }
 
     /// <summary>
@@ -362,9 +360,15 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public Scope? Scope { get; internal set; }
 
-        /// <summary>Whether its ground is made and not yet taken back.</summary>
+        /// <summary>Whether its ground is made and not yet taken back: false once its scope has ended, with its world too.</summary>
         [LocalSafe]
-        public bool IsMade { get; internal set; }
+        public bool IsMade
+        {
+            get => made && !Scope!.HasEnded;
+            internal set => made = value;
+        }
+
+        private bool made;
 
         /// <summary>From its first corner to its last, the area planned.</summary>
         internal Bounds Plot { get; }
