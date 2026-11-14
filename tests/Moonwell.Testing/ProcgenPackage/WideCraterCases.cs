@@ -37,25 +37,32 @@ namespace Moonwell.Testing
             return Bounds.FromCorners(new Vector2(0f, 0f), new Vector2((Side - 1) * 128f, (Side - 1) * 128f));
         }
 
-        /// <summary>SnowyForest's hills, with a level place in the middle.</summary>
+        /// <summary>SnowyForest's hills, with a level place in the middle and a road from it to another.</summary>
         private static TerrainGenerator Land()
+        {
+            return Land(out _);
+        }
+
+        private static TerrainGenerator Land(out Road road)
         {
             var land = new TerrainGenerator(1234) { Lowest = -100f, Highest = 250f };
             land.Paint(Tile.LordaeronSummerGrass);
             land.Paint(Tile.LordaeronSummerRock, fromSlope: 22f);
-            land.Level(75 * 128f, 75 * 128f, 512f);
+            var middle = land.Level(75 * 128f, 75 * 128f, 512f);
+            var east = land.Level(130 * 128f, 30 * 128f, 384f);
+            road = land.Road(middle, east, 384f);
             return land;
         }
 
         /// <summary>
         /// Past 20,000 corners a plan takes wide craters: its heights are what they make, close to the hills' own (planned
-        /// in two halves, as pieces of the whole, which never take them), but for the level place, exact, and the area's edge,
-        /// where no crater reaches.
+        /// in two halves, as pieces of the whole, which never take them), but for the level places and the road, exact, and the
+        /// area's edge, where no crater reaches.
         /// </summary>
         public static void Plan(FakeWorld world)
         {
             Big();
-            var land = Land();
+            var land = Land(out var road);
             var plan = land.Plan(Area());
             Expect.True(plan.WideDepths != null, "past 20,000 corners the plan takes wide craters");
             var left = land.Plan(Bounds.FromCorners(new Vector2(0f, 0f), new Vector2(74 * 128f, (Side - 1) * 128f)), Area());
@@ -81,6 +88,21 @@ namespace Moonwell.Testing
             Expect.True(differ > Side * Side / 2, "though not exactly: " + differ + " corners differ");
             Expect.Near(0f, plan.Heights[75, 75], "the level place is level at the ground as it was");
             Expect.Near(0f, plan.Heights[75 + 3, 75], "across it");
+            var onRoad = 0;
+            var roadOff = 0f;
+            var raised = false;
+            foreach (var point in road.Points)
+            {
+                var column = (int)Math.Floor(point.X / 128f + 0.5f);
+                var row = (int)Math.Floor(point.Y / 128f + 0.5f);
+                var exact = column < 75 ? left.Heights[column, row] : right.Heights[column - 75, row];
+                roadOff = Math.Max(roadOff, Math.Abs(plan.Heights[column, row] - exact));
+                raised = raised || Math.Abs(exact) > 10f;
+                onRoad++;
+            }
+
+            Expect.True(onRoad > 10 && raised, "a road of " + onRoad + " points over hills");
+            Expect.True(roadOff < 0.01f, "the road keeps its heights under each of its points, worst " + roadOff + " off");
             Expect.Near(0f, plan.Heights[0, 60], "the area's edge is the ground as it was");
             Expect.Near(0f, plan.Heights[Side - 1, 90], "every edge");
         }
