@@ -103,6 +103,12 @@ namespace Moonwell.Build
                 var imported = new List<string>();
                 foreach (var file in RelativeFiles(project.AssetsFolder))
                 {
+                    // A looks table is read by the build, not packed (decision 321).
+                    if (file.EndsWith(LookFiles.Extension, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
                     var name = Images.PackedName(file);
                     if (packed.TryGetValue(name, out var other))
                     {
@@ -133,7 +139,7 @@ namespace Moonwell.Build
                     }
                 }
 
-                ImportList.Write(project.StagedFolder, imported.Concat(WriteGreyCopies(project, packed, log)));
+                ImportList.Write(project.StagedFolder, imported.Concat(WriteGreyCopies(project, packed, log)).Concat(LookFiles.Make(project, log)));
             }
         }
 
