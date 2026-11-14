@@ -1671,7 +1671,7 @@ A map's own node derives from `Node`:
 public sealed class Chop : Node
 {
     protected override void Start() => OrderOn(Orders.Harvest, Read(TreeNear)!);
-    protected override Status Run() => Unit.Owner.Lumber >= 10 ? Status.Succeeded : Status.Running;
+    protected override Status Run() => Read(TreeNear)!.IsAlive ? Status.Running : Status.Succeeded; // until it falls
     protected override void Stop() { }   // cut off by an interrupt
 }
 ```
