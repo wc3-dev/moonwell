@@ -2364,6 +2364,8 @@ title.Effect = null;                                                        // s
 Moonwell redraws every moving text 32 times a second on one timer, counting from when the effect is set, until the
 `Effect` is set to null or the text ends. `Text` reads the words as set, and a new `Text` keeps the effect; `Color` is
 not drawn while it runs (a floating text's alpha and fade are). A label's `ShowLocal` and `ShowNameOf` text take it too.
+A redraw is mostly the colouring in Lua: about 0.1 ms for 13 letters and 0.2 to 0.4 ms for 53 (seen), so each moving
+text of 13 letters takes about 3 ms of every game second, and one of 53 about 11.
 
 ## Random numbers
 
