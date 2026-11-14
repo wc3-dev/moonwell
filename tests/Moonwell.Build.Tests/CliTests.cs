@@ -43,7 +43,7 @@ namespace Moonwell.Build.Tests
             Assert.StartsWith("Sample · release build", builds.Release.Output);
             Assert.Matches(@"(?m)^  ✓ Compile C#      \d+\.\ds\r?\n  ✓ Read objects    \d+\.\ds\r?\n  ✓ Compile to Lua  \d+\.\ds\r?\n  ✓ Pack the map    \d+\.\ds\r?$", builds.Development.Output);
             Assert.DoesNotContain("Build succeeded", builds.Development.Output);
-            Assert.DoesNotContain("\u001b", builds.Development.Output);
+            Assert.DoesNotContain("\u001b", builds.Development.Output, StringComparison.Ordinal);
             Assert.True(File.Exists(builds.Development.Archive));
             Assert.True(File.Exists(builds.Release.Archive));
 
