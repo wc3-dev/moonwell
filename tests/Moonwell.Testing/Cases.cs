@@ -433,6 +433,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "text.sweep-shapes", Run = TextEffectCases.SweepShapes });
             list.Add(new Case { Name = "text.sweep-repeating", Run = TextEffectCases.SweepRepeating });
             list.Add(new Case { Name = "text.sweep-long-text", Run = TextEffectCases.SweepLongText });
+            list.Add(new Case { Name = "text.moving-effect", Run = TextEffectCases.MovingEffect });
             list.Add(new Case { Name = "text.alternate", Run = TextEffectCases.Alternate });
             list.Add(new Case { Name = "text.confetti", Run = TextEffectCases.Confetti });
             list.Add(new Case { Name = "text.highlight", Run = TextEffectCases.Highlight });
@@ -1606,6 +1607,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.text-area", Run = FrameCases.TextArea });
             list.Add(new Case { Name = "frames.progress-bar", Run = FrameCases.ProgressBar });
             list.Add(new Case { Name = "frames.label-colour", Run = FrameCases.LabelColour });
+            list.Add(new Case { Name = "frames.label-effect", Run = FrameCases.LabelEffect });
+            list.Add(new Case { Name = "frames.text-effects-share-timer", Run = FrameCases.TextEffectsShareTimer });
             list.Add(new Case { Name = "frames.tooltip", Run = FrameCases.Tooltip });
             list.Add(new Case { Name = "frames.tooltip-on-screen", Run = FrameCases.TooltipOnScreen });
             list.Add(new Case { Name = "frames.tooltip-on-image", Run = FrameCases.TooltipOnImage });
@@ -1782,6 +1785,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "floating-text.hidden-from-unseen", Run = FloatingTextCases.HiddenFromUnseen });
             list.Add(new Case { Name = "floating-text.ends-with-unit", Run = FloatingTextCases.EndsWithUnit });
             list.Add(new Case { Name = "floating-text.shown-to", Run = FloatingTextCases.ShownTo });
+            list.Add(new Case { Name = "floating-text.effect", Run = FloatingTextCases.Effect });
         }
 
         /// <summary>Adds the sound and music cases.</summary>
