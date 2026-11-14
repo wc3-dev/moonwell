@@ -1694,10 +1694,10 @@ namespace Moonwell
         /// <summary>The key of an ability's level in the cooldown and mana tables.</summary>
         private static long LevelKey(int abilityId, int levelIndex) => ((long)abilityId * 1000) + levelIndex;
 
-        /// <summary>The full cooldown set for a unit's ability at a level; 0 when none was set.</summary>
+        /// <summary>The full cooldown set for a unit's ability at a level; when none was set, its object data's while a Simulation plays on .NET, else 0.</summary>
         public float AbilityCooldown(unit unit, int abilityId, int levelIndex)
         {
-            return cooldowns.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var seconds) ? seconds : 0.0f;
+            return cooldowns.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var seconds) ? seconds : DeclaredCooldown(abilityId, levelIndex);
         }
 
         /// <summary>Sets the full cooldown of a unit's ability at a level.</summary>
@@ -1749,10 +1749,10 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The mana cost set for a unit's ability at a level; 0 when none was set.</summary>
+        /// <summary>The mana cost set for a unit's ability at a level; when none was set, its object data's while a Simulation plays on .NET, else 0.</summary>
         public int AbilityManaCost(unit unit, int abilityId, int levelIndex)
         {
-            return manaCosts.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var mana) ? mana : 0;
+            return manaCosts.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var mana) ? mana : DeclaredManaCost(abilityId, levelIndex);
         }
 
         /// <summary>Sets the mana cost of a unit's ability at a level.</summary>
@@ -2994,16 +2994,17 @@ namespace Moonwell
             return slots;
         }
 
-        /// <summary>Records an order and gives the answer set in OrderAnswer, or a spell's (<see cref="FakeDummies"/>); when the runtime listens for orders, delivers the order event inside the call, as the game does (seen 11-03), then a spell's effect; a stop ends a channel.</summary>
+        /// <summary>Records an order and gives the answer set in OrderAnswer, or a spell's (<see cref="FakeDummies"/>), or the play's for a cast (PlayId); when the runtime listens for orders, delivers the order event inside the call, as the game does (seen 11-03), then a spell's effect; a stop ends a channel.</summary>
         public bool OrderUnit(unit unit, string order)
         {
             NoteGone(unit);
             Orders.Add("immediate " + order);
             var spell = Dummies.Answer(unit, order, SpellKind.None, null);
-            var answer = spell ?? OrderAnswer;
+            var id = spell == null ? PlayId(unit, OrderIdOf(order)) : OrderIdOf(order);
+            var answer = spell ?? (OrderAnswer && id >= 0);
             if (answer)
             {
-                DeliverOrder(unit, OrderIdOf(order), OrderKind.None, 0f, 0f, null, null);
+                DeliverOrder(unit, id, OrderKind.None, 0f, 0f, null, null);
             }
 
             if (spell == true)
@@ -3035,11 +3036,12 @@ namespace Moonwell
             OrderPoints.Add(x);
             OrderPoints.Add(y);
             var spell = Dummies.Answer(unit, order, SpellKind.Point, null);
+            var id = spell == null ? PlayId(unit, OrderIdOf(order)) : OrderIdOf(order);
             // A channelling unit refuses a move order and channels on (seen 11-06, on Moonwell's dummy, which cannot move).
-            var answer = spell ?? (OrderAnswer && !(order == "move" && Dummies.Channels(unit)));
+            var answer = spell ?? (OrderAnswer && id >= 0 && !(order == "move" && Dummies.Channels(unit)));
             if (answer)
             {
-                DeliverOrder(unit, OrderIdOf(order), OrderKind.Place, x, y, null, null);
+                DeliverOrder(unit, id, OrderKind.Place, x, y, null, null);
             }
 
             if (spell == true)
@@ -3057,10 +3059,11 @@ namespace Moonwell
             Orders.Add("target " + order);
             OrderTargets.Add(target);
             var spell = Dummies.Answer(unit, order, SpellKind.Target, target as unit);
-            var answer = spell ?? OrderAnswer;
+            var id = spell == null ? PlayId(unit, OrderIdOf(order)) : OrderIdOf(order);
+            var answer = spell ?? (OrderAnswer && id >= 0);
             if (answer)
             {
-                DeliverOrder(unit, OrderIdOf(order), OrderKind.Target, 0f, 0f, target as unit, target as item);
+                DeliverOrder(unit, id, OrderKind.Target, 0f, 0f, target as unit, target as item);
             }
 
             var aimed = target as unit;
@@ -3115,24 +3118,16 @@ namespace Moonwell
             return false;
         }
 
-        /// <summary>The ids of the orders the cases use, by the game's string (seen 11-03). An instance field: past the class's 200th member, CSharp.lua reads a private static field by its bare name, which the game does not have.</summary>
-        private readonly Dictionary<string, int> orderIds = new Dictionary<string, int>
-        {
-            { "smart", 851971 }, { "stop", 851972 }, { "attack", 851983 }, { "attackground", 851984 }, { "move", 851986 },
-            { "patrol", 851990 }, { "holdposition", 851993 }, { "defend", 852055 }, { "undefend", 852056 },
-            { "holybolt", 852092 }, { "immolation", 852177 }, { "unimmolation", 852178 },
-        };
-
         /// <summary>The order each unit carries out now, by id; 0 when idle.</summary>
         private readonly Dictionary<unit, int> currentOrders = new Dictionary<unit, int>();
 
         /// <summary>How many orders each unit has queued after the one it carries out, as a case set them; none until set.</summary>
         private readonly Dictionary<unit, int> queued = new Dictionary<unit, int>();
 
-        /// <summary>The id of an order string the cases use; 0 for one the fake does not know.</summary>
+        /// <summary>The game's id of an order string, in any case; 0 for one the game has no id for (see GameOrders).</summary>
         private int OrderIdOf(string order)
         {
-            return orderIds.TryGetValue(order, out var id) ? id : 0;
+            return GameOrders.IdOf(order);
         }
 
         /// <summary>The order a unit carries out now, as the game's GetUnitCurrentOrder reads it.</summary>
@@ -3141,18 +3136,10 @@ namespace Moonwell
             return currentOrders.TryGetValue(unit, out var id) ? id : 0;
         }
 
-        /// <summary>The game's string of an order id; "" for one the fake does not know.</summary>
+        /// <summary>The game's string of an order id; "" for one the fake does not know (see GameOrders).</summary>
         public string OrderName(int id)
         {
-            foreach (var pair in orderIds)
-            {
-                if (pair.Value == id)
-                {
-                    return pair.Key;
-                }
-            }
-
-            return "";
+            return GameOrders.NameOf(id);
         }
 
         /// <summary>Sets the order a unit carries out now, with no event, as the game's own reading (a patrol under way reads 851991).</summary>

@@ -1928,8 +1928,9 @@ public sealed class CampGuard : UnitBrain
 - `Fight(fighter)` casts or attacks the target and fails with none; `PullBack(fighter)` walks back and stands;
   `WalkLane(fighter)` walks the fighter's `Route`. A class that inherits `LaneWalker` overrides `Root()` for its own
   tree.
-- In a fast simulation a walker meets, walks, fights and pulls back, but the fake plays no spells yet: a cast ends at
-  once, or after its hold for an order the fake knows.
+- In a fast simulation a walker meets, walks, fights, casts and pulls back. A cast is held as any order, then its
+  cooldown starts and its mana is spent, and the walker attacks again; what the spell does stays the game's (see
+  [Fast simulation](#fast-simulation)).
 
 ## AI: tools
 
@@ -2083,10 +2084,18 @@ public class GuardTests
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
   anything else. An attack to a point fights the nearest enemy within acquisition range on the way, then walks on. Hold
   position never moves and swings at an enemy within range, its `CurrentOrder` reading "" as in the game. `stop` leaves
-  the unit idle, patrol stands, and any other order (a spell, `attackground`) ends after its hold.
-- The fake knows orders by name from a short list: `smart`, `stop`, `move`, `attack`, `attackground`, `patrol`,
-  `holdposition`, `defend`, `undefend`, `holybolt`, `immolation` and `unimmolation`. Any other name leaves the unit idle
-  at once, and is neither counted nor held.
+  the unit idle, patrol stands, and any other order that is no cast (`attackground`, `harvest`) ends after its hold.
+- The fake knows the game's id of every order string in its ability data and of its base orders, in any case of the
+  string. A name the game has no id for leaves the unit idle at once, and is neither counted nor held.
+- A spell's order casts the unit's ability whose order string it is, read from the ability's object data on .NET (a
+  test can give one with `sim.World.SetAbilityOrder(abilityId, "thunderbolt")`). The cast is taken, with its order
+  event, and held as any order; then it goes off: the ability's cooldown starts and its mana cost is spent, those of
+  the unit's level, and the unit is left idle, as the game leaves it at a cast's end. The cooldown and cost are the
+  unit's own (`LiveCooldown`, `LiveManaCost`), from the object data unless code changed them. While the cooldown runs, or
+  with less mana than the cost, the order is refused as the game refuses it: false, no order event, and the unit's
+  attack goes on. A spell's order of an ability the unit lacks is taken as a name the fake does not know.
+- A cast goes off where the unit stands, whatever its range, at once after its hold, with no cast or backswing time; it
+  fires no spell events, deals no damage and gives no buff.
 - A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
   a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
   damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
@@ -2094,7 +2103,7 @@ public class GuardTests
   game.
 - Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
   through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
-  3.0.1.24371); turning, vision, buffs, and spells and their effects; an attack's damage point and a missile's flight
+  3.0.1.24371); turning, vision, buffs, and what spells do; an attack's damage point and a missile's flight
   (a swing lands at once); heroes' attributes (a hero fights on its base numbers); units placed in World Editor; and the
   Damage, Terrain, Areas, Input and Physics systems. A simulation shows how the map's own logic decides, not exactly how
   a fight goes in the game.

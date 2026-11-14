@@ -20,7 +20,7 @@ namespace Moonwell.Testing
         /// <summary>Holy Light, cast in the cases with the fake's "holybolt".</summary>
         private static readonly int HealId = ObjectTypes.FourCC("AHhb");
 
-        /// <summary>Blizzard, a spell at a place, which the fake does not know, so the unit reads idle at once after it.</summary>
+        /// <summary>Blizzard, a spell at a place, cast in the cases with "nosuchorder", which the fake does not know, so the unit reads idle at once after it.</summary>
         private static readonly int BlizzardId = ObjectTypes.FourCC("AHbz");
 
         /// <summary>The game's id of "holybolt" in the fake.</summary>
@@ -212,11 +212,11 @@ namespace Moonwell.Testing
             unit.AddAbility(ClapId);
             unit.AddAbility(BlizzardId);
             fighter.Spells.Add(Spell.Self(ClapId, "immolation", when: f => f.EnemiesNear >= 2));
-            fighter.Spells.Add(Spell.At(BlizzardId, "blizzard"));
+            fighter.Spells.Add(Spell.At(BlizzardId, "nosuchorder"));
             world.Orders.Clear();
             world.OrderPoints.Clear();
             Is(Status.Running, tree.Run(), "the first spell's condition does not hold with one enemy near: the second");
-            Expect.Equal("point blizzard, target attack", Given(world), "at the target's place, and the unit, idle at once after it, attacks in the same pass");
+            Expect.Equal("point nosuchorder, target attack", Given(world), "at the target's place, and the unit, idle at once after it, attacks in the same pass");
             Expect.Near(300f, world.OrderPoints[0], "x");
             Expect.Near(0f, world.OrderPoints[1], "y");
             At(world, 1, 0f, 300f);

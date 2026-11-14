@@ -83,7 +83,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.combat.lane-walker", Run = CombatCases.LaneWalkerSettings });
         }
 
-        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds and the read-outs.</summary>
+        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds, the read-outs, the order names and casts.</summary>
         private static void AddSimulation(List<Case> list)
         {
             list.Add(new Case { Name = "simulation.steps", Run = SimulationCases.StepsInOrder });
@@ -105,6 +105,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.many-attackers", Run = SimulationCases.ManyAttackers });
             list.Add(new Case { Name = "simulation.map-draws", Run = SimulationCases.MapDraws });
             list.Add(new Case { Name = "simulation.spell-ends", Run = SimulationCases.SpellEnds });
+            list.Add(new Case { Name = "simulation.order-names", Run = SimulationCases.OrderNames });
+            list.Add(new Case { Name = "simulation.cast", Run = SimulationCases.Cast });
+            list.Add(new Case { Name = "simulation.cast-refused", Run = SimulationCases.CastRefused });
             list.Add(new Case { Name = "simulation.no-dummy", Run = SimulationCases.NoDummy });
             list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
         }

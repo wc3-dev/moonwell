@@ -5,7 +5,7 @@ namespace Moonwell
 {
     /// <summary>
     /// The fake world's play, which a Simulation turns on: in each 0.02 s step the units of a type with numbers walk, chase,
-    /// swing and acquire, and each order stands its unit 8 steps first. Off, the fake is as it always was.
+    /// swing, acquire and cast, and each order stands its unit 8 steps first. Off, the fake is as it always was.
     /// </summary>
     public sealed partial class FakeWorld
     {
@@ -31,6 +31,20 @@ namespace Moonwell
 
         /// <summary>What the play keeps of each unit it plays.</summary>
         private readonly Dictionary<unit, PlayedUnit> played = new Dictionary<unit, PlayedUnit>();
+
+        /// <summary>The order string each ability type is cast with, as SetAbilityOrder gives it.</summary>
+        private readonly Dictionary<int, string> abilityOrders = new Dictionary<int, string>();
+
+#if !MOONWELL_LUA
+        /// <summary>The numbers each ability type's object data gave, null for none, so that each is looked up once.</summary>
+        private readonly Dictionary<int, SpellNumbers?> spellNumbers = new Dictionary<int, SpellNumbers?>();
+#endif
+
+        /// <summary>Gives an ability type the order string the play casts it with; on .NET it replaces its object data's. The cooldown and mana cost a cast uses are its unit's (SetAbilityCooldown, SetAbilityManaCost), else on .NET its object data's.</summary>
+        public void SetAbilityOrder(int abilityId, string order)
+        {
+            abilityOrders[abilityId] = order;
+        }
 
         /// <summary>Turns the play on, with its dice from the seed and the map's random numbers (Pick) from the seed after it.</summary>
         internal void StartPlay(int seed)
@@ -215,6 +229,7 @@ namespace Moonwell
             unitPlay.ReadyStep = nextPlay + 8;
             unitPlay.Walking = false;
             unitPlay.Holding = id == 851993;
+            unitPlay.Cast = IsSpell(id) ? AbilityFor(ordered, id) : 0;
             unitPlay.Target = target;
             unitPlay.TargetIsEnemy = false;
             unitPlay.HasPoint = kind == OrderKind.Place;
@@ -229,7 +244,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A ready unit's step, by its current order. An order the play does not carry out (a spell, attackground, one on an item) ends at the unit's first ready step; patrol stands. Hold position reads 0, as the game's does (seen 11-14), so the play keeps it apart from idle.</summary>
+        /// <summary>A ready unit's step, by its current order. A cast goes off at the unit's first ready step and ends there, leaving it idle, as the game leaves it at the cast's end (seen 11-14); any other order the play does not carry out (attackground, one on an item) ends there too; patrol stands. Hold position reads 0, as the game's does (seen 11-14), so the play keeps it apart from idle.</summary>
         private void Act(unit made, PlayedUnit unitPlay, int k)
         {
             var id = CurrentOrderOf(made);
@@ -283,8 +298,132 @@ namespace Moonwell
 
             if (id != 851990 && id != 851972)
             {
+                if (unitPlay.Cast != 0)
+                {
+                    GoOff(made, unitPlay.Cast);
+                    unitPlay.Cast = 0;
+                }
+
                 currentOrders[made] = 0;
             }
+        }
+
+        /// <summary>
+        /// The id a played unit's order is carried out with. A spell's order (852055 to 852762, as Moonwell counts them) casts the
+        /// unit's ability whose order string it is, and is -1, refused as the game refuses it, with no order event, while that
+        /// ability's cooldown runs or the unit's mana is below its cost (seen 11-14); with no such ability it is 0, as an order
+        /// the fake does not know. Any other order, and every order of a unit not played, keeps its id.
+        /// </summary>
+        private int PlayId(unit unit, int id)
+        {
+            if (!IsSpell(id) || !played.ContainsKey(unit))
+            {
+                return id;
+            }
+
+            var ability = AbilityFor(unit, id);
+            if (ability == 0)
+            {
+                return 0;
+            }
+
+            var mana = manas.TryGetValue(unit, out var kept) ? kept : 0.0f;
+            return AbilityCooldownLeft(unit, ability) > 0.0f || mana < AbilityManaCost(unit, ability, AbilityLevel(unit, ability) - 1) ? -1 : id;
+        }
+
+        /// <summary>A cast goes off: its ability's cooldown starts and its mana cost is spent, both at the ability's level now, the mana going no lower than 0. What the spell does is left to the game. An ability taken away in the hold does nothing.</summary>
+        private void GoOff(unit caster, int ability)
+        {
+            var level = AbilityLevel(caster, ability);
+            if (level <= 0)
+            {
+                return;
+            }
+
+            StartAbilityCooldown(caster, ability, AbilityCooldown(caster, ability, level - 1));
+            var mana = (manas.TryGetValue(caster, out var kept) ? kept : 0.0f) - AbilityManaCost(caster, ability, level - 1);
+            manas[caster] = mana > 0.0f ? mana : 0.0f;
+        }
+
+        /// <summary>The ability of a unit's that a spell's order casts: one it has whose order string has the order's id; 0 for none.</summary>
+        private int AbilityFor(unit unit, int id)
+        {
+            if (abilityLevels.TryGetValue(unit, out var levels))
+            {
+                foreach (var pair in levels)
+                {
+                    if (pair.Value > 0 && OrderIdOf(AbilityOrderOf(pair.Key)) == id)
+                    {
+                        return pair.Key;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        /// <summary>The order string an ability type is cast with: SetAbilityOrder's, else on .NET its object data's; "" for none.</summary>
+        private string AbilityOrderOf(int abilityId)
+        {
+            if (abilityOrders.TryGetValue(abilityId, out var order))
+            {
+                return order;
+            }
+
+#if !MOONWELL_LUA
+            var numbers = SpellOf(abilityId);
+            if (numbers != null)
+            {
+                return numbers.Order;
+            }
+#endif
+            return "";
+        }
+
+        /// <summary>An ability type's cooldown at a level index from its object data, while the play runs on .NET; 0 otherwise.</summary>
+        private float DeclaredCooldown(int abilityId, int levelIndex)
+        {
+#if !MOONWELL_LUA
+            var numbers = playing ? SpellOf(abilityId) : null;
+            if (numbers != null)
+            {
+                return numbers.Cooldowns[SpellNumbers.Index(numbers.Cooldowns.Length, levelIndex)];
+            }
+#endif
+            return 0.0f;
+        }
+
+        /// <summary>An ability type's mana cost at a level index from its object data, while the play runs on .NET; 0 otherwise.</summary>
+        private int DeclaredManaCost(int abilityId, int levelIndex)
+        {
+#if !MOONWELL_LUA
+            var numbers = playing ? SpellOf(abilityId) : null;
+            if (numbers != null)
+            {
+                return numbers.ManaCosts[SpellNumbers.Index(numbers.ManaCosts.Length, levelIndex)];
+            }
+#endif
+            return 0;
+        }
+
+#if !MOONWELL_LUA
+        /// <summary>An ability type's numbers from its object data, looked up once; null for none.</summary>
+        private SpellNumbers? SpellOf(int abilityId)
+        {
+            if (!spellNumbers.TryGetValue(abilityId, out var numbers))
+            {
+                numbers = ObjectNumbers.SpellOf(abilityId);
+                spellNumbers[abilityId] = numbers;
+            }
+
+            return numbers;
+        }
+#endif
+
+        /// <summary>Whether an order id is a spell's: 852055 to 852762, as Moonwell counts them.</summary>
+        private static bool IsSpell(int id)
+        {
+            return id >= 852055 && id <= 852762;
         }
 
         /// <summary>An idle unit that can attack takes the nearest enemy within its acquisition range as its attack, silently: no order event, not counted, not held. A watched unit's acquire event comes first, its order still reading 0, as the game's does; an order given inside it (full control's hold) is kept instead.</summary>
@@ -617,6 +756,9 @@ namespace Moonwell
 
         /// <summary>Whether its last order was hold position, which reads 0 as idle does.</summary>
         public bool Holding;
+
+        /// <summary>The ability its last order casts, which goes off at its first ready step; 0 for none.</summary>
+        public int Cast;
 
         /// <summary>The x the walk started from.</summary>
         public float FromX;

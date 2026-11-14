@@ -2,13 +2,16 @@ using Moonwell.AI.Combat;
 
 namespace Moonwell.Tests
 {
-    /// <summary>Lane walkers in the fast simulation, on .NET: units made by id walk their lanes, fight what they meet and pull back, with their repeated orders kept from the game.</summary>
+    /// <summary>Lane walkers in the fast simulation, on .NET: units made by id walk their lanes, fight what they meet, cast and pull back, with their repeated orders kept from the game.</summary>
     public class CombatSimulationTests
     {
         private static readonly int Walker = ObjectTypes.FourCC("s0lw");
         private static readonly int Grunt = ObjectTypes.FourCC("s0lg");
         private static readonly int Brute = ObjectTypes.FourCC("s0lb");
         private static readonly int Runner = ObjectTypes.FourCC("s0lr");
+        private static readonly int MountainKing = ObjectTypes.FourCC("Hmkg");
+        private static readonly int Footman = ObjectTypes.FourCC("hfoo");
+        private static readonly int StormBolt = ObjectTypes.FourCC("AHtb");
 
         /// <summary>A lane walker that counts its thinks.</summary>
         private sealed class CountingWalker : LaneWalker
@@ -109,6 +112,90 @@ namespace Moonwell.Tests
             var first = Lanes(5);
             var again = Lanes(5);
             Assert.Equal(first, again);
+        }
+
+        /// <summary>A Mountain King with Storm Bolt, as their object data give them (the order "thunderbolt", a cooldown of 9 and 75 mana), and a lane walker whose spells hold it, meets a footman and casts at it: the cast is counted, its cooldown runs and its mana is spent when it goes off, and the hero attacks again within a few steps.</summary>
+        [Fact]
+        public void AHeroCastsAtWhatItMeets()
+        {
+            var sim = Simulation.Start();
+            var hero = BoltHero();
+            var bolt = hero.AbilityOf(StormBolt);
+            var footman = Unit.Create(Footman, Player.Two, 600.0f, 0.0f, Game.Instance);
+
+            var before = 0;
+            Assert.True(sim.RunUntil(() => { var casting = hero.CurrentOrder == "thunderbolt"; before = casting ? before : sim.OrdersOf(hero); return casting; }, 10.0f), "it casts");
+            Assert.Equal(before + 1, sim.OrdersOf(hero));
+            Assert.Equal("target thunderbolt", sim.World.Orders.Last());
+            Assert.Same(footman.Handle, sim.World.OrderTargets.Last());
+            Assert.Equal(300.0f, hero.Mana);
+
+            Assert.True(sim.RunUntil(() => bolt.CooldownLeft > 0.0f, 1.0f), "the cast goes off");
+            Assert.Equal(9.0f, bolt.CooldownLeft, 3);
+            Assert.Equal(225.0f, hero.Mana);
+            Assert.Equal("", hero.CurrentOrder);
+            Assert.True(sim.RunUntil(() => hero.CurrentOrder == Orders.Attack, 0.1f), "it attacks again within 5 steps");
+            Assert.Equal("target attack", sim.World.Orders.Last());
+            Assert.Same(footman.Handle, sim.World.OrderTargets.Last());
+        }
+
+        /// <summary>While Storm Bolt's cooldown runs the walker skips it and attacks, ordering it no more; once it is over the walker casts it again.</summary>
+        [Fact]
+        public void AHeroSkipsItsSpellWhileItsCooldownRuns()
+        {
+            var sim = Simulation.Start();
+            var hero = BoltHero();
+            var bolt = hero.AbilityOf(StormBolt);
+            Unit.Create(Footman, Player.Two, 600.0f, 0.0f, Game.Instance);
+
+            Assert.True(sim.RunUntil(() => bolt.CooldownLeft > 0.0f, 10.0f), "it casts");
+            var wentOff = sim.Time;
+            Assert.True(sim.RunUntil(() => bolt.CooldownLeft <= 0.0f, 10.0f), "the cooldown runs out");
+            Assert.Equal(1, Casts(sim));
+            Assert.True(sim.World.Orders.Count(order => order == "target attack") >= 1, "it attacked meanwhile");
+            Assert.True(sim.RunUntil(() => Casts(sim) == 2, 1.0f), "then it casts again");
+            Assert.True(sim.Time >= wentOff + 9.0f, "not before the cooldown's 9 s: " + (sim.Time - wentOff));
+            Assert.True(sim.RunUntil(() => hero.Mana == 150.0f, 0.2f), "and its 75 mana spent again: " + hero.Mana);
+        }
+
+        /// <summary>With less mana than Storm Bolt's 75 the walker never casts it and attacks, and the cast given by code is refused: false, not counted, nothing spent.</summary>
+        [Fact]
+        public void ACastWithTooLittleManaIsRefused()
+        {
+            var sim = Simulation.Start();
+            var hero = BoltHero();
+            hero.Mana = 74.0f;
+            var footman = Unit.Create(Footman, Player.Two, 600.0f, 0.0f, Game.Instance);
+
+            Assert.True(sim.RunUntil(() => hero.CurrentOrder == Orders.Attack, 10.0f), "it attacks");
+            sim.Run(2.0f);
+            Assert.Equal(0, Casts(sim));
+            var orders = sim.OrdersOf(hero);
+            Assert.False(hero.OrderOn("thunderbolt", footman), "refused");
+            Assert.Equal(orders, sim.OrdersOf(hero));
+            Assert.Equal(Orders.Attack, hero.CurrentOrder);
+            sim.Run(1.0f);
+            Assert.Equal(74.0f, hero.Mana);
+            Assert.Equal(0.0f, hero.AbilityOf(StormBolt).CooldownLeft);
+        }
+
+        /// <summary>A Mountain King of player 1 at the start of a lane east, with Storm Bolt and a lane walker that casts it, 2,000 life so that no footman kills it, and 300 mana: the simulation applies no attributes, so a hero has its base numbers.</summary>
+        private static Unit BoltHero()
+        {
+            var hero = Unit.Create(MountainKing, Player.One, 0.0f, 0.0f, Game.Instance);
+            hero.MaxLife = 2000.0f;
+            hero.Life = 2000.0f;
+            hero.MaxMana = 300.0f;
+            hero.Mana = 300.0f;
+            hero.AddAbility(StormBolt);
+            hero.Add(new LaneWalker(Lane(0.0f, 3000.0f, 0.0f)) { Spells = { Spell.On(StormBolt, "thunderbolt") } });
+            return hero;
+        }
+
+        /// <summary>How many Storm Bolts were ordered so far.</summary>
+        private static int Casts(Simulation sim)
+        {
+            return sim.World.Orders.Count(order => order == "target thunderbolt");
         }
 
         /// <summary>Plays four walkers of player 1 east and four of player 2 west on lanes 150 apart, until one side is gone: the winner's slot, its walkers left and the time.</summary>
