@@ -2358,6 +2358,13 @@ namespace Moonwell.Testing
         {
             NoteGone(unit);
             Dummies.Stopped(unit);
+
+            // The game gives a living unit it gives away a stop inside the call, before the change; to its own owner nothing (seen 11-08).
+            if (!dead.Contains(unit) && (!unitSlots.TryGetValue(unit, out var before) || before != SlotOf(player)))
+            {
+                DeliverOrder(unit, 851972, OrderKind.None, 0f, 0f, null, null);
+            }
+
             unitSlots[unit] = SlotOf(player);
             UnitCalls.Add("owner " + SlotOf(player) + " True");
             if (Listening.Contains(GameEvent.OwnerChange))
@@ -2366,13 +2373,17 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>Puts a unit at the place, and records a "move".</summary>
+        /// <summary>Puts a unit at the place, and records a "move"; a unit with an order gets a stop event and is left idle, as SetUnitPosition does (seen 11-03).</summary>
         public void MoveUnit(unit unit, float x, float y)
         {
             NoteGone(unit);
             UnitCalls.Add("move");
             unitXs[unit] = x;
             unitYs[unit] = y;
+            if (CurrentOrderOf(unit) != 0)
+            {
+                DeliverOrder(unit, 851972, OrderKind.None, 0f, 0f, null, null);
+            }
         }
 
         /// <summary>Puts a unit at the place, and records a "place".</summary>
@@ -3138,20 +3149,32 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>The units whose acquire event the runtime watches, once for each registration.</summary>
+        /// <summary>The units whose acquire event the runtime watches, once for each watch.</summary>
         public List<unit> AcquireWatched = new List<unit>();
 
         /// <summary>The units that can fall asleep at night; none until set.</summary>
         private readonly HashSet<unit> sleepers = new HashSet<unit>();
 
-        /// <summary>Records the registration of a unit's acquire event.</summary>
+        /// <summary>Records the watch of a unit's acquire event.</summary>
         public void WatchAcquire(unit unit)
         {
             NoteGone(unit);
             AcquireWatched.Add(unit);
         }
 
-        /// <summary>A unit picks a target by itself, as the game's unit AI does with no order and no order event: its acquire event, once for each registration.</summary>
+        /// <summary>Ends every watch of a unit's acquire event, as destroying its trigger does; the unit itself is not touched.</summary>
+        public void UnwatchAcquire(unit unit)
+        {
+            for (var i = AcquireWatched.Count - 1; i >= 0; i--)
+            {
+                if (AcquireWatched[i] == unit)
+                {
+                    AcquireWatched.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>A unit picks a target by itself, as the game's unit AI does with no order and no order event: its acquire event, once for each watch.</summary>
         public void Acquire(unit unit)
         {
             for (var i = 0; i < AcquireWatched.Count; i++)
@@ -3315,6 +3338,15 @@ namespace Moonwell.Testing
                     InventoryCalls.Add("slot " + slot);
                     slots[i] = slots[slot];
                     slots[slot] = item;
+
+                    // The game fires 852005 on the item (seen 11-03), an instant order: the unit goes on with its own.
+                    var carrying = CurrentOrderOf(unit);
+                    DeliverOrder(unit, 852005, OrderKind.Target, 0f, 0f, null, item);
+                    if (CurrentOrderOf(unit) == 852005)
+                    {
+                        currentOrders[unit] = carrying;
+                    }
+
                     return true;
                 }
             }

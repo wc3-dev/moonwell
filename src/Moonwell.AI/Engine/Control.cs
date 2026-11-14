@@ -12,6 +12,9 @@ namespace Moonwell.AI
     /// </summary>
     internal sealed class Control
     {
+        /// <summary>The game's id of holdposition.</summary>
+        private const int HoldId = 851993;
+
         /// <summary>The game the units below are in; a runtime reset makes another, and they are forgotten.</summary>
         private static Game? game;
 
@@ -35,6 +38,9 @@ namespace Moonwell.AI
 
         /// <summary>Whether an order not from code waits for its answer.</summary>
         private bool answering;
+
+        /// <summary>Whether the unit's last order was hold position from code, so it already holds and a pick needs no answer.</summary>
+        private bool codeHold;
 
         private Control(Unit unit)
         {
@@ -63,7 +69,12 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>Gives the waiting answers: hold position as Moonwell's own order to each unit still under control and alive, then its brains are woken. The loop calls it at each step before the step's number goes up, so the wakes think in that step.</summary>
+        /// <summary>
+        /// Gives the waiting answers: hold position as Moonwell's own order to each unit still under control and alive, then its
+        /// brains forget the order they last sent and are woken. Moonwell's hold reads 0, as idle, so a brain that remembered
+        /// its order would take it as done and drop it. The loop calls it at each step before the step's number goes up, so the
+        /// wakes think in that step.
+        /// </summary>
         internal static void Answer()
         {
             if (waiting.Count == 0)
@@ -91,7 +102,13 @@ namespace Moonwell.AI
                 var components = unit.components;
                 for (var k = 0; k < components.Count; k++)
                 {
-                    (components[k] as UnitBrain)?.Wake();
+                    var brain = components[k] as UnitBrain;
+                    if (brain != null)
+                    {
+                        brain.sentOrder = null;
+                        brain.retried = false;
+                        brain.Wake();
+                    }
                 }
             }
 
@@ -112,10 +129,10 @@ namespace Moonwell.AI
             Events.AcquireListener = Acquired;
             Events.OrderListener = Ordered;
             Events.Listen(GameEvent.Order);
-            Inbound.WatchAcquire(unit);
+            Runtime.World.WatchAcquire(unit.Handle);
         }
 
-        /// <summary>A brain gives the unit back: the last stops the answers, stops a unit Moonwell left on hold, so the game picks up at once, unless it is dead or leaving, and lets it sleep again if it could.</summary>
+        /// <summary>A brain gives the unit back: the last stops the answers and the watch of its picks, stops a unit Moonwell left on hold, so the game picks up at once, unless it is dead or leaving, and lets it sleep again if it could.</summary>
         private static void Give(Unit unit)
         {
             Fresh();
@@ -132,6 +149,7 @@ namespace Moonwell.AI
 
             units.Remove(unit);
             control.answering = false;
+            Runtime.World.UnwatchAcquire(unit.Handle);
             if (unit.IsGone)
             {
                 return;
@@ -148,17 +166,17 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>A unit picks a target by itself: held at once when under control with no order, as on hold position, whose order also reads 0.</summary>
+        /// <summary>A unit picks a target by itself: held at once when under control with no order, idle or on a hold not from code, both of which read 0. A unit code put on hold holds already.</summary>
         private static void Acquired(Unit unit)
         {
-            if (units.TryGetValue(unit, out var control) && Runtime.World.CurrentOrderOf(unit.Handle) == 0)
+            if (units.TryGetValue(unit, out var control) && !control.codeHold && Runtime.World.CurrentOrderOf(unit.Handle) == 0)
             {
                 control.Hold();
             }
         }
 
-        /// <summary>A unit under control is given an order: it is no longer on Moonwell's hold. One from code drops a waiting answer; any other waits for one.</summary>
-        private static void Ordered(Unit unit, bool fromCode)
+        /// <summary>A unit under control is given an order: it is no longer on Moonwell's hold. One from code drops a waiting answer and notes whether it is hold position; any other waits for one.</summary>
+        private static void Ordered(Unit unit, int id, bool fromCode)
         {
             if (!units.TryGetValue(unit, out var control))
             {
@@ -166,6 +184,7 @@ namespace Moonwell.AI
             }
 
             control.held = false;
+            control.codeHold = fromCode && id == HoldId;
             if (fromCode)
             {
                 control.answering = false;

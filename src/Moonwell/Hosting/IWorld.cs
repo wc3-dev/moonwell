@@ -539,8 +539,11 @@ namespace Moonwell.Hosting
         /// <summary>The id of the order a unit carries out now; 0 when it is idle or holds its position.</summary>
         int CurrentOrderOf(unit unit);
 
-        /// <summary>Delivers to Inbound each target the unit picks by itself, from now on; called once a unit.</summary>
+        /// <summary>Delivers to Inbound each target the unit picks by itself, until UnwatchAcquire.</summary>
         void WatchAcquire(unit unit);
+
+        /// <summary>Stops delivering the targets a unit picks by itself.</summary>
+        void UnwatchAcquire(unit unit);
 
         /// <summary>Whether a unit can fall asleep at night.</summary>
         bool CanSleep(unit unit);

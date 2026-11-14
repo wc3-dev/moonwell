@@ -1612,19 +1612,22 @@ protected override void OnAdded()
 }
 ```
 
-- A target the unit picks by itself while it carries no order, idle or on hold position, is answered at once with
-  hold position.
+- A target the unit picks by itself while it carries no order, idle or on Moonwell's hold, is answered at once with
+  hold position. A unit that code put on hold position already holds, and gets nothing.
 - Every order not from code, the game's own, an AI script's or a person's click, is answered with hold position at the
-  loop's next step, within 0.02 s, and the unit's brains are woken to think in that step. It is not answered inside its
-  event: there hold position doesn't hold, and for a computer's unit sent back after an attack-move it closes the game.
-  Several in one step get one answer, and an order from code before the step drops it. The unit's `OnOrdered` and the
-  map's `OnUnitOrdered` still hear them.
-- An order from code always goes through: the brain's own, and any of the unit's `Order`, `OrderAt` and `OrderOn`. On
-  the brain's attack-move the unit fights what it meets, as an attack-move does.
+  loop's next step, within 0.02 s. The unit's brains forget the order they last sent, so their next one reaches the
+  game, and are woken to think in that step. It is not answered inside its event: there hold position doesn't hold,
+  and for a computer's unit sent back after an attack-move it closes the game. Several in one step get one answer, an
+  order from code before the step drops it, and so does a reaction that refuses it. The unit's `OnOrdered` and the
+  map's `OnUnitOrdered` still hear them. An item's use, a toggle or an autocast change nothing the unit does and get
+  no answer.
+- An order from code always goes through: the brain's own, the unit's `Order`, `OrderAt` and `OrderOn`, and the stop
+  that `MoveTo` or a change of owner gives. On the brain's attack-move the unit fights what it meets, as an attack-move
+  does. An order the unit already carries when control begins goes on until the brain orders it.
 - An enemy right beside the unit is still hit, as on hold position. The unit doesn't sleep at night.
 - The unit is under full control while any of its brains has it. Setting it false, or the last such brain ending,
   gives the unit back: it sleeps again if it could, and one left on Moonwell's hold gets a stop, so the game picks up
-  at once. A dead or removed unit gets no stop.
+  at once. A hold from code is left as it is, and a dead or removed unit gets no stop.
 
 The melee and campaign AI scripts are the game's natives: `Natives.StartMeleeAI(p, "human.ai")` runs from a Moonwell
 map, as do `StartCampaignAI`, `PauseCompAI` and `CommandAI`. A full-control brain on a unit of such a player undoes

@@ -160,7 +160,11 @@ namespace Moonwell
                 if (InGame())
                 {
                     owner = value.Handle;
+
+                    // The game stops a living unit it gives away, inside the call (game facts 11-08).
+                    Inbound.CodeOrders++;
                     Runtime.World.SetOwner(Handle, value.Handle);
+                    Inbound.CodeOrders--;
                     Dummies.OwnerChanged(this);
                 }
             }
@@ -499,7 +503,10 @@ namespace Moonwell
         {
             if (InGame())
             {
+                // A unit with an order gets a stop event inside the move (game facts 11-03).
+                Inbound.CodeOrders++;
                 Runtime.World.MoveUnit(Handle, x, y);
+                Inbound.CodeOrders--;
             }
         }
 
@@ -1239,9 +1246,6 @@ namespace Moonwell
         /// <summary>The order the unit carries out, to give back when one is refused: the last order kept, until a stop, a build or another order not worth giving again replaced it; instant orders leave it.</summary>
         internal Order? Carried;
 
-        /// <summary>Whether the world delivers the unit's acquire event; its registration lasts the unit's life.</summary>
-        internal bool AcquireWatched;
-
         /// <summary>Orders the unit to stop. Does nothing once the unit is gone.</summary>
         public void Stop()
         {
@@ -1316,7 +1320,11 @@ namespace Moonwell
                 }
             }
 
-            return Runtime.World.MoveItemToSlot(Handle, item.Handle, slot);
+            // The slot move fires an order event (852005, game facts 11-03).
+            Inbound.CodeOrders++;
+            var moved = Runtime.World.MoveItemToSlot(Handle, item.Handle, slot);
+            Inbound.CodeOrders--;
+            return moved;
         }
 
         /// <summary>Makes the unit drop an item from its inventory where it stands (UnitRemoveItem). The game counts it as a drop, so OnDropped and OnItemDropped run, inside this call and while the unit still has the item: the item's Carrier is the unit there, and null after the call. Does nothing for an item that lies on the ground, and once the unit or the item is gone. A unit whose inventory drops its items at death (a footman's; a hero's keeps them) drops them as it dies, and the drop reactions run before its OnDeath, with Carrier already null. The items of a unit removed with RemoveUnit leave it inside that call, but the game fires their drop events after the call, while the unit's type id still reads. For a unit Moonwell removed (Remove(), or its scope ending) no drop reaction runs, neither the item's nor the unit's, and its handle makes no second object; for one a native removed, which Moonwell has not noticed yet, the drop reactions run for an object that is about to be swept, with Carrier already null. Seen for a hero, whose items are then removed with it; other units are assumed to do the same.</summary>

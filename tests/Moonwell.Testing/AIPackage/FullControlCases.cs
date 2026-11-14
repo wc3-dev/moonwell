@@ -63,7 +63,7 @@ namespace Moonwell.Testing
             Expect.Equal(0, Watches(world, leaning), "and its unit's picks are not watched");
         }
 
-        /// <summary>An order not from code is heard by the reactions, then held at the next step, not inside its event, and the unit's brain thinks in that step; the hold leaves what the brain remembers sending.</summary>
+        /// <summary>An order not from code is heard by the reactions, then held at the next step, not inside its event, and the unit's brain forgets its last order and thinks in that step.</summary>
         public static void ForeignOrder(FakeWorld world)
         {
             var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
@@ -80,7 +80,7 @@ namespace Moonwell.Testing
             Expect.Equal("immediate holdposition", Given(world), "held at the next step");
             Expect.Equal("1", string.Join(" ", brain.Thought), "and the brain thinks in that step");
             Expect.Equal(1, ear.Heard.Count, "the hold runs no reaction");
-            Expect.Equal("move", brain.sentOrder!, "and the brain still remembers its own last order");
+            Expect.True(brain.sentOrder == null, "and the brain forgets its last order, so its next reaches the game");
             BrainCases.Steps(world, 3);
             Expect.Equal(1, world.Orders.Count, "one answer");
         }
@@ -169,6 +169,7 @@ namespace Moonwell.Testing
             brain.FullControl = false;
             Expect.Equal("immediate stop", Given(world), "a unit left on hold, by an answer at a step, is stopped");
             Expect.Equal(0, ear.Heard.Count, "as Moonwell's own order");
+            Expect.Equal(0, Watches(world, unit), "and its picks are watched no more");
             world.Acquire(unit.Handle);
             world.PlayerOrders(unit.Handle, Orders.Move, 900f, 0f);
             BrainCases.Steps(world, 2);
@@ -210,7 +211,100 @@ namespace Moonwell.Testing
             var gone = world.GoneCalls;
             leaving.Remove();
             Expect.Equal(0, world.Orders.Count, "a removed unit gets none");
+            Expect.Equal(0, Watches(world, leaving), "and its watch ends");
             Expect.Equal(gone, world.GoneCalls, "and no call on a removed unit");
+        }
+
+        /// <summary>A brain that sends the same order to a place at every think gets it through after each answer, two orders not from code a step apart included: Moonwell's hold reads idle, which a brain that remembered its order would take for done.</summary>
+        public static void NotStuckOnHold(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var brain = new StepBrain { FullControl = true, ThinkEvery = 0.02f };
+            brain.During = () => brain.OrderAt(Orders.Move, 1000f, 0f);
+            unit.Add(brain);
+            world.Orders.Clear();
+
+            BrainCases.Steps(world, 2);
+            Expect.Equal("point move", Given(world), "sent once, then dropped as a repeat");
+            world.PlayerOrders(unit.Handle, Orders.Move, 0f, 900f);
+            BrainCases.Steps(world, 1);
+            world.PlayerOrders(unit.Handle, Orders.Move, 0f, 900f);
+            BrainCases.Steps(world, 1);
+            Expect.Equal("point move, immediate holdposition, point move, immediate holdposition, point move", Given(world), "after each answer the move reaches the game again");
+            Expect.Equal("move", unit.CurrentOrder, "and the unit is on it, not left on hold");
+        }
+
+        /// <summary>Moonwell's calls that give the unit an order event are from code: MoveTo's stop, a slot move's 852005 and a change of owner's stop are never answered; an item's use, an instant order, isn't either, whoever gives it.</summary>
+        public static void CodeCalls(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var ear = unit.Add(new OrderEar());
+            var brain = unit.Add(new StepBrain { FullControl = true });
+            var item = Item.Of(world.NewItem(ObjectTypes.FourCC("ebtf")))!;
+            world.PutInSlot(unit.Handle, 0, item.Handle);
+            world.Orders.Clear();
+
+            brain.OrderAt(Orders.Move, 500f, 0f);
+            unit.MoveTo(100f, 0f);
+            Expect.Equal("", unit.CurrentOrder, "MoveTo stops the unit");
+            brain.OrderAt(Orders.Move, 500f, 0f);
+            Expect.True(unit.Give(item, 3), "the item moves to the fourth slot");
+            Expect.Equal("move", unit.CurrentOrder, "and the move goes on");
+            unit.Owner = Player.Get(1);
+            Expect.Equal("", unit.CurrentOrder, "a change of owner stops the unit");
+            world.PlayerOrdersId(unit.Handle, 852008, OrderKind.None);
+            BrainCases.Steps(world, 2);
+            Expect.Equal(6, ear.Heard.Count, "each fired its order event: the two moves, two stops, the slot move and the use");
+            Expect.Equal("point move, point move", Given(world), "and none is answered with hold position");
+        }
+
+        /// <summary>A hold position from code is left as it is: a pick on it gives nothing, and given back the unit gets no stop and keeps its spot; after an order not from code a pick is held again.</summary>
+        public static void CodeHold(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var brain = unit.Add(new StepBrain { FullControl = true });
+            brain.Order(Orders.HoldPosition);
+            world.Orders.Clear();
+
+            world.Acquire(unit.Handle);
+            Expect.Equal(0, world.Orders.Count, "a unit the brain put on hold gives nothing when it picks a target");
+            brain.FullControl = false;
+            Expect.Equal(0, world.Orders.Count, "and given back, no stop moves it off its spot");
+
+            brain.FullControl = true;
+            unit.Order(Orders.HoldPosition);
+            world.Orders.Clear();
+            world.Acquire(unit.Handle);
+            Expect.Equal(0, world.Orders.Count, "the unit's own Order is from code too");
+
+            world.PlayerOrders(unit.Handle, Orders.Move, 900f, 0f);
+            BrainCases.Steps(world, 1);
+            world.Orders.Clear();
+            world.Acquire(unit.Handle);
+            Expect.Equal("immediate holdposition", Given(world), "after an order not from code, a pick is held again");
+        }
+
+        /// <summary>An order not from code that a reaction refuses gets no hold: the order Moonwell gives back holds.</summary>
+        public static void Refused(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var brain = unit.Add(new StepBrain { FullControl = true });
+            var ear = unit.Add(new OrderEar());
+            ear.During = order =>
+            {
+                if (order.Name == Orders.Patrol)
+                {
+                    order.Cancel();
+                }
+            };
+            brain.OrderAt(Orders.Move, 500f, 0f);
+            world.Orders.Clear();
+
+            world.PlayerOrders(unit.Handle, Orders.Patrol, 300f, 0f);
+            Expect.Equal("point move", Given(world), "the reaction refuses it, and the brain's move is given back");
+            BrainCases.Steps(world, 2);
+            Expect.Equal("point move", Given(world), "no hold comes to undo that");
+            Expect.Equal("move", unit.CurrentOrder, "and the unit goes on with the move");
         }
 
         /// <summary>Two brains on one unit: it is under full control while either has it, both are woken by an answer, and the last to give it up gives the unit back; its picks are watched once.</summary>
@@ -220,8 +314,10 @@ namespace Moonwell.Testing
             var first = unit.Add(new StepBrain { FullControl = true });
             var second = unit.Add(new StepBrain { FullControl = true });
             Expect.Equal(1, Watches(world, unit), "the unit's picks are watched once");
+            world.Orders.Clear();
             world.Acquire(unit.Handle);
             first.FullControl = false;
+            Expect.Equal("immediate holdposition", Given(world), "the first giving it up gives no stop while the other has it");
             world.Orders.Clear();
 
             world.PlayerOrders(unit.Handle, Orders.Move, 900f, 0f);
@@ -255,7 +351,7 @@ namespace Moonwell.Testing
 
             brain.FullControl = false;
             brain.FullControl = true;
-            Expect.Equal(1, Watches(world, other), "the unit's picks are watched once in its life");
+            Expect.Equal(1, Watches(world, other), "set off and on again, the unit's picks are watched once");
         }
     }
 

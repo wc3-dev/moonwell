@@ -88,6 +88,10 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.full-control.code-orders", Run = FullControlCases.CodeOrders });
             list.Add(new Case { Name = "ai.full-control.sleep", Run = FullControlCases.Sleep });
             list.Add(new Case { Name = "ai.full-control.give-back", Run = FullControlCases.GiveBack });
+            list.Add(new Case { Name = "ai.full-control.not-stuck-on-hold", Run = FullControlCases.NotStuckOnHold });
+            list.Add(new Case { Name = "ai.full-control.code-calls", Run = FullControlCases.CodeCalls });
+            list.Add(new Case { Name = "ai.full-control.code-hold", Run = FullControlCases.CodeHold });
+            list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
             list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
             list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
             list.Add(new Case { Name = "ai.utility.curves", Run = UtilityCases.Curves });
