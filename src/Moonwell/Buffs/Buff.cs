@@ -25,6 +25,9 @@ namespace Moonwell
         [LocalSafe]
         public float Strength { get; protected set; } = 0.0f;
 
+        /// <summary>The icon a kit BuffRow shows for the buff, as ReplaceableTextures\CommandButtons\BTNImmolationOn.blp, set in the class's constructor; empty unless set, and then a buff that stands for a game buff (one a spell puts on, or a declared buff's) shows the game buff's icon, and any other none (decision 340). Not Icon, which is a declared buff's object data.</summary>
+        public string HudIcon { get; protected set; } = "";
+
         /// <summary>For a strongest buff, the apply it runs at.</summary>
         internal Hold? current;
 

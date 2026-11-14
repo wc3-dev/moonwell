@@ -32,6 +32,9 @@ namespace Moonwell
         /// <summary>The owner of each unit in selection when it was selected, in the same order.</summary>
         private readonly List<Player> selectedOwners = new List<Player>();
 
+        /// <summary>The selection OnSelectionChanged last ran with, in order.</summary>
+        private readonly List<Unit> reportedSelection = new List<Unit>();
+
         /// <summary>The player's name when the player object was made, at the start, which a save is tied to, as the map may rename the player.</summary>
         internal string StartName { get; }
 
@@ -683,6 +686,25 @@ namespace Moonwell
 
                 return units;
             }
+        }
+
+        /// <summary>Whether Selection differs from the one OnSelectionChanged last ran with, units or order; it is kept as the last one when it does.</summary>
+        internal bool SelectionMoved()
+        {
+            var now = Selection;
+            var same = now.Count == reportedSelection.Count;
+            for (var i = 0; same && i < now.Count; i++)
+            {
+                same = now[i] == reportedSelection[i];
+            }
+
+            if (!same)
+            {
+                reportedSelection.Clear();
+                reportedSelection.AddRange(now);
+            }
+
+            return !same;
         }
 
         /// <summary>Selects only this unit for the player, as a click does: the player's machine clears its selection and selects the unit, and the game's events then reach every machine, with OnDeselected and OnSelected, a moment later. Does nothing for a unit that is gone, dead, hidden or has Locust (seen 11-06). A change to the game: not for Local.For.</summary>

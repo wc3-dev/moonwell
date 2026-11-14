@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnSelectionChanged", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport });
                 }
 
                 return mapHooks;
@@ -85,6 +85,12 @@ namespace Moonwell
         /// <param name="deselectedUnit">The unit deselected.</param>
         /// <param name="deselectingPlayer">The player who deselected it.</param>
         public virtual void OnUnitDeselected(Unit deselectedUnit, Player deselectingPlayer)
+        {
+        }
+
+        /// <summary>Runs once when a player's selection has changed, for the game's components, then that player's: after the instant's selection events are all in (a drag over twelve units is one change, not 24), and only when the units or their order differ from the last time it ran for the player. Read player.Selection inside. A unit the game drops with no event (it dies, is removed, hidden, gets Locust or changes hands) shows at the next change (decision 341).</summary>
+        /// <param name="player">The player whose selection changed.</param>
+        public virtual void OnSelectionChanged(Player player)
         {
         }
 
