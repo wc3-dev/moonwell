@@ -98,23 +98,23 @@ namespace Moonwell.Testing
         /// <summary>Adds the cases for the AI package's behaviour trees: each node, the watching of When, and the tree's Run and Stop.</summary>
         private static void AddAITrees(List<Case> list)
         {
-            list.Add(new Case { Name = "ai.trees.sequence", Run = TreeNodeCases.Sequence });
-            list.Add(new Case { Name = "ai.trees.select", Run = TreeNodeCases.Select });
-            list.Add(new Case { Name = "ai.trees.when-cuts-in", Run = TreeNodeCases.WhenCutsIn });
-            list.Add(new Case { Name = "ai.trees.when-ends-its-branch", Run = TreeNodeCases.WhenEndsItsBranch });
-            list.Add(new Case { Name = "ai.trees.only-a-select-watches", Run = TreeNodeCases.OnlyASelectWatches });
-            list.Add(new Case { Name = "ai.trees.parallel", Run = TreeNodeCases.Parallel });
-            list.Add(new Case { Name = "ai.trees.repeat", Run = TreeNodeCases.Repeat });
-            list.Add(new Case { Name = "ai.trees.invert-and-succeed", Run = TreeNodeCases.InvertAndSucceed });
-            list.Add(new Case { Name = "ai.trees.facts", Run = TreeNodeCases.Facts });
-            list.Add(new Case { Name = "ai.trees.wait", Run = TreeNodeCases.Wait });
-            list.Add(new Case { Name = "ai.trees.cooldown", Run = TreeNodeCases.Cooldown });
-            list.Add(new Case { Name = "ai.trees.timeout", Run = TreeNodeCases.Timeout });
-            list.Add(new Case { Name = "ai.trees.pick", Run = TreeNodeCases.Pick });
-            list.Add(new Case { Name = "ai.trees.one-tree-per-node", Run = TreeNodeCases.OneTreePerNode });
-            list.Add(new Case { Name = "ai.trees.nested-run", Run = TreeNodeCases.NestedRun });
-            list.Add(new Case { Name = "ai.trees.stop", Run = TreeNodeCases.Stop });
-            list.Add(new Case { Name = "ai.trees.unit-brain", Run = TreeNodeCases.UnitBrainTree });
+            list.Add(new Case { Name = "ai.trees.sequence", Run = BehaviourTreeCases.Sequence });
+            list.Add(new Case { Name = "ai.trees.select", Run = BehaviourTreeCases.Select });
+            list.Add(new Case { Name = "ai.trees.when-cuts-in", Run = BehaviourTreeCases.WhenCutsIn });
+            list.Add(new Case { Name = "ai.trees.when-ends-its-branch", Run = BehaviourTreeCases.WhenEndsItsBranch });
+            list.Add(new Case { Name = "ai.trees.only-a-select-watches", Run = BehaviourTreeCases.OnlyASelectWatches });
+            list.Add(new Case { Name = "ai.trees.parallel", Run = BehaviourTreeCases.Parallel });
+            list.Add(new Case { Name = "ai.trees.repeat", Run = BehaviourTreeCases.Repeat });
+            list.Add(new Case { Name = "ai.trees.invert-and-succeed", Run = BehaviourTreeCases.InvertAndSucceed });
+            list.Add(new Case { Name = "ai.trees.facts", Run = BehaviourTreeCases.Facts });
+            list.Add(new Case { Name = "ai.trees.wait", Run = BehaviourTreeCases.Wait });
+            list.Add(new Case { Name = "ai.trees.cooldown", Run = BehaviourTreeCases.Cooldown });
+            list.Add(new Case { Name = "ai.trees.timeout", Run = BehaviourTreeCases.Timeout });
+            list.Add(new Case { Name = "ai.trees.pick", Run = BehaviourTreeCases.Pick });
+            list.Add(new Case { Name = "ai.trees.one-tree-per-node", Run = BehaviourTreeCases.OneTreePerNode });
+            list.Add(new Case { Name = "ai.trees.nested-run", Run = BehaviourTreeCases.NestedRun });
+            list.Add(new Case { Name = "ai.trees.stop", Run = BehaviourTreeCases.Stop });
+            list.Add(new Case { Name = "ai.trees.unit-brain", Run = BehaviourTreeCases.UnitBrainTree });
             list.Add(new Case { Name = "ai.trees.move-to", Run = TreeUnitCases.MoveTo });
             list.Add(new Case { Name = "ai.trees.attack", Run = TreeUnitCases.Attack });
             list.Add(new Case { Name = "ai.trees.cast", Run = TreeUnitCases.Cast });

@@ -4,9 +4,6 @@ using static Moonwell.AI.Nodes;
 
 namespace Moonwell.Testing
 {
-    // shortcut: the file sorts after Fact.cs on purpose, as TreeNodeCases.cs does: a file before Fact.cs that names a Fact<T> makes it
-    // before Fact.cs's own imports are filled, stopping the script at load. Rename freely once Fact<T> no longer reads its file's imports
-    // when made.
     /// <summary>Cases for the behaviour trees' unit actions: MoveTo, Attack, Cast, FollowRoute and UseItem, each ordering the unit through its brain.</summary>
     public static class TreeUnitCases
     {

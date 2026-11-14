@@ -5,11 +5,8 @@ using static Moonwell.AI.Nodes;
 
 namespace Moonwell.Testing
 {
-    // shortcut: the file sorts after Fact.cs on purpose: the script runs each file's imports in file-name order, and a file before
-    // Fact.cs that names a Fact<T> makes it before Fact.cs's own imports are filled, stopping the script at load. Rename freely once
-    // Fact<T> no longer reads its file's imports when made.
     /// <summary>Cases for the AI package's behaviour trees: each node's rules, the watching of When in a Select, and the tree's Run and Stop.</summary>
-    public static class TreeNodeCases
+    public static class BehaviourTreeCases
     {
         /// <summary>The type id of the cases' units.</summary>
         private static readonly int Footman = ObjectTypes.FourCC("hfoo");
