@@ -395,6 +395,7 @@ namespace Moonwell.Build.Tests
         {
             var parent = folders.TemporaryFolderOutsideRepository();
             var map = packed.TemplateMap(parent);
+            Assert.True(File.Exists(Path.Combine(map, ".editorconfig")));
             WriteFeedConfig(map);
 
             // The map's own code is the template's, so a failure shows the build's output.

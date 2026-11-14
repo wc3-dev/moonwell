@@ -204,6 +204,7 @@ namespace Moonwell.Build.Tests
             Assert.Contains("namespace MyMap.Heroes", File.ReadAllText(Path.Combine(folder, "Heroes", "Champion.cs")));
             Assert.DoesNotContain("MoonwellMap", File.ReadAllText(Path.Combine(folder, "Map.cs")));
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".gitignore")), File.ReadAllBytes(Path.Combine(folder, ".gitignore")));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".editorconfig")), File.ReadAllBytes(Path.Combine(folder, ".editorconfig")));
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, "map", "war3map.w3e")), File.ReadAllBytes(Path.Combine(folder, "map", "war3map.w3e")));
             Assert.False(Directory.Exists(Path.Combine(folder, ".template.config")));
             Assert.Equal(Directory.GetFiles(Path.Combine(template, "map")).Length, Directory.GetFiles(Path.Combine(folder, "map")).Length);
