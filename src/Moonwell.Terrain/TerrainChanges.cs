@@ -48,9 +48,18 @@ namespace Moonwell
         /// corner each, row by row from the bottom left, <paramref name="columns"/> across and 128 apart. <c>Height</c> and
         /// the rest follow as for a single <c>Raise</c>. A corner outside the map is left out. The array is copied. A grid
         /// that is not rows of <paramref name="columns"/> is refused.
+        /// <para>
+        /// The game makes each new crater slower the more it holds (about 10 µs with none, 50 µs at 25,000 and 500 µs at
+        /// 85,000, 3.0.1.24371), so a grid of more than some tens of thousands of corners is better raised by fewer, wider
+        /// craters: with a <paramref name="spacing"/> above 1, a crater stands every so many corners, the array holds one
+        /// amount a crater, and each moves the corners within its <paramref name="radius"/> by its amount x cos(90 degrees x
+        /// distance / radius), as the game's crater does; a corner moves by the sum of the craters that reach it. The
+        /// spacing 1 and radius 128 it takes unless set are a crater a corner, as above. A spacing below 1 or a radius of 0
+        /// or less is refused.
+        /// </para>
         /// </summary>
         [ChangesState]
-        public static TerrainChange Raise(float x, float y, int columns, float[] by, Scope scope)
+        public static TerrainChange Raise(float x, float y, int columns, float[] by, Scope scope, int spacing = 1, float radius = 128f)
         {
             var amounts = new float[by.Length];
             for (var k = 0; k < by.Length; k++)
@@ -58,7 +67,7 @@ namespace Moonwell
                 amounts[k] = by[k];
             }
 
-            return OverGrid(TerrainChange.Raise, x, y, columns, amounts, null, scope, "Terrain.Raise");
+            return OverGrid(TerrainChange.Raise, x, y, columns, amounts, null, scope, "Terrain.Raise", spacing, radius);
         }
 
         /// <summary>Rings that run out from a point over some seconds. Only for the look: <c>Height</c> does not see it, and the ground is as before after.</summary>
@@ -343,15 +352,23 @@ namespace Moonwell
         }
 
         /// <summary>A change over a grid of corners, its first the map's corner nearest (x, y); refused for a grid that is not rows of columns.</summary>
-        private static TerrainChange OverGrid(int kind, float x, float y, int columns, float[]? amounts, int[]? values, Scope scope, string label)
+        private static TerrainChange OverGrid(int kind, float x, float y, int columns, float[]? amounts, int[]? values, Scope scope, string label, int spacing = 1, float radius = -1f)
         {
             var length = amounts != null ? amounts.Length : values!.Length;
             var fits = columns >= 1 && length >= columns && length % columns == 0;
+            var spaced = spacing >= 1 && (kind != TerrainChange.Raise || radius > 0f);
             var grid = Grid;
-            var change = new TerrainChange(kind, grid.Left, grid.Bottom, Nearest((x - grid.Left) / 128f), Nearest((y - grid.Bottom) / 128f), fits ? columns : 0, fits ? length / columns : 0, amounts, values);
+            var change = new TerrainChange(kind, grid.Left, grid.Bottom, Nearest((x - grid.Left) / 128f), Nearest((y - grid.Bottom) / 128f), fits && spaced ? columns : 0, fits && spaced ? length / columns : 0, amounts, values, spaced ? spacing : 1, radius);
             if (!fits)
             {
                 Errors.Refuse(label, "a grid of " + length + " corners is not rows of " + columns);
+                change.End();
+                return change;
+            }
+
+            if (!spaced)
+            {
+                Errors.Refuse(label, "craters a spacing of " + spacing + " corners apart and a radius of " + radius + ": the spacing is 1 or more and the radius above 0");
                 change.End();
                 return change;
             }

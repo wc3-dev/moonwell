@@ -60,7 +60,10 @@ namespace Moonwell
         /// <summary>The row, in the map's grid, of a grid change's first corner.</summary>
         internal readonly int FirstRow;
 
-        /// <summary>How far a grid raise moves each corner, row by row from the bottom left; null for another change.</summary>
+        /// <summary>The corners between a grid raise's craters, 1 for a crater a corner; its craters' radius is <c>Radius</c>.</summary>
+        internal readonly int Spacing;
+
+        /// <summary>How far a grid raise moves each corner, or each crater when its craters stand apart, row by row from the bottom left; null for another change.</summary>
         internal readonly float[]? Amounts;
 
         /// <summary>A grid change's tile or pathing kinds for each corner, row by row from the bottom left, 0 for a corner it leaves; null for another change.</summary>
@@ -75,18 +78,19 @@ namespace Moonwell
         /// <summary>
         /// A change over a grid of corners 128 apart, the first at a column and row of the map's grid, whose corner 0, 0 is
         /// at (left, bottom). Its box is the 128 squares around its corners: a pathing change holds the cells whose centres
-        /// are in a corner's square.
+        /// are in a corner's square. A grid raise's craters stand <paramref name="spacing"/> corners apart, each of the radius.
         /// </summary>
-        internal TerrainChange(int kind, float left, float bottom, int firstColumn, int firstRow, int across, int up, float[]? amounts, int[]? values)
+        internal TerrainChange(int kind, float left, float bottom, int firstColumn, int firstRow, int across, int up, float[]? amounts, int[]? values, int spacing = 1, float radius = -1f)
         {
             Kind = kind;
             X = left + firstColumn * 128f;
             Y = bottom + firstRow * 128f;
-            Radius = -1f;
+            Radius = radius;
+            Spacing = spacing;
             MinX = X - 64f;
             MinY = Y - 64f;
-            MaxX = X + (across - 1) * 128f + 64f;
-            MaxY = Y + (up - 1) * 128f + 64f;
+            MaxX = X + (across - 1) * spacing * 128f + 64f;
+            MaxY = Y + (up - 1) * spacing * 128f + 64f;
             FirstColumn = firstColumn;
             FirstRow = firstRow;
             Across = across;
