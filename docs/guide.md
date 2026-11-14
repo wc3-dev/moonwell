@@ -2264,6 +2264,87 @@ heroes.Picked += (who, hero) => who.Select(hero);
   ```
 - Events run as frames' do: synced, with the player, and not inside `Local.For`.
 
+### HUD parts
+
+The kit's HUD parts are frames for a unit's frame, its bars, action buttons, a cast bar, a row of buffs and a list of the
+units selected. Each is laid out in the theme (`Kit.Theme.Hud` for the border, `LifeBar`, `ManaBar`, `CastBar`,
+`Interrupted` and `Backing` for the bars), and each of its pieces is a frame of its own, which a map may place again,
+size or give another texture.
+
+```csharp
+var frame = Screen.Add(new UnitFrame { Anchor = FramePoint.TopLeft }, this, shownTo: player);
+frame.Show(hero);                               // icon, name, level, life, mana and buffs, followed from now on
+frame.Add(frame.Life, 90, 45, 119, 12);         // a piece placed again, in Screen.DesignHeight units
+frame.Life.Bar.Texture = Looks.Wow.HealthFill;  // and given the map's own art
+frame.Art.Texture = Looks.Wow.PlayerFrame;      // over the bars, under the texts
+
+var fire = bar.Add(new ActionButton { Icon = @"ReplaceableTextures\CommandButtons\BTNFireBolt.blp", Hotkey = "Q" });
+fire.Clicked += who => CastFireball(who);
+fire.Cooldown(8f);                              // dark, then uncovered clockwise over 8 s
+fire.Count = 3;
+
+var cast = Screen.Add(new CastBar(), this, shownTo: player);
+cast.Start("Fireball", 2.5f, @"ReplaceableTextures\CommandButtons\BTNFireBolt.blp");
+cast.Interrupt();                               // red, "Interrupted", faded out
+
+var party = Screen.Add(new SelectionList { Anchor = FramePoint.Left }, this, shownTo: player);
+party.Follow(player);
+```
+
+- `StatusBar` is a `Backing`, a `Bar` and a `Label` over both. `Follow(unit, Vital.Life)` or `Vital.Mana` follows a
+  unit, read 20 times a second on one timer for every part, and drawn again only when it changed; a dead or gone unit
+  reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life rounded up as the game shows it),
+  `Percent` or `None`.
+- `UnitFrame` has `Portrait`, `NameLabel`, `LevelLabel`, `Life`, `Mana`, `Buffs` (a `BuffRow` below the frame) and
+  `Art`, an empty image over the bars and under the texts for a map's own frame art. It is hidden until `Show(unit)`,
+  and `Show(null)` hides it again. The portrait is the unit's icon, each machine its own as the graphics mode can give
+  another, so its `Texture` reads empty; the name is each machine's own, as `ShowNameOf` gives it. To put the game's
+  moving portrait in it, `player.GameUi().Portrait.Fill(frame.Portrait)`.
+- `ActionButton` is an icon button with `Hotkey` (the key's text in the top right corner; it only shows the key, see
+  below), `Count` (a number in the bottom right, `null` for none) and `Cooldown(seconds)`, which darkens the icon and
+  uncovers it clockwise from the top until the time is up; `Cooldown(0)` ends it and `CooldownLeft` reads what is left.
+  The button still takes clicks while it cools. The sweep is 64 dark images the build writes into a map that uses the
+  kit: the game's own sweep model, put in a frame, draws at a size of its own, dark blue, with a second sweep standing
+  under it (seen 11-14).
+- A key that presses an action button is the map's, from `Moonwell.Input`:
+
+  ```csharp
+  public sealed class ActionKeys : PlayerComponent, IKeyWatch
+  {
+      public void OnKeyPressed(Keyboard keyboard, Key key)
+      {
+          if (key == Key.Q) { CastFireball(Player); }
+      }
+  }
+  ```
+
+- `CastBar` is driven by the map: `Start(name, seconds, icon)` shows it and fills it over the seconds, then hides it;
+  `Interrupt()` fills it in the theme's `Interrupted` texture, says `InterruptedText` and fades it out over half a
+  second. A `Start` replaces a cast running or fading. It does not follow a unit's own game casts.
+- `BuffRow.Show(unit)` shows the unit's buffs that have an icon, in the order they came on, with the seconds left under
+  each (`2m` from a minute on, nothing for a buff with no expiry). The icon is the buff class's `HudIcon`, set in its
+  constructor; with none, a buff that stands for a game buff (one a spell puts on, or a declared buff) shows that game
+  buff's icon. A buff with neither is left out, and so are the game's own buffs that have no Moonwell class. Eight to a
+  line unless `Columns` says otherwise.
+
+  ```csharp
+  public sealed class Burning : Buff
+  {
+      public Burning()
+      {
+          Duration = 6f;
+          HudIcon = @"ReplaceableTextures\CommandButtons\BTNImmolationOn.blp";
+      }
+  }
+  ```
+
+- `SelectionList.Follow(player)` shows one small `UnitFrame` (icon, name, life and mana) for each unit the player has
+  selected, up to 24, in the order selected, one column down unless `Columns` is set. It changes with
+  `OnSelectionChanged` and drops a unit that dies or goes at once. A click on an entry selects that unit alone, for the
+  player who clicked; frames do not see Shift, so there is no Shift-click. `Entry = () => new PartyFrame()` makes a
+  map's own `UnitFrame` class for each, set before `Follow`. The game's active subgroup (Tab) is not shown: no native
+  reads it.
+
 ## Boards and dialogs
 
 A multiboard is the game's table in the top right; a leaderboard its list of names and numbers there; a dialog its
@@ -2474,6 +2555,10 @@ public sealed class Tavern : UnitComponent
 - `Select` and the rest change the selection on the player's own machine only, unit by unit, as the game takes it; they
   are changes, not for `Local.For`. A dead, hidden or Locust unit is not selected. Seen in single player; with two
   players it is not checked yet.
+- `OnSelectionChanged(Player player)` on the game's components and that player's runs once when a player's selection
+  has changed: after the instant's events are all in, so a drag over twelve units is one change, not 24, and only when
+  the units or their order differ from the last time; read `player.Selection` inside. A unit the game drops with no
+  event shows at the next change.
 - A map listens for selections only when its code writes a selection reaction or reads `Selection`.
 
 `LevelOf<T>()`, `SetLevel<T>(2)` and `AddLevel<T>()` take an upgrade class;

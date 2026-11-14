@@ -53,6 +53,7 @@ namespace Moonwell
             DayChange.Reset();
             FloatingTexts.Reset();
             MovingTexts.Reset();
+            SelectionChanges.Reset();
             LastingLightning.Reset();
             Music.Reset();
             Cinematic.Reset();

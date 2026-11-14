@@ -8,6 +8,9 @@ namespace Moonwell
 
         internal string texture = "";
 
+        /// <summary>The texture this machine draws in place of Texture, such as a unit's icon, which can differ by graphics mode; null for Texture. Setting Texture clears it.</summary>
+        internal string? local;
+
         /// <summary>An empty text over the image that takes its mouse once it is listened to, as an image lets the mouse through; null until then.</summary>
         internal framehandle? catcher;
 
@@ -29,6 +32,7 @@ namespace Moonwell
                 }
 
                 texture = value;
+                local = null;
                 if (handle != null)
                 {
                     FramesSystem.World.PaintFrame(handle, value);
@@ -109,12 +113,29 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Draws a texture of this machine's own, called on every machine with its own: Texture keeps reading the shared one given, and setting it again ends this.</summary>
+        internal void ShowLocal(string shared, string own)
+        {
+            if (HasEnded)
+            {
+                return;
+            }
+
+            texture = shared;
+            local = own;
+            if (handle != null)
+            {
+                FramesSystem.World.PaintFrame(handle, own.Length > 0 ? own : Blank);
+            }
+        }
+
         /// <summary>Gives the game the texture, then the points and looks.</summary>
         internal override void Place()
         {
-            if (texture.Length > 0)
+            var shown = local ?? texture;
+            if (shown.Length > 0)
             {
-                FramesSystem.World.PaintFrame(handle!, texture);
+                FramesSystem.World.PaintFrame(handle!, shown);
             }
 
             base.Place();

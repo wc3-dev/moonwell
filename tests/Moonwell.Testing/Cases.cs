@@ -127,6 +127,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "selection.read-in-local", Run = SelectionCases.ReadInLocal });
             list.Add(new Case { Name = "selection.select-calls", Run = SelectionCases.SelectCalls });
             list.Add(new Case { Name = "selection.only-when-wanted", Run = SelectionCases.OnlyWhenWanted });
+            list.Add(new Case { Name = "selection.changed-once", Run = KitHudCases.SelectionChangedOnce });
             list.Add(new Case { Name = "teams.numbered", Run = TeamCases.Numbered });
             list.Add(new Case { Name = "teams.players", Run = TeamCases.Players });
             list.Add(new Case { Name = "teams.undeclared", Run = TeamCases.Undeclared });
@@ -1717,6 +1718,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.scoreboard", Run = KitWindowCases.Scoreboard });
             list.Add(new Case { Name = "kit.talents", Run = KitWindowCases.Talents });
             list.Add(new Case { Name = "kit.talent-tabs", Run = KitWindowCases.TalentTabs });
+            list.Add(new Case { Name = "kit.status-bar-follows", Run = KitHudCases.StatusBarFollows });
+            list.Add(new Case { Name = "kit.status-bar-only-on-change", Run = KitHudCases.StatusBarOnlyOnChange });
+            list.Add(new Case { Name = "kit.unit-frame-shows", Run = KitHudCases.UnitFrameShows });
+            list.Add(new Case { Name = "kit.action-button-cooldown", Run = KitHudCases.ActionButtonCooldown });
+            list.Add(new Case { Name = "kit.cast-bar-runs", Run = KitHudCases.CastBarRuns });
+            list.Add(new Case { Name = "kit.buff-row-shows", Run = KitHudCases.BuffRowShows });
+            list.Add(new Case { Name = "kit.selection-list-follows", Run = KitHudCases.SelectionListFollows });
+            list.Add(new Case { Name = "kit.selection-list-entry", Run = KitHudCases.SelectionListEntry });
             list.Add(new Case { Name = "fdf.child-found", Run = FdfCases.ChildFound });
             list.Add(new Case { Name = "fdf.found-not-pooled", Run = FdfCases.FoundNotPooled });
             list.Add(new Case { Name = "fdf.child-refused", Run = FdfCases.ChildRefused });
