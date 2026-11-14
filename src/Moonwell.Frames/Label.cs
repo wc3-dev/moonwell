@@ -3,9 +3,10 @@ using System;
 namespace Moonwell
 {
     /// <summary>
-    /// A line or block of text, in the game's font; Scale makes its text bigger and leaves its place and box alone. A label lets clicks through to what is under it
-    /// unless Enabled is set. A font of its own is not offered: BlzFrameSetFont on a TEXT by type changes neither its height
-    /// nor its letters (seen 11-03).
+    /// A line or block of text, in the game's font unless Font names another, at the game's height unless Size is set; Scale
+    /// makes its text bigger and leaves its place and box alone. A label lets clicks through to what is under it unless
+    /// Enabled is set. The game takes a TEXT's font and height only from its template, by path, and BlzFrameSetFont
+    /// changes nothing (seen 11-13), so Size, Font and Shadow pick one of the text templates the build writes.
     /// </summary>
     public class Label : Frame
     {
@@ -17,6 +18,22 @@ namespace Moonwell
 
         /// <summary>The text ShowLocal shows on this machine, until Text is set; null for the shared text.</summary>
         internal string? local;
+
+        internal float size;
+
+        internal string font = "";
+
+        internal bool shadow;
+
+        /// <summary>The text templates' heights, in the game's units: 0.005 to 0.04, in steps of 0.0005 (TextStep).</summary>
+        internal const int FirstStep = 10;
+
+        internal const int LastStep = 80;
+
+        internal const float TextStep = 0.0005f;
+
+        /// <summary>The step for a label given a Font or Shadow and no Size: 0.0095, nearest the game's own 0.0094 (seen 11-13).</summary>
+        internal const int GameStep = 19;
 
         /// <summary>Makes a label, to be added to the screen or to another frame.</summary>
         public Label()
@@ -77,6 +94,104 @@ namespace Moonwell
                     Align();
                 }
             }
+        }
+
+        /// <summary>The text's height in the units Screen.DesignHeight sets (12 is the game's own at 768), snapped to the nearest 0.0005 of the game's units from 0.005 to 0.04; 0, the game's, unless set. Read when the label is made, as the game takes it only from a template.</summary>
+        [LocalSafe]
+        public float Size
+        {
+            get { return size; }
+            set
+            {
+                if (Unmade("Size"))
+                {
+                    size = value;
+                    var step = (int)(value * 0.6f / Screen.DesignHeight / TextStep + 0.5f);
+                    if (value != 0.0f && (step < FirstStep || step > LastStep))
+                    {
+                        Errors.Refuse(Names.NameOf(this) + ".Size", value + " is outside the text sizes, 0.005 to 0.04 of the game's units: drawn at the nearest");
+                    }
+                }
+            }
+        }
+
+        /// <summary>The path in the map of a .ttf font in the map's assets ("war3mapImported\Fonts\Title.ttf"), for which the build writes the text templates; empty for the game's font unless set. Read when the label is made.</summary>
+        [LocalSafe]
+        public string Font
+        {
+            get { return font; }
+            set
+            {
+                if (Unmade("Font"))
+                {
+                    font = value;
+                }
+            }
+        }
+
+        /// <summary>Whether the text has a black shadow, down and right; false unless set. Read when the label is made.</summary>
+        [LocalSafe]
+        public bool Shadow
+        {
+            get { return shadow; }
+            set
+            {
+                if (Unmade("Shadow"))
+                {
+                    shadow = value;
+                }
+            }
+        }
+
+        /// <summary>The build's text template for the label's Size, Font and Shadow; the label's Template when it has one or none of them is set.</summary>
+        internal override string MakeTemplate
+        {
+            get
+            {
+                if (Template.Length > 0 || (size == 0.0f && font.Length == 0 && !shadow))
+                {
+                    return Template;
+                }
+
+                var step = size == 0.0f ? GameStep : (int)(size * 0.6f / Screen.DesignHeight / TextStep + 0.5f);
+                return TextTemplate(font, Math.Min(Math.Max(step, FirstStep), LastStep), shadow);
+            }
+        }
+
+        /// <summary>A text template's name, as the build writes it: MoonwellText, the font's path with each letter lowered and all else an underscore (Game for the game's font), the step, and S for a shadow.</summary>
+        internal static string TextTemplate(string fontPath, int step, bool shadowed)
+        {
+            return "MoonwellText_" + (fontPath.Length == 0 ? "Game" : FontKey(fontPath)) + "_" + step + (shadowed ? "S" : "");
+        }
+
+        private static string FontKey(string fontPath)
+        {
+            var lower = fontPath.ToLowerInvariant();
+            var key = "";
+            for (var i = 0; i < lower.Length; i++)
+            {
+                var c = lower.Substring(i, 1);
+                key += "abcdefghijklmnopqrstuvwxyz0123456789".IndexOf(c) >= 0 ? c : "_";
+            }
+
+            return key;
+        }
+
+        /// <summary>Whether a template's value may still be set: false, and reported, once the label is made; false once it has ended.</summary>
+        private bool Unmade(string what)
+        {
+            if (HasEnded)
+            {
+                return false;
+            }
+
+            if (handle != null)
+            {
+                Errors.Refuse(Names.NameOf(this) + "." + what, "read when the label is made: set it before adding the label");
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>A TEXT, which draws its text in the game's font (seen 10-14).</summary>
