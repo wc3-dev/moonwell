@@ -57,6 +57,12 @@ namespace Moonwell.AI
         /// <summary>Where the unit stood when the last order to a place was sent again.</summary>
         internal float retryY;
 
+        /// <summary>FullControl as set.</summary>
+        internal bool fullControl;
+
+        /// <summary>Whether the brain counts toward its unit's full control.</summary>
+        internal bool controlling;
+
         /// <summary>Makes the brain; it starts thinking once added.</summary>
         protected UnitBrain()
         {
@@ -74,6 +80,31 @@ namespace Moonwell.AI
         /// <summary>The brain's own blackboard, the first of its chain: then the blackboard of the unit's owner now, then the game's. It ends with the brain.</summary>
         [LocalSafe]
         public Blackboard Blackboard => mind.Board;
+
+        /// <summary>
+        /// Whether the brain has full control of its unit; false, the default, leaves the game's own unit AI on, as a unit
+        /// picks targets, hits back and goes home by itself. True stops it: a target the unit picks by itself with no order
+        /// is answered at once with hold position, and every order not from code (the game's, an AI script's, a person's
+        /// click) with hold position at the next step, waking the unit's brains, whose next order then always reaches the game;
+        /// the unit doesn't sleep. An enemy right beside it is still hit, as on hold position, and an order from code always
+        /// goes through, a hold position too, which is left as it is. Set it at any time, in OnAdded
+        /// too; the unit is under full control while any of its brains has it. Set false, or the last such brain ending,
+        /// gives the unit back: it sleeps again if it could, and one left on Moonwell's hold gets a stop, so the game picks
+        /// up at once.
+        /// </summary>
+        public bool FullControl
+        {
+            get
+            {
+                return fullControl;
+            }
+
+            set
+            {
+                fullControl = value;
+                Control.Steer(this);
+            }
+        }
 
         /// <summary>Has the brain think at the next step, within 0.02 s: once in that step however many wakes come, a tick due then included. A wake from inside a step goes to the step after, unless the brain still waits to think from a wake in this one.</summary>
         public void Wake()
@@ -141,14 +172,16 @@ namespace Moonwell.AI
             finally
             {
                 mind.Start();
+                Control.Steer(this);
             }
         }
 
-        /// <summary>The brain has ended: so has its blackboard, and the loop counts it out.</summary>
+        /// <summary>The brain has ended: so has its blackboard, the loop counts it out, and it gives back its unit's full control.</summary>
         internal override void Finish()
         {
             base.Finish();
             mind.End();
+            Control.Steer(this);
         }
 
         /// <summary>

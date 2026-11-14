@@ -17,6 +17,9 @@ namespace Moonwell
         /// <summary>How deep order reactions are nested now: an order given inside an order reaction runs its own inside.</summary>
         private static int orderDepth;
 
+        /// <summary>How many of Moonwell's calls that give a unit an order event are open now (its Order, OrderAt and OrderOn, MoveTo, Give to a slot, a change of owner): an order whose event comes inside one is from code. A count, so a nested call can't reset it.</summary>
+        internal static int CodeOrders;
+
         /// <summary>The last orders a unit keeps: the newest and the two before it.</summary>
         private const int KeptOrders = 3;
 
@@ -88,6 +91,14 @@ namespace Moonwell
                 return;
             }
 
+            // Before the reactions, so an order a reaction gives is heard after this one. An instant order leaves what the unit does as it was.
+            var listener = Events.OrderListener;
+            if (listener != null && IsInstant(id))
+            {
+                listener = null;
+            }
+
+            listener?.Invoke(ordered, id, CodeOrders > 0);
             var order = new Order(ordered, id, Runtime.World.OrderName(id), kind, x, y, target, queue > 1);
             order.Previous = repeats ? last!.Previous : last;
             var carried = ordered.Carried;
@@ -127,7 +138,9 @@ namespace Moonwell
 
             if (order.IsCancelled)
             {
-                Refuse(ordered, carried);
+                // Refused, the order is handled by code: the listener hears what the unit is left with, the order given back or a stop.
+                var gaveBack = Refuse(ordered, carried);
+                listener?.Invoke(ordered, gaveBack ? carried!.Id : StopOrder, true);
             }
             else if (WorthGivingAgain(id))
             {
@@ -181,16 +194,18 @@ namespace Moonwell
         /// <summary>
         /// Refuses a cancelled order, after its reactions: the order the unit was carrying out is given back inside the event,
         /// which holds (seen 11-03); with none (a stop, a build or nothing came before), a stop a moment later, as a stop inside the
-        /// event does not hold. A queued order refused so ends the queue, as the game drops the orders queued after it.
+        /// event does not hold. A queued order refused so ends the queue, as the game drops the orders queued after it. True when
+        /// the order was given back.
         /// </summary>
-        private static void Refuse(Unit ordered, Order? carried)
+        private static bool Refuse(Unit ordered, Order? carried)
         {
             if (carried != null && !carried.Done && GiveBack(ordered, carried))
             {
-                return;
+                return true;
             }
 
             StopLater(ordered);
+            return false;
         }
 
         /// <summary>Gives a unit an earlier order again as Moonwell's own; false when it can't be given (its target is gone, or the game said no).</summary>
@@ -214,7 +229,7 @@ namespace Moonwell
         }
 
         /// <summary>Gives a unit an order whose event no reaction hears, and returns the game's answer.</summary>
-        private static bool GiveOwn(Unit ordered, Func<bool> give)
+        internal static bool GiveOwn(Unit ordered, Func<bool> give)
         {
             var before = ownOrder;
             ownOrder = ordered.Handle;
