@@ -1071,25 +1071,51 @@ namespace Moonwell
                 return false;
             }
 
+            var handle = WidgetHandle(target);
+            return handle != null && Runtime.World.OrderUnitOn(Handle, order, handle);
+        }
+
+        /// <summary>Has the unit use an item it carries, with no place and no target, as a click on the item does, and returns the game's answer. False, and no call to the game, once the unit or the item is gone.</summary>
+        public bool UseItem(Item item)
+        {
+            return !IsGone && !item.IsGone && Runtime.World.UseItem(Handle, item.Handle);
+        }
+
+        /// <summary>Has the unit use an item it carries at a place, and returns the game's answer. False, and no call to the game, once the unit or the item is gone.</summary>
+        public bool UseItemAt(Item item, float x, float y)
+        {
+            return !IsGone && !item.IsGone && Runtime.World.UseItemAt(Handle, item.Handle, x, y);
+        }
+
+        /// <summary>Has the unit use an item it carries on a unit, an item or a destructable, and returns the game's answer. False, and no call to the game, once the unit, the item or the target is gone.</summary>
+        public bool UseItemOn(Item item, Widget target)
+        {
+            if (IsGone || item.IsGone || target.IsGone)
+            {
+                return false;
+            }
+
+            var handle = WidgetHandle(target);
+            return handle != null && Runtime.World.UseItemOn(Handle, item.Handle, handle);
+        }
+
+        /// <summary>The game's handle of a unit, an item or a destructable; null for any other widget.</summary>
+        private static widget? WidgetHandle(Widget target)
+        {
             var unit = target as Unit;
             if (unit != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, unit.Handle);
+                return unit.Handle;
             }
 
             var item = target as Item;
             if (item != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, item.Handle);
+                return item.Handle;
             }
 
             var destructable = target as Destructable;
-            if (destructable != null)
-            {
-                return Runtime.World.OrderUnitOn(Handle, order, destructable.Handle);
-            }
-
-            return false;
+            return destructable != null ? destructable.Handle : null;
         }
 
         /// <summary>
