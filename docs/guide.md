@@ -533,6 +533,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `AnimationSpeed` | read and set, 1 unless set; 0.5 plays at half speed, 0 holds the unit still mid-animation |
 | `AddAnimationTag(tag)`, `RemoveAnimationTag(tag)` | `AnimationTag.Defend`, `Alternate`, `Gold`, `Lumber`, `Work`, or any tag the game takes (`"upgrade first"`): the unit's animations play with it until it is removed |
 | `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
+| `UseItem(item)`, `UseItemAt(item, x, y)`, `UseItemOn(item, target)` | use an item the unit carries, as a click on it does, giving the game's answer; false once the unit, the item or the target is gone |
 | `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
@@ -1589,12 +1590,12 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
 - A unit brain's `Order`, `OrderAt` and `OrderOn` reach the game only when the order is new. A repeat, the same order
   on the same target or to a place within 32 of the last, gives true and is dropped while the unit still carries out
   the order its `CurrentOrder` read just after the last one was sent, or while the unit is idle and has done it:
-  within 64 of the place, its target dead or gone, or neither. It is sent again once another order took over, when the
-  unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives away. A unit idle
-  short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd jammed at one
-  place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends it again. An
-  order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and `OrderOn` send every
-  time.
+  within 64 of the place asked for, its target dead or gone, or neither. It is sent again once another order took
+  over, when the unit is idle with its target alive, and after its owner changed, as the game stops a unit it gives
+  away. A unit idle short of the place gets it once more; idle again within 32 of where it stood then, as in a crowd
+  jammed at one place, it has done it, and only an idle stop elsewhere, an order that is no repeat or a new owner sends
+  it again. An order the game refused is not kept, so the next is sent. The unit's own `Order`, `OrderAt` and
+  `OrderOn` send every time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
 ## AI: choosing by scores
@@ -1687,6 +1688,97 @@ unit.Add(new Grunt { HomeX = unit.X, HomeY = unit.Y, GoalX = camp.X, GoalY = cam
   `{ Life, Curve.Points(flee.Curve) }` and `{ EnemiesNear, 0, flee.Enemies, Curve.Rising }`. The `:float` keeps a
   curve of whole numbers, such as `0;1;1;0`, a list of `float`s, as `Points` takes. `Keep` can be set from data too.
 - An option's action is a plain method, so it can run anything, a behavior tree included.
+
+## AI: behaviour trees
+
+A brain can think with a behaviour tree: nodes built once, run from the root at each think, going on where the last
+pass left off.
+
+```csharp
+using Moonwell.AI;
+using static Moonwell.AI.Nodes;
+
+public sealed class Guard : UnitBrain
+{
+    public static readonly Fact<Unit?> Alarm = new Fact<Unit?>("alarm");
+    static readonly Fact<bool> Hurt = new Fact<bool>("hurt", keep: 0.5f,
+        read: board => board.Unit!.Life < board.Unit!.MaxLife * Data.Guards.Gate.FleeBelow);
+
+    public float HomeX, HomeY;
+    public Route? Out, Back;
+    readonly Tree tree;
+
+    public Guard()
+    {
+        tree = new Tree(this,
+            Select(
+                When(Hurt, MoveTo(() => HomeX, () => HomeY)),   // cuts in when Hurt turns true
+                When(Alarm, Attack(Alarm)),
+                Repeat(Sequence(FollowRoute(() => Out), FollowRoute(() => Back)))));
+    }
+
+    protected override void OnAdded() => ThinkEvery = 0.25f;
+    protected override void Think() => tree.Run();
+}
+```
+
+- A brain makes its tree in its constructor, `new Tree(this, root)`, from the helpers of `Nodes`, and runs it in
+  `Think`: each `tree.Run()` is one pass from the root, giving `Status.Running`, `Succeeded` or `Failed`. A node that
+  gives Running goes on at the next pass, and a root that ended starts again. A node is in one tree, at one place, so
+  each brain builds its own: a node put in a second place throws. `tree.Stop()` cuts off every running node; called
+  from a node during a pass, it waits for the pass to end. A `Run` from inside a `Run` of the same tree is reported
+  and refused.
+- Control: `Sequence` runs its children in order until one fails, `Select` until one succeeds; `Parallel` runs every
+  child at each pass, failing as soon as one fails; `Repeat(child, times)` starts the child anew each time it
+  succeeds, forever without `times`; `Invert` swaps success and failure, and `Succeed` succeeds however its child ends.
+- Checks and waits: `If(condition)` checks once, as a sequence's guard, and `When(condition, child)` runs the child
+  while the condition holds, checked at every pass; both also take a fact, a `Fact<bool>` holding when true and a fact
+  of a class when not null. `Wait(seconds)` waits; `Cooldown(seconds, child)` fails without starting the child until
+  that long after it ended; `Timeout(seconds, child)` halts a child that has run that long and fails. `Do(() => ...)`
+  is a leaf of your own function.
+- Unit actions order the unit through its brain, so a repeat it carries out never reaches the game. Each fails for a
+  dead or removed unit and a refused order, and on a player or game brain's tree is reported and fails.
+  - `MoveTo(() => x, () => y)` succeeds within 64 of the place, read at every pass so a moving place is followed.
+  - `Attack(target)`, a function or a `Fact<Unit?>`, follows a new target, succeeds once it dies, and fails when the
+    unit stands idle with it alive, as one that can't see or reach it.
+  - `Cast(order)`, at a place or on a target, runs while the unit carries the order out and succeeds once it stops: a
+    stun reads the same as a spell that went off. A second cast of the same spell is sent, and so is one on another
+    target; a cast the unit still carries out as its brain last gave it is only watched.
+  - `FollowRoute(() => route)` walks a `Route`'s points from the one after the nearest;
+    `FollowRoute(() => route, Orders.Attack)` attack-moves. A route has no loop, so a patrol is a way out and a way
+    back, repeated. A map gets a `Route` from `unit.FindPath(x, y)` (Moonwell.Pathing) or a procgen road's
+    `road.Toward(place)`.
+  - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does, and a use of the item the unit
+    still carries out is only watched. A potion leaves no order to watch, so it succeeds at once.
+  - `MoveTo` and `FollowRoute` also fail when the unit is idle short of the place just after the order, as one jammed in
+    a crowd after its one more try.
+- Utility AI: `Pick(Scored(() => score, child), ...)` runs the option with the best score, re-scored at each pass; 0 or
+  less is never picked. A running option is kept unless another beats it by more than a tenth or its own score drops
+  to 0 or less, and with none above 0 it fails.
+- Interrupts: a `When` directly in a `Select` is watched. While a child below it runs on, the first `When` above it
+  whose condition holds and whose child does not fail at once cuts in: its branch takes over, then the child that ran
+  is stopped, so that child's `Stop` runs after the new branch has started. A `When` whose child fails at once, as an
+  attack on a dead target, leaves the running child alone. A running `When` whose condition no longer holds fails, and
+  the select goes on to the next child in the same pass. Nothing outside the select is watched, and an `If` never is.
+- Thresholds and timings are numbers to tune: keep them in a `data` file and read them through `Data`, as
+  `Data.Guards.Gate.FleeBelow` above comes from `data\guards.csv` ([Data files](#data-files)).
+
+A map's own node derives from `Node`:
+
+```csharp
+public sealed class Chop : Node
+{
+    protected override void Start() => OrderOn(Orders.Harvest, Read(TreeNear)!);
+    protected override Status Run() => Read(TreeNear)!.IsAlive ? Status.Running : Status.Succeeded; // until it falls
+    protected override void Stop() { }   // cut off by an interrupt
+}
+```
+
+- `Start` runs when the node starts, at the first pass that reaches it and again after it ended; `Run` gives its status
+  at each pass; `Stop` runs only when it is cut off while running, by an interrupt, its parent ending or `tree.Stop()`,
+  never when it ends by itself.
+- It reads `Unit`, `Blackboard` and `Read(fact)` (here `TreeNear`, a map's `Fact<Destructable?>`) and orders the unit
+  through the brain with `Order`, `OrderAt` and `OrderOn`, so repeats are dropped as the actions' are.
 
 ## Fast simulation
 

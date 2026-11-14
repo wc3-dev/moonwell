@@ -59,6 +59,7 @@ namespace Moonwell.Testing
             AddPlaced(list);
             AddProcgen(list);
             AddAI(list);
+            AddAITrees(list);
             AddSimulation(list);
             return list;
         }
@@ -120,6 +121,36 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.utility.run", Run = UtilityCases.Run });
             list.Add(new Case { Name = "ai.utility.in-a-brain", Run = UtilityCases.InABrain });
             list.Add(new Case { Name = "ai.simulation.brains-win", Run = SimulationBrainCases.BrainsWin });
+        }
+
+        /// <summary>Adds the cases for the AI package's behaviour trees: each node, the watching of When, and the tree's Run and Stop.</summary>
+        private static void AddAITrees(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.trees.sequence", Run = BehaviourTreeCases.Sequence });
+            list.Add(new Case { Name = "ai.trees.select", Run = BehaviourTreeCases.Select });
+            list.Add(new Case { Name = "ai.trees.when-cuts-in", Run = BehaviourTreeCases.WhenCutsIn });
+            list.Add(new Case { Name = "ai.trees.when-ends-its-branch", Run = BehaviourTreeCases.WhenEndsItsBranch });
+            list.Add(new Case { Name = "ai.trees.when-failing-at-once", Run = BehaviourTreeCases.WhenFailingAtOnce });
+            list.Add(new Case { Name = "ai.trees.only-a-select-watches", Run = BehaviourTreeCases.OnlyASelectWatches });
+            list.Add(new Case { Name = "ai.trees.parallel", Run = BehaviourTreeCases.Parallel });
+            list.Add(new Case { Name = "ai.trees.repeat", Run = BehaviourTreeCases.Repeat });
+            list.Add(new Case { Name = "ai.trees.invert-and-succeed", Run = BehaviourTreeCases.InvertAndSucceed });
+            list.Add(new Case { Name = "ai.trees.facts", Run = BehaviourTreeCases.Facts });
+            list.Add(new Case { Name = "ai.trees.wait", Run = BehaviourTreeCases.Wait });
+            list.Add(new Case { Name = "ai.trees.cooldown", Run = BehaviourTreeCases.Cooldown });
+            list.Add(new Case { Name = "ai.trees.timeout", Run = BehaviourTreeCases.Timeout });
+            list.Add(new Case { Name = "ai.trees.pick", Run = BehaviourTreeCases.Pick });
+            list.Add(new Case { Name = "ai.trees.one-tree-per-node", Run = BehaviourTreeCases.OneTreePerNode });
+            list.Add(new Case { Name = "ai.trees.nested-run", Run = BehaviourTreeCases.NestedRun });
+            list.Add(new Case { Name = "ai.trees.stop", Run = BehaviourTreeCases.Stop });
+            list.Add(new Case { Name = "ai.trees.stop-during-run", Run = BehaviourTreeCases.StopDuringRun });
+            list.Add(new Case { Name = "ai.trees.names-apart", Run = BehaviourTreeCases.NamesApart });
+            list.Add(new Case { Name = "ai.trees.unit-brain", Run = BehaviourTreeCases.UnitBrainTree });
+            list.Add(new Case { Name = "ai.trees.move-to", Run = TreeUnitCases.MoveTo });
+            list.Add(new Case { Name = "ai.trees.attack", Run = TreeUnitCases.Attack });
+            list.Add(new Case { Name = "ai.trees.cast", Run = TreeUnitCases.Cast });
+            list.Add(new Case { Name = "ai.trees.follow-route", Run = TreeUnitCases.FollowRoute });
+            list.Add(new Case { Name = "ai.trees.use-item", Run = TreeUnitCases.UseItem });
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
@@ -1592,6 +1623,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
             list.Add(new Case { Name = "units.order-gone", Run = UnitCases.OrderGone });
+            list.Add(new Case { Name = "units.use-item", Run = UnitCases.UseItem });
             list.Add(new Case { Name = "units.name", Run = UnitCases.NameReadAndSet });
             list.Add(new Case { Name = "units.icon", Run = UnitCases.IconRead });
             list.Add(new Case { Name = "units.level-set-with-handle", Run = UnitCases.LevelSetWithHandleDoesNothing });

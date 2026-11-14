@@ -517,6 +517,55 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.GoneCalls, "no call to the game for the gone unit");
         }
 
+        /// <summary>UseItem, UseItemAt and UseItemOn give the game the item, a place or the widget of a unit, an item or a destructable, and return its answer; a gone unit, item or target calls nothing and gives false.</summary>
+        public static void UseItem(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            var potion = Item.Of(world.NewItem(ObjectTypes.FourCC("phea")))!;
+            var targetHandle = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var target = Unit.Of(targetHandle)!;
+            var itemHandle = world.NewItem(ObjectTypes.FourCC("ofoo"));
+            var item = Item.Of(itemHandle)!;
+            var treeHandle = world.NewDestructable(ObjectTypes.FourCC("LTlt"));
+            var tree = Destructable.Of(treeHandle)!;
+            unit.Give(potion, 2);
+
+            Expect.True(unit.UseItem(potion), "the game takes the use");
+            Expect.Equal(852010, world.CurrentOrderOf(unit.Handle), "the fake reads the third slot's order, 852008 and two");
+            Expect.True(unit.UseItemAt(potion, 100.5f, -200f), "at a place");
+            Expect.True(unit.UseItemOn(potion, target), "on a unit");
+            Expect.True(unit.UseItemOn(potion, item), "on an item");
+            Expect.True(unit.UseItemOn(potion, tree), "on a destructable");
+            Expect.Equal("useitem, useitem point, useitem target, useitem target, useitem target", string.Join(", ", world.Orders), "the calls");
+            Expect.Near(100.5f, world.OrderPoints[0], "x");
+            Expect.Near(-200f, world.OrderPoints[1], "y");
+            Expect.Same(targetHandle, world.OrderTargets[0], "the unit's handle reached the game");
+            Expect.Same(itemHandle, world.OrderTargets[1], "the item's handle reached the game");
+            Expect.Same(treeHandle, world.OrderTargets[2], "the destructable's handle reached the game");
+
+            world.OrderAnswer = false;
+            Expect.True(!unit.UseItem(potion), "the game's refusal is returned");
+            world.OrderAnswer = true;
+            world.Orders.Clear();
+
+            world.VanishUnit(targetHandle);
+            world.VanishItem(itemHandle);
+            world.Advance(0.3f);
+            Expect.True(!unit.UseItemOn(potion, target), "no use on a removed unit");
+            Expect.True(!unit.UseItemOn(potion, item), "no use on a removed item");
+            Expect.True(!unit.UseItemOn(item, unit), "no use of a removed item");
+            Expect.True(!unit.UseItem(item), "nor with no target");
+            Expect.Equal(0, world.Orders.Count, "nothing reached the game for a removed item or target");
+
+            unit.Remove();
+            world.GoneCalls = 0;
+            Expect.True(!unit.UseItem(potion), "a removed unit uses nothing");
+            Expect.True(!unit.UseItemAt(potion, 0f, 0f), "at a place");
+            Expect.True(!unit.UseItemOn(potion, unit), "or on a target");
+            Expect.Equal(0, world.Orders.Count, "nothing reached the game from a removed unit");
+            Expect.Equal(0, world.GoneCalls, "no call to the game for the gone unit");
+        }
+
         /// <summary>A unit's name is the game's: read inside Local.For, set for every machine; once the unit is gone, the last name set (a read keeps nothing, as it differs by machine), and a set calls nothing.</summary>
         public static void NameReadAndSet(FakeWorld world)
         {

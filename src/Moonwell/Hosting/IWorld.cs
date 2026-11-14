@@ -536,6 +536,15 @@ namespace Moonwell.Hosting
         /// <summary>Gives a unit an order on a widget (a unit, an item or a destructable); the game's answer.</summary>
         bool OrderUnitOn(unit unit, string order, widget target);
 
+        /// <summary>Has a unit use an item it carries, with no place and no target; the game's answer.</summary>
+        bool UseItem(unit unit, item item);
+
+        /// <summary>Has a unit use an item it carries at a place; the game's answer.</summary>
+        bool UseItemAt(unit unit, item item, float x, float y);
+
+        /// <summary>Has a unit use an item it carries on a widget (a unit, an item or a destructable); the game's answer.</summary>
+        bool UseItemOn(unit unit, item item, widget target);
+
         /// <summary>The id of the order a unit carries out now; 0 when it is idle.</summary>
         int CurrentOrderOf(unit unit);
 

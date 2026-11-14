@@ -222,7 +222,7 @@ namespace Moonwell
         /// <summary>The fly height of each unit, 0 until set.</summary>
         private readonly Dictionary<unit, float> flyHeights = new Dictionary<unit, float>();
 
-        /// <summary>The orders given to units, as "immediate", "point" or "target", a space, and the order string.</summary>
+        /// <summary>The orders given to units, as "immediate", "point" or "target", a space, and the order string; and the item uses, as "useitem", "useitem point" or "useitem target".</summary>
         public List<string> Orders = new List<string>();
 
         /// <summary>The x and y of each point order, in turn.</summary>
@@ -3059,6 +3059,49 @@ namespace Moonwell
             }
 
             return answer;
+        }
+
+        /// <summary>Records an item use as "useitem" and gives the answer set in OrderAnswer; see UsedItem.</summary>
+        public bool UseItem(unit unit, item item)
+        {
+            return UsedItem(unit, item, "useitem");
+        }
+
+        /// <summary>Records an item use at a place as "useitem point", its x and y in OrderPoints, and gives the answer set in OrderAnswer; see UsedItem.</summary>
+        public bool UseItemAt(unit unit, item item, float x, float y)
+        {
+            OrderPoints.Add(x);
+            OrderPoints.Add(y);
+            return UsedItem(unit, item, "useitem point");
+        }
+
+        /// <summary>Records an item use on a widget as "useitem target", the widget in OrderTargets, and gives the answer set in OrderAnswer; see UsedItem.</summary>
+        public bool UseItemOn(unit unit, item item, widget target)
+        {
+            OrderTargets.Add(target);
+            return UsedItem(unit, item, "useitem target");
+        }
+
+        /// <summary>Records an item use in Orders and gives OrderAnswer. A use taken makes the unit's current order its slot's, 852008 for the first (seen 11-03) and, assumed, one more for each slot after, with no order event; an item outside its inventory gives false and leaves the order.</summary>
+        private bool UsedItem(unit unit, item item, string call)
+        {
+            NoteGone(unit);
+            Orders.Add(call);
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == item)
+                {
+                    if (OrderAnswer)
+                    {
+                        currentOrders[unit] = 852008 + i;
+                    }
+
+                    return OrderAnswer;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>The ids of the orders the cases use, by the game's string (seen 11-03). An instance field: past the class's 200th member, CSharp.lua reads a private static field by its bare name, which the game does not have.</summary>
