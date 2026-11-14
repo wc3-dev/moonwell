@@ -392,6 +392,35 @@ namespace Moonwell.Testing
             Expect.True(!(some + 1 > 0 && no), "some + 1 > 0 && false");
         }
 
+        /// <summary>
+        /// One out variable across a three-way || and a || or &amp;&amp; kept in a bool (K10, 2.0.4-moonwell.25): the chain declared
+        /// its flag twice and lost a hit, and a kept result was nil when false.
+        /// </summary>
+        public static void OutAcrossOr(FakeWorld world)
+        {
+            var a = new Dictionary<string, int> { ["x"] = 1 };
+            var b = new Dictionary<string, int> { ["y"] = 2 };
+            Expect.Equal("hit 1", Chain(a, b, "x"), "a three-way || keeps the first hit");
+            Expect.Equal("hit 2", Chain(a, b, "y"), "a three-way || keeps the second hit");
+            Expect.Equal("hit 1", Chain(a, b, "z"), "a three-way || takes the last call");
+            var kept = a.TryGetValue("z", out var v) || b.TryGetValue("z", out v);
+            Expect.True(kept == false, "a false || kept in a bool is false");
+            var both = a.TryGetValue("x", out var w) && b.TryGetValue("z", out w);
+            Expect.True(both == false, "a false && kept in a bool is false");
+            Expect.True(a.TryGetValue("z", out v) || b.TryGetValue("y", out v), "a || with a hit");
+            Expect.Equal(2, v, "a || gives the second call's out");
+        }
+
+        private static string Chain(Dictionary<string, int> a, Dictionary<string, int> b, string key)
+        {
+            if (a.TryGetValue(key, out var v) || b.TryGetValue(key, out v) || a.TryGetValue("x", out v))
+            {
+                return "hit " + v;
+            }
+
+            return "miss";
+        }
+
         /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
         public static void EnumText(FakeWorld world)
         {
