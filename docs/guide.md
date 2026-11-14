@@ -1746,7 +1746,8 @@ public sealed class Guard : UnitBrain
     target; a cast the unit still carries out as its brain last gave it is only watched.
   - `FollowRoute(() => route)` walks a `Route`'s points from the one after the nearest;
     `FollowRoute(() => route, Orders.Attack)` attack-moves.
-  - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does.
+  - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does, and a use of the item the unit
+    still carries out is only watched.
   - `MoveTo` and `FollowRoute` also fail when the unit is idle short of the place just after the order, as one jammed in
     a crowd after its one more try.
 - Utility AI: `Pick(Scored(() => score, child), ...)` runs the option with the best score, re-scored at each pass; 0 or

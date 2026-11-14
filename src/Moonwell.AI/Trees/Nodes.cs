@@ -209,8 +209,10 @@ namespace Moonwell.AI
 
         /// <summary>
         /// Has the unit use the item the function gives, read at the node's start, as the unit's <c>UseItem</c> does, then
-        /// watches the unit's current order id as <c>Cast</c> does. Failed for a null or gone item, a use the game refused, or
-        /// a dead or removed unit. Succeeded means the unit stopped carrying the use out, not that the item took effect.
+        /// watches the unit's current order id as <c>Cast</c> does. A unit already carrying out a use of the item, its current
+        /// order id 852008 plus the item's slot (the first slot's seen, the others unmeasured), is not ordered again, only
+        /// watched. Failed for a null or gone item, a use the game refused, or a dead or removed unit. Succeeded means the unit
+        /// stopped carrying the use out, not that the item took effect.
         /// </summary>
         public static Node UseItem(Func<Item?> item)
         {

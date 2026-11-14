@@ -235,13 +235,16 @@ namespace Moonwell.Testing
             RefusedOnAGameBrain(world, Nodes.FollowRoute(() => east), "FollowRouteNode");
         }
 
-        /// <summary>UseItem uses the item through the unit's calls, then runs while the unit's order id is its slot's and succeeds once it differs; at a place and on a target too; a null or gone item or target and a refused use fail.</summary>
+        /// <summary>UseItem uses the item through the unit's calls, then runs while the unit's order id is its slot's and succeeds once it differs; a use the unit still carries out is only watched; at a place and on a target too; a null or gone item, a null or removed target, an item the unit does not carry and a refused use fail.</summary>
         public static void UseItem(FakeWorld world)
         {
             var brain = BrainAt(world, 0f, 0f);
             var unit = brain.Unit;
             var foe = Unit.Of(world.NewUnit(Footman, slot: 1))!;
+            var removed = Unit.Of(world.NewUnit(Footman, slot: 1))!;
+            removed.Remove();
             var potion = Item.Of(world.NewItem(ObjectTypes.FourCC("phea")))!;
+            var elsewhere = Item.Of(world.NewItem(ObjectTypes.FourCC("phea")))!;
             unit.Give(potion, 1);
             Item? used = potion;
             var tree = new Tree(brain, Nodes.UseItem(() => used));
@@ -255,6 +258,10 @@ namespace Moonwell.Testing
 
             Is(Status.Running, new Tree(brain, Nodes.UseItem(() => potion, () => 10f, () => 20f)).Run(), "at a place");
             Expect.Near(20f, world.OrderPoints[1], "the place reached the game");
+            Is(Status.Running, new Tree(brain, Nodes.UseItem(() => potion)).Run(), "a use of the item the unit carries out");
+            Expect.Equal(2, world.Orders.Count, "is watched, not sent again");
+            world.SetCurrentOrder(unit.Handle, 0);
+
             Unit? aim = null;
             var onFoe = new Tree(brain, Nodes.UseItem(() => potion, () => aim));
             Is(Status.Failed, onFoe.Run(), "a null target");
@@ -262,16 +269,22 @@ namespace Moonwell.Testing
             Is(Status.Running, onFoe.Run(), "on a target");
             Expect.Same(foe.Handle, world.OrderTargets[0], "the target reached the game");
             Expect.Equal("useitem, useitem point, useitem target", string.Join(", ", world.Orders), "the calls");
+            world.SetCurrentOrder(unit.Handle, 0);
+            Is(Status.Succeeded, onFoe.Run(), "done");
+            aim = removed;
+            Is(Status.Failed, onFoe.Run(), "a removed target");
 
             used = null;
             Is(Status.Failed, tree.Run(), "a null item");
+            used = elsewhere;
+            Is(Status.Failed, tree.Run(), "an item the unit does not carry: the game refuses it");
             used = potion;
             world.OrderAnswer = false;
             Is(Status.Failed, tree.Run(), "a refused use");
             world.OrderAnswer = true;
             potion.Remove();
             Is(Status.Failed, tree.Run(), "a gone item");
-            Expect.Equal(4, world.Orders.Count, "only the refused use reached the game");
+            Expect.Equal(5, world.Orders.Count, "only the uses of an item not carried and the refused use reached the game");
 
             RefusedOnAGameBrain(world, Nodes.UseItem(() => potion), "UseItemNode");
         }

@@ -3065,24 +3065,26 @@ namespace Moonwell.Testing
             return UsedItem(unit, item, "useitem target");
         }
 
-        /// <summary>Records an item use in Orders and gives OrderAnswer. A use taken makes the unit's current order its slot's, 852008 for the first (seen 11-03) and, assumed, one more for each slot after, with no order event; an item outside its inventory leaves the order.</summary>
+        /// <summary>Records an item use in Orders and gives OrderAnswer. A use taken makes the unit's current order its slot's, 852008 for the first (seen 11-03) and, assumed, one more for each slot after, with no order event; an item outside its inventory gives false and leaves the order.</summary>
         private bool UsedItem(unit unit, item item, string call)
         {
             NoteGone(unit);
             Orders.Add(call);
-            if (OrderAnswer)
+            var slots = SlotsOf(unit);
+            for (var i = 0; i < slots.Length; i++)
             {
-                var slots = SlotsOf(unit);
-                for (var i = 0; i < slots.Length; i++)
+                if (slots[i] == item)
                 {
-                    if (slots[i] == item)
+                    if (OrderAnswer)
                     {
                         currentOrders[unit] = 852008 + i;
                     }
+
+                    return OrderAnswer;
                 }
             }
 
-            return OrderAnswer;
+            return false;
         }
 
         /// <summary>The ids of the orders the cases use, by the game's string (seen 11-03). An instance field: past the class's 200th member, CSharp.lua reads a private static field by its bare name, which the game does not have.</summary>
