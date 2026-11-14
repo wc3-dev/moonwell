@@ -194,6 +194,24 @@ namespace Moonwell.Procgen
         }
 
         /// <summary>
+        /// A rectangular level place over an area (the game's coordinates), for a clearing, a town or a region drawn in the
+        /// editor: level as <c>Level</c>'s circle is, never blocked and treeless, and blended back to the hills over
+        /// <paramref name="blend"/> past its nearest edge. <c>Bounds.FromCenter</c> gives one of a size round a point. An area
+        /// with a side of 0 or less throws ArgumentException.
+        /// </summary>
+        public Place Level(Bounds area, float blend = 256f)
+        {
+            if (!(area.Size.X > 0f && area.Size.Y > 0f))
+            {
+                throw new ArgumentException("TerrainGenerator.Level takes an area with sides above 0, not " + area);
+            }
+
+            var place = new Place(area, blend > 0f ? blend : 0f);
+            places.Add(place);
+            return place;
+        }
+
+        /// <summary>
         /// Level places picked in an area from the seed, for camps, shops, shrines or entrances: up to
         /// <paramref name="count"/> spots, each at least <paramref name="spacing"/> from every other place and never
         /// overlapping one, the whole place inside the area. Fewer come back when no more fit. With a place to spread them
@@ -646,10 +664,9 @@ namespace Moonwell.Procgen
         {
             foreach (var place in places)
             {
-                var need = Math.Max(spacing, radius + place.Radius + Math.Max(blend, place.Blend));
                 var dx = place.X - x;
                 var dy = place.Y - y;
-                if (dx * dx + dy * dy < need * need)
+                if (dx * dx + dy * dy < spacing * spacing || place.Beyond(x, y) < radius + Math.Max(blend, place.Blend))
                 {
                     return false;
                 }
@@ -670,28 +687,30 @@ namespace Moonwell.Procgen
             return count;
         }
 
-        /// <summary>Levels the corners within a radius of a point (from the first corner of the cells) at a height, blends the ones in the rim past it but not those on a road, which keep the road's easy slope, and marks the level ones.</summary>
-        private static void LevelPlace(float[] cells, bool[] level, float[] roadGap, int columns, int rows, float x, float y, float radius, float blend, float target)
+        /// <summary>Levels the corners on a place (the cells' first corner at x0, y0 in the world) at a height, blends the ones in the rim past it but not those on a road, which keep the road's easy slope, and marks the level ones.</summary>
+        private static void LevelPlace(float[] cells, bool[] level, float[] roadGap, int columns, int rows, Place place, float x0, float y0, float target)
         {
-            var reach = radius + blend;
-            var lastColumn = Math.Min(Noise.Floor((x + reach) / TileSize) + 1, columns - 1);
-            var lastRow = Math.Min(Noise.Floor((y + reach) / TileSize) + 1, rows - 1);
-            for (var row = Math.Max(Noise.Floor((y - reach) / TileSize), 0); row <= lastRow; row++)
+            var blend = place.Blend;
+            var x = place.X - x0;
+            var y = place.Y - y0;
+            var reachX = place.Width / 2f + blend;
+            var reachY = place.Height / 2f + blend;
+            var lastColumn = Math.Min(Noise.Floor((x + reachX) / TileSize) + 1, columns - 1);
+            var lastRow = Math.Min(Noise.Floor((y + reachY) / TileSize) + 1, rows - 1);
+            for (var row = Math.Max(Noise.Floor((y - reachY) / TileSize), 0); row <= lastRow; row++)
             {
-                for (var column = Math.Max(Noise.Floor((x - reach) / TileSize), 0); column <= lastColumn; column++)
+                for (var column = Math.Max(Noise.Floor((x - reachX) / TileSize), 0); column <= lastColumn; column++)
                 {
-                    var dx = column * TileSize - x;
-                    var dy = row * TileSize - y;
-                    var distance = Maths.Sqrt(dx * dx + dy * dy);
+                    var beyond = place.Beyond(x0 + column * TileSize, y0 + row * TileSize);
                     var at = row * columns + column;
-                    if (distance <= radius)
+                    if (beyond <= 0f)
                     {
                         cells[at] = target;
                         level[at] = true;
                     }
-                    else if (distance < reach && roadGap[at] > 0f)
+                    else if (beyond < blend && roadGap[at] > 0f)
                     {
-                        var t = (distance - radius) / blend;
+                        var t = beyond / blend;
                         cells[at] = target + (cells[at] - target) * (t * t * (3f - 2f * t));
                     }
                 }
@@ -968,8 +987,9 @@ namespace Moonwell.Procgen
                     var most = 0f;
                     for (var k = 0; k < places.Length; k++)
                     {
-                        var across = 2f * (places[k].Radius + places[k].Blend) / TileSize + 3f;
-                        most = Math.Max(most, across * across);
+                        var across = (places[k].Width + 2f * places[k].Blend) / TileSize + 3f;
+                        var up = (places[k].Height + 2f * places[k].Blend) / TileSize + 3f;
+                        most = Math.Max(most, across * up);
                     }
 
                     return most;
@@ -1096,7 +1116,7 @@ namespace Moonwell.Procgen
                 for (var k = from; k < to; k++)
                 {
                     var place = places[k];
-                    LevelPlace(cells, level, roadGap, wide, rows + 2, place.X - (firstColumn - 1) * TileSize, place.Y - (firstRow - 1) * TileSize, place.Radius, place.Blend, 0f);
+                    LevelPlace(cells, level, roadGap, wide, rows + 2, place, (firstColumn - 1) * TileSize, (firstRow - 1) * TileSize, 0f);
                 }
             }
 
@@ -1346,16 +1366,14 @@ namespace Moonwell.Procgen
                 var height = Height(x / TileSize, y / TileSize);
                 foreach (var place in places)
                 {
-                    var dx = x - place.X;
-                    var dy = y - place.Y;
-                    var distance = Maths.Sqrt(dx * dx + dy * dy);
-                    if (distance <= place.Radius)
+                    var beyond = place.Beyond(x, y);
+                    if (beyond <= 0f)
                     {
                         height = 0f;
                     }
-                    else if (distance < place.Radius + place.Blend)
+                    else if (beyond < place.Blend)
                     {
-                        var t = (distance - place.Radius) / place.Blend;
+                        var t = beyond / place.Blend;
                         height *= t * t * (3f - 2f * t);
                     }
                 }
@@ -1392,9 +1410,7 @@ namespace Moonwell.Procgen
                     var cap = float.MaxValue;
                     foreach (var place in places)
                     {
-                        var dx = points[k].X - place.X;
-                        var dy = points[k].Y - place.Y;
-                        cap = Math.Min(cap, RoadSlope * Math.Max(Maths.Sqrt(dx * dx + dy * dy) - place.Radius, 0f));
+                        cap = Math.Min(cap, RoadSlope * place.Beyond(points[k].X, points[k].Y));
                     }
 
                     heights[k] = Maths.Clamp(sum / (last - first + 1), -cap, cap);

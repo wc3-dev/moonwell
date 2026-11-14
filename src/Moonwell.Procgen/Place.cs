@@ -14,7 +14,7 @@ namespace Moonwell.Procgen
     }
 
     /// <summary>
-    /// A level place of a <c>TerrainGenerator</c>: a circle of ground level at the ground as it was, never raised, so the
+    /// A level place of a <c>TerrainGenerator</c>: a circle, or a rectangle from <c>Level(Bounds)</c>, of ground level at the ground as it was, never raised, so the
     /// buildings and items made there stand on it (the game draws them sunk on raised ground). It is never blocked, has no
     /// trees, and roads can join it. <c>Level</c>, <c>Places</c> and <c>Exit</c> give one.
     /// </summary>
@@ -33,8 +33,22 @@ namespace Moonwell.Procgen
             X = x;
             Y = y;
             Radius = radius;
+            Width = 2f * radius;
+            Height = 2f * radius;
             Blend = blend;
             List = list;
+        }
+
+        internal Place(Bounds area, float blend)
+        {
+            Name = "";
+            X = area.Center.X;
+            Y = area.Center.Y;
+            Width = area.Size.X;
+            Height = area.Size.Y;
+            Radius = Math.Min(Width, Height) / 2f;
+            IsRectangle = true;
+            Blend = blend;
         }
 
         /// <summary>The name it was given; empty for a place from Level.</summary>
@@ -49,9 +63,21 @@ namespace Moonwell.Procgen
         [LocalSafe]
         public float Y { get; }
 
-        /// <summary>How far out from its centre it is level.</summary>
+        /// <summary>How far out from its centre it is level every way: half the shorter side of a rectangle.</summary>
         [LocalSafe]
         public float Radius { get; }
+
+        /// <summary>How wide it is level: twice the radius of a circle.</summary>
+        [LocalSafe]
+        public float Width { get; }
+
+        /// <summary>How high it is level, along y: twice the radius of a circle.</summary>
+        [LocalSafe]
+        public float Height { get; }
+
+        /// <summary>Whether it is a rectangle, from <c>Level(Bounds)</c>, rather than a circle.</summary>
+        [LocalSafe]
+        public bool IsRectangle { get; }
 
         /// <summary>How hard it is, from 1 for the places nearest the place they were spread from to the most difficulties asked for the farthest; 1 when none was asked.</summary>
         [LocalSafe]
@@ -65,6 +91,21 @@ namespace Moonwell.Procgen
         internal int Column => Noise.Floor(X / 128f + 0.5f);
 
         internal int Row => Noise.Floor(Y / 128f + 0.5f);
+
+        /// <summary>How far a point is outside it: 0 on it, so the blend is an even band all round.</summary>
+        internal float Beyond(float x, float y)
+        {
+            var dx = Math.Abs(x - X);
+            var dy = Math.Abs(y - Y);
+            if (!IsRectangle)
+            {
+                return Math.Max(Maths.Sqrt(dx * dx + dy * dy) - Radius, 0f);
+            }
+
+            dx = Math.Max(dx - Width / 2f, 0f);
+            dy = Math.Max(dy - Height / 2f, 0f);
+            return Maths.Sqrt(dx * dx + dy * dy);
+        }
 
         /// <summary>
         /// Makes its group in the scope: the first type at its centre, the rest round it facing the centre, owned by the
