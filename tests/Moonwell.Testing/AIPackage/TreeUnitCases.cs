@@ -133,7 +133,7 @@ namespace Moonwell.Testing
             RefusedOnAGameBrain(world, Nodes.Attack(() => foe), "AttackNode");
         }
 
-        /// <summary>Cast orders the spell, then runs while the unit's order id is the one read just after and succeeds once it differs, or at once when it was 0; a second cast of the same plain spell is sent; a unit already carrying it is only watched; a null, dead or refused target fails.</summary>
+        /// <summary>Cast orders the spell, then runs while the unit's order id is the one read just after and succeeds once it differs, or at once when it was 0; a second cast of the same plain spell is sent; a unit still carrying it out as the brain gave it is only watched, but the same spell on another target is sent; a null or dead target and a refused cast fail.</summary>
         public static void Cast(FakeWorld world)
         {
             var brain = BrainAt(world, 0f, 0f);
@@ -165,11 +165,14 @@ namespace Moonwell.Testing
             Is(Status.Running, bolt.Run(), "on the foe");
             Expect.Same(foe.Handle, world.OrderTargets[0], "the target reached the game");
             Expect.Equal(HolyBoltId, world.CurrentOrderOf(unit.Handle), "the unit carries it");
+            var second = Unit.Of(world.NewUnit(Footman, slot: 1))!;
+            Is(Status.Running, new Tree(brain, Nodes.Cast("holybolt", () => second)).Run(), "the same spell on a second target");
+            Expect.Same(second.Handle, world.OrderTargets[1], "is sent while the unit carries it out on the first");
             world.SetCurrentOrder(unit.Handle, 0);
             Is(Status.Succeeded, bolt.Run(), "done");
             foe.Kill();
             Is(Status.Failed, bolt.Run(), "a dead target");
-            Expect.Equal(4, world.Orders.Count, "neither the null nor the dead target was ordered");
+            Expect.Equal(5, world.Orders.Count, "neither the null nor the dead target was ordered");
 
             world.OrderAnswer = false;
             Is(Status.Failed, new Tree(brain, Nodes.Cast("immolation")).Run(), "a refused cast");

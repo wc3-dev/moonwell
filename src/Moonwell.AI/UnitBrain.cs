@@ -10,13 +10,13 @@ namespace Moonwell.AI
     public abstract class UnitBrain : UnitComponent
     {
         /// <summary>An order with no place and no target.</summary>
-        private const int Plain = 0;
+        internal const int Plain = 0;
 
         /// <summary>An order to a place.</summary>
-        private const int AtPlace = 1;
+        internal const int AtPlace = 1;
 
         /// <summary>An order on a widget.</summary>
-        private const int OnWidget = 2;
+        internal const int OnWidget = 2;
 
         /// <summary>How near a place is the same place, squared: 32.</summary>
         private const float SamePlace = 32f * 32f;
@@ -162,9 +162,7 @@ namespace Moonwell.AI
         private bool Send(string order, int kind, float x, float y, Widget? target)
         {
             var unit = Unit;
-            var repeat = sentOrder == order && sentKind == kind && sentTarget == target
-                && (kind != AtPlace || Squared(x - sentX, y - sentY) <= SamePlace)
-                && unit.Owner == sentOwner;
+            var repeat = Repeats(order, kind, x, y, target);
             var retry = false;
             var standX = 0f;
             var standY = 0f;
@@ -236,6 +234,14 @@ namespace Moonwell.AI
             sentCurrent = unit.CurrentOrder;
             sentOwner = unit.Owner;
             return true;
+        }
+
+        /// <summary>Whether an order repeats the last the brain sent: the same order of the same kind, on the same target or to a place within 32 of it, to the unit under the same owner.</summary>
+        internal bool Repeats(string order, int kind, float x, float y, Widget? target)
+        {
+            return sentOrder == order && sentKind == kind && sentTarget == target
+                && (kind != AtPlace || Squared(x - sentX, y - sentY) <= SamePlace)
+                && Unit.Owner == sentOwner;
         }
 
         /// <summary>Whether a target is dead or gone.</summary>

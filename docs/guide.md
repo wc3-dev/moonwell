@@ -1742,7 +1742,8 @@ public sealed class Guard : UnitBrain
   - `Attack(target)`, a function or a `Fact<Unit?>`, follows a new target, succeeds once it dies, and fails when the
     unit stands idle with it alive, as one that can't see or reach it.
   - `Cast(order)`, at a place or on a target, runs while the unit carries the order out and succeeds once it stops: a
-    stun reads the same as a spell that went off. A second cast of the same spell is sent.
+    stun reads the same as a spell that went off. A second cast of the same spell is sent, and so is one on another
+    target; a cast the unit still carries out as its brain last gave it is only watched.
   - `FollowRoute(() => route)` walks a `Route`'s points from the one after the nearest;
     `FollowRoute(() => route, Orders.Attack)` attack-moves.
   - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does.

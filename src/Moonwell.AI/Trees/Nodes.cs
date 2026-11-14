@@ -171,10 +171,11 @@ namespace Moonwell.AI
 
         /// <summary>
         /// Casts a spell with no target by its order string (<c>"thunderclap"</c>), then gives Running while the unit's current
-        /// order id is the one it read just after, and Succeeded once it differs, or at once when that was 0. A unit already
-        /// carrying out that order string is not ordered again, only watched; otherwise the brain's last order is forgotten,
-        /// so a second cast of the same spell is sent. Failed for a refused order or a dead or removed unit. Succeeded means
-        /// the unit stopped carrying the cast out, not that the spell went off: a stun reads the same.
+        /// order id is the one it read just after, and Succeeded once it differs, or at once when that was 0. A unit still
+        /// carrying out the cast as its brain last gave it, the same spell on the same target or at a place within 32, is not
+        /// ordered again, only watched; otherwise the brain's last order is forgotten, so a second cast of the same spell, or
+        /// one on another target, is sent. Failed for a refused order or a dead or removed unit. Succeeded means the unit
+        /// stopped carrying the cast out, not that the spell went off: a stun reads the same.
         /// </summary>
         public static Node Cast(string order)
         {
