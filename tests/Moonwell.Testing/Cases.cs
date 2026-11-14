@@ -238,6 +238,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.terrain.make-stopped", Run = TerrainGeneratorCases.MakeStopped });
             list.Add(new Case { Name = "procgen.wide.plan", Run = WideCraterCases.Plan });
             list.Add(new Case { Name = "procgen.wide.make", Run = WideCraterCases.Make });
+            list.Add(new Case { Name = "procgen.wide.flat-skips-heights", Run = WideCraterCases.FlatSkipsHeights });
             list.Add(new Case { Name = "procgen.wide.apply", Run = WideCraterCases.Apply });
             list.Add(new Case { Name = "procgen.wide.paced", Run = WideCraterCases.Paced });
             list.Add(new Case { Name = "procgen.wide.slow-reported", Run = WideCraterCases.SlowReported });
