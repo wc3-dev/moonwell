@@ -55,6 +55,17 @@ public class FramePartTests
     }
 
     [Fact]
+    public void add_to_a_string_or_texture_by_name_is_refused()
+    {
+        var found = MapCode.Messages("""
+            Screen.AddTo(new Panel(), "SimpleClassValue", Game.Instance);
+            Screen.AddTo(new Panel(), "SimpleInfoPanelUnitDetail", Game.Instance);
+            """).Where(one => one.Contains("crashes the game", StringComparison.Ordinal));
+
+        Assert.Equal(new[] { "'Screen.AddTo(new Panel(), \"SimpleClassValue\", Game.Instance)' crashes the game to the desktop: 'SimpleClassValue' is a String of one of the game's simple frames, not a frame of its own; Screen.AddTo reads whether it shows: add to the frame it sits in, 'SimpleUnitStatsPanel'" }, found);
+    }
+
+    [Fact]
     public void the_message_names_the_frame_a_string_sits_in()
     {
         var found = MapCode.Messages("""

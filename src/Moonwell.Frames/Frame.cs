@@ -71,6 +71,15 @@ namespace Moonwell
         /// <summary>Whether the frame is on the layer over the HUD, as one added with Screen.AddOver, or added to a frame there.</summary>
         internal bool over;
 
+        /// <summary>For a frame added with Screen.AddTo, how its game frame is found, and found again after a load; null for others.</summary>
+        internal System.Func<framehandle?>? gameFrame;
+
+        /// <summary>The game frame a frame added with Screen.AddTo shows and hides with, checked every 0.03 s, as the game would not keep it as a child; null where the game does it, and for other frames.</summary>
+        internal framehandle? gameFrameFollowed;
+
+        /// <summary>Whether the followed game frame showed at its last check on this machine.</summary>
+        internal bool gameShown = true;
+
         /// <summary>The frame's tooltip; null unless set.</summary>
         internal Tooltip? tooltip;
 
@@ -1422,7 +1431,7 @@ namespace Moonwell
         /// <summary>Whether the frame is to be shown on this machine: it is everyone's, or this machine's player's.</summary>
         internal bool ShownHere()
         {
-            return (player == null || Runtime.World.IsLocal(player.Handle)) && !HiddenByCinematic();
+            return (player == null || Runtime.World.IsLocal(player.Handle)) && (gameFrameFollowed == null || gameShown) && !HiddenByCinematic();
         }
 
         /// <summary>Shows or hides the game's frame again as it should be on this machine: after a cinematic's letterbox comes or goes.</summary>

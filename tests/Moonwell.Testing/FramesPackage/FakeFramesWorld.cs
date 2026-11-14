@@ -192,7 +192,15 @@ namespace Moonwell.Testing
             }
 
             var made = new framehandle();
-            var fake = new FakeFrame { Type = type, Template = template, Parent = Live(parent) };
+            var under = Live(parent);
+            if (SimpleGameFrames.Contains(under.Under))
+            {
+                // A map's frame under a simple frame of the game gets another parent, quietly (seen 11-13).
+                under = Game("another parent of " + under.Under);
+                parent = handles[under];
+            }
+
+            var fake = new FakeFrame { Type = type, Template = template, Parent = under };
             if (TemplateSizes.TryGetValue(template, out var size))
             {
                 fake.Width = size.X;
@@ -430,6 +438,9 @@ namespace Moonwell.Testing
         {
             Asked(frame).Level = level;
         }
+
+        /// <summary>The game's frames, by name or as "origin kind index", that are simple frames: a frame made under one is given another parent, as the game does (seen 11-13).</summary>
+        public HashSet<string> SimpleGameFrames = new HashSet<string> { "SimpleInfoPanelUnitDetail" };
 
         /// <summary>The game's HUD frames looked up, by name or as "origin kind index", made at the first lookup.</summary>
         public Dictionary<string, FakeFrame> GameFrames = new Dictionary<string, FakeFrame>();
