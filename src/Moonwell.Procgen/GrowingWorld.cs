@@ -109,7 +109,10 @@ namespace Moonwell.Procgen
                     var at = row * plan.Columns + column;
                     if (plan.Trees[at] != 0 || (plan.Blocked[at] & Pathing.Walk) != 0)
                     {
+                        // The move stops a unit with an order: an order event from code.
+                        Inbound.CodeOrders++;
                         Runtime.World.MoveUnit(handle, x, y);
+                        Inbound.CodeOrders--;
                         return;
                     }
                 }

@@ -27,6 +27,12 @@ namespace Moonwell
         /// <summary>Set by the terrain package: takes its craters out of the game when the game is about to write a saved game; null without one.</summary>
         internal static Action? TerrainSaveListener;
 
+        /// <summary>Set by the AI package: hears a unit whose acquire event is watched pick a target by itself; null without one.</summary>
+        internal static Action<Unit>? AcquireListener;
+
+        /// <summary>Set by the AI package: hears each order given to a known unit, before its reactions, by its id and whether it came from code, and once more when a reaction refused it, as from code, with the id of the order the unit is left with. Moonwell's own orders, undefend, the stunned order and instant orders are not heard. Null without one.</summary>
+        internal static Action<Unit, int, bool>? OrderListener;
+
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, Damage?>? DamageDealer;
 
@@ -167,6 +173,8 @@ namespace Moonwell
             LoadListener = null;
             TerrainLoadListener = null;
             TerrainSaveListener = null;
+            AcquireListener = null;
+            OrderListener = null;
             DamageDealer = null;
         }
 

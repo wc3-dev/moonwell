@@ -40,6 +40,9 @@ namespace Moonwell.Engine
         /// <summary>The trigger that sees each watched destructable die, one each, destroyed as the destructable leaves, since a trigger's events cannot be taken off it.</summary>
         private readonly Dictionary<destructable, trigger> deathTriggers = new Dictionary<destructable, trigger>();
 
+        /// <summary>The trigger that sees each watched unit pick a target, one each, destroyed when the watch ends, since a trigger's events cannot be taken off it.</summary>
+        private readonly Dictionary<unit, trigger> acquireTriggers = new Dictionary<unit, trigger>();
+
         /// <summary>The lines of the log file and when it is next written.</summary>
         private readonly LogFile log = new LogFile();
 
@@ -933,6 +936,12 @@ namespace Moonwell.Engine
             return Natives.IsUnitIllusion(unit);
         }
 
+        /// <summary>Whether a unit is a structure: IsUnitType with UNIT_TYPE_STRUCTURE.</summary>
+        public bool IsStructure(unit unit)
+        {
+            return Natives.IsUnitType(unit, Natives.UNIT_TYPE_STRUCTURE);
+        }
+
         /// <summary>The player that owns a unit.</summary>
         public player OwnerOf(unit unit)
         {
@@ -1275,6 +1284,18 @@ namespace Moonwell.Engine
         public float AverageDamageOf(unit unit)
         {
             return Natives.BlzGetUnitBaseDamage(unit, 0) + Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
+        }
+
+        /// <summary>The cooldown of a unit's first weapon: BlzGetUnitAttackCooldown.</summary>
+        public float AttackCooldownOf(unit unit)
+        {
+            return Natives.BlzGetUnitAttackCooldown(unit, 0);
+        }
+
+        /// <summary>A unit's acquisition range: GetUnitAcquireRange.</summary>
+        public float AcquireRangeOf(unit unit)
+        {
+            return Natives.GetUnitAcquireRange(unit);
         }
 
         /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>
@@ -1643,10 +1664,77 @@ namespace Moonwell.Engine
             return Natives.IssueTargetOrder(unit, order, target);
         }
 
+        /// <summary>Has a unit use an item with no place and no target: UnitUseItem.</summary>
+        public bool UseItem(unit unit, item item)
+        {
+            return Natives.UnitUseItem(unit, item);
+        }
+
+        /// <summary>Has a unit use an item at a place: UnitUseItemPoint.</summary>
+        public bool UseItemAt(unit unit, item item, float x, float y)
+        {
+            return Natives.UnitUseItemPoint(unit, item, x, y);
+        }
+
+        /// <summary>Has a unit use an item on a widget: UnitUseItemTarget.</summary>
+        public bool UseItemOn(unit unit, item item, widget target)
+        {
+            return Natives.UnitUseItemTarget(unit, item, target);
+        }
+
         /// <summary>The order a unit carries out now: GetUnitCurrentOrder.</summary>
         public int CurrentOrderOf(unit unit)
         {
             return Natives.GetUnitCurrentOrder(unit);
+        }
+
+        /// <summary>Delivers a unit's picks of a target to Inbound, on a trigger of its own.</summary>
+        public void WatchAcquire(unit unit)
+        {
+            if (acquireTriggers.ContainsKey(unit))
+            {
+                return;
+            }
+
+            var watch = Natives.CreateTrigger();
+            Natives.TriggerRegisterUnitEvent(watch, unit, Natives.EVENT_UNIT_ACQUIRED_TARGET);
+            Natives.TriggerAddAction(watch, AcquireAction);
+            acquireTriggers[unit] = watch;
+        }
+
+        /// <summary>Stops delivering a unit's picks: its trigger is destroyed.</summary>
+        public void UnwatchAcquire(unit unit)
+        {
+            if (acquireTriggers.TryGetValue(unit, out var watch))
+            {
+                acquireTriggers.Remove(unit);
+                Natives.DestroyTrigger(watch);
+            }
+        }
+
+        /// <summary>UnitCanSleep.</summary>
+        public bool CanSleep(unit unit)
+        {
+            return Natives.UnitCanSleep(unit);
+        }
+
+        /// <summary>UnitAddSleep: false wakes a sleeping unit for good, where UnitWakeUp wakes it for a moment (game facts, 11-14).</summary>
+        public void SetSleep(unit unit, bool sleep)
+        {
+            Natives.UnitAddSleep(unit, sleep);
+        }
+
+        /// <summary>Hands a watched unit's pick of a target to Inbound.</summary>
+        private static void AcquireAction()
+        {
+            try
+            {
+                Inbound.Acquired(Natives.GetTriggerUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Acquired", error);
+            }
         }
 
         /// <summary>The game's string of an order id: OrderId2String.</summary>
@@ -1697,17 +1785,24 @@ namespace Moonwell.Engine
         /// <summary>The units within a radius of a place: GroupEnumUnitsInRange.</summary>
         public List<unit> UnitsInRange(float x, float y, float radius)
         {
+            var units = new List<unit>();
+            UnitsInRange(x, y, radius, units);
+            return units;
+        }
+
+        /// <summary>The units within a radius of a place, into a list, cleared first: GroupEnumUnitsInRange.</summary>
+        public void UnitsInRange(float x, float y, float radius, List<unit> into)
+        {
             rangeGroup ??= Natives.CreateGroup();
             Natives.GroupEnumUnitsInRange(rangeGroup, x, y, radius, null);
-            var units = new List<unit>();
+            into.Clear();
             var count = Natives.BlzGroupGetSize(rangeGroup);
             for (var i = 0; i < count; i++)
             {
-                units.Add(Natives.BlzGroupUnitAt(rangeGroup, i));
+                into.Add(Natives.BlzGroupUnitAt(rangeGroup, i));
             }
 
             Natives.GroupClear(rangeGroup);
-            return units;
         }
 
         /// <summary>The area of an ability a unit has, at its level: BlzGetAbilityRealLevelField of ABILITY_RLF_AREA_OF_EFFECT; 0 when it has none.</summary>

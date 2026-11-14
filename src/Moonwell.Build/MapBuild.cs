@@ -29,6 +29,9 @@ namespace Moonwell.Build
         private const string PhysicsAssemblyName = "Moonwell.Physics";
         private const string PathingAssemblyName = "Moonwell.Pathing";
 
+        /// <summary>The AI package's assembly: a map that references it gets the package installed by its Main, which in a development build adds its tools to the debug mode before the first brain.</summary>
+        private const string AIAssemblyName = "Moonwell.AI";
+
         /// <summary>Runs every step of the build, in order.</summary>
         /// <param name="path">A project folder, or the path of its <c>.csproj</c> file.</param>
         /// <param name="options">What kind of build to make.</param>
@@ -376,6 +379,11 @@ namespace Moonwell.Build
             if (Declarations.Needs(targetPath, FramesAssemblyName))
             {
                 installs.Add("global::Moonwell.FramesSystem.Install();");
+            }
+
+            if (Declarations.Needs(targetPath, AIAssemblyName))
+            {
+                installs.Add("global::Moonwell.AISystem.Install();");
             }
 
             if (physics)

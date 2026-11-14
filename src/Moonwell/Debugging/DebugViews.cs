@@ -1,9 +1,10 @@
 #if DEBUG
+using System;
 using System.Collections.Generic;
 
 namespace Moonwell
 {
-    /// <summary>The packages' views of the debug mode, in the order they were added, and the length of a step.</summary>
+    /// <summary>The packages' views of the debug mode, in the order they were added, their lines shown whatever is selected, and the length of a step.</summary>
     internal static class DebugViews
     {
         /// <summary>One step of Moonwell's time when no view sets it: 1/32 s.</summary>
@@ -11,6 +12,9 @@ namespace Moonwell
 
         /// <summary>The views, in the order they were added; cleared by Runtime.Reset.</summary>
         internal static List<IDebugView> All = new List<IDebugView>();
+
+        /// <summary>The packages' lines the panel shows whatever is selected, after the selected object's, in the order added; cleared by Runtime.Reset.</summary>
+        internal static List<Action<DebugLines>> Always = new List<Action<DebugLines>>();
 
         /// <summary>The seconds of Moonwell's time one step moves: the interactions package's step when it is in the map, else 1/32 s.</summary>
         internal static float StepLength = DefaultStep;
@@ -24,10 +28,11 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Forgets every view and sets the step back to 1/32 s; Runtime.Reset calls it.</summary>
+        /// <summary>Forgets every view and line and sets the step back to 1/32 s; Runtime.Reset calls it.</summary>
         internal static void Reset()
         {
             All.Clear();
+            Always.Clear();
             StepLength = DefaultStep;
         }
     }

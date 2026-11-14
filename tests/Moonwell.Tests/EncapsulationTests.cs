@@ -19,6 +19,7 @@ public class EncapsulationTests
         (typeof(AreaSystem), new[] { "Install" }),
         (typeof(InputSystem), new[] { "Install" }),
         (typeof(Physics), new[] { "Install" }),
+        (typeof(AISystem), new[] { "Install" }),
     };
 
     private static bool Hidden(MemberInfo member)
@@ -50,7 +51,7 @@ public class EncapsulationTests
             }
         }
 
-        Assert.All(new[] { typeof(DamageSystem), typeof(AreaSystem), typeof(InputSystem) }, type => Assert.True(Hidden(type), type.Name + " is not hidden"));
+        Assert.All(new[] { typeof(DamageSystem), typeof(AreaSystem), typeof(InputSystem), typeof(AISystem) }, type => Assert.True(Hidden(type), type.Name + " is not hidden"));
     }
 
     [Fact]

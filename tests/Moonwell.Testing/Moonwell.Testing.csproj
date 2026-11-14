@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Moonwell\Moonwell.csproj" />
+    <ProjectReference Include="..\..\src\Moonwell.AI\Moonwell.AI.csproj" />
+    <ProjectReference Include="..\..\src\Moonwell.AI.Combat\Moonwell.AI.Combat.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Areas\Moonwell.Areas.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Damage\Moonwell.Damage.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Input\Moonwell.Input.csproj" />
@@ -20,6 +22,7 @@
     <ProjectReference Include="..\..\src\Moonwell.Physics\Moonwell.Physics.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Pathing\Moonwell.Pathing.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Procgen\Moonwell.Procgen.csproj" />
+    <ProjectReference Include="..\..\src\Moonwell.Simulation\Moonwell.Simulation.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Terrain\Moonwell.Terrain.csproj" />
   </ItemGroup>
 

@@ -160,7 +160,11 @@ namespace Moonwell
                 if (InGame())
                 {
                     owner = value.Handle;
+
+                    // The game stops a living unit it gives away, inside the call (game facts 11-08).
+                    Inbound.CodeOrders++;
                     Runtime.World.SetOwner(Handle, value.Handle);
+                    Inbound.CodeOrders--;
                     Dummies.OwnerChanged(this);
                 }
             }
@@ -499,7 +503,10 @@ namespace Moonwell
         {
             if (InGame())
             {
+                // A unit with an order gets a stop event inside the move (game facts 11-03).
+                Inbound.CodeOrders++;
                 Runtime.World.MoveUnit(Handle, x, y);
+                Inbound.CodeOrders--;
             }
         }
 
@@ -1054,13 +1061,29 @@ namespace Moonwell
         /// <summary>Gives the unit an order with no place and no target, by the game's order string ("stop", "holdposition"), and returns the game's answer. False, and no call to the game, once the unit is gone.</summary>
         public bool Order(string order)
         {
-            return !IsGone && Runtime.World.OrderUnit(Handle, order);
+            if (IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.OrderUnit(Handle, order);
+            Inbound.CodeOrders--;
+            return taken;
         }
 
         /// <summary>Gives the unit an order to a place, by the game's order string ("move", "attack", "smart"), and returns the game's answer. False, and no call to the game, once the unit is gone.</summary>
         public bool OrderAt(string order, float x, float y)
         {
-            return !IsGone && Runtime.World.OrderUnitAt(Handle, order, x, y);
+            if (IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.OrderUnitAt(Handle, order, x, y);
+            Inbound.CodeOrders--;
+            return taken;
         }
 
         /// <summary>Gives the unit an order on a unit, an item or a destructable, by the game's order string ("attack", "smart"), and returns the game's answer. False, and no call to the game, once the unit or the target is gone.</summary>
@@ -1071,25 +1094,83 @@ namespace Moonwell
                 return false;
             }
 
+            var handle = WidgetHandle(target);
+            if (handle == null)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.OrderUnitOn(Handle, order, handle);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>Has the unit use an item it carries, with no place and no target, as a click on the item does, and returns the game's answer. False, and no call to the game, once the unit or the item is gone.</summary>
+        public bool UseItem(Item item)
+        {
+            if (IsGone || item.IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.UseItem(Handle, item.Handle);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>Has the unit use an item it carries at a place, and returns the game's answer. False, and no call to the game, once the unit or the item is gone.</summary>
+        public bool UseItemAt(Item item, float x, float y)
+        {
+            if (IsGone || item.IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.UseItemAt(Handle, item.Handle, x, y);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>Has the unit use an item it carries on a unit, an item or a destructable, and returns the game's answer. False, and no call to the game, once the unit, the item or the target is gone.</summary>
+        public bool UseItemOn(Item item, Widget target)
+        {
+            if (IsGone || item.IsGone || target.IsGone)
+            {
+                return false;
+            }
+
+            var handle = WidgetHandle(target);
+            if (handle == null)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.UseItemOn(Handle, item.Handle, handle);
+            Inbound.CodeOrders--;
+            return taken;
+        }
+
+        /// <summary>The game's handle of a unit, an item or a destructable; null for any other widget.</summary>
+        private static widget? WidgetHandle(Widget target)
+        {
             var unit = target as Unit;
             if (unit != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, unit.Handle);
+                return unit.Handle;
             }
 
             var item = target as Item;
             if (item != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, item.Handle);
+                return item.Handle;
             }
 
             var destructable = target as Destructable;
-            if (destructable != null)
-            {
-                return Runtime.World.OrderUnitOn(Handle, order, destructable.Handle);
-            }
-
-            return false;
+            return destructable != null ? destructable.Handle : null;
         }
 
         /// <summary>
@@ -1290,7 +1371,11 @@ namespace Moonwell
                 }
             }
 
-            return Runtime.World.MoveItemToSlot(Handle, item.Handle, slot);
+            // The slot move fires an order event (852005, game facts 11-03).
+            Inbound.CodeOrders++;
+            var moved = Runtime.World.MoveItemToSlot(Handle, item.Handle, slot);
+            Inbound.CodeOrders--;
+            return moved;
         }
 
         /// <summary>Makes the unit drop an item from its inventory where it stands (UnitRemoveItem). The game counts it as a drop, so OnDropped and OnItemDropped run, inside this call and while the unit still has the item: the item's Carrier is the unit there, and null after the call. Does nothing for an item that lies on the ground, and once the unit or the item is gone. A unit whose inventory drops its items at death (a footman's; a hero's keeps them) drops them as it dies, and the drop reactions run before its OnDeath, with Carrier already null. The items of a unit removed with RemoveUnit leave it inside that call, but the game fires their drop events after the call, while the unit's type id still reads. For a unit Moonwell removed (Remove(), or its scope ending) no drop reaction runs, neither the item's nor the unit's, and its handle makes no second object; for one a native removed, which Moonwell has not noticed yet, the drop reactions run for an object that is about to be swept, with Carrier already null. Seen for a hero, whose items are then removed with it; other units are assumed to do the same.</summary>

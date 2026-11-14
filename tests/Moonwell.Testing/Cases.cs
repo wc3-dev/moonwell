@@ -58,7 +58,165 @@ namespace Moonwell.Testing
             AddDebug(list);
             AddPlaced(list);
             AddProcgen(list);
+            AddAI(list);
+            AddAITrees(list);
+            AddCombat(list);
+            AddAITools(list);
+            AddSimulation(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the AI combat package: meeting, target choice, casting, pulling back, the leash and the lane walker.</summary>
+        private static void AddCombat(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.combat.targets", Run = CombatCases.Targets });
+            list.Add(new Case { Name = "ai.combat.ruled-out", Run = CombatCases.RuledOut });
+            list.Add(new Case { Name = "ai.combat.weights", Run = CombatCases.Weights });
+            list.Add(new Case { Name = "ai.combat.spells", Run = CombatCases.Spells });
+            list.Add(new Case { Name = "ai.combat.cast-ends", Run = CombatCases.CastEnds });
+            list.Add(new Case { Name = "ai.combat.refused", Run = CombatCases.Refused });
+            list.Add(new Case { Name = "ai.combat.pull-back", Run = CombatCases.PullingBack });
+            list.Add(new Case { Name = "ai.combat.leash", Run = CombatCases.Leash });
+            list.Add(new Case { Name = "ai.combat.set-aside", Run = CombatCases.SetAside });
+            list.Add(new Case { Name = "ai.combat.after-a-kill", Run = CombatCases.AfterAKill });
+            list.Add(new Case { Name = "ai.combat.attacker", Run = CombatCases.Attacker });
+            list.Add(new Case { Name = "ai.combat.unseen", Run = CombatCases.Unseen });
+            list.Add(new Case { Name = "ai.combat.meet-range", Run = CombatCases.MeetRange });
+            list.Add(new Case { Name = "ai.combat.lane-walker", Run = CombatCases.LaneWalkerSettings });
+        }
+
+        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds, the read-outs, the order names and casts.</summary>
+        private static void AddSimulation(List<Case> list)
+        {
+            list.Add(new Case { Name = "simulation.steps", Run = SimulationCases.StepsInOrder });
+            list.Add(new Case { Name = "simulation.hold", Run = SimulationCases.Hold });
+            list.Add(new Case { Name = "simulation.seeded", Run = SimulationCases.Seeded });
+            list.Add(new Case { Name = "simulation.walk", Run = SimulationCases.Walk });
+            list.Add(new Case { Name = "simulation.duel", Run = SimulationCases.Duel });
+            list.Add(new Case { Name = "simulation.armor", Run = SimulationCases.Armor });
+            list.Add(new Case { Name = "simulation.seed", Run = SimulationCases.Seed });
+            list.Add(new Case { Name = "simulation.acquire", Run = SimulationCases.Acquire });
+            list.Add(new Case { Name = "simulation.attack-move", Run = SimulationCases.AttackMove });
+            list.Add(new Case { Name = "simulation.hold-position", Run = SimulationCases.HoldPosition });
+            list.Add(new Case { Name = "simulation.stop", Run = SimulationCases.Stop });
+            list.Add(new Case { Name = "simulation.alive", Run = SimulationCases.Alive });
+            list.Add(new Case { Name = "simulation.map-start", Run = SimulationCases.MapStart });
+            list.Add(new Case { Name = "simulation.smart", Run = SimulationCases.Smart });
+            list.Add(new Case { Name = "simulation.removed-target", Run = SimulationCases.RemovedTarget });
+            list.Add(new Case { Name = "simulation.reaction-order", Run = SimulationCases.ReactionOrder });
+            list.Add(new Case { Name = "simulation.many-attackers", Run = SimulationCases.ManyAttackers });
+            list.Add(new Case { Name = "simulation.map-draws", Run = SimulationCases.MapDraws });
+            list.Add(new Case { Name = "simulation.spell-ends", Run = SimulationCases.SpellEnds });
+            list.Add(new Case { Name = "simulation.order-names", Run = SimulationCases.OrderNames });
+            list.Add(new Case { Name = "simulation.cast", Run = SimulationCases.Cast });
+            list.Add(new Case { Name = "simulation.cast-refused", Run = SimulationCases.CastRefused });
+            list.Add(new Case { Name = "simulation.no-dummy", Run = SimulationCases.NoDummy });
+            list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
+        }
+
+        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, full control, and utility AI.</summary>
+        private static void AddAI(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.brains.think-on-each-actor", Run = BrainCases.ThinkOnEachActor });
+            list.Add(new Case { Name = "ai.brains.ticks", Run = BrainCases.Ticks });
+            list.Add(new Case { Name = "ai.brains.spread", Run = BrainCases.Spread });
+            list.Add(new Case { Name = "ai.brains.spread-at-a-steady-rate", Run = BrainCases.SpreadAtASteadyRate });
+            list.Add(new Case { Name = "ai.brains.woken-by-another", Run = BrainCases.WokenByAnother });
+            list.Add(new Case { Name = "ai.brains.ticks-leave-their-step", Run = BrainCases.TicksLeaveTheirStep });
+            list.Add(new Case { Name = "ai.brains.wake-once", Run = BrainCases.WakeOnce });
+            list.Add(new Case { Name = "ai.brains.throwing-think", Run = BrainCases.ThrowingThink });
+            list.Add(new Case { Name = "ai.brains.due-order", Run = BrainCases.DueOrder });
+            list.Add(new Case { Name = "ai.facts.written", Run = FactCases.Written });
+            list.Add(new Case { Name = "ai.facts.worked-out", Run = FactCases.WorkedOut });
+            list.Add(new Case { Name = "ai.facts.owner-change", Run = FactCases.OwnerChange });
+            list.Add(new Case { Name = "ai.facts.from-an-early-file", Run = FactCases.FromAnEarlyFile });
+            list.Add(new Case { Name = "ai.orders.point", Run = BrainOrderCases.PointOrders });
+            list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
+            list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
+            list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.full-control.acquire", Run = FullControlCases.Acquire });
+            list.Add(new Case { Name = "ai.full-control.foreign-order", Run = FullControlCases.ForeignOrder });
+            list.Add(new Case { Name = "ai.full-control.one-answer", Run = FullControlCases.OneAnswer });
+            list.Add(new Case { Name = "ai.full-control.code-orders", Run = FullControlCases.CodeOrders });
+            list.Add(new Case { Name = "ai.full-control.sleep", Run = FullControlCases.Sleep });
+            list.Add(new Case { Name = "ai.full-control.give-back", Run = FullControlCases.GiveBack });
+            list.Add(new Case { Name = "ai.full-control.not-stuck-on-hold", Run = FullControlCases.NotStuckOnHold });
+            list.Add(new Case { Name = "ai.full-control.code-calls", Run = FullControlCases.CodeCalls });
+            list.Add(new Case { Name = "ai.full-control.code-hold", Run = FullControlCases.CodeHold });
+            list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
+            list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
+            list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
+            list.Add(new Case { Name = "ai.full-control.in-play", Run = FullControlCases.InPlay });
+            list.Add(new Case { Name = "ai.full-control.lean-on-in-play", Run = FullControlCases.LeanOnInPlay });
+            list.Add(new Case { Name = "ai.utility.curves", Run = UtilityCases.Curves });
+            list.Add(new Case { Name = "ai.utility.points", Run = UtilityCases.Points });
+            list.Add(new Case { Name = "ai.utility.scores", Run = UtilityCases.Scores });
+            list.Add(new Case { Name = "ai.utility.ranges", Run = UtilityCases.Ranges });
+            list.Add(new Case { Name = "ai.utility.chain", Run = UtilityCases.Chain });
+            list.Add(new Case { Name = "ai.utility.ruled-out", Run = UtilityCases.RuledOut });
+            list.Add(new Case { Name = "ai.utility.pick", Run = UtilityCases.Pick });
+            list.Add(new Case { Name = "ai.utility.keep", Run = UtilityCases.Keep });
+            list.Add(new Case { Name = "ai.utility.run", Run = UtilityCases.Run });
+            list.Add(new Case { Name = "ai.utility.in-a-brain", Run = UtilityCases.InABrain });
+            list.Add(new Case { Name = "ai.simulation.brains-win", Run = SimulationBrainCases.BrainsWin });
+        }
+
+        /// <summary>Adds the cases for the AI package's behaviour trees: each node, the watching of When, and the tree's Run and Stop.</summary>
+        private static void AddAITrees(List<Case> list)
+        {
+            list.Add(new Case { Name = "ai.trees.sequence", Run = BehaviourTreeCases.Sequence });
+            list.Add(new Case { Name = "ai.trees.select", Run = BehaviourTreeCases.Select });
+            list.Add(new Case { Name = "ai.trees.when-cuts-in", Run = BehaviourTreeCases.WhenCutsIn });
+            list.Add(new Case { Name = "ai.trees.when-ends-its-branch", Run = BehaviourTreeCases.WhenEndsItsBranch });
+            list.Add(new Case { Name = "ai.trees.when-failing-at-once", Run = BehaviourTreeCases.WhenFailingAtOnce });
+            list.Add(new Case { Name = "ai.trees.only-a-select-watches", Run = BehaviourTreeCases.OnlyASelectWatches });
+            list.Add(new Case { Name = "ai.trees.parallel", Run = BehaviourTreeCases.Parallel });
+            list.Add(new Case { Name = "ai.trees.repeat", Run = BehaviourTreeCases.Repeat });
+            list.Add(new Case { Name = "ai.trees.invert-and-succeed", Run = BehaviourTreeCases.InvertAndSucceed });
+            list.Add(new Case { Name = "ai.trees.facts", Run = BehaviourTreeCases.Facts });
+            list.Add(new Case { Name = "ai.trees.wait", Run = BehaviourTreeCases.Wait });
+            list.Add(new Case { Name = "ai.trees.cooldown", Run = BehaviourTreeCases.Cooldown });
+            list.Add(new Case { Name = "ai.trees.timeout", Run = BehaviourTreeCases.Timeout });
+            list.Add(new Case { Name = "ai.trees.pick", Run = BehaviourTreeCases.Pick });
+            list.Add(new Case { Name = "ai.trees.one-tree-per-node", Run = BehaviourTreeCases.OneTreePerNode });
+            list.Add(new Case { Name = "ai.trees.nested-run", Run = BehaviourTreeCases.NestedRun });
+            list.Add(new Case { Name = "ai.trees.stop", Run = BehaviourTreeCases.Stop });
+            list.Add(new Case { Name = "ai.trees.stop-during-run", Run = BehaviourTreeCases.StopDuringRun });
+            list.Add(new Case { Name = "ai.trees.names-apart", Run = BehaviourTreeCases.NamesApart });
+            list.Add(new Case { Name = "ai.trees.unit-brain", Run = BehaviourTreeCases.UnitBrainTree });
+            list.Add(new Case { Name = "ai.trees.move-to", Run = TreeUnitCases.MoveTo });
+            list.Add(new Case { Name = "ai.trees.attack", Run = TreeUnitCases.Attack });
+            list.Add(new Case { Name = "ai.trees.cast", Run = TreeUnitCases.Cast });
+            list.Add(new Case { Name = "ai.trees.follow-route", Run = TreeUnitCases.FollowRoute });
+            list.Add(new Case { Name = "ai.trees.use-item", Run = TreeUnitCases.UseItem });
+        }
+
+        /// <summary>Adds the cases for the AI package's tools (K7): the brain view, the decision log and the commands; they exist only in a development build, as the debug mode does.</summary>
+        private static void AddAITools(List<Case> list)
+        {
+            // Named debug.*, as the debug mode's cases are: the release Lua test leaves those out of its count by that prefix.
+#if DEBUG
+            list.Add(new Case { Name = "debug.ai-tools.view-tree", Run = BrainToolsCases.ViewTree });
+            list.Add(new Case { Name = "debug.ai-tools.view-choice", Run = BrainToolsCases.ViewChoice });
+            list.Add(new Case { Name = "debug.ai-tools.view-facts", Run = BrainToolsCases.ViewFacts });
+            list.Add(new Case { Name = "debug.ai-tools.view-other-actors", Run = BrainToolsCases.ViewOtherActors });
+            list.Add(new Case { Name = "debug.ai-tools.view-folds", Run = BrainToolsCases.ViewFolds });
+            list.Add(new Case { Name = "debug.ai-tools.brain-selects", Run = BrainToolsCases.BrainSelects });
+            list.Add(new Case { Name = "debug.ai-tools.log-choice", Run = BrainToolsCases.LogChoice });
+            list.Add(new Case { Name = "debug.ai-tools.log-tree", Run = BrainToolsCases.LogTree });
+            list.Add(new Case { Name = "debug.ai-tools.log-class", Run = BrainToolsCases.LogClass });
+            list.Add(new Case { Name = "debug.ai-tools.log-keeps-newest", Run = BrainToolsCases.LogKeepsNewest });
+            list.Add(new Case { Name = "debug.ai-tools.force", Run = BrainToolsCases.Force });
+            list.Add(new Case { Name = "debug.ai-tools.fact", Run = BrainToolsCases.SetFact });
+            list.Add(new Case { Name = "debug.ai-tools.wake", Run = BrainToolsCases.Wake });
+            list.Add(new Case { Name = "debug.ai-tools.off-and-map-commands", Run = BrainToolsCases.OffAndMapCommands });
+            list.Add(new Case { Name = "debug.ai-tools.enum-and-nullable-facts", Run = BrainToolsCases.EnumAndNullableFacts });
+            list.Add(new Case { Name = "debug.ai-tools.before-any-brain", Run = BrainToolsCases.BeforeAnyBrain });
+            list.Add(new Case { Name = "debug.ai-tools.force-pick", Run = BrainToolsCases.ForcePick });
+            list.Add(new Case { Name = "debug.ai-tools.log-two-brains", Run = BrainToolsCases.LogTwoBrains });
+            list.Add(new Case { Name = "debug.ai-tools.negative-fact", Run = BrainToolsCases.NegativeFact });
+            list.Add(new Case { Name = "debug.ai-tools.ending-while-logged-and-forced", Run = BrainToolsCases.EndingWhileLoggedAndForced });
+#endif
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
@@ -1541,6 +1699,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "units.order-point", Run = UnitCases.OrderPoint });
             list.Add(new Case { Name = "units.order-target", Run = UnitCases.OrderTarget });
             list.Add(new Case { Name = "units.order-gone", Run = UnitCases.OrderGone });
+            list.Add(new Case { Name = "units.use-item", Run = UnitCases.UseItem });
             list.Add(new Case { Name = "units.name", Run = UnitCases.NameReadAndSet });
             list.Add(new Case { Name = "units.icon", Run = UnitCases.IconRead });
             list.Add(new Case { Name = "units.level-set-with-handle", Run = UnitCases.LevelSetWithHandleDoesNothing });
