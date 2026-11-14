@@ -9,7 +9,8 @@ namespace Moonwell.Analyzers;
 
 /// <summary>
 /// MW0057 (J17): a native the game crashes on, given one of its Strings or Textures found by name
-/// (<c>BlzGetFrameByName("SimpleNameValue", 0)</c>), straight or through a local or field that holds one.
+/// (<c>BlzGetFrameByName("SimpleNameValue", 0)</c>), straight or through a local or field that holds one; and
+/// <c>Screen.AddTo</c> given one by name (J28), as it reads whether the game frame shows.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FramePartAnalyzer : DiagnosticAnalyzer
@@ -51,6 +52,14 @@ public sealed class FramePartAnalyzer : DiagnosticAnalyzer
     private static void Called(OperationAnalysisContext context, ConcurrentBag<(IInvocationOperation, ISymbol)> calls)
     {
         var call = (IInvocationOperation)context.Operation;
+        if (IsAddTo(call.TargetMethod) && call.Arguments.Length > 1
+            && Unwrapped(call.Arguments[1].Value).ConstantValue is { HasValue: true, Value: string part }
+            && GameFrameParts.All.ContainsKey(part))
+        {
+            context.ReportDiagnostic(Report(call, part));
+            return;
+        }
+
         if (!IsNative(call.TargetMethod) || !Crashing.Contains(call.TargetMethod.Name) || call.Arguments.Length == 0)
         {
             return;
@@ -114,7 +123,9 @@ public sealed class FramePartAnalyzer : DiagnosticAnalyzer
     private static Diagnostic Report(IInvocationOperation call, string name)
     {
         var (kind, frame) = GameFrameParts.All[name];
-        var instead = call.TargetMethod.Name == "BlzFrameGetParent"
+        var instead = call.TargetMethod.Name == "AddTo"
+            ? "Screen.AddTo reads whether it shows" + (frame != null ? $": add to the frame it sits in, '{frame}'" : ": add to the frame it sits in")
+            : call.TargetMethod.Name == "BlzFrameGetParent"
             ? frame != null ? $"find the frame it sits in by that frame's own name, BlzGetFrameByName(\"{frame}\", 0)" : "find the frame it sits in by that frame's own name, which the game's .fdf files give"
             : "move it off with BlzFrameClearAllPoints and BlzFrameSetAbsPoint, which take one with no crash" + (frame != null ? $", or call it on the frame it sits in, '{frame}'" : "");
         return Diagnostic.Create(Rules.FramePart, call.Syntax.GetLocation(), call.Syntax.ToString(), name, kind, instead);
@@ -128,6 +139,11 @@ public sealed class FramePartAnalyzer : DiagnosticAnalyzer
         }
 
         return operation;
+    }
+
+    private static bool IsAddTo(IMethodSymbol method)
+    {
+        return method.Name == "AddTo" && method.ContainingType is { Name: "Screen", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } };
     }
 
     private static bool IsNative(IMethodSymbol method)
