@@ -59,7 +59,25 @@ namespace Moonwell.Testing
             AddPlaced(list);
             AddProcgen(list);
             AddAI(list);
+            AddSimulation(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the fast simulation: its steps, the hold, walking, fighting, acquiring, seeds and the read-outs.</summary>
+        private static void AddSimulation(List<Case> list)
+        {
+            list.Add(new Case { Name = "simulation.steps", Run = SimulationCases.StepsInOrder });
+            list.Add(new Case { Name = "simulation.hold", Run = SimulationCases.Hold });
+            list.Add(new Case { Name = "simulation.seeded", Run = SimulationCases.Seeded });
+            list.Add(new Case { Name = "simulation.walk", Run = SimulationCases.Walk });
+            list.Add(new Case { Name = "simulation.duel", Run = SimulationCases.Duel });
+            list.Add(new Case { Name = "simulation.armor", Run = SimulationCases.Armor });
+            list.Add(new Case { Name = "simulation.seed", Run = SimulationCases.Seed });
+            list.Add(new Case { Name = "simulation.acquire", Run = SimulationCases.Acquire });
+            list.Add(new Case { Name = "simulation.attack-move", Run = SimulationCases.AttackMove });
+            list.Add(new Case { Name = "simulation.hold-position", Run = SimulationCases.HoldPosition });
+            list.Add(new Case { Name = "simulation.stop", Run = SimulationCases.Stop });
+            list.Add(new Case { Name = "simulation.alive", Run = SimulationCases.Alive });
         }
 
         /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, and brain orders.</summary>
@@ -81,6 +99,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.simulation.brains-win", Run = SimulationBrainCases.BrainsWin });
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
