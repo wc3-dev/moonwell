@@ -1,6 +1,6 @@
 using System;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>The exception a failed Expect check throws.</summary>
     public sealed class ExpectationFailed : Exception

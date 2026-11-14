@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Moonwell.Hosting;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>The fake game a case runs against: it records what the runtime asks of it and moves time by hand.</summary>
     public sealed partial class FakeWorld : IWorld
@@ -514,7 +514,12 @@ namespace Moonwell.Testing
         /// <summary>Moves time forward by the seconds, calling Runtime.Wake at each wake request on the way, WakeLate after the time it asked for; time never goes back, so a wake that came late keeps its time. The frame of the last calls ends first, and again each time the time moves: the drops that waited for it fire, and the units removed in it read type id 0. The second wake in a row that would not move the time comes at the game's next tick instead (NextTick), as the game's own clock moves on.</summary>
         public void Advance(float seconds)
         {
-            var target = Time + seconds;
+            AdvanceTo(Time + seconds);
+        }
+
+        /// <summary>Moves time forward to a time of the world, as Advance does.</summary>
+        internal void AdvanceTo(float target)
+        {
             DeliverPendingDrops();
             EndPendingRemovals();
             DeliverPendingSync();
@@ -727,7 +732,18 @@ namespace Moonwell.Testing
                 return false;
             }
 
-            if (dead.Contains(target) || (SpellImmune.Contains(target) && (attackType == 4 || IsMagicDamage(damageType))))
+            if (SpellImmune.Contains(target) && (attackType == 4 || IsMagicDamage(damageType)))
+            {
+                return true;
+            }
+
+            return Hurt(source, target, amount, false);
+        }
+
+        /// <summary>The damage itself, for DealDamage and the play's swings: delivered to Inbound inside the call, with isAttack as the event's, when the runtime listens for damage; then the life drops by what the reactions left, and 0.405 or less kills with the source as the killer; a unit whose life was never set keeps its 0. A dead unit gets no event and takes nothing, and the answer is true.</summary>
+        internal bool Hurt(unit source, unit target, float amount, bool isAttack)
+        {
+            if (dead.Contains(target))
             {
                 return true;
             }
@@ -735,7 +751,7 @@ namespace Moonwell.Testing
             var left = amount;
             if (Listening.Contains(GameEvent.Damage))
             {
-                left = Inbound.Damaged(target, source, amount, false);
+                left = Inbound.Damaged(target, source, amount, isAttack);
             }
 
             if (lives.TryGetValue(target, out var life))
@@ -1110,6 +1126,7 @@ namespace Moonwell.Testing
             unitXs[created] = x;
             unitYs[created] = y;
             facings[created] = facing;
+            Seed(created, typeId);
             return created;
         }
 
@@ -3167,6 +3184,7 @@ namespace Moonwell.Testing
         private void DeliverOrder(unit unit, int id, OrderKind kind, float x, float y, unit? targetUnit, item? targetItem)
         {
             currentOrders[unit] = id;
+            PlayOrdered(unit, id, kind, x, y, targetUnit);
             var queue = 1 + (queued.TryGetValue(unit, out var count) ? count : 0);
             queued.Remove(unit);
             if (Listening.Contains(GameEvent.Order))

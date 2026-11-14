@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Moonwell.Hosting;
 
-namespace Moonwell.Testing
+namespace Moonwell
 {
     /// <summary>The fake world's multiboards, leaderboards and dialogs.</summary>
     public sealed partial class FakeWorld
