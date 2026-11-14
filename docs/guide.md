@@ -1597,6 +1597,116 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
   time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
+## Fast simulation
+
+The `Moonwell.Simulation` package runs a map's own code in .NET on a fake of the game, faster than real time: its
+components, brains, reactions and timers, with units that walk, chase and fight by their object data. A test plays a
+map's AI through a fight or a long game and checks what it decided. The same seed gives the same run.
+
+It goes in a test project beside the map project, not in its folder: the build compiles every `.cs` under the map
+project into the map. Only the test project references `Moonwell.Simulation`; a package the map project uses goes into
+the map's Lua.
+
+```
+MyMap\MyMap.csproj                the map
+MyMap.Tests\MyMap.Tests.csproj    the tests
+MyMap.Tests\GuardTests.cs
+```
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyMap\MyMap.csproj" />
+    <PackageReference Include="Moonwell.Simulation" Version="0.16.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>
+```
+
+`dotnet test MyMap.Tests` runs them. A map whose code names `Data`, `Placed` or `Lua` needs a `moonwell build` first,
+which writes those classes for the compile.
+
+```csharp
+using Moonwell;
+using MyMap;
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)] // one simulation at a time
+
+public class GuardTests
+{
+    [Fact]
+    public void AGuardAnswersTheAlarmOnce()
+    {
+        var sim = Simulation.Start(new Settings(), seed: 7);     // the map's start, as the game runs it
+        var guard = Unit.Create(ObjectTypes.FourCC("hfoo"), Player.One, 0f, 0f, Game.Instance);
+        guard.Add(new Guard { HomeX = 0f, HomeY = 0f });
+        var raider = Unit.Create(ObjectTypes.FourCC("ogru"), Player.Two, 1500f, 0f, Game.Instance);
+        Player.One.Blackboard().Set(Guard.Alarm, raider);
+
+        sim.Run(1f);                                             // the guard's brain thinks on its own meanwhile
+        Assert.Equal(1, sim.OrdersOf(guard));                    // one attack reached the game, not one a think
+        Assert.InRange(sim.StoodOf(guard), 0.15f, 0.17f);        // held once, at that order
+        Assert.True(guard.X > 0f);                               // and on its way
+    }
+
+    [Fact]
+    public void TheRaidsAreBeaten()
+    {
+        var sim = Simulation.Start(new Settings());
+        Assert.True(sim.RunUntil(() => sim.Alive(Player.Two) == 0, 600f));   // ten minutes of the map's own raids
+        Assert.True(sim.Alive(Player.One) > 0);
+    }
+}
+```
+
+- `Simulation.Start(map)` starts the map as the game would: its slots playing on their teams (slot 0 as a person when
+  it lists none), its object classes registered, its `Components`, its `PlayerComponents` on each playing slot, then
+  every `OnGameStart`. `Simulation.Start()` starts an empty game, with nothing of the map's, for units and brains the
+  test makes by id. Either takes a `seed`: it gives the dice of the attacks, and the seed after it the map's own random
+  numbers (`Game.Random` and a `Dice` made without a seed).
+- `Run(seconds)` plays steps of 0.02 s, the seconds rounded to whole steps, a half step up. `RunUntil(check, seconds)`
+  stops at the first step its check holds and gives true, or false when it never did. In each step Moonwell's timers
+  run first, the brains' own 0.02 s step among them, so brains think as in the game; then each unit acts, in the order
+  made. `sim.World.Advance` moves the fake's time without the play, so units neither walk nor fight: use `Run`.
+- `Alive(player)` counts the player's units alive and not removed, Moonwell's dummies left out. `OrdersOf(unit)` counts
+  the orders the unit was given, repeats included, and `StoodOf(unit)` the seconds it stood at their holds. `Time` is
+  the game's seconds so far.
+- A unit plays by its type's numbers: on .NET those of its object data (the map's class for the type, else the standard
+  object), or those `SetNumbers(typeId, new UnitNumbers { ... })` gives for units made from then on. A unit takes its
+  attack range, cooldown, damage, dice and acquisition range when it is made; its life, move speed and armor start from
+  them and count as they are at each step. A unit of a type with no numbers never moves, and its orders are neither
+  counted nor held.
+- Every order holds the unit 0.16 s (8 steps) before it starts, a repeat of the same order too, as the game holds a
+  unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
+  to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
+  anything else. An attack to a point fights the nearest enemy within acquisition range on the way, then walks on. Hold
+  position never moves and swings at an enemy within range. `stop` leaves the unit idle, patrol stands, and any other
+  order (a spell, `attackground`) ends after its hold.
+- The fake knows orders by name from a short list: `smart`, `stop`, `move`, `attack`, `attackground`, `patrol`,
+  `holdposition`, `defend`, `undefend`, `holybolt`, `immolation` and `unimmolation`. Any other name leaves the unit idle
+  at once, and is neither counted nor held.
+- A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
+  a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
+  damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
+  not counted or held.
+- Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
+  through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
+  3.0.1.24371); turning, vision, buffs, and spells and their effects; an attack's damage point and a missile's flight
+  (a swing lands at once); heroes' attributes (a hero fights on its base numbers); units placed in World Editor; and the
+  Damage, Terrain, Areas, Input and Physics systems. A simulation shows how the map's own logic decides, not exactly how
+  a fight goes in the game.
+- The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit
+  from running tests side by side.
+
 ## Interactions and finding
 
 Add the `Moonwell.Interactions` package (the template's `.csproj` has the line, commented) for things that react to what

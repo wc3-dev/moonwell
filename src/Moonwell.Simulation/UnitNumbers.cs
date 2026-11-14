@@ -1,6 +1,6 @@
 namespace Moonwell
 {
-    /// <summary>The numbers a Simulation plays a unit type by, as its object data holds them.</summary>
+    /// <summary>The numbers a Simulation plays a unit type by, as its object data holds them. A unit takes its range, cooldown, damage, dice and acquisition range when it is made; its life, move speed and armor start from them and are read as they are at each step.</summary>
     public sealed class UnitNumbers
     {
         /// <summary>The most life, which a unit starts with.</summary>

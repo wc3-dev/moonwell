@@ -53,14 +53,14 @@ namespace Moonwell
             return played.TryGetValue(unit, out var unitPlay) ? unitPlay : null;
         }
 
-        /// <summary>How many units the world made that the slot owns, alive and not removed.</summary>
+        /// <summary>How many units the world made that the slot owns, alive and not removed, Moonwell's dummies and helper units left out.</summary>
         internal int AliveOf(int slot)
         {
             var count = 0;
             for (var i = 0; i < madeUnits.Count; i++)
             {
                 var made = madeUnits[i];
-                if (!Gone(made) && UnitSlot(made) == slot)
+                if (!Gone(made) && !IsHelperUnit(made) && UnitSlot(made) == slot)
                 {
                     count++;
                 }
@@ -72,7 +72,8 @@ namespace Moonwell
         /// <summary>
         /// One step: its time, with Moonwell's timers due by then (the brains' step among them), then the play over the units
         /// made before it, in the order made. An order given in the timers is stamped with this step, one given in the play
-        /// with the next.
+        /// with the next. A dead unit, a removed one and a paused one do nothing; one seen dead and alive again (a revived hero)
+        /// comes back idle.
         /// </summary>
         internal void PlayOneStep()
         {
@@ -90,14 +91,39 @@ namespace Moonwell
                     continue;
                 }
 
+                if (dead.Contains(made))
+                {
+                    unitPlay.SeenDead = true;
+                    continue;
+                }
+
                 if (Gone(made))
+                {
+                    continue;
+                }
+
+                if (unitPlay.SeenDead)
+                {
+                    unitPlay.SeenDead = false;
+                    currentOrders[made] = 0;
+                    unitPlay.Walking = false;
+                    unitPlay.Target = null;
+                    unitPlay.HasPoint = false;
+                }
+
+                if (PausedUnits.Contains(made))
                 {
                     continue;
                 }
 
                 if (k < unitPlay.ReadyStep)
                 {
-                    unitPlay.Stood++;
+                    // An order given in this step's play is stamped with the next: its 8 steps start there.
+                    if (k >= unitPlay.ReadyStep - 8)
+                    {
+                        unitPlay.Stood++;
+                    }
+
                     continue;
                 }
 
@@ -199,7 +225,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A ready unit's step, by its current order.</summary>
+        /// <summary>A ready unit's step, by its current order. An order the play does not carry out (a spell, attackground, one on an item) ends at the unit's first ready step; patrol stands.</summary>
         private void Act(unit made, PlayedUnit unitPlay, int k)
         {
             var id = CurrentOrderOf(made);
@@ -219,6 +245,10 @@ namespace Moonwell
                 {
                     Walk(made, unitPlay, unitPlay.PointX, unitPlay.PointY);
                 }
+                else
+                {
+                    currentOrders[made] = 0;
+                }
 
                 return;
             }
@@ -233,6 +263,10 @@ namespace Moonwell
                 {
                     AttackMove(made, unitPlay, k);
                 }
+                else
+                {
+                    currentOrders[made] = 0;
+                }
 
                 return;
             }
@@ -240,6 +274,12 @@ namespace Moonwell
             if (id == 851993)
             {
                 Hold(made, unitPlay, k);
+                return;
+            }
+
+            if (id != 851990 && id != 851972)
+            {
+                currentOrders[made] = 0;
             }
         }
 
@@ -298,9 +338,14 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A walking step toward a point: the plan is made at the first, from where the unit stands, in ceil(distance x 50 / speed) steps; at the last the unit stands exactly on the point, idle. A walk of 0 arrives at once; a unit with no speed stands.</summary>
+        /// <summary>A walking step toward a point: the plan is made at the first, from where the unit stands, in ceil(distance x 50 / speed) steps, and made again when the unit no longer stands where the play put it; at the last the unit stands exactly on the point, idle. A walk of 0 arrives at once; a unit with no speed stands.</summary>
         private void Walk(unit made, PlayedUnit unitPlay, float toX, float toY)
         {
+            if (unitPlay.Walking && (XOf(made) != unitPlay.LastX || YOf(made) != unitPlay.LastY))
+            {
+                unitPlay.Walking = false;
+            }
+
             if (!unitPlay.Walking)
             {
                 var fromX = XOf(made);
@@ -324,21 +369,31 @@ namespace Moonwell
                 unitPlay.FromX = fromX;
                 unitPlay.FromY = fromY;
                 unitPlay.Done = 0;
-                unitPlay.Total = (int)Math.Ceiling(Math.Sqrt(squared) * 50.0 / speed);
+
+                // A hair over a whole number of steps counts as it, so that float and double give the same steps.
+                var steps = Math.Sqrt(squared) * 50.0 / speed - 0.0001;
+                unitPlay.Total = steps <= 1.0 ? 1 : (int)Math.Ceiling(steps);
             }
 
             unitPlay.Done++;
             if (unitPlay.Done >= unitPlay.Total)
             {
-                unitXs[made] = toX;
-                unitYs[made] = toY;
+                Place(made, unitPlay, toX, toY);
                 unitPlay.Walking = false;
                 currentOrders[made] = 0;
                 return;
             }
 
-            unitXs[made] = unitPlay.FromX + (toX - unitPlay.FromX) * unitPlay.Done / unitPlay.Total;
-            unitYs[made] = unitPlay.FromY + (toY - unitPlay.FromY) * unitPlay.Done / unitPlay.Total;
+            Place(made, unitPlay, unitPlay.FromX + (toX - unitPlay.FromX) * unitPlay.Done / unitPlay.Total, unitPlay.FromY + (toY - unitPlay.FromY) * unitPlay.Done / unitPlay.Total);
+        }
+
+        /// <summary>Puts a played unit at a place, and keeps the place, so that a walk sees when something else moved the unit.</summary>
+        private void Place(unit made, PlayedUnit unitPlay, float x, float y)
+        {
+            unitXs[made] = x;
+            unitYs[made] = y;
+            unitPlay.LastX = x;
+            unitPlay.LastY = y;
         }
 
         /// <summary>An attack on a unit: ended when the target is dead or gone; in range, a swing when the cooldown is over; else a chase of speed / 50, stopping at the range.</summary>
@@ -381,13 +436,11 @@ namespace Moonwell
             var towardY = dy / distance;
             if (distance - step <= range)
             {
-                unitXs[made] = targetX - towardX * range;
-                unitYs[made] = targetY - towardY * range;
+                Place(made, unitPlay, targetX - towardX * range, targetY - towardY * range);
             }
             else
             {
-                unitXs[made] = x + towardX * step;
-                unitYs[made] = y + towardY * step;
+                Place(made, unitPlay, x + towardX * step, y + towardY * step);
             }
         }
 
@@ -404,10 +457,25 @@ namespace Moonwell
             }
 
             unitPlay.NextSwing = k + unitPlay.CooldownSteps;
-            Hurt(made, target, raw * ArmorFactor(ArmorOf(target)), true);
+            Hurt(made, target, raw * ArmorFactor(ArmorAt(target)), true);
         }
 
-        /// <summary>The nearest living enemy of the unit within a squared distance, centre to centre, never Neutral Passive; of two as near, the one made first.</summary>
+        /// <summary>A unit's armor as ArmorOf reads it, its own and its abilities' Idef bonus fields, with no call counted.</summary>
+        private float ArmorAt(unit unit)
+        {
+            var armor = armors.TryGetValue(unit, out var own) ? own : 0.0f;
+            foreach (var id in armorBonuses)
+            {
+                if (AbilityLevel(unit, id) > 0)
+                {
+                    armor += BonusOf(unit, id);
+                }
+            }
+
+            return armor;
+        }
+
+        /// <summary>The nearest living enemy of the unit within a squared distance, centre to centre, among the units the play plays, never Neutral Passive or Moonwell's dummies and helper units; of two as near, the one made first.</summary>
         private unit? Nearest(unit made, float reachSquared)
         {
             var x = XOf(made);
@@ -418,7 +486,7 @@ namespace Moonwell
             for (var i = 0; i < madeUnits.Count; i++)
             {
                 var other = madeUnits[i];
-                if (other == made || Gone(other))
+                if (other == made || !played.ContainsKey(other) || Gone(other) || IsHelperUnit(other))
                 {
                     continue;
                 }
@@ -448,10 +516,16 @@ namespace Moonwell
             return unitPlay.AcquisitionRange > 0.0f && unitPlay.Damage + unitPlay.DamageDice > 0;
         }
 
-        /// <summary>Whether a unit is dead, removed or vanished.</summary>
+        /// <summary>Whether a unit is dead, removed or vanished: a removed unit is pending in its frame and vanished from the next.</summary>
         private bool Gone(unit unit)
         {
-            return dead.Contains(unit) || vanishedUnits.Contains(unit) || RemovedUnits.Contains(unit);
+            return dead.Contains(unit) || vanishedUnits.Contains(unit) || pendingRemovals.Contains(unit);
+        }
+
+        /// <summary>Whether a unit is Moonwell's casting dummy or a package's helper unit, by the type the fake keeps.</summary>
+        private bool IsHelperUnit(unit unit)
+        {
+            return unitTypes.TryGetValue(unit, out var typeId) && typeId != 0 && ObjectTypes.IsHelper(typeId);
         }
 
         /// <summary>The slot of the player owning a unit, read with no call counted; 0 for one the world did not make.</summary>
@@ -541,5 +615,14 @@ namespace Moonwell
 
         /// <summary>The walk's steps done.</summary>
         public int Done;
+
+        /// <summary>The x the play last put the unit at.</summary>
+        public float LastX;
+
+        /// <summary>The y the play last put the unit at.</summary>
+        public float LastY;
+
+        /// <summary>Whether the play saw the unit dead, so that it comes back idle if it lives again.</summary>
+        public bool SeenDead;
     }
 }

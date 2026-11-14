@@ -5,9 +5,10 @@ namespace Moonwell
 {
     /// <summary>
     /// A game run flat out on the fake world, in steps of 0.02 s. Units of a type with numbers walk straight at their move
-    /// speed, chase and swing at what they attack, attack the nearest enemy in reach when idle, and stand 0.15 s at each
+    /// speed, chase and swing at what they attack, attack the nearest enemy in reach when idle, and stand 0.16 s at each
     /// order, while Moonwell's timers and reactions run as in the game. The same seed gives the same run. Pathing,
-    /// collision, missiles' flight, spells, buffs, vision and turning are left to the game.
+    /// collision, missiles' flight, spells, buffs, vision and turning are left to the game, and heroes fight on their base
+    /// numbers: their attributes add no life, damage or armor.
     /// </summary>
     public sealed class Simulation
     {
@@ -16,13 +17,13 @@ namespace Moonwell
             World = world;
         }
 
-        /// <summary>The fake world the game runs on. Its own Advance moves time without the play.</summary>
+        /// <summary>The fake world the game runs on. Its own Advance moves time without the play: units neither walk nor fight, and the steps Run counts fall behind, so it is not to be mixed with Run.</summary>
         public FakeWorld World { get; }
 
         /// <summary>The game's seconds so far.</summary>
         public float Time => World.Time;
 
-        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed).</summary>
+        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). Heroes fight on their base numbers: their attributes' bonuses are not applied.</summary>
         public static Simulation Start(int seed = 1)
         {
             var world = FakeWorld.Install();
@@ -35,7 +36,7 @@ namespace Moonwell
         /// none), each team's slots allied, then its register step, its starting components, its player components on each
         /// playing slot, and every OnGameStart. On .NET the register step registers the object classes the map uses, as its
         /// build would; in Lua it registers nothing. World Editor's placed units, and the damage, terrain, areas, input and physics
-        /// systems, are left out.
+        /// systems, are left out, and heroes fight on their base numbers: their attributes' bonuses are not applied.
         /// </summary>
         public static Simulation Start(Map map, int seed = 1)
         {
@@ -49,7 +50,7 @@ namespace Moonwell
             return simulation;
         }
 
-        /// <summary>Runs the seconds in whole steps: rounded to whole milliseconds, then to whole steps with a half step up, and at least one; none for 0 or less.</summary>
+        /// <summary>Runs the seconds in whole steps: rounded to whole milliseconds, then to whole steps with a half step up, and at least one; none for 0 or less. Each step's time is its number of steps since the start, so a World.Advance between runs, which moves time without the play, is not to be mixed with it.</summary>
         public void Run(float seconds)
         {
             var steps = StepsOf(seconds);
@@ -80,7 +81,7 @@ namespace Moonwell
             return false;
         }
 
-        /// <summary>Gives a unit type its numbers, for the units of the type made from now on; on .NET they replace what its object data gives.</summary>
+        /// <summary>Gives a unit type its numbers, for the units of the type made from now on; on .NET they replace what its object data gives. A unit takes its range, cooldown, damage, dice and acquisition range when it is made; its move speed and armor are read as they are at each step.</summary>
         public void SetNumbers(int typeId, UnitNumbers numbers)
         {
             World.SetNumbers(typeId, numbers);
@@ -100,7 +101,7 @@ namespace Moonwell
             return unitPlay == null ? 0.0f : unitPlay.Stood / 50.0f;
         }
 
-        /// <summary>How many units the player owns that the fake made, alive and not removed, whether played or not.</summary>
+        /// <summary>How many units the player owns that the fake made, alive and not removed, whether played or not; Moonwell's dummies and helper units are left out.</summary>
         public int Alive(Player player)
         {
             return World.AliveOf(player.Slot);

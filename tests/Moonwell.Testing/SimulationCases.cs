@@ -73,6 +73,40 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>A unit component that orders a walker to walk the first time its unit is hit, inside the damage reaction.</summary>
+    public sealed class OrderOnHit : UnitComponent
+    {
+        /// <summary>The unit to order; null once ordered.</summary>
+        public Unit? Walker;
+
+        /// <summary>Orders the walker to (250, 500), once.</summary>
+        public override void OnDamaged(Damage damage)
+        {
+            if (Walker != null)
+            {
+                Walker.OrderAt("move", 250.0f, 500.0f);
+                Walker = null;
+            }
+        }
+    }
+
+    /// <summary>A unit component that counts its unit's deaths and keeps the last killer.</summary>
+    public sealed class DeathCount : UnitComponent
+    {
+        /// <summary>How many times its unit died.</summary>
+        public int Deaths;
+
+        /// <summary>The last killer.</summary>
+        public Unit? Killer;
+
+        /// <summary>Counts the death.</summary>
+        public override void OnDeath(Unit? killerUnit)
+        {
+            Deaths++;
+            Killer = killerUnit;
+        }
+    }
+
     /// <summary>
     /// Cases for the fast simulation (decisions 312 to 314): its steps, the hold, walking, fighting, acquiring, seeds and the
     /// read-outs. Each case starts its own simulation, which installs a fresh fake world, and makes its units with
@@ -508,6 +542,206 @@ namespace Moonwell.Testing
             Steps(sim, 1);
             Expect.Equal(1, sim.Alive(Player.One), "the dead stay out");
             Expect.Equal(1, sim.Alive(Player.Two), "the removed stay out");
+        }
+
+        /// <summary>Smart on an enemy attacks it; on an ally it walks to where the ally stood when ordered; on a point it walks there.</summary>
+        public static void Smart(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10 });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            var hunter = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var enemy = Make(Target, Player.Two, 300.0f, 0.0f);
+            var follower = Make(Attacker, Player.One, 0.0f, 1000.0f);
+            var friend = Make(Target, Player.One, 0.0f, 1250.0f);
+            var walker = Make(Attacker, Player.One, 0.0f, 2000.0f);
+            hunter.OrderOn("smart", enemy); // each stamped 1, ready at 9
+            follower.OrderOn("smart", friend);
+            friend.PlaceAt(500.0f, 1250.0f); // the friend leaves; the follower walks to where it stood
+            walker.OrderAt("smart", 300.0f, 2000.0f);
+
+            // The hunter chases 6 a step from 9: 300 - 6 x 33 = 102 away at step 41, then max(100, 96) = 100 at 42.
+            Steps(sim, 42);
+            Expect.Near(200.0f, hunter.X, "the hunter chased to its range");
+            Expect.Near(1000.0f, enemy.Life, "no swing while chasing");
+            Steps(sim, 1); // step 43
+            Expect.Near(990.0f, enemy.Life, "smart on an enemy attacks it");
+            Expect.Equal("smart", hunter.CurrentOrder, "with the smart order");
+
+            // The follower walks 250 at 300: ceil(250 x 50 / 300 - 0.0001) = ceil(41.67) = 42 steps, 9 to 50.
+            Steps(sim, 7); // step 50
+            Expect.True(follower.X == 0.0f && follower.Y == 1250.0f, "smart on an ally walks to where it stood, not " + follower.X + ", " + follower.Y);
+            Expect.Equal("", follower.CurrentOrder, "and ends there");
+            Expect.Near(1000.0f, friend.Life, "the ally is not attacked");
+
+            // The walker walks 300 at 300: ceil(50 - 0.0001) = 50 steps, 9 to 58.
+            Steps(sim, 7); // step 57
+            Expect.Equal("smart", walker.CurrentOrder, "smart on a point walks");
+            Steps(sim, 1); // step 58
+            Expect.True(walker.X == 300.0f && walker.Y == 2000.0f, "to the point, not " + walker.X + ", " + walker.Y);
+            Expect.Equal("", walker.CurrentOrder, "and ends there");
+        }
+
+        /// <summary>An attack ends when its target is removed.</summary>
+        public static void RemovedTarget(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 150.0f, AttackCooldown = 1.0f, Damage = 10 });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            var attacker = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var target = Make(Target, Player.Two, 100.0f, 0.0f);
+            attacker.OrderOn("attack", target); // ready at 9, in range (100 of 150): a swing at 9, the next at 59
+            Steps(sim, 20);
+            Expect.Near(990.0f, target.Life, "one swing");
+            Expect.Equal("attack", attacker.CurrentOrder, "attacking");
+            target.Remove();
+            Steps(sim, 1); // step 21
+            Expect.Equal("", attacker.CurrentOrder, "the attack ends when its target is removed");
+            Expect.Equal(0, sim.Alive(Player.Two), "the target is gone");
+        }
+
+        /// <summary>An order given in a damage reaction inside a swing is stamped with the next step: the unit stands exactly 8 steps, though the play reaches it later in the same step.</summary>
+        public static void ReactionOrder(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 150.0f, AttackCooldown = 2.0f, Damage = 10 });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            sim.SetNumbers(Walker, WalkerNumbers());
+            var attacker = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var target = Make(Target, Player.Two, 100.0f, 0.0f);
+            var walker = Make(Walker, Player.One, 0.0f, 500.0f); // made after the attacker: the play reaches it after the swing
+            target.Add(new OrderOnHit { Walker = walker });
+            attacker.OrderOn("attack", target); // ready at 9; its swing at 9 orders the walker, stamped 10, ready at 18
+            Steps(sim, 17);
+            Expect.Equal("move", walker.CurrentOrder, "ordered in the reaction");
+            Expect.Near(0.0f, walker.X, "it stands steps 10 to 17");
+            Steps(sim, 1); // step 18; a walk of 250 at 270 is ceil(250 x 50 / 270 - 0.0001) = ceil(46.30) = 47 steps
+            Expect.Near(250.0f * 1.0f / 47.0f, walker.X, "it walks from step 18"); // 5.32
+            Expect.Near(0.16f, sim.StoodOf(walker), "it stood exactly 8 steps"); // 8 x 0.02
+            Expect.Equal(1, sim.OrdersOf(walker), "one order");
+        }
+
+        /// <summary>Three attackers on one target all swing; its death fires once, and all three are idle the step after.</summary>
+        public static void ManyAttackers(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 150.0f, AttackCooldown = 1.0f, Damage = 10 });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 55.0f, MoveSpeed = 200.0f });
+            var first = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var second = Make(Attacker, Player.One, 0.0f, 100.0f); // 141.4 from the target, in range
+            var third = Make(Attacker, Player.One, 0.0f, -100.0f);
+            var target = Make(Target, Player.Two, 100.0f, 0.0f);
+            var hits = target.Add(new HitLog());
+            var deaths = target.Add(new DeathCount());
+            first.OrderOn("attack", target); // all ready at 9
+            second.OrderOn("attack", target);
+            third.OrderOn("attack", target);
+            Steps(sim, 9); // step 9: 55 - 10 x 3 = 25
+            Expect.Equal(3, hits.Amounts.Count, "all three swing at 9");
+            Expect.Near(25.0f, target.Life, "25 left");
+            Steps(sim, 50); // step 59: 15, 5, then the third's -5 kills
+            Expect.True(!target.IsAlive, "the target dies at 59");
+            Expect.Equal(6, hits.Amounts.Count, "after six swings");
+            Expect.Equal(1, deaths.Deaths, "its death fires once");
+            Expect.Same(third, deaths.Killer, "the third swing killed");
+            Expect.Equal("attack", first.CurrentOrder, "the first notices at its next step");
+            Steps(sim, 1); // step 60
+            Expect.Equal("", first.CurrentOrder, "the first is idle");
+            Expect.Equal("", second.CurrentOrder, "the second is idle");
+            Expect.Equal("", third.CurrentOrder, "the third is idle");
+            Steps(sim, 60);
+            Expect.Equal(6, hits.Amounts.Count, "and nothing swings at the dead");
+            Expect.Equal(1, deaths.Deaths, "which dies once");
+        }
+
+        /// <summary>The map's own random numbers (Game.Random) repeat for the same seed: they are new Dice(seed + 1)'s.</summary>
+        public static void MapDraws(FakeWorld world)
+        {
+            var first = Draws(5);
+            var again = Draws(5);
+            var other = Draws(6);
+            var dice = new Dice(6);
+            var differs = false;
+            for (var i = 0; i < first.Count; i++)
+            {
+                Expect.Equal(dice.Int(1, 1000000), first[i], "seed 5's draw " + i + " is Dice(6)'s");
+                Expect.Equal(first[i], again[i], "the same seed, the same draw " + i);
+                differs = differs || first[i] != other[i];
+            }
+
+            Expect.True(differs, "another seed draws others");
+        }
+
+        /// <summary>Five of the map's draws from 1 to 1000000 in a simulation started with a seed.</summary>
+        private static List<int> Draws(int seed)
+        {
+            Simulation.Start(seed);
+            var drawn = new List<int>();
+            for (var i = 0; i < 5; i++)
+            {
+                drawn.Add(Game.Random.Int(1, 1000000));
+            }
+
+            return drawn;
+        }
+
+        /// <summary>A spell order is counted and held, ends at the unit's first ready step, and the unit then acquires an enemy.</summary>
+        public static void SpellEnds(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10, AcquisitionRange = 500.0f });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            var caster = Make(Attacker, Player.One, 0.0f, 0.0f);
+            caster.Order("immolation"); // stamped 1, ready at 9
+            Make(Target, Player.Two, 300.0f, 0.0f);
+            Steps(sim, 8);
+            Expect.Equal("immolation", caster.CurrentOrder, "held to step 8");
+            Steps(sim, 1); // step 9
+            Expect.Equal("", caster.CurrentOrder, "the spell order ends at its first ready step");
+            Steps(sim, 1); // step 10
+            Expect.Equal("attack", caster.CurrentOrder, "then the unit acquires");
+            Expect.Equal(1, sim.OrdersOf(caster), "the spell is counted");
+            Expect.Near(0.16f, sim.StoodOf(caster), "and held");
+        }
+
+        /// <summary>Moonwell's casting dummy is never acquired, though nearest and played, and Alive leaves it out.</summary>
+        public static void NoDummy(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            var dummyType = ObjectTypes.FourCC("s0dm");
+            ObjectTypes.DummyType(dummyType);
+            sim.SetNumbers(Attacker, new UnitNumbers { Life = 500.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10, AcquisitionRange = 500.0f });
+            sim.SetNumbers(Target, new UnitNumbers { Life = 1000.0f, MoveSpeed = 200.0f });
+            sim.SetNumbers(dummyType, new UnitNumbers { Life = 100.0f });
+            var guard = Make(Attacker, Player.One, 0.0f, 0.0f);
+            var dummy = sim.World.SpawnUnit(sim.World.PlayerAt(1), dummyType, 100.0f, 0.0f, 0.0f); // as Moonwell's pool makes one
+            var enemy = Make(Target, Player.Two, 400.0f, 0.0f);
+            Steps(sim, 1);
+            Expect.Equal("attack", guard.CurrentOrder, "it acquires the enemy at 400, not the dummy at 100");
+            Steps(sim, 51); // chases from step 2, 100 away at 51, a swing at 52 (as in Acquire)
+            Expect.Near(990.0f, enemy.Life, "the enemy takes the swing");
+            Expect.Near(100.0f, sim.World.LifeOf(dummy), "the dummy takes none");
+            Expect.Equal(1, sim.Alive(Player.Two), "Alive leaves the dummy out");
+        }
+
+        /// <summary>A unit put elsewhere mid-walk (PlaceAt, as a knockback) walks on from where it stands, with a new plan.</summary>
+        public static void Replan(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Walker, new UnitNumbers { Life = 100.0f, MoveSpeed = 250.0f });
+            var unit = Make(Walker, Player.One, 0.0f, 0.0f);
+            unit.OrderAt("move", 500.0f, 0.0f); // ready at 9; ceil(500 x 50 / 250 - 0.0001) = 100 steps
+            Steps(sim, 20); // 12 walking steps
+            Expect.Near(60.0f, unit.X, "walking"); // 500 x 12 / 100
+            unit.PlaceAt(0.0f, 300.0f);
+            // Step 21 plans again from (0, 300): sqrt(500^2 + 300^2) = 583.10, ceil(583.10 x 50 / 250 - 0.0001) = ceil(116.62) = 117 steps.
+            Steps(sim, 1);
+            Expect.Near(500.0f * 1.0f / 117.0f, unit.X, "from where it stands: x"); // 4.27
+            Expect.Near(300.0f - 300.0f * 1.0f / 117.0f, unit.Y, "and y"); // 297.44
+            Expect.True(sim.RunUntil(() => unit.CurrentOrder == "", 5.0f), "it arrives");
+            Expect.Near(2.74f, sim.Time, "at step 137"); // 21 + 116, / 50
+            Expect.True(unit.X == 500.0f && unit.Y == 0.0f, "on the point, not " + unit.X + ", " + unit.Y);
+            Expect.Equal(1, sim.OrdersOf(unit), "one order");
         }
     }
 }
