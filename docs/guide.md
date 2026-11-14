@@ -35,7 +35,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Start.cs` | The game's start: makes the Champion and the footmen |
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
 | `map/` | The World Editor map, saved as a folder |
-| `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
+| `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP; a `.looks.csv` lists copies the build makes), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
 Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
@@ -2523,8 +2523,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   changing them later does nothing (seen). The build writes a template for each height from 0.005 to 0.04 of the
   game's units, in steps of 0.0005, for the game's font and each `.ttf` in the assets, and a label takes the nearest.
   `Scale` sizes the text too, and leaves the label's place and box alone: the game scales a label's offset and box with
-  it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`. A map's own panel inherits `Panel` and
-  keeps its frames in fields.
+  it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`; a piece, a colour or a round cut of one
+  is a copy the build makes ([Assets](#assets)). A map's own panel inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
   Labels, images and empty panels let clicks through, until they are listened to for the mouse.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
@@ -2562,7 +2562,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 - `TextArea` shows lines (`Text`, `AddLine`), the last one added at the bottom; `ProgressBar` draws its `Texture` over
   the share of its width that `Value` is of `Min` to `Max`: the fill is as high as the bar, and its width is the share of
   the bar's `Width`, or of the frame it covers with `Fill` (or that frame covers), whose new size it follows (the game
-  gives a size from points too late to read); a label's `Color` colours its text, white unless set, as a colour code
+  gives a size from points too late to read), and a bar's look from a `.looks.csv` is cut over that share, not
+  squashed ([Assets](#assets)); a label's `Color` colours its text, white unless set, as a colour code
   around it: a label lets clicks through by being turned off, and the game draws a turned-off label's text colour grey
   (seen). Codes in the text draw over it, and its alpha is not drawn, so fade a label with `Alpha`.
 - `frame.Tooltip = new Tooltip { Text = "..." }` shows a bordered box with the text above the frame while a player's
@@ -3507,6 +3508,38 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
   and without one shows the icon in colour (seen). The build makes it the way the game's HD copies are, unless
   `assets/` or the map has one there. Two icons with one file name in different folders share one copy, and the build
   warns of it.
+- Pieces of a texture, colours, a round cut and a bar's steps are copies the build makes, listed in a `.looks.csv`
+  beside the texture. The game tints and cuts a texture only in simple frames, a layer of their own that covers a label
+  in `Screen.Add` and sits under every frame in `AddOver` (seen), so Moonwell's frames draw copies instead. A row is one
+  copy, made at the texture's path with the row's name after it, and code names it through `Looks`, written before the
+  compile as `Data` is ([Data files](#data-files)), so a wrong name is a compile error:
+
+  ```
+  assets\war3mapImported\UI-TargetingFrame.looks.csv      assets\war3mapImported\UI-StatusBar.looks.csv
+  Name,Left,Top,Right,Bottom                              Name,Color,Bar
+  PlayerFrame,0.855,0.0625,0.102,0.664                    Life,00ff00,yes
+  ```
+
+  ```csharp
+  frame.Add(new Image { Texture = Looks.UITargetingFrame.PlayerFrame }, 0, 0, 193, 77);   // Screen.DesignHeight = 768
+  frame.Add(new ProgressBar { Texture = Looks.UIStatusBar.Life, Value = 0.5f }, 106, 41, 119, 12);
+  ```
+
+  - `Left`, `Top`, `Right` and `Bottom` cut a piece, each a share of the texture from 0 to 1, as WoW's TexCoords; left
+    greater than right mirrors it, top greater than bottom turns it over. The piece is stretched to the next power of two
+    of its size in pixels, so an image sized as the piece shows it as drawn. With none of them, the copy is the whole
+    texture.
+  - `Color` multiplies the copy by a colour, as WoW's `BarColor` does a grey bar: `00ff00` is green.
+  - `Round` set to `yes` cuts it round, a circle inside the square with a soft edge one pixel wide, for an icon in a ring.
+  - `Bar` set to `yes` also makes 63 copies of its left part, in 64ths: a `ProgressBar` given that look shows the one
+    nearest its share, so the texture is cut over the filled share, not squashed. Its path ends in `.Bar.blp`.
+  - With no texture of its name in `assets/` or the game, each row is a flat colour, a `Name` and a `Color` only:
+    `Flat.looks.csv` with the row `Backing,000000` gives `new Image { Texture = Looks.Flat.Backing, Alpha = 128 }`.
+  - A `.looks.csv` at one of the game's icons copies the game's own, from its Classic files:
+    `assets\ReplaceableTextures\CommandButtons\BTNFootman.looks.csv`. `Looks.Round(path)` gives the round copy of a
+    listed icon, else the path as it is, for an icon read while the game runs, as a selected hero's.
+  - A column the table does not have, a share outside 0 to 1, or a colour that is not six hex digits stops the build,
+    naming the line. The table itself is not packed, and its texture is not listed as unused.
 - A model has to be made for the graphics the map is played in. An HD (Reforged) model draws nothing in Classic
   graphics: the unit keeps its shadow, life bar and icon and has no body, and neither the build nor the game says so
   (seen). A Classic model shows in both. An HD model is told by its textures, a diffuse, a normal and an ORM map for
