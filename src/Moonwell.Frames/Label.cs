@@ -17,13 +17,13 @@ namespace Moonwell
 
         internal Color color = Color.White;
 
-        private TextEffect? effect;
+        internal TextEffect? effect;
 
         /// <summary>When the Effect was set, which it moves from.</summary>
-        private float effectSince;
+        internal float effectSince;
 
-        /// <summary>Whether it is in TextEffect's redraws.</summary>
-        private bool redrawing;
+        /// <summary>Whether it is in MovingTexts' redraws.</summary>
+        internal bool redrawing;
 
         /// <summary>The text ShowLocal shows on this machine, until Text is set; null for the shared text.</summary>
         internal string? local;
@@ -103,7 +103,7 @@ namespace Moonwell
                 if (effect != null && !redrawing)
                 {
                     redrawing = true;
-                    TextEffect.Join(Redraw);
+                    MovingTexts.Join(Redraw);
                 }
             }
         }

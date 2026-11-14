@@ -54,7 +54,7 @@ namespace Moonwell
         /// <summary>When the Effect was set, which it moves from.</summary>
         private float effectSince;
 
-        /// <summary>Whether it is in TextEffect's redraws.</summary>
+        /// <summary>Whether it is in MovingTexts' redraws.</summary>
         private bool redrawing;
 
         /// <summary>The alpha last given to the game, which the fade lowers; -1 until it is first coloured.</summary>
@@ -157,7 +157,7 @@ namespace Moonwell
                 if (effect != null && !redrawing)
                 {
                     redrawing = true;
-                    TextEffect.Join(Redraw);
+                    MovingTexts.Join(Redraw);
                 }
             }
         }
