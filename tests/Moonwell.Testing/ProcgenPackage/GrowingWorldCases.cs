@@ -397,6 +397,115 @@ namespace Moonwell.Testing
             Expect.Equal(units.Count, gone, "ending the world removes them");
         }
 
+        /// <summary>Ending a world, or the scope it was grown in, takes back every chunk: none reads IsMade after (J48).</summary>
+        public static void Ended(FakeWorld world)
+        {
+            Flat();
+            var land = Land(31, out _);
+            for (var run = 0; run < 2; run++)
+            {
+                var holder = Game.Instance.Add(new Holder());
+                var grown = land.Grow(World(), holder, chunkSize: 8);
+                grown.Near = 0f;
+                var chunks = new List<Chunk>();
+                grown.Made += chunks.Add;
+                Hero(world, 960f, 960f);
+                world.Advance(4f);
+                var made = 0;
+                foreach (var chunk in chunks)
+                {
+                    made += chunk.IsMade ? 1 : 0;
+                }
+
+                Expect.Equal(4, made, "the four chunks the hero stands between, made");
+                if (run == 0)
+                {
+                    grown.End();
+                }
+
+                holder.End();
+                made = 0;
+                foreach (var chunk in chunks)
+                {
+                    made += chunk.IsMade ? 1 : 0;
+                }
+
+                Expect.Equal(0, made, run == 0 ? "none made once the world ended" : "none made once the scope it was grown in ended");
+                world.PlacedUnits.Clear();
+            }
+        }
+
+#if DEBUG
+        /// <summary>
+        /// A forest of over 500 trees, made by Apply, Make or Grow, is one child of the scope given and is never reported as a
+        /// leak; 500 timers of the map's own in that scope still are (decision 326).
+        /// </summary>
+        public static void NoLeakReported(FakeWorld world)
+        {
+            Flat();
+            var land = new TerrainGenerator(5) { Lowest = 0f, Highest = 500f, FeatureSize = 1024f };
+            land.Paint(Tile.LordaeronSummerDirt, fromHeight: 0.4f);
+            land.Forest(Tree, cover: 1f, density: 1f);
+            for (var way = 0; way < 3; way++)
+            {
+                var from = world.DestructableSpawns.Count;
+                var holder = Game.Instance.Add(new Holder());
+                if (way == 0)
+                {
+                    land.Plan(World()).Apply(holder);
+                }
+                else if (way == 1)
+                {
+                    var making = land.Make(World(), holder);
+                    for (var k = 0; k < 2000 && !making.IsDone; k++)
+                    {
+                        world.Advance(0.02f);
+                    }
+                }
+                else
+                {
+                    var grown = land.Grow(World(), holder, chunkSize: Side);
+                    grown.Near = 0f;
+                    var made = false;
+                    grown.Made += chunk => made = true;
+                    Hero(world, 512f, 512f);
+                    for (var k = 0; k < 2000 && !made; k++)
+                    {
+                        world.Advance(0.02f);
+                    }
+                }
+
+                var name = way == 0 ? "Apply" : way == 1 ? "Make" : "Grow";
+                Expect.True(world.DestructableSpawns.Count - from > 1000, name + " makes a forest: " + (world.DestructableSpawns.Count - from));
+                Expect.Equal(1, holder.ChildCount, name + "'s scope holds one thing");
+                Expect.Equal(0, LeakReports(world), name + " reports no leak: " + string.Join(" | ", world.Logged));
+                holder.End();
+                world.PlacedUnits.Clear();
+            }
+
+            var own = Game.Instance.Add(new Holder());
+            land.Plan(World()).Apply(own);
+            for (var k = 0; k < 499; k++)
+            {
+                own.After(1000f, () => { });
+            }
+
+            Expect.Equal(1, LeakReports(world), "the map's own 499 timers beside a forest are reported");
+            own.End();
+        }
+
+        private static int LeakReports(FakeWorld world)
+        {
+            var count = 0;
+            foreach (var line in world.Logged)
+            {
+                count += line.IndexOf(".Leak", StringComparison.Ordinal) >= 0 ? 1 : 0;
+            }
+
+            return count;
+        }
+#endif
+
         private static int Moves(FakeWorld world, int from)
         {
             var moves = 0;
