@@ -213,6 +213,11 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.terrain.apply", Run = TerrainGeneratorCases.Apply });
             list.Add(new Case { Name = "procgen.terrain.make-in-steps", Run = TerrainGeneratorCases.MakeInSteps });
             list.Add(new Case { Name = "procgen.terrain.make-stopped", Run = TerrainGeneratorCases.MakeStopped });
+            list.Add(new Case { Name = "procgen.wide.plan", Run = WideCraterCases.Plan });
+            list.Add(new Case { Name = "procgen.wide.make", Run = WideCraterCases.Make });
+            list.Add(new Case { Name = "procgen.wide.apply", Run = WideCraterCases.Apply });
+            list.Add(new Case { Name = "procgen.wide.paced", Run = WideCraterCases.Paced });
+            list.Add(new Case { Name = "procgen.wide.slow-reported", Run = WideCraterCases.SlowReported });
             list.Add(new Case { Name = "procgen.terrain.refused", Run = TerrainGeneratorCases.Refused });
             list.Add(new Case { Name = "procgen.trees.rules", Run = TerrainGeneratorCases.TreeRules });
             list.Add(new Case { Name = "procgen.trees.seams", Run = TerrainGeneratorCases.TreeSeams });
@@ -239,6 +244,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "procgen.grow.take-back", Run = GrowingWorldCases.TakeBack });
             list.Add(new Case { Name = "procgen.grow.units", Run = GrowingWorldCases.Units });
             list.Add(new Case { Name = "procgen.grow.camps", Run = GrowingWorldCases.Camps });
+            list.Add(new Case { Name = "procgen.grow.ended", Run = GrowingWorldCases.Ended });
         }
 
         /// <summary>Adds the cases for a unit's animation and players' selections.</summary>
@@ -706,6 +712,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.error-halts", Run = SessionCases.ErrorHalts });
             list.Add(new Case { Name = "debug.leaks.scope-grows", Run = ToolsCases.ScopeGrows });
             list.Add(new Case { Name = "debug.leaks.held", Run = ToolsCases.HeldCounted });
+            list.Add(new Case { Name = "debug.leaks.procgen-ground", Run = GrowingWorldCases.NoLeakReported });
             list.Add(new Case { Name = "debug.profile.timers-and-sections", Run = ToolsCases.ProfileTimersAndSections });
             list.Add(new Case { Name = "debug.profile.reactions", Run = ToolsCases.ProfileReactions });
             list.Add(new Case { Name = "debug.tools.map-command-wins", Run = ToolsCases.MapCommandWins });
@@ -1311,6 +1318,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.change.spread", Run = ChangeCases.Spread });
             list.Add(new Case { Name = "terrain.change.trail", Run = ChangeCases.Trail });
             list.Add(new Case { Name = "terrain.change.grid-raise", Run = GridChangeCases.Raise });
+            list.Add(new Case { Name = "terrain.change.grid-raise-wide", Run = GridChangeCases.WideRaise });
             list.Add(new Case { Name = "terrain.change.grid-tiles", Run = GridChangeCases.Tiles });
             list.Add(new Case { Name = "terrain.change.grid-block", Run = GridChangeCases.Block });
             list.Add(new Case { Name = "terrain.change.grid-block-sparse", Run = GridChangeCases.SparseBlock });

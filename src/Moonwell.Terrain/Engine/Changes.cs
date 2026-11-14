@@ -220,7 +220,7 @@ namespace Moonwell.Engine
             var made = new List<object>();
             for (var j = 0; j < change.Up; j++)
             {
-                var row = change.FirstRow + j;
+                var row = change.FirstRow + j * change.Spacing;
                 if (row < 0 || row >= grid.Rows)
                 {
                     continue;
@@ -228,11 +228,11 @@ namespace Moonwell.Engine
 
                 for (var i = 0; i < change.Across; i++)
                 {
-                    var column = change.FirstColumn + i;
+                    var column = change.FirstColumn + i * change.Spacing;
                     var by = amounts[j * change.Across + i];
                     if (by != 0f && column >= 0 && column < grid.Columns)
                     {
-                        made.Add(Terrain.World.Crater(grid.Left + column * TileSize, grid.Bottom + row * TileSize, TileSize, -by));
+                        made.Add(Terrain.World.Crater(grid.Left + column * TileSize, grid.Bottom + row * TileSize, change.Radius, -by));
                     }
                 }
             }
@@ -297,9 +297,15 @@ namespace Moonwell.Engine
         private static void RaiseEach(TerrainChange change, float[] amounts, float sign)
         {
             var grid = Terrain.Grid;
+            if (change.Radius > TileSize)
+            {
+                RaiseWide(change, amounts, sign);
+                return;
+            }
+
             for (var j = 0; j < change.Up; j++)
             {
-                var row = change.FirstRow + j;
+                var row = change.FirstRow + j * change.Spacing;
                 if (row < 0 || row >= grid.Rows)
                 {
                     continue;
@@ -307,7 +313,7 @@ namespace Moonwell.Engine
 
                 for (var i = 0; i < change.Across; i++)
                 {
-                    var column = change.FirstColumn + i;
+                    var column = change.FirstColumn + i * change.Spacing;
                     var by = amounts[j * change.Across + i] * sign;
                     if (by == 0f || column < 0 || column >= grid.Columns)
                     {
@@ -315,6 +321,59 @@ namespace Moonwell.Engine
                     }
 
                     grid.Raise(column, row, by);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Moves the grid's corners by a grid raise of wide craters, or back with the sign -1: each crater's shape (its amount
+        /// x cos(90 degrees x distance / radius), as the round raise's) summed over the corners in reach first, so each corner
+        /// is moved once, and by the same sum both ways.
+        /// </summary>
+        private static void RaiseWide(TerrainChange change, float[] amounts, float sign)
+        {
+            var grid = Terrain.Grid;
+            var reach = Slots.Whole(change.Radius / TileSize);
+            var spacing = change.Spacing;
+            var wide = (change.Across - 1) * spacing + 2 * reach + 1;
+            var high = (change.Up - 1) * spacing + 2 * reach + 1;
+            var sums = new float[wide * high];
+            for (var dj = -reach; dj <= reach; dj++)
+            {
+                for (var di = -reach; di <= reach; di++)
+                {
+                    var d = TileSize * Maths.Sqrt(di * di + dj * dj);
+                    if (!(d < change.Radius))
+                    {
+                        continue;
+                    }
+
+                    var weight = Angles.Cos(90f * d / change.Radius);
+                    for (var j = 0; j < change.Up; j++)
+                    {
+                        for (var i = 0; i < change.Across; i++)
+                        {
+                            var by = amounts[j * change.Across + i];
+                            if (by != 0f)
+                            {
+                                sums[(j * spacing + reach + dj) * wide + i * spacing + reach + di] += by * weight;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (var b = 0; b < high; b++)
+            {
+                var row = change.FirstRow - reach + b;
+                for (var a = 0; a < wide; a++)
+                {
+                    var column = change.FirstColumn - reach + a;
+                    var by = sums[b * wide + a];
+                    if (by != 0f && row >= 0 && row < grid.Rows && column >= 0 && column < grid.Columns)
+                    {
+                        grid.Raise(column, row, by * sign);
+                    }
                 }
             }
         }
