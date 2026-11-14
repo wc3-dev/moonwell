@@ -45,6 +45,9 @@ namespace Moonwell.AI
             this.unitBrain = unitBrain;
             Root = root;
             root.Bind(this);
+#if DEBUG
+            board.AddTree(this);
+#endif
         }
 
         /// <summary>The node every pass starts from.</summary>

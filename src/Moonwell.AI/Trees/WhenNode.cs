@@ -10,6 +10,14 @@ namespace Moonwell.AI
 
         /// <summary>The child it runs.</summary>
         private readonly Node child;
+#if DEBUG
+
+        /// <summary>Whether the AI tools' -force has the condition read true.</summary>
+        internal bool forced;
+
+        /// <summary>Whether the AI tools' log last saw the node running.</summary>
+        internal bool loggedRunning;
+#endif
 
         /// <summary>A when of a condition and a child.</summary>
         internal WhenNode(Func<Blackboard, bool> condition, Node child)
@@ -19,10 +27,16 @@ namespace Moonwell.AI
             this.child = child;
         }
 
-        /// <summary>Whether the condition holds now.</summary>
+        /// <summary>Whether the condition holds now; in a development build, always while -force holds it, kept for the AI tools.</summary>
         internal bool Holds()
         {
+#if DEBUG
+            var holds = forced || condition(Blackboard);
+            lastHeld = holds;
+            return holds;
+#else
             return condition(Blackboard);
+#endif
         }
 
         /// <summary>Runs the child while the condition holds; otherwise halts it and fails.</summary>

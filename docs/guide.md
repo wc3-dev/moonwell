@@ -1837,6 +1837,65 @@ public sealed class Chop : Node
 - It reads `Unit`, `Blackboard` and `Read(fact)` (here `TreeNear`, a map's `Fact<Destructable?>`) and orders the unit
   through the brain with `Order`, `OrderAt` and `OrderOn`, so repeats are dropped as the actions' are.
 
+## AI: tools
+
+In a development build, the [debug mode](#debug-mode) shows what a brain thinks and lets you push it from chat. Select
+a unit, a player or the game holding a brain (Ctrl + click, or `-brain Guard`), and the panel shows each of its brains:
+
+```
+Guard  every 0.25 s  logged
+1 > Select
+2   When hurt false
+3     MoveTo
+4 >   Repeat
+5 >     Sequence
+6 >       FollowRoute
+7         FollowRoute
+choice 1
+8 > flee 0.73  life 0.20, enemies near 4.00
+9   fight 0.27
+facts
+  hurt false 0.1 s
+  food (Player 1) 12 3.0 s
+```
+
+- The head line: the brain's class, how it thinks (every so many seconds, or on wake), and `logged` while the log
+  follows it.
+- Its trees, in the order made, a line a node: indented by depth, `>` on a running node, the fact a `When`, `If` or
+  `Attack` was made with, a `When`'s or `If`'s last value, and `forced`.
+- Its choices, each one picked on the brain's blackboard: the options with their last scores, `>` on `Current`, and the
+  current one's inputs with their last values.
+- Its facts: every fact held on its blackboard and up its chain, with its value and age; one from up the chain says
+  whose. An enum shows as its number, as the game's Lua keeps it.
+- Nodes and options are numbered for `-force`, through the object's brains in the order added: each brain's trees
+  depth first, then its choices' options. A brain whose lines don't fit shows each subtree that isn't running as one
+  line ending in `+n`, the nodes it folds, and the numbers skip them.
+
+| Chat | Does |
+|---|---|
+| `-brain Guard` | counts the brains of a class (in any case) and selects the next object holding one |
+| `-brainlog` | logs the selected object's brains; `-brainlog Guard` every brain of a class, those made later too; either again stops the log and writes it to `CustomMapData\Moonwell\brains.txt` |
+| `-force 3` | forces line 3: a `Select`'s or `Pick`'s child runs, the parent trying no other; a `When`'s condition reads true; a choice's option wins whatever the scores. `-force` alone lets go of every force on the selected object |
+| `-fact hurt true` | sets a written fact on the selected object's brains' blackboards: the value is the last word, read as the fact's `int`, `float`, `bool` (`true`, `false`, `1`, `0`) or `string` |
+| `-wake` | wakes the selected object's brains |
+
+- The log keeps a line only when what won changes: a choice's `Current`, a `Select` or `Pick` running another child, or
+  a `When` cutting in or ending. A line has the game time, the brain's object (and its class when the object holds
+  more than one brain), the change, and up to 8 facts the brain read in that think, with their values and ages:
+
+  ```
+  12.25 Footman 3  choice 1: flee 0.61 (was fight 0.40)  life 0.31 0.2s, enemies near 4 0.1s
+  12.40 Footman 3  tree: line 2 When hurt cut in  hurt true 0.0s
+  ```
+
+  One log runs at a time. It keeps the newest 2,000 lines, and the panel shows the last 5 while it runs.
+- A force holds until `-force` alone, with the mode off too. A `When` forced in a `Select` is both: the select runs it,
+  and its condition reads true.
+- `-fact` finds the fact by its name, in any case, among the facts made so far. It refuses a worked-out fact, a name
+  two facts share, and a fact of another type.
+- The commands answer only while the mode is on and are listed by `-help`; a map's own command of the same name wins.
+  Everything they read and change is the same on every machine. A release build has none of it.
+
 ## Fast simulation
 
 The `Moonwell.Simulation` package runs a map's own code in .NET on a fake of the game, faster than real time: its

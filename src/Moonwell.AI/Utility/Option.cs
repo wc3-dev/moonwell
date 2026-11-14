@@ -13,7 +13,7 @@ namespace Moonwell.AI
     public sealed class Option : IEnumerable
     {
         /// <summary>The inputs, in the order added.</summary>
-        private readonly List<Input> inputs = new List<Input>();
+        internal readonly List<Input> inputs = new List<Input>();
 
         /// <summary>What the option does, run by Run.</summary>
         private readonly Action run;
@@ -152,6 +152,11 @@ namespace Moonwell.AI
 
             /// <summary>What the scaled value is put through.</summary>
             internal readonly Curve Curve;
+#if DEBUG
+
+            /// <summary>The value the last Score read, for the AI tools; 0 before any.</summary>
+            internal float lastValue;
+#endif
 
             /// <summary>Makes an input.</summary>
             internal Input(string name, Func<Blackboard, float> read, float min, float max, Curve curve)
@@ -166,7 +171,11 @@ namespace Moonwell.AI
             /// <summary>The input's score on a blackboard: the fact scaled from min..max to 0..1, then put through the curve, which clamps it.</summary>
             internal float Score(Blackboard board)
             {
-                return Curve.Of((Read(board) - Min) / (Max - Min));
+                var value = Read(board);
+#if DEBUG
+                lastValue = value;
+#endif
+                return Curve.Of((value - Min) / (Max - Min));
             }
         }
     }

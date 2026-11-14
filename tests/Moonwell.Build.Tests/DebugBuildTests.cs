@@ -7,7 +7,7 @@ namespace Moonwell.Build.Tests
     /// <summary>
     /// The Sample's release script carries none of the debug mode but the three public types that are in both builds; its
     /// development script carries the mode. A map with the interactions and areas packages carries their views in a
-    /// development build only.
+    /// development build only, and so does a map with the AI package its tools.
     /// </summary>
     [Collection("Sample")]
     public sealed class DebugBuildTests : IDisposable
@@ -101,6 +101,40 @@ namespace Moonwell.Build.Tests
 
             Assert.Contains("Moonwell.Gizmo", release);
             Assert.Contains("AreaSystem.Install", release);
+        }
+
+        [Fact]
+        public void release_with_ai_has_no_brain_tools()
+        {
+            // The Areas fixture with the AI package referenced and a brain added from a method, so that the compiler keeps the reference.
+            var project = folders.TemporaryCopyOf("Areas");
+            var projectFile = Path.Combine(project, "Areas.csproj");
+            File.WriteAllText(
+                projectFile,
+                File.ReadAllText(projectFile).Replace(
+                    "  </ItemGroup>\n\n</Project>",
+                    "    <ProjectReference Include=\"..\\..\\..\\..\\src\\Moonwell.AI\\Moonwell.AI.csproj\" />\n  </ItemGroup>\n\n</Project>"));
+            File.WriteAllText(
+                Path.Combine(project, "Guards.cs"),
+                "using Moonwell;\nusing Moonwell.AI;\n\nnamespace AreasFixture\n{\n    public sealed class Guard : UnitBrain\n    {\n        protected override void Think()\n        {\n        }\n    }\n\n    public static class Guards\n    {\n        public static Guard Make(Unit unit)\n        {\n            return unit.Add(new Guard());\n        }\n    }\n}\n");
+
+            var tools = new[] { "BrainView", "BrainLog", "BrainTools", "\"brainlog\"" };
+            var development = Build(project, false);
+            foreach (var marker in tools)
+            {
+                Assert.Contains(marker, development);
+            }
+
+            // The Main installs the package, which adds the tools before the first brain.
+            Assert.Contains("Moonwell.AISystem.Install()", development);
+
+            var release = Build(project, true);
+            foreach (var marker in tools)
+            {
+                Assert.DoesNotContain(marker, release);
+            }
+
+            Assert.Contains("Moonwell.AI.UnitBrain", release);
         }
 
         // Builds the project, a release build when asked, and returns its war3map.lua.

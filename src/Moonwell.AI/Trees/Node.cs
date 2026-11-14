@@ -17,6 +17,14 @@ namespace Moonwell.AI
 
         /// <summary>Whether the node has started and not ended.</summary>
         internal bool running;
+#if DEBUG
+
+        /// <summary>The name of the fact the node was made with (When, If, Attack), for the AI tools; null for none.</summary>
+        internal string? factName;
+
+        /// <summary>The last value of a When's or an If's condition, for the AI tools; null before the first.</summary>
+        internal bool? lastHeld;
+#endif
 
         /// <summary>Whether the node has started and not ended: it gave Running at its last pass and has not been cut off.</summary>
         [LocalSafe]
