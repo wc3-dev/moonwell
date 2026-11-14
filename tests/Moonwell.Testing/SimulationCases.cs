@@ -25,6 +25,54 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>The unit class of the map-start case, registered by hand.</summary>
+    public sealed class Marcher : Unit
+    {
+    }
+
+    /// <summary>The map-start case's game component: counts the game's starts, and makes a Marcher for player one 0.1 s after the start.</summary>
+    public sealed class MarchStart : GameComponent
+    {
+        /// <summary>How many times the game started.</summary>
+        public int Starts;
+
+        /// <summary>The Marcher it made; null until then.</summary>
+        public Unit? Made;
+
+        /// <summary>Counts the start and makes the Marcher a moment later: the case gives its type numbers after Start returns.</summary>
+        public override void OnGameStart()
+        {
+            Starts++;
+            After(0.1f, () =>
+            {
+                Made = Unit.Create(SimulationCases.MarcherType, Player.One, 0.0f, 0.0f, Game.Instance);
+            });
+        }
+    }
+
+    /// <summary>The map-start case's player component, on each playing slot.</summary>
+    public sealed class MarchSeat : PlayerComponent
+    {
+    }
+
+    /// <summary>The map-start case's map: slots 0 and 2 on Blue, slot 1 an orc computer on Red, a game component and a player component.</summary>
+    public sealed class MarchMap : Map
+    {
+        /// <summary>The team of slots 0 and 2.</summary>
+        public static readonly Team Blue = new Team("Blue");
+
+        /// <summary>The team of slot 1.</summary>
+        public static readonly Team Red = new Team("Red");
+
+        /// <summary>Lists the slots and the components.</summary>
+        public MarchMap()
+        {
+            Slots.Add(new Slot(0, Blue, Controller.User), new Slot(1, Red, Controller.Computer, Race.Orc), new Slot(2, Blue, Controller.Computer));
+            Components.Add(new MarchStart());
+            PlayerComponents.Add(() => new MarchSeat());
+        }
+    }
+
     /// <summary>
     /// Cases for the fast simulation (decisions 312 to 314): its steps, the hold, walking, fighting, acquiring, seeds and the
     /// read-outs. Each case starts its own simulation, which installs a fresh fake world, and makes its units with
@@ -39,6 +87,9 @@ namespace Moonwell.Testing
         private static readonly int Attacker = ObjectTypes.FourCC("s0at");
         private static readonly int Target = ObjectTypes.FourCC("s0tg");
         private static readonly int OtherTarget = ObjectTypes.FourCC("s0ot");
+
+        /// <summary>The type of the map-start case's Marcher.</summary>
+        public static readonly int MarcherType = ObjectTypes.FourCC("s0mr");
 
         /// <summary>Runs the simulation one 0.02 s step at a time.</summary>
         private static void Steps(Simulation sim, int count)
@@ -405,6 +456,36 @@ namespace Moonwell.Testing
             Expect.Equal(2, sim.OrdersOf(unit), "the stop is counted");
             Expect.Near(0.32f, sim.StoodOf(unit), "and held"); // 8 + 8 = 16 steps x 0.02
             Expect.Near(stood, unit.X, "it moves only from step 30");
+        }
+
+        /// <summary>Start(map) starts the map as the game would: its slots playing on their teams, its game component started once, its player component on each playing slot, and the units its code makes played.</summary>
+        public static void MapStart(FakeWorld world)
+        {
+            var sim = Simulation.Start(new MarchMap());
+            ObjectTypes.Unit<Marcher>(MarcherType, () => new Marcher());
+            sim.SetNumbers(MarcherType, new UnitNumbers { Life = 100.0f, MoveSpeed = 250.0f });
+            Expect.True(Player.One.SlotState == SlotState.Playing && Player.Two.SlotState == SlotState.Playing && Player.Three.SlotState == SlotState.Playing, "the three slots play");
+            Expect.True(Player.Four.SlotState != SlotState.Playing, "a slot the map does not list does not");
+            Expect.True(Player.Two.Controller == Controller.Computer && Player.Two.Race == Race.Orc, "slot 1 is an orc computer");
+            Expect.True(Player.One.IsAlly(Player.Three) && Player.Three.IsAlly(Player.One), "Blue's slots are allies");
+            Expect.True(Player.One.IsEnemy(Player.Two) && Player.Two.IsEnemy(Player.Three), "Red is their enemy");
+            Expect.Equal(1, Player.One.GetAll<MarchSeat>().Count, "player one's component");
+            Expect.Equal(1, Player.Two.GetAll<MarchSeat>().Count, "player two's");
+            Expect.Equal(1, Player.Three.GetAll<MarchSeat>().Count, "player three's");
+            Expect.Equal(0, Player.Four.ComponentCount, "none for a slot not playing");
+            var start = Game.Instance.GetAll<MarchStart>()[0];
+            Expect.Equal(1, start.Starts, "the game started");
+
+            Steps(sim, 5); // the Marcher is made at 0.1 s, in step 5's timers
+            Expect.True(start.Made is Marcher, "the start made a Marcher");
+            var marcher = start.Made!;
+            Expect.Near(100.0f, marcher.Life, "seeded from its numbers");
+            marcher.OrderAt("move", 250.0f, 0.0f); // stamped 6, ready at 14; ceil(250 x 50 / 250) = 50 steps, 14 to 63
+            Steps(sim, 33); // steps 6 to 38: 25 walking steps
+            Expect.Near(125.0f, marcher.X, "it walks"); // 250 x 25 / 50
+            Expect.True(sim.RunUntil(() => marcher.CurrentOrder == "", 2.0f), "and arrives");
+            Expect.Near(1.26f, sim.Time, "at step 63"); // 63 / 50
+            Expect.Equal(1, start.Starts, "the game started once");
         }
 
         /// <summary>Alive counts the units a player owns that the fake made, alive and not removed, before and after a death and a removal.</summary>

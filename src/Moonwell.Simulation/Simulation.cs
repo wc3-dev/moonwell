@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Moonwell
 {
@@ -27,6 +28,25 @@ namespace Moonwell
             var world = FakeWorld.Install();
             world.StartPlay(seed);
             return new Simulation(world);
+        }
+
+        /// <summary>
+        /// Starts the map's game on a fresh fake world as the game would: its slots playing (slot 0 as a person when it lists
+        /// none), each team's slots allied, then its register step, its starting components, its player components on each
+        /// playing slot, and every OnGameStart. On .NET the register step registers the object classes the map uses, as its
+        /// build would; in Lua it registers nothing. World Editor's placed units, and the damage, terrain, areas, input and physics
+        /// systems, are left out.
+        /// </summary>
+        public static Simulation Start(Map map, int seed = 1)
+        {
+            var simulation = Start(seed);
+            Seat(simulation.World, map.StartSlots);
+#if MOONWELL_LUA
+            Runtime.Begin(() => Runtime.Install(map, () => { }));
+#else
+            Runtime.Begin(() => Runtime.Install(map, () => Registry.Register(map)));
+#endif
+            return simulation;
         }
 
         /// <summary>Runs the seconds in whole steps: rounded to whole milliseconds, then to whole steps with a half step up, and at least one; none for 0 or less.</summary>
@@ -84,6 +104,43 @@ namespace Moonwell
         public int Alive(Player player)
         {
             return World.AliveOf(player.Slot);
+        }
+
+        /// <summary>Sets up the map's slots as the game does from its war3map.w3i: each playing, with its controller and race, on its team, numbered in the order the slots first name them, and passive to the others on it.</summary>
+        private static void Seat(FakeWorld world, List<Slot> slots)
+        {
+            if (slots.Count == 0)
+            {
+                world.SetSlot(0, SlotState.Playing, Controller.User);
+                return;
+            }
+
+            var teams = new List<Team>();
+            for (var i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                world.SetSlot(slot.Number, SlotState.Playing, slot.Controller);
+                if (slot.Race.HasValue)
+                {
+                    world.SetRace(slot.Number, slot.Race.Value);
+                }
+
+                if (!teams.Contains(slot.Team))
+                {
+                    teams.Add(slot.Team);
+                }
+
+                world.MoveToTeam(world.PlayerAt(slot.Number), teams.IndexOf(slot.Team));
+                for (var j = 0; j < i; j++)
+                {
+                    var other = slots[j];
+                    if (other.Team == slot.Team && other.Number != slot.Number)
+                    {
+                        world.SetAllianceOf(world.PlayerAt(slot.Number), world.PlayerAt(other.Number), (int)Alliance.Passive);
+                        world.SetAllianceOf(world.PlayerAt(other.Number), world.PlayerAt(slot.Number), (int)Alliance.Passive);
+                    }
+                }
+            }
         }
 
         /// <summary>The steps of a time, as the brains count a ThinkEvery: rounded to whole milliseconds, then to whole steps with a half step up, and at least 1; 0 for none.</summary>

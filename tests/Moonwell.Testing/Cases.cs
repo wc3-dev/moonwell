@@ -78,6 +78,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.hold-position", Run = SimulationCases.HoldPosition });
             list.Add(new Case { Name = "simulation.stop", Run = SimulationCases.Stop });
             list.Add(new Case { Name = "simulation.alive", Run = SimulationCases.Alive });
+            list.Add(new Case { Name = "simulation.map-start", Run = SimulationCases.MapStart });
         }
 
         /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, and brain orders.</summary>

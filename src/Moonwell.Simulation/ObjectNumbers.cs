@@ -12,14 +12,15 @@ namespace Moonwell
     /// </summary>
     internal static class ObjectNumbers
     {
-        /// <summary>The standard unit classes of Moonwell.Objects by id, read once.</summary>
+        /// <summary>The standard unit and hero classes of Moonwell.Objects by id, read once.</summary>
         private static Dictionary<int, Type>? standards;
 
         /// <summary>The numbers of a unit type; null when its object data gives none.</summary>
         internal static UnitNumbers? Of(int typeId)
         {
             var standardUnit = Type.GetType("Moonwell.Objects.StandardUnit, Moonwell.Objects");
-            if (standardUnit == null)
+            var standardHero = standardUnit?.Assembly.GetType("Moonwell.Objects.StandardHero");
+            if (standardUnit == null || standardHero == null)
             {
                 return null;
             }
@@ -30,9 +31,9 @@ namespace Moonwell
                 declared = ObjectTypes.DefaultOf((Unit)null!, typeId);
             }
 
-            if (declared == null || !standardUnit.IsInstanceOfType(declared))
+            if (declared == null || !(standardUnit.IsInstanceOfType(declared) || standardHero.IsInstanceOfType(declared)))
             {
-                if (!StandardsOf(standardUnit).TryGetValue(typeId, out var standard))
+                if (!StandardsOf(standardUnit, standardHero).TryGetValue(typeId, out var standard))
                 {
                     return null;
                 }
@@ -54,8 +55,8 @@ namespace Moonwell
             };
         }
 
-        /// <summary>The classes of Moonwell.Objects marked [Standard] with a unit's id, by the id; the attribute is read by name.</summary>
-        private static Dictionary<int, Type> StandardsOf(Type standardUnit)
+        /// <summary>The unit and hero classes of Moonwell.Objects marked [Standard], by the id; the attribute is read by name.</summary>
+        private static Dictionary<int, Type> StandardsOf(Type standardUnit, Type standardHero)
         {
             if (standards != null)
             {
@@ -65,7 +66,7 @@ namespace Moonwell
             var found = new Dictionary<int, Type>();
             foreach (var type in standardUnit.Assembly.GetTypes())
             {
-                if (type.IsAbstract || !standardUnit.IsAssignableFrom(type))
+                if (type.IsAbstract || !(standardUnit.IsAssignableFrom(type) || standardHero.IsAssignableFrom(type)))
                 {
                     continue;
                 }
