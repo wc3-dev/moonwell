@@ -1,7 +1,7 @@
 # Making a map with Moonwell
 
-This guide describes Moonwell 0.17.0; the guide for 0.16.0 is at the
-[`v0.16.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.16.0/docs/guide.md).
+This guide describes Moonwell 0.17.1; the guide for 0.17.0 is at the
+[`v0.17.0` tag](https://github.com/wc3-dev/moonwell/blob/v0.17.0/docs/guide.md).
 
 ## Start a map
 
