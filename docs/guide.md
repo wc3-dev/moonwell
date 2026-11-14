@@ -2493,9 +2493,12 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
 
 - Two layers: `Screen.Add` puts a frame on the whole width of each player's window, beneath the game's HUD, whose art
   draws over it; `Screen.AddOver` puts one over the HUD, within the screen's 4:3 middle, for what must cover it. No frame
-  a map makes can do both (seen). Places and sizes are in the game's units: the 4:3 middle is 0.8 wide and 0.6 high
-  from its bottom left, and the whole width runs from 0.4 - 0.3 * the window's width / height to 0.4 + 0.3 * it. Frames
-  placed by the screen's edges follow the window when it is resized, within half a second.
+  a map makes can do both (seen). Beneath the HUD, the top bar covers the top 0.022 of the whole width, a hero's
+  button the window's left edge below it (0.04 wide, down to 0.075), and the console the bottom of the 4:3 middle, up
+  to 0.16 (seen, Classic graphics); the screen's sides and the wide-screen margins are clear. Places and sizes are in
+  the game's units: the 4:3 middle is 0.8 wide and 0.6 high from its bottom left, and the whole width runs from 0.4 -
+  0.3 * the window's width / height to 0.4 + 0.3 * it. Frames placed by the screen's edges follow the window when it is
+  resized, within half a second.
 - A frame sits by its `Anchor` on the same point of its parent, the screen or the frame it was added to, moved by
   `Offset`; `Center` unless set. `Attach(point, other, otherPoint, x, y)` ties one of its points to another frame's in
   place of the anchor, and a second `Attach` stretches it between the two; `Fill(other)` covers another frame. A frame
@@ -2898,7 +2901,7 @@ units selected. Each is laid out in the theme (`Kit.Theme.Hud` for the border, `
 size or give another texture.
 
 ```csharp
-var frame = Screen.Add(new UnitFrame { Anchor = FramePoint.TopLeft }, this, shownTo: player);
+var frame = Screen.Add(new UnitFrame { Anchor = FramePoint.Left }, this, shownTo: player);  // clear of the HUD
 frame.Show(hero);                               // icon, name, level, life, mana and buffs, followed from now on
 frame.Add(frame.Life, 90, 45, 119, 12);         // a piece placed again, in Screen.DesignHeight units: Add with a place
                                                 // moves a frame already added to this one
