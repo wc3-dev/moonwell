@@ -21,6 +21,7 @@
     <Project Path="src/Moonwell.Objects/Moonwell.Objects.csproj" />
     <Project Path="src/Moonwell.Physics/Moonwell.Physics.csproj" />
     <Project Path="src/Moonwell.Pathing/Moonwell.Pathing.csproj" />
+    <Project Path="src/Moonwell.AI/Moonwell.AI.csproj" />
     <Project Path="src/Moonwell.Procgen/Moonwell.Procgen.csproj" />
     <Project Path="src/Moonwell.Terrain/Moonwell.Terrain.csproj" />
     <Project Path="src/Moonwell/Moonwell.csproj" />

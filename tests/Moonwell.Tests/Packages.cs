@@ -14,6 +14,7 @@ internal static class Packages
         typeof(Moonwell.Terrain).Assembly,
         typeof(Moonwell.Paths).Assembly,
         typeof(Moonwell.Procgen.Noise).Assembly,
+        typeof(Moonwell.AI.Blackboard).Assembly,
         typeof(Moonwell.Area).Assembly,
         typeof(Moonwell.Mouse).Assembly,
         typeof(Moonwell.Physics).Assembly,
