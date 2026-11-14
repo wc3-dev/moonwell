@@ -1816,6 +1816,117 @@ public sealed class Chop : Node
 - It reads `Unit`, `Blackboard` and `Read(fact)` (here `TreeNear`, a map's `Fact<Destructable?>`) and orders the unit
   through the brain with `Order`, `OrderAt` and `OrderOn`, so repeats are dropped as the actions' are.
 
+## AI: combat
+
+Add the `Moonwell.AI.Combat` package, on `Moonwell.AI`, for units that walk a lane and fight what they meet: a ready
+`LaneWalker` brain, and the fighter and tree nodes it is built of, for a map's own brain.
+
+```csharp
+using Moonwell.AI.Combat;
+
+unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen road, or unit.FindPath(x, y)
+{
+    MeetRange = 600f,                                     // 0, the default: the unit's acquisition range
+    Targets = { Target.Nearest, Target.Weakest.Weight(2f), Target.By(u => u is Hero ? 1f : 0.3f) },
+    Spells =
+    {
+        Spell.On(StormBolt, "thunderbolt", when: t => t is Hero),               // on its target
+        Spell.Self(ThunderClap, "thunderclap", when: f => f.EnemiesNear >= 3),  // no target
+        Spell.Ally(HolyLight, "holybolt", when: a => a.Life < a.MaxLife / 2),   // a hurt ally, itself counted
+        Spell.At(Blizzard, "blizzard"),                                         // at its target's place
+    },
+    PullBack = { Below = 0.25f },                         // the rest stay at their defaults
+});
+```
+
+- `StormBolt` and the others are ability ids, `ObjectTypes.FourCC("AHtb")`; `Spell.On<StormBolt>("thunderbolt")`
+  takes a registered ability class instead. The order string is the one the game casts the ability with.
+- A lane walker thinks every 0.25 s with full control ([Full control](#full-control)), both set in its `OnAdded`; a
+  map's own `OnAdded` changes them after `base.OnAdded()`. Its tree, built at its first think, pulls back while it
+  should, else fights while it meets an enemy, else walks its route.
+- It meets, at each think, a living enemy unit its owner sees (an order at an unseen unit is refused), structures too,
+  within its meet range, and one that damaged it in the last 3 s however far. It keeps the spot where it left its
+  route, and an enemy farther than `Leash` from it is not fought: 2,100, the default, about the game's own chase limit.
+  A fleeing enemy that crosses the leash is dropped and the walker goes back. Once back within 64 of a point of its
+  route with no enemy met, it forgets the spot.
+- It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
+  `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
+  and walks back to where its fight started.
+
+The target is picked by rules, each scoring every enemy met from 0 to 1 against the others met at the same think, so
+the best of them scores 1 and none scores 0:
+
+| Rule | Scores an enemy |
+|---|---|
+| `Target.Nearest` | the nearest distance over its distance, a distance below 16 counted as 16 |
+| `Target.Weakest` | the least life left over its life left, as amounts, not shares of the most |
+| `Target.MostDangerous` | its damage a second over the most: the middle of its white damage over its attack cooldown, below 1 counted as 1 |
+| `Target.Attacker` | 1 when it damaged the walker in the last 3 s, else 0.5 |
+| `Target.By(u => ...)` | the function's value, clamped to 0..1; 0 rules the enemy out |
+
+- An enemy's score is its rules' scores, each to the power of its weight, multiplied, then to 1 over the sum of the
+  weights: (s1^w1 × s2^w2)^(1 / (w1 + w2)). `Weight(2f)` counts a rule twice, and 0 leaves its score out but still
+  rules out at 0; a weight below 0 throws `ArgumentException`. With no rules, `Nearest`.
+- With `Nearest` and `Weakest`, an enemy 200 away at full life and one 400 away at half life both score
+  (1 × 0.5)^(1/2) = 0.71, and the first met wins. With `Weakest.Weight(2f)` the far one scores (0.5 × 1²)^(1/3) = 0.79
+  against (1 × 0.5²)^(1/3) = 0.63.
+- The best wins, the first met among equals, and stays the target until another scores more than its score times 1.1,
+  10% more, so a walker does not flip between two enemies. A target that died, can't be seen or is no longer met is
+  dropped.
+- Casting: at each think in a fight, the first spell in `Spells` whose aim has someone, whose condition holds and that
+  is ready is cast through the brain: ready, the unit has the ability, its cooldown is over and its mana is at least
+  the ability's mana cost now, all read from the game. The walker watches the cast as `Cast` does, while the unit's
+  order id is the one read just after it, then goes back to the attack. A spell the game refuses gives way to the next.
+- `On` and `At` take a condition on the target, `Self` one on the fighter, and `Ally` one on each ally in meet range,
+  its own unit counted, checked from the most hurt (the least share of its most life) until it holds. With no
+  condition, `Ally` takes the most hurt whose life is below its most, and the others always cast when ready.
+- Pulling back: below 30% of its life (`Below`), or outnumbered, with at least 2 (`Outnumbered`) enemies in its meet
+  range to each allied unit there, its own counted, structures on neither side and attackers beyond its meet range not
+  counted. It walks back with `move` along its route to the start, from the point before the one nearest it, or to
+  `To`, and stands there on hold position. It comes back at or above 70% (`ComeBackAt`) and no longer outnumbered. A
+  `Below` and an `Outnumbered` of 0 never pull back.
+
+A map's own brain makes a `Fighter` and builds a tree of its own from the same nodes:
+
+```csharp
+using Moonwell.AI;
+using Moonwell.AI.Combat;
+using static Moonwell.AI.Nodes;
+using static Moonwell.AI.Combat.CombatNodes;
+
+public sealed class CampGuard : UnitBrain
+{
+    public float HomeX, HomeY;
+    readonly Fighter fighter;
+    readonly Tree tree;
+
+    public CampGuard()
+    {
+        fighter = new Fighter(this) { MeetRange = 800f, Targets = { Target.MostDangerous } };
+        tree = new Tree(this,
+            Select(
+                When(fighter.ShouldPullBack, PullBack(fighter)),
+                When(fighter.Meets, Fight(fighter)),
+                MoveTo(() => HomeX, () => HomeY)));
+    }
+
+    protected override void OnAdded() => ThinkEvery = 0.25f;
+    public override void OnDamaged(Damage damage) => fighter.Hurt(damage);   // notes the attacker
+    protected override void Think() => tree.Run();
+}
+```
+
+- `fighter.Meets()` and `fighter.ShouldPullBack()` check once an instant, whichever comes first: they find the enemies
+  met and pick the target. `Target`, `EnemiesNear`, `AlliesNear` and `PullingBack` read what the last check found.
+- `fighter.Hurt(damage)` in `OnDamaged` notes the attacker and wakes the brain when it is new; a lane walker does it.
+- `Fight(fighter)` casts or attacks the target and fails with none; `PullBack(fighter)` walks back and stands;
+  `WalkLane(fighter)` walks the fighter's `Route`. A class that inherits `LaneWalker` overrides `Root()` for its own
+  tree.
+- In a fast simulation a walker meets, walks, fights and pulls back, but the fake plays no spells yet: a cast ends at
+  once, or after its hold for an order the fake knows.
+- Not yet seen in the game: what a unit does after a cast from code in the middle of an attack, and whether the game's
+  chase limit also ends a chase from code.
+
 ## Fast simulation
 
 The `Moonwell.Simulation` package runs a map's own code in .NET on a fake of the game, faster than real time: its
