@@ -77,6 +77,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.facts.written", Run = FactCases.Written });
             list.Add(new Case { Name = "ai.facts.worked-out", Run = FactCases.WorkedOut });
             list.Add(new Case { Name = "ai.facts.owner-change", Run = FactCases.OwnerChange });
+            list.Add(new Case { Name = "ai.facts.from-an-early-file", Run = FactCases.FromAnEarlyFile });
             list.Add(new Case { Name = "ai.orders.point", Run = BrainOrderCases.PointOrders });
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
