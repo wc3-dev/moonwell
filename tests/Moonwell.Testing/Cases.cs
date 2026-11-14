@@ -1739,6 +1739,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "frames.label", Run = FrameCases.Label });
             list.Add(new Case { Name = "frames.label-lets-clicks-through", Run = FrameCases.LabelLetsClicksThrough });
             list.Add(new Case { Name = "frames.show-local", Run = FrameCases.ShowLocal });
+            list.Add(new Case { Name = "frames.show-name-of", Run = FrameCases.ShowNameOf });
+            list.Add(new Case { Name = "frames.label-scale-keeps-place", Run = FrameCases.LabelScaleKeepsPlace });
+            list.Add(new Case { Name = "frames.add-placed", Run = FrameCases.AddPlaced });
             list.Add(new Case { Name = "frames.image", Run = FrameCases.Image });
             list.Add(new Case { Name = "frames.panel-look", Run = FrameCases.PanelLook });
             list.Add(new Case { Name = "frames.panel-empty", Run = FrameCases.PanelEmpty });

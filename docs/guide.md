@@ -2497,6 +2497,10 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   lower one) do as named. A side left at 0 keeps the size the frame's template gives, read once, when the frame is made
   (a template's size reads at once, seen), so a button given only a `Width` keeps its height; one made by its type, as
   a label is, has 0 there, and a label given only a `Width` is as tall as its lines.
+- `panel.Add(child, x, y, width, height)` places a child from the panel's top left, y down, with its size, so a layout
+  copied from pixels is written as it is. The numbers are in the units `Screen.DesignHeight` sets, the screen's height:
+  0.6, the game's, unless set. Set it once, before adding (`Screen.DesignHeight = 768` for a layout made for a screen
+  768 high); a frame added already keeps its place. `Offset`, `Width` and `Height` still read the game's units.
 - Tweens move a value over time: `MoveTo(offset, seconds)`, `SizeTo(width, height, seconds)`, `ScaleTo`, `FadeTo` (an
   alpha) and a label's `ColorTo`, each with an ease from `Ease` (linear unless given), and `Tween(seconds, ease, t =>
   ...)` for anything else, given how far along it is, eased, ending with 1. A tween steps 32 times a second on every
@@ -2512,8 +2516,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   ```
 - `Panel` holds others and has the game's window look (`EscMenuBackdrop`) unless its `Template` says otherwise;
   `Template = ""` makes an empty one that draws nothing. `Label` shows `Text` in the game's font, set where its
-  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` makes it
-  bigger, as the game takes no other font or height for it (seen). `Image` shows a `Texture`. A map's own panel
+  `Alignment` says (a `FramePoint`: `Left` for the middle of the left edge; `TopLeft` unless set); `Scale` sizes its
+  text, as the game takes no other font or height for a label (seen), and leaves its place and box alone: the game
+  scales a label's offset and box with it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`. A map's own panel
   inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
   Labels, images and empty panels let clicks through, until they are listened to for the mouse.
@@ -2570,7 +2575,10 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   two players it is not checked yet.
 - Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting, making and
   adding are not. `label.ShowLocal(text)`, inside `Local.For`, shows a text on that machine only, as a number only one
-  player sees; `Text` keeps the shared text, and setting it shows that everywhere again.
+  player sees; `Text` keeps the shared text, and setting it shows that everywhere again. `label.ShowNameOf(unit)`,
+  outside `Local.For`, shows each machine its own name for a unit (a hero's proper name, else the unit's name, as both
+  are in each player's language), and `Text` reads the type's name. It shows the name at the call: call it again after
+  a rename.
 - `End()` hides a frame with the frames added to it. Nothing is destroyed, as destroying a frame can desync (a claim):
   the next frame of its class and template is given the hidden one, with none of its old values. One sized on a
   template goes only to a frame given a size. One that a frame still showing is tied to is not given out again, so the
