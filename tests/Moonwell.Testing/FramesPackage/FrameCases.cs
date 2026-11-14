@@ -289,6 +289,82 @@ namespace Moonwell.Testing
             Expect.Equal("shared", label.Text, "Text reads the shared text");
         }
 
+        /// <summary>ShowNameOf draws this machine's own name, a hero's proper name, else the unit's; Text reads the type's name; Text set after shows the shared text again.</summary>
+        public static void ShowNameOf(FakeWorld world)
+        {
+            var frames = Installed();
+            var label = Screen.Add(new Label(), Game.Instance);
+            var footman = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            world.RenameUnit(footman, "Footman here");
+            var unit = Unit.Of(footman)!;
+            label.ShowNameOf(unit);
+            Expect.Equal("Footman here", frames.FrameOf(label.Handle!).Text, "the unit's name, this machine's");
+            Expect.Equal(unit.Default.Name, label.Text, "Text reads the type's name");
+            var paladin = world.NewUnit(ObjectTypes.FourCC("Hpal"), hero: true);
+            world.SetProperName(paladin, "Uther");
+            label.ShowNameOf(Unit.Of(paladin)!);
+            Expect.Equal("Uther", frames.FrameOf(label.Handle!).Text, "a hero's proper name");
+            label.Text = "shared";
+            Expect.Equal("shared", frames.FrameOf(label.Handle!).Text, "Text shows the shared text again");
+        }
+
+        /// <summary>A label's Scale sizes its text only: its offset, ties and size are given divided by it, again when it changes; a panel's are given as set.</summary>
+        public static void LabelScaleKeepsPlace(FakeWorld world)
+        {
+            var frames = Installed();
+            var label = Screen.Add(new Label { Anchor = FramePoint.TopLeft, Offset = new Vector2(0.08f, -0.04f), Width = 0.2f, Height = 0.02f, Scale = 0.8f }, Game.Instance);
+            var fake = frames.FrameOf(label.Handle!);
+            Expect.Near(0.1f, fake.Points[0].X, "the offset's x over the scale");
+            Expect.Near(-0.05f, fake.Points[0].Y, "the offset's y over the scale");
+            Expect.Near(0.25f, fake.Width, "the width over the scale");
+            Expect.Near(0.025f, fake.Height, "the height over the scale");
+            Expect.Near(0.8f, fake.Scale, "the game's scale");
+            Expect.Near(0.08f, label.Offset.X, "Offset reads as set");
+            Expect.Near(0.2f, label.Width, "Width reads as set");
+            label.Scale = 2f;
+            Expect.Near(0.04f, fake.Points[0].X, "placed again for the new scale");
+            Expect.Near(0.1f, fake.Width, "sized again for the new scale");
+            var other = Screen.Add(new Panel(), Game.Instance);
+            label.Attach(FramePoint.Left, other, FramePoint.Right, 0.02f, 0f);
+            Expect.Near(0.01f, fake.Points[0].X, "a tie's offset over the scale");
+            var panel = Screen.Add(new Panel { Offset = new Vector2(0.08f, 0f), Width = 0.2f, Scale = 0.8f }, Game.Instance);
+            Expect.Near(0.08f, frames.FrameOf(panel.Handle!).Points[0].X, "a panel's offset as set");
+            Expect.Near(0.2f, frames.FrameOf(panel.Handle!).Width, "a panel's width as set");
+        }
+
+        /// <summary>Add with a place and size puts the child from the parent's top left, y down, in Screen.DesignHeight's units; above 0 only.</summary>
+        public static void AddPlaced(FakeWorld world)
+        {
+            var frames = Installed();
+            var panel = Screen.Add(new Panel(), Game.Instance);
+            var game = panel.Add(new Panel(), 0.01f, 0.02f, 0.1f, 0.05f);
+            var fake = frames.FrameOf(game.Handle!);
+            Expect.Equal(0, fake.Points[0].Point, "its top left");
+            Expect.Equal(0, fake.Points[0].OtherPoint, "at the parent's top left");
+            Expect.Near(0.01f, fake.Points[0].X, "x in the game's units unless set");
+            Expect.Near(-0.02f, fake.Points[0].Y, "y down");
+            Expect.Near(0.1f, fake.Width, "the width");
+            Expect.Near(0.05f, fake.Height, "the height");
+            Screen.DesignHeight = 768f;
+            try
+            {
+                var pixels = panel.Add(new Panel(), 128f, 64f, 256f, 32f);
+                fake = frames.FrameOf(pixels.Handle!);
+                Expect.Near(0.1f, fake.Points[0].X, "128 px");
+                Expect.Near(-0.05f, fake.Points[0].Y, "64 px down");
+                Expect.Near(0.2f, fake.Width, "256 px wide");
+                Expect.Near(0.025f, fake.Height, "32 px high");
+                Expect.Near(0.1f, pixels.Offset.X, "Offset reads the game's units");
+                Screen.DesignHeight = 0f;
+                Expect.Near(768f, Screen.DesignHeight, "0 refused");
+                Expect.True(world.Logged.Exists(line => line.Contains("DesignHeight")), "reported: " + string.Join(" | ", world.Logged));
+            }
+            finally
+            {
+                Screen.DesignHeight = 0.6f;
+            }
+        }
+
         /// <summary>An image is a BACKDROP painted with its texture.</summary>
         public static void Image(FakeWorld world)
         {
