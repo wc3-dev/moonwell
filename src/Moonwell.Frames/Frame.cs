@@ -1347,6 +1347,151 @@ namespace Moonwell
         /// <summary>The template the frame is made from: its Template, but a label's text template for its Size, Font and Shadow.</summary>
         internal virtual string MakeTemplate => Template;
 
+        /// <summary>
+        /// Works out where the frame is on this machine's screen, in the game's units (x 0 to 0.8 over the 4:3 middle, y 0 to
+        /// 0.6), from how the map placed it: its Anchor and Offset on its parent, the frame it fills, its ties to other frames,
+        /// its size or its template's, and its scale and its parents' up to the screen, whose whole-width root spans this
+        /// machine's window. False where Moonwell cannot know it: a tie to a piece of the HUD, a frame under one of the game's
+        /// frames, a side with no size, or a window with no size. With shapeOnly the whole-width root is taken as the 4:3
+        /// middle, so the answer is the same on every machine whatever its window.
+        /// </summary>
+        internal bool ScreenPlace(bool shapeOnly, out float left, out float bottom, out float right, out float top)
+        {
+            return ScreenPlace(0, shapeOnly, out left, out bottom, out right, out top);
+        }
+
+        private bool ScreenPlace(int depth, bool shapeOnly, out float left, out float bottom, out float right, out float top)
+        {
+            left = bottom = right = top = 0.0f;
+            if (depth > 32 || HasEnded)
+            {
+                return false;
+            }
+
+            if (filled != null)
+            {
+                return filled.ScreenPlace(depth + 1, shapeOnly, out left, out bottom, out right, out top);
+            }
+
+            var drawn = DrawnScale() / PlaceScale;
+            var w = (width != 0.0f ? width : madeWidth) * drawn;
+            var h = (height != 0.0f ? height : madeHeight) * drawn;
+            float xLow = 0.0f, xHigh = 0.0f, yLow = 0.0f, yHigh = 0.0f, xAt = 0.0f, yAt = 0.0f;
+            bool xLowSet = false, xHighSet = false, xAtSet = false, yLowSet = false, yHighSet = false, yAtSet = false;
+            if (ties != null)
+            {
+                for (var i = 0; i < ties.Count; i++)
+                {
+                    var tie = ties[i];
+                    if (tie.Other == null || !tie.Other.ScreenPlace(depth + 1, shapeOnly, out var l, out var b, out var r, out var t))
+                    {
+                        return false;
+                    }
+
+                    var x = PointX(tie.OtherPoint, l, r) + tie.X * drawn;
+                    var y = PointY(tie.OtherPoint, b, t) + tie.Y * drawn;
+                    var side = Side(tie.Point);
+                    if (side.X == 0) { xLow = x; xLowSet = true; } else if (side.X == 2) { xHigh = x; xHighSet = true; } else { xAt = x; xAtSet = true; }
+                    if (side.Y == 0) { yLow = y; yLowSet = true; } else if (side.Y == 2) { yHigh = y; yHighSet = true; } else { yAt = y; yAtSet = true; }
+                }
+            }
+            else
+            {
+                float pl, pb, pr, pt;
+                if (Parent is Frame frame && frame.handle != null && frame.handle == parentHandle)
+                {
+                    if (!frame.ScreenPlace(depth + 1, shapeOnly, out pl, out pb, out pr, out pt))
+                    {
+                        return false;
+                    }
+                }
+                else if (parentHandle == null || !FramesSystem.RootPlace(parentHandle, shapeOnly, out pl, out pb, out pr, out pt))
+                {
+                    return false;
+                }
+
+                var x = PointX(anchor, pl, pr) + offset.X * drawn;
+                var y = PointY(anchor, pb, pt) + offset.Y * drawn;
+                var side = Side(anchor);
+                if (side.X == 0) { xLow = x; xLowSet = true; } else if (side.X == 2) { xHigh = x; xHighSet = true; } else { xAt = x; xAtSet = true; }
+                if (side.Y == 0) { yLow = y; yLowSet = true; } else if (side.Y == 2) { yHigh = y; yHighSet = true; } else { yAt = y; yAtSet = true; }
+            }
+
+            return Span(xLowSet, xLow, xAtSet, xAt, xHighSet, xHigh, w, out left, out right)
+                && Span(yLowSet, yLow, yAtSet, yAt, yHighSet, yHigh, h, out bottom, out top);
+        }
+
+        /// <summary>The scale the game draws the frame at: its own times its parents' frames'.</summary>
+        private float DrawnScale()
+        {
+            var drawn = scale;
+            for (var up = Parent as Frame; up != null; up = up.Parent as Frame)
+            {
+                drawn *= up.scale;
+            }
+
+            return drawn;
+        }
+
+        // A side from the points set on it, as the game works it out: two points give it, one point gives it with the size.
+        private static bool Span(bool lowSet, float low, bool atSet, float at, bool highSet, float high, float size, out float from, out float to)
+        {
+            from = to = 0.0f;
+            if (lowSet && highSet)
+            {
+                from = low;
+                to = high;
+            }
+            else if (lowSet && atSet)
+            {
+                from = low;
+                to = low + (at - low) * 2.0f;
+            }
+            else if (atSet && highSet)
+            {
+                from = high - (high - at) * 2.0f;
+                to = high;
+            }
+            else if (size <= 0.0f)
+            {
+                return false;
+            }
+            else if (lowSet)
+            {
+                from = low;
+                to = low + size;
+            }
+            else if (highSet)
+            {
+                from = high - size;
+                to = high;
+            }
+            else
+            {
+                from = at - size / 2.0f;
+                to = at + size / 2.0f;
+            }
+
+            return true;
+        }
+
+        // Which side a point is on, across and up: 0 the low side, 1 the middle, 2 the high side.
+        private static (int X, int Y) Side(FramePoint point)
+        {
+            var index = (int)point;
+            return (index % 3, 2 - (index / 3));
+        }
+
+        private static float PointX(FramePoint point, float left, float right)
+        {
+            return left + (right - left) * Side(point).X / 2.0f;
+        }
+
+        private static float PointY(FramePoint point, float bottom, float top)
+        {
+            return bottom + (top - bottom) * Side(point).Y / 2.0f;
+        }
+
         /// <summary>What the frame's own offsets and size are divided by when given to the game: 1, but a label's Scale.</summary>
         internal virtual float PlaceScale => 1.0f;
 

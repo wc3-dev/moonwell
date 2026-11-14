@@ -2616,8 +2616,13 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   moved, with them. A map's frame
   ties itself to a piece with `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`,
   with the label added by `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The chat and the
-  game's messages are not offered, nor moving the portrait or the hero icons, as the game crashes or draws them wrong
-  (seen). In a development build, `-frames` writes the game's frame tree to `CustomMapData\Moonwell\frames.txt`:
+  game's messages are not offered, nor moving the hero icons, as the game crashes or draws them wrong (seen).
+  `Portrait.Fill(frame)` puts the portrait, the first unit selected, on a map's frame at its place and size: the game
+  places the portrait across the whole window's width, not the 4:3 middle, so Moonwell works out where the frame is
+  from how the map placed it and squeezes it for the window's shape, again every second and when the window changes
+  (seen in classic and Reforged graphics). A frame tied to a piece of the HUD, or with no size, is refused, as its
+  place cannot be known; the game has one portrait, so it shows in one frame at a time. In a
+  development build, `-frames` writes the game's frame tree to `CustomMapData\Moonwell\frames.txt`:
   each frame's index under its parent, name, size, whether it shows and how many children it has.
 - `Screen.AddTo(frame, gameFrame, scope)` adds a frame that shows only while one of the game's HUD frames shows, named
   as in the game's `.fdf` files (`"EscMenuMainPanel"`, the F10 menu; `"SimpleInfoPanelUnitDetail"`, one unit
