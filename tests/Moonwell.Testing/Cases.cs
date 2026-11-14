@@ -60,6 +60,7 @@ namespace Moonwell.Testing
             AddProcgen(list);
             AddAI(list);
             AddAITrees(list);
+            AddAITools(list);
             AddSimulation(list);
             return list;
         }
@@ -165,6 +166,28 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.trees.cast", Run = TreeUnitCases.Cast });
             list.Add(new Case { Name = "ai.trees.follow-route", Run = TreeUnitCases.FollowRoute });
             list.Add(new Case { Name = "ai.trees.use-item", Run = TreeUnitCases.UseItem });
+        }
+
+        /// <summary>Adds the cases for the AI package's tools (K7): the brain view, the decision log and the commands; they exist only in a development build, as the debug mode does.</summary>
+        private static void AddAITools(List<Case> list)
+        {
+            // Named debug.*, as the debug mode's cases are: the release Lua test leaves those out of its count by that prefix.
+#if DEBUG
+            list.Add(new Case { Name = "debug.ai-tools.view-tree", Run = BrainToolsCases.ViewTree });
+            list.Add(new Case { Name = "debug.ai-tools.view-choice", Run = BrainToolsCases.ViewChoice });
+            list.Add(new Case { Name = "debug.ai-tools.view-facts", Run = BrainToolsCases.ViewFacts });
+            list.Add(new Case { Name = "debug.ai-tools.view-other-actors", Run = BrainToolsCases.ViewOtherActors });
+            list.Add(new Case { Name = "debug.ai-tools.view-folds", Run = BrainToolsCases.ViewFolds });
+            list.Add(new Case { Name = "debug.ai-tools.brain-selects", Run = BrainToolsCases.BrainSelects });
+            list.Add(new Case { Name = "debug.ai-tools.log-choice", Run = BrainToolsCases.LogChoice });
+            list.Add(new Case { Name = "debug.ai-tools.log-tree", Run = BrainToolsCases.LogTree });
+            list.Add(new Case { Name = "debug.ai-tools.log-class", Run = BrainToolsCases.LogClass });
+            list.Add(new Case { Name = "debug.ai-tools.log-keeps-newest", Run = BrainToolsCases.LogKeepsNewest });
+            list.Add(new Case { Name = "debug.ai-tools.force", Run = BrainToolsCases.Force });
+            list.Add(new Case { Name = "debug.ai-tools.fact", Run = BrainToolsCases.SetFact });
+            list.Add(new Case { Name = "debug.ai-tools.wake", Run = BrainToolsCases.Wake });
+            list.Add(new Case { Name = "debug.ai-tools.off-and-map-commands", Run = BrainToolsCases.OffAndMapCommands });
+#endif
         }
 
         /// <summary>Adds the cases for the procgen package: noise, fields and the terrain generator.</summary>
