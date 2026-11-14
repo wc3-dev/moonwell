@@ -28,6 +28,8 @@
     <PackageReference Include="KeraLua" Version="1.4.9" />
     <PackageReference Include="War3Net.Drawing.Blp" Version="6.0.2" />
     <PackageReference Include="StbImageSharp" Version="2.30.16" />
+    <!-- Pfim's DDS reader, for the game's textures a looks table copies: Reforged stores even its Classic ones as DDS. -->
+    <PackageReference Include="Pfim" Version="0.11.4" />
   </ItemGroup>
 
 </Project>

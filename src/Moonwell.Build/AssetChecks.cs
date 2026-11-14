@@ -203,7 +203,8 @@ namespace Moonwell.Build
                 .OrderBy(file => file, StringComparer.Ordinal))
             {
                 var packed = Images.PackedName(file);
-                if (!IsPath(packed) || InGame(game, packed) || IsGreyCopy(packed))
+                // A texture with a looks table beside it is the source of its copies (decision 321).
+                if (!IsPath(packed) || InGame(game, packed) || IsGreyCopy(packed) || File.Exists(Path.Combine(project.AssetsFolder, Path.ChangeExtension(file, null) + LookFiles.Extension)))
                 {
                     continue;
                 }

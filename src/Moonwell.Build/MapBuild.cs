@@ -76,8 +76,9 @@ namespace Moonwell.Build
             PlaceNames.Check(project, "Destructable.Named", PlacedWriter.DestructableNames(project, placed), "placed destructable");
             PlaceNames.Check(project, "PlacedSound.Named", PlacedWriter.SoundNames(placed), "sound");
 
-            // Data is written before the compile too, from the CSV and JSON files in data\.
+            // Data and the looks' names are written before the compile too, from the CSV and JSON files in data\ and the .looks.csv files in assets\.
             DataWriter.Write(project);
+            LookFiles.WriteNames(project);
             LuaLibraries.WriteBindings(project);
 
             var targetPath = DotnetBuild.Run(project, options.Release, log);
