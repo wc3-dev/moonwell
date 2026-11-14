@@ -477,7 +477,7 @@ namespace Moonwell
             cast.End();
             if (!by.IsGone)
             {
-                Runtime.World.OrderUnit(caster, "stop");
+                by.Order(Orders.Stop);
                 if (refusal.Length > 0)
                 {
                     by.Owner.Error(refusal);

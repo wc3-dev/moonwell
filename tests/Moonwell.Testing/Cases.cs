@@ -90,7 +90,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
         }
 
-        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, and utility AI.</summary>
+        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, full control, and utility AI.</summary>
         private static void AddAI(List<Case> list)
         {
             list.Add(new Case { Name = "ai.brains.think-on-each-actor", Run = BrainCases.ThinkOnEachActor });
@@ -110,6 +110,20 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.full-control.acquire", Run = FullControlCases.Acquire });
+            list.Add(new Case { Name = "ai.full-control.foreign-order", Run = FullControlCases.ForeignOrder });
+            list.Add(new Case { Name = "ai.full-control.one-answer", Run = FullControlCases.OneAnswer });
+            list.Add(new Case { Name = "ai.full-control.code-orders", Run = FullControlCases.CodeOrders });
+            list.Add(new Case { Name = "ai.full-control.sleep", Run = FullControlCases.Sleep });
+            list.Add(new Case { Name = "ai.full-control.give-back", Run = FullControlCases.GiveBack });
+            list.Add(new Case { Name = "ai.full-control.not-stuck-on-hold", Run = FullControlCases.NotStuckOnHold });
+            list.Add(new Case { Name = "ai.full-control.code-calls", Run = FullControlCases.CodeCalls });
+            list.Add(new Case { Name = "ai.full-control.code-hold", Run = FullControlCases.CodeHold });
+            list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
+            list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
+            list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
+            list.Add(new Case { Name = "ai.full-control.in-play", Run = FullControlCases.InPlay });
+            list.Add(new Case { Name = "ai.full-control.lean-on-in-play", Run = FullControlCases.LeanOnInPlay });
             list.Add(new Case { Name = "ai.utility.curves", Run = UtilityCases.Curves });
             list.Add(new Case { Name = "ai.utility.points", Run = UtilityCases.Points });
             list.Add(new Case { Name = "ai.utility.scores", Run = UtilityCases.Scores });

@@ -109,6 +109,7 @@ namespace Moonwell
                     unitPlay.Walking = false;
                     unitPlay.Target = null;
                     unitPlay.HasPoint = false;
+                    unitPlay.Holding = false;
                 }
 
                 if (PausedUnits.Contains(made))
@@ -211,6 +212,7 @@ namespace Moonwell
             unitPlay.Orders++;
             unitPlay.ReadyStep = nextPlay + 8;
             unitPlay.Walking = false;
+            unitPlay.Holding = id == 851993;
             unitPlay.Target = target;
             unitPlay.TargetIsEnemy = false;
             unitPlay.HasPoint = kind == OrderKind.Place;
@@ -225,10 +227,16 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A ready unit's step, by its current order. An order the play does not carry out (a spell, attackground, one on an item) ends at the unit's first ready step; patrol stands.</summary>
+        /// <summary>A ready unit's step, by its current order. An order the play does not carry out (a spell, attackground, one on an item) ends at the unit's first ready step; patrol stands. Hold position reads 0, as the game's does (seen 11-14), so the play keeps it apart from idle.</summary>
         private void Act(unit made, PlayedUnit unitPlay, int k)
         {
             var id = CurrentOrderOf(made);
+            if (id == 851993 || (id == 0 && unitPlay.Holding))
+            {
+                Hold(made, unitPlay, k);
+                return;
+            }
+
             if (id == 0)
             {
                 Acquire(made, unitPlay);
@@ -271,19 +279,13 @@ namespace Moonwell
                 return;
             }
 
-            if (id == 851993)
-            {
-                Hold(made, unitPlay, k);
-                return;
-            }
-
             if (id != 851990 && id != 851972)
             {
                 currentOrders[made] = 0;
             }
         }
 
-        /// <summary>An idle unit that can attack takes the nearest enemy within its acquisition range as its attack, silently: no order event, not counted, not held.</summary>
+        /// <summary>An idle unit that can attack takes the nearest enemy within its acquisition range as its attack, silently: no order event, not counted, not held. A watched unit's acquire event comes first, its order still reading 0, as the game's does; an order given inside it (full control's hold) is kept instead.</summary>
         private void Acquire(unit made, PlayedUnit unitPlay)
         {
             if (!CanAcquire(unitPlay))
@@ -293,6 +295,13 @@ namespace Moonwell
 
             var found = Nearest(made, unitPlay.AcquisitionRange * unitPlay.AcquisitionRange);
             if (found == null)
+            {
+                return;
+            }
+
+            var orders = unitPlay.Orders;
+            Acquire(made);
+            if (unitPlay.Orders != orders)
             {
                 return;
             }
@@ -603,6 +612,9 @@ namespace Moonwell
 
         /// <summary>Whether a walk is under way.</summary>
         public bool Walking;
+
+        /// <summary>Whether its last order was hold position, which reads 0 as idle does.</summary>
+        public bool Holding;
 
         /// <summary>The x the walk started from.</summary>
         public float FromX;

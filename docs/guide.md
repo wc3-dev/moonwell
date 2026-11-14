@@ -1598,6 +1598,42 @@ player.Blackboard().Set(Guard.Alarm, raider);                    // every guard 
   `OrderOn` send every time.
 - Brains and blackboards are the same on every machine: think, read and write outside `Local.For`.
 
+### Full control
+
+A unit brain leans on the game by default: between its orders the game's own unit AI acts, as for any unit. An idle
+unit picks enemies near it and fights them, hits back, answers a call for help, a creep goes home, and a computer's
+unit is sent back after its attack-move ends. Set `FullControl = true`, in `OnAdded` or at any time, and the unit does
+only what code orders:
+
+```csharp
+protected override void OnAdded()
+{
+    ThinkEvery = 0.25f;
+    FullControl = true;                                           // the unit no longer fights or walks by itself
+}
+```
+
+- A target the unit picks by itself while it carries no order, idle or on Moonwell's hold, is answered at once with
+  hold position. A unit that code put on hold position already holds, and gets nothing.
+- Every order not from code, the game's own, an AI script's or a person's click, is answered with hold position at the
+  loop's next step, within 0.02 s. The unit's brains forget the order they last sent, so their next one reaches the
+  game, and are woken to think in that step. It is not answered inside its event: there hold position doesn't hold,
+  and for a computer's unit sent back after an attack-move it closes the game. Several in one step get one answer, an
+  order from code before the step drops it, and so does a reaction that refuses it. The unit's `OnOrdered` and the
+  map's `OnUnitOrdered` still hear them. An item's use, a toggle or an autocast change nothing the unit does and get
+  no answer.
+- An order from code always goes through: the brain's own, the unit's `Order`, `OrderAt` and `OrderOn`, and the stop
+  that `MoveTo` or a change of owner gives. On the brain's attack-move the unit fights what it meets, as an attack-move
+  does. An order the unit already carries when control begins goes on until the brain orders it.
+- An enemy right beside the unit is still hit, as on hold position. The unit doesn't sleep at night.
+- The unit is under full control while any of its brains has it. Setting it false, or the last such brain ending,
+  gives the unit back: it sleeps again if it could, and one left on Moonwell's hold gets a stop, so the game picks up
+  at once. A hold from code is left as it is, and a dead or removed unit gets no stop.
+
+The melee and campaign AI scripts are the game's natives: `Natives.StartMeleeAI(p, "human.ai")` runs from a Moonwell
+map, as do `StartCampaignAI`, `PauseCompAI` and `CommandAI`. A full-control brain on a unit of such a player undoes
+the script's orders to it.
+
 ## AI: choosing by scores
 
 A brain with several things it could do can score each one at every think and run the best, which is called utility
@@ -1872,15 +1908,16 @@ public class GuardTests
   unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
   anything else. An attack to a point fights the nearest enemy within acquisition range on the way, then walks on. Hold
-  position never moves and swings at an enemy within range. `stop` leaves the unit idle, patrol stands, and any other
-  order (a spell, `attackground`) ends after its hold.
+  position never moves and swings at an enemy within range, its `CurrentOrder` reading "" as in the game. `stop` leaves
+  the unit idle, patrol stands, and any other order (a spell, `attackground`) ends after its hold.
 - The fake knows orders by name from a short list: `smart`, `stop`, `move`, `attack`, `attackground`, `patrol`,
   `holdposition`, `defend`, `undefend`, `holybolt`, `immolation` and `unimmolation`. Any other name leaves the unit idle
   at once, and is neither counted nor held.
 - A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
   a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
   damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
-  not counted or held.
+  not counted or held. A unit under a brain's full control is put on hold position at that moment instead, as in the
+  game.
 - Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
   through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
   3.0.1.24371); turning, vision, buffs, and spells and their effects; an attack's damage point and a missile's flight
