@@ -201,6 +201,7 @@ namespace Moonwell.Build
             }
 
             var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
+                .Concat(BuffWatch.IconLines(declarations.Objects, standard, data.ValueSet))
                 .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? DummyType.MapAbilities(project.MapFolder) : null))
                 .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);

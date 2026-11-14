@@ -19,6 +19,7 @@ namespace Moonwell
             UnitSelection(unit, player, selected);
             MapSelection(Game.Instance, unit, player, selected);
             MapSelection(player, unit, player, selected);
+            SelectionChanges.Mark(player);
         }
 
         /// <summary>Runs OnSelected or OnDeselected on a unit, then on its components, in add order.</summary>
