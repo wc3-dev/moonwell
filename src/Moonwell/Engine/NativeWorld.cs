@@ -40,6 +40,9 @@ namespace Moonwell.Engine
         /// <summary>The trigger that sees each watched destructable die, one each, destroyed as the destructable leaves, since a trigger's events cannot be taken off it.</summary>
         private readonly Dictionary<destructable, trigger> deathTriggers = new Dictionary<destructable, trigger>();
 
+        /// <summary>The trigger every watched unit's acquire event is registered on; null until the first.</summary>
+        private trigger? acquire;
+
         /// <summary>The lines of the log file and when it is next written.</summary>
         private readonly LogFile log = new LogFile();
 
@@ -1647,6 +1650,43 @@ namespace Moonwell.Engine
         public int CurrentOrderOf(unit unit)
         {
             return Natives.GetUnitCurrentOrder(unit);
+        }
+
+        /// <summary>Registers the unit's acquire event on the one trigger all watched units share, made on first use.</summary>
+        public void WatchAcquire(unit unit)
+        {
+            if (acquire == null)
+            {
+                acquire = Natives.CreateTrigger();
+                Natives.TriggerAddAction(acquire, AcquireAction);
+            }
+
+            Natives.TriggerRegisterUnitEvent(acquire, unit, Natives.EVENT_UNIT_ACQUIRED_TARGET);
+        }
+
+        /// <summary>UnitCanSleep.</summary>
+        public bool CanSleep(unit unit)
+        {
+            return Natives.UnitCanSleep(unit);
+        }
+
+        /// <summary>UnitAddSleep: false wakes a sleeping unit for good, where UnitWakeUp wakes it for a moment (game facts, 11-14).</summary>
+        public void SetSleep(unit unit, bool sleep)
+        {
+            Natives.UnitAddSleep(unit, sleep);
+        }
+
+        /// <summary>Hands a watched unit's pick of a target to Inbound.</summary>
+        private static void AcquireAction()
+        {
+            try
+            {
+                Inbound.Acquired(Natives.GetTriggerUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Acquired", error);
+            }
         }
 
         /// <summary>The game's string of an order id: OrderId2String.</summary>

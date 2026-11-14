@@ -3131,9 +3131,56 @@ namespace Moonwell.Testing
                 Inbound.Ordered(unit, id, kind, x, y, targetUnit, targetItem, null, queue);
             }
 
-            if (id == 851972 && currentOrders.TryGetValue(unit, out var now) && now == 851972)
+            // A stop leaves the unit idle, and a unit holding its position reads 0 as an idle one does (seen 11-14).
+            if ((id == 851972 || id == 851993) && currentOrders.TryGetValue(unit, out var now) && now == id)
             {
                 currentOrders[unit] = 0;
+            }
+        }
+
+        /// <summary>The units whose acquire event the runtime watches, once for each registration.</summary>
+        public List<unit> AcquireWatched = new List<unit>();
+
+        /// <summary>The units that can fall asleep at night; none until set.</summary>
+        private readonly HashSet<unit> sleepers = new HashSet<unit>();
+
+        /// <summary>Records the registration of a unit's acquire event.</summary>
+        public void WatchAcquire(unit unit)
+        {
+            NoteGone(unit);
+            AcquireWatched.Add(unit);
+        }
+
+        /// <summary>A unit picks a target by itself, as the game's unit AI does with no order and no order event: its acquire event, once for each registration.</summary>
+        public void Acquire(unit unit)
+        {
+            for (var i = 0; i < AcquireWatched.Count; i++)
+            {
+                if (AcquireWatched[i] == unit)
+                {
+                    Inbound.Acquired(unit);
+                }
+            }
+        }
+
+        /// <summary>Whether a unit can fall asleep at night, as SetSleep left it.</summary>
+        public bool CanSleep(unit unit)
+        {
+            NoteGone(unit);
+            return sleepers.Contains(unit);
+        }
+
+        /// <summary>Lets a unit fall asleep at night, or wakes it for good.</summary>
+        public void SetSleep(unit unit, bool sleep)
+        {
+            NoteGone(unit);
+            if (sleep)
+            {
+                sleepers.Add(unit);
+            }
+            else
+            {
+                sleepers.Remove(unit);
             }
         }
 

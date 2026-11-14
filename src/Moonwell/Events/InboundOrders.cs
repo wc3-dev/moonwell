@@ -17,6 +17,9 @@ namespace Moonwell
         /// <summary>How deep order reactions are nested now: an order given inside an order reaction runs its own inside.</summary>
         private static int orderDepth;
 
+        /// <summary>How many of the unit's Order, OrderAt and OrderOn calls are open now: an order whose event comes inside one is from code. A count, so a nested call can't reset it.</summary>
+        internal static int CodeOrders;
+
         /// <summary>The last orders a unit keeps: the newest and the two before it.</summary>
         private const int KeptOrders = 3;
 
@@ -88,6 +91,8 @@ namespace Moonwell
                 return;
             }
 
+            // Before the reactions, so an order a reaction gives is heard after this one.
+            Events.OrderListener?.Invoke(ordered, CodeOrders > 0);
             var order = new Order(ordered, id, Runtime.World.OrderName(id), kind, x, y, target, queue > 1);
             order.Previous = repeats ? last!.Previous : last;
             var carried = ordered.Carried;
@@ -214,7 +219,7 @@ namespace Moonwell
         }
 
         /// <summary>Gives a unit an order whose event no reaction hears, and returns the game's answer.</summary>
-        private static bool GiveOwn(Unit ordered, Func<bool> give)
+        internal static bool GiveOwn(Unit ordered, Func<bool> give)
         {
             var before = ownOrder;
             ownOrder = ordered.Handle;

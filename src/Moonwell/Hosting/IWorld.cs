@@ -536,8 +536,17 @@ namespace Moonwell.Hosting
         /// <summary>Gives a unit an order on a widget (a unit, an item or a destructable); the game's answer.</summary>
         bool OrderUnitOn(unit unit, string order, widget target);
 
-        /// <summary>The id of the order a unit carries out now; 0 when it is idle.</summary>
+        /// <summary>The id of the order a unit carries out now; 0 when it is idle or holds its position.</summary>
         int CurrentOrderOf(unit unit);
+
+        /// <summary>Delivers to Inbound each target the unit picks by itself, from now on; called once a unit.</summary>
+        void WatchAcquire(unit unit);
+
+        /// <summary>Whether a unit can fall asleep at night.</summary>
+        bool CanSleep(unit unit);
+
+        /// <summary>Lets a unit fall asleep at night, or wakes it for good.</summary>
+        void SetSleep(unit unit, bool sleep);
 
         /// <summary>The game's string of an order id; "" for the few with none.</summary>
         string OrderName(int id);

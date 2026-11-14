@@ -62,7 +62,7 @@ namespace Moonwell.Testing
             return list;
         }
 
-        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, and utility AI.</summary>
+        /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, full control, and utility AI.</summary>
         private static void AddAI(List<Case> list)
         {
             list.Add(new Case { Name = "ai.brains.think-on-each-actor", Run = BrainCases.ThinkOnEachActor });
@@ -82,6 +82,14 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.full-control.acquire", Run = FullControlCases.Acquire });
+            list.Add(new Case { Name = "ai.full-control.foreign-order", Run = FullControlCases.ForeignOrder });
+            list.Add(new Case { Name = "ai.full-control.one-answer", Run = FullControlCases.OneAnswer });
+            list.Add(new Case { Name = "ai.full-control.code-orders", Run = FullControlCases.CodeOrders });
+            list.Add(new Case { Name = "ai.full-control.sleep", Run = FullControlCases.Sleep });
+            list.Add(new Case { Name = "ai.full-control.give-back", Run = FullControlCases.GiveBack });
+            list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
+            list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
             list.Add(new Case { Name = "ai.utility.curves", Run = UtilityCases.Curves });
             list.Add(new Case { Name = "ai.utility.points", Run = UtilityCases.Points });
             list.Add(new Case { Name = "ai.utility.scores", Run = UtilityCases.Scores });

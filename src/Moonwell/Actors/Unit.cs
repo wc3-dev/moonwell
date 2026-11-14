@@ -1054,13 +1054,29 @@ namespace Moonwell
         /// <summary>Gives the unit an order with no place and no target, by the game's order string ("stop", "holdposition"), and returns the game's answer. False, and no call to the game, once the unit is gone.</summary>
         public bool Order(string order)
         {
-            return !IsGone && Runtime.World.OrderUnit(Handle, order);
+            if (IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.OrderUnit(Handle, order);
+            Inbound.CodeOrders--;
+            return taken;
         }
 
         /// <summary>Gives the unit an order to a place, by the game's order string ("move", "attack", "smart"), and returns the game's answer. False, and no call to the game, once the unit is gone.</summary>
         public bool OrderAt(string order, float x, float y)
         {
-            return !IsGone && Runtime.World.OrderUnitAt(Handle, order, x, y);
+            if (IsGone)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.OrderUnitAt(Handle, order, x, y);
+            Inbound.CodeOrders--;
+            return taken;
         }
 
         /// <summary>Gives the unit an order on a unit, an item or a destructable, by the game's order string ("attack", "smart"), and returns the game's answer. False, and no call to the game, once the unit or the target is gone.</summary>
@@ -1071,25 +1087,32 @@ namespace Moonwell
                 return false;
             }
 
+            widget? handle = null;
             var unit = target as Unit;
+            var item = target as Item;
+            var destructable = target as Destructable;
             if (unit != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, unit.Handle);
+                handle = unit.Handle;
             }
-
-            var item = target as Item;
-            if (item != null)
+            else if (item != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, item.Handle);
+                handle = item.Handle;
             }
-
-            var destructable = target as Destructable;
-            if (destructable != null)
+            else if (destructable != null)
             {
-                return Runtime.World.OrderUnitOn(Handle, order, destructable.Handle);
+                handle = destructable.Handle;
             }
 
-            return false;
+            if (handle == null)
+            {
+                return false;
+            }
+
+            Inbound.CodeOrders++;
+            var taken = Runtime.World.OrderUnitOn(Handle, order, handle);
+            Inbound.CodeOrders--;
+            return taken;
         }
 
         /// <summary>
@@ -1215,6 +1238,9 @@ namespace Moonwell
 
         /// <summary>The order the unit carries out, to give back when one is refused: the last order kept, until a stop, a build or another order not worth giving again replaced it; instant orders leave it.</summary>
         internal Order? Carried;
+
+        /// <summary>Whether the world delivers the unit's acquire event; its registration lasts the unit's life.</summary>
+        internal bool AcquireWatched;
 
         /// <summary>Orders the unit to stop. Does nothing once the unit is gone.</summary>
         public void Stop()
