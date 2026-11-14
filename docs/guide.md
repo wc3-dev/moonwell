@@ -1705,7 +1705,7 @@ public sealed class Guard : UnitBrain
         read: board => board.Unit!.Life < board.Unit!.MaxLife * Data.Guards.Gate.FleeBelow);
 
     public float HomeX, HomeY;
-    public Route? Patrol;
+    public Route? Out, Back;
     readonly Tree tree;
 
     public Guard()
@@ -1714,7 +1714,7 @@ public sealed class Guard : UnitBrain
             Select(
                 When(Hurt, MoveTo(() => HomeX, () => HomeY)),   // cuts in when Hurt turns true
                 When(Alarm, Attack(Alarm)),
-                Repeat(FollowRoute(() => Patrol))));
+                Repeat(Sequence(FollowRoute(() => Out), FollowRoute(() => Back)))));
     }
 
     protected override void OnAdded() => ThinkEvery = 0.25f;
@@ -1745,7 +1745,9 @@ public sealed class Guard : UnitBrain
     stun reads the same as a spell that went off. A second cast of the same spell is sent, and so is one on another
     target; a cast the unit still carries out as its brain last gave it is only watched.
   - `FollowRoute(() => route)` walks a `Route`'s points from the one after the nearest;
-    `FollowRoute(() => route, Orders.Attack)` attack-moves.
+    `FollowRoute(() => route, Orders.Attack)` attack-moves. A route has no loop, so a patrol is a way out and a way
+    back, repeated. A map gets a `Route` from `unit.FindPath(x, y)` (Moonwell.Pathing) or a procgen road's
+    `road.Toward(place)`.
   - `UseItem(() => item)`, at a place or on a target, watches the use as `Cast` does, and a use of the item the unit
     still carries out is only watched.
   - `MoveTo` and `FollowRoute` also fail when the unit is idle short of the place just after the order, as one jammed in
