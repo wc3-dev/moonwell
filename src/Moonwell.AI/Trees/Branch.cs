@@ -5,6 +5,14 @@ namespace Moonwell.AI
     {
         /// <summary>The children, in order.</summary>
         internal readonly Node[] children;
+#if DEBUG
+
+        /// <summary>The child the AI tools' -force has a Select or a Pick run, trying no other; -1 for none.</summary>
+        internal int forcedChild = -1;
+
+        /// <summary>The child of a Select or a Pick the AI tools' log last saw running; -1 for none.</summary>
+        internal int loggedChild = -1;
+#endif
 
         /// <summary>A node with these children.</summary>
         internal Branch(Node[] children)

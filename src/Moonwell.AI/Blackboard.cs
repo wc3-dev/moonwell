@@ -27,7 +27,7 @@ namespace Moonwell.AI
         private readonly int kind;
 
         /// <summary>The facts this blackboard holds a value of, to forget when it ends.</summary>
-        private readonly List<IHeldFact> held = new List<IHeldFact>();
+        internal readonly List<IHeldFact> held = new List<IHeldFact>();
 
         /// <summary>The unit, for a unit brain's blackboard once the brain is added; null otherwise.</summary>
         internal Unit? unit;
@@ -37,6 +37,14 @@ namespace Moonwell.AI
 
         /// <summary>Whether its brain has ended: it holds nothing more.</summary>
         internal bool ended;
+#if DEBUG
+
+        /// <summary>The trees made for this blackboard's brain, in the order made, for the AI tools; null until one is.</summary>
+        internal List<Tree>? trees;
+
+        /// <summary>The choices picked on this blackboard, in the order first picked, for the AI tools; null until one is.</summary>
+        internal List<Choice>? choices;
+#endif
 
         internal Blackboard(int kind, Player? player)
         {
@@ -107,6 +115,30 @@ namespace Moonwell.AI
         {
             held.Add(fact);
         }
+#if DEBUG
+
+        /// <summary>Notes a tree made for this blackboard's brain, for the AI tools.</summary>
+        internal void AddTree(Tree tree)
+        {
+            if (trees == null)
+            {
+                trees = new List<Tree>();
+            }
+
+            trees.Add(tree);
+        }
+
+        /// <summary>Notes a choice picked on this blackboard for the first time, for the AI tools.</summary>
+        internal void AddChoice(Choice choice)
+        {
+            if (choices == null)
+            {
+                choices = new List<Choice>();
+            }
+
+            choices.Add(choice);
+        }
+#endif
 
         /// <summary>Ends a brain's blackboard: every fact forgets its value here.</summary>
         internal void End()

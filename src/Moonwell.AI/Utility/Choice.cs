@@ -13,10 +13,24 @@ namespace Moonwell.AI
     public sealed class Choice : IEnumerable<Option>
     {
         /// <summary>The options, in the order added.</summary>
-        private readonly List<Option> options = new List<Option>();
+        internal readonly List<Option> options = new List<Option>();
 
         /// <summary>How much more than the current option's score another needs to win, as a part of it.</summary>
         private float keep = 0.1f;
+#if DEBUG
+
+        /// <summary>Whether Pick has the AI tools' work to do: list the choice on the blackboard of its first, then have a forced option win.</summary>
+        private bool tooled = true;
+
+        /// <summary>Whether the choice is listed on the blackboard of its first Pick.</summary>
+        private bool listed;
+
+        /// <summary>The option the AI tools' -force has win at every Pick, whatever the scores; null for none.</summary>
+        internal Option? forced;
+
+        /// <summary>The option the AI tools' log last saw as Current.</summary>
+        internal Option? logged;
+#endif
 
         /// <summary>Adds an option, after those added before.</summary>
         public void Add(Option option)
@@ -80,6 +94,12 @@ namespace Moonwell.AI
                 Current = best;
             }
 
+#if DEBUG
+            if (tooled)
+            {
+                Tool(board);
+            }
+#endif
             return Current;
         }
 
@@ -100,5 +120,31 @@ namespace Moonwell.AI
         {
             return options.GetEnumerator();
         }
+#if DEBUG
+
+        /// <summary>-force: has an option win at every Pick whatever the scores, or no longer with null.</summary>
+        internal void Force(Option? option)
+        {
+            forced = option;
+            tooled = true;
+        }
+
+        /// <summary>Lists the choice on the blackboard of its first Pick, for the AI tools' view, and has a forced option win.</summary>
+        private void Tool(Blackboard board)
+        {
+            if (!listed)
+            {
+                listed = true;
+                board.AddChoice(this);
+            }
+
+            if (forced != null)
+            {
+                Current = forced;
+            }
+
+            tooled = forced != null;
+        }
+#endif
     }
 }

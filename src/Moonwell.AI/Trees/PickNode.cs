@@ -44,6 +44,12 @@ namespace Moonwell.AI
         /// <summary>Scores the options, keeps or switches, and runs the one picked.</summary>
         protected override Status Run()
         {
+#if DEBUG
+            if (forcedChild >= 0)
+            {
+                return RunForced();
+            }
+#endif
             var best = -1;
             var bestScore = 0f;
             var currentScore = 0f;
@@ -88,5 +94,25 @@ namespace Moonwell.AI
 
             return status;
         }
+#if DEBUG
+
+        /// <summary>-force: runs only the forced option, scoring none, halting the one that ran.</summary>
+        private Status RunForced()
+        {
+            if (current >= 0 && current != forcedChild)
+            {
+                options[current].Halt();
+            }
+
+            current = forcedChild;
+            var status = options[current].Tick();
+            if (status != Status.Running)
+            {
+                current = -1;
+            }
+
+            return status;
+        }
+#endif
     }
 }

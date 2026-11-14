@@ -5,8 +5,8 @@ namespace Moonwell.AI
     /// <summary>What the three brain classes share, as C# lets a class inherit only one: the brain's tick, its wakes, its place in the loop and its blackboard.</summary>
     internal sealed class Mind
     {
-        /// <summary>The brain, for the error reports.</summary>
-        private readonly Component brain;
+        /// <summary>The brain, for the error reports and the AI tools.</summary>
+        internal readonly Component brain;
 
         /// <summary>The brain's Think.</summary>
         private readonly Action think;
@@ -37,6 +37,14 @@ namespace Moonwell.AI
 
         /// <summary>Whether the brain has ended.</summary>
         private bool ended;
+#if DEBUG
+
+        /// <summary>The run of the AI tools' log the brain's trees and choices were last noted for; noted anew at its first logged think in another.</summary>
+        internal int logRun;
+
+        /// <summary>The brain's class name in lower case, for -brain and -brainlog; null until asked.</summary>
+        private string? className;
+#endif
 
         internal Mind(Component brain, Action think)
         {
@@ -139,6 +147,13 @@ namespace Moonwell.AI
                 loop!.Due(this, TickAt);
             }
 
+#if DEBUG
+            var logged = BrainLog.On && BrainLog.Follows(this);
+            if (logged)
+            {
+                BrainLog.Before(this);
+            }
+#endif
             try
             {
                 think();
@@ -147,6 +162,12 @@ namespace Moonwell.AI
             {
                 Errors.Report(brain, ".Think", error);
             }
+#if DEBUG
+            if (logged)
+            {
+                BrainLog.After(this);
+            }
+#endif
         }
 
         /// <summary>The brain ended: its blackboard ends, its tick's entry leaves its step, and the loop counts it out. A wake's entry, a step away at most, is dropped as the loop meets it.</summary>
@@ -169,5 +190,18 @@ namespace Moonwell.AI
                 loop.Ended();
             }
         }
+#if DEBUG
+
+        /// <summary>The brain's class name in lower case, worked out once.</summary>
+        internal string ClassName()
+        {
+            if (className == null)
+            {
+                className = Names.NameOf(brain).ToLower();
+            }
+
+            return className;
+        }
+#endif
     }
 }
