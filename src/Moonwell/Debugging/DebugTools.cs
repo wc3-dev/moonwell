@@ -6,8 +6,9 @@ namespace Moonwell
 {
     /// <summary>
     /// The debug mode's commands past -debug, -step, -speed and -stats (decisions 261 to 265): what shows in the panel
-    /// (-leaks, -profile, -scopes, -timers, -help), -find, the test cheats, and the map's own debug commands. They answer only
-    /// while the mode is on; a map's own command of the same name wins, and the built-in one steps aside.
+    /// (-leaks, -profile, -scopes, -timers, -help), -find, the test cheats, the packages' commands, and the map's own debug
+    /// commands. They answer only while the mode is on; a map's own command of the same name wins, and the built-in one
+    /// steps aside.
     /// </summary>
     internal static class DebugTools
     {
@@ -28,6 +29,11 @@ namespace Moonwell
 
         private static List<string> mapNames = new List<string>();
         private static List<string> mapHelps = new List<string>();
+
+        /// <summary>The packages' commands without the dash, beside their help lines and what they do (AddCommand).</summary>
+        private static List<string> packageNames = new List<string>();
+        private static List<string> packageHelps = new List<string>();
+        private static List<Action<Player, string>> packageCommands = new List<Action<Player, string>>();
         private static List<Unit> gods = new List<Unit>();
         private static List<Player> noCooldowns = new List<Player>();
         private static List<Player> revealed = new List<Player>();
@@ -39,6 +45,9 @@ namespace Moonwell
         {
             mapNames = new List<string>();
             mapHelps = new List<string>();
+            packageNames = new List<string>();
+            packageHelps = new List<string>();
+            packageCommands = new List<Action<Player, string>>();
             gods = new List<Unit>();
             noCooldowns = new List<Player>();
             revealed = new List<Player>();
@@ -46,10 +55,23 @@ namespace Moonwell
             noCooldownWatch = null;
         }
 
-        /// <summary>Whether a word is one of these built-in commands.</summary>
+        /// <summary>Whether a word is one of these built-in commands or a package's.</summary>
         internal static bool IsBuiltIn(string word)
         {
-            return Array.IndexOf(BuiltIn, word) >= 0;
+            return Array.IndexOf(BuiltIn, word) >= 0 || packageNames.Contains(word);
+        }
+
+        /// <summary>A package's command, in lower case without the dash, answered as the built-in ones: only while the mode is on, listed by -help with its line (none for an empty one), and stepping aside for a map's command of its name. A name added already is not added again.</summary>
+        internal static void AddCommand(string name, string help, Action<Player, string> heard)
+        {
+            if (packageNames.Contains(name))
+            {
+                return;
+            }
+
+            packageNames.Add(name);
+            packageHelps.Add(help);
+            packageCommands.Add(heard);
         }
 
         /// <summary>DebugMode.Command: a map's chat command for development builds, heard all game, which -help lists with its text.</summary>
@@ -77,6 +99,21 @@ namespace Moonwell
             }
 
             var player = Player.Get(slot);
+            var package = packageNames.IndexOf(word);
+            if (package >= 0)
+            {
+                try
+                {
+                    packageCommands[package](player, rest);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report("-" + word, error);
+                }
+
+                return;
+            }
+
             switch (word)
             {
                 case "leaks":
@@ -292,7 +329,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>-help: the built-in commands, the map's debug commands with their text, and the map's own commands.</summary>
+        /// <summary>-help: the built-in commands, the packages', the map's debug commands with their text, and the map's own commands.</summary>
         private static void AddHelp(DebugLines lines)
         {
             lines.Add("HELP  while -debug is on; a command again hides what it shows");
@@ -303,6 +340,14 @@ namespace Moonwell
             lines.Add("-spawn <class or id> [n]  -level <n>");
             lines.Add("-kill  -heal  -god: on the selected unit");
             lines.Add("-nocd  -reveal: for you, again to undo");
+            for (var i = 0; i < packageHelps.Count; i++)
+            {
+                if (packageHelps[i].Length > 0)
+                {
+                    lines.Add(packageHelps[i]);
+                }
+            }
+
             for (var i = 0; i < mapNames.Count; i++)
             {
                 lines.Add("-" + mapNames[i] + ": " + mapHelps[i]);

@@ -64,14 +64,22 @@ namespace Moonwell.AI
         /// <summary>Succeeded when the fact is true, Failed when not, at once. A one-time check, never watched.</summary>
         public static Node If(Fact<bool> fact)
         {
-            return new IfNode(board => board.Read(fact));
+            var node = new IfNode(board => board.Read(fact));
+#if DEBUG
+            node.factName = fact.Name;
+#endif
+            return node;
         }
 
         /// <summary>Succeeded when the fact is not null, Failed when it is, at once. A one-time check, never watched.</summary>
         public static Node If<T>(Fact<T> fact)
             where T : class?
         {
-            return new IfNode(board => board.Read(fact) != null);
+            var node = new IfNode(board => board.Read(fact) != null);
+#if DEBUG
+            node.factName = fact.Name;
+#endif
+            return node;
         }
 
         /// <summary>Runs the child while the condition holds, checked at every pass: false at its start, it gives Failed without starting the child; false while it runs, it halts the child and gives Failed. Directly in a <c>Select</c>, it can cut in on a child below it.</summary>
@@ -83,14 +91,22 @@ namespace Moonwell.AI
         /// <summary>Runs the child while the fact is true, as <c>When</c> with a condition.</summary>
         public static Node When(Fact<bool> fact, Node child)
         {
-            return new WhenNode(board => board.Read(fact), child);
+            var node = new WhenNode(board => board.Read(fact), child);
+#if DEBUG
+            node.factName = fact.Name;
+#endif
+            return node;
         }
 
         /// <summary>Runs the child while the fact is not null, as <c>When</c> with a condition.</summary>
         public static Node When<T>(Fact<T> fact, Node child)
             where T : class?
         {
-            return new WhenNode(board => board.Read(fact) != null, child);
+            var node = new WhenNode(board => board.Read(fact) != null, child);
+#if DEBUG
+            node.factName = fact.Name;
+#endif
+            return node;
         }
 
         /// <summary>Gives Running until that many seconds have passed since it started, then Succeeded.</summary>
@@ -166,7 +182,11 @@ namespace Moonwell.AI
         /// <summary>Attacks the unit a fact holds, read from the brain's blackboard at every pass, as <c>Attack</c> with a function.</summary>
         public static Node Attack(Fact<Unit?> target)
         {
-            return new AttackNode(board => board.Read(target));
+            var node = new AttackNode(board => board.Read(target));
+#if DEBUG
+            node.factName = target.Name;
+#endif
+            return node;
         }
 
         /// <summary>

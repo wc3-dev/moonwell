@@ -63,6 +63,9 @@ namespace Moonwell.AI
             if (current == null || current.game != Game.Instance)
             {
                 current = new Minds(Game.Instance);
+#if DEBUG
+                BrainTools.Install();
+#endif
             }
 
             return current;
