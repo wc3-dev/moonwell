@@ -43,6 +43,24 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_warnings_list_stays_on_its_one_line_outside_a_terminal()
+        {
+            var (_, output, _) = Show(false, (log, step) =>
+            {
+                step("Check assets");
+                log.WriteLine("warning: these may be unused:");
+                log.WriteLine(@"  assets\a.png");
+                log.WriteLine(@"  assets\b.wav");
+                log.WriteLine("note: after the list");
+                return "Arena.w3x";
+            });
+
+            var lines = output.Split('\n').Select(line => line.TrimEnd('\r')).ToList();
+            Assert.Equal(@"      warning  these may be unused: assets\a.png, assets\b.wav", lines[1]);
+            Assert.Equal("      note     after the list", lines[2]);
+        }
+
+        [Fact]
         public void verbose_shows_the_whole_log_too()
         {
             var (_, output, _) = Show(true, (log, step) =>

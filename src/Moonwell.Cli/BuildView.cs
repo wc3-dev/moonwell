@@ -40,7 +40,8 @@ namespace Moonwell.Tool
         private readonly HashSet<string> seen = new HashSet<string>();
         private bool spinning;
         private string? archive;
-        private bool inSilencedList;
+        // Where a line ending in a colon puts the indented lines after it: a warning's list, or the silenced places, shown only when verbose.
+        private List<string>? listing;
 
         private BuildView(TextWriter output, TextWriter error, bool verbose)
         {
@@ -220,12 +221,13 @@ namespace Moonwell.Tool
                 Print($"[dim]{line.EscapeMarkup()}[/]");
             }
 
-            if (inSilencedList && line.StartsWith("  ", StringComparison.Ordinal))
+            if (listing != null && line.StartsWith("  ", StringComparison.Ordinal))
             {
+                listing.Add(line.Trim());
                 return;
             }
 
-            inSilencedList = false;
+            listing = null;
             if (Header.Match(line) is { Success: true } found)
             {
                 Print($"[bold]{found.Groups["name"].Value.EscapeMarkup()}[/] [dim]·[/] {found.Groups["kind"].Value} build");
@@ -240,13 +242,16 @@ namespace Moonwell.Tool
                 var text = line["moonwell: ".Length..];
 
                 // The places behind a rule turned off are listed in build\silenced.txt and shown when verbose.
-                inSilencedList = text.EndsWith("):", StringComparison.Ordinal);
-                Note(new Line("note", string.Empty, string.Empty, inSilencedList ? text[..^1] : text));
+                var silenced = text.EndsWith("):", StringComparison.Ordinal);
+                listing = silenced ? new List<string>() : null;
+                Note(new Line("note", string.Empty, string.Empty, silenced ? text[..^1] : text));
             }
             else if (line.StartsWith("note: ", StringComparison.Ordinal) || line.StartsWith("warning: ", StringComparison.Ordinal))
             {
                 var colon = line.IndexOf(':');
-                Note(new Line(line[..colon], string.Empty, string.Empty, line[(colon + 2)..]));
+                var note = new Line(line[..colon], string.Empty, string.Empty, line[(colon + 2)..]);
+                listing = note.Text.EndsWith(':') ? note.Items : null;
+                Note(note);
             }
             else if (Diagnostic.Match(line) is { Success: true } diagnostic)
             {
@@ -359,7 +364,7 @@ namespace Moonwell.Tool
         {
             var where = line.Where.Length > 0 ? line.Where.EscapeMarkup() + "  " : string.Empty;
             var code = line.Code.Length > 0 ? $"[dim]{line.Code.EscapeMarkup()}[/]  " : string.Empty;
-            return $"{Kind(line)}  {where}{code}{line.Text.EscapeMarkup()}";
+            return $"{Kind(line)}  {where}{code}{Joined(line).EscapeMarkup()}";
         }
 
         private static string Kind(Line line)
@@ -374,7 +379,8 @@ namespace Moonwell.Tool
         }
 
         // A problem or a note. In a terminal (decision 366) a problem's place and code take a line and its text goes under it,
-        // and any text wraps at its own indent, never back at the left edge; elsewhere each is one line, for tools to read.
+        // and any text wraps at its own indent, never back at the left edge, with a list's items one per line under it; elsewhere
+        // each is one line, for tools to read.
         private void Print(Line line, int indent, bool failed = false)
         {
             if ((failed ? errorConsole : console) is not { } styled)
@@ -384,7 +390,7 @@ namespace Moonwell.Tool
             }
 
             StopSpinning();
-            var text = new Markup(line.Text.EscapeMarkup());
+            var text = new Markup(string.Join('\n', line.Items.Prepend(line.Text)).EscapeMarkup());
             if (line.Where.Length > 0)
             {
                 var code = line.Code.Length > 0 ? $"  [dim]{line.Code.EscapeMarkup()}[/]" : string.Empty;
@@ -426,7 +432,14 @@ namespace Moonwell.Tool
 
         private static string Count(int count, string what) => $"{count} {what}{(count == 1 ? string.Empty : "s")}";
 
-        private sealed record Line(string Kind, string Where, string Code, string Text);
+        // A list stays on the problem's one line outside a terminal.
+        private static string Joined(Line line) => line.Items.Count == 0 ? line.Text : line.Text + " " + string.Join(", ", line.Items);
+
+        // A note or warning whose text ends in a colon carries the indented lines after it as a list, each shown on its own line in a terminal.
+        private sealed record Line(string Kind, string Where, string Code, string Text)
+        {
+            public List<string> Items { get; } = new List<string>();
+        }
 
         private sealed class Step
         {

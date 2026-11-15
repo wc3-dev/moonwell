@@ -71,8 +71,11 @@ namespace Moonwell.Build
                 var unused = Unused(project, staged, game);
                 if (unused.Count > 0)
                 {
-                    log.WriteLine("warning: nothing in the map names these assets, so they may be unused (a path the code puts together while the game runs is not seen): "
-                        + string.Join(", ", unused.Select(file => $@"assets\{file}")));
+                    log.WriteLine("warning: nothing in the map names these assets, so they may be unused (a path the code puts together while the game runs is not seen):");
+                    foreach (var file in unused)
+                    {
+                        log.WriteLine($@"  assets\{file}");
+                    }
                 }
             }
         }
