@@ -3703,6 +3703,13 @@ game with it. Both make a development build: it checks the values Moonwell recei
 A second build of the same map started while one runs (a `watch` and a `run`, say) waits for the first to end and
 says so.
 
+A build shows a checklist of its steps (Compile C#, Read objects, Compile to Lua, Pack the map), with a spinner on the
+running one and each one's time. The build's notes show under the step that made them. Errors and warnings show
+once each, with the file and line an editor jumps to, and those from the Lua step read like the C# compiler's. A
+failed build's errors go to the error output. `--verbose` adds every line of the build, `dotnet build`'s among them.
+Output that is no terminal (CI, a file), or a terminal with `NO_COLOR` set, gets the same checklist as plain text.
+`moonwell` alone, in a terminal, lists the commands to pick from.
+
 | Command | What it does |
 |---|---|
 | `moonwell new <name>` | Makes a map project in a new folder of that name, the name being its namespace too |
@@ -3713,10 +3720,12 @@ says so.
 | `moonwell objects --to-map` | Builds, then writes the built object files, the files from `assets/` and the list that names them into `map/`, so World Editor lists the objects declared in code and shows their models and icons; close World Editor first |
 | `moonwell game find <path>` | Says whether the game has a file, by the storage path it is read from (`moonwell game find Textures\HeroFarseer.blp`). A folder, or a path with `*`, lists the files there (`moonwell game find Units\Orc\HeroTaurenChieftain`) |
 | `moonwell game extract <path>` | Writes the game's file into the current folder, under the name the game stores it by; `--out` names the file or the folder instead. A folder, or a path with `*`, writes every file there at its game path, so `--out assets` puts each where the map would replace it |
+| `moonwell mdx <model>` | Shows a tree of the files a model names (its textures, the models and effects of its emitters) and what those name in turn, each marked `game`, `custom` (the project's `assets/` or `map/`, or beside a model outside a project) or in neither. The model is a file, or a path in the project or the game (`moonwell mdx Units\Human\Footman\Footman.mdx`) |
 
-Each takes the project's folder after the command, as `build` does; `new` takes the name. The `game` commands need
-no project. They take `--mode sd`, `hd` or `de` for the graphics the file is looked up in (Classic when not given),
-and `--game <folder>` for an install that is not in its usual place. They end with 1 when the game has no such file.
+Each takes the project's folder after the command, as `build` does; `new` takes the name. The `game` commands and
+`mdx` need no project. They take `--mode sd`, `hd` or `de` for the graphics the file is looked up in (Classic when not
+given; HD for `mdx`), and `--game <folder>` for an install that is not in its usual place. They end with 1 when the
+game has no such file.
 
 The build also rejects `using static Moonwell.Natives` (MW0008; write `Natives.X`), which hides `Player` behind
 `Natives.Player`, and a call to what only the code it writes calls (MW0045): `Runtime.Start`, a package's `Install` and
@@ -3754,9 +3763,9 @@ there; the key itself is not checked. Two warnings point at mistakes that can be
   none. `[AllowUnused]` keeps it quiet, for an object kept for later or used where the build doesn't look (World
   Editor's own objects, item tables).
 
-The build ends by listing each place that turns a Moonwell rule off, as `Hud.cs:12: [SyncUnchecked] on Hud.Refresh`,
-and writes the same list to `build\silenced.txt`. Past five places it prints only the count and the file's name. A map
-that turns nothing off gets no list and no file. What it lists:
+The build ends by noting how many places turn a Moonwell rule off, and writes each place, as
+`Hud.cs:12: [SyncUnchecked] on Hud.Refresh`, to `build\silenced.txt`; `--verbose` prints them too, up to five. A map
+that turns nothing off gets no note and no file. What it lists:
 
 - `[SyncUnchecked]` on a method, a lambda or a local function.
 - `#pragma warning disable` that names an MW rule, or names no rule at all, which turns every rule off.

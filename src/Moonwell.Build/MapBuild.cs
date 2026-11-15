@@ -84,6 +84,7 @@ namespace Moonwell.Build
             LookFiles.WriteNames(project);
             LuaLibraries.WriteBindings(project);
 
+            options.Step?.Invoke("Compile C#");
             var targetPath = DotnetBuild.Run(project, options.Release, log);
             PackageSources.Check(project, options.PackageVersion ?? PackageSources.ToolVersion);
             var settings = MapSettingsReader.Read(targetPath, project);
@@ -133,6 +134,7 @@ namespace Moonwell.Build
             BuildOptions options,
             TextWriter log)
         {
+            options.Step?.Invoke("Read objects");
             var data = GameData.Of(settings.DataSet, settings.DataVersion);
             var standard = StandardData.Read(objectsDll);
             var declarations = Declarations.Read(targetPath, project, standard, data.ValueSet);
@@ -205,7 +207,9 @@ namespace Moonwell.Build
                 .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? DummyType.MapAbilities(project.MapFolder) : null))
                 .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
+            options.Step?.Invoke("Compile to Lua");
             LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
+            options.Step?.Invoke("Pack the map");
             StageWith(project, () => Stage.Write(project, map, written, writtenIds, declarations.StandardClassIds, standard, log));
             return declarations.Objects;
         }
@@ -250,7 +254,9 @@ namespace Moonwell.Build
             var experience = MapMisc.ReadExperience(MapMisc.FolderOf(project), HeroExperience.Standard);
             var day = MapMisc.ReadDay(MapMisc.FolderOf(project), GameDay.Standard);
             EntryWriter.Write(project, settings, false, Installs(project, map, targetPath, new List<BridgeWriter.OwnType>(), null, experience, day, log), Loading(targetPath));
+            options.Step?.Invoke("Compile to Lua");
             LuaCompiler.Compile(project, map, targetPath, options.Release);
+            options.Step?.Invoke("Pack the map");
             StageWith(project, () => Stage.WriteWithoutObjects(project, map, log));
         }
 

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Moonwell.Build.Tests" />
+    <InternalsVisibleTo Include="Moonwell.Cli" />
   </ItemGroup>
 
   <ItemGroup>

@@ -282,8 +282,9 @@ namespace Moonwell.Build.Tests
                     ".editorconfig:2: dotnet_diagnostic.MW0004.severity = none",
                 },
                 File.ReadAllLines(Path.Combine(project, "build", "silenced.txt")));
-            var last = Lines(output).TakeLast(2).ToArray();
-            Assert.Equal(new[] { @"moonwell: 6 places turn a Moonwell rule off, listed in build\silenced.txt", @"moonwell: built build\Maths.w3x" }, last);
+            var last = Lines(output).Where(line => line.Length > 0).TakeLast(2).ToArray();
+            Assert.Equal(@"      note     6 places turn a Moonwell rule off, listed in build\silenced.txt", last[0]);
+            Assert.StartsWith(@"✓ Built build\Maths.w3x in ", last[1]);
         }
 
         private static string[] Lines(StringWriter writer)
