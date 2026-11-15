@@ -152,7 +152,7 @@ namespace Moonwell.Tool
                 ?? throw new ReportedException();
             if (options.Launch)
             {
-                start(options.Game, $"-launch -windowmode windowedfullscreen -loadfile \"{archive}\"");
+                start(options.Game, $"-launch -nowfpause -windowmode windowedfullscreen -loadfile \"{archive}\"");
             }
         }
 

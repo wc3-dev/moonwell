@@ -178,7 +178,7 @@ namespace Moonwell.Build.Tests
             var call = Assert.Single(started);
             Assert.Equal(game, call.Exe);
             var archive = Path.Combine(sample, "build", "Sample.w3x");
-            Assert.Equal($"-launch -windowmode windowedfullscreen -loadfile \"{archive}\"", call.Arguments);
+            Assert.Equal($"-launch -nowfpause -windowmode windowedfullscreen -loadfile \"{archive}\"", call.Arguments);
         }
 
         [Fact]
