@@ -51,12 +51,12 @@ namespace Moonwell.Build.Tests
 
             var output = Build(project);
 
-            var warnings = Lines(output, "warning:");
+            var warnings = Lines(output, "warning  ");
             Assert.Equal(
                 new[]
                 {
-                    @"warning: Sample.Arthas: uico names war3mapImported\BTNArthas.blp, which neither the game nor the map has",
-                    @"warning: Sample.Looks's code names war3mapImported\Typo.blp, which neither the game nor the map has",
+                    @"warning  Sample.Arthas: uico names war3mapImported\BTNArthas.blp, which neither the game nor the map has",
+                    @"warning  Sample.Looks's code names war3mapImported\Typo.blp, which neither the game nor the map has",
                 },
                 warnings);
         }
@@ -93,8 +93,8 @@ namespace Moonwell.Build.Tests
 
             // Named by the code, a game file it replaces, a portrait of a named model, its own grey copy and a text file are not listed.
             Assert.Equal(
-                new[] { @"warning: nothing in the map names these assets, so they may be unused (a path the code puts together while the game runs is not seen): assets\Sounds\Lost.wav, assets\war3mapImported\Lost.png" },
-                Lines(output, "warning:"));
+                new[] { @"warning  nothing in the map names these assets, so they may be unused (a path the code puts together while the game runs is not seen): assets\Sounds\Lost.wav, assets\war3mapImported\Lost.png" },
+                Lines(output, "warning  "));
         }
 
         [Fact]
@@ -124,8 +124,8 @@ namespace Moonwell.Build.Tests
 
             // A replaceable texture has no path, the map has one as a PNG, the game has another, and one named twice is warned of once.
             Assert.Equal(
-                new[] { @"warning: the model Hero.mdx names the texture Textures\Typo.blp, which neither the game nor the map has" },
-                Lines(output, "warning:"));
+                new[] { @"warning  the model Hero.mdx names the texture Textures\Typo.blp, which neither the game nor the map has" },
+                Lines(output, "warning  "));
         }
 
         [Fact]
@@ -158,7 +158,7 @@ namespace Moonwell.Build.Tests
 
         private static string[] Lines(string output, string start)
         {
-            return output.Split('\n').Select(line => line.TrimEnd('\r')).Where(line => line.StartsWith(start, StringComparison.Ordinal)).ToArray();
+            return output.Split('\n').Select(line => line.Trim()).Where(line => line.StartsWith(start, StringComparison.Ordinal)).ToArray();
         }
 
         private static void CopyImage(string fixture, string project, string relative)

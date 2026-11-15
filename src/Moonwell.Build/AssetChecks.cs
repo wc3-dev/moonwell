@@ -170,7 +170,7 @@ namespace Moonwell.Build
         }
 
         // The path without its extension and the kind of file, as the game finds one of a kind under another of its extensions.
-        private static string Key(string path)
+        internal static string Key(string path)
         {
             var normalized = path.Trim().Replace('/', '\\').TrimStart('\\');
             var extension = Path.GetExtension(normalized);
@@ -178,12 +178,15 @@ namespace Moonwell.Build
             return kind < 0 ? normalized : normalized[..^extension.Length] + "|" + kind;
         }
 
-        private static bool InGame(GameFiles game, string path)
+        private static bool InGame(GameFiles game, string path) => FindInGame(game, path, "hd") != null;
+
+        /// <summary>Where the game's storage has a path, under its own extension or one the game swaps for it; null when it has none.</summary>
+        internal static string? FindInGame(GameFiles game, string path, string mode)
         {
             var extension = Path.GetExtension(path);
             var kind = Kinds.FirstOrDefault(members => members.Contains(extension, StringComparer.OrdinalIgnoreCase)) ?? new[] { extension };
             var stem = path[..^extension.Length];
-            return kind.Any(other => game.Find(stem + other, "hd") != null);
+            return kind.Select(other => game.Find(stem + other, mode)).FirstOrDefault(found => found != null);
         }
 
         // The textures, models and sounds of the assets whose path no other file of the built map has, that replace no file of
