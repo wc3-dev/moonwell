@@ -38,11 +38,12 @@ namespace Moonwell.Build
         /// </summary>
         /// <param name="path">A project folder, or the path of its <c>.csproj</c> file.</param>
         /// <param name="log">Where the build's output goes.</param>
+        /// <param name="step">Told each step of the build as it starts, by name.</param>
         /// <returns>The names of the files written; none when the source map already held every one.</returns>
         /// <exception cref="BuildException">The build fails, or a file cannot be written.</exception>
-        public static IReadOnlyList<string> WriteToMap(string path, TextWriter log)
+        public static IReadOnlyList<string> WriteToMap(string path, TextWriter log, Action<string>? step = null)
         {
-            MapBuild.Run(path, new BuildOptions(), log);
+            MapBuild.Run(path, new BuildOptions { Step = step }, log);
             var project = MapProject.Find(path);
 
             // The build passed, so a helper's id the source map defines is an object of the map's own, and stays.

@@ -24,7 +24,8 @@ namespace Moonwell.Tool
         /// <returns>The command's arguments, or null when there is no one to ask.</returns>
         public static string[]? Ask(TextWriter output)
         {
-            var console = Terminal.Over(output, out _);
+            var say = new Say(output);
+            var console = say.Console;
             if (!console.Profile.Capabilities.Interactive || Console.IsInputRedirected)
             {
                 return null;
@@ -35,7 +36,7 @@ namespace Moonwell.Tool
                 .PageSize(Commands.Length)
                 .UseConverter(command => $"[bold]{command.Name,-13}[/][dim]{command.Text.EscapeMarkup()}[/]")
                 .AddChoices(Commands));
-            console.MarkupLine($"[dim]moonwell[/] [bold]{picked.Name}[/]");
+            say.Line($"[dim]moonwell[/] [bold]{picked.Name}[/]");
             return picked.Name.Split(' ')
                 .Concat(picked.Asks.Select(ask => console.Prompt(new TextPrompt<string>(ask.EscapeMarkup() + ":"))))
                 .ToArray();
