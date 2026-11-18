@@ -1,4 +1,7 @@
+using Moonwell.AI;
 using Moonwell.AI.Combat;
+using static Moonwell.AI.Combat.CombatNodes;
+using static Moonwell.AI.Nodes;
 
 namespace Moonwell.Tests
 {
@@ -27,6 +30,36 @@ namespace Moonwell.Tests
             {
                 Thinks++;
                 base.Think();
+            }
+        }
+
+        /// <summary>A brain with a tree of the map's own and full control, as the guide's CampGuard: it fights what it meets, else walks home, to HomeX on the line y 0.</summary>
+        private sealed class Guard : UnitBrain
+        {
+            public readonly Fighter Fighter;
+            public float HomeX;
+            private readonly Tree tree;
+
+            public Guard()
+            {
+                Fighter = new Fighter(this);
+                tree = new Tree(this, Select(When(Fighter.Meets, Fight(Fighter)), MoveTo(() => HomeX, () => 0.0f)));
+            }
+
+            public override void OnDamaged(Damage damage)
+            {
+                Fighter.Hurt(damage);
+            }
+
+            protected override void OnAdded()
+            {
+                ThinkEvery = 0.25f;
+                FullControl = true;
+            }
+
+            protected override void Think()
+            {
+                tree.Run();
             }
         }
 
@@ -85,6 +118,41 @@ namespace Moonwell.Tests
             Assert.True(dx * dx + dy * dy > 2100.0f * 2100.0f, "beyond the leash from where it left its lane");
             Assert.True(farthest < 2200.0f, "it went no farther than its leash and its reach: " + farthest);
             Assert.True(sim.RunUntil(() => walker.X == 3000.0f, 60.0f), "then it walks on to its lane's end, at " + walker.X);
+        }
+
+        /// <summary>A guard in a tree of the map's own kills the grunt it meets where it stands, then its tree walks it 4,000 away, beyond its leash of 2,100 from that fight, and it fights the grunt it meets there: the spot its leash counts from is forgotten when the fight is over (J101).</summary>
+        [Fact]
+        public void AGuardInItsOwnTreeFightsAgainFarFromItsFirstFight()
+        {
+            var sim = Start();
+            var unit = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var guard = unit.Add(new Guard());
+            var first = Unit.Create(Grunt, Player.Two, 400.0f, 0.0f, Game.Instance);
+
+            Assert.True(sim.RunUntil(() => !first.IsAlive, 30.0f), "it kills the grunt it meets where it stands");
+            guard.HomeX = 4000.0f;
+            Assert.True(sim.RunUntil(() => unit.X >= 3990.0f, 30.0f), "its tree walks it to its new home, at " + unit.X);
+            // 400 from the guard: in its meet range of 500, beyond the grunt's own 300, so only the brain starts this fight.
+            var second = Unit.Create(Grunt, Player.Two, unit.X + 400.0f, 0.0f, Game.Instance);
+            Assert.True(sim.RunUntil(() => !second.IsAlive, 30.0f), "4,400 from its first fight, it fights the grunt it meets: target " + (guard.Fighter.Target == null ? "none" : "kept"));
+        }
+
+        /// <summary>A guard in a tree of the map's own still drops a fleeing enemy at its leash: with the runner in its meet range beyond the leash the fight is not over, so the spot is kept and its tree walks it home.</summary>
+        [Fact]
+        public void AGuardInItsOwnTreeDropsAFleeingEnemyAtItsLeash()
+        {
+            var sim = Start();
+            var unit = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var guard = unit.Add(new Guard());
+            var runner = Unit.Create(Runner, Player.Two, 400.0f, 0.0f, Game.Instance);
+            runner.OrderAt(Orders.Move, 400.0f, 10000.0f);
+
+            Assert.True(sim.RunUntil(() => guard.Fighter.Target == runner, 10.0f), "it meets the runner");
+            var farthest = 0.0f;
+            Assert.True(sim.RunUntil(() => { farthest = Math.Max(farthest, unit.Y); return guard.Fighter.Target == null; }, 30.0f), "it drops the runner");
+            Assert.True(sim.RunUntil(() => { farthest = Math.Max(farthest, unit.Y); return unit.X == 0.0f && unit.Y == 0.0f; }, 30.0f), "its tree walks it home, at " + unit.X + ", " + unit.Y);
+            Assert.True(runner.IsAlive, "the runner got away");
+            Assert.True(farthest < 2200.0f, "it went no farther than its leash and its reach: " + farthest);
         }
 
         /// <summary>A walker fighting a brute it cannot beat pulls back below 30% of its life, walks back to its lane's start with moves, and stands there, still pulled back below 70%.</summary>
