@@ -26,9 +26,8 @@ namespace Moonwell.Tool
         private const string Built = "moonwell: built ";
 
         private readonly TextWriter output;
-        private readonly TextWriter error;
-        private readonly IAnsiConsole? errorConsole;
-        private readonly IAnsiConsole? console;
+        private readonly Say errorSay;
+        private readonly Say say;
         private readonly bool verbose;
         private readonly bool live;
         private readonly object gate = new object();
@@ -46,16 +45,10 @@ namespace Moonwell.Tool
         private BuildView(TextWriter output, TextWriter error, bool verbose)
         {
             this.output = output;
-            this.error = error;
-            var errorTerminal = Terminal.Over(error, out var errorStyled);
-            errorConsole = errorStyled ? errorTerminal : null;
+            errorSay = new Say(error);
             this.verbose = verbose;
-            var terminal = Terminal.Over(output, out var styled);
-            if (styled)
-            {
-                console = terminal;
-                live = !verbose && terminal.Profile.Capabilities.Interactive;
-            }
+            say = new Say(output);
+            live = say.Styled && !verbose && say.Console.Profile.Capabilities.Interactive;
         }
 
         public override Encoding Encoding => Encoding.UTF8;
@@ -156,7 +149,7 @@ namespace Moonwell.Tool
             for (var i = 0; i < problems.Count; i++)
             {
                 // In a terminal a problem takes several lines, so a blank one keeps each apart.
-                if (i > 0 && (failure != null ? errorConsole : console) != null)
+                if (i > 0 && (failure != null ? errorSay : say).Styled)
                 {
                     Print(string.Empty, failure != null);
                 }
@@ -341,7 +334,7 @@ namespace Moonwell.Tool
             if (steps.Count > 0 && steps[^1].Took == null)
             {
                 output.Write("\r\u001b[2K");
-                console!.Markup(StepLine(steps[^1]));
+                say.Console.Markup(StepLine(steps[^1]));
                 spinning = true;
             }
         }
@@ -364,18 +357,7 @@ namespace Moonwell.Tool
         {
             var where = line.Where.Length > 0 ? line.Where.EscapeMarkup() + "  " : string.Empty;
             var code = line.Code.Length > 0 ? $"[dim]{line.Code.EscapeMarkup()}[/]  " : string.Empty;
-            return $"{Kind(line)}  {where}{code}{Joined(line).EscapeMarkup()}";
-        }
-
-        private static string Kind(Line line)
-        {
-            var colour = line.Kind switch
-            {
-                "error" => "red",
-                "warning" => "yellow",
-                _ => "blue",
-            };
-            return $"[{colour}]{line.Kind,-7}[/]";
+            return $"{Say.Kind(line.Kind)}  {where}{code}{Joined(line).EscapeMarkup()}";
         }
 
         // A problem or a note. In a terminal (decision 366) a problem's place and code take a line and its text goes under it,
@@ -383,26 +365,23 @@ namespace Moonwell.Tool
         // each is one line, for tools to read.
         private void Print(Line line, int indent, bool failed = false)
         {
-            if ((failed ? errorConsole : console) is not { } styled)
+            var to = failed ? errorSay : say;
+            if (!to.Styled)
             {
                 Print(new string(' ', indent) + Markup(line), failed);
                 return;
             }
 
             StopSpinning();
-            var text = new Markup(string.Join('\n', line.Items.Prepend(line.Text)).EscapeMarkup());
             if (line.Where.Length > 0)
             {
                 var code = line.Code.Length > 0 ? $"  [dim]{line.Code.EscapeMarkup()}[/]" : string.Empty;
-                styled.MarkupLine($"{new string(' ', indent)}{Kind(line)}  {line.Where.EscapeMarkup()}{code}");
-                styled.Write(new Padder(text, new Padding(indent + 9, 0, 0, 0)));
+                to.Line($"{new string(' ', indent)}{Say.Kind(line.Kind)}  {line.Where.EscapeMarkup()}{code}");
+                to.Console.Write(new Padder(new Markup(string.Join('\n', line.Items.Prepend(line.Text)).EscapeMarkup()), new Padding(indent + 9, 0, 0, 0)));
                 return;
             }
 
-            var grid = new Grid()
-                .AddColumn(new GridColumn().NoWrap().Width(7).Padding(indent, 0, 2, 0))
-                .AddColumn(new GridColumn().Padding(0, 0, 0, 0));
-            styled.Write(grid.AddRow(new Markup(Kind(line)), text));
+            to.Message(line.Kind, line.Text, indent, line.Items);
         }
 
         private void StopSpinning()
@@ -417,15 +396,7 @@ namespace Moonwell.Tool
         private void Print(string markup, bool failed = false)
         {
             StopSpinning();
-
-            if ((failed ? errorConsole : console) is { } styled)
-            {
-                styled.MarkupLine(markup);
-            }
-            else
-            {
-                (failed ? error : output).WriteLine(markup.RemoveMarkup());
-            }
+            (failed ? errorSay : say).Line(markup);
         }
 
         private static string Seconds(TimeSpan time) => $"{time.TotalSeconds:0.0}s";

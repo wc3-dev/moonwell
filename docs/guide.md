@@ -3719,16 +3719,21 @@ running one and each one's time. The build's notes show under the step that made
 once each, with the file and line an editor jumps to, and those from the Lua step read like the C# compiler's. A
 failed build's errors go to the error output. `--verbose` adds every line of the build, `dotnet build`'s among them.
 Output that is no terminal (CI, a file), or a terminal with `NO_COLOR` set, gets the same checklist as plain text.
+
+Every other line the tool prints has the checklist's look. What a command did follows a green tick (`✓ Deleted
+build\`). A `note`, a `warning` or an `error` opens with that word in its colour. A list, such as the one
+`moonwell objects` prints, is columns. Outside a terminal the words are the same, without the colours.
+
 `moonwell` alone, in a terminal, lists the commands to pick from.
 
 | Command | What it does |
 |---|---|
-| `moonwell new <name>` | Makes a map project in a new folder of that name, the name being its namespace too |
+| `moonwell new <name>` | Makes a map project in a new folder of that name, the name being its namespace too, and prints the folder's full path |
 | `moonwell watch` | Builds, then builds again each time a file of the project changes (the code, `assets/`, `map/`), until Ctrl+C; a failed build is shown and the watch goes on |
 | `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
 | `moonwell clean` | Deletes `build/` |
-| `moonwell objects` | Lists the map's classes of object data, each with its id, kind and the standard object it is based on |
-| `moonwell objects --to-map` | Builds, then writes the built object files, the files from `assets/` and the list that names them into `map/`, so World Editor lists the objects declared in code and shows their models and icons; close World Editor first |
+| `moonwell objects` | Lists the map's classes of object data, a line each: its id, its kind, the class and the standard object it is based on |
+| `moonwell objects --to-map` | Builds, showing the checklist, then writes the built object files, the files from `assets/` and the list that names them into `map/`, so World Editor lists the objects declared in code and shows their models and icons; close World Editor first |
 | `moonwell game find <path>` | Says whether the game has a file, by the storage path it is read from (`moonwell game find Textures\HeroFarseer.blp`). A folder, or a path with `*`, lists the files there (`moonwell game find Units\Orc\HeroTaurenChieftain`) |
 | `moonwell game extract <path>` | Writes the game's file into the current folder, under the name the game stores it by; `--out` names the file or the folder instead. A folder, or a path with `*`, writes every file there at its game path, so `--out assets` puts each where the map would replace it |
 | `moonwell mdx <model>` | Shows a tree of the files a model names (its textures, the models and effects of its emitters) and what those name in turn, each marked `game`, `custom` (the project's `assets/` or `map/`, or beside a model outside a project) or in neither. The model is a file, or a path in the project or the game (`moonwell mdx Units\Human\Footman\Footman.mdx`) |

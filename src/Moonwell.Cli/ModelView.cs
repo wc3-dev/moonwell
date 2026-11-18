@@ -35,7 +35,7 @@ namespace Moonwell.Tool
         /// <exception cref="BuildException">No file and no game path is the model.</exception>
         public static void Show(string model, string mode, string? install, TextWriter output)
         {
-            var console = Terminal.Over(output, out _);
+            var say = new Say(output);
 
             GameFiles? game = null;
             try
@@ -44,7 +44,7 @@ namespace Moonwell.Tool
             }
             catch (Exception failure) when (failure is IOException or InvalidDataException)
             {
-                console.MarkupLine($"[yellow]note[/]  the game's files cannot be read ({failure.Message.EscapeMarkup()}), so no path is marked as the game's");
+                say.Message("note", $"the game's files cannot be read ({failure.Message}), so no path is marked as the game's");
             }
 
             using (game)
@@ -75,7 +75,7 @@ namespace Moonwell.Tool
                 var tree = new Tree(root.Text);
                 var shown = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { AssetChecks.Key(model) };
                 Add(tree.AddNode, root.Bytes, custom, game, mode, shown);
-                console.Write(tree);
+                say.Console.Write(tree);
             }
         }
 
