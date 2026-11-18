@@ -2637,7 +2637,8 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   `Attach(point, frame, framePoint)` to a map's frame, and size by `Scale`; they keep their own size between two
   `Attach` points. `Fill(frame)` puts one centred on a map's frame at the frame's size: a command button (0.039 square)
   or an item button (0.031) takes the size, and the minimap, which draws at one size, about 0.139 square, whatever size
-  it is given, is scaled to fit inside the frame (seen). A moved button leaves nothing behind taking
+  it is given, is scaled to fit inside the frame (seen). A moved minimap is tied again every second, as one scaled in
+  the instant it is tied draws only a white dot until a later tie (seen). A moved button leaves nothing behind taking
   clicks, and the first move stops the game placing its HUD again when the window changes. The selection icons move at
   no size, so they take no clicks: a group's icons draw up and left of the point, one unit's name hangs from it. The
   inventory's bar sits in the selection panel, so moving the icons moves the inventory's text, and the item buttons not

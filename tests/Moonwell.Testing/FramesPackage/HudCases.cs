@@ -125,6 +125,9 @@ namespace Moonwell.Testing
             world.Advance(0.15f);
             Expect.Equal(1, fake.Points.Count, "tied again a moment after the scale, one point");
             Expect.Same(frames.FrameOf(ring.Handle!), First(fake)?.Other, "to the frame");
+            fake.Points.Clear();
+            world.Advance(1.0f);
+            Expect.Equal(1, fake.Points.Count, "and again every second, as in a busy instant the first came too soon (seen 11-18)");
             Player.One.GameUi().SelectionIcons.Fill(ring);
             Expect.True(world.Logged.Exists(line => line.Contains("no size")), "the selection icons refused: " + string.Join(" | ", world.Logged));
         }

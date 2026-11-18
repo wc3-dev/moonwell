@@ -23,11 +23,8 @@ namespace Moonwell
         /// <summary>The map frame the piece fills, centred on it at its size; null unless Fill was called.</summary>
         private Frame? filling;
 
-        /// <summary>How long after a scale change the minimap is tied again: scaled in the instant it was tied, it drew only a white dot, and tied a 0.1 s later it drew whole (seen 11-13 and 14).</summary>
+        /// <summary>How long after a scale change the minimap is first tied again: scaled in the instant it was tied, it drew only a white dot, and tied a 0.1 s later it drew whole (seen 11-13 and 14). In a busy instant 0.6 s into a game that tie came too soon and one 5 s later drew it (seen 11-18), so the hold ties it again every second as well.</summary>
         private const float RetieAfter = 0.1f;
-
-        /// <summary>The game time after which the minimap is tied again on this machine; 0 when it need not be.</summary>
-        private float retieAt;
 
         /// <summary>The scale Fill gave the minimap on this machine, from a size the game may give only here; 0 until then, and after a load. Scale reads what the map set, the same everywhere.</summary>
         private float fitted;
@@ -51,7 +48,7 @@ namespace Moonwell
             this.atNoSize = atNoSize;
         }
 
-        /// <summary>The piece's scale, which sizes it; 1 unless set. A moved minimap is tied again a moment after, as scaled in the instant it was tied it draws only a white dot (seen 11-13 and 14).</summary>
+        /// <summary>The piece's scale, which sizes it; 1 unless set. A moved minimap is tied again a moment after and every second, as scaled in the instant it was tied it draws only a white dot (seen 11-13, 14 and 18).</summary>
         [LocalSafe]
         public float Scale
         {
@@ -62,7 +59,6 @@ namespace Moonwell
                 if (Here() && (visible || !hiddenByScale))
                 {
                     FramesSystem.World.ScaleFrame(frames[0], value);
-                    RetieLater();
                 }
 
                 if (drawnWidth > 0.0f)
@@ -115,7 +111,6 @@ namespace Moonwell
                 {
                     fitted = fits;
                     world.ScaleFrame(frames[0], fits);
-                    RetieLater();
                     tie = true;
                 }
             }
@@ -183,29 +178,16 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Marks the minimap, on this machine, to be tied again once RetieAfter has passed.</summary>
-        private void RetieLater()
-        {
-            if (drawnWidth > 0.0f)
-            {
-                retieAt = Game.Time + RetieAfter;
-            }
-        }
-
-        /// <summary>Ties the minimap again on its player's machine once its time has come: from a timer made on every machine after a scale set or Fill, and from the hold every second, after a load or a frame filled that changed size.</summary>
+        /// <summary>Ties a moved minimap again on its player's machine, while a frame it is tied to lasts: from a timer made on every machine after a scale set or Fill, and from the hold every second, as how late a tie must come to draw it is not known (seen 11-18).</summary>
         private void Retie()
         {
-            if (retieAt <= 0.0f || Game.Time < retieAt || !Here())
+            if (!moved || !Here() || ties == null || !ties.Exists(tie => !tie.Other!.HasEnded && tie.Other.handle != null))
             {
                 return;
             }
 
-            retieAt = 0.0f;
-            if (moved)
-            {
-                FramesSystem.World.ClearFramePoints(frames[0]);
-                TieAll();
-            }
+            FramesSystem.World.ClearFramePoints(frames[0]);
+            TieAll();
         }
 
         /// <summary>Takes the piece's game frame and the parent it is moved under, looked up again.</summary>
@@ -228,7 +210,6 @@ namespace Moonwell
             moved = false;
             fitted = 0.0f;
             TieAll();
-            RetieLater();
             if (filling != null && !filling.HasEnded && filling.handle != null)
             {
                 Fit(false);
@@ -254,7 +235,11 @@ namespace Moonwell
                 Fit(false);
             }
 
-            Retie();
+            if (drawnWidth > 0.0f)
+            {
+                Retie();
+            }
+
             if (!atNoSize)
             {
                 return;
