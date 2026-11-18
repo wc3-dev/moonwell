@@ -1967,11 +1967,17 @@ public sealed class CampGuard : UnitBrain
 - `fighter.Meets()` and `fighter.ShouldPullBack()` check once an instant, whichever comes first: they find the enemies
   met and pick the target. `Target`, `EnemiesNear`, `AlliesNear` and `PullingBack` read what the last check found.
   Once it pulls back, `ShouldPullBack` holds until the unit is within 64 of where `PullBack` takes it.
+- `Leash` counts from where the fight started. In a tree with no `WalkLane`, as this one, the fighter forgets that spot
+  when the fight is over: at a check with no target and no enemy its owner sees in its meet range, nor one that
+  damaged it in the last 3 s, the leash not counted. So each fight has its own leash, wherever the tree has moved the
+  unit since. An enemy dropped at the leash keeps the spot while it stays in meet range, so it is not chased again
+  from where the unit stands. While the fighter pulls back, the spot is kept.
 - `Targets` and `Spells` are lists every machine shares: change them outside `Local.For` (MW0001).
 - `fighter.Hurt(damage)` in `OnDamaged` notes the attacker and wakes the brain when it is new; a lane walker does it.
 - `Fight(fighter)` casts or attacks the target and fails with none; `PullBack(fighter)` walks back and stands;
-  `WalkLane(fighter)` walks the fighter's `Route`. A class that inherits `LaneWalker` overrides `Root()` for its own
-  tree.
+  `WalkLane(fighter)` walks the fighter's `Route`, and its fighter keeps the spot where a fight started until it is
+  back on its route, or at the spot with no route, as a lane walker does. A class that inherits `LaneWalker`
+  overrides `Root()` for its own tree.
 - In a fast simulation a walker meets, walks, fights, casts and pulls back. A cast is held as any order, then its
   cooldown starts and its mana is spent, and the walker attacks again; what the spell does stays the game's (see
   [Fast simulation](#fast-simulation)).

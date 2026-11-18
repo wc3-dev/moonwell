@@ -476,7 +476,7 @@ namespace Moonwell.Testing
             Expect.True(!crowded.Fighter.ShouldPullBack(), "back as near as it gets, at 70% it comes back");
         }
 
-        /// <summary>The spot where the walker leaves its route is kept, and an enemy farther than the leash from it is dropped, while one within it is fought; the spot is forgotten once the unit is back within 64 of its route, anywhere along it, with no target; with no route it walks back to the spot and forgets it there.</summary>
+        /// <summary>The spot where the walker leaves its route is kept, and an enemy farther than the leash from it is dropped, while one within it is fought; the spot is forgotten once the unit is back within 64 of its route, anywhere along it, with no target; with no route it walks back to the spot and forgets it there; with no WalkLane it forgets the spot once no enemy is about.</summary>
         public static void Leash(FakeWorld world)
         {
             var brain = Brain(world, 500f, 0f, 600f);
@@ -533,6 +533,21 @@ namespace Moonwell.Testing
             Expect.True(!lane.Fighter.hasSpot, "30 from its lane, 3,000 from either of its two points: back, so the spot is forgotten");
             var second = At(world, 1, 3200f, 10300f);
             Expect.Same(second, Check(world, lane.Fighter), "an enemy 2,200 from the first fight's spot, beyond the leash of 1,000, is fought");
+
+            var own = Brain(world, 0f, 20000f, 600f);
+            own.Fighter.Leash = 1000f;
+            var fled = At(world, 1, 0f, 20400f);
+            Expect.Same(fled, Check(world, own.Fighter), "a fight in a tree with no WalkLane");
+            world.PlaceUnit(own.Unit.Handle, 0f, 20800f);
+            world.PlaceUnit(fled.Handle, 0f, 21100f);
+            Expect.True(Check(world, own.Fighter) == null, "beyond the leash: dropped");
+            Expect.True(own.Fighter.hasSpot, "still in its meet range, so the fight is not over and the spot is kept");
+            world.PlaceUnit(fled.Handle, 0f, 21500f);
+            Expect.True(Check(world, own.Fighter) == null, "out of its meet range: none about");
+            Expect.True(!own.Fighter.hasSpot, "the fight is over, 800 from its spot: forgotten, as nothing walks it back");
+            world.PlaceUnit(fled.Handle, 0f, 21300f);
+            Expect.Same(fled, Check(world, own.Fighter), "back in its meet range: a new fight, its leash from where it stands");
+            Expect.Near(20800f, own.Fighter.spotY, "the new spot");
         }
 
         /// <summary>A target the unit left alive, idle after the brain's attack on it, is set aside for 3 s and the next best attacked in the same pass, still counted near; a target whose attack the game refuses is set aside too, and with every target refused the fight fails.</summary>

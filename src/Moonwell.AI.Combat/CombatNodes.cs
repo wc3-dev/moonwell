@@ -37,10 +37,13 @@ namespace Moonwell.AI.Combat
         /// <summary>
         /// Walks the fighter's route as <c>FollowRoute</c> does, with move orders, taking it up at the point after the one
         /// nearest the unit, so after a fight it goes on from where it is. With no route, it walks back to where its last
-        /// fight started, then fails, as there is nothing to walk.
+        /// fight started, then fails, as there is nothing to walk. A fighter it is made for keeps the spot where its fight
+        /// started until it is back, on its route or at the spot; one in a tree with no WalkLane forgets it when the fight
+        /// is over.
         /// </summary>
         public static Node WalkLane(Fighter fighter)
         {
+            fighter.walksBack = true;
             return Select(
                 When(fighter.ReturnsToSpot, MoveTo(() => fighter.spotX, () => fighter.spotY)),
                 FollowRoute(() => fighter.Route));
