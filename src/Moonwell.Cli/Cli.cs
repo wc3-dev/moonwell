@@ -2,23 +2,26 @@ using System.IO.Enumeration;
 using System.Reflection;
 using Moonwell.Build;
 using Moonwell.GameData;
+using Spectre.Console;
 
 namespace Moonwell.Tool
 {
     /// <summary>The <c>moonwell</c> command: parses its arguments and runs the build or another command.</summary>
     internal static class Cli
     {
-        private const string Usage =
-            "usage: moonwell build [folder] [--release] [--verbose]\n" +
-            "       moonwell run [folder] [--release] [--verbose] [--game <exe>]\n" +
-            "       moonwell watch [folder] [--release] [--verbose] [--run] [--game <exe>]\n" +
-            "       moonwell new <name>\n" +
-            "       moonwell import <map> <name>\n" +
-            "       moonwell clean [folder]\n" +
-            "       moonwell objects [folder] [--to-map]\n" +
-            "       moonwell mdx <model> [--mode sd|hd|de] [--game <folder>]\n" +
-            "       moonwell game find <path> [--mode sd|hd|de] [--game <folder>]\n" +
-            "       moonwell game extract <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
+        private static readonly (string Command, string Takes)[] Commands =
+        {
+            ("build", "[folder] [--release] [--verbose]"),
+            ("run", "[folder] [--release] [--verbose] [--game <exe>]"),
+            ("watch", "[folder] [--release] [--verbose] [--run] [--game <exe>]"),
+            ("new", "<name>"),
+            ("import", "<map> <name>"),
+            ("clean", "[folder]"),
+            ("objects", "[folder] [--to-map]"),
+            ("mdx", "<model> [--mode sd|hd|de] [--game <folder>]"),
+            ("game find", "<path> [--mode sd|hd|de] [--game <folder>]"),
+            ("game extract", "<path> [--out <path>] [--mode sd|hd|de] [--game <folder>]"),
+        };
 
         // Folders of the project a change in which is no reason to build again: what the builds write, and the tools'.
         private static readonly string[] Unwatched = { "build", "bin", "obj", ".git", ".vs", ".idea" };
@@ -41,7 +44,7 @@ namespace Moonwell.Tool
 
             if (args.Length == 1 && args[0] == "--version")
             {
-                output.WriteLine(Version());
+                new Say(output).Line(Version());
                 return 0;
             }
 
@@ -49,8 +52,7 @@ namespace Moonwell.Tool
             {
                 if (!TryParseGame(args, out var model))
                 {
-                    error.WriteLine(Usage);
-                    return 2;
+                    return Usage(error);
                 }
 
                 return Report(error, () => ModelView.Show(model.Path, model.Mode, model.Install, output));
@@ -60,8 +62,7 @@ namespace Moonwell.Tool
             {
                 if (!TryParseGame(args, out var game))
                 {
-                    error.WriteLine(Usage);
-                    return 2;
+                    return Usage(error);
                 }
 
                 return Report(error, () => Game(game, output));
@@ -69,42 +70,57 @@ namespace Moonwell.Tool
 
             if (!TryParse(args, out var options))
             {
-                error.WriteLine(Usage);
-                return 2;
+                return Usage(error);
             }
 
+            var say = new Say(output);
             return Report(error, () =>
             {
                 switch (options.Command)
                 {
                     case "new":
                         var folder = NewMap.Write(options.Name, ".", Version());
-                        output.WriteLine($"moonwell: made {folder}; cd {options.Name}, then moonwell run");
+                        say.Result($"Made {folder}");
                         break;
                     case "import":
                         var imported = NewMap.Write(options.Name, ".", Version());
-                        OldMapImport.Run(options.Source, imported, output);
-                        try
+                        using (var log = say.Log())
                         {
-                            ObjectImport.Run(imported, output);
+                            OldMapImport.Run(options.Source, imported, log);
+                            try
+                            {
+                                ObjectImport.Run(imported, log);
+                            }
+                            catch (BuildException failure)
+                            {
+                                say.Message("note", $"the object data stays in the map's object files, which the build keeps: {failure.Message}");
+                            }
                         }
-                        catch (BuildException failure)
-                        {
-                            output.WriteLine($"moonwell: the object data stays in the map's object files, which the build keeps: {failure.Message}");
-                        }
-                        output.WriteLine($"moonwell: made {imported}; cd {options.Name}, then moonwell run");
+
+                        say.Result($"Made {imported}");
                         break;
                     case "clean":
-                        Clean(options.Folder, output);
+                        Clean(options.Folder, say);
                         break;
                     case "objects" when options.ToMap:
-                        var written = MapObjects.WriteToMap(options.Folder, output);
-                        output.WriteLine(written.Count > 0
-                            ? $@"moonwell: wrote {string.Join(", ", written.Take(8))}{(written.Count > 8 ? $" and {written.Count - 8} more" : string.Empty)} into map\"
-                            : @"moonwell: map\ already holds the built objects and assets");
+                        IReadOnlyList<string> written = Array.Empty<string>();
+                        _ = BuildView.Show(output, error, false, (log, step) =>
+                        {
+                            written = MapObjects.WriteToMap(options.Folder, log, step);
+                            return string.Empty;
+                        }) ?? throw new ReportedException();
+                        if (written.Count > 0)
+                        {
+                            say.Result($@"Wrote {string.Join(", ", written.Take(8))}{(written.Count > 8 ? $" and {written.Count - 8} more" : string.Empty)} into map\");
+                        }
+                        else
+                        {
+                            say.Message("note", @"map\ already holds the built objects and assets");
+                        }
+
                         break;
                     case "objects":
-                        Objects(options.Folder, output);
+                        Objects(options.Folder, say);
                         break;
                     case "watch":
                         Watch(options, output, error, start, stop ?? (() => { }), cancel);
@@ -116,9 +132,23 @@ namespace Moonwell.Tool
             });
         }
 
+        // The commands and what each takes, for arguments the tool does not understand.
+        private static int Usage(TextWriter error)
+        {
+            var say = new Say(error);
+            var width = Commands.Max(command => command.Command.Length);
+            foreach (var (command, takes) in Commands)
+            {
+                say.Line($"[bold]moonwell {command.PadRight(width)}[/]  [dim]{takes.EscapeMarkup()}[/]");
+            }
+
+            return 2;
+        }
+
         // Runs a command, reporting what fails: 0, or 1 with the message.
         private static int Report(TextWriter error, Action command)
         {
+            var say = new Say(error);
             try
             {
                 command();
@@ -130,13 +160,13 @@ namespace Moonwell.Tool
             }
             catch (BuildException failure)
             {
-                error.WriteLine($"moonwell: {failure.Message}");
+                say.Message("error", failure.Message);
                 return 1;
             }
             catch (Exception failure)
             {
-                error.WriteLine($"moonwell: unexpected error: {failure.GetType().Name}: {failure.Message}");
-                error.WriteLine(failure.StackTrace);
+                say.Message("error", $"unexpected error: {failure.GetType().Name}: {failure.Message}");
+                say.Line($"[dim]{(failure.StackTrace ?? string.Empty).EscapeMarkup()}[/]");
                 return 1;
             }
         }
@@ -188,8 +218,9 @@ namespace Moonwell.Tool
             while (true)
             {
                 Report(error, () => Build(options, output, error, start));
-                output.WriteLine();
-                output.WriteLine("Watching for changes; Ctrl+C stops");
+                var say = new Say(output);
+                say.Line();
+                say.Line("[dim]Watching for changes; Ctrl+C stops[/]");
                 try
                 {
                     changed.Wait(cancel);
@@ -212,12 +243,12 @@ namespace Moonwell.Tool
             }
         }
 
-        private static void Clean(string folder, TextWriter output)
+        private static void Clean(string folder, Say say)
         {
             var project = MapProject.Find(folder);
             if (!Directory.Exists(project.BuildFolder))
             {
-                output.WriteLine(@"moonwell: no build\ to delete");
+                say.Message("note", @"no build\ to delete");
                 return;
             }
 
@@ -230,15 +261,15 @@ namespace Moonwell.Tool
                 throw new BuildException($@"cannot delete build\ (is the game or World Editor using the map?): {failure.Message}");
             }
 
-            output.WriteLine(@"moonwell: deleted build\");
+            say.Result(@"Deleted build\");
         }
 
-        private static void Objects(string folder, TextWriter output)
+        private static void Objects(string folder, Say say)
         {
             var objects = MapObjects.List(folder, TextWriter.Null);
             if (objects.Count == 0)
             {
-                output.WriteLine("moonwell: the map declares no objects");
+                say.Message("note", "the map declares no objects");
                 return;
             }
 
@@ -246,13 +277,14 @@ namespace Moonwell.Tool
             var name = objects.Max(entry => entry.ClassName.Length);
             foreach (var (className, kindName, id, root) in objects)
             {
-                output.WriteLine($"{id}  {kindName.PadRight(kind)}  {className.PadRight(name)}  based on {root}");
+                say.Line($"[bold]{id}[/]  [dim]{kindName.PadRight(kind)}[/]  {className.PadRight(name).EscapeMarkup()}  [dim]{root}[/]");
             }
         }
 
         // game find and game extract: one file as the game finds it, or every file under a folder or matching a pattern with *.
         private static void Game(GameOptions options, TextWriter output)
         {
+            var say = new Say(output);
             GameFiles files;
             try
             {
@@ -271,7 +303,7 @@ namespace Moonwell.Tool
                 {
                     if (!options.Extract)
                     {
-                        output.WriteLine(found);
+                        say.Line(found.EscapeMarkup());
                         return;
                     }
 
@@ -281,7 +313,7 @@ namespace Moonwell.Tool
                         : Directory.Exists(options.Out) || options.Out.EndsWith('/') || options.Out.EndsWith('\\') ? Path.Combine(options.Out, name)
                         : options.Out;
                     Write(target, files.Read(path, options.Mode));
-                    output.WriteLine($"moonwell: wrote {target}");
+                    say.Result($"Wrote {target}");
                     return;
                 }
 
@@ -303,13 +335,13 @@ namespace Moonwell.Tool
                     }
                     else
                     {
-                        output.WriteLine(file);
+                        say.Line(file.EscapeMarkup());
                     }
                 }
 
                 if (options.Extract)
                 {
-                    output.WriteLine($"moonwell: wrote {listed.Count} files into {options.Out ?? "."}");
+                    say.Result($"Wrote {listed.Count} files into {options.Out ?? "."}");
                 }
             }
         }

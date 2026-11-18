@@ -11,16 +11,16 @@ namespace Moonwell.Build.Tests
     public sealed class CliTests : IDisposable
     {
         private const string Usage =
-            "usage: moonwell build [folder] [--release] [--verbose]\n" +
-            "       moonwell run [folder] [--release] [--verbose] [--game <exe>]\n" +
-            "       moonwell watch [folder] [--release] [--verbose] [--run] [--game <exe>]\n" +
-            "       moonwell new <name>\n" +
-            "       moonwell import <map> <name>\n" +
-            "       moonwell clean [folder]\n" +
-            "       moonwell objects [folder] [--to-map]\n" +
-            "       moonwell mdx <model> [--mode sd|hd|de] [--game <folder>]\n" +
-            "       moonwell game find <path> [--mode sd|hd|de] [--game <folder>]\n" +
-            "       moonwell game extract <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
+            "moonwell build         [folder] [--release] [--verbose]\n" +
+            "moonwell run           [folder] [--release] [--verbose] [--game <exe>]\n" +
+            "moonwell watch         [folder] [--release] [--verbose] [--run] [--game <exe>]\n" +
+            "moonwell new           <name>\n" +
+            "moonwell import        <map> <name>\n" +
+            "moonwell clean         [folder]\n" +
+            "moonwell objects       [folder] [--to-map]\n" +
+            "moonwell mdx           <model> [--mode sd|hd|de] [--game <folder>]\n" +
+            "moonwell game find     <path> [--mode sd|hd|de] [--game <folder>]\n" +
+            "moonwell game extract  <path> [--out <path>] [--mode sd|hd|de] [--game <folder>]";
 
         private readonly SampleBuilds builds;
         private readonly TestFolders folders;
@@ -81,7 +81,7 @@ namespace Moonwell.Build.Tests
                 (_, _) => throw new InvalidOperationException("starter failed"));
 
             Assert.Equal(1, exitCode);
-            Assert.StartsWith("moonwell: unexpected error: InvalidOperationException: starter failed", error.ToString());
+            Assert.StartsWith("error    unexpected error: InvalidOperationException: starter failed", error.ToString());
             Assert.Contains(" at ", error.ToString());
         }
 
@@ -146,7 +146,7 @@ namespace Moonwell.Build.Tests
 
             Assert.Equal(2, exitCode);
             Assert.Equal(string.Empty, output);
-            Assert.Equal(Usage, error.Trim());
+            Assert.Equal(Usage, error.Trim().ReplaceLineEndings("\n"));
             Assert.Empty(started);
         }
 
@@ -189,7 +189,7 @@ namespace Moonwell.Build.Tests
             var (exitCode, output, error, started) = Run("run", TestFolders.Fixture("Sample"), "--game", game);
 
             Assert.Equal(1, exitCode);
-            Assert.Equal($"moonwell: the game is not at {game}", error.Trim());
+            Assert.Equal($"error    the game is not at {game}", error.Trim());
             Assert.Empty(started);
             Assert.Equal(string.Empty, output);
         }
@@ -248,11 +248,11 @@ namespace Moonwell.Build.Tests
             var (exitCode, output, error, _) = Run("clean", folder);
 
             Assert.Equal(0, exitCode);
-            Assert.Equal(@"moonwell: deleted build\", output.Trim());
+            Assert.Equal(@"✓ Deleted build\", output.Trim());
             Assert.Equal(string.Empty, error);
             Assert.False(Directory.Exists(Path.Combine(folder, "build")));
             Assert.True(Directory.Exists(Path.Combine(folder, "map")));
-            Assert.Equal(@"moonwell: no build\ to delete", Run("clean", folder).Output.Trim());
+            Assert.Equal(@"note     no build\ to delete", Run("clean", folder).Output.Trim());
         }
 
         [Fact]
@@ -262,7 +262,7 @@ namespace Moonwell.Build.Tests
 
             Assert.Equal(0, exitCode);
             Assert.Equal(string.Empty, error);
-            Assert.Equal("H001  hero  Sample.Arthas  based on Hpal", output.Trim());
+            Assert.Equal("H001  hero  Sample.Arthas  Hpal", output.Trim());
         }
 
         [Fact]
@@ -279,7 +279,11 @@ namespace Moonwell.Build.Tests
             Assert.Empty(started);
             var added = Directory.GetFiles(map, "*", SearchOption.AllDirectories).Where(file => !before.ContainsKey(file)).Select(file => Path.GetRelativePath(map, file)).Order(StringComparer.Ordinal).ToList();
             Assert.Equal(new[] { @"Moonwell\hello.txt", "war3map.imp", "war3map.w3u", "war3mapSkin.w3u" }, added);
-            Assert.EndsWith(@"moonwell: wrote war3map.w3u, war3mapSkin.w3u, Moonwell\hello.txt, war3map.imp into map\", output.TrimEnd());
+            Assert.EndsWith(@"✓ Wrote war3map.w3u, war3mapSkin.w3u, Moonwell\hello.txt, war3map.imp into map\", output.TrimEnd());
+
+            // The build shows as the checklist, not as dotnet's log (decision 370).
+            Assert.Contains("✓ Pack the map", output);
+            Assert.DoesNotContain("Build succeeded", output);
             Assert.Equal(new[] { @"Moonwell\hello.txt" }, ImportList.Paths(Path.Combine(map, "war3map.imp")));
             foreach (var (file, bytes) in before)
             {
@@ -295,7 +299,7 @@ namespace Moonwell.Build.Tests
             // Run again, the build takes the files back and the command finds nothing to write.
             var again = Run("objects", folder, "--to-map");
             Assert.True(again.ExitCode == 0, again.Error + again.Output);
-            Assert.EndsWith(@"moonwell: map\ already holds the built objects and assets", again.Output.TrimEnd());
+            Assert.EndsWith(@"note     map\ already holds the built objects and assets", again.Output.TrimEnd());
             Assert.DoesNotContain("replaces the map's file", again.Output);
 
             // A change made to the class's object in World Editor: the next build writes the class's own value, and leaves the source map be.
@@ -399,7 +403,7 @@ namespace Moonwell.Build.Tests
 
             Assert.Equal(1, exitCode);
             Assert.Equal(string.Empty, output);
-            Assert.Equal(@"moonwell: the game has no file units\human\NoSuchUnit\NoSuchUnit.mdx", error.Trim());
+            Assert.Equal(@"error    the game has no file units\human\NoSuchUnit\NoSuchUnit.mdx", error.Trim());
         }
 
         [Fact]
@@ -411,7 +415,7 @@ namespace Moonwell.Build.Tests
             var (exitCode, _, error, _) = Run("game", "find", "x.blp", "--game", empty);
 
             Assert.Equal(1, exitCode);
-            Assert.StartsWith("moonwell: No Warcraft III install", error);
+            Assert.StartsWith("error    No Warcraft III install", error);
             Assert.DoesNotContain("unexpected error", error);
         }
 
@@ -423,7 +427,7 @@ namespace Moonwell.Build.Tests
 
             var (exitCode, output, _, _) = Run("game", "extract", @"UI\SoundInfo\UnitAckSounds.slk", "--out", target);
             Assert.Equal(0, exitCode);
-            Assert.Equal($"moonwell: wrote {Path.Combine(target, "UnitAckSounds.slk")}", output.Trim());
+            Assert.Equal($"✓ Wrote {Path.Combine(target, "UnitAckSounds.slk")}", output.Trim());
             Assert.StartsWith("ID;", File.ReadAllText(Path.Combine(target, "UnitAckSounds.slk")));
 
             var named = Path.Combine(target, "sub", "peasant.dds");
@@ -432,7 +436,7 @@ namespace Moonwell.Build.Tests
 
             (exitCode, output, _, _) = Run("game", "extract", "Units/Human/HeroPaladin/*What*.ogg", "--out", target);
             Assert.Equal(0, exitCode);
-            Assert.Matches(@"^moonwell: wrote \d+ files into ", output.Trim());
+            Assert.Matches(@"^✓ Wrote \d+ files into ", output.Trim());
             Assert.True(new FileInfo(Path.Combine(target, "Units", "Human", "HeroPaladin", "HeroPaladinWhat1.ogg")).Length > 0);
             Assert.False(File.Exists(Path.Combine(target, "Units", "Human", "HeroPaladin", "HeroPaladinDeath.ogg")));
         }
