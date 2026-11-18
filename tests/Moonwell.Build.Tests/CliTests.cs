@@ -117,30 +117,45 @@ namespace Moonwell.Build.Tests
         }
 
         [Theory]
+        [InlineData("unknown command 'deploy'", "deploy")]
+        [InlineData("unknown option '--fast' for build", "build", "--fast")]
+        [InlineData("unexpected argument 'two'", "build", "one", "two")]
+        [InlineData("unknown option '--game' for build", "build", "--game", "game.exe")]
+        [InlineData("--game needs the game's exe", "run", "--game")]
+        [InlineData("new needs a name", "new")]
+        [InlineData("unexpected argument 'Two'", "new", "One", "Two")]
+        [InlineData("unknown option '--release' for new", "new", "One", "--release")]
+        [InlineData("import needs a map and a name", "import")]
+        [InlineData("import needs a map and a name", "import", "old.w3x")]
+        [InlineData("unexpected argument 'Two'", "import", "old.w3x", "One", "Two")]
+        [InlineData("unknown option '--release' for clean", "clean", "--release")]
+        [InlineData("unknown option '--run' for objects", "objects", "--run")]
+        [InlineData("unknown option '--to-map' for build", "build", "--to-map")]
+        [InlineData("--game needs --run", "watch", "--game", "game.exe")]
+        [InlineData("game needs find or extract", "game")]
+        [InlineData("unknown command 'game list'", "game", "list", "x")]
+        [InlineData("game find needs a path", "game", "find")]
+        [InlineData("unexpected argument 'two'", "game", "find", "one", "two")]
+        [InlineData("--mode takes sd, hd or de", "game", "find", "x", "--mode", "ultra")]
+        [InlineData("unknown option '--out' for game find", "game", "find", "x", "--out", "here")]
+        [InlineData("--out needs a path", "game", "extract", "x", "--out")]
+        [InlineData("--game needs the game's folder", "mdx", "x.mdx", "--game")]
+        [InlineData("mdx needs a model", "mdx")]
+        public void bad_arguments_say_what_is_wrong_then_the_usage_and_exit_2(string problem, params string[] args)
+        {
+            var (exitCode, output, error, started) = Run(args);
+
+            Assert.Equal(2, exitCode);
+            Assert.Equal(string.Empty, output);
+            Assert.Equal($"error    {problem}\n\n{Usage}", error.Trim().ReplaceLineEndings("\n"));
+            Assert.Empty(started);
+        }
+
+        [Theory]
         [InlineData]
-        [InlineData("deploy")]
-        [InlineData("build", "--fast")]
-        [InlineData("build", "one", "two")]
-        [InlineData("build", "--game", "game.exe")]
-        [InlineData("run", "--game")]
-        [InlineData("new")]
-        [InlineData("new", "One", "Two")]
-        [InlineData("new", "One", "--release")]
-        [InlineData("import")]
-        [InlineData("import", "old.w3x")]
-        [InlineData("import", "old.w3x", "One", "Two")]
-        [InlineData("clean", "--release")]
-        [InlineData("objects", "--run")]
-        [InlineData("build", "--to-map")]
-        [InlineData("watch", "--game", "game.exe")]
-        [InlineData("game")]
-        [InlineData("game", "list", "x")]
-        [InlineData("game", "find")]
-        [InlineData("game", "find", "one", "two")]
-        [InlineData("game", "find", "x", "--mode", "ultra")]
-        [InlineData("game", "find", "x", "--out", "here")]
-        [InlineData("game", "extract", "x", "--out")]
-        public void bad_arguments_exit_2(params string[] args)
+        [InlineData("--help")]
+        [InlineData("-h")]
+        public void no_arguments_or_help_print_the_usage_with_no_error(params string[] args)
         {
             var (exitCode, output, error, started) = Run(args);
 

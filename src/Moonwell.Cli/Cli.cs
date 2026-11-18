@@ -50,9 +50,9 @@ namespace Moonwell.Tool
 
             if (args.Length > 0 && args[0] == "mdx")
             {
-                if (!TryParseGame(args, out var model))
+                if (!TryParseGame(args, out var model, out var problem))
                 {
-                    return Usage(error);
+                    return Usage(error, problem);
                 }
 
                 return Report(error, () => ModelView.Show(model.Path, model.Mode, model.Install, output));
@@ -60,17 +60,17 @@ namespace Moonwell.Tool
 
             if (args.Length > 0 && args[0] == "game")
             {
-                if (!TryParseGame(args, out var game))
+                if (!TryParseGame(args, out var game, out var problem))
                 {
-                    return Usage(error);
+                    return Usage(error, problem);
                 }
 
                 return Report(error, () => Game(game, output));
             }
 
-            if (!TryParse(args, out var options))
+            if (!TryParse(args, out var options, out var wrong))
             {
-                return Usage(error);
+                return Usage(error, wrong);
             }
 
             var say = new Say(output);
@@ -132,10 +132,16 @@ namespace Moonwell.Tool
             });
         }
 
-        // The commands and what each takes, for arguments the tool does not understand.
-        private static int Usage(TextWriter error)
+        // What is wrong with the arguments, when anything is, then the commands and what each takes.
+        private static int Usage(TextWriter error, string problem)
         {
             var say = new Say(error);
+            if (problem.Length > 0)
+            {
+                say.Message("error", problem);
+                say.Line();
+            }
+
             var width = Commands.Max(command => command.Command.Length);
             foreach (var (command, takes) in Commands)
             {
@@ -370,16 +376,18 @@ namespace Moonwell.Tool
             return given;
         }
 
-        private static bool TryParseGame(string[] args, out GameOptions options)
+        private static bool TryParseGame(string[] args, out GameOptions options, out string problem)
         {
             // mdx takes its model and the same options as game find, its paths looked for in HD art unless told.
             var model = args.Length > 0 && args[0] == "mdx";
             options = new GameOptions { Mode = model ? "hd" : "sd" };
             if (!model && (args.Length < 2 || args[1] is not ("find" or "extract")))
             {
+                problem = args.Length < 2 ? "game needs find or extract" : $"unknown command 'game {args[1]}'";
                 return false;
             }
 
+            var command = model ? "mdx" : $"game {args[1]}";
             options.Extract = !model && args[1] == "extract";
             for (var i = model ? 1 : 2; i < args.Length; i++)
             {
@@ -399,6 +407,13 @@ namespace Moonwell.Tool
                 }
                 else if (argument.StartsWith("--", StringComparison.Ordinal) || options.Path.Length > 0)
                 {
+                    problem = argument switch
+                    {
+                        "--mode" => "--mode takes sd, hd or de",
+                        "--game" => "--game needs the game's folder",
+                        "--out" when options.Extract => "--out needs a path",
+                        _ => Unexpected(argument, command),
+                    };
                     return false;
                 }
                 else
@@ -407,8 +422,12 @@ namespace Moonwell.Tool
                 }
             }
 
-            return options.Path.Length > 0;
+            problem = options.Path.Length > 0 ? string.Empty : $"{command} needs a {(model ? "model" : "path")}";
+            return problem.Length == 0;
         }
+
+        private static string Unexpected(string argument, string command) =>
+            argument.StartsWith("--", StringComparison.Ordinal) ? $"unknown option '{argument}' for {command}" : $"unexpected argument '{argument}'";
 
         // The tool's version without the source revision the SDK appends after a plus sign.
         private static string Version()
@@ -421,11 +440,13 @@ namespace Moonwell.Tool
             return plus < 0 ? version : version.Substring(0, plus);
         }
 
-        private static bool TryParse(string[] args, out Options options)
+        private static bool TryParse(string[] args, out Options options, out string problem)
         {
             options = new Options();
             if (args.Length == 0 || !new[] { "build", "run", "watch", "new", "import", "clean", "objects" }.Contains(args[0]))
             {
+                // moonwell alone, or asked for help, is no mistake: it gets the usage with no error.
+                problem = args.Length == 0 || args[0] is "--help" or "-h" ? string.Empty : $"unknown command '{args[0]}'";
                 return false;
             }
 
@@ -460,6 +481,7 @@ namespace Moonwell.Tool
                 }
                 else if (argument.StartsWith("--", StringComparison.Ordinal) || positionals.Count == (options.Command == "import" ? 2 : 1))
                 {
+                    problem = argument == "--game" && options.Command is "run" or "watch" ? "--game needs the game's exe" : Unexpected(argument, options.Command);
                     return false;
                 }
                 else
@@ -481,7 +503,11 @@ namespace Moonwell.Tool
             }
 
             // A game is named only for a command that starts one; new needs its name, import its map and name.
-            return (!gameGiven || options.Launch) && (options.Command != "new" || positionals.Count == 1) && (options.Command != "import" || positionals.Count == 2);
+            problem = gameGiven && !options.Launch ? "--game needs --run"
+                : options.Command == "new" && positionals.Count != 1 ? "new needs a name"
+                : options.Command == "import" && positionals.Count != 2 ? "import needs a map and a name"
+                : string.Empty;
+            return problem.Length == 0;
         }
 
         // A build failure the build view has shown already.
