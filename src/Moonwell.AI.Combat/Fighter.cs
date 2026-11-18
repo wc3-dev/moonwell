@@ -8,8 +8,9 @@ namespace Moonwell.AI.Combat
     /// map's own brain makes one, <c>new Fighter(this)</c>, for the combat nodes of its tree. A check runs once an instant,
     /// from <c>Meets</c> or <c>ShouldPullBack</c>: it finds the enemies the fighter meets and picks its target. It meets a
     /// living enemy unit, structures too, that its unit's owner sees, within its meet range or one that damaged its unit in
-    /// the last 3 s however far, and none farther than its leash from where its fight started. An enemy its unit couldn't
-    /// attack is set aside for 3 s, and the next best is picked.
+    /// the last 3 s however far, and none farther than its leash from where its fight started. That spot is forgotten when
+    /// the fight is over, so the next fight's leash counts from where that one starts; a fighter that <c>WalkLane</c> walks
+    /// keeps it until it is back. An enemy its unit couldn't attack is set aside for 3 s, and the next best is picked.
     /// </summary>
     public sealed class Fighter
     {
@@ -91,6 +92,12 @@ namespace Moonwell.AI.Combat
         /// <summary>Whether the spot where the fight started is kept, which the leash counts from.</summary>
         internal bool hasSpot;
 
+        /// <summary>Whether a WalkLane node walks the fighter, back to the spot or its route after a fight, so the spot is kept until it is back.</summary>
+        internal bool walksBack;
+
+        /// <summary>Whether the last check found an enemy its unit's owner sees, in meet range or an attacker, the leash not counted: the fight is not over.</summary>
+        private bool about;
+
         /// <summary>The x of the spot where the fight started.</summary>
         internal float spotX;
 
@@ -111,7 +118,7 @@ namespace Moonwell.AI.Combat
         [LocalSafe]
         public float MeetRange { get; set; }
 
-        /// <summary>How far from where its fight started an enemy is fought: 2,100, the default, about the game's own chase limit.</summary>
+        /// <summary>How far from where its fight started an enemy is fought: 2,100, the default, about the game's own chase limit. Each fight counts from its own start, as the spot is forgotten when a fight is over.</summary>
         [LocalSafe]
         public float Leash { get; set; } = 2100f;
 
@@ -317,7 +324,9 @@ namespace Moonwell.AI.Combat
         /// <summary>
         /// Finds the enemies met and the allies near, picks the target, and keeps or forgets the spot where the fight
         /// started: kept from the first check with a target, forgotten at one without a target with the unit back on its
-        /// route, within 64 of a stretch of it, or within 64 of the spot itself when it has no route.
+        /// route, within 64 of a stretch of it, or within 64 of the spot itself when it has no route. With no WalkLane to
+        /// walk it back and not pulling back, it is forgotten sooner, once the fight is over: at a check with no target
+        /// that found no enemy about, the leash not counted, so an enemy dropped at the leash that stays near keeps it.
         /// </summary>
         private void Refresh(float now)
         {
@@ -327,6 +336,7 @@ namespace Moonwell.AI.Combat
             allies.Clear();
             EnemiesNear = 0;
             AlliesNear = 0;
+            about = false;
             var unit = brain.Unit;
             if (unit == null || !unit.IsAlive)
             {
@@ -401,7 +411,7 @@ namespace Moonwell.AI.Combat
                     spotY = y;
                 }
             }
-            else if (hasSpot && IsBack(x, y))
+            else if (hasSpot && (IsBack(x, y) || (!walksBack && !about && pulledFor == 0)))
             {
                 hasSpot = false;
             }
@@ -433,10 +443,16 @@ namespace Moonwell.AI.Combat
             metY.Add(otherY);
         }
 
-        /// <summary>Whether an enemy is to be met: its owner's player sees it, and it is within the leash of the spot.</summary>
+        /// <summary>Whether an enemy is to be met: its owner's player sees it, which notes it as about, and it is within the leash of the spot.</summary>
         private bool Meetable(Player owner, Unit other, float otherX, float otherY, float fromX, float fromY)
         {
-            return Squared(otherX - fromX, otherY - fromY) <= Leash * Leash && Runtime.World.Sees(owner.Handle, other.Handle);
+            if (!Runtime.World.Sees(owner.Handle, other.Handle))
+            {
+                return false;
+            }
+
+            about = true;
+            return Squared(otherX - fromX, otherY - fromY) <= Leash * Leash;
         }
 
         /// <summary>Whether the unit is back where a fight takes it from: within 64 of a stretch of its route between two points, or of the spot with no route.</summary>

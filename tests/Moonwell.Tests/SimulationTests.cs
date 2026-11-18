@@ -13,6 +13,49 @@ namespace Moonwell.Tests
         {
         }
 
+        /// <summary>A map with a name, and slots with names: a person's, a computer's, and a computer's with none.</summary>
+        private sealed class NamedMap : Map
+        {
+            private static readonly Team Blue = new Team("Blue");
+
+            public NamedMap(string saveFolder = "")
+            {
+                Name = "My Rpg!";
+                SaveFolder = saveFolder;
+                Slots.Add(
+                    new Slot(0, Blue, Controller.User) { Name = "Hero" },
+                    new Slot(1, Blue, Controller.Computer) { Name = "MMAI" },
+                    new Slot(2, Blue, Controller.Computer));
+            }
+        }
+
+        /// <summary>The file a player's write made, by its folder.</summary>
+        private static bool Wrote(Simulation sim, string folder)
+        {
+            PlayerFile.Write(Player.One, "settings.txt", "x");
+            return sim.World.Files.ContainsKey(folder + "\\settings.txt");
+        }
+
+        /// <summary>Start(map) puts player files where the build would: the map's SaveFolder, else its name, else the project's, in letters and digits.</summary>
+        [Fact]
+        public void FilesGoInTheMapsSaveFolder()
+        {
+            Expect.True(Wrote(Simulation.Start(new NamedMap("Kept")), "Kept"), "the SaveFolder");
+            Expect.True(Wrote(Simulation.Start(new NamedMap()), "MyRpg"), "the map's name");
+            Expect.True(Wrote(Simulation.Start(new EmptyMap()), "MoonwellTests"), "the project's name");
+            Expect.True(Wrote(Simulation.Start(), "Map"), "an empty game");
+        }
+
+        /// <summary>A computer's slot has its Slot's name, as in the game; a person's keeps their own, and a slot with no name is "Player n".</summary>
+        [Fact]
+        public void ComputerSlotsTakeTheirNames()
+        {
+            Simulation.Start(new NamedMap());
+            Expect.Equal("MMAI", Player.Get(1).Name, "the named computer");
+            Expect.Equal("Player 3", Player.Get(2).Name, "the computer with no name");
+            Expect.Equal("Player 1", Player.One.Name, "the person");
+        }
+
         /// <summary>A footman made by its class takes its life and move speed from its object data.</summary>
         [Fact]
         public void FootmanFromObjectData()

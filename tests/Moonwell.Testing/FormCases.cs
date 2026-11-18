@@ -421,6 +421,52 @@ namespace Moonwell.Testing
             return "miss";
         }
 
+        /// <summary>
+        /// A pattern variable read after an || that holds its negation (J82, 2.0.4-moonwell.26): it was declared inside the
+        /// block written for the ||'s right side, so after the if the name was a global, nil.
+        /// </summary>
+        public static void PatternAfterOr(FakeWorld world)
+        {
+            Expect.Equal("count 3", Dropped("gear", new Holder { Count = 3 }), "a || !(x is T t), read after the if");
+            Expect.Equal("none", Dropped(null, new Holder { Count = 3 }), "a || !(x is T t), the left side true");
+            Expect.Equal("none", Dropped("gear", "text"), "a || !(x is T t), no match");
+            Expect.Equal("count 4", DroppedNot("gear", new Holder { Count = 4 }), "a || x is not T t, read after the if");
+        }
+
+        private static string Dropped(object? gear, object dragged)
+        {
+            if (gear == null || !(dragged is Holder button))
+            {
+                return "none";
+            }
+
+            return "count " + button.Count;
+        }
+
+        private static string DroppedNot(object? gear, object dragged)
+        {
+            if (gear == null || dragged is not Holder button)
+            {
+                return "none";
+            }
+
+            return "count " + button.Count;
+        }
+
+        /// <summary>
+        /// Two cast calls in a row (J88, 2.0.4-moonwell.26): each starts with a bracket in Lua, and in a map build the ;
+        /// between them went on Moonwell's line mark, inside its comment, so Lua called what the first call gave back.
+        /// </summary>
+        public static void CastCallsInARow(FakeWorld world)
+        {
+            object first = new Panel();
+            object second = new Panel();
+            ((Panel)first).Refresh();
+            ((Panel)second).Refresh();
+            Expect.Equal(1, ((Panel)first).Shown, "the first cast call ran once");
+            Expect.Equal(1, ((Panel)second).Shown, "the second cast call ran once");
+        }
+
         /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
         public static void EnumText(FakeWorld world)
         {
@@ -595,6 +641,16 @@ namespace Moonwell.Testing
         private struct Spot
         {
             public int X;
+        }
+
+        private class Panel
+        {
+            public int Shown;
+
+            public void Refresh()
+            {
+                Shown++;
+            }
         }
 
         private class Counter
