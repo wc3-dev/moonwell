@@ -2117,6 +2117,10 @@ public class GuardTests
   every `OnGameStart`. `Simulation.Start()` starts an empty game, with nothing of the map's, for units and brains the
   test makes by id. Either takes a `seed`: it gives the dice of the attacks, and the seed after it the map's own random
   numbers (`Game.Random` and a `Dice` made without a seed).
+- With a map, a player's files go in the folder the build would pick: the map's `SaveFolder`, else its name, else the
+  map project's name, in letters and digits only, so `sim.World.Files` holds `MyRpg\settings.txt`. An empty game writes
+  under `Map`. A computer's slot has its `Slot`'s `Name`, as in the game; a person's slot stays `Player 1`, where the
+  game shows the person's own name.
 - `Run(seconds)` plays steps of 0.02 s, the seconds rounded to whole steps, a half step up. `RunUntil(check, seconds)`
   stops at the first step its check holds and gives true, or false when it never did. In each step Moonwell's timers
   run first, the brains' own 0.02 s step among them, so brains think as in the game; then each unit acts, in the order
