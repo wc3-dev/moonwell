@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Moonwell
 {
@@ -42,6 +43,7 @@ namespace Moonwell
         {
             var simulation = Start(seed);
             Seat(simulation.World, map.StartSlots);
+            Runtime.InstallSaveFolder(FolderOf(map));
 #if MOONWELL_LUA
             Runtime.Begin(() => Runtime.Install(map, () => { }));
 #else
@@ -121,6 +123,12 @@ namespace Moonwell
             {
                 var slot = slots[i];
                 world.SetSlot(slot.Number, SlotState.Playing, slot.Controller);
+                // Only a computer's slot reads its war3map.w3i name in the game; a person's is their own (game-facts, probe `lobby`).
+                if (slot.Controller == Controller.Computer && slot.Name.Length > 0)
+                {
+                    world.Rename(world.PlayerAt(slot.Number), slot.Name);
+                }
+
                 if (slot.Race.HasValue)
                 {
                     world.SetRace(slot.Number, slot.Race.Value);
@@ -142,6 +150,35 @@ namespace Moonwell
                     }
                 }
             }
+        }
+
+        /// <summary>The map's save folder as the build picks it (FileStore.FolderOf): its SaveFolder, else its name, else its project's, in letters and digits only; "Map" with none. In Lua the project's name is not known.</summary>
+        private static string FolderOf(Map map)
+        {
+#if MOONWELL_LUA
+            var names = new[] { map.SaveFolder, map.Name };
+#else
+            var names = new[] { map.SaveFolder, map.Name, map.GetType().Assembly.GetName().Name ?? "" };
+#endif
+            for (var i = 0; i < names.Length; i++)
+            {
+                var folder = new StringBuilder();
+                for (var j = 0; j < names[i].Length; j++)
+                {
+                    var c = names[i][j];
+                    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
+                    {
+                        folder.Append(c);
+                    }
+                }
+
+                if (folder.Length > 0)
+                {
+                    return folder.ToString();
+                }
+            }
+
+            return "Map";
         }
 
         /// <summary>The steps of a time, as the brains count a ThinkEvery: rounded to whole milliseconds, then to whole steps with a half step up, and at least 1; 0 for none.</summary>
