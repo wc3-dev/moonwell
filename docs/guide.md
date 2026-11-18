@@ -3724,7 +3724,9 @@ Every other line the tool prints has the checklist's look. What a command did fo
 build\`). A `note`, a `warning` or an `error` opens with that word in its colour. A list, such as the one
 `moonwell objects` prints, is columns. Outside a terminal the words are the same, without the colours.
 
-`moonwell` alone, in a terminal, lists the commands to pick from.
+`moonwell` alone, in a terminal, lists the commands to pick from. Arguments the tool does not understand (an unknown command or
+option, a missing name) get an `error` line saying what is wrong, then the commands and what each takes, and the tool
+ends with 2.
 
 | Command | What it does |
 |---|---|
