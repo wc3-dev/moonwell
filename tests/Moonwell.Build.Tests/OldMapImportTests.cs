@@ -103,8 +103,8 @@ namespace Moonwell.Build.Tests
 
             OldMapImport.Run(Path.Combine(TestFolders.Fixture("Sample"), "map"), project, new StringWriter());
 
-            Assert.True(File.Exists(Path.Combine(project, "map", "war3map.w3i")));
-            Assert.False(File.Exists(Path.Combine(project, "map", "war3map.lua")));
+            Assert.True(File.Exists(Path.Combine(project, "map.w3x", "war3map.w3i")));
+            Assert.False(File.Exists(Path.Combine(project, "map.w3x", "war3map.lua")));
             Assert.False(Directory.Exists(Path.Combine(project, "Heroes")));
             Assert.False(File.Exists(Path.Combine(project, "Start.cs")));
             Assert.True(File.Exists(Path.Combine(project, "lua", "old_map.lua")));

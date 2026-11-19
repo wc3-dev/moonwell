@@ -3,12 +3,16 @@ namespace Moonwell.Build
     /// <summary>A map project: one C# project and the World Editor map folder beside it.</summary>
     public sealed class MapProject
     {
+        // World Editor saves in place into a folder named map.w3x, and beside one named map, the name before 0.20.1 (decisions 378 and 380).
+        private static readonly string[] MapNames = { "map.w3x", "map" };
+
         private MapProject(string folder, string projectFile)
         {
             Folder = folder;
             ProjectFile = projectFile;
             Name = Path.GetFileNameWithoutExtension(projectFile);
-            MapFolder = Path.Combine(folder, "map");
+            MapName = MapNames.FirstOrDefault(name => File.Exists(Path.Combine(folder, name, "war3map.w3i"))) ?? MapNames[0];
+            MapFolder = Path.Combine(folder, MapName);
             AssetsFolder = Path.Combine(folder, "assets");
             DataFolder = Path.Combine(folder, "data");
             BuildFolder = Path.Combine(folder, "build");
@@ -26,8 +30,11 @@ namespace Moonwell.Build
         /// <summary>The project file name without <c>.csproj</c>; the map's name.</summary>
         public string Name { get; }
 
-        /// <summary>The World Editor map folder, <c>map</c> under the project folder.</summary>
+        /// <summary>The World Editor map folder under the project folder: <c>map.w3x</c>, or <c>map</c> when only that holds a map.</summary>
         public string MapFolder { get; }
+
+        /// <summary>The map folder's name, <c>map.w3x</c> or <c>map</c>, for messages.</summary>
+        public string MapName { get; }
 
         /// <summary>The folder of files that override or add to the map, <c>assets</c> under the project folder.</summary>
         public string AssetsFolder { get; }
@@ -101,10 +108,25 @@ namespace Moonwell.Build
             var project = new MapProject(folder, projectFile);
             if (!File.Exists(Path.Combine(project.MapFolder, "war3map.w3i")))
             {
-                throw new BuildException(@"no World Editor map: map\war3map.w3i is missing");
+                throw new BuildException($@"no World Editor map: {project.MapName}\war3map.w3i is missing");
             }
 
             return project;
+        }
+
+        /// <summary>Stops the build at a map World Editor saved inside the map folder, which would be packed whole into the built map (decision 381).</summary>
+        /// <exception cref="BuildException">A folder below the map folder's top holds a <c>war3map.w3i</c>.</exception>
+        internal void CheckNoMapInside()
+        {
+            var inside = Directory.GetFiles(MapFolder, "war3map.w3i", SearchOption.AllDirectories)
+                .Select(file => Path.GetDirectoryName(Path.GetRelativePath(MapFolder, file))!)
+                .Where(folder => folder.Length > 0)
+                .OrderBy(folder => folder, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (inside != null)
+            {
+                throw new BuildException($@"{MapName}\{inside}\ holds a second map, saved inside the map's folder; move or delete it");
+            }
         }
     }
 }

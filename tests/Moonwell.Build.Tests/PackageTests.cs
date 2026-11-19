@@ -442,7 +442,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void template_map_has_the_game_data_the_build_writes()
         {
-            var info = Path.Combine(TestFolders.Fixture("."), "..", "..", "..", "template", "MoonwellMap", "map", "war3map.w3i");
+            var info = Path.Combine(TestFolders.Fixture("."), "..", "..", "..", "template", "MoonwellMap", "map.w3x", "war3map.w3i");
             using var reader = new BinaryReader(File.OpenRead(info));
 
             var data = reader.ReadMapInfo();

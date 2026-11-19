@@ -12,7 +12,7 @@ indent_size = 4
 indent_size = 2
 
 # The game's and World Editor's own files are kept exactly as they wrote them.
-[{map/**,**/map/**,**/*.w3mod/**}]
+[{map.w3x/**,**/map.w3x/**,map/**,**/map/**,**/*.w3mod/**}]
 charset = unset
 end_of_line = unset
 insert_final_newline = unset

@@ -140,7 +140,7 @@ namespace Moonwell.Build.Tests
         [Fact]
         public void a_real_map_has_one_more_corner_than_tiles_each_way()
         {
-            var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "template", "MoonwellMap", "map", "war3map.w3e"));
+            var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "template", "MoonwellMap", "map.w3x", "war3map.w3e"));
             MapEnvironment environment;
             using (var reader = new BinaryReader(File.OpenRead(path)))
             {
