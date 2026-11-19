@@ -17,16 +17,6 @@
     <Description>The moonwell command: makes a Moonwell map project, builds it into a Warcraft III map, and starts the game with it.</Description>
     <!-- The machine's regional format never reaches the map: numbers are written as the game reads them (MapBuild.Run sets the same culture). -->
     <InvariantGlobalization>true</InvariantGlobalization>
-    <!--
-      A fresh process compiles Roslyn and CSharp.lua to machine code before it builds anything, seconds of every build. So the
-      tool is packed with that done (ReadyToRun) for 64-bit Windows, as Moonwell.Cli.win-x64; Moonwell.Cli.any is the tool as
-      it was, for every other system, and Moonwell.Cli only points at the two. Neither carries the .NET runtime.
-    -->
-    <RuntimeIdentifiers>win-x64;any</RuntimeIdentifiers>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <SelfContained>false</SelfContained>
-    <!-- A build is over before the runtime's profiling of its own code (tiered PGO) pays back. -->
-    <TieredPGO>false</TieredPGO>
   </PropertyGroup>
 
 </Project>
