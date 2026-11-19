@@ -58,9 +58,9 @@ namespace Moonwell.Build
 
                 var replaced = new HashSet<string>(StringComparer.Ordinal);
                 var dropped = new List<(string Name, ObjectEntry Entry)>();
-                RemoveDeclared(main, mainName, declared, replaced, dropped, log);
-                RemoveDeclared(skin, skinName, declared, replaced, dropped, log);
-                WarnKept(main, skin, mainName, skinName, standard.Ids(kind), log);
+                RemoveDeclared(main, $@"{project.MapName}\{mainName}", declared, replaced, dropped, log);
+                RemoveDeclared(skin, $@"{project.MapName}\{skinName}", declared, replaced, dropped, log);
+                WarnKept(main, skin, $@"{project.MapName}\{mainName}", $@"{project.MapName}\{skinName}", standard.Ids(kind), log);
 
                 var fields = new Dictionary<string, StandardData.ObjectField>(StringComparer.Ordinal);
                 foreach (var field in standard.Fields(kind))
@@ -112,7 +112,7 @@ namespace Moonwell.Build
                 var id = SourceObjectFile.IdOf(entry);
                 if (declared.TryGetValue(id, out var one) && entry.BaseId != one.StandardRoot && warned.Add(id))
                 {
-                    log.WriteLine($@"warning: map\{name}'s {id} (based on {entry.BaseId}) is replaced by {one.ClassName} (based on {one.StandardRoot})");
+                    log.WriteLine($@"warning: {name}'s {id} (based on {entry.BaseId}) is replaced by {one.ClassName} (based on {one.StandardRoot})");
                 }
             }
 
@@ -139,8 +139,8 @@ namespace Moonwell.Build
                     }
 
                     log.WriteLine(isStandard
-                        ? $@"warning: map\{name} keeps World Editor's changes to {id}, which no class declares"
-                        : $@"warning: map\{name} keeps {id}, which no class declares");
+                        ? $@"warning: {name} keeps World Editor's changes to {id}, which no class declares"
+                        : $@"warning: {name} keeps {id}, which no class declares");
                 }
             }
         }
@@ -165,7 +165,7 @@ namespace Moonwell.Build
                 if (lost.Count > 0)
                 {
                     var fields = string.Join(", ", lost.Select(one => one.Field).Distinct());
-                    log.WriteLine($@"warning: map\{lost[0].Name}'s changes to {id} ({fields}) are replaced by {declared[id].ClassName}");
+                    log.WriteLine($@"warning: {lost[0].Name}'s changes to {id} ({fields}) are replaced by {declared[id].ClassName}");
                 }
             }
         }

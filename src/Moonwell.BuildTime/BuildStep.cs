@@ -25,7 +25,7 @@ namespace Moonwell.BuildTime
 
         private BuildRun? run;
 
-        /// <summary>The map's files, as World Editor saved them in <c>map\</c>, with the files in <c>assets\</c> over them.</summary>
+        /// <summary>The map's files, as World Editor saved them in <c>map.w3x\</c>, with the files in <c>assets\</c> over them.</summary>
         protected MapReader Map => Current.Map;
 
         private BuildRun Current => run ?? throw new InvalidOperationException("a build step reads the map and gives its results in Run, which the build calls; its constructor runs before the build has given it the map");

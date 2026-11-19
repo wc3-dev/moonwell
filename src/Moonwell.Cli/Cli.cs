@@ -104,18 +104,20 @@ namespace Moonwell.Tool
                         break;
                     case "objects" when options.ToMap:
                         IReadOnlyList<string> written = Array.Empty<string>();
+                        var mapName = "map";
                         _ = BuildView.Show(output, error, false, (log, step) =>
                         {
                             written = MapObjects.WriteToMap(options.Folder, log, step);
+                            mapName = MapProject.Find(options.Folder).MapName;
                             return string.Empty;
                         }) ?? throw new ReportedException();
                         if (written.Count > 0)
                         {
-                            say.Result($@"Wrote {string.Join(", ", written.Take(8))}{(written.Count > 8 ? $" and {written.Count - 8} more" : string.Empty)} into map\");
+                            say.Result($@"Wrote {string.Join(", ", written.Take(8))}{(written.Count > 8 ? $" and {written.Count - 8} more" : string.Empty)} into {mapName}\");
                         }
                         else
                         {
-                            say.Message("note", @"map\ already holds the built objects and assets");
+                            say.Message("note", $@"{mapName}\ already holds the built objects and assets");
                         }
 
                         break;

@@ -72,7 +72,26 @@ namespace Moonwell.Build.Tests
         {
             var error = Assert.Throws<BuildException>(() => MapProject.Find(Fixture("NoMap")));
 
-            Assert.Equal(@"no World Editor map: map\war3map.w3i is missing", error.Message);
+            Assert.Equal(@"no World Editor map: map.w3x\war3map.w3i is missing", error.Message);
+        }
+
+        [Fact]
+        public void the_map_is_taken_from_map_w3x_then_from_map_and_never_from_map_w3m()
+        {
+            var folder = NewTemporaryFolder();
+            File.WriteAllText(Path.Combine(folder, "A.csproj"), string.Empty);
+            WriteMap(folder, "map.w3m");
+            Assert.Throws<BuildException>(() => MapProject.Find(folder));
+
+            WriteMap(folder, "map");
+            var old = MapProject.Find(folder);
+            Assert.Equal("map", old.MapName);
+            Assert.Equal(Path.Combine(folder, "map"), old.MapFolder);
+
+            WriteMap(folder, "map.w3x");
+            var project = MapProject.Find(folder);
+            Assert.Equal("map.w3x", project.MapName);
+            Assert.Equal(Path.Combine(folder, "map.w3x"), project.MapFolder);
         }
 
         public void Dispose()
@@ -89,6 +108,12 @@ namespace Moonwell.Build.Tests
         private static string Fixture(string name)
         {
             return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Fixtures", name));
+        }
+
+        private static void WriteMap(string folder, string name)
+        {
+            Directory.CreateDirectory(Path.Combine(folder, name));
+            File.WriteAllText(Path.Combine(folder, name, "war3map.w3i"), string.Empty);
         }
 
         private string NewTemporaryFolder()

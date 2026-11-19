@@ -63,7 +63,7 @@ namespace Moonwell.Build
         {
             var script = map.Script ?? throw new BuildException("the map has no script to stage");
 
-            CheckNames("map", project.MapFolder);
+            CheckNames(project.MapName, project.MapFolder);
             if (Directory.Exists(project.AssetsFolder))
             {
                 CheckNames("assets", project.AssetsFolder);
@@ -84,7 +84,7 @@ namespace Moonwell.Build
                 }
             }
 
-            using (var info = map.GetInfoFile() ?? throw new BuildException(@"no World Editor map: map\war3map.w3i is missing"))
+            using (var info = map.GetInfoFile() ?? throw new BuildException($@"no World Editor map: {project.MapName}\war3map.w3i is missing"))
             using (var infoStream = info.MpqStream)
             using (var staged = File.Create(Path.Combine(project.StagedFolder, "war3map.w3i")))
             {

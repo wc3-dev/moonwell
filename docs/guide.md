@@ -34,7 +34,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Map.cs` | The map's settings, and the components the game starts with |
 | `Start.cs` | The game's start: makes the Champion and the footmen |
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
-| `map/` | The World Editor map, saved as a folder |
+| `map.w3x/` | The World Editor map, saved as a folder |
 | `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP; a `.looks.csv` lists copies the build makes), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
 | `buildtime/` | Code that runs while the map builds and reads the map's files; make it when you need it ([Code that runs while the map builds](#code-that-runs-while-the-map-builds)) |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
@@ -44,9 +44,14 @@ class by what they inherit. The template keeps one folder per feature, each with
 Don't name one after a group of `Moonwell.Objects` (`Human`, `Items`): with `MyMap.Items` in the project, `Items.X`
 finds that namespace and fails with CS0234.
 
-World Editor is for terrain and placed things: regions, cameras, units, items, trees. Open `map/` in World Editor,
-change it, and save it as a folder again. Objects, triggers and the map's settings are in code; the build replaces the
-saved script.
+World Editor is for terrain and placed things: regions, cameras, units, items, trees. Open `map.w3x/` in World Editor,
+change it and save (Ctrl+S): the save goes into the same folder, and the next build takes it. Objects, triggers and
+the map's settings are in code; the build replaces the saved script.
+
+A project made before 0.20.1 has the folder as `map/`, and still builds. World Editor does not save into a folder of
+that name: it saves a new folder, `map.w3m/`, beside it, which the build does not read. Rename `map/` to `map.w3x/`
+once, and saves go into it. With both there, the build takes `map.w3x/`. A map saved inside the map folder stops the
+build, which names it.
 
 ## The map's settings
 
@@ -3578,7 +3583,7 @@ var wood = Data.Trees.Goal.Count;      // in game code, or in an object's constr
 | `Fail(text)` | Stops the build with that line. Write it about the map: "region Harbor has no buildable ground" |
 | `Report("trees.txt", text)` | Writes a file for you to read into `build\reports\`, a text or a `Picture`. Nothing of it reaches the map |
 
-Build code changes nothing in `map/` or in the built map. To set an object's field from what it works out, give the
+Build code changes nothing in `map.w3x/` or in the built map. To set an object's field from what it works out, give the
 value and read it from `Data` in the object's constructor.
 
 **The map's files.** `Map` hands out each file as the War3Net library parsed it, read the first time it is asked for:
@@ -3820,10 +3825,10 @@ A file in `assets/` goes into the map at the same path: `assets\war3mapImported\
   game runs (`"BTN" + name + ".blp"`) is not seen. A file at one of the game's paths, a grey copy and a model's
   `_portrait` are not listed.
 - The build names every file from `assets/`, and each BLP and grey copy it makes, in the built map's `war3map.imp`,
-  World Editor's list of imported files, after the entries the map in `map/` has there. The game does not read the
+  World Editor's list of imported files, after the entries the map in `map.w3x/` has there. The game does not read the
   list. World Editor does: it shows a green icon for a file the list does not name, and its save drops the file (seen).
   So the built map can be opened in World Editor to look at, with its models and icons. A save there still writes the
-  script anew from the triggers, without the map's code. For the map in `map/`, see `moonwell objects --to-map`
+  script anew from the triggers, without the map's code. For the map in `map.w3x/`, see `moonwell objects --to-map`
   ([The build](#the-build)).
 
 ## The build
@@ -3851,14 +3856,14 @@ ends with 2.
 | Command | What it does |
 |---|---|
 | `moonwell new <name>` | Makes a map project in a new folder of that name, the name being its namespace too, and prints the folder's full path |
-| `moonwell watch` | Builds, then builds again each time a file of the project changes (the code, `assets/`, `map/`), until Ctrl+C; a failed build is shown and the watch goes on |
+| `moonwell watch` | Builds, then builds again each time a file of the project changes (the code, `assets/`, `map.w3x/`), until Ctrl+C; a failed build is shown and the watch goes on |
 | `moonwell watch --run` | The same, starting the game with the map after each build, and closing the game it started before the next |
 | `moonwell clean` | Deletes `build/` |
 | `moonwell objects` | Lists the map's classes of object data, a line each: its id, its kind, the class and the standard object it is based on |
-| `moonwell objects --to-map` | Builds, showing the checklist, then writes the built object files, the files from `assets/` and the list that names them into `map/`, so World Editor lists the objects declared in code and shows their models and icons; close World Editor first |
+| `moonwell objects --to-map` | Builds, showing the checklist, then writes the built object files, the files from `assets/` and the list that names them into `map.w3x/`, so World Editor lists the objects declared in code and shows their models and icons; close World Editor first |
 | `moonwell game find <path>` | Says whether the game has a file, by the storage path it is read from (`moonwell game find Textures\HeroFarseer.blp`). A folder, or a path with `*`, lists the files there (`moonwell game find Units\Orc\HeroTaurenChieftain`) |
 | `moonwell game extract <path>` | Writes the game's file into the current folder, under the name the game stores it by; `--out` names the file or the folder instead. A folder, or a path with `*`, writes every file there at its game path, so `--out assets` puts each where the map would replace it |
-| `moonwell mdx <model>` | Shows a tree of the files a model names (its textures, the models and effects of its emitters) and what those name in turn, each marked `game`, `custom` (the project's `assets/` or `map/`, or beside a model outside a project) or in neither. The model is a file, or a path in the project or the game (`moonwell mdx Units\Human\Footman\Footman.mdx`) |
+| `moonwell mdx <model>` | Shows a tree of the files a model names (its textures, the models and effects of its emitters) and what those name in turn, each marked `game`, `custom` (the project's `assets/` or `map.w3x/`, or beside a model outside a project) or in neither. The model is a file, or a path in the project or the game (`moonwell mdx Units\Human\Footman\Footman.mdx`) |
 
 Each takes the project's folder after the command, as `build` does; `new` takes the name. The `game` commands and
 `mdx` need no project. They take `--mode sd`, `hd` or `de` for the graphics the file is looked up in (Classic when not
@@ -3936,12 +3941,12 @@ build counts nothing, so there such a loop still freezes the game.
 costs the game up to 23 ms, so the file is written at most once a second: the lines of the last second are lost if the
 game closes first. A line longer than 253 characters is split.
 
-To place objects declared in code in World Editor, close World Editor, run `moonwell objects --to-map` and open `map/`
-again. The command builds the map and writes the built object files into `map/`; a build never writes into `map/`. It
-also copies the files from `assets/` there, a PNG as its BLP, and names them in `map\war3map.imp`, so a placed unit
+To place objects declared in code in World Editor, close World Editor, run `moonwell objects --to-map` and open `map.w3x/`
+again. The command builds the map and writes the built object files into `map.w3x/`; a build never writes into `map.w3x/`. It
+also copies the files from `assets/` there, a PNG as its BLP, and names them in `map.w3x\war3map.imp`, so a placed unit
 shows its model and icon in World Editor. Run it again when a new object should be placed or an asset has changed.
-`assets/` stays the place to change a file: the build takes a file from `assets/` over its copy in `map/`. A file
-deleted from `assets/` stays in `map/`, and in the built map, until it is deleted there too or in World Editor's Asset
+`assets/` stays the place to change a file: the build takes a file from `assets/` over its copy in `map.w3x/`. A file
+deleted from `assets/` stays in `map.w3x/`, and in the built map, until it is deleted there too or in World Editor's Asset
 Manager. World Editor reads a map's objects when it opens
 the map, so one left open lists none of the new ones, and its next save puts its own objects back. The objects
 Moonwell adds for itself, such as the dummy that casts for `CastOn`, are left out. The next build keeps the placed

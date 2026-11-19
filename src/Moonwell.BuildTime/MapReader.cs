@@ -100,7 +100,7 @@ namespace Moonwell.BuildTime
         /// <exception cref="BuildFailure">The map has no pathing or ground file, or one cannot be read.</exception>
         public Cells Cells => cells ??= Cells.All(new PathingGrid(PathingMap, Environment));
 
-        /// <summary>The names of every file of the map, folders with <c>\</c>, in name order: those in <c>assets\</c> and those in <c>map\</c>.</summary>
+        /// <summary>The names of every file of the map, folders with <c>\</c>, in name order: those in <c>assets\</c> and those in <c>map.w3x\</c>.</summary>
         public IReadOnlyList<string> Files
         {
             get
@@ -121,7 +121,7 @@ namespace Moonwell.BuildTime
             }
         }
 
-        /// <summary>Whether the map has a file of a name, in <c>assets\</c> or in <c>map\</c>.</summary>
+        /// <summary>Whether the map has a file of a name, in <c>assets\</c> or in <c>map.w3x\</c>.</summary>
         /// <param name="name">The file's name, such as <c>war3map.shd</c> or <c>war3mapImported\Rules.txt</c>.</param>
         public bool Has(string name)
         {

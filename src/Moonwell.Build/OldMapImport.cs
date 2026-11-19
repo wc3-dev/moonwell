@@ -85,7 +85,7 @@ namespace Moonwell.Build
             File.WriteAllText(Path.Combine(project.Folder, "OldScript.cs"), StartCode(project.Name, starts, destructables));
             File.WriteAllText(Path.Combine(project.Folder, "Map.cs"), SettingsCode(project.Name));
 
-            log.WriteLine($"moonwell: imported {Path.GetFileName(source)}: its files are in map, its script ({scriptName}) is lua\\{LibraryName}, started by OldScript.cs");
+            log.WriteLine($"moonwell: imported {Path.GetFileName(source)}: its files are in {project.MapName}, its script ({scriptName}) is lua\\{LibraryName}, started by OldScript.cs");
         }
 
         /// <summary>

@@ -27,10 +27,10 @@ namespace Moonwell.Build
             }
             catch (Exception failure) when (failure is not BuildException)
             {
-                throw new BuildException($@"cannot read the World Editor map in map\: {failure.Message}");
+                throw new BuildException($@"cannot read the World Editor map in {project.MapName}\: {failure.Message}");
             }
 
-            var info = map.Info ?? throw new BuildException(@"no World Editor map: map\war3map.w3i is missing");
+            var info = map.Info ?? throw new BuildException($@"no World Editor map: {project.MapName}\war3map.w3i is missing");
             info.ScriptLanguage = ScriptLanguage.Lua;
             var set = info.GameDataSet;
             var version = info.GameDataVersion;
@@ -61,8 +61,8 @@ namespace Moonwell.Build
                 info.RecommendedPlayers = settings.RecommendedPlayers;
             }
 
-            MapSetup.Apply(map, settings, log);
-            MapSetup.ApplyTiles(map, settings);
+            MapSetup.Apply(map, settings, log, project.MapName);
+            MapSetup.ApplyTiles(map, settings, project.MapName);
 
             return map;
         }

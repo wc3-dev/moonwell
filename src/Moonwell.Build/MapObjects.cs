@@ -92,7 +92,7 @@ namespace Moonwell.Build
         }
 
         // The files from assets/ as the build packed them, and the list that names them, so that World Editor shows a placed
-        // unit's model and icon (decision 278). The grey copies the build makes are left out: one in map/ would stop the build
+        // unit's model and icon (decision 278). The grey copies the build makes are left out: one in the map folder would stop the build
         // making it anew from a changed icon.
         private static void WriteAssets(MapProject project, List<string> written)
         {
@@ -128,7 +128,7 @@ namespace Moonwell.Build
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
-                throw new BuildException($@"cannot write map\{ImportList.FileName}: {failure.Message} (is World Editor using it?)");
+                throw new BuildException($@"cannot write {project.MapName}\{ImportList.FileName}: {failure.Message} (is World Editor using it?)");
             }
 
             if (File.Exists(list) && (before == null || !before.AsSpan().SequenceEqual(File.ReadAllBytes(list))))
@@ -147,7 +147,7 @@ namespace Moonwell.Build
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
-                throw new BuildException($@"cannot write map\{name}: {failure.Message} (is World Editor using it?)");
+                throw new BuildException($@"cannot write {project.MapName}\{name}: {failure.Message} (is World Editor using it?)");
             }
         }
     }

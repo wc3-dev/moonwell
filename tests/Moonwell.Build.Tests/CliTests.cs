@@ -61,8 +61,36 @@ namespace Moonwell.Build.Tests
             var (exitCode, _, error, _) = Run("build", TestFolders.Fixture("NoMap"));
 
             Assert.Equal(1, exitCode);
-            Assert.Contains(@"  error    no World Editor map: map\war3map.w3i is missing", error);
+            Assert.Contains(@"  error    no World Editor map: map.w3x\war3map.w3i is missing", error);
             Assert.EndsWith("✗ Build failed: 1 error", error.TrimEnd());
+        }
+
+        [Fact]
+        public void a_map_saved_inside_the_map_folder_stops_the_build()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            Directory.CreateDirectory(Path.Combine(folder, "map", "map.w3x"));
+            File.Copy(Path.Combine(folder, "map", "war3map.w3i"), Path.Combine(folder, "map", "map.w3x", "war3map.w3i"));
+
+            var (exitCode, _, error, _) = Run("build", folder);
+
+            Assert.Equal(1, exitCode);
+            Assert.Contains(@"  error    map\map.w3x\ holds a second map, saved inside the map's folder; move or delete it", error);
+            Assert.False(Directory.Exists(Path.Combine(folder, "build")));
+        }
+
+        [Fact]
+        public void a_project_with_its_map_in_map_w3x_builds_and_is_named_so()
+        {
+            var folder = folders.TemporaryCopyOfSample();
+            Directory.Move(Path.Combine(folder, "map"), Path.Combine(folder, "map.w3x"));
+
+            var (exitCode, output, error, _) = Run("objects", folder, "--to-map");
+
+            Assert.True(exitCode == 0, error + output);
+            Assert.EndsWith(@"✓ Wrote war3map.w3u, war3mapSkin.w3u, Moonwell\hello.txt, war3map.imp into map.w3x\", output.TrimEnd());
+            Assert.True(File.Exists(Path.Combine(folder, "map.w3x", "war3map.w3u")));
+            Assert.True(File.Exists(Path.Combine(folder, "build", "Sample.w3x")));
         }
 
         [Fact]
@@ -225,9 +253,9 @@ namespace Moonwell.Build.Tests
             Assert.DoesNotContain("MoonwellMap", File.ReadAllText(Path.Combine(folder, "Map.cs")));
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".gitignore")), File.ReadAllBytes(Path.Combine(folder, ".gitignore")));
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".editorconfig")), File.ReadAllBytes(Path.Combine(folder, ".editorconfig")));
-            Assert.Equal(File.ReadAllBytes(Path.Combine(template, "map", "war3map.w3e")), File.ReadAllBytes(Path.Combine(folder, "map", "war3map.w3e")));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(template, "map.w3x", "war3map.w3e")), File.ReadAllBytes(Path.Combine(folder, "map.w3x", "war3map.w3e")));
             Assert.False(Directory.Exists(Path.Combine(folder, ".template.config")));
-            Assert.Equal(Directory.GetFiles(Path.Combine(template, "map")).Length, Directory.GetFiles(Path.Combine(folder, "map")).Length);
+            Assert.Equal(Directory.GetFiles(Path.Combine(template, "map.w3x")).Length, Directory.GetFiles(Path.Combine(folder, "map.w3x")).Length);
         }
 
         [Theory]
