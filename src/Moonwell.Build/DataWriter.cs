@@ -8,7 +8,8 @@ namespace Moonwell.Build
     /// <summary>
     /// Writes <c>Data.g.cs</c> before the compile from the CSV and JSON files in the project's <c>data</c> folder (decision 259):
     /// the class <c>Moonwell.Data</c>, with a class for each file that object constructors and game code read
-    /// (<c>Data.Abilities.Smite.Damage</c>, <c>Data.Waves.All</c>), so a wrong name is a compile error.
+    /// (<c>Data.Abilities.Smite.Damage</c>, <c>Data.Waves.All</c>), so a wrong name is a compile error. What the map's build
+    /// code gave (<see cref="BuildTimeCode"/>, decision 372) is written the same way, each give as a JSON file of its name.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -41,7 +42,9 @@ namespace Moonwell.Build
                     .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
                     .ToList()
                 : new List<string>();
-            if (files.Count == 0)
+            // What the map's build code gave (decision 372): each give a JSON file of its name, typed as one in data\ is.
+            var gives = BuildTimeCode.GiveFiles(project);
+            if (files.Count == 0 && gives.Count == 0)
             {
                 if (File.Exists(path))
                 {
@@ -59,10 +62,11 @@ namespace Moonwell.Build
             text.Append("    public static class Data\n    {\n");
             var made = new Dictionary<string, string>(StringComparer.Ordinal);
             var first = true;
-            foreach (var file in files)
+            foreach (var file in files.Concat(gives))
             {
-                var shown = "data\\" + Path.GetFileName(file);
-                var name = Name(Path.GetFileNameWithoutExtension(file), shown, "its file name");
+                var given = gives.Contains(file);
+                var shown = given ? $"the build code's Give(\"{Path.GetFileNameWithoutExtension(file)}\")" : "data\\" + Path.GetFileName(file);
+                var name = Name(Path.GetFileNameWithoutExtension(file), shown, given ? "its name" : "its file name");
                 if (made.TryGetValue(name, out var other))
                 {
                     throw new BuildException($"{other} and {shown} both make Data.{name}; rename one");
@@ -78,7 +82,7 @@ namespace Moonwell.Build
                 }
                 else
                 {
-                    Json(lines, name, shown, ReadText(file, shown));
+                    Json(lines, name, shown, ReadText(file, shown), given);
                 }
 
                 text.Append(lines);
@@ -235,13 +239,14 @@ namespace Moonwell.Build
         }
 
         // A JSON file: an object as a static class of its keys, a list as All.
-        private static void Json(Lines lines, string name, string shown, string text)
+        // A give keeps each number's type (typed): one written with a decimal point is a float even when its value is whole.
+        private static void Json(Lines lines, string name, string shown, string text, bool typed)
         {
             object? root;
             try
             {
                 using var document = JsonDocument.Parse(text, new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
-                root = Value(document.RootElement);
+                root = Value(document.RootElement, typed);
             }
             catch (JsonException failure)
             {
@@ -352,23 +357,29 @@ namespace Moonwell.Build
         }
 
         // A JSON value as long, double, bool, string, a list, Fields or null.
-        private static object? Value(JsonElement element)
+        private static object? Value(JsonElement element, bool typed)
         {
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
+                    // A give's empty list, written with a sample of its items' type to read the type from.
+                    if (typed && element.EnumerateObject().Select(property => property.Name).SequenceEqual(new[] { Moonwell.BuildTime.BuildStep.EmptyList }))
+                    {
+                        return new EmptyList(Value(element.EnumerateObject().First().Value, typed));
+                    }
+
                     var fields = new Fields();
                     foreach (var property in element.EnumerateObject())
                     {
-                        fields.Add((property.Name, Value(property.Value)));
+                        fields.Add((property.Name, Value(property.Value, typed)));
                     }
 
                     return fields;
                 case JsonValueKind.Array:
-                    return element.EnumerateArray().Select(Value).ToList();
+                    return element.EnumerateArray().Select(item => Value(item, typed)).ToList();
                 case JsonValueKind.Number:
                     var number = element.GetDouble();
-                    return Whole(number) ? (object)(long)number : number;
+                    return (typed ? element.GetRawText().IndexOfAny(new[] { '.', 'e', 'E' }) < 0 : Whole(number)) ? (object)(long)number : number;
                 case JsonValueKind.String:
                     return element.GetString();
                 case JsonValueKind.True:
@@ -395,6 +406,8 @@ namespace Moonwell.Build
                     return new Scalar(ScalarKind.Text);
                 case List<object?> items:
                     return new ListShape(items.Aggregate<object?, Shape?>(null, (merged, item) => Merge(merged, ShapeOf(item, shown, where), shown, where)));
+                case EmptyList empty:
+                    return new ListShape(ShapeOf(empty.Sample, shown, where));
                 case Fields fields:
                     var shape = new ObjectShape(new List<FieldShape>());
                     foreach (var (key, inner) in fields)
@@ -552,6 +565,9 @@ namespace Moonwell.Build
         private sealed record FieldShape(string Name, string Key, Shape? Shape);
 
         private sealed record Column(string Name, string? Forced);
+
+        /// <summary>An empty list a build step gave, with a sample of what its items would hold.</summary>
+        private sealed record EmptyList(object? Sample);
 
         /// <summary>A JSON object's keys and values, in order.</summary>
         private sealed class Fields : List<(string Key, object? Value)>

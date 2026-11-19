@@ -335,6 +335,67 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void package_carries_the_libraries_build_code_is_written_against()
+        {
+            using var archive = ZipFile.OpenRead(packed.MoonwellPackage);
+            var names = archive.Entries.Select(entry => entry.FullName).Where(name => name.StartsWith("buildtime/", StringComparison.Ordinal)).ToList();
+
+            Assert.Contains("buildtime/Moonwell.BuildTime.dll", names);
+            Assert.Contains("buildtime/Moonwell.BuildTime.xml", names);
+            Assert.Contains("buildtime/War3Net.Build.Core.dll", names);
+            Assert.Contains("buildtime/War3Net.Common.dll", names);
+            Assert.All(names, name => Assert.True(name.StartsWith("buildtime/Moonwell.BuildTime.", StringComparison.Ordinal) || name.StartsWith("buildtime/War3Net.", StringComparison.Ordinal), name));
+        }
+
+        [Fact]
+        public void packaged_map_with_build_code_builds_and_an_editors_build_knows_its_types()
+        {
+            var copy = PackagedSample(false, false);
+            Directory.CreateDirectory(Path.Combine(copy, "buildtime"));
+            File.WriteAllText(Path.Combine(copy, "buildtime", "Ground.cs"), """
+                using System.Linq;
+                using Moonwell.BuildTime;
+                using War3Net.Build.Environment;
+
+                namespace Sample.BuildTime
+                {
+                    public sealed class Ground : BuildStep
+                    {
+                        public const int Limit = 5;
+
+                        public override void Run()
+                        {
+                            MapPathingMap pathing = Map.PathingMap;
+                            Give("Ground", new { WalkableCells = Map.Cells.Count(cell => cell.CanWalk), Columns = (int)pathing.Width });
+                        }
+                    }
+                }
+                """);
+            File.WriteAllText(Path.Combine(copy, "Ground.cs"), "namespace Sample\n{\n    public static class GroundRead\n    {\n        public static int Walkable() => Moonwell.Data.Ground.WalkableCells;\n    }\n}\n");
+
+            // The tool's build: the build code runs, the game reads its result, and no build code is in the game.
+            var log = new StringWriter();
+            var archive = MapBuild.Run(copy, Packed(), log);
+            Assert.True(File.Exists(archive), log.ToString());
+            var script = File.ReadAllText(Path.Combine(copy, "build", "Sample", "war3map.lua"));
+            Assert.Contains("WalkableCells", script);
+            Assert.DoesNotContain("PathingMap", script);
+            Assert.DoesNotContain(Directory.GetFiles(Path.Combine(copy, "bin"), "*.dll", SearchOption.AllDirectories), path => Path.GetFileName(path).StartsWith("War3Net", StringComparison.Ordinal) || Path.GetFileName(path) == "Moonwell.BuildTime.dll");
+
+            // An editor's build, a plain dotnet build: the folder is in the project and compiles against the package's libraries.
+            PackedMoonwell.Dotnet(copy, "build", "-nologo", "--disable-build-servers");
+
+            // There the rule marks game code that names build code, which the tool's own compile stops on too.
+            File.WriteAllText(Path.Combine(copy, "Crossing.cs"), "namespace Sample\n{\n    public static class Crossing\n    {\n        public static int Limit() => Sample.BuildTime.Ground.Limit;\n    }\n}\n");
+            var editor = Assert.Throws<InvalidOperationException>(() => PackedMoonwell.Dotnet(copy, "build", "-nologo", "--disable-build-servers"));
+            Assert.Contains("Crossing.cs(5,55): error MW0058: 'Ground' is build code, which never reaches the game", editor.Message);
+
+            var tool = new StringWriter();
+            Assert.Throws<BuildException>(() => MapBuild.Run(copy, Packed(), tool));
+            Assert.Matches(@"Crossing\.cs\(5,\d+\): error CS\d+", tool.ToString());
+        }
+
+        [Fact]
         public void packaged_sample_runs_the_analyzer()
         {
             var copy = PackagedSample(false, false);

@@ -11,6 +11,8 @@ namespace Moonwell.Build
         // the project's path in brackets after the message is left out.
         private static readonly Regex MovedName = new Regex(@"error CS0234:[^\[]*\W(AttackType|DefenseType)\W[^\[]*\WMoonwell\.Objects\W", RegexOptions.CultureInvariant);
 
+        private const string GameOnly = "-p:MoonwellGameOnly=true";
+
         // CS0246 names a type that binds to nothing, such as AttackType in a file with only using Moonwell.Objects.
         private static readonly Regex UnboundName = new Regex(@"error CS0246:[^\[]*\W(AttackType|DefenseType)\W", RegexOptions.CultureInvariant);
 
@@ -30,7 +32,9 @@ namespace Moonwell.Build
 
             // One MSBuild process (-m:1), compiling on dotnet's compiler server: a map is one project, or a few that build in turn,
             // and each worker process MSBuild would start, or a compiler started cold, costs more than the build it helps with.
-            var build = Dotnet(project, new[] { "build", project.ProjectFile, "-c", configuration, "-nologo", "-m:1" }, log, written.Add);
+            // MoonwellGameOnly leaves the map's build code (buildtime\) out of the compile, as Moonwell.targets reads it: the game's
+            // assembly holds game code only. An editor's own build has no such property, so it shows build code its types.
+            var build = Dotnet(project, new[] { "build", project.ProjectFile, "-c", configuration, "-nologo", "-m:1", GameOnly }, log, written.Add);
             if (build != 0)
             {
                 var hints = MovedHints(written);
@@ -40,7 +44,7 @@ namespace Moonwell.Build
             // AddImplicitDefineConstants adds the SDK's symbols (NET, NET10_0_OR_GREATER) to DefineConstants, as the compile does.
             var captured = new StringWriter();
             // NoWarn, the two analyzer switches and the analyzer config files are what Silenced lists.
-            var query = Dotnet(project, new[] { "msbuild", project.ProjectFile, "-t:AddImplicitDefineConstants", "-getProperty:TargetPath", "-getProperty:DefineConstants", "-getProperty:NoWarn", "-getProperty:RunAnalyzers", "-getProperty:RunAnalyzersDuringBuild", "-getItem:Compile", "-getItem:EditorConfigFiles", "-p:Configuration=" + configuration, "--disable-build-servers" }, captured);
+            var query = Dotnet(project, new[] { "msbuild", project.ProjectFile, "-t:AddImplicitDefineConstants", "-getProperty:TargetPath", "-getProperty:DefineConstants", "-getProperty:NoWarn", "-getProperty:RunAnalyzers", "-getProperty:RunAnalyzersDuringBuild", "-getItem:Compile", "-getItem:EditorConfigFiles", "-p:Configuration=" + configuration, GameOnly, "--disable-build-servers" }, captured);
             var text = captured.ToString();
             var start = text.IndexOf('{');
             if (query != 0 || start < 0)

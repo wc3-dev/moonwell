@@ -329,6 +329,18 @@ public static class Rules
     /// <summary>The rules for what only the build's code does.</summary>
     public static ImmutableArray<DiagnosticDescriptor> BuildOnly { get; } = ImmutableArray.Create(BuildOnlyMember, NewOfGameObject);
 
+    public static readonly DiagnosticDescriptor BuildTimeLine = new(
+        "MW0058",
+        "Build code and game code named across the line between them",
+        "'{0}' is {1}",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "The C# files in a map project's buildtime folder are build code: the moonwell tool compiles them on their own and runs them on .NET while the map builds, before the game code is compiled, and they never reach the game's Lua. So build code cannot name game code (Moonwell's game classes and the map's own, Placed and Data among them), which is not compiled yet when it runs, and game code cannot name build code (a class in buildtime, BuildStep, the map reader, War3Net's types), which is not in the game. Build code hands its results over with Give, and game code reads them from Data. The build's own two compiles stop on a crossing either way; the rule shows it in the editor, where both are one project.");
+
+    /// <summary>The rule for the line between a map's build code and its game code.</summary>
+    public static ImmutableArray<DiagnosticDescriptor> BuildTime { get; } = ImmutableArray.Create(BuildTimeLine);
+
     public static readonly DiagnosticDescriptor LiveInDeclaration = new(
         "MW0012",
         "The game in a declared class's constructor",

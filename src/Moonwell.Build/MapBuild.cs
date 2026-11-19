@@ -79,6 +79,9 @@ namespace Moonwell.Build
             PlaceNames.Check(project, "Destructable.Named", PlacedWriter.DestructableNames(project, placed), "placed destructable");
             PlaceNames.Check(project, "PlacedSound.Named", PlacedWriter.SoundNames(placed), "sound");
 
+            // The map's own build code runs before its game code compiles: what it gives is written into Data with the files in data\.
+            BuildTimeCode.Run(project, options, log);
+
             // Data and the looks' names are written before the compile too, from the CSV and JSON files in data\ and the .looks.csv files in assets\.
             DataWriter.Write(project);
             LookFiles.WriteNames(project);

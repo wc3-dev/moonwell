@@ -23,6 +23,8 @@
     <ProjectReference Include="..\..\src\Moonwell.AI\Moonwell.AI.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.AI.Combat\Moonwell.AI.Combat.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Areas\Moonwell.Areas.csproj" />
+    <!-- What a map's build code is written against, for the rule that keeps it apart from game code. -->
+    <ProjectReference Include="..\..\src\Moonwell.BuildTime\Moonwell.BuildTime.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Damage\Moonwell.Damage.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Input\Moonwell.Input.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Frames\Moonwell.Frames.csproj" />

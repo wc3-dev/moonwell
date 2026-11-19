@@ -27,18 +27,18 @@ public sealed class SyntaxAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(InterfaceMember,
+        context.RegisterGameSyntaxNodeAction(InterfaceMember,
             SyntaxKind.MethodDeclaration, SyntaxKind.PropertyDeclaration, SyntaxKind.OperatorDeclaration, SyntaxKind.ConversionOperatorDeclaration,
             SyntaxKind.EventDeclaration, SyntaxKind.EventFieldDeclaration);
-        context.RegisterSyntaxNodeAction(TwoConstructions, SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration);
-        context.RegisterSyntaxNodeAction(RefType, SyntaxKind.RefType);
-        context.RegisterSyntaxNodeAction(RefLocal, SyntaxKind.RefExpression);
-        context.RegisterOperationAction(Boxed, OperationKind.Conversion);
-        context.RegisterSyntaxNodeAction(Name, SyntaxKind.IdentifierName, SyntaxKind.GenericName);
-        context.RegisterSyntaxNodeAction(Await, SyntaxKind.AwaitExpression);
-        context.RegisterSyntaxNodeAction(AwaitStatement, SyntaxKind.ForEachStatement, SyntaxKind.ForEachVariableStatement, SyntaxKind.UsingStatement, SyntaxKind.LocalDeclarationStatement);
-        context.RegisterSyntaxNodeAction(Pointer, SyntaxKind.PointerType);
-        context.RegisterSyntaxNodeAction(EnumInvocation, SyntaxKind.InvocationExpression);
+        context.RegisterGameSyntaxNodeAction(TwoConstructions, SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration);
+        context.RegisterGameSyntaxNodeAction(RefType, SyntaxKind.RefType);
+        context.RegisterGameSyntaxNodeAction(RefLocal, SyntaxKind.RefExpression);
+        context.RegisterGameOperationAction(Boxed, OperationKind.Conversion);
+        context.RegisterGameSyntaxNodeAction(Name, SyntaxKind.IdentifierName, SyntaxKind.GenericName);
+        context.RegisterGameSyntaxNodeAction(Await, SyntaxKind.AwaitExpression);
+        context.RegisterGameSyntaxNodeAction(AwaitStatement, SyntaxKind.ForEachStatement, SyntaxKind.ForEachVariableStatement, SyntaxKind.UsingStatement, SyntaxKind.LocalDeclarationStatement);
+        context.RegisterGameSyntaxNodeAction(Pointer, SyntaxKind.PointerType);
+        context.RegisterGameSyntaxNodeAction(EnumInvocation, SyntaxKind.InvocationExpression);
     }
 
     // ---- MW0023 ----

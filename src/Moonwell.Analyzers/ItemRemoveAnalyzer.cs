@@ -20,7 +20,7 @@ public sealed class ItemRemoveAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(Call, SyntaxKind.InvocationExpression);
+        context.RegisterGameSyntaxNodeAction(Call, SyntaxKind.InvocationExpression);
     }
 
     private static void Call(SyntaxNodeAnalysisContext context)

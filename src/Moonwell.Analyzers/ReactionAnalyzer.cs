@@ -120,10 +120,10 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
             }
 
             var checker = new Checker(families, unit, unitComponent, mapComponent);
-            start.RegisterSymbolAction(checker.Check, SymbolKind.NamedType);
-            start.RegisterSymbolAction(checker.CheckHidden, SymbolKind.Method);
-            start.RegisterOperationAction(checker.CheckCall, OperationKind.Invocation);
-            start.RegisterOperationAction(checker.CheckReference, OperationKind.MethodReference);
+            start.RegisterGameSymbolAction(checker.Check, SymbolKind.NamedType);
+            start.RegisterGameSymbolAction(checker.CheckHidden, SymbolKind.Method);
+            start.RegisterGameOperationAction(checker.CheckCall, OperationKind.Invocation);
+            start.RegisterGameOperationAction(checker.CheckReference, OperationKind.MethodReference);
         });
     }
 
