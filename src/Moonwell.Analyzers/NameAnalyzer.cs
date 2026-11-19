@@ -48,9 +48,9 @@ public sealed class NameAnalyzer : DiagnosticAnalyzer
 
             var moonwell = start.Compilation.SourceModule.ReferencedAssemblySymbols.Where(IsMoonwell).ToList();
             var checker = new Checker(natives, moonwell);
-            start.RegisterSyntaxNodeAction(checker.Namespace, SyntaxKind.NamespaceDeclaration, SyntaxKind.FileScopedNamespaceDeclaration);
-            start.RegisterSymbolAction(checker.Type, SymbolKind.NamedType);
-            start.RegisterOperationAction(checker.Call, OperationKind.Invocation);
+            start.RegisterGameSyntaxNodeAction(checker.Namespace, SyntaxKind.NamespaceDeclaration, SyntaxKind.FileScopedNamespaceDeclaration);
+            start.RegisterGameSymbolAction(checker.Type, SymbolKind.NamedType);
+            start.RegisterGameOperationAction(checker.Call, OperationKind.Invocation);
         });
     }
 

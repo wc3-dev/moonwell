@@ -33,10 +33,10 @@ public sealed class SpellBuffAnalyzer : DiagnosticAnalyzer
             var listed = new ConcurrentDictionary<INamedTypeSymbol, bool>(SymbolEqualityComparer.Default);
             var found = new ConcurrentBag<(INamedTypeSymbol Type, Location Location, string Message)>();
             var set = new ConcurrentBag<(INamedTypeSymbol Holder, Location Location, string Property)>();
-            start.RegisterOperationAction(operation => Called(operation, listed, found), OperationKind.Invocation);
-            start.RegisterOperationAction(operation => Assigned(operation, set),
+            start.RegisterGameOperationAction(operation => Called(operation, listed, found), OperationKind.Invocation);
+            start.RegisterGameOperationAction(operation => Assigned(operation, set),
                 OperationKind.SimpleAssignment, OperationKind.CompoundAssignment, OperationKind.CoalesceAssignment, OperationKind.DeconstructionAssignment);
-            start.RegisterSymbolAction(symbol => Declared(symbol, listed, found), SymbolKind.NamedType);
+            start.RegisterGameSymbolAction(symbol => Declared(symbol, listed, found), SymbolKind.NamedType);
             start.RegisterCompilationEndAction(end =>
             {
                 foreach (var one in found)

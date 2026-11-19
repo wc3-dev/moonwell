@@ -33,8 +33,8 @@ public sealed class FramePartAnalyzer : DiagnosticAnalyzer
             // A field may be set in one file and used in another, so the calls on a local or field are reported at the end.
             var holds = new ConcurrentDictionary<ISymbol, string>(SymbolEqualityComparer.Default);
             var calls = new ConcurrentBag<(IInvocationOperation Call, ISymbol Held)>();
-            start.RegisterOperationAction(operation => Called(operation, calls), OperationKind.Invocation);
-            start.RegisterOperationAction(operation => Kept(operation, holds),
+            start.RegisterGameOperationAction(operation => Called(operation, calls), OperationKind.Invocation);
+            start.RegisterGameOperationAction(operation => Kept(operation, holds),
                 OperationKind.SimpleAssignment, OperationKind.VariableDeclarator, OperationKind.FieldInitializer);
             start.RegisterCompilationEndAction(end =>
             {

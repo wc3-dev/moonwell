@@ -40,7 +40,7 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
             // Which classes are parts is known once every save class is seen, so the check runs when the analysis ends.
             var types = new ConcurrentBag<INamedTypeSymbol>();
             // The code the build writes, in Moonwell.Generated, is its own.
-            start.RegisterSymbolAction(symbol =>
+            start.RegisterGameSymbolAction(symbol =>
             {
                 if (symbol.Symbol.ContainingNamespace?.ToDisplayString() != "Moonwell.Generated")
                 {
