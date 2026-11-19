@@ -67,6 +67,7 @@ namespace Moonwell.Build
         private static string Build(string path, BuildOptions options, TextWriter log)
         {
             var project = MapProject.Find(path);
+            project.CheckNoMapInside();
             log.WriteLine($"moonwell: {project.Name} ({(options.Release ? "release" : "development")} build)");
             using var held = BuildLock.Take(project, log);
 

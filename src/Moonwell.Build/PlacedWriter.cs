@@ -43,7 +43,7 @@ namespace Moonwell.Build
             }
             catch (Exception failure) when (failure is not BuildException)
             {
-                throw new BuildException($@"cannot read the World Editor map in map\: {failure.Message}");
+                throw new BuildException($@"cannot read the World Editor map in {project.MapName}\: {failure.Message}");
             }
         }
 

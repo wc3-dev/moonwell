@@ -61,7 +61,7 @@ namespace Moonwell.Build
             }
             catch (Exception failure) when (failure is EndOfStreamException or InvalidDataException or ArgumentException)
             {
-                throw new BuildException($@"map\{FileName} cannot be read ({failure.Message}); save the map in World Editor to write it anew");
+                throw new BuildException($@"{Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(path)))}\{FileName} cannot be read ({failure.Message}); save the map in World Editor to write it anew");
             }
         }
 

@@ -24,7 +24,8 @@ namespace Moonwell.Build
         /// <param name="map">The opened map, with its info file and its placed units.</param>
         /// <param name="settings">The map class's settings.</param>
         /// <param name="log">The build log; a slot with no start location placed in World Editor is noted in it.</param>
-        public static void Apply(War3Net.Build.Map map, MapSettings settings, TextWriter log)
+        /// <param name="mapName">The map folder's name, for the note.</param>
+        public static void Apply(War3Net.Build.Map map, MapSettings settings, TextWriter log, string mapName = "map")
         {
             var slots = settings.Slots;
             var teams = settings.Teams;
@@ -50,7 +51,7 @@ namespace Moonwell.Build
                 if (!starts.TryGetValue(slot.Number, out var start))
                 {
                     start = middle;
-                    log.WriteLine($"note: slot {slot.Number} has no start location in map\\, so it starts in the map's middle; place one for Player {slot.Number + 1} in World Editor");
+                    log.WriteLine($"note: slot {slot.Number} has no start location in {mapName}\\, so it starts in the map's middle; place one for Player {slot.Number + 1} in World Editor");
                 }
 
                 info.Players.Add(new PlayerData
@@ -101,8 +102,9 @@ namespace Moonwell.Build
         /// </summary>
         /// <param name="map">The opened map, with its ground.</param>
         /// <param name="settings">The map class's settings.</param>
+        /// <param name="mapName">The map folder's name, for the errors.</param>
         /// <exception cref="BuildException">A declared number is no ground tile, or the list would pass the game's limit.</exception>
-        public static void ApplyTiles(War3Net.Build.Map map, MapSettings settings)
+        public static void ApplyTiles(War3Net.Build.Map map, MapSettings settings, string mapName = "map")
         {
             var declared = settings.Tiles;
             if (declared == null || declared.Count == 0)
@@ -110,7 +112,7 @@ namespace Moonwell.Build
                 return;
             }
 
-            var ground = map.Environment ?? throw new BuildException($@"{settings.TypeName}.Tiles: the map has no map\war3map.w3e to add them to");
+            var ground = map.Environment ?? throw new BuildException($@"{settings.TypeName}.Tiles: the map has no {mapName}\war3map.w3e to add them to");
             var types = ground.TerrainTypes;
             var had = types.Count;
             foreach (var id in declared)
@@ -135,7 +137,7 @@ namespace Moonwell.Build
             {
                 var added = string.Join(", ", types.Skip(had).Select(type => Rawcodes.TextOf((int)type)));
                 throw new BuildException(
-                    $@"{settings.TypeName}.Tiles: the map's tile list would hold {types.Count} tiles, past the {limit} its w3e format holds: {had} from map\war3map.w3e and {types.Count - had} declared ({added}); declare fewer, or remove tiles the map does not use in World Editor");
+                    $@"{settings.TypeName}.Tiles: the map's tile list would hold {types.Count} tiles, past the {limit} its w3e format holds: {had} from {mapName}\war3map.w3e and {types.Count - had} declared ({added}); declare fewer, or remove tiles the map does not use in World Editor");
             }
         }
     }
