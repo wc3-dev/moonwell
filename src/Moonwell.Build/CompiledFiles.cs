@@ -69,8 +69,8 @@ namespace Moonwell.Build
         }
 
         /// <summary>
-        /// Every <c>*.cs</c> under a folder but the top-level <c>bin</c> and <c>obj</c> (their files are the compiler's own) and the
-        /// folders given.
+        /// Every <c>*.cs</c> under a folder but the top-level <c>bin</c> and <c>obj</c> (their files are the compiler's own), the
+        /// top-level <c>buildtime</c> (the map's build code, which is no game code) and the folders given.
         /// </summary>
         /// <param name="folder">The project folder, or a copy of it.</param>
         /// <param name="skipped">Full paths of folders under it to leave out, such as the build folder.</param>
@@ -88,7 +88,7 @@ namespace Moonwell.Build
             foreach (var sub in Directory.EnumerateDirectories(folder))
             {
                 var name = Path.GetFileName(sub);
-                if (name.Equals("bin", StringComparison.OrdinalIgnoreCase) || name.Equals("obj", StringComparison.OrdinalIgnoreCase) || Skipped(sub))
+                if (name.Equals("bin", StringComparison.OrdinalIgnoreCase) || name.Equals("obj", StringComparison.OrdinalIgnoreCase) || name.Equals(BuildTimeCode.FolderName, StringComparison.OrdinalIgnoreCase) || Skipped(sub))
                 {
                     continue;
                 }

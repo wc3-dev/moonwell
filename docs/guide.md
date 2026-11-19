@@ -36,6 +36,7 @@ three footmen to fight. Learn Smite and cast it: the screen names the target. Ea
 | `Heroes/` | One feature: the Champion, its spell and its kill counter |
 | `map/` | The World Editor map, saved as a folder |
 | `assets/` | Files packed into the map at the same paths (models, icons, sounds; a PNG becomes a BLP; a `.looks.csv` lists copies the build makes), named with ASCII characters only; make it when you need it ([Assets](#assets)) |
+| `buildtime/` | Code that runs while the map builds and reads the map's files; make it when you need it ([Code that runs while the map builds](#code-that-runs-while-the-map-builds)) |
 | `build/` | What the build writes: the staged map and `MyMap.w3x`; do not commit it |
 
 Code can sit in any folder and any namespace not named like a native (MW0044): the build finds objects and the map
@@ -3523,6 +3524,125 @@ foreach (var wave in Data.Waves.All) { ... }            // in game code: wave.Un
   key or row name it can't make one from, at two that make the same, and at a CSV line with more values than columns.
   Only the files directly in `data` are read.
 
+## Code that runs while the map builds
+
+C# files in the project's `buildtime` folder are build code. `moonwell build` compiles and runs them on .NET before it
+compiles the game code. Build code reads the map's files, works something out, and hands the result to the game by
+name, or stops the build. None of it reaches the game.
+
+A step is a class that inherits `BuildStep`. Every step runs once a build, in the order of their names.
+
+```csharp
+// buildtime/CreepPath.cs
+using System.Collections.Generic;
+using System.Linq;
+using Moonwell.BuildTime;
+using War3Net.Common.Extensions;
+
+public sealed class CreepPath : BuildStep
+{
+    public override void Run()
+    {
+        // The build fails unless the creeps can walk from the spawn to the goal.
+        var spawn = Map.Region("Spawn");
+        var goal = Map.Region("Goal");
+        var reached = Map.Cells.Where(cell => cell.CanWalk).FloodFrom(spawn.CenterX, spawn.CenterY);
+        if (!reached.Contains(goal.CenterX, goal.CenterY))
+        {
+            Fail("the creeps cannot walk from Spawn to Goal");
+        }
+
+        // The game gets the trees in each region, by the region's name.
+        var tree = "LTlt".FromRawcode();
+        var trees = new Dictionary<string, object>();
+        foreach (var region in Map.Regions.Regions)
+        {
+            var cells = Map.Cells.In(region);
+            trees[region.Name] = new { Count = Map.Doodads.Doodads.Count(doodad => doodad.TypeId == tree && cells.Contains(doodad.Position.X, doodad.Position.Y)) };
+        }
+
+        Give("Trees", trees);
+    }
+}
+```
+
+```csharp
+var wood = Data.Trees.Goal.Count;      // in game code, or in an object's constructor
+```
+
+| In a step | What it does |
+|---|---|
+| `Map` | Reads the map's files |
+| `Give("Trees", value)` | Hands a value to the game: the build writes it into `Data`, as it does a file in `data` ([Data files](#data-files)), so it is `Data.Trees` |
+| `Warn(text)` | Prints a warning; the build goes on |
+| `Fail(text)` | Stops the build with that line. Write it about the map: "region Harbor has no buildable ground" |
+| `Report("trees.txt", text)` | Writes a file for you to read into `build\reports\`, a text or a `Picture`. Nothing of it reaches the map |
+
+Build code changes nothing in `map/` or in the built map. To set an object's field from what it works out, give the
+value and read it from `Data` in the object's constructor.
+
+**The map's files.** `Map` hands out each file as the War3Net library parsed it, read the first time it is asked for:
+
+| Member | The file |
+|---|---|
+| `Map.Info` | `war3map.w3i`: the map's name, players, size and playable area |
+| `Map.Environment` | `war3map.w3e`: each corner's height, cliff level, water and tile |
+| `Map.PathingMap` | `war3map.wpm`: a byte for each 32 by 32 cell, row by row from the bottom left |
+| `Map.Regions`, `Map.Region("Spawn")` | `war3map.w3r`: every region, or the one of a name |
+| `Map.Cameras`, `Map.Sounds` | `war3map.w3c` and `war3map.w3s` |
+| `Map.Doodads` | `war3map.doo`: placed doodads and destructables, trees among them |
+| `Map.Units` | `war3mapUnits.doo`: placed units, buildings and items, and the start locations |
+| `Map.ImportedFiles`, `Map.TriggerStrings` | `war3map.imp` and `war3map.wts` |
+| `Map.ShadowMap`, `Map.PreviewIcons` | `war3map.shd` and `war3map.mmp` |
+| `Map.Bytes(name)`, `Map.Has(name)`, `Map.Files` | Any file by its name, as its bytes |
+
+- The files are read as World Editor saved them. What the map's `Map` class sets (the name, the slots, the tiles) is
+  not in them yet.
+- A file in `assets/` stands in for the map's file of that name, as it does in the built map.
+- A map with no regions, cameras, sounds, doodads or placed units gives an empty list, not null. The build stops when
+  the map has no info, ground or pathing file.
+- `Map.Region` with a name the map does not have stops the build and lists the regions it has.
+- An id such as a tree's `LTlt` is a number in these files: `"LTlt".FromRawcode()`, with `using War3Net.Common.Extensions`.
+
+**Cells.** `Map.Cells` is every pathing cell of the map, found by world coordinates. Each call gives a new set:
+
+| Call | What it gives |
+|---|---|
+| `cells.In(region)`, `cells.In(left, bottom, right, top)` | The cells whose centres are inside |
+| `cells.Where(cell => cell.CanBuild)` | The cells that pass a test: `CanWalk`, `CanBuild`, `CanFly`, `IsWater`, `IsBlighted`; a cell also has `X`, `Y`, `Column`, `Row` and `Flags` |
+| `cells.Count`, `cells.IsEmpty`, `cells.Contains(x, y)` | How many, and whether a point's cell is one |
+| `a.And(b)`, `a.Or(b)`, `a.Except(b)` | The cells in both, in either, and in the first only |
+| `cells.FloodFrom(x, y)` | The cells joined to a point, stepping left, right, up and down inside the set |
+| `water.Distances()` | How far every cell of the map is from the set: `toWater.At(x, y)`, `toWater[cell]` |
+| `cells.DistanceTo(water)` | The shortest straight line between two sets, centre to centre |
+| `cells.LargestRectangle()` | The largest rectangle of cells that fits in the set: `Columns`, `Rows`, and its sides in world coordinates |
+
+- A cell is 32 by 32, so a 128 tile is 16 cells and a building's footprint of 4 by 4 is 128 across.
+- The pathing file holds the ground, cliffs, water, doodads and bridges. Trees and other destructables, and placed
+  units and buildings, are not in it: the game adds them while it runs. Take them from `Map.Doodads` and `Map.Units`.
+- `new Picture(Map).Fill(water, Color.Blue)` draws sets of cells, a pixel a cell, for `Report("water.png", picture)`.
+
+**What can be given.** A value is anything `System.Text.Json` writes: an anonymous object, a record, a list, a
+dictionary by name, a number, a text.
+
+- An object's properties and a dictionary's keys become members, so a name can come from the map: a wrong region name
+  in the game code is then a compile error. Names are made as a data file's are (`Old Town` is `OldTown`).
+- A number keeps its type: an `int` is whole, and a `float` is a `float` even when its value is whole. An empty list
+  keeps its items' type, unless it is a list of `object`.
+- Give each name once. A give and a file in `data` that make the same name stop the build.
+- Give what the game needs, not a grid of every cell: what is given goes into the map's script.
+
+**Build code and game code are kept apart.** Build code uses .NET in full, `Moonwell.BuildTime` and War3Net. It cannot
+name the game's classes (`Unit`, `Terrain`, your own, `Placed` and `Data` among them), which are not compiled yet when
+it runs, and game code cannot name build code. Either is error MW0058 in the editor and stops the build. The rules
+about the game and its Lua do not apply in `buildtime`: a `Random`, the clock and files are fine there. Reload the
+project in the editor after making the folder, so that it knows `BuildStep`.
+
+**When it runs.** The build runs the steps when a file under `buildtime`, `map`, `assets` or `data` has changed since
+the last run, and otherwise keeps the last run's results and prints its warnings again. `moonwell watch` builds again
+on a change to build code as on any other. Write steps so that the same files give the same result: one that reads
+the clock or the network gives a map that differs from build to build.
+
 ## Lua libraries
 
 A Lua library from Hive or elsewhere goes in the project's `lua` folder as a `.lua` file. The build links every one
@@ -3715,7 +3835,7 @@ A second build of the same map started while one runs (a `watch` and a `run`, sa
 says so.
 
 A build shows a checklist of its steps (Compile C#, Read objects, Compile to Lua, Pack the map), with a spinner on the
-running one and each one's time. The build's notes show under the step that made them. Errors and warnings show
+running one and each one's time. A map with build code has one more step first, Run build code. The build's notes show under the step that made them. Errors and warnings show
 once each, with the file and line an editor jumps to, and those from the Lua step read like the C# compiler's. A
 failed build's errors go to the error output. `--verbose` adds every line of the build, `dotnet build`'s among them.
 Output that is no terminal (CI, a file), or a terminal with `NO_COLOR` set, gets the same checklist as plain text.

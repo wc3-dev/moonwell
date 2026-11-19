@@ -16,4 +16,18 @@
     <Compile Include="build/generated/LuaLibraries.g.cs" Condition="Exists('build/generated/LuaLibraries.g.cs')" />
   </ItemGroup>
 
+  <!--
+    buildtime/ holds the map's build code, which the moonwell tool compiles and runs by itself before the game code. The
+    tool's own dotnet build (MoonwellGameOnly) leaves the folder out, so the game's assembly and its Lua never hold it.
+    Any other build, an editor's among them, keeps it in, with the libraries it is written against, so the editor knows
+    BuildStep and War3Net's types. They are not copied beside the map's assembly: only the tool runs build code.
+  -->
+  <ItemGroup Condition="'$(MoonwellGameOnly)' == 'true'">
+    <Compile Remove="buildtime/**" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(MoonwellGameOnly)' != 'true' And Exists('$(MSBuildProjectDirectory)/buildtime')">
+    <Reference Include="$(MSBuildThisFileDirectory)../buildtime/Moonwell.BuildTime.dll;$(MSBuildThisFileDirectory)../buildtime/War3Net.*.dll" Private="false" />
+  </ItemGroup>
+
 </Project>

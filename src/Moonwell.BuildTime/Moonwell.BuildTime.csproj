@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    What a map's build code (the .cs files in its buildtime folder) is written against: BuildStep, the map reader and the
+    cell helpers. The moonwell tool compiles and runs that code with this library, and the Moonwell package carries it,
+    with War3Net's libraries beside it, so an editor knows its types (src/Moonwell/Moonwell.csproj packs this project's
+    output). It is not a package of its own and is never compiled to Lua.
+  -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- War3Net's libraries beside the output, for the Moonwell package to carry. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Moonwell.Build" />
+    <InternalsVisibleTo Include="Moonwell.Build.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Moonwell.War3Net.Build.Core" Version="6.1.2-moonwell.6" />
+  </ItemGroup>
+
+</Project>

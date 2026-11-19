@@ -21,10 +21,10 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void sources_leave_out_the_top_level_bin_and_obj_and_the_folders_given()
+        public void sources_leave_out_the_top_level_bin_obj_and_buildtime_and_the_folders_given()
         {
             var folder = folders.TemporaryFolderOutsideRepository();
-            foreach (var file in new[] { "A.cs", "bin/B.cs", "obj/C.cs", "Sub/D.cs", "Sub/obj/G.cs", "build/E.cs", "build/marked/F.cs" })
+            foreach (var file in new[] { "A.cs", "bin/B.cs", "obj/C.cs", "buildtime/H.cs", "buildtime/Sub/I.cs", "Sub/D.cs", "Sub/obj/G.cs", "build/E.cs", "build/marked/F.cs" })
             {
                 Write(folder, file, "class X { }");
             }

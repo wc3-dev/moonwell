@@ -26,31 +26,31 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
         context.RegisterCompilationStartAction(start =>
         {
             var checker = new Checker(start.Compilation);
-            start.RegisterOperationAction(checker.Call,
+            start.RegisterGameOperationAction(checker.Call,
                 OperationKind.Invocation, OperationKind.PropertyReference, OperationKind.MethodReference, OperationKind.ObjectCreation, OperationKind.FieldReference);
-            start.RegisterOperationAction(checker.Loop, OperationKind.Loop, OperationKind.Spread);
-            start.RegisterOperationAction(checker.Conversion, OperationKind.Conversion);
-            start.RegisterOperationAction(checker.Literal, OperationKind.Literal);
-            start.RegisterOperationAction(checker.Declarator, OperationKind.VariableDeclarator);
-            start.RegisterOperationAction(checker.DeclaredLocal, OperationKind.LocalReference, OperationKind.DeclarationPattern, OperationKind.RecursivePattern);
-            start.RegisterOperationAction(checker.LocalFunction, OperationKind.LocalFunction);
-            start.RegisterOperationAction(checker.Text,
+            start.RegisterGameOperationAction(checker.Loop, OperationKind.Loop, OperationKind.Spread);
+            start.RegisterGameOperationAction(checker.Conversion, OperationKind.Conversion);
+            start.RegisterGameOperationAction(checker.Literal, OperationKind.Literal);
+            start.RegisterGameOperationAction(checker.Declarator, OperationKind.VariableDeclarator);
+            start.RegisterGameOperationAction(checker.DeclaredLocal, OperationKind.LocalReference, OperationKind.DeclarationPattern, OperationKind.RecursivePattern);
+            start.RegisterGameOperationAction(checker.LocalFunction, OperationKind.LocalFunction);
+            start.RegisterGameOperationAction(checker.Text,
                 OperationKind.Binary, OperationKind.Interpolation, OperationKind.Conversion, OperationKind.CompoundAssignment, OperationKind.InterpolatedStringAppendFormatted);
-            start.RegisterOperationAction(checker.Implicit,
+            start.RegisterGameOperationAction(checker.Implicit,
                 OperationKind.Binary, OperationKind.Unary, OperationKind.CompoundAssignment, OperationKind.Increment, OperationKind.Decrement,
                 OperationKind.Conversion, OperationKind.Using, OperationKind.UsingDeclaration, OperationKind.Loop, OperationKind.LocalReference,
                 OperationKind.EventReference, OperationKind.DeconstructionAssignment, OperationKind.RecursivePattern, OperationKind.CollectionExpression,
                 OperationKind.ImplicitIndexerReference);
-            start.RegisterOperationAction(checker.Delegates,
+            start.RegisterGameOperationAction(checker.Delegates,
                 OperationKind.Argument, OperationKind.ParameterReference, OperationKind.SimpleAssignment, OperationKind.EventAssignment);
-            start.RegisterOperationAction(checker.HashArgument, OperationKind.Argument, OperationKind.VariableInitializer, OperationKind.SimpleAssignment);
-            start.RegisterOperationAction(checker.TextOfItems, OperationKind.Argument);
-            start.RegisterOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
-            start.RegisterOperationAction(checker.Write,
+            start.RegisterGameOperationAction(checker.HashArgument, OperationKind.Argument, OperationKind.VariableInitializer, OperationKind.SimpleAssignment);
+            start.RegisterGameOperationAction(checker.TextOfItems, OperationKind.Argument);
+            start.RegisterGameOperationAction(checker.LambdaPlacement, OperationKind.AnonymousFunction);
+            start.RegisterGameOperationAction(checker.Write,
                 OperationKind.SimpleAssignment, OperationKind.CompoundAssignment, OperationKind.CoalesceAssignment, OperationKind.DeconstructionAssignment,
                 OperationKind.Increment, OperationKind.Decrement, OperationKind.EventAssignment, OperationKind.Argument, OperationKind.Invocation);
-            start.RegisterSymbolAction(checker.Placement, SymbolKind.Method, SymbolKind.Property);
-            start.RegisterSymbolAction(checker.Declaration, SymbolKind.Field, SymbolKind.Property, SymbolKind.Method, SymbolKind.NamedType, SymbolKind.Event);
+            start.RegisterGameSymbolAction(checker.Placement, SymbolKind.Method, SymbolKind.Property);
+            start.RegisterGameSymbolAction(checker.Declaration, SymbolKind.Field, SymbolKind.Property, SymbolKind.Method, SymbolKind.NamedType, SymbolKind.Event);
         });
     }
 

@@ -22,6 +22,26 @@
   </Target>
 
   <!--
+    The package also carries, in buildtime/, the libraries a map's build code is written against: Moonwell.BuildTime and
+    War3Net's. Moonwell.targets gives them to an editor's build as references, so the editor knows BuildStep and the map
+    reader's types with nothing added to the map's project; the moonwell tool compiles build code with its own copies.
+    They are built here as the analyzer is, and added when the package's files are gathered, as on a clean checkout they
+    are not there yet when this project is read.
+  -->
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildTime</TargetsForTfmSpecificContentInPackage>
+    <!-- NU5100 warns that a library outside lib/ is no reference of the package: these are meant not to be, as only build code uses them. -->
+    <NoWarn>$(NoWarn);NU5100</NoWarn>
+  </PropertyGroup>
+
+  <Target Name="PackBuildTime">
+    <MSBuild Projects="..\Moonwell.BuildTime\Moonwell.BuildTime.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" />
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="..\Moonwell.BuildTime\bin\$(Configuration)\net10.0\Moonwell.BuildTime.dll;..\Moonwell.BuildTime\bin\$(Configuration)\net10.0\Moonwell.BuildTime.xml;..\Moonwell.BuildTime\bin\$(Configuration)\net10.0\War3Net.*.dll" PackagePath="buildtime" />
+    </ItemGroup>
+  </Target>
+
+  <!--
     Moonwell.Package.Version is the package's version, which a map can print. Each build writes it to obj/ from $(Version),
     compiles it, and packs it beside the other sources, so the map's Lua carries the version of the package it uses.
     The class is not named Version, which a map with using System would find twice.

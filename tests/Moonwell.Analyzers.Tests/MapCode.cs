@@ -31,6 +31,34 @@ internal static class MapCode
         return Found(Analyze(source, path: path));
     }
 
+    /// <summary>
+    /// The analyzer's diagnostics for a project of several files, each named by its path, in file and source order, each as
+    /// "file: id: the code it points at"; the files may name each other's types.
+    /// </summary>
+    public static List<string> CheckFiles(params (string Path, string Source)[] files)
+    {
+        return AnalyzeFiles(files).Select(d => d.Location.SourceTree!.FilePath + ": " + d.Id + ": " + d.Location.SourceTree.GetText().ToString(d.Location.SourceSpan)).ToList();
+    }
+
+    /// <summary>The messages of the analyzer's diagnostics for a project of several files, in file and source order.</summary>
+    public static List<string> MessagesOfFiles(params (string Path, string Source)[] files)
+    {
+        return AnalyzeFiles(files).Select(d => d.GetMessage()).ToList();
+    }
+
+    private static List<Diagnostic> AnalyzeFiles((string Path, string Source)[] files)
+    {
+        var trees = files.Select(file => CSharpSyntaxTree.ParseText(file.Source, new CSharpParseOptions(LanguageVersion.Latest), file.Path)).ToList();
+        var compilation = CSharpCompilation.Create("Map" + Guid.NewGuid().ToString("N"), trees, References,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
+        var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+        Assert.True(errors.Count == 0, string.Join("\n", errors));
+        return compilation.WithAnalyzers(Analyzers).GetAnalyzerDiagnosticsAsync().Result
+            .OrderBy(d => trees.IndexOf(d.Location.SourceTree!))
+            .ThenBy(d => d.Location.SourceSpan.Start)
+            .ToList();
+    }
+
     /// <summary>The id analyzer's diagnostics for a whole file, in source order, each as "id: the code it points at".</summary>
     public static List<string> CheckIds(string source)
     {
@@ -139,7 +167,8 @@ internal static class MapCode
     private static (SyntaxTree Tree, ImmutableArray<Diagnostic> Diagnostics) Analyze(string source, bool broken = false, ImmutableArray<DiagnosticAnalyzer>? analyzers = null, string path = "", string library = "")
     {
         var (tree, compilation) = Compile(source, broken, path, library);
-        analyzers ??= ImmutableArray.Create<DiagnosticAnalyzer>(new SyncAnalyzer(), new LuaAnalyzer(), new NameAnalyzer(), new SyntaxAnalyzer(), new FieldRulesAnalyzer(), new MovedAnalyzer(), new BareDamageAnalyzer(), new DeclaredAnalyzer(), new ReactionAnalyzer(), new ScopeAnalyzer(), new BuildOnlyAnalyzer(), new SpellBuffAnalyzer(), new SaveAnalyzer(), new ItemRemoveAnalyzer(), new FramePartAnalyzer());
-        return (tree, compilation.WithAnalyzers(analyzers.Value).GetAnalyzerDiagnosticsAsync().Result);
+        return (tree, compilation.WithAnalyzers(analyzers ?? Analyzers).GetAnalyzerDiagnosticsAsync().Result);
     }
+
+    private static readonly ImmutableArray<DiagnosticAnalyzer> Analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(new SyncAnalyzer(), new LuaAnalyzer(), new NameAnalyzer(), new SyntaxAnalyzer(), new FieldRulesAnalyzer(), new MovedAnalyzer(), new BareDamageAnalyzer(), new DeclaredAnalyzer(), new ReactionAnalyzer(), new ScopeAnalyzer(), new BuildOnlyAnalyzer(), new SpellBuffAnalyzer(), new SaveAnalyzer(), new ItemRemoveAnalyzer(), new FramePartAnalyzer(), new BuildTimeAnalyzer());
 }
