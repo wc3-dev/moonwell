@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(MoonwellGameOnly)' != 'true' And Exists('$(MSBuildProjectDirectory)/buildtime')">
-    <Reference Include="$(MSBuildThisFileDirectory)../buildtime/*.dll" Private="false" />
+    <Reference Include="$(MSBuildThisFileDirectory)../buildtime/Moonwell.BuildTime.dll;$(MSBuildThisFileDirectory)../buildtime/War3Net.*.dll" Private="false" />
   </ItemGroup>
 
 </Project>

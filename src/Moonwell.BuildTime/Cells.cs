@@ -17,6 +17,8 @@ namespace Moonwell.BuildTime
 
         private readonly bool[] inside;
 
+        private Distances? distances;
+
         private Cells(PathingGrid grid, bool[] inside)
         {
             this.grid = grid;
@@ -170,7 +172,8 @@ namespace Moonwell.BuildTime
         /// <returns>The distances, to read by cell or by point: <c>var toWater = water.Distances(); toWater.At(x, y)</c>.</returns>
         public Distances Distances()
         {
-            return new Distances(grid, inside);
+            // A set never changes, so its distances are worked out once: asking how far each of many regions is from the same water is cheap.
+            return distances ??= new Distances(grid, inside);
         }
 
         /// <summary>The shortest straight line from a cell of this set to a cell of another, between centres; infinite when either is empty.</summary>

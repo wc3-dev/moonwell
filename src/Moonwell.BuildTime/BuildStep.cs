@@ -20,7 +20,7 @@ namespace Moonwell.BuildTime
         {
             IncludeFields = true,
             WriteIndented = true,
-            Converters = { new DecimalSingle(), new DecimalDouble(), new JsonStringEnumConverter(), new TypedLists() },
+            Converters = { new DecimalSingle(), new DecimalDouble(), new DecimalDecimal(), new JsonStringEnumConverter(), new TypedLists() },
         };
 
         private BuildRun? run;
@@ -261,6 +261,13 @@ namespace Moonwell.BuildTime
             public override float Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => reader.GetSingle();
 
             public override void Write(Utf8JsonWriter writer, float value, JsonSerializerOptions options) => writer.WriteRawValue(Decimal(value.ToString("R", CultureInfo.InvariantCulture)));
+        }
+
+        private sealed class DecimalDecimal : JsonConverter<decimal>
+        {
+            public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => reader.GetDecimal();
+
+            public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options) => writer.WriteRawValue(Decimal(value.ToString(CultureInfo.InvariantCulture)));
         }
 
         private sealed class DecimalDouble : JsonConverter<double>
