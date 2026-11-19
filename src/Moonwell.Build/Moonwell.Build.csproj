@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Moonwell.BuildTime\Moonwell.BuildTime.csproj" />
     <ProjectReference Include="..\Moonwell.GameData\Moonwell.GameData.csproj" />
     <ProjectReference Include="..\Moonwell.MapFiles\Moonwell.MapFiles.csproj" />
   </ItemGroup>

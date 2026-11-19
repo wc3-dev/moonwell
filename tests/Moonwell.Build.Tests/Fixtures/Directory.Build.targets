@@ -13,4 +13,9 @@
     <Compile Include="build/generated/LuaLibraries.g.cs" Condition="Exists('build/generated/LuaLibraries.g.cs')" />
   </ItemGroup>
 
+  <!-- And the tool's own compile leaves their build code out, as Moonwell.targets has it do. -->
+  <ItemGroup Condition="'$(MoonwellGameOnly)' == 'true'">
+    <Compile Remove="buildtime/**" />
+  </ItemGroup>
+
 </Project>
