@@ -144,6 +144,8 @@ namespace Moonwell.Build.Tests
                 doodads = reader.ReadMapDoodads();
             }
 
+            doodads.UseNewFormat = true;
+
             doodads.Doodads.Add(new DoodadData
             {
                 TypeId = type.FromRawcode(),

@@ -560,9 +560,11 @@ namespace Moonwell.Build.Tests
                 doodads = reader.ReadMapDoodads();
             }
 
+            doodads.UseNewFormat = true;
+
             foreach (var (type, x, y) in placed)
             {
-                doodads.Doodads.Add(new DoodadData { TypeId = type.FromRawcode(), Position = new System.Numerics.Vector3(x, y, 0f), Scale = System.Numerics.Vector3.One, Life = 100, CreationNumber = doodads.Doodads.Count + 1 });
+                doodads.Doodads.Add(new DoodadData { TypeId = type.FromRawcode(), SkinId = type.FromRawcode(), Position = new System.Numerics.Vector3(x, y, 0f), Scale = System.Numerics.Vector3.One, Life = 100, CreationNumber = doodads.Doodads.Count + 1 });
             }
 
             using var writer = new BinaryWriter(File.Create(path));
