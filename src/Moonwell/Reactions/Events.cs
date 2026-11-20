@@ -15,6 +15,9 @@ namespace Moonwell
         /// <summary>The reaction bits that some class overrides, once any has been needed.</summary>
         private static int wanted;
 
+        /// <summary>The Hook2 bits that some class overrides, once any has been needed.</summary>
+        private static int wanted2;
+
         /// <summary>Set by a damage package: called in place of listening for the game's damage event; null without one.</summary>
         internal static Action? DamageListener;
 
@@ -40,6 +43,7 @@ namespace Moonwell
         internal static void Need(int mask, int mask2 = 0)
         {
             wanted |= mask;
+            wanted2 |= mask2;
             if ((mask & (Hook.OnDamaged | Hook.OnDealtDamage | Hook.OnUnitDamaged)) != 0)
             {
                 if (DamageListener != null)
@@ -164,11 +168,18 @@ namespace Moonwell
             return (wanted & bit) != 0;
         }
 
+        /// <summary>Whether a Hook2 reaction bit has been needed.</summary>
+        internal static bool Wants2(int bit)
+        {
+            return (wanted2 & bit) != 0;
+        }
+
         /// <summary>Forgets every registration and need; Runtime.Reset calls it.</summary>
         internal static void Reset()
         {
             listening = new bool[EventCount];
             wanted = 0;
+            wanted2 = 0;
             DamageListener = null;
             LoadListener = null;
             TerrainLoadListener = null;

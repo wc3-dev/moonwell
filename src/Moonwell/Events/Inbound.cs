@@ -950,7 +950,7 @@ namespace Moonwell
             caster.EndDispatch();
         }
 
-        /// <summary>A hero gains one level or more, as one event that reads the last: for each level gained, in order, the hero's OnLevelUp and its components', then the map's and the hero's player's OnHeroLevelUp. A hero first taken in here, or whose level was known as this one or higher (taken away by a native), runs them once, for the level reached. The levels after one whose reactions ended the hero run nothing.</summary>
+        /// <summary>A hero gains one level or more, as one event that reads the last: first the hero's game stats that a level changes are worked out and put again (StatSheet.LevelUp); then, for each level gained, in order, the hero's OnLevelUp and its components', then the map's and the hero's player's OnHeroLevelUp. A hero first taken in here, or whose level was known as this one or higher (taken away by a native), runs them once, for the level reached. The levels after one whose reactions ended the hero run nothing.</summary>
         private static void HandleHeroLevel(unit handle)
         {
             if (KnownUnits.Find(handle) == null && !Events.Wants(Hook.OnHeroLevelUp))
@@ -969,6 +969,9 @@ namespace Moonwell
             {
                 hero.leveledTo = reached - 1;
             }
+
+            // The game's own numbers have moved with the level: the stats that scale or read them are put again before any reaction runs (I52).
+            hero.stats?.LevelUp();
 
             // One level at a time, so that a reaction that raises the hero again runs the new levels once, in order, inside
             // its call, and this loop then finds them done; one that lowers it ends the loop.

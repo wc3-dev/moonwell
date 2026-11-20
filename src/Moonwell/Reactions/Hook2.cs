@@ -5,5 +5,8 @@ namespace Moonwell
     {
         /// <summary>A research starts, is cancelled or finishes, or a shop sells: one bit for the upgrade classes', the units' and their components' reactions (decisions 213 and 214).</summary>
         internal const int OnResearchOrSale = 1;
+
+        /// <summary>A stat's total changes on a unit or a player: one bit for the unit's and its components' OnStatChanged and the game and player components' OnUnitStatChanged and OnPlayerStatChanged.</summary>
+        internal const int OnStatChanged = 2;
     }
 }

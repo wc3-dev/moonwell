@@ -20,6 +20,7 @@ namespace Moonwell.Testing
             AddQuestsAndCinematics(list);
             AddBoardsAndDialogs(list);
             AddStatsAndScores(list);
+            AddStatsEngine(list);
             AddUnitAbilities(list);
             AddSpells(list);
             AddSummons(list);
@@ -2042,7 +2043,34 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.refused", Run = StatCases.Refused });
             list.Add(new Case { Name = "stats.green", Run = StatCases.Green });
             list.Add(new Case { Name = "stats.numbers", Run = StatCases.Numbers });
+            list.Add(new Case { Name = "stats.limits", Run = StatCases.Limits });
+            list.Add(new Case { Name = "stats.capped-by", Run = StatCases.CappedBy });
+            list.Add(new Case { Name = "stats.named", Run = StatCases.Named });
+            list.Add(new Case { Name = "stats.bases", Run = StatCases.Bases });
+            list.Add(new Case { Name = "stats.stages", Run = StatCases.Stages });
+            list.Add(new Case { Name = "stats.game-stages", Run = StatCases.GameStages });
+            list.Add(new Case { Name = "stats.change", Run = StatCases.Change });
+            list.Add(new Case { Name = "stats.stacking-strongest", Run = StatCases.StackingStrongest });
+            list.Add(new Case { Name = "stats.stacking-rules", Run = StatCases.StackingRules });
+            list.Add(new Case { Name = "stats.reading", Run = StatCases.Reading });
+            list.Add(new Case { Name = "stats.ready-made", Run = StatCases.ReadyMade });
+            list.Add(new Case { Name = "stats.buff-refresh", Run = StatCases.BuffRefresh });
+            list.Add(new Case { Name = "stats.buff-strongest", Run = StatCases.BuffStrongest });
             list.Add(new Case { Name = "scores.count", Run = StatCases.Scores });
+        }
+
+        /// <summary>Adds the stat engine's cases: change reactions, stats from stats, a game stat's ownership, a hero's level-up and life's percent.</summary>
+        private static void AddStatsEngine(List<Case> list)
+        {
+            list.Add(new Case { Name = "stats.reactions", Run = StatCases.Reactions });
+            list.Add(new Case { Name = "stats.nested", Run = StatCases.Nested });
+            list.Add(new Case { Name = "stats.from", Run = StatCases.FromStats });
+            list.Add(new Case { Name = "stats.from-game", Run = StatCases.FromGame });
+            list.Add(new Case { Name = "stats.ownership", Run = StatCases.Ownership });
+            list.Add(new Case { Name = "stats.level-up", Run = StatCases.LevelUp });
+            list.Add(new Case { Name = "stats.attribute-follows", Run = StatCases.AttributeFollows });
+            list.Add(new Case { Name = "stats.keeps-percent", Run = StatCases.KeepsPercent });
+            list.Add(new Case { Name = "stats.named-ready", Run = StatCases.NamedReady });
         }
 
         /// <summary>Adds the cases for the 3.0 bag and equipment slots (decision 215).</summary>
