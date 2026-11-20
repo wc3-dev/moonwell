@@ -94,6 +94,9 @@ namespace Moonwell.Build
             var settings = MapSettingsReader.Read(targetPath, project);
             var map = SourceMap.Open(project, settings, log);
 
+            // A ready-made stat whose effect is the stats package's does nothing without it.
+            StatsPackage.Check(targetPath);
+
             // The reference decides, not a Moonwell.Objects.dll an earlier build left beside the assembly. The pathing package's
             // helper units are object data, so a map that uses it takes this path too.
             IReadOnlyList<DeclaredObject> objects = Array.Empty<DeclaredObject>();
@@ -334,9 +337,16 @@ namespace Moonwell.Build
                 log.WriteLine(day.Warning);
             }
 
-            if (Declarations.Needs(targetPath, DamageAssemblyName))
+            // The stats package acts on core's stats, which a map's code reaches without naming the package, so its reference counts; it runs on the damage package, installed first.
+            var stats = Declarations.Depends(targetPath, StatsPackage.AssemblyName);
+            if (stats || Declarations.Needs(targetPath, DamageAssemblyName))
             {
                 installs.Add("global::Moonwell.DamageSystem.Install();");
+            }
+
+            if (stats)
+            {
+                installs.Add("global::Moonwell.StatsSystem.Install();");
             }
 
             var physics = Declarations.Needs(targetPath, PhysicsAssemblyName);

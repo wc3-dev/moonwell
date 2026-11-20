@@ -20,10 +20,10 @@ namespace Moonwell
         }
 
         /// <summary>How far left of the target a miss's text starts, where the game starts its own: a first guess from one screenshot, which a game check sets.</summary>
-        private const float MissLeft = 74.0f;
+        internal const float MissLeft = 74.0f;
 
         /// <summary>How high above the ground a miss's text starts: about 50 lower than a PopText over the same unit starts. A first guess from one screenshot, which a game check sets.</summary>
-        private const float MissHeight = 100.0f;
+        internal const float MissHeight = 100.0f;
 
         /// <summary>The amount of the hit; a reaction may change it, and a missed hit keeps 0.</summary>
         [LocalSafe]
