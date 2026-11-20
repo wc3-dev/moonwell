@@ -141,4 +141,34 @@ public class BuildTimeTests
             @"C:\Maps\MyMap\Tools\Rect.cs: MW0038: new Random()",
         }, MapCode.CheckFiles((@"C:\Maps\MyMap\Tools\Rect.cs", Code)));
     }
+
+    [Fact]
+    public void a_test_project_that_compiles_build_code_has_no_game_code()
+    {
+        // As Next's: the map's buildtime files linked in from beside the test project, which references Moonwell.BuildTime
+        // and no game library. Doubles and infinities (MW0005, MW0042) and build code's types (MW0058) are all fine there.
+        const string Ground = """
+            using Moonwell.BuildTime;
+
+            namespace MyMap.BuildTime
+            {
+                public static class Ground
+                {
+                    public static double Nearest(MapReader map, Cells cells) => cells.Count == 0 ? double.PositiveInfinity : 1.5;
+                }
+            }
+            """;
+
+        Assert.Empty(MapCode.CheckBuildTimeFiles(
+            (@"C:\Maps\MyMap	ests\MapTests\..\..uildtime\Ground.cs", Ground),
+            (@"C:\Maps\MyMap	ests\MapTests\GroundTests.cs", """
+                namespace MyMap.Tests
+                {
+                    public class GroundTests
+                    {
+                        public static bool Far(Moonwell.BuildTime.MapReader map, Moonwell.BuildTime.Cells cells) => double.IsInfinity(MyMap.BuildTime.Ground.Nearest(map, cells));
+                    }
+                }
+                """)));
+    }
 }
