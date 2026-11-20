@@ -1268,6 +1268,19 @@ namespace Moonwell.Engine
             return Natives.BlzGetUnitBaseDamage(unit, 0) + Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
         }
 
+        /// <summary>Sets a unit's own base armor: BlzSetUnitArmor.</summary>
+        public void SetBaseArmor(unit unit, float armor)
+        {
+            Natives.BlzSetUnitArmor(unit, armor);
+        }
+
+        /// <summary>Sets the middle of a unit's white damage, keeping its dice: BlzSetUnitBaseDamage of the first weapon to the number less the middle of the dice (BlzGetUnitDiceNumber and BlzGetUnitDiceSides), rounded to a whole number.</summary>
+        public void SetAverageDamage(unit unit, float damage)
+        {
+            var middle = Natives.BlzGetUnitDiceNumber(unit, 0) * (Natives.BlzGetUnitDiceSides(unit, 0) + 1) / 2.0f;
+            Natives.BlzSetUnitBaseDamage(unit, (int)Math.Floor(damage - middle + 0.5f), 0);
+        }
+
         /// <summary>The cooldown of a unit's first weapon: BlzGetUnitAttackCooldown.</summary>
         public float AttackCooldownOf(unit unit)
         {

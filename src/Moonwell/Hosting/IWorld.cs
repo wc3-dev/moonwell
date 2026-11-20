@@ -365,6 +365,12 @@ namespace Moonwell.Hosting
         /// <summary>The middle of a unit's white damage: its base damage and the middle of its dice, without bonuses.</summary>
         float AverageDamageOf(unit unit);
 
+        /// <summary>Sets a unit's own base armor (BlzSetUnitArmor), the number its armor is made from.</summary>
+        void SetBaseArmor(unit unit, float armor);
+
+        /// <summary>Sets the middle of a unit's white damage to a number, keeping its dice, by setting its base damage (BlzSetUnitBaseDamage) to that number less the middle of the dice, to a whole number.</summary>
+        void SetAverageDamage(unit unit, float damage);
+
         /// <summary>The seconds between a unit's attacks with its first weapon, without bonuses.</summary>
         float AttackCooldownOf(unit unit);
 

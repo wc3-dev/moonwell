@@ -4,15 +4,30 @@ using System.Collections.Generic;
 namespace Moonwell
 {
     /// <summary>
-    /// A unit's or player's modifiers, by stat, and what Moonwell's part of each of the game's stats is in the game now
+    /// A unit's or player's modifiers and bases, by stat, and what Moonwell's part of each of the game's stats is in the game now
     /// (decision 221). A game stat's base is the game's number less Moonwell's part, so the game's own changes (a level, an
-    /// item) stay. Damage, armor and attack speed go through Moonwell's bonus abilities, which the game takes at once and
-    /// shows green; the others, whose bonus abilities keep their first value, change the unit's own number (seen 11-08).
+    /// item) stay, until the map sets a base for the unit or its type: then Moonwell owns that stat on the unit, its base is
+    /// the truth, and the total goes to the game (decision 387). Damage, armor and attack speed go through Moonwell's bonus
+    /// abilities, which the game takes at once and shows green; the others, whose bonus abilities keep their first value, change
+    /// the unit's own number (seen 11-08).
     /// </summary>
     internal sealed class StatSheet
     {
         /// <summary>The bonus abilities the build declares (Moonwell.Build's BonusAbilities): copies of AItg, AId1 and AIsx that give nothing until set.</summary>
         internal const string DamageId = "AMWd", ArmorId = "AMWa", AttackSpeedId = "AMWs";
+
+        /// <summary>
+        /// Changes nested deeper than this, each inside a reaction to the one before, are reported once and the innermost is not
+        /// announced. 16 as the order and dummy guards are: each try in the compiled Lua takes one of the game's about 196 nested
+        /// calls, and the game drops a deeper chain without a word (decision 276).
+        /// </summary>
+        internal const int MostNested = 16;
+
+        /// <summary>How many announcements are running now, each inside a reaction to the one before; shared by every holder, as a reaction may change another holder's stats.</summary>
+        private static int nested;
+
+        /// <summary>Whether the chain running now has been reported.</summary>
+        private static bool nestedReported;
 
         private readonly Actor actor;
 
@@ -20,15 +35,42 @@ namespace Moonwell
 
         private readonly Dictionary<Stat, float> applied = new Dictionary<Stat, float>();
 
+        /// <summary>The total of each game stat as last put in the game, which a hero's level-up reads as the total before.</summary>
+        private readonly Dictionary<Stat, float> last = new Dictionary<Stat, float>();
+
+        /// <summary>The bases set for this holder itself.</summary>
+        private Dictionary<Stat, float>? bases;
+
+        /// <summary>While the total a stat had before a change is worked out: the total each stat changed so far had, which what reads them sees instead of their present total; null otherwise.</summary>
+        private Dictionary<Stat, float>? olds;
+
+        /// <summary>Reads a stat's total on this holder, as the formulas are given; made once.</summary>
+        private Func<Stat, float>? reader;
+
+        /// <summary>Whether the hero's level-up is listened for, so its percents are put again.</summary>
+        private bool levelWatch;
+
+        /// <summary>Whether the hero's other stats are being put again after a level or an attribute, so a put of an attribute inside does not start another round.</summary>
+        private bool following;
+
         internal StatSheet(Actor actor)
         {
             this.actor = actor;
         }
 
-        /// <summary>Adds a modifier held by a scope and puts the stat's new value in the game; refused, and given back ended, for a player's game stat or a holder that has ended.</summary>
-        internal Modifier Add(Stat stat, float amount, float percent, Scope heldBy, string label)
+        /// <summary>Whether any class overrides a change reaction: nothing is worked out for the reactions until one does.</summary>
+        private static bool Watching => Events.Wants2(Hook2.OnStatChanged);
+
+        /// <summary>A stat's total as it is now, to read before something changes it, when a reaction will want it; 0 when none will.</summary>
+        internal float Before(Stat stat)
         {
-            var modifier = new Modifier(this, stat, amount, percent);
+            return Watching ? Get(stat) : 0.0f;
+        }
+
+        /// <summary>Adds a modifier held by a scope, under its stacking rule, and puts the stat's new value in the game; refused, and given back ended, for a player's game stat or a holder that has ended.</summary>
+        internal Modifier Add(Stat stat, float amount, float percent, float times, float late, Scope heldBy, object? group, Stacking? stacking, Unit? source, string label)
+        {
+            var modifier = new Modifier(this, stat, amount, percent, times, late, group, source);
             if (stat.Kind != StatKind.Own && !(actor is Unit))
             {
                 Errors.Refuse(label, stat.Name + " is a unit's stat: a player takes only the map's own stats");
@@ -48,34 +90,411 @@ namespace Moonwell
                 return modifier;
             }
 
+            if (group == null)
+            {
+                if (stacking != null)
+                {
+                    Dev.Report(label, "the modifier of " + stat.Name + " has a stacking rule but no group, so it adds up with the others: give it a group");
+                }
+            }
+            else
+            {
+                modifier.rule = stacking ?? Stacking.Strongest;
+                if (modifier.rule == Stacking.Refresh || modifier.rule == Stacking.PerSource)
+                {
+                    EndOlder(stat, group, modifier.rule == Stacking.PerSource, source);
+                }
+            }
+
             if (!held.TryGetValue(stat, out var list))
             {
                 list = new List<Modifier>();
                 held[stat] = list;
             }
 
+            var before = Before(stat);
             list.Add(modifier);
             heldBy.Adopt(modifier);
-            Put(stat);
+            if (heldBy is Buff buff && buff.applying)
+            {
+                buff.madeInApply ??= new List<Modifier>();
+                buff.madeInApply.Add(modifier);
+            }
+
+            Changed(stat, before);
             return modifier;
         }
 
         /// <summary>Takes a modifier off and puts the stat's new value in the game.</summary>
         internal void Remove(Modifier modifier)
         {
-            if (held.TryGetValue(modifier.Stat, out var list) && list.Remove(modifier))
+            if (held.TryGetValue(modifier.Stat, out var list) && list.Contains(modifier))
             {
-                Put(modifier.Stat);
+                var before = Before(modifier.Stat);
+                list.Remove(modifier);
+                Changed(modifier.Stat, before);
             }
         }
 
-        /// <summary>A map's own stat's value: (base + flat) × (1 + percents / 100). A game stat's is what the game shows: the base as it is now and Moonwell's part as last put, so what the game added since (strength's life, a level) is outside the percents until the stat next changes (I52).</summary>
+        /// <summary>
+        /// Works a stat out again after a modifier or a base changed, with before its total until then (read with Before), and puts it
+        /// in the game: the one place a stat's change goes through. The stats that read it are worked out again and put too, and then
+        /// the reactions run, once for each stat whose total changed.
+        /// </summary>
+        internal void Changed(Stat stat, float before)
+        {
+            if (held.TryGetValue(stat, out var list))
+            {
+                Recount(list);
+            }
+
+            PutFollowing(stat);
+            if (!Watching)
+            {
+                Spread(stat, null, null);
+                return;
+            }
+
+            if (Get(stat) == before)
+            {
+                return;
+            }
+
+            var batch = new List<Stat>();
+            batch.Add(stat);
+            var thens = new Dictionary<Stat, float>();
+            thens[stat] = before;
+            Spread(stat, thens, batch);
+            for (var i = 0; i < batch.Count; i++)
+            {
+                if (Get(batch[i]) != thens[batch[i]])
+                {
+                    Announce(batch[i], thens[batch[i]]);
+                }
+            }
+        }
+
+        /// <summary>Works out again, and puts in the game, every stat that reads the stat; while a change is watched (thens is not null), the total each had before is noted in thens, worked out as the stats changed so far were, and the stat is added to the batch.</summary>
+        private void Spread(Stat stat, Dictionary<Stat, float>? thens, List<Stat>? batch)
+        {
+            var readers = stat.Readers;
+            if (readers == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < readers.Count; i++)
+            {
+                var reader = readers[i];
+                if (thens != null && !thens.ContainsKey(reader))
+                {
+                    olds = thens;
+                    var then = Get(reader);
+                    olds = null;
+                    thens[reader] = then;
+                    batch!.Add(reader);
+                }
+
+                PutFollowing(reader);
+                Spread(reader, thens, batch);
+            }
+        }
+
+        /// <summary>A hero gained a level: the game's own number of each stat has moved, so every game stat that has a percent or a multiplier counting, is owned, or reads or is read by another stat is worked out again and put, before the map's reactions to the level run (I52). For an owned stat this overwrites what the level added.</summary>
+        internal void LevelUp()
+        {
+            Refresh(null);
+        }
+
+        /// <summary>Puts a game stat, and when it is a hero's attribute puts the hero's other stats a level would put again: the game adds an attribute's life, damage and the rest on top of the number a set left (probe-stats-2).</summary>
+        private void PutFollowing(Stat stat)
+        {
+            Put(stat);
+            if (!following && actor is Hero && (stat.Kind == StatKind.Strength || stat.Kind == StatKind.Agility || stat.Kind == StatKind.Intelligence))
+            {
+                Refresh(stat);
+            }
+        }
+
+        /// <summary>Works out again and puts each game stat of the holder that Reaches, but the one given; a put of an attribute inside starts no round of its own.</summary>
+        private void Refresh(Stat? except)
+        {
+            var stats = new List<Stat>();
+            foreach (var stat in last.Keys)
+            {
+                stats.Add(stat);
+            }
+
+            var was = following;
+            following = true;
+            for (var i = 0; i < stats.Count; i++)
+            {
+                if (stats[i] != except && Reaches(stats[i]))
+                {
+                    Changed(stats[i], last[stats[i]]);
+                }
+            }
+
+            following = was;
+        }
+
+        /// <summary>Whether a level changes what a game stat comes to: a counting percent or multiplier works on a base the level moved, an owned stat is put over it, and a stat that reads or is read by another passes the move on.</summary>
+        private bool Reaches(Stat stat)
+        {
+            if (stat.HasFormulas || stat.Readers != null || IsOwned(stat))
+            {
+                return true;
+            }
+
+            if (held.TryGetValue(stat, out var list))
+            {
+                for (var i = 0; i < list.Count; i++)
+                {
+                    if (list[i].counts && (list[i].Percent != 0.0f || list[i].Times != 1.0f))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Puts, in the game, each of the game stats the unit's type or class has a base for, as the unit comes in.</summary>
+        internal void PutTyped(List<Stat> stats)
+        {
+            for (var i = 0; i < stats.Count; i++)
+            {
+                Changed(stats[i], Before(stats[i]));
+            }
+        }
+
+        /// <summary>Runs the change reactions of a stat whose total changed: the unit's, its components', the game's components' and the unit's player's, or for a player's stat the game's components' and the player's. A chain nested more than MostNested deep is reported once and not announced.</summary>
+        private void Announce(Stat stat, float before)
+        {
+            var unit = actor as Unit;
+            if (unit != null && (unit.HasEnded || unit.IsGone))
+            {
+                return;
+            }
+
+            if (nested >= MostNested)
+            {
+                if (!nestedReported)
+                {
+                    nestedReported = true;
+                    Errors.Refuse("Stat.Changed", "stat changes nested more than " + MostNested + " deep, each made by a reaction to the one before, at " + stat.Name + (unit == null ? "" : " of " + Names.NameOf(unit)) + "; the innermost is not announced, so make the next from a timer (After(0))");
+                }
+
+                return;
+            }
+
+            // No try around the reactions: every reaction has its own, and a second one would take another of the game's nested calls at each level.
+            nested++;
+            if (unit != null)
+            {
+                UnitChanged(unit, stat, before);
+                MapChanged(Game.Instance, unit, null, stat, before);
+                var player = Player.Existing(unit.Owner.Slot);
+                if (player != null)
+                {
+                    MapChanged(player, unit, null, stat, before);
+                }
+            }
+            else if (actor is Player holder)
+            {
+                MapChanged(Game.Instance, null, holder, stat, before);
+                MapChanged(holder, null, holder, stat, before);
+            }
+
+            nested--;
+            if (nested <= 0)
+            {
+                ResetNesting();
+            }
+        }
+
+        /// <summary>No change is being announced: Runtime.Reset calls it, which puts right a count that an error thrown past an announcement left behind.</summary>
+        internal static void ResetNesting()
+        {
+            nested = 0;
+            nestedReported = false;
+        }
+
+        /// <summary>Runs OnStatChanged on a unit, then on its components, in add order.</summary>
+        private static void UnitChanged(Unit unit, Stat stat, float before)
+        {
+            if (!unit.HasEnded && (unit.Mask2 & Hook2.OnStatChanged) != 0)
+            {
+                try
+                {
+                    unit.OnStatChanged(stat, before);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(unit, ".OnStatChanged", error);
+                }
+            }
+
+            var count = unit.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = unit.ComponentAt(i) as UnitComponent;
+                if (component == null || component.HasEnded || (component.Mask2 & Hook2.OnStatChanged) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    component.OnStatChanged(stat, before);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(component, ".OnStatChanged", error);
+                }
+            }
+
+            unit.EndDispatch();
+        }
+
+        /// <summary>Runs OnUnitStatChanged (for a unit) or OnPlayerStatChanged (for a player) on the map components of an actor, in add order.</summary>
+        private static void MapChanged(Actor on, Unit? unit, Player? player, Stat stat, float before)
+        {
+            var count = on.BeginDispatch();
+            for (var i = 0; i < count; i++)
+            {
+                var component = on.ComponentAt(i) as MapComponent;
+                if (component == null || component.HasEnded || (component.Mask2 & Hook2.OnStatChanged) == 0)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (unit != null)
+                    {
+                        component.OnUnitStatChanged(unit, stat, before);
+                    }
+                    else
+                    {
+                        component.OnPlayerStatChanged(player!, stat, before);
+                    }
+                }
+                catch (Exception error)
+                {
+                    Errors.Report(component, unit != null ? ".OnUnitStatChanged" : ".OnPlayerStatChanged", error);
+                }
+            }
+
+            on.EndDispatch();
+        }
+
+        /// <summary>The modifiers of a stat, as a copy in the order they were made, those a rule leaves out included.</summary>
+        internal IReadOnlyList<Modifier> Modifiers(Stat stat)
+        {
+            return held.TryGetValue(stat, out var list) ? new List<Modifier>(list) : new List<Modifier>();
+        }
+
+        /// <summary>Sets the base of a stat on this holder; for a game stat, Moonwell owns it from then on. Refused, and reported, for a player's game stat.</summary>
+        internal void SetBase(Stat stat, float value, string label)
+        {
+            if (stat.Kind != StatKind.Own && !(actor is Unit))
+            {
+                Errors.Refuse(label, stat.Name + " is a unit's stat: a player takes only the map's own stats");
+                return;
+            }
+
+            var before = Before(stat);
+            bases ??= new Dictionary<Stat, float>();
+            bases[stat] = value;
+            Changed(stat, before);
+        }
+
+        /// <summary>Adds an amount to the base the stat has now, without what its formulas give: the unit's own, its class's or type's, the stat's, or for a game stat not yet owned the game's number less Moonwell's part.</summary>
+        internal void AddBase(Stat stat, float amount, string label)
+        {
+            SetBase(stat, RawBase(stat) + amount, label);
+        }
+
+        /// <summary>Whether Moonwell owns a game stat on this holder: the holder's own base or its type's is set (decision 387).</summary>
+        private bool IsOwned(Stat stat)
+        {
+            return Owned(stat, out var ignored);
+        }
+
+        /// <summary>Whether a base is set for this holder, its class or its type, and which; for a map's own stat this is its base, and for a game stat it is the number Moonwell works from.</summary>
+        private bool Owned(Stat stat, out float value)
+        {
+            if (bases != null && bases.TryGetValue(stat, out value))
+            {
+                return true;
+            }
+
+            if (actor is Unit unit && stat.TypeBaseOf(unit, out value))
+            {
+                return true;
+            }
+
+            value = 0.0f;
+            return false;
+        }
+
+        /// <summary>A stat's base before what its formulas give: for a map's own stat, the holder's own, else its type's, else the stat's; for a game stat, the same when Moonwell owns it, else the game's number less Moonwell's part; 0 for a game stat of a unit that is gone.</summary>
+        internal float RawBase(Stat stat)
+        {
+            if (stat.Kind != StatKind.Own)
+            {
+                var gameUnit = actor as Unit;
+                if (gameUnit == null || gameUnit.Handle == null || gameUnit.IsGone)
+                {
+                    return 0.0f;
+                }
+
+                return Owned(stat, out var ownedBase) ? ownedBase : BaseOf(gameUnit.Handle, stat);
+            }
+
+            return Owned(stat, out var own) ? own : stat.Base;
+        }
+
+        /// <summary>A stat's base, with what its From and Formula give.</summary>
+        internal float GetBase(Stat stat)
+        {
+            if (stat.Kind != StatKind.Own)
+            {
+                var gameUnit = actor as Unit;
+                if (gameUnit == null || gameUnit.Handle == null || gameUnit.IsGone)
+                {
+                    return 0.0f;
+                }
+            }
+
+            return RawBase(stat) + Given(stat);
+        }
+
+        /// <summary>A stat's total on this holder, as the formulas read it: the total before the change being spread when the stat is one it changed, else its present total.</summary>
+        private float Read(Stat stat)
+        {
+            return olds != null && olds.TryGetValue(stat, out var then) ? then : Get(stat);
+        }
+
+        private float Given(Stat stat)
+        {
+            if (!stat.HasFormulas)
+            {
+                return 0.0f;
+            }
+
+            reader ??= new Func<Stat, float>(Read);
+            return stat.Given(reader);
+        }
+
+        /// <summary>A stat's total, by the four stages. A game stat Moonwell owns is Moonwell's total. Another game stat's is what the game shows: the base as it is now and Moonwell's part as last put, so what the game added since (strength's life, a level) is outside the percents until the stat next changes or the hero levels up (I52).</summary>
         internal float Get(Stat stat)
         {
-            var kind = stat.Kind;
-            if (kind == StatKind.Own)
+            if (stat.Kind == StatKind.Own)
             {
-                return Total(stat, stat.Base);
+                return Value(stat, RawBase(stat) + Given(stat));
             }
 
             var unit = actor as Unit;
@@ -84,24 +503,123 @@ namespace Moonwell
                 return 0.0f;
             }
 
+            if (Owned(stat, out var ownedBase))
+            {
+                return Value(stat, ownedBase + Given(stat));
+            }
+
             return BaseOf(unit.Handle, stat) + (applied.TryGetValue(stat, out var part) ? part : 0.0f);
         }
 
-        private float Total(Stat stat, float baseValue)
+        // (base + flat) × (1 + percents / 100) × each multiplier + late flat, then held to the limits.
+        private float Value(Stat stat, float baseValue)
         {
             var flat = 0.0f;
             var percent = 0.0f;
+            var times = 1.0f;
+            var late = 0.0f;
             if (held.TryGetValue(stat, out var list))
             {
                 for (var i = 0; i < list.Count; i++)
                 {
+                    if (!list[i].counts)
+                    {
+                        continue;
+                    }
+
                     flat += list[i].Amount;
                     percent += list[i].Percent;
+                    times *= list[i].Times;
+                    late += list[i].Late;
                 }
             }
 
-            var total = (baseValue + flat) * (1.0f + percent / 100.0f);
-            return stat.Kind == StatKind.Own ? total : Math.Max(stat.Kind == StatKind.MaxLife ? 1.0f : 0.0f, total);
+            return Limited(stat, (baseValue + flat) * (1.0f + percent / 100.0f) * times + late);
+        }
+
+        // The least, then the most (the stat's own and its cap's total, the smaller), then whole.
+        private float Limited(Stat stat, float total)
+        {
+            if (stat.Least != null && total < stat.Least.Value)
+            {
+                total = stat.Least.Value;
+            }
+
+            var most = stat.Most;
+            if (stat.Cap != null)
+            {
+                var cap = Read(stat.Cap);
+                if (most == null || cap < most.Value)
+                {
+                    most = cap;
+                }
+            }
+
+            if (most != null && total > most.Value)
+            {
+                total = most.Value;
+            }
+
+            return stat.Whole ? Whole(total) : total;
+        }
+
+        /// <summary>The stacking rules: all modifiers count, then in each group of a Strongest rule only the farthest from no change does, the earlier of a tie.</summary>
+        private static void Recount(List<Modifier> list)
+        {
+            for (var i = 0; i < list.Count; i++)
+            {
+                list[i].counts = true;
+            }
+
+            for (var i = 0; i < list.Count; i++)
+            {
+                var one = list[i];
+                if (!one.counts || one.rule != Stacking.Strongest)
+                {
+                    continue;
+                }
+
+                for (var j = i + 1; j < list.Count; j++)
+                {
+                    var other = list[j];
+                    if (!other.counts || other.rule != Stacking.Strongest || !object.Equals(one.Group, other.Group))
+                    {
+                        continue;
+                    }
+
+                    // The number that says how far a modifier is from no change: its four numbers added, a multiplier in percent points.
+                    if (Distance(other) > Distance(one))
+                    {
+                        one.counts = false;
+                        break;
+                    }
+
+                    other.counts = false;
+                }
+            }
+        }
+
+        private static float Distance(Modifier modifier)
+        {
+            return Math.Abs(modifier.Amount) + Math.Abs(modifier.Percent) + Math.Abs(modifier.Late) + Math.Abs(modifier.Times - 1.0f) * 100.0f;
+        }
+
+        /// <summary>Ends the modifiers a new Refresh or PerSource one replaces: the stat's older ones of the group, and with PerSource those of the same source.</summary>
+        private void EndOlder(Stat stat, object group, bool sameSource, Unit? source)
+        {
+            if (!held.TryGetValue(stat, out var list))
+            {
+                return;
+            }
+
+            var older = new List<Modifier>(list);
+            for (var i = 0; i < older.Count; i++)
+            {
+                if (object.Equals(older[i].Group, group) && (!sameSource || older[i].Source == source))
+                {
+                    older[i].End();
+                }
+            }
         }
 
         // The game's number less Moonwell's part; damage's green bonus and attack speed are not in the number read.
@@ -136,7 +654,7 @@ namespace Moonwell
             }
         }
 
-        // shortcut: a percent of a base the game changes (a level) is put again only at the stat's next change; follow levels if maps need it.
+        // Puts a game stat's total in the game. A stat Moonwell does not own works on the game's number as it is now (a hero's level-up puts it again); one it owns sets the game's number from its own base.
         private void Put(Stat stat)
         {
             var unit = actor as Unit;
@@ -147,48 +665,109 @@ namespace Moonwell
 
             var world = Runtime.World;
             var handle = unit.Handle;
-            var baseValue = BaseOf(handle, stat);
-            var total = Total(stat, baseValue);
+            var owned = Owned(stat, out var ownedBase);
+            var raw = owned ? ownedBase : BaseOf(handle, stat);
+            var baseValue = raw + Given(stat);
+            var total = Value(stat, baseValue);
+            last[stat] = total;
+            if (!levelWatch && unit is Hero && Reaches(stat))
+            {
+                levelWatch = true;
+                Events.Need(Hook.OnLevelUp);
+            }
+
             switch (stat.Kind)
             {
                 case StatKind.Damage:
-                    applied[stat] = Bonus(handle, DamageId, "Iatt", false, Whole(total - baseValue));
+                    if (owned)
+                    {
+                        // The dice stay, so the middle of the white damage is the base; the game keeps a whole number, so the green bonus makes up what it did not take.
+                        world.SetAverageDamage(handle, baseValue);
+                        raw = world.AverageDamageOf(handle);
+                    }
+
+                    applied[stat] = Bonus(handle, DamageId, "Iatt", false, Whole(total - raw));
                     break;
                 case StatKind.Armor:
-                    applied[stat] = Bonus(handle, ArmorId, "Idef", false, Whole(total - baseValue));
+                    if (owned)
+                    {
+                        // Whether the game's setter takes the bonuses with it is not known, so Moonwell's own is taken off first and put on again after.
+                        if (world.AbilityLevel(handle, ObjectTypes.FourCC(ArmorId)) != 0)
+                        {
+                            Bonus(handle, ArmorId, "Idef", false, 0.0f);
+                        }
+
+                        world.SetBaseArmor(handle, baseValue);
+                        raw = baseValue;
+                    }
+
+                    applied[stat] = Bonus(handle, ArmorId, "Idef", false, Whole(total - raw));
                     break;
                 case StatKind.AttackSpeed:
                     applied[stat] = Bonus(handle, AttackSpeedId, "Isx1", true, total / 100.0f) * 100.0f;
                     break;
                 case StatKind.MoveSpeed:
                     world.SetMoveSpeed(handle, total);
-                    applied[stat] = world.MoveSpeedOf(handle) - baseValue;
+                    applied[stat] = world.MoveSpeedOf(handle) - raw;
                     break;
                 case StatKind.MaxLife:
-                    world.SetMaxLife(handle, Whole(total));
-                    applied[stat] = world.MaxLifeOf(handle) - baseValue;
+                    PutMost(handle, false, Whole(total));
+                    applied[stat] = world.MaxLifeOf(handle) - raw;
                     break;
                 case StatKind.MaxMana:
-                    world.SetMaxMana(handle, Whole(total));
-                    applied[stat] = world.MaxManaOf(handle) - baseValue;
+                    PutMost(handle, true, Whole(total));
+                    applied[stat] = world.MaxManaOf(handle) - raw;
                     break;
                 case StatKind.LifeRegen:
                 case StatKind.ManaRegen:
                     world.SetRegen(handle, stat.Kind == StatKind.ManaRegen, total);
-                    applied[stat] = total - baseValue;
+                    applied[stat] = total - raw;
                     break;
                 case StatKind.Strength:
                     world.SetStrength(handle, (int)Whole(total));
-                    applied[stat] = world.StrengthOf(handle, false) - baseValue;
+                    applied[stat] = world.StrengthOf(handle, false) - raw;
                     break;
                 case StatKind.Agility:
                     world.SetAgility(handle, (int)Whole(total));
-                    applied[stat] = world.AgilityOf(handle, false) - baseValue;
+                    applied[stat] = world.AgilityOf(handle, false) - raw;
                     break;
                 case StatKind.Intelligence:
                     world.SetIntelligence(handle, (int)Whole(total));
-                    applied[stat] = world.IntelligenceOf(handle, false) - baseValue;
+                    applied[stat] = world.IntelligenceOf(handle, false) - raw;
                     break;
+            }
+        }
+
+        // Sets a unit's most life or mana, and keeps its current life or mana at the same percent of the most (decision 391): 650 of 650 becomes 750 of 750, 325 of 650 becomes 375 of 750. A dead unit is left alone, and a most of 0 before or after is not divided by. A unit alive keeps at least 1 life, as the game kills at 0.405.
+        private static void PutMost(unit handle, bool mana, float most)
+        {
+            var world = Runtime.World;
+            var before = mana ? world.MaxManaOf(handle) : world.MaxLifeOf(handle);
+            var amount = mana ? world.ManaOf(handle) : world.LifeOf(handle);
+            var alive = world.IsAlive(handle);
+            if (mana)
+            {
+                world.SetMaxMana(handle, most);
+            }
+            else
+            {
+                world.SetMaxLife(handle, most);
+            }
+
+            var now = mana ? world.MaxManaOf(handle) : world.MaxLifeOf(handle);
+            if (!alive || amount <= 0.0f || before <= 0.0f || now <= 0.0f || now == before)
+            {
+                return;
+            }
+
+            var keep = amount >= before ? now : now * amount / before;
+            if (mana)
+            {
+                world.SetMana(handle, keep);
+            }
+            else
+            {
+                world.SetLife(handle, keep < 1.0f ? 1.0f : keep);
             }
         }
 
