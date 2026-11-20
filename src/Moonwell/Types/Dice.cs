@@ -78,7 +78,36 @@ namespace Moonwell
         /// <summary>A number from low up to high, high left out.</summary>
         public float Real(float low, float high)
         {
-            return low + (high - low) * (Int(0, 16777215) / 16777216.0f);
+            var drawn = Int(0, 16777215);
+            var real = RealAt(low, high, drawn);
+            if (real != high || low == high)
+            {
+                return real;
+            }
+
+            // The sum rounded up to high in 32-bit floats: the largest the draws below give instead, found without a
+            // draw of its own, so the numbers after it stay the same.
+            var below = 0;
+            var above = drawn;
+            while (above - below > 1)
+            {
+                var middle = (below + above) / 2;
+                if (RealAt(low, high, middle) == high)
+                {
+                    above = middle;
+                }
+                else
+                {
+                    below = middle;
+                }
+            }
+
+            return RealAt(low, high, below);
+        }
+
+        private static float RealAt(float low, float high, int drawn)
+        {
+            return low + (high - low) * (drawn / 16777216.0f);
         }
 
         /// <summary>True with the chance, from 0 (never) to 1 (always): Chance(0.25f) is true one time in four.</summary>
