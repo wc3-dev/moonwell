@@ -78,6 +78,35 @@ namespace Moonwell.Testing
             Expect.Equal(0, bought, "Bought does not run");
         }
 
+        /// <summary>A good's restock ends when it is removed: its timer does nothing after, and the good put back starts fresh, full and with no restock under way, never over its Stock.</summary>
+        public static void ShopRemoveEndsRestock(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            ObjectTypes.Item(ObjectTypes.FourCC("pman"), () => new ShopPotion());
+            var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), slot: 0))!;
+            var shop = Screen.Add(new ShopWindow { Buyer = hero }, Game.Instance, shownTo: Player.One);
+            var potion = new ShopEntry { Name = "Potion", Icon = "potion.blp", Cost = 100, Stock = 1, Restock = 5.0f };
+            Player.One.Gold = 1000;
+            shop.Sell<ShopPotion>(potion);
+            ClickOn(frames, shop.buttons[0], 0);
+            shop.Remove(potion);
+            world.Advance(5.1f);
+            Expect.Equal(0, potion.Left, "a removed good does not restock");
+            shop.Sell<ShopPotion>(potion);
+            ClickOn(frames, shop.buttons[0], 0);
+            shop.Remove(potion);
+            shop.Sell<ShopPotion>(potion);
+            Expect.Equal(1, potion.Left, "put back full");
+            world.Advance(5.1f);
+            Expect.Equal(1, potion.Left, "the old restock adds none over the stock");
+            ClickOn(frames, shop.buttons[0], 0);
+            Expect.Equal(0, potion.Left, "one sold, not two");
+            Expect.True(!shop.buttons[0].Enabled, "sold out is greyed");
+            world.Advance(5.1f);
+            Expect.Equal(1, potion.Left, "its own restock brings one back");
+            Expect.True(shop.buttons[0].Enabled, "and shows the new button again");
+        }
+
         /// <summary>A settings window shows a line for each setting; the player's changes run Changed and are written to their file, and the next game's window brings them back, running Changed.</summary>
         public static void Settings(FakeWorld world)
         {

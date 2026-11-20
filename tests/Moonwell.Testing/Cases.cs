@@ -1915,6 +1915,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.moved-throws", Run = KitCases.MovedThrows });
             list.Add(new Case { Name = "kit.shop", Run = KitWindowCases.Shop });
             list.Add(new Case { Name = "kit.shop-sells", Run = KitWindowCases.ShopSells });
+            list.Add(new Case { Name = "kit.shop-remove-ends-restock", Run = KitWindowCases.ShopRemoveEndsRestock });
             list.Add(new Case { Name = "kit.settings", Run = KitWindowCases.Settings });
             list.Add(new Case { Name = "kit.settings-spoiled", Run = KitWindowCases.SettingsSpoiled });
             list.Add(new Case { Name = "kit.scoreboard", Run = KitWindowCases.Scoreboard });
