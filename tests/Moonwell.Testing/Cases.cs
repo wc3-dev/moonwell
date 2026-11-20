@@ -41,6 +41,7 @@ namespace Moonwell.Testing
             AddAuditAreas(list);
             AddInput(list);
             AddFrames(list);
+            AddKitStats(list);
             AddKeys(list);
             AddOrders(list);
             AddSelection(list);
@@ -1931,6 +1932,19 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fdf.child-makes-its-own", Run = FdfCases.ChildMakesItsOwn });
             list.Add(new Case { Name = "fdf.found-label-lets-clicks-through", Run = FdfCases.FoundLabelLetsClicksThrough });
             list.Add(new Case { Name = "fdf.ended-part-refused", Run = FdfCases.EndedPartRefused });
+        }
+
+        /// <summary>Adds the kit's stat cases, apart from AddFrames, which is near Lua's limit of 200 locals.</summary>
+        private static void AddKitStats(List<Case> list)
+        {
+            list.Add(new Case { Name = "kit.stat-bar-follows-stats", Run = KitStatCases.StatBarFollowsStats });
+            list.Add(new Case { Name = "kit.stat-bar-follows-one-thing", Run = KitStatCases.StatBarFollowsOneThing });
+            list.Add(new Case { Name = "kit.overlay-on-life", Run = KitStatCases.OverlayOnLife });
+            list.Add(new Case { Name = "kit.overlay-on-stat-bar", Run = KitStatCases.OverlayOnStatBar });
+            list.Add(new Case { Name = "kit.experience-bar", Run = KitStatCases.ExperienceBar });
+            list.Add(new Case { Name = "kit.stat-list-rows", Run = KitStatCases.StatListRows });
+            list.Add(new Case { Name = "kit.stat-list-tooltip", Run = KitStatCases.StatListTooltip });
+            list.Add(new Case { Name = "kit.unit-frame-stats", Run = KitStatCases.UnitFrameStats });
         }
 
         /// <summary>Adds the special effect cases.</summary>

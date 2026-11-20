@@ -3134,13 +3134,29 @@ var party = Screen.Add(new SelectionList { Anchor = FramePoint.Left }, this, sho
 party.Follow(player);
 ```
 
-- `StatusBar` is a `Backing`, a `Bar` and a `Label` over both. `Follow(unit, Vital.Life)` or `Vital.Mana` follows a
-  unit, read 20 times a second on one timer for every part, and drawn again only when it changed; a dead or gone unit
-  reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life rounded up as the game shows it),
-  `Percent` or `None`.
-- `UnitFrame` has `Portrait`, `NameLabel`, `LevelLabel`, `Life`, `Mana`, `Buffs` (a `BuffRow` below the frame) and
-  `Art`, an empty image over the bars and under the texts for a map's own frame art. It is hidden until `Show(unit)`,
-  and `Show(null)` hides it again. The portrait is the unit's icon, each machine its own as the graphics mode can give
+- `StatusBar` is a `Backing`, a `Bar`, an `OverlayBar` and a `Label` over both. `Follow(unit, Vital.Life)`, `Vital.Mana`
+  or `Vital.Experience` follows a unit, read 20 times a second on one timer for every part, and drawn again only when it
+  changed; a dead or gone unit reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life
+  rounded up as the game shows it), `Percent` or `None`.
+- `Follow(unit, stat, outOf)` makes the bar any stat out of another stat or a number, as `bar.Follow(hero, Energy,
+  MaxEnergy)`; the text works as for life. It is drawn again at once when either stat changes on that unit, not by the
+  20-a-second poll. Following something else, or `null`, drops the old following.
+- `Overlay(stat)` draws a second layer over the bar for another stat of the followed unit, as a share of the bar's own
+  most and never wider than the bar: `frame.Life.Overlay(Stat.Barrier)` fills a quarter of a life bar of 800 for a
+  barrier of 200. `Overlay(null)` takes it off. `OverlayBar` is the layer's frame, in the theme's `OverlayBar` texture at
+  `OverlayAlpha`, which a map may restyle.
+- `Vital.Experience` is a hero's progress to its next level: the fill is `Hero.LevelProgress` and the `Values` text its
+  experience past its level's out of what the next level needs (`300 / 600`); at the top level the last step shows
+  full, and a unit that is no hero shows an empty bar.
+- `StatList` is rows of a stat's name and value for one unit: `list.Show(hero, Stat.Armor, Stat.CritChance)`. A whole
+  stat shows whole, another with at most one decimal, and a row is drawn again when its stat changes. A row's tooltip
+  lists the base, then each modifier that counts (`+5`, `+20%`, `x1.5`, `+10 after` for a late flat) with what holds it,
+  then those a stacking rule leaves out under "Left out:". A modifier is named by its holder: an item's carry by its
+  item's class, a buff or a component by its class. `Show(null)` or no stats empties it.
+- `UnitFrame` has `Portrait`, `NameLabel`, `LevelLabel`, `Life`, `Mana`, `Buffs` (a `BuffRow` below the frame), `Stats`
+  (a `StatList` below the buffs, empty until the map calls `frame.Stats.Show(...)`, and emptied when the frame shows
+  another unit) and `Art`, an empty image over the bars and under the texts for a map's own frame art. It is hidden
+  until `Show(unit)`, and `Show(null)` hides it again. The portrait is the unit's icon, each machine its own as the graphics mode can give
   another, so its `Texture` reads empty; the name is each machine's own, as `ShowNameOf` gives it. To put the game's
   moving portrait in it, `player.GameUi().Portrait.Fill(frame.Portrait)`.
 - `ActionButton` is an icon button with `Hotkey` (the key's text in the top right corner; it only shows the key, see
