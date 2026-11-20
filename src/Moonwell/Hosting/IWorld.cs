@@ -395,6 +395,18 @@ namespace Moonwell.Hosting
         /// <summary>Adds an amount, negative to take away, to the attack range of a unit's first weapon: the game takes a change only as an add, through weapon index 1 (probe-stats-1).</summary>
         void AddAttackRange(unit unit, float delta);
 
+        /// <summary>A unit's cast point, the seconds from the order's start of a cast to the spell's effect, as it has it now.</summary>
+        float CastPointOf(unit unit);
+
+        /// <summary>Sets a unit's cast point; the unit's alone, from its next cast (seen 11-19).</summary>
+        void SetCastPoint(unit unit, float seconds);
+
+        /// <summary>A unit's cast backswing, the seconds from the spell's effect to its finish, as it has it now.</summary>
+        float CastBackswingOf(unit unit);
+
+        /// <summary>Sets a unit's cast backswing; the unit's alone, from its next cast (seen 11-19).</summary>
+        void SetCastBackswing(unit unit, float seconds);
+
         /// <summary>The move speed of a unit.</summary>
         float MoveSpeedOf(unit unit);
 

@@ -3,7 +3,7 @@ using System.ComponentModel;
 namespace Moonwell
 {
     /// <summary>
-    /// Starts the stats package, which gives the ready-made stats on <see cref="Stat"/> their effect on every hit and heal:
+    /// Starts the stats package, which gives the ready-made stats on <see cref="Stat"/> their effect on every hit and heal, on a unit's abilities and cast speed, and on the experience and gold of a kill:
     /// a map's generated Main calls Install when the map references the package, after the damage package's.
     /// </summary>
     public static class StatsSystem
@@ -18,10 +18,16 @@ namespace Moonwell
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install()
         {
-            if (Game.Instance.Get<StatEffects>() == null)
+            var effects = Game.Instance.Get<StatEffects>();
+            if (effects == null)
             {
-                Game.Instance.Add(new StatEffects());
+                effects = new StatEffects();
+                Game.Instance.Add(effects);
+                Hooks.AddTakenIn(effects.TakenIn);
             }
+
+            Events.AbilitiesListener = effects.Abilities.PutScales;
+            Events.DeathListener = effects.Died;
         }
     }
 }

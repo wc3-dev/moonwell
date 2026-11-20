@@ -2509,6 +2509,9 @@ namespace Moonwell
             Die(unit, killer);
         }
 
+        /// <summary>Stands in for what the game gives for a kill (experience and bounty), which it gives after the killing hit's damage event and before the death event (seen 11-20): a case sets it to give them with the world's own calls; it runs with the dying unit and its killer, before the death event, whether or not deaths are listened for.</summary>
+        public Action<unit, unit?>? KillGift;
+
         /// <summary>The death itself, for KillUnit, for a life set to 0.405 or less and for damage: life 0, the death inside the call when deaths are listened for, and nothing for a unit already dead (seen 10-21).</summary>
         private void Die(unit unit, unit? killer)
         {
@@ -2523,6 +2526,7 @@ namespace Moonwell
             Dummies.Stopped(unit);
             DropAll(unit);
             GameBuffs.TakeAll(unit);
+            KillGift?.Invoke(unit, killer);
             if (Listening.Contains(GameEvent.Death))
             {
                 Inbound.Died(unit, killer);

@@ -85,6 +85,35 @@ namespace Moonwell
             SetAttackRange(unit, AttackRangeOf(unit) + delta);
         }
 
+        /// <summary>Each unit's cast point and cast backswing, set by SetCastPoint and SetCastBackswing.</summary>
+        private readonly Dictionary<unit, float> castPoints = new Dictionary<unit, float>();
+
+        private readonly Dictionary<unit, float> castBackswings = new Dictionary<unit, float>();
+
+        /// <summary>A unit's cast point; 0 until set.</summary>
+        public float CastPointOf(unit unit)
+        {
+            return Kept(castPoints, unit);
+        }
+
+        /// <summary>Sets a unit's cast point.</summary>
+        public void SetCastPoint(unit unit, float seconds)
+        {
+            castPoints[unit] = seconds;
+        }
+
+        /// <summary>A unit's cast backswing; 0 until set.</summary>
+        public float CastBackswingOf(unit unit)
+        {
+            return Kept(castBackswings, unit);
+        }
+
+        /// <summary>Sets a unit's cast backswing.</summary>
+        public void SetCastBackswing(unit unit, float seconds)
+        {
+            castBackswings[unit] = seconds;
+        }
+
         /// <summary>The cast range set for a unit's ability at a level; 0 until set.</summary>
         public float AbilityRange(unit unit, int abilityId, int levelIndex)
         {

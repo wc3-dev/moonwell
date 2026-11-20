@@ -39,6 +39,9 @@ namespace Moonwell
         /// <summary>Set by the stats package: hears that a unit's set of abilities or the level of one of them changed (an ability's object first made, AddAbility, RemoveAbility, a hero learning or raising a skill, a Level set), so it can scale a new ability or level; null without one.</summary>
         internal static Action<Unit>? AbilitiesListener;
 
+        /// <summary>Set by the stats package: hears each unit's death first, before any reaction of Moonwell's runs for it and whether or not anything else listens, by the dying unit's handle, so it can add to what the game gave for the kill; null without one. The package asks for the death event itself (Listen) once it has something to add.</summary>
+        internal static Action<unit>? DeathListener;
+
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, bool, float, Damage?>? DamageDealer;
 
@@ -190,6 +193,7 @@ namespace Moonwell
             AcquireListener = null;
             OrderListener = null;
             AbilitiesListener = null;
+            DeathListener = null;
             DamageDealer = null;
         }
 
