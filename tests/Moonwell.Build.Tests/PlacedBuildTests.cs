@@ -67,9 +67,58 @@ namespace Moonwell.Build.Tests
             Assert.Contains("Settings.cs:9: the map has no World Editor placed unit named 'hfoo_0099'. Its placed units: Hblm_0003, Hpal_0002.", output);
         }
 
+        [Theory]
+        [InlineData("unit")]
+        [InlineData("item")]
+        [InlineData("destructable")]
+        public void a_map_with_400_placed_things_of_a_kind_builds_and_keeps_their_names(string kind)
+        {
+            var project = folders.TemporaryCopyOf("Sample");
+            for (var number = 100; number < 500; number++)
+            {
+                switch (kind)
+                {
+                    case "unit":
+                        AddUnit(project, "hfoo", number);
+                        break;
+                    case "item":
+                        AddItem(project, "ratc", number);
+                        break;
+                    default:
+                        AddDestructable(project, "YTpb", number);
+                        break;
+                }
+            }
+
+            Write(project, kind switch
+            {
+                "unit" => "Placed.Units.hfoo_0100?.Kill(); Placed.Units.hfoo_0499?.Kill();",
+                "item" => "Placed.Items.ratc_0100?.Remove(); Placed.Items.ratc_0499?.Remove();",
+                _ => "Placed.Destructables.YTpb_0100?.Kill(); Placed.Destructables.YTpb_0499?.Kill();",
+            });
+
+            var (exitCode, output) = Build(project);
+
+            Assert.True(exitCode == 0, output);
+        }
+
         private static void Write(string project, string body)
         {
             File.WriteAllText(Path.Combine(project, "Settings.cs"), Code.Replace("BODY", body));
+        }
+
+        // A copy of a placed unit of war3mapUnits.doo, of another type and number.
+        private static void AddUnit(string project, string type, int number)
+        {
+            var path = Path.Combine(project, "map", "war3mapUnits.doo");
+            var units = ReadUnits(path);
+            var unit = ReadUnits(path).Units.First(placed => placed.IsUnit() && !placed.IsPlayerStartLocation());
+            unit.TypeId = type.FromRawcode();
+            unit.SkinId = unit.TypeId;
+            unit.CreationNumber = number;
+            units.Units.Add(unit);
+            using var writer = new BinaryWriter(File.Create(path), Encoding.UTF8);
+            writer.Write(units);
         }
 
         // A copy of a start location of war3mapUnits.doo, made an item: it carries every field a placed item has.
