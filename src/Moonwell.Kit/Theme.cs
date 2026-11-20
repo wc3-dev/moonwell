@@ -53,6 +53,22 @@ namespace Moonwell
         [LocalSafe]
         public string ManaBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor01.blp";
 
+        /// <summary>A bar following a stat other than life or mana: the game's orange team colour unless set.</summary>
+        [LocalSafe]
+        public string StatBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor05.blp";
+
+        /// <summary>A hero's experience bar's fill: the game's purple team colour unless set.</summary>
+        [LocalSafe]
+        public string ExperienceBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor03.blp";
+
+        /// <summary>A bar's second layer, as a barrier over life: the game's snow white team colour unless set, drawn at OverlayAlpha so the bar shows through.</summary>
+        [LocalSafe]
+        public string OverlayBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor21.blp";
+
+        /// <summary>How opaque a bar's second layer is, 0 to 255; 150 unless set.</summary>
+        [LocalSafe]
+        public int OverlayAlpha { get; set; } = 150;
+
         /// <summary>A cast bar's fill: the game's yellow team colour unless set.</summary>
         [LocalSafe]
         public string CastBar { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor04.blp";
