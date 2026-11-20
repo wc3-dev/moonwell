@@ -157,7 +157,7 @@ namespace Moonwell
             return 2.0f - (float)Math.Pow(0.94, Math.Min(20, (int)-armor));
         }
 
-        /// <summary>Seeds a unit made while the play runs, when its type has numbers, before Moonwell takes it in: its life, move speed, armor and average damage, and what the play keeps of it.</summary>
+        /// <summary>Seeds a unit made while the play runs, when its type has numbers, before Moonwell takes it in: its life, mana, move speed, armor, average damage and abilities, and what the play keeps of it.</summary>
         private void Seed(unit made, int typeId)
         {
             if (!playing)
@@ -173,6 +173,13 @@ namespace Moonwell
 
             maxLives[made] = numbers.Life;
             lives[made] = numbers.Life;
+            maxManas[made] = numbers.MaxMana;
+            manas[made] = Math.Min(numbers.Mana, numbers.MaxMana);
+            foreach (var abilityId in numbers.Abilities)
+            {
+                SetAbilityLevel(made, abilityId, 1);
+            }
+
             moveSpeeds[made] = numbers.MoveSpeed;
             armors[made] = numbers.Armor;
             averageDamages[made] = numbers.Damage + numbers.DamageDice * (numbers.DamageSides + 1) / 2.0f;

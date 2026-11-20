@@ -97,7 +97,27 @@ namespace Moonwell
                 Damage = Convert.ToInt32(Value(declared, "Damage")),
                 DamageDice = Convert.ToInt32(Value(declared, "DamageDice")),
                 DamageSides = Convert.ToInt32(Value(declared, "DamageSides")),
+                Mana = Convert.ToSingle(Value(declared, "Mana")),
+                MaxMana = Convert.ToSingle(Value(declared, "MaxMana")),
+                Abilities = IdsOf(Value(declared, "Abilities")),
             };
+        }
+
+        /// <summary>The ids of an object list's entries, a class's by its attributes and a standard object's with no class by its id text; an entry with no id is left out.</summary>
+        private static int[] IdsOf(object? list)
+        {
+            var ids = new List<int>();
+            var entries = list?.GetType().GetProperty("Entries", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(list) as System.Collections.IEnumerable;
+            foreach (var entry in entries ?? Array.Empty<object>())
+            {
+                var id = entry is Type type ? Registry.IdOf(type) : entry as string;
+                if (id != null && id.Length == 4)
+                {
+                    ids.Add(ObjectTypes.FourCC(id));
+                }
+            }
+
+            return ids.ToArray();
         }
 
         /// <summary>An ability type's order string, and its cooldown and mana cost at each level, read from its object data as a unit type's numbers are; null when it has none.</summary>

@@ -95,6 +95,33 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Every standard class of Moonwell.Objects with its [Standard] id and maker, read once; empty without Moonwell.Objects.</summary>
+        private static List<(Type Type, int Id, Func<object> Make)>? standards;
+
+        /// <summary>Registers every standard class of Moonwell.Objects with its game id and maker, those the map's register step registered kept (decision 382).</summary>
+        internal static void RegisterStandard()
+        {
+            if (standards == null)
+            {
+                standards = new List<(Type, int, Func<object>)>();
+                var objects = Type.GetType("Moonwell.Objects.StandardUnit, " + ObjectsAssembly)?.Assembly;
+                foreach (var type in objects == null ? Array.Empty<Type>() : TypesOf(objects))
+                {
+                    var id = Argument(type, StandardAttribute);
+                    if (!type.IsAbstract && id != null && id.Length == 4 && KindBaseOf(type) != null)
+                    {
+                        var standard = type;
+                        standards.Add((type, ObjectTypes.FourCC(id), () => Activator.CreateInstance(standard, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DoNotWrapExceptions, null, null, null)!));
+                    }
+                }
+            }
+
+            foreach (var (type, id, make) in standards)
+            {
+                ObjectTypes.Standard(type, id, make);
+            }
+        }
+
         /// <summary>The listens a built map's Main makes when its code reads what only they fill: last orders, selections, transports and summons.</summary>
         private static void Listen(HashSet<string> members)
         {
@@ -271,7 +298,7 @@ namespace Moonwell
         }
 
         /// <summary>A class's object id: a declared class's from [ObjectId], or its standard object's with [Replaces]; a standard class's [Standard] id; null for none.</summary>
-        private static string? IdOf(Type type)
+        internal static string? IdOf(Type type)
         {
             if (!IsDeclared(type))
             {

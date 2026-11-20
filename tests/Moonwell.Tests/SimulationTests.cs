@@ -122,5 +122,48 @@ namespace Moonwell.Tests
             Expect.True(winner.Life < 420.0f, "the winner was hit too: " + winner.Life);
             Expect.Equal(1, sim.Alive(Player.One) + sim.Alive(Player.Two), "one footman left");
         }
+
+        /// <summary>An empty game knows every standard class by its game id (J99, J135): a hero takes Storm Bolt by its class.</summary>
+        [Fact]
+        public void AnEmptyGameKnowsTheStandardClasses()
+        {
+            Simulation.Start();
+            Expect.Equal(ObjectTypes.FourCC("AHtb"), ObjectTypes.IdOf<Human.Abilities.StormBolt>(), "Storm Bolt's id");
+            var king = Unit.Create(ObjectTypes.FourCC("Hmkg"), Player.One, 0.0f, 0.0f, Game.Instance);
+            king.AddAbility<Human.Abilities.StormBolt>();
+            Expect.True(king.HasAbility(ObjectTypes.FourCC("AHtb")), "the king has it");
+        }
+
+        /// <summary>The map's Storm Bolt in place of the standard one, which a map's start uses and an empty game does not.</summary>
+        [Replaces]
+        private sealed class MapBolt : Human.Abilities.StormBolt
+        {
+        }
+
+        /// <summary>With the map's start, its [Replaces] class is made for the standard class's id, the standard classes registered after it.</summary>
+        [Fact]
+        public void TheMapsReplacingClassWins()
+        {
+            Simulation.Start(new EmptyMap());
+            var king = Unit.Create(ObjectTypes.FourCC("Hmkg"), Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.True(king.AddAbility<Human.Abilities.StormBolt>() is MapBolt, "the map's class");
+            Simulation.Start();
+            king = Unit.Create(ObjectTypes.FourCC("Hmkg"), Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.True(!(king.AddAbility<Human.Abilities.StormBolt>() is MapBolt), "the standard class in an empty game");
+        }
+
+        /// <summary>A unit starts with its type's abilities and mana from its object data (J133); a hero's hero abilities stay unlearned.</summary>
+        [Fact]
+        public void APriestStartsWithItsAbilitiesAndMana()
+        {
+            Simulation.Start();
+            var priest = Unit.Create(ObjectTypes.FourCC("hmpr"), Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.True(priest.HasAbility(ObjectTypes.FourCC("Ahea")), "Heal");
+            Expect.True(priest.HasAbility(ObjectTypes.FourCC("Ainf")), "Inner Fire");
+            Expect.Near(75.0f, priest.Mana, "mana");
+            Expect.Near(200.0f, priest.MaxMana, "max mana");
+            var paladin = Unit.Create(ObjectTypes.FourCC("Hpal"), Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.True(!paladin.HasAbility(ObjectTypes.FourCC("AHhb")), "Holy Light unlearned");
+        }
     }
 }
