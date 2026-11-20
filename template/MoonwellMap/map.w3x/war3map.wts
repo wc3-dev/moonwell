@@ -1,16 +1,16 @@
 ﻿STRING 1
 {
-Moonwell Template
+MoonwellMap
 }
 
 STRING 2
 {
-Any
+1
 }
 
 STRING 3
 {
-Nondescript
+A map made with Moonwell.
 }
 
 STRING 4

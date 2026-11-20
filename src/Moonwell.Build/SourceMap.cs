@@ -16,7 +16,7 @@ namespace Moonwell.Build
         /// <summary>Opens the project's map without its GUI triggers and applies the map class's settings, its game data option and its slots among them.</summary>
         /// <param name="project">The map project.</param>
         /// <param name="settings">The settings read from the map class; empty ones keep World Editor's values.</param>
-        /// <param name="log">The build log; a game data option the map class changes is noted in it.</param>
+        /// <param name="log">The build log; a game data option or setting the map class changes, and computers a moonwell run game leaves empty, are noted in it.</param>
         /// <returns>The opened map, its script language set to Lua.</returns>
         public static War3Net.Build.Map Open(MapProject project, MapSettings settings, TextWriter log)
         {
@@ -41,30 +41,49 @@ namespace Moonwell.Build
                 log.WriteLine($"note: the map's game data option {GameData.Describe(set, version)} is replaced by {data}");
             }
 
-            if (settings.Name.Length > 0)
-            {
-                info.MapName = settings.Name;
-            }
-
-            if (settings.Author.Length > 0)
-            {
-                info.MapAuthor = settings.Author;
-            }
-
-            if (settings.Description.Length > 0)
-            {
-                info.MapDescription = settings.Description;
-            }
-
-            if (settings.RecommendedPlayers.Length > 0)
-            {
-                info.RecommendedPlayers = settings.RecommendedPlayers;
-            }
+            var texts = MapTypes.TextsOf(map.TriggerStrings);
+            info.MapName = Replace(info.MapName, settings.Name, "name", texts, log);
+            info.MapAuthor = Replace(info.MapAuthor, settings.Author, "author", texts, log);
+            info.MapDescription = Replace(info.MapDescription, settings.Description, "description", texts, log);
+            info.RecommendedPlayers = Replace(info.RecommendedPlayers, settings.RecommendedPlayers, "recommended players", texts, log);
 
             MapSetup.Apply(map, settings, log, project.MapName);
             MapSetup.ApplyTiles(map, settings, project.MapName);
+            NoteEmptyComputers(info, log);
 
             return map;
+        }
+
+        // A setting the map class leaves empty keeps World Editor's value; one that replaces a different text is noted.
+        private static string? Replace(string? held, string set, string what, IReadOnlyDictionary<uint, string> texts, TextWriter log)
+        {
+            if (set.Length == 0)
+            {
+                return held;
+            }
+
+            var text = MapTypes.TextOf(held ?? string.Empty, texts);
+            if (text.Length > 0 && text != set)
+            {
+                log.WriteLine($"note: the map's {what} \"{text.ReplaceLineEndings(" ")}\" in World Editor is replaced by the map class's \"{set.ReplaceLineEndings(" ")}\"");
+            }
+
+            return set;
+        }
+
+        // With custom forces and no fixed player settings, a -loadfile game seats none of the map's computers (Sven's runs, 11-20).
+        private static void NoteEmptyComputers(MapInfo info, TextWriter log)
+        {
+            if (!info.MapFlags.HasFlag(MapFlags.UseCustomForces) || info.MapFlags.HasFlag(MapFlags.FixedPlayerSettingsForCustomForces))
+            {
+                return;
+            }
+
+            var computers = info.Players.Where(player => player.Controller == PlayerController.Computer).Select(player => player.Id).ToList();
+            if (computers.Count > 0)
+            {
+                log.WriteLine($"note: {(computers.Count == 1 ? "slot" : "slots")} {string.Join(", ", computers)} {(computers.Count == 1 ? "is a computer" : "are computers")} in World Editor, but a moonwell run game leaves {(computers.Count == 1 ? "it" : "them")} empty, as the map has custom forces without fixed player settings; set up Slots in the map class, or turn on Fixed Player Settings in World Editor's forces");
+            }
         }
     }
 }
