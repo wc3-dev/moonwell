@@ -50,7 +50,7 @@ namespace Moonwell.Spells
                 for (var i = 0; i < found.Count; i++)
                 {
                     hit.Add(found[i]);
-                    Hit(cast, found[i], damage);
+                    Hit(cast, found[i], damage, true);
                 }
 
                 if (caster.IsGone || !caster.IsPushed())

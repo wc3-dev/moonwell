@@ -36,6 +36,9 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
                 new KeyValuePair<string, string>("OnLanded", "OnUnitHurt"),
                 new KeyValuePair<string, string>("OnBurst", "OnUnitBurst"),
             })),
+            new KeyValuePair<string, ImmutableDictionary<string, string>>("IHealSource", ImmutableDictionary<string, string>.Empty),
+            new KeyValuePair<string, ImmutableDictionary<string, string>>("IHealTarget", ImmutableDictionary<string, string>.Empty),
+            new KeyValuePair<string, ImmutableDictionary<string, string>>("IHealWatch", ImmutableDictionary<string, string>.Empty),
             // OnLanded is IDamageSource's name: a push's landing is OnGrounded.
             new KeyValuePair<string, ImmutableDictionary<string, string>>("IPushTarget", ImmutableDictionary.CreateRange(new[]
             {
@@ -78,13 +81,14 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
             var mapHosts = new Func<INamedTypeSymbol, bool>(type => IsA(type, mapComponent));
             const string UnitHosts = "a unit's class and its components (buffs too)";
             const string MapHosts = "the game's and players' components";
-            foreach (var name in new[] { "IDamageSource", "IDamageTarget", "IDamageWatch" })
+            foreach (var name in new[] { "IDamageSource", "IDamageTarget", "IDamageWatch", "IHealSource", "IHealTarget", "IHealWatch" })
             {
                 if (compilation.GetTypeByMetadataName("Moonwell." + name) is { } face)
                 {
-                    var watch = name == "IDamageWatch";
+                    var watch = name.EndsWith("Watch", StringComparison.Ordinal);
+                    var heal = name.StartsWith("IHeal", StringComparison.Ordinal);
                     families.Add(new Family(face, "damage package", watch ? mapHosts : unitHosts, watch ? MapHosts : UnitHosts, Renamed[name],
-                        method => method.Parameters.Length == 1 && IsDamageParameter(method.Parameters[0].Type), false));
+                        method => method.Parameters.Length == 1 && (heal ? IsHealParameter(method.Parameters[0].Type) : IsDamageParameter(method.Parameters[0].Type)), false));
                 }
             }
 
@@ -131,6 +135,12 @@ public sealed class ReactionAnalyzer : DiagnosticAnalyzer
     private static bool IsDamageParameter(ITypeSymbol type)
     {
         return type.ContainingNamespace?.ToDisplayString() == "Moonwell" && (type.Name == "Hit" || type.Name == "Burst");
+    }
+
+    /// <summary>Whether a type is the damage package's Heal.</summary>
+    private static bool IsHealParameter(ITypeSymbol type)
+    {
+        return type.ContainingNamespace?.ToDisplayString() == "Moonwell" && type.Name == "Heal";
     }
 
     /// <summary>Whether a type is one a reaction takes: the damage package's Hit or Burst, or the physics package's Impact or Slam.</summary>
