@@ -19,4 +19,17 @@ public class DamageDocsTests
         var bare = members.Where(member => member.Element("summary") == null).Select(member => (string)member.Attribute("name")!).ToList();
         Assert.True(bare.Count == 0, "reactions without a summary: " + string.Join(", ", bare));
     }
+
+    // The heal interfaces' methods carry @CSharpLua.Ignore too, so each needs a summary for the same reason.
+    [Fact]
+    public void EveryHealReactionHasAHoverSummary()
+    {
+        var xml = Path.ChangeExtension(typeof(Hit).Assembly.Location, ".xml");
+        var members = XDocument.Load(xml).Descendants("member")
+            .Where(member => ((string)member.Attribute("name")!).StartsWith("M:Moonwell.IHeal"))
+            .ToList();
+        Assert.Equal(6, members.Count);
+        var bare = members.Where(member => member.Element("summary") == null).Select(member => (string)member.Attribute("name")!).ToList();
+        Assert.True(bare.Count == 0, "reactions without a summary: " + string.Join(", ", bare));
+    }
 }

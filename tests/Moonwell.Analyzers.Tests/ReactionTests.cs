@@ -679,4 +679,103 @@ public class ReactionTests
             }
             """));
     }
+
+    [Fact]
+    public void written_right_heal_reactions_are_left_alone()
+    {
+        Assert.Empty(MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Healer : Unit, IHealSource, IHealTarget
+                {
+                    public void OnHealing(Heal heal) { }
+                    public void OnHealed(Heal heal) { }
+                    public void OnReceiving(Heal heal) { }
+                    public void OnReceived(Heal heal) { }
+                    public void Helper(Heal heal) { }
+                }
+
+                public class Meter : GameComponent, IHealWatch
+                {
+                    public void OnUnitReceiving(Heal heal) { }
+                    public void OnUnitReceived(Heal heal) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void a_heal_reaction_that_is_not_public_or_takes_a_hit_or_is_a_letter_off_is_MW0036_with_messages()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnReceived' never runs: a reaction of IHealTarget is public, not static, and takes a Heal",
+            "'OnHealing' never runs: a reaction of IHealSource is public, not static, and takes a Heal",
+            "'OnReceivd' is not a reaction of IHealTarget, so it never runs; did you mean OnReceived?",
+            "'OnHealed' never runs: it is an overload, and the damage package calls only OnHealed(Heal); give the helper another name",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Hidden : Unit, IHealTarget
+                {
+                    void OnReceived(Heal heal) { }
+                }
+
+                public class Wrong : Unit, IHealSource
+                {
+                    public void OnHealing(Hit hit) { }
+                }
+
+                public class Typo : Unit, IHealTarget
+                {
+                    public void OnReceivd(Heal heal) { }
+                }
+
+                public class Overload : Unit, IHealSource
+                {
+                    public void OnHealed(Heal heal) { }
+                    public void OnHealed(Heal heal, float scale) { }
+                }
+            }
+            """));
+    }
+
+    [Fact]
+    public void a_heal_reaction_without_its_interface_or_on_a_class_the_package_never_calls_is_MW0036_with_messages()
+    {
+        Assert.Equal(new[]
+        {
+            "'OnReceiving' never runs: it is a reaction of IHealTarget, which this class does not implement",
+            "'OnUnitReceived' never runs: the damage package calls IHealWatch only on the game's and players' components",
+            "'IHealSource' on this class never runs: the damage package calls IHealSource only on a unit's class and its components (buffs too)",
+            "'IHealWatch' on this class never runs: the damage package calls IHealWatch only on the game's and players' components",
+        }, MapCode.MessagesOfFile("""
+            using Moonwell;
+
+            namespace Map
+            {
+                public class Forgot : Unit
+                {
+                    public void OnReceiving(Heal heal) { }
+                }
+
+                public class Meter : Unit
+                {
+                    public void OnUnitReceived(Heal heal) { }
+                }
+
+                public class Rules : GameComponent, IHealSource
+                {
+                }
+
+                public class Mark : UnitComponent, IHealWatch
+                {
+                }
+            }
+            """));
+    }
 }

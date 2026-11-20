@@ -165,5 +165,38 @@ namespace Moonwell.Tests
             var paladin = Unit.Create(ObjectTypes.FourCC("Hpal"), Player.One, 0.0f, 0.0f, Game.Instance);
             Expect.True(!paladin.HasAbility(ObjectTypes.FourCC("AHhb")), "Holy Light unlearned");
         }
+
+        /// <summary>The stages play on units made from object data: a rule that halves each hit its footmen take after armor makes a fight of two footmen last at least 1.6 times as long as the same fight with no rule.</summary>
+        [Fact]
+        public void AHalvingRuleLengthensAFootmenFight()
+        {
+            var sim = Simulation.Start();
+            var plainFirst = Unit.Create(Footman, Player.One, 0.0f, 0.0f, Game.Instance);
+            var plainSecond = Unit.Create(Footman, Player.Two, 200.0f, 0.0f, Game.Instance);
+            var halvedFirst = Unit.Create(Footman, Player.One, 0.0f, 5000.0f, Game.Instance);
+            var halvedSecond = Unit.Create(Footman, Player.Two, 200.0f, 5000.0f, Game.Instance);
+            halvedFirst.Add(new FightRules { Keep = 0.5f });
+            halvedSecond.Add(new FightRules { Keep = 0.5f });
+            Expect.True(sim.RunUntil(() => !plainFirst.IsAlive || !plainSecond.IsAlive, 200.0f), "a plain footman dies");
+            var plain = sim.Time;
+            Expect.True(sim.RunUntil(() => !halvedFirst.IsAlive || !halvedSecond.IsAlive, 200.0f), "a halved footman dies");
+            Expect.True(sim.Time > 1.6f * plain, "the halved fight lasts " + sim.Time + " s against " + plain + " s");
+        }
+
+        /// <summary>A unit's attack range is a number of its own that a later change sets: a unit of range 100 made to reach 300 stops its chase 300 from its target.</summary>
+        [Fact]
+        public void AnAttackRangeSetLaterIsWhereTheUnitStops()
+        {
+            var sim = Simulation.Start();
+            var type = ObjectTypes.FourCC("s0rg");
+            sim.SetNumbers(type, new UnitNumbers { Life = 100.0f, MoveSpeed = 300.0f, AttackRange = 100.0f, AttackCooldown = 1.0f, Damage = 10 });
+            var attacker = Unit.Create(type, Player.One, 0.0f, 0.0f, Game.Instance);
+            var target = Unit.Create(type, Player.Two, 400.0f, 0.0f, Game.Instance);
+            sim.World.SetAttackRange(attacker.Handle, 300.0f);
+            attacker.OrderOn("attack", target);
+            sim.Run(2.0f);
+            Expect.Near(100.0f, attacker.X, "it stopped 300 from the target");
+            Expect.True(target.Life < 100.0f, "and swung from there");
+        }
     }
 }

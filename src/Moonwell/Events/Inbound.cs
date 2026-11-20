@@ -219,6 +219,8 @@ namespace Moonwell
             {
                 deal.Damage = damage;
                 damage.Tag = deal.Tag;
+                damage.IsArea = deal.Area;
+                damage.Power = deal.Power;
             }
 
             Dispatch(damage, amount == 0.0f && deal == null);
@@ -226,12 +228,12 @@ namespace Moonwell
         }
 
         /// <summary>Deals damage from code through the world, and returns the damage the reactions saw; one made here when the runtime does not listen for damage, null when the game dealt nothing.</summary>
-        internal static Damage? Deal(Unit source, Unit target, float amount, DamageKind kind, AttackType attackType, bool isAttack, bool ranged, WeaponSound sound, object? tag)
+        internal static Damage? Deal(Unit source, Unit target, float amount, DamageKind kind, AttackType attackType, bool isAttack, bool ranged, WeaponSound sound, object? tag, bool area, float power)
         {
             // The game answers true for a dead target, though it deals nothing and fires no event (seen 10-31).
             var alive = target.IsAlive;
             var previous = dealing;
-            var deal = new Dealing(source.Handle, target.Handle, isAttack, tag);
+            var deal = new Dealing(source.Handle, target.Handle, isAttack, tag, area, power);
             dealing = deal;
             bool dealt;
             try
@@ -251,23 +253,31 @@ namespace Moonwell
 
             var damage = deal.Damage ?? new Damage(target, source, amount, isAttack);
             damage.Tag = tag;
+            damage.IsArea = area;
+            damage.Power = power;
             return damage;
         }
 
         /// <summary>A damage Unit.Damage deals: its handles, and the damage its event made.</summary>
         private sealed class Dealing
         {
-            internal Dealing(unit source, unit target, bool isAttack, object? tag)
+            internal Dealing(unit source, unit target, bool isAttack, object? tag, bool area, float power)
             {
                 Source = source;
                 Target = target;
                 IsAttack = isAttack;
                 Tag = tag;
+                Area = area;
+                Power = power;
             }
 
             internal bool IsAttack { get; }
 
             internal object? Tag { get; }
+
+            internal bool Area { get; }
+
+            internal float Power { get; }
 
             internal unit Source { get; }
 

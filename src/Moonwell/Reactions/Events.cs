@@ -37,7 +37,7 @@ namespace Moonwell
         internal static Action<Unit, int, bool>? OrderListener;
 
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
-        internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, Damage?>? DamageDealer;
+        internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, bool, float, Damage?>? DamageDealer;
 
         /// <summary>Adds the reaction bits to the wanted ones, and listens for the event each bit, of Hook and of Hook2 (mask2), needs.</summary>
         internal static void Need(int mask, int mask2 = 0)
