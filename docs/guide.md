@@ -3841,9 +3841,9 @@ public sealed class MyMap : Map
 }
 ```
 
-A saved field is an `int`, `float`, `bool`, `string`, an enum, a `RealTime`, a `List` or array of those, or a part: a
-class of the map's own with `[Saved]` fields of its own, such as a hero's gear. It is public, and a property has a public
-`get` and `set`. A save class and a part have a public constructor without parameters and no `required` member, and are
+A saved field is an `int`, `float`, `bool`, `string`, an enum of an `int` or smaller, a `RealTime`, a `List` or array of
+those, or a part: a class of the map's own with `[Saved]` fields of its own, such as a hero's gear. It is public, and a
+property has a public `get` and `set`. A save class and a part have a public constructor without parameters and no `required` member, and are
 not private, protected, file-local or generic, as the build's code names them. An override of a saved property is saved
 under its base's number. Error MW0052 says when one doesn't hold, or when a number is used twice. A library of the map's
 own may hold save classes too; they are public.
