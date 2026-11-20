@@ -1337,6 +1337,30 @@ namespace Moonwell.Engine
             Natives.BlzSetUnitWeaponRealField(unit, Natives.UNIT_WEAPON_RF_ATTACK_RANGE, 1, delta);
         }
 
+        /// <summary>A unit's cast point: BlzGetUnitRealField of UNIT_RF_CAST_POINT.</summary>
+        public float CastPointOf(unit unit)
+        {
+            return Natives.BlzGetUnitRealField(unit, Natives.UNIT_RF_CAST_POINT);
+        }
+
+        /// <summary>Sets a unit's cast point: BlzSetUnitRealField of UNIT_RF_CAST_POINT, live on that unit alone (seen 11-19).</summary>
+        public void SetCastPoint(unit unit, float seconds)
+        {
+            Natives.BlzSetUnitRealField(unit, Natives.UNIT_RF_CAST_POINT, seconds);
+        }
+
+        /// <summary>A unit's cast backswing: BlzGetUnitRealField of UNIT_RF_CAST_BACK_SWING.</summary>
+        public float CastBackswingOf(unit unit)
+        {
+            return Natives.BlzGetUnitRealField(unit, Natives.UNIT_RF_CAST_BACK_SWING);
+        }
+
+        /// <summary>Sets a unit's cast backswing: BlzSetUnitRealField of UNIT_RF_CAST_BACK_SWING, live on that unit alone (seen 11-19).</summary>
+        public void SetCastBackswing(unit unit, float seconds)
+        {
+            Natives.BlzSetUnitRealField(unit, Natives.UNIT_RF_CAST_BACK_SWING, seconds);
+        }
+
         /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>
         public float MoveSpeedOf(unit unit)
         {

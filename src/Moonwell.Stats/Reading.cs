@@ -13,6 +13,18 @@ namespace Moonwell
                 return unit.Get(stat);
             }
 
+            return Plain(stat);
+        }
+
+        /// <summary>A player's stat: its total, or the stat's own base held to its limits for a player with no sheet of stats.</summary>
+        internal static float Of(Player player, Stat stat)
+        {
+            return player.stats != null ? player.Get(stat) : Plain(stat);
+        }
+
+        /// <summary>A stat's own base, held to its limits.</summary>
+        private static float Plain(Stat stat)
+        {
             var value = stat.Base;
             if (stat.Least != null && value < stat.Least.Value)
             {
