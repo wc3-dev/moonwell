@@ -1,5 +1,38 @@
+using System;
+using System.Collections.Generic;
+
 namespace Moonwell
 {
+    /// <summary>The number an ability has at each level that a stats package scales, as the game has it: the ability's own number for each level, read from the game the first time it is needed or set by the map, and the factor that multiplies it into what the game gets.</summary>
+    internal sealed class LiveNumber
+    {
+        /// <summary>The factor, 1 until a package sets it.</summary>
+        internal float Scale = 1.0f;
+
+        /// <summary>The ability's own number at each level index, for the levels read or set.</summary>
+        private Dictionary<int, float>? owns;
+
+        /// <summary>The ability's own number at a level index: the one kept, else the game's now, which is kept.</summary>
+        internal float Of(int index, float gameNow)
+        {
+            owns ??= new Dictionary<int, float>();
+            if (!owns.TryGetValue(index, out var own))
+            {
+                own = gameNow;
+                owns[index] = own;
+            }
+
+            return own;
+        }
+
+        /// <summary>Makes a number the ability's own at a level index.</summary>
+        internal void Own(int index, float value)
+        {
+            owns ??= new Dictionary<int, float>();
+            owns[index] = value;
+        }
+    }
+
     /// <summary>An ability of a unit: one object per unit and ability id, a scope that holds the casts of the ability.</summary>
     public class Ability : Scope
     {
@@ -36,6 +69,15 @@ namespace Moonwell
 
         /// <summary>The level last read or set, kept for when the unit is gone.</summary>
         internal int lastLevel;
+
+        /// <summary>The ability's own cooldown for each level, and the factor a package scales it by.</summary>
+        internal readonly LiveNumber cooldownNumber = new LiveNumber();
+
+        /// <summary>The ability's own mana cost for each level, and the factor a package scales it by.</summary>
+        internal readonly LiveNumber manaCostNumber = new LiveNumber();
+
+        /// <summary>The ability's own cast range for each level, and the factor a package scales it by.</summary>
+        internal readonly LiveNumber rangeNumber = new LiveNumber();
 
         /// <summary>The level of the ability on its unit, as the game reads it now; 0 when the unit lacks it. Setting it keeps it within the ability's levels, as the game does (5 on a three-level ability gives 3, 0 gives 1), and does nothing on a unit without the ability; a development build reports both. A hero skill raised on a hero runs the learn reactions once for each level gained, in order, each with Level reading that level, as learning does, and a reaction that changes the level ends the levels still to come; lowering runs nothing. Once the unit is gone, the last level read or set, and setting does nothing.</summary>
         [LocalSafe]
@@ -105,6 +147,7 @@ namespace Moonwell
         {
             var given = Runtime.World.ChangeAbilityLevel(Unit.Handle, Id, level);
             lastLevel = given;
+            Events.AbilitiesListener?.Invoke(Unit);
             if (given == level)
             {
                 return true;
@@ -123,8 +166,31 @@ namespace Moonwell
             {
                 if (Usable("LiveCooldown"))
                 {
-                    Runtime.World.SetAbilityCooldown(Unit.Handle, Id, Level - 1, value);
+                    cooldownNumber.Own(Level - 1, value);
+                    PutCooldown();
                 }
+            }
+        }
+
+        /// <summary>The factor the full cooldown is scaled by, 1 by default: the game gets the ability's own cooldown at the level times it, so a percent set again never compounds. Set by a stats package, which puts it again when the unit's abilities or one's level change; it reaches the game at the level the ability has now, when the unit has it.</summary>
+        internal float CooldownScale
+        {
+            get => cooldownNumber.Scale;
+            set
+            {
+                cooldownNumber.Scale = value;
+                PutCooldown();
+            }
+        }
+
+        /// <summary>Puts the ability's own cooldown at the level now, times its scale, in the game, when the unit has the ability.</summary>
+        private void PutCooldown()
+        {
+            if (Has())
+            {
+                var index = Level - 1;
+                var own = cooldownNumber.Of(index, Runtime.World.AbilityCooldown(Unit.Handle, Id, index));
+                Runtime.World.SetAbilityCooldown(Unit.Handle, Id, index, own * cooldownNumber.Scale);
             }
         }
 
@@ -141,8 +207,68 @@ namespace Moonwell
             {
                 if (Usable("LiveManaCost"))
                 {
-                    Runtime.World.SetAbilityManaCost(Unit.Handle, Id, Level - 1, value);
+                    manaCostNumber.Own(Level - 1, value);
+                    PutManaCost();
                 }
+            }
+        }
+
+        /// <summary>The factor the mana cost is scaled by, 1 by default, as CooldownScale works; the game gets a whole number, rounded half up.</summary>
+        internal float ManaCostScale
+        {
+            get => manaCostNumber.Scale;
+            set
+            {
+                manaCostNumber.Scale = value;
+                PutManaCost();
+            }
+        }
+
+        /// <summary>Puts the ability's own mana cost at the level now, times its scale, in the game, when the unit has the ability.</summary>
+        private void PutManaCost()
+        {
+            if (Has())
+            {
+                var index = Level - 1;
+                var own = manaCostNumber.Of(index, Runtime.World.AbilityManaCost(Unit.Handle, Id, index));
+                Runtime.World.SetAbilityManaCost(Unit.Handle, Id, index, (int)Math.Floor(own * manaCostNumber.Scale + 0.5f));
+            }
+        }
+
+        /// <summary>How far the unit can cast the ability from, at its level now, on this unit; 0 when the unit lacks it or is gone. Setting it changes this unit's range at this level only, from its next cast on, and does nothing on a unit without the ability; a development build reports that. A set becomes the ability's own range, which a package's scale (CastRange) works on.</summary>
+        [LocalSafe]
+        public float LiveRange
+        {
+            get => Has() ? Runtime.World.AbilityRange(Unit.Handle, Id, Level - 1) : 0.0f;
+            set
+            {
+                if (Usable("LiveRange"))
+                {
+                    rangeNumber.Own(Level - 1, value);
+                    PutRange();
+                }
+            }
+        }
+
+        /// <summary>The factor the cast range is scaled by, 1 by default, as CooldownScale works.</summary>
+        internal float RangeScale
+        {
+            get => rangeNumber.Scale;
+            set
+            {
+                rangeNumber.Scale = value;
+                PutRange();
+            }
+        }
+
+        /// <summary>Puts the ability's own cast range at the level now, times its scale, in the game, when the unit has the ability.</summary>
+        private void PutRange()
+        {
+            if (Has())
+            {
+                var index = Level - 1;
+                var own = rangeNumber.Of(index, Runtime.World.AbilityRange(Unit.Handle, Id, index));
+                Runtime.World.SetAbilityRange(Unit.Handle, Id, index, own * rangeNumber.Scale);
             }
         }
 

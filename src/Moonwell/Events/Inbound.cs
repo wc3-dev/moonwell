@@ -1022,6 +1022,7 @@ namespace Moonwell
                 return;
             }
 
+            Events.AbilitiesListener?.Invoke(hero);
             Learned(hero, hero.AbilityOf(abilityId));
         }
 

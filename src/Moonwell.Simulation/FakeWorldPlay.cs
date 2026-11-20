@@ -198,6 +198,7 @@ namespace Moonwell
             averageDamages[made] = numbers.Damage + numbers.DamageDice * (numbers.DamageSides + 1) / 2.0f;
             attackCooldowns[made] = numbers.AttackCooldown;
             acquireRanges[made] = numbers.AcquisitionRange;
+            attackRanges[made] = numbers.AttackRange;
             var unitPlay = new PlayedUnit();
             unitPlay.AttackRange = numbers.AttackRange;
             unitPlay.AttackCooldown = numbers.AttackCooldown;
@@ -617,7 +618,8 @@ namespace Moonwell
         /// <summary>A swing: the damage plus a draw of the play's dice for each die plus the green damage bonus the unit has now, dealt before armor as an attack of damage type normal, which the fake's play of the hit cuts by the armor then. The next swing comes a cooldown later: the base over 1 + the unit's attack speed bonus now.</summary>
         private void Swing(unit made, PlayedUnit unitPlay, unit target, int k)
         {
-            var raw = unitPlay.Damage;
+            // The middle of the white damage as the world has it now: one set since the unit was made (an owned damage stat) moves every swing by the same amount.
+            var raw = unitPlay.Damage + AverageDamageNow(made, unitPlay);
             if (unitPlay.DamageSides >= 1)
             {
                 for (var i = 0; i < unitPlay.DamageDice; i++)
@@ -633,6 +635,17 @@ namespace Moonwell
             Hurt(made, target, amount < 0.0f ? 0.0f : amount, true, SwingAttackType, NormalDamageType, 0);
         }
 
+        /// <summary>How far the middle of a unit's white damage has moved from the number it was made with; 0 when it has not.</summary>
+        private float AverageDamageNow(unit unit, PlayedUnit unitPlay)
+        {
+            if (!averageDamages.TryGetValue(unit, out var average))
+            {
+                return 0.0f;
+            }
+
+            return average - (unitPlay.Damage + unitPlay.DamageDice * (unitPlay.DamageSides + 1) / 2.0f);
+        }
+
         /// <summary>The bonus field of a Moonwell bonus ability the unit has now; 0 without the ability.</summary>
         private float BonusNow(unit unit, int abilityId)
         {
@@ -642,6 +655,7 @@ namespace Moonwell
         /// <summary>Sets how far a played unit's attack reaches from now on, centre to centre; a unit not played is left as it is. Called by the stats that change a unit's attack range.</summary>
         internal void SetAttackRange(unit unit, float range)
         {
+            attackRanges[unit] = range;
             if (played.TryGetValue(unit, out var unitPlay))
             {
                 unitPlay.AttackRange = range;

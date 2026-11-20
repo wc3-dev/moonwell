@@ -1189,6 +1189,32 @@ namespace Moonwell.Engine
             Natives.BlzSetUnitAbilityManaCost(unit, abilityId, levelIndex, mana);
         }
 
+        /// <summary>The cast range of a unit's ability at a level: BlzGetAbilityRealLevelField of ABILITY_RLF_CAST_RANGE.</summary>
+        public float AbilityRange(unit unit, int abilityId, int levelIndex)
+        {
+            return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_CAST_RANGE, levelIndex);
+        }
+
+        /// <summary>Sets the cast range of a unit's own copy of an ability at a level: BlzSetAbilityRealLevelField of ABILITY_RLF_CAST_RANGE.</summary>
+        public void SetAbilityRange(unit unit, int abilityId, int levelIndex, float range)
+        {
+            Natives.BlzSetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_CAST_RANGE, levelIndex, range);
+        }
+
+        /// <summary>The ids of the abilities a unit has: BlzGetUnitAbilityByIndex from 0 until it answers nothing, each by BlzGetAbilityId.</summary>
+        public List<int> AbilityIdsOf(unit unit)
+        {
+            var ids = new List<int>();
+            var ability = Natives.BlzGetUnitAbilityByIndex(unit, 0);
+            while (ability != null)
+            {
+                ids.Add(Natives.BlzGetAbilityId(ability));
+                ability = Natives.BlzGetUnitAbilityByIndex(unit, ids.Count);
+            }
+
+            return ids;
+        }
+
         /// <summary>Gives a unit the summoned type, so dispels hurt it as the game's summons (seen 11-08).</summary>
         public void MakeSummoned(unit unit)
         {
@@ -1309,6 +1335,24 @@ namespace Moonwell.Engine
         public float AcquireRangeOf(unit unit)
         {
             return Natives.GetUnitAcquireRange(unit);
+        }
+
+        /// <summary>Sets a unit's acquisition range: SetUnitAcquireRange.</summary>
+        public void SetAcquireRange(unit unit, float range)
+        {
+            Natives.SetUnitAcquireRange(unit, range);
+        }
+
+        /// <summary>The attack range of a unit's first weapon: BlzGetUnitWeaponRealField of UNIT_WEAPON_RF_ATTACK_RANGE at index 0.</summary>
+        public float AttackRangeOf(unit unit)
+        {
+            return Natives.BlzGetUnitWeaponRealField(unit, Natives.UNIT_WEAPON_RF_ATTACK_RANGE, 0);
+        }
+
+        /// <summary>Adds to the attack range of a unit's first weapon: BlzSetUnitWeaponRealField at index 1, which adds its value to the range (a set at index 0 does nothing; seen 11-20).</summary>
+        public void AddAttackRange(unit unit, float delta)
+        {
+            Natives.BlzSetUnitWeaponRealField(unit, Natives.UNIT_WEAPON_RF_ATTACK_RANGE, 1, delta);
         }
 
         /// <summary>The move speed of a unit: GetUnitMoveSpeed.</summary>
@@ -1845,6 +1889,12 @@ namespace Moonwell.Engine
             var normal = Natives.BlzGetAbilityRealLevelField(ability, Natives.ABILITY_RLF_DURATION_NORMAL, level - 1);
             var hero = Natives.BlzGetAbilityRealLevelField(ability, Natives.ABILITY_RLF_DURATION_HERO, level - 1);
             return normal > hero ? normal : hero;
+        }
+
+        /// <summary>ABILITY_RLF_DURATION_HERO at a level for a target that is a hero, else ABILITY_RLF_DURATION_NORMAL.</summary>
+        public float SpellLastsOn(unit unit, int abilityId, int level, bool hero)
+        {
+            return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), hero ? Natives.ABILITY_RLF_DURATION_HERO : Natives.ABILITY_RLF_DURATION_NORMAL, level - 1);
         }
 
         /// <summary>ABILITY_IF_MISSILE_SPEED of a unit's copy of an ability.</summary>

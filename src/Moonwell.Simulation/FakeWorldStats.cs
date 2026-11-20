@@ -20,6 +20,15 @@ namespace Moonwell
 
         private readonly Dictionary<unit, float> acquireRanges = new Dictionary<unit, float>();
 
+        /// <summary>Each unit's first weapon's attack range, which SetAttackRange and AddAttackRange keep with the play's own.</summary>
+        private readonly Dictionary<unit, float> attackRanges = new Dictionary<unit, float>();
+
+        /// <summary>The ids of the abilities each unit was ever given a level of, in the order they were first given: the order AbilityIdsOf answers in, which a dictionary does not keep in Lua.</summary>
+        private readonly Dictionary<unit, List<int>> givenOrders = new Dictionary<unit, List<int>>();
+
+        /// <summary>The cast ranges set, by unit, ability and level index; 0 when none was set.</summary>
+        private readonly Dictionary<unit, Dictionary<long, float>> abilityRanges = new Dictionary<unit, Dictionary<long, float>>();
+
         /// <summary>The units made structures.</summary>
         private readonly HashSet<unit> structures = new HashSet<unit>();
 
@@ -58,6 +67,58 @@ namespace Moonwell
         public void SetAcquireRange(unit unit, float range)
         {
             acquireRanges[unit] = range;
+            if (played.TryGetValue(unit, out var unitPlay))
+            {
+                unitPlay.AcquisitionRange = range;
+            }
+        }
+
+        /// <summary>A unit's first weapon's attack range; 0 until set.</summary>
+        public float AttackRangeOf(unit unit)
+        {
+            return Kept(attackRanges, unit);
+        }
+
+        /// <summary>Adds to a unit's first weapon's attack range, as the game's set through weapon index 1 does, and a played unit's attack follows.</summary>
+        public void AddAttackRange(unit unit, float delta)
+        {
+            SetAttackRange(unit, AttackRangeOf(unit) + delta);
+        }
+
+        /// <summary>The cast range set for a unit's ability at a level; 0 until set.</summary>
+        public float AbilityRange(unit unit, int abilityId, int levelIndex)
+        {
+            return abilityRanges.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var range) ? range : 0.0f;
+        }
+
+        /// <summary>Sets the cast range of a unit's ability at a level.</summary>
+        public void SetAbilityRange(unit unit, int abilityId, int levelIndex, float range)
+        {
+            if (!abilityRanges.TryGetValue(unit, out var set))
+            {
+                set = new Dictionary<long, float>();
+                abilityRanges[unit] = set;
+            }
+
+            set[LevelKey(abilityId, levelIndex)] = range;
+        }
+
+        /// <summary>The ids of the abilities a unit has now, buffs, carriers and bonus abilities with them, in the order they were first given.</summary>
+        public List<int> AbilityIdsOf(unit unit)
+        {
+            var ids = new List<int>();
+            if (givenOrders.TryGetValue(unit, out var order))
+            {
+                for (var i = 0; i < order.Count; i++)
+                {
+                    if (AbilityLevel(unit, order[i]) > 0)
+                    {
+                        ids.Add(order[i]);
+                    }
+                }
+            }
+
+            return ids;
         }
 
         /// <summary>Makes a unit a structure.</summary>

@@ -21,6 +21,21 @@ namespace Moonwell
         [LocalSafe]
         public Stacking Stacking { get; protected set; } = Stacking.Refresh;
 
+        /// <summary>Whether the buff harms the unit it is on, which the class sets in its constructor as it sets Stacking: a BuffRow can show only the harmful or only the others. A crowd control buff reads harmful too.</summary>
+        [LocalSafe]
+        public bool IsHarmful
+        {
+            get => harmfulMark || IsCrowdControl;
+            protected set => harmfulMark = value;
+        }
+
+        /// <summary>The mark IsHarmful keeps for itself.</summary>
+        internal bool harmfulMark;
+
+        /// <summary>Whether the buff is crowd control (a stun, a slow, a silence), which the class sets in its constructor: a unit's CrowdControlReduction shortens it. Moonwell's own buff lasts that percent shorter from its apply, refresh or strongest apply on (Remaining tells it); a game buff a spell lists is taken off early at its full duration, shortened the same way, when that duration can be read from the spell that gave it.</summary>
+        [LocalSafe]
+        public bool IsCrowdControl { get; protected set; }
+
         /// <summary>How strong the buff is, which the class sets in its constructor for each apply; a strongest buff reads the strongest of its applies still on (decision 165).</summary>
         [LocalSafe]
         public float Strength { get; protected set; } = 0.0f;
@@ -33,6 +48,9 @@ namespace Moonwell
 
         /// <summary>The game buff a spell, an aura or an attack put on, which this object stands for (decision 152); 0 for a buff put on by Apply.</summary>
         internal int gameBuff;
+
+        /// <summary>The ability that gave the game buff, which gives its duration; 0 when none is known.</summary>
+        internal int gameAbility;
 
         /// <summary>Whether its OnApply is running, so a modifier it holds is noted in madeInApply.</summary>
         internal bool applying;
@@ -173,6 +191,7 @@ namespace Moonwell
         /// <summary>Starts a buff the watch made for a game buff (decision 152): its ticks, and listening for deaths when a death ends it, then OnApply. The game's buff shows its icon and decides when it ends, so it has no carrier and no expiry.</summary>
         internal void BeginSpell()
         {
+            CutShort();
             if (EndsOnDeath)
             {
                 Events.Need(Hook.OnDeath);
@@ -187,11 +206,65 @@ namespace Moonwell
         }
 
         /// <summary>Gives a spell's buff again (decision 153): the new source and level, and OnApply again.</summary>
-        internal void GiveAgain(Unit? source, int level)
+        internal void GiveAgain(Unit? source, int level, int ability)
         {
             Source = source;
             Level = level;
+            gameAbility = ability;
+            CutShort();
             CallApply();
+        }
+
+        /// <summary>The seconds a crowd control buff lasts on its unit now: those given less the unit's crowd control reduction, a percent. 0 stays 0, the buff that lasts until it is removed.</summary>
+        private float Shortened(float seconds)
+        {
+            if (!IsCrowdControl || seconds <= 0.0f)
+            {
+                return seconds;
+            }
+
+            var percent = Unit.Get(Stat.CrowdControlReduction);
+            return percent <= 0.0f ? seconds : seconds * (1.0f - percent / 100.0f);
+        }
+
+        /// <summary>Takes a crowd control game buff off early: after the duration of the spell that gave it, at the level it gave it, shortened by the unit's crowd control reduction, the game's buff is taken off as Remove does (the game would end it at the full duration). Each time the buff is given again the time starts anew, and an earlier one is dropped. Left to the game when the buff is not crowd control, the unit has no reduction, or the duration cannot be known: the giver is not a unit that still has the ability, or the spell has no duration.</summary>
+        private void CutShort()
+        {
+            if (expiry != null)
+            {
+                expiry.End();
+                expiry = null;
+            }
+
+            if (!IsCrowdControl || gameBuff == 0 || HasEnded || Source == null || Source.IsGone || gameAbility == 0 || Level <= 0)
+            {
+                return;
+            }
+
+            if (Runtime.World.AbilityLevel(Source.Handle, gameAbility) <= 0)
+            {
+                return;
+            }
+
+            var full = Runtime.World.SpellLastsOn(Source.Handle, gameAbility, Level, Unit is Hero);
+            var seconds = Shortened(full);
+            if (full <= 0.0f || seconds >= full)
+            {
+                return;
+            }
+
+            Timer? made = null;
+            made = OwnAfter(seconds, () => EndCut(made));
+            expiry = made;
+        }
+
+        /// <summary>Ends a game buff the reduction cut short, unless it was given again or ended since.</summary>
+        private void EndCut(Timer? made)
+        {
+            if (!HasEnded && expiry == made)
+            {
+                End();
+            }
         }
 
         /// <summary>Joins another apply to a strongest buff already on its unit, with its own strength, source, holder and duration, and runs at the strongest; the new buff is dropped.</summary>
@@ -250,7 +323,7 @@ namespace Moonwell
 
                 if (seconds > 0.0f)
                 {
-                    held.Expiry = OwnAfter(seconds, () => ExpireHold(held));
+                    held.Expiry = OwnAfter(Shortened(seconds), () => ExpireHold(held));
                 }
 
                 return held;
@@ -268,7 +341,7 @@ namespace Moonwell
 
             if (!hold.HasEnded && seconds > 0.0f)
             {
-                hold.Expiry = OwnAfter(seconds, () => ExpireHold(hold));
+                hold.Expiry = OwnAfter(Shortened(seconds), () => ExpireHold(hold));
             }
 
             return hold;
@@ -397,7 +470,7 @@ namespace Moonwell
             }
 
             Timer? made = null;
-            made = OwnAfter(Duration, () => Expire(made));
+            made = OwnAfter(Shortened(Duration), () => Expire(made));
             expiry = made;
         }
 

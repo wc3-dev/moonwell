@@ -317,6 +317,15 @@ namespace Moonwell.Hosting
         /// <summary>Sets the mana cost of a unit's ability at a level counted from 0, for its next casts.</summary>
         void SetAbilityManaCost(unit unit, int abilityId, int levelIndex, int mana);
 
+        /// <summary>The cast range of a unit's ability at a level counted from 0.</summary>
+        float AbilityRange(unit unit, int abilityId, int levelIndex);
+
+        /// <summary>Sets the cast range of a unit's own copy of an ability at a level counted from 0, for its next casts.</summary>
+        void SetAbilityRange(unit unit, int abilityId, int levelIndex, float range);
+
+        /// <summary>The ids of the abilities a unit has now, in the game's order, the helper abilities Moonwell gave it included; empty for a unit with none.</summary>
+        List<int> AbilityIdsOf(unit unit);
+
         /// <summary>Gives a unit the summoned type.</summary>
         void MakeSummoned(unit unit);
 
@@ -376,6 +385,15 @@ namespace Moonwell.Hosting
 
         /// <summary>How far a unit looks for an enemy to attack when idle, its acquisition range now.</summary>
         float AcquireRangeOf(unit unit);
+
+        /// <summary>Sets how far a unit looks for an enemy to attack when idle.</summary>
+        void SetAcquireRange(unit unit, float range);
+
+        /// <summary>The attack range of a unit's first weapon, read with weapon index 0.</summary>
+        float AttackRangeOf(unit unit);
+
+        /// <summary>Adds an amount, negative to take away, to the attack range of a unit's first weapon: the game takes a change only as an add, through weapon index 1 (probe-stats-1).</summary>
+        void AddAttackRange(unit unit, float delta);
 
         /// <summary>The move speed of a unit.</summary>
         float MoveSpeedOf(unit unit);
@@ -631,6 +649,9 @@ namespace Moonwell.Hosting
 
         /// <summary>The longer of an ability's normal and hero duration at a level, on a unit's copy.</summary>
         float SpellLasts(unit unit, int abilityId, int level);
+
+        /// <summary>An ability's duration at a level, on a unit's copy, for a target that is a hero (the hero duration) or not (the normal one).</summary>
+        float SpellLastsOn(unit unit, int abilityId, int level, bool hero);
 
         /// <summary>The missile speed of a unit's copy of an ability; 0 for one with no missile.</summary>
         int ProjectileSpeedOf(unit unit, int abilityId);

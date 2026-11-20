@@ -40,6 +40,8 @@ namespace Moonwell
         private readonly Dictionary<player, Dictionary<int, int>> techs = new Dictionary<player, Dictionary<int, int>>();
         private readonly Dictionary<fogmodifier, FakePatch> patches = new Dictionary<fogmodifier, FakePatch>();
         private readonly Dictionary<int, float> durations = new Dictionary<int, float>();
+        private readonly Dictionary<int, float> heroDurations = new Dictionary<int, float>();
+        private readonly Dictionary<int, float> normalDurations = new Dictionary<int, float>();
         private readonly Dictionary<int, int> speeds = new Dictionary<int, int>();
 
         /// <summary>The dummies of a world.</summary>
@@ -107,6 +109,8 @@ namespace Moonwell
         public void Durations(int abilityId, float normal, float hero)
         {
             durations[abilityId] = normal > hero ? normal : hero;
+            normalDurations[abilityId] = normal;
+            heroDurations[abilityId] = hero;
         }
 
         /// <summary>Sets a spell's missile speed; 0 until set, a spell with no missile.</summary>
@@ -186,6 +190,12 @@ namespace Moonwell
         public float Lasts(int abilityId)
         {
             return durations.TryGetValue(abilityId, out var lasts) ? lasts : 0.0f;
+        }
+
+        /// <summary>A spell's duration for a hero target or another; 0 until set.</summary>
+        public float LastsOn(int abilityId, bool hero)
+        {
+            return (hero ? heroDurations : normalDurations).TryGetValue(abilityId, out var lasts) ? lasts : 0.0f;
         }
 
         /// <summary>A spell's missile speed; 0 until set.</summary>
