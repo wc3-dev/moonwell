@@ -2,7 +2,7 @@ namespace Moonwell
 {
     /// <summary>
     /// A unit's frame of the UI kit's HUD (decision 334): a Portrait (the unit's icon), its name, its level, a life and a
-    /// mana bar and a row of its buffs below, laid out in the theme's Hud border, with an Art image over the bars for a
+    /// mana bar and a row of its buffs below and, below those, a Stats list the map fills, laid out in the theme's Hud border, with an Art image over the bars for a
     /// map's own art. Show(unit) fills it, and it follows the unit from then on. Every piece is a frame of its own, which a
     /// map may place, size or re-texture, frame.Add(frame.Life, x, y, width, height) placing one again. Hidden until it
     /// shows a unit. 0.2 by 0.064 unless sized.
@@ -16,6 +16,8 @@ namespace Moonwell
         internal readonly StatusBar mana;
 
         internal readonly BuffRow buffs;
+
+        internal readonly StatList stats;
 
         internal readonly Image art;
 
@@ -43,6 +45,7 @@ namespace Moonwell
             life = KitTicks.Place(this, new StatusBar(), 0.062f, 0.022f, 0.131f, 0.017f);
             mana = KitTicks.Place(this, new StatusBar(), 0.062f, 0.041f, 0.131f, 0.016f);
             buffs = KitTicks.Place(this, new BuffRow(), 0.007f, 0.066f, 0.186f, 0.032f);
+            stats = KitTicks.Place(this, new StatList(), 0.007f, 0.1f, StatList.RowWidth, StatList.RowHeight);
             art = Add(new Image());
             art.Fill(this);
             nameLabel = KitTicks.Place(this, new Label { Alignment = FramePoint.Left, Color = theme.Title }, 0.062f, 0.006f, 0.098f, 0.014f);
@@ -73,6 +76,10 @@ namespace Moonwell
         [LocalSafe]
         public BuffRow Buffs => buffs;
 
+        /// <summary>The stats the map lists for the unit, in rows below the buffs: empty, and drawing nothing, until the map calls Stats.Show(unit, stat, ...). Showing another unit with the frame empties it.</summary>
+        [LocalSafe]
+        public StatList Stats => stats;
+
         /// <summary>An image over the portrait and bars and under the texts, covering the frame, for a map's own art; no texture unless set.</summary>
         [LocalSafe]
         public Image Art => art;
@@ -94,6 +101,11 @@ namespace Moonwell
             life.Follow(shown, Vital.Life);
             mana.Follow(shown, Vital.Mana);
             buffs.Show(shown);
+            if (stats.unit != shown)
+            {
+                stats.Show(null);
+            }
+
             shownLevel = -1;
             if (shown == null)
             {
@@ -146,6 +158,7 @@ namespace Moonwell
             mana.Text = BarText.None;
             levelLabel.Visible = false;
             buffs.Visible = false;
+            stats.Visible = false;
         }
     }
 }
