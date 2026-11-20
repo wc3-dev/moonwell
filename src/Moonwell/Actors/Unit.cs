@@ -1500,7 +1500,32 @@ namespace Moonwell
             made.Mask = Hooks.MaskOf(made, Ability.AbilityHooks, out made.Mask2);
             Events.Need(made.Mask, made.Mask2);
             abilities[abilityId] = made;
+            Events.AbilitiesListener?.Invoke(this);
             return made;
+        }
+
+        /// <summary>The abilities the unit has in the game now, not the ones its type starts with (a declared class's Abilities), as the objects AbilityOf gives, in the game's order: a new list each read, so a loop may add or remove abilities. Moonwell's own helper abilities are left out (a stat's bonus ability, a buff's carrier and game buff), and so are the game buffs a buff class of the map watches. A carried item's ability counts, as the game gives it to the unit; the abilities of the unit's type do too. Makes the object of an ability not asked for before, so it is not for Local.For code. An ability the unit loses or gains through a morph, or another change the game makes itself, is in the list at the next read, but no notice comes for it. Empty once the unit is gone.</summary>
+        public IReadOnlyList<Ability> LiveAbilities
+        {
+            get
+            {
+                var found = new List<Ability>();
+                if (IsGone)
+                {
+                    return found;
+                }
+
+                var ids = Runtime.World.AbilityIdsOf(Handle);
+                for (var i = 0; i < ids.Count; i++)
+                {
+                    if (!ObjectTypes.IsHelperAbility(ids[i]))
+                    {
+                        found.Add(AbilityOf(ids[i]));
+                    }
+                }
+
+                return found;
+            }
         }
 
         /// <summary>The ability of the unit of a registered class: the object of that class.</summary>
@@ -1518,6 +1543,7 @@ namespace Moonwell
 
             Runtime.World.MakeAbilityPermanent(Handle, abilityId);
             ability.lastLevel = 1;
+            Events.AbilitiesListener?.Invoke(this);
             var hero = this as Hero;
             if (hero != null && Runtime.World.IsHeroAbility(Handle, abilityId))
             {
@@ -1549,6 +1575,8 @@ namespace Moonwell
             {
                 known.lastLevel = 0;
             }
+
+            Events.AbilitiesListener?.Invoke(this);
 
             if (skill)
             {

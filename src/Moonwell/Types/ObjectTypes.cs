@@ -37,6 +37,9 @@ namespace Moonwell
         /// <summary>The hidden ability that carries each registered buff class on its unit, keyed by the class; a lookup only.</summary>
         private static Dictionary<object, int> carriers = new Dictionary<object, int>();
 
+        /// <summary>The ids of the abilities and game buffs Moonwell puts on units for itself: each registered buff class's carrier and game buff.</summary>
+        private static HashSet<int> helperAbilities = new HashSet<int>();
+
         /// <summary>The order string a dummy casts each spell with, keyed by the ability's id; a lookup only.</summary>
         private static Dictionary<int, string> castOrders = new Dictionary<int, string>();
 
@@ -287,6 +290,8 @@ namespace Moonwell
 
             buffIds[key] = buffId;
             carriers[key] = carrierId;
+            helperAbilities.Add(buffId);
+            helperAbilities.Add(carrierId);
         }
 
         /// <summary>Registers a declared buff class's icon, its object data's, which a kit BuffRow shows when the class sets no HudIcon (decision 351).</summary>
@@ -692,6 +697,12 @@ namespace Moonwell
             return 0;
         }
 
+        /// <summary>Whether an ability id is one Moonwell puts on a unit for itself, and not the map's or the game's: a stat's bonus ability, a buff's carrier or its game buff, or a game buff the map's classes watch.</summary>
+        internal static bool IsHelperAbility(int abilityId)
+        {
+            return helperAbilities.Contains(abilityId) || StatSheet.IsBonusAbility(abilityId) || SpellBuffs.Watches(abilityId);
+        }
+
         /// <summary>Forgets every registered type; Runtime.Reset calls it.</summary>
         internal static void Reset()
         {
@@ -705,6 +716,7 @@ namespace Moonwell
             buffIds = new Dictionary<object, int>();
             buffIcons = new Dictionary<object, string>();
             carriers = new Dictionary<object, int>();
+            helperAbilities = new HashSet<int>();
             castOrders = new Dictionary<int, string>();
             landsOnCaster = new HashSet<int>();
             requirements = new Dictionary<int, List<(int Tech, int Level)>>();

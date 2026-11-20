@@ -65,7 +65,26 @@ namespace Moonwell.Testing
             AddCombat(list);
             AddAITools(list);
             AddSimulation(list);
+            AddAbilitiesAndControl(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for a unit's abilities, the live numbers an ability keeps a base for, attack range as a stat, an owned damage in a simulated swing, the buff marks and the crowd control reduction.</summary>
+        private static void AddAbilitiesAndControl(List<Case> list)
+        {
+            list.Add(new Case { Name = "abilities.list", Run = AbilityControlCases.AbilitiesList });
+            list.Add(new Case { Name = "abilities.notice", Run = AbilityControlCases.AbilitiesNotice });
+            list.Add(new Case { Name = "abilities.live-numbers-keep-a-base", Run = AbilityControlCases.LiveNumbersKeepABase });
+            list.Add(new Case { Name = "abilities.live-numbers-need-the-ability", Run = AbilityControlCases.LiveNumbersNeedTheAbility });
+            list.Add(new Case { Name = "stats.attack-range", Run = AbilityControlCases.AttackRange });
+            list.Add(new Case { Name = "stats.attack-range-owned", Run = AbilityControlCases.AttackRangeOwned });
+            list.Add(new Case { Name = "simulation.attack-range-stat", Run = AbilityControlCases.SimulationAttackRange });
+            list.Add(new Case { Name = "simulation.owned-damage", Run = AbilityControlCases.SimulationOwnedDamage });
+            list.Add(new Case { Name = "buffs.marks", Run = AbilityControlCases.BuffMarks });
+            list.Add(new Case { Name = "kit.buff-row-harmful", Run = AbilityControlCases.BuffRowHarmful });
+            list.Add(new Case { Name = "buffs.crowd-control-own", Run = AbilityControlCases.CrowdControlOwnBuff });
+            list.Add(new Case { Name = "buffs.crowd-control-strongest", Run = AbilityControlCases.CrowdControlStrongest });
+            list.Add(new Case { Name = "spellbuff.crowd-control-game-buff", Run = AbilityControlCases.CrowdControlGameBuff });
         }
 
         /// <summary>Adds the cases for the AI combat package: meeting, target choice, casting, pulling back, the leash and the lane walker.</summary>

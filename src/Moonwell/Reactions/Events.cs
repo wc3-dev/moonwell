@@ -36,6 +36,9 @@ namespace Moonwell
         /// <summary>Set by the AI package: hears each order given to a known unit, before its reactions, by its id and whether it came from code, and once more when a reaction refused it, as from code, with the id of the order the unit is left with. Moonwell's own orders, undefend, the stunned order and instant orders are not heard. Null without one.</summary>
         internal static Action<Unit, int, bool>? OrderListener;
 
+        /// <summary>Set by the stats package: hears that a unit's set of abilities or the level of one of them changed (an ability's object first made, AddAbility, RemoveAbility, a hero learning or raising a skill, a Level set), so it can scale a new ability or level; null without one.</summary>
+        internal static Action<Unit>? AbilitiesListener;
+
         /// <summary>A damage package's own Unit.Damage, which deals through its stages and returns its hit; null without one.</summary>
         internal static Func<Unit, Unit, float, DamageKind, AttackType, bool, bool, WeaponSound, object?, bool, float, Damage?>? DamageDealer;
 
@@ -186,6 +189,7 @@ namespace Moonwell
             TerrainSaveListener = null;
             AcquireListener = null;
             OrderListener = null;
+            AbilitiesListener = null;
             DamageDealer = null;
         }
 
