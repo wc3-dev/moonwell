@@ -36,6 +36,7 @@ namespace Moonwell
             Team.Reset();
             Inbound.ResetAlliances();
             Inbound.ResetNesting();
+            StatSheet.ResetNesting();
             Inbound.CodeOrders = 0;
             Sharing.Reset();
             ChatCommand.Reset();

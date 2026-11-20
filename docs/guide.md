@@ -695,33 +695,45 @@ Placed.Sounds.Intro?.Play();                          // with the Sound Editor's
 
 ## Stats and scores
 
-A stat is a number a unit or a player has: a base, then modifiers, flat or percent, each held by a scope, which takes it
-off when it ends (an item's `Item.Carry`, a buff, a talent, the unit itself). Percents add up, then multiply:
-(base + flat) × (1 + percents / 100), so +20% and +30% make +50%.
+A stat is a number a unit or a player has: a base, then modifiers, each held by a scope, which takes it off when it ends
+(an item's `Item.Carry`, a buff, a talent, the unit itself). A stat is worked out in four stages: (base + flat) ×
+(1 + percents / 100) × each multiplier + late flat, then held to its least and most, and rounded half up when it is
+whole. A base of 100 with +20 flat, +50% and +50%, ×1.5 and +10 late is (100 + 20) × 2 × 1.5 + 10 = 370.
 
 ```csharp
 public static class Stats
 {
-    public static readonly Stat SpellPower = new Stat("Spell power");
+    // A base, limits and whole numbers are all optional: new Stat("Spell power") is a plain number.
+    public static readonly Stat Rage = new Stat("Rage", 0, least: 0, most: 100, whole: true);
 }
 
 // A buff: +20% damage and -30% move speed while it is on.
 protected override void OnApply()
 {
-    Target.Modify(Stat.Damage, percent: 20, heldBy: this);
-    Target.Modify(Stat.MoveSpeed, percent: -30, heldBy: this);
+    Unit.Modify(Stat.Damage, percent: 20, heldBy: this);
+    Unit.Modify(Stat.MoveSpeed, percent: -30, heldBy: this);
 }
 
-// An item component: +5 armor and +10 spell power while carried.
+// An item component: +5 armor and +10 rage while carried.
 Carrier.Modify(Stat.Armor, 5, heldBy: Item.Carry);
-Carrier.Modify(Stats.SpellPower, 10, heldBy: Item.Carry);
+Carrier.Modify(Stats.Rage, 10, heldBy: Item.Carry);
 
-var power = hero.Get(Stats.SpellPower);
+hero.Modify(Stat.Damage, times: 1.5f, heldBy: this);    // a multiplier: each one multiplies
+hero.Modify(Stat.MoveSpeed, late: 30, heldBy: this);    // a flat amount after the multipliers
+
+var rage = hero.Get(Stats.Rage);
 ```
 
-`Modify` gives back the modifier, whose `End()` takes it off sooner. A holder that has ended adds nothing, reported in
-development builds. A map's own stat (`new Stat(name)`, or `new Stat(name, base)`) is only a number the map reads, on
-units and players. The game's stats are units' only, and change the unit in the game:
+`Modify` gives back the modifier, whose `End()` takes it off sooner. Its `Amount`, `Percent`, `Times` and `Late` can be set
+afterwards (a talent's rank, a stack count) and the stat follows; on an ended modifier a set does nothing. A holder that
+has ended adds nothing, reported in development builds. A buff that gives a modifier in `OnApply` need not take it off
+when it is applied again: the modifiers its last `OnApply` made end before it runs again.
+
+A map's own stat is only a number the map reads, on units and players. `Least` and `Most` can be set afterwards
+(`Stat.CooldownReduction.Most = 40`), and `energy.CappedBy(maxEnergy)` makes another stat's total on the same unit the
+most. `Stat.Named("Rage")` finds the stat made with a name, the first when two share one (a second is reported in
+development builds); it finds a ready-made or game stat by its display name too ("Life", "Crit chance", "Fire
+resistance"), even when nothing has used it yet. The game's stats are units' only, and change the unit in the game:
 
 | Stat | |
 |---|---|
@@ -732,12 +744,99 @@ units and players. The game's stats are units' only, and change the unit in the 
 | `LifeRegen`, `ManaRegen` | the unit's own a second, to which a hero's strength and intelligence add |
 | `Strength`, `Agility`, `Intelligence` | a hero's base, shown white; whole numbers |
 
-A game stat never goes below 0. Its base is the game's number less Moonwell's part, so what the game changes meanwhile (a
-level's life, a tome) stays; a percent of a base the game changed is put again at the stat's next change. `Get` reads
-what the game shows, without what items and the game's own abilities add to damage and attack speed: a hero's +10% life
-covers the life its strength gave when the life last changed, and 5 strength added after adds its life unscaled.
-Damage, armor and attack speed go through three abilities Moonwell declares, so a map that reads them needs
-Moonwell.Objects.
+A game stat never goes below 0. Until the map sets a base for it, its base is the game's number less Moonwell's part, read
+live, so what the game changes meanwhile (a tome) stays. `Get` reads what the game shows, without what items and the
+game's own abilities add to damage and attack speed. When a hero gains a level, or Moonwell puts one of its attributes (a modifier, a base, a `From`), every game stat of that hero with a
+percent or multiplier counting, an owned base (below) or a `From` or `Formula` is worked out and put again before the
+map's `OnLevelUp` runs, so a hero's +10% life covers the life its strength gave at the level; a change the game makes
+any other way (a tome, an item) is seen at the next level-up or the stat's next change. Damage, armor and attack speed
+go through three abilities Moonwell declares, so a map that reads them needs Moonwell.Objects.
+
+When Moonwell changes a unit's most life or most mana through a stat, the unit's current life or mana keeps its percent
+of the most: 325 of 650 with +100 becomes 375 of 750, and back. A dead unit is left alone, and a unit alive keeps at
+least 1 life. A most mana of 0 before or after is not divided by. `Life +=` stays a raw set.
+
+The base of a map's own stat on a unit is the first of: the unit's own, its class's or type's, the stat's own.
+
+```csharp
+Stats.Rage.SetBase<Paladin>(20);        // every unit that came in as a Paladin (and the classes that inherit it)
+Stats.Rage.SetBase(typeId, 10);         // every unit of a type id
+hero.SetBase(Stats.Rage, 50);           // this unit; a player has SetBase, GetBase and AddBase too
+hero.AddBase(Stats.Rage, 5);            // a set of the base plus an amount, for a tome or a level
+```
+
+A game stat takes a base too, and that means Moonwell owns that stat on the unit from then on: the base is Moonwell's
+number, the total by the four stages goes to the game, and `Get` is Moonwell's total, not what the game shows.
+
+```csharp
+hero.SetBase(Stat.MaxLife, 800);                    // this hero's most life is 800 plus its modifiers, whatever the game says
+Stat.MaxMana.SetBase<Paladin>(400);                 // every Paladin; each takes it in the game as it comes in
+hero.AddBase(Stat.Armor, 2);                        // on a stat not yet owned, starts from the game's present base
+```
+
+Most life and mana, move speed, both regenerations and the attributes go to the game as the unit's own number. Armor goes
+as the unit's own base armor and damage as its own base damage (the dice kept, so the middle of the white damage is the
+base), and the green bonus makes up the rest; attack speed has no base in the game, so its base only joins the bonus.
+What a game item's own ability adds still shows in the game on top and is not in `Get`: a map with stats of its own gives
+its items Moonwell modifiers. A level-up puts an owned stat again, so what the level added is overwritten. A stat nobody
+set a base for works as before, and a player takes no game stat. Setting a type's base, or a stat's `Least` or `Most`,
+after units exist announces nothing: a unit takes it at the stat's next change on it.
+
+A modifier can name a group and a stacking rule, in the words buffs use. Within one unit, one stat and one group:
+
+```csharp
+hero.Modify(Stat.Armor, 5, heldBy: Item.Carry, group: "Ring of Protection");     // two rings give 5, not 10
+hero.Modify(Stat.Armor, 3, heldBy: this, group: "Bleed", stacking: Stacking.PerSource, source: caster);
+```
+
+| Rule | What happens |
+|---|---|
+| `Strongest` | Only the modifier farthest from no change counts (the largest amount, percent or late flat, or multiplier away from 1; with several numbers they are added by size), and when it ends the next one counts. A group with no rule is this |
+| `Refresh` | A new one ends the older ones of the group |
+| `PerSource` | As `Refresh`, among those with the same `source` |
+| `Separate`, or no group | Every modifier adds up |
+
+A rule with no group is reported in development builds and ignored. `modifier.Counts` says whether a rule left it out.
+
+`Get(stat)` is the total, `GetBase(stat)` the base, `GetBonus(stat)` the total less the base ("bonus armor"), and
+`Modifiers(stat)` a copy of the stat's modifiers, with `Amount`, `Percent`, `Times`, `Late`, `Group`, `Source` and
+`Parent` (their holder), so a loop may end them.
+
+A stat can be made from other stats. `From` adds another stat's total times a number to the base, on every unit, and
+`Formula` is the general form: a function that reads stats on the same holder, with the stats it reads listed. Their
+results join the base, so percents scale them, and several add up.
+
+```csharp
+Stat.MaxLife.From(Stats.Stamina, 10);                                        // 10 most life for each point of stamina
+Stat.AttackPower.From(Stat.Strength, 2);                                     // a map's stat may read a game stat, and the reverse
+Stats.Dodge.Formula(read => read(Stat.Agility) / 10 + read(Stats.Luck), Stat.Agility, Stats.Luck);
+```
+
+They are kept current: when a stat changes on a unit, every stat that reads it (through `From`, `Formula` or `CappedBy`) is
+worked out again there and put in the game if it is one. A loop (A from B from A, through any mix of the three) is
+refused and reported when it is declared, and that declaration is ignored. `GetBase` includes what they give.
+
+To know when a stat changes, override `OnStatChanged(stat, before)` on a unit class or a unit component. A game
+component or a player component has `OnUnitStatChanged(unit, stat, before)` for the units' stats (a player component, for
+that player's units) and `OnPlayerStatChanged(player, stat, before)` for a player's own. It runs once for each change of
+a total, after the game has the new number, with `before` the old total, for the unit, its components, the game's
+components, then the unit's player's. It does not run when the total did not change: a modifier a stacking rule leaves
+out, a value a limit holds. A reaction may change stats; more than 16 nested changes in one instant are reported once
+and the innermost is not announced (the game drops deeper chains without a word). Nothing is worked out for it until some class overrides one.
+
+```csharp
+public override void OnStatChanged(Stat stat, float before)
+{
+    if (stat == Stat.MaxLife && Get(stat) < before) { /* it dropped */ }
+}
+```
+
+Ready-made stats are on `Stat`, as bare numbers for now, with a name, a base and limits of their own: `CritChance`,
+`CritDamage`, `HitChance`, `Evasion`, `Parry`, `BlockChance`, `BlockAmount`, `AttackPower`, `SpellPower`,
+`ArmorPenetration`, `SpellPenetration`, `AreaDamageReduction`, `Barrier`, `Stagger`, `StaggerTime`, `LifeSteal`,
+`ManaLeech`, `HealingBonus`, `CooldownReduction`, `ManaCostReduction`, `CastRange`, `CastSpeed`, `CrowdControlReduction`,
+`ExperienceGain`, `GoldBonus`, `LootBonus`, `DropRate` and `ItemLevel`, and `Stat.Resistance(kind)`, one stat for each
+damage kind. Nothing in the core reads them yet.
 
 A score is a whole number for each player that the map counts itself, as a kill means something else in each map:
 

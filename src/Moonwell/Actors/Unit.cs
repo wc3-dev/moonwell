@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnStatChanged" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnStatChanged });
                 }
 
                 return unitHooks;
@@ -1574,15 +1574,33 @@ namespace Moonwell
         public bool HasAbility<T>()
             where T : Ability => HasAbility(ObjectTypes.IdOf<T>());
 
-        /// <summary>Adds a flat amount to a stat while a scope holds it (decision 221), and returns the modifier, whose End takes it off sooner: Modify(Stat.Armor, 5, heldBy: Item.Carry). A holder that has ended adds nothing, reported in development builds.</summary>
-        public Modifier Modify(Stat stat, float amount, Scope heldBy) => Stats.Add(stat, amount, 0.0f, heldBy, "Unit.Modify");
+        /// <summary>Adds a flat amount to a stat while a scope holds it (decision 221), and returns the modifier, whose End takes it off sooner: Modify(Stat.Armor, 5, heldBy: Item.Carry). A holder that has ended adds nothing, reported in development builds. A group names what it stacks with: modifiers of one group on one stat of this unit stack by the stacking rule (with a group and no rule, Strongest: only the one farthest from no change counts, and when it ends the next does; Refresh: a new one ends the older ones; PerSource: as Refresh among those with the same source; Separate: all add up), and with no group all add up. A rule with no group is reported in development builds and ignored.</summary>
+        public Modifier Modify(Stat stat, float amount, Scope heldBy, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, amount, 0.0f, 1.0f, 0.0f, heldBy, group, stacking, source, "Unit.Modify");
 
-        /// <summary>Adds a percent to a stat while a scope holds it (decision 221), and returns the modifier: Modify(Stat.Damage, percent: 20, heldBy: this). Percents add up, then multiply the base and the flat amounts.</summary>
-        public Modifier Modify(Stat stat, Scope heldBy, float percent) => Stats.Add(stat, 0.0f, percent, heldBy, "Unit.Modify");
+        /// <summary>Adds percents, multipliers and a late flat amount to a stat while a scope holds it (decision 385), and returns the modifier: Modify(Stat.Damage, percent: 20, heldBy: this). The stages are (base + flat) × (1 + the percents added up / 100) × each multiplier + the late flats added up, held to the stat's least and most. Group, stacking and source are as for the flat Modify.</summary>
+        public Modifier Modify(Stat stat, Scope heldBy, float percent = 0.0f, float times = 1.0f, float late = 0.0f, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, 0.0f, percent, times, late, heldBy, group, stacking, source, "Unit.Modify");
 
-        /// <summary>A stat's value now: (base + flat) Ã— (1 + percents / 100). A game stat reads what the game shows, less what its items and the game's own bonuses add to damage and attack speed: its percents cover the base as it was at the stat's last change, so what the game added since (strength's life, a level) adds unscaled until the stat next changes; 0 once the unit is gone.</summary>
+        /// <summary>A stat's value now, by the four stages and held to the stat's limits. A game stat Moonwell owns (a base was set for the unit or its type) is Moonwell's total. Another game stat reads what the game shows, less what its items and the game's own bonuses add to damage and attack speed: its percents cover the base as it was at the stat's last change, so what the game added since (strength's life) adds unscaled until the stat next changes; a hero's level-up works it out again; 0 once the unit is gone.</summary>
         [LocalSafe]
         public float Get(Stat stat) => Stats.Get(stat);
+
+        /// <summary>A stat's base, with what its From and Formula give: the unit's own (SetBase), else its type's (Stat.SetBase) by the class it came in as, else the stat's own base. For a game stat nobody set a base for, the game's number less Moonwell's part, read live; once a base is set, Moonwell owns the stat and the base is that number.</summary>
+        [LocalSafe]
+        public float GetBase(Stat stat) => Stats.GetBase(stat);
+
+        /// <summary>The total less the base: what the modifiers add, as a card's "bonus armor". A game stat's is Moonwell's part.</summary>
+        [LocalSafe]
+        public float GetBonus(Stat stat) => Stats.Get(stat) - Stats.GetBase(stat);
+
+        /// <summary>Sets the base of a stat on this unit, which the modifiers then work on. For a game stat, Moonwell owns that stat on this unit from then on: the base is Moonwell's number, the total by the four stages goes to the game (most life and mana, move speed, regeneration and attributes as the unit's own number; armor as its own base armor and damage as its own base damage, the dice kept, with the green bonus for the rest; attack speed as the green bonus), and Get is Moonwell's total. What a game item's own ability adds still shows in the game on top and is not in Get. A hero's level-up puts it again, so what the level added is overwritten.</summary>
+        public void SetBase(Stat stat, float value) => Stats.SetBase(stat, value, "Unit.SetBase");
+
+        /// <summary>Adds an amount to the base: a set of the base plus the amount, for a tome or a level. For a game stat nobody set a base for, it starts from the game's present base (less Moonwell's part), and Moonwell owns the stat from then on (see SetBase).</summary>
+        public void AddBase(Stat stat, float amount) => Stats.AddBase(stat, amount, "Unit.AddBase");
+
+        /// <summary>The modifiers on a stat, a copy in the order they were made, so a loop may end them. Those a stacking rule leaves out are in it; Counts says which.</summary>
+        [LocalSafe]
+        public IReadOnlyList<Modifier> Modifiers(Stat stat) => Stats.Modifiers(stat);
 
         internal StatSheet? stats;
 
@@ -1817,6 +1835,18 @@ namespace Moonwell
         /// <param name="soldUnit">The unit sold.</param>
         /// <param name="buyer">The unit that bought it.</param>
         public virtual void OnUnitSold(Unit soldUnit, Unit buyer)
+        {
+        }
+
+        /// <summary>
+        /// Runs when the total of one of the unit's own stats changes, after the game has the new number, before its components and the game's and its player's components see it: its modifiers, its base, or a stat it reads
+        /// (From, Formula, CappedBy). It runs once for each change of the total, with before the old total, and not when the total did not change (a modifier a stacking rule leaves out, a value a limit holds). A stat it
+        /// reads that changes is announced after this one. It may change stats; a chain of more than 16 nested changes in one instant is reported once and the innermost is not announced (the game drops deeper chains silently). A change the game makes on its own
+        /// (a tome, an item's bonus) is seen at the hero's next level-up or the stat's next change; setting a type's base or a stat's Least or Most announces nothing.
+        /// </summary>
+        /// <param name="stat">The stat whose total changed.</param>
+        /// <param name="before">Its total before the change.</param>
+        public virtual void OnStatChanged(Stat stat, float before)
         {
         }
 

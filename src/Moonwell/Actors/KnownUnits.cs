@@ -86,6 +86,12 @@ namespace Moonwell
                 hero.Keep(Kept.Level);
             }
 
+            var typed = Stat.WithTypeBase(made);
+            if (typed.Count > 0)
+            {
+                made.Stats.PutTyped(typed);
+            }
+
             for (var i = 0; i < made.StartComponents.Count; i++)
             {
                 made.Add(made.StartComponents[i]);

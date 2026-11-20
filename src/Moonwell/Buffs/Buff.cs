@@ -34,6 +34,12 @@ namespace Moonwell
         /// <summary>The game buff a spell, an aura or an attack put on, which this object stands for (decision 152); 0 for a buff put on by Apply.</summary>
         internal int gameBuff;
 
+        /// <summary>Whether its OnApply is running, so a modifier it holds is noted in madeInApply.</summary>
+        internal bool applying;
+
+        /// <summary>The modifiers the buff made while its last OnApply ran, which end before OnApply runs again, so a refresh does not stack them on themselves.</summary>
+        internal List<Modifier>? madeInApply;
+
         /// <summary>Whether a game aura gave it last, so the watch follows the strongest holder in reach.</summary>
         internal bool byAura;
 
@@ -410,7 +416,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Runs OnApply as a reaction of the buff.</summary>
+        /// <summary>Runs OnApply as a reaction of the buff, after ending the modifiers its last OnApply made.</summary>
         private void CallApply()
         {
             if (HasEnded)
@@ -418,6 +424,18 @@ namespace Moonwell
                 return;
             }
 
+            if (madeInApply != null)
+            {
+                var old = madeInApply;
+                madeInApply = null;
+                for (var i = 0; i < old.Count; i++)
+                {
+                    old[i].End();
+                }
+            }
+
+            var was = applying;
+            applying = true;
             try
             {
                 OnApply();
@@ -426,6 +444,8 @@ namespace Moonwell
             {
                 Errors.Report(this, ".OnApply", error);
             }
+
+            applying = was;
         }
 
         /// <summary>Runs OnTick as a reaction of the buff.</summary>

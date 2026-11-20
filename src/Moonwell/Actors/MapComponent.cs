@@ -18,7 +18,7 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnSelectionChanged", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnSelectionChanged", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport }, names2: new[] { "OnUnitStatChanged", "OnPlayerStatChanged" }, bits2: new[] { Hook2.OnStatChanged, Hook2.OnStatChanged });
                 }
 
                 return mapHooks;
@@ -121,6 +121,25 @@ namespace Moonwell
         /// <param name="leveledHero">The hero that gained the level.</param>
         /// <param name="reachedLevel">The level gained. In a jump of several levels (the game fires one event for it) the hero's Level already reads the last.</param>
         public virtual void OnHeroLevelUp(Hero leveledHero, int reachedLevel)
+        {
+        }
+
+        /// <summary>
+        /// Runs when the total of a unit's stat changes, for the game's components, then the components of the unit's player, after the unit and its components saw it (see Unit.OnStatChanged): once for each
+        /// change, with before the old total, and not when the total did not change. It may change stats; a chain of more than 16 nested changes in one instant is reported once and the innermost is not announced (the game drops deeper chains silently).
+        /// </summary>
+        /// <param name="unit">The unit whose stat changed.</param>
+        /// <param name="stat">The stat whose total changed.</param>
+        /// <param name="before">Its total before the change.</param>
+        public virtual void OnUnitStatChanged(Unit unit, Stat stat, float before)
+        {
+        }
+
+        /// <summary>Runs when the total of a player's own stat changes, for the game's components, then that player's components (see OnUnitStatChanged); a player takes the map's own stats only.</summary>
+        /// <param name="player">The player whose stat changed.</param>
+        /// <param name="stat">The stat whose total changed.</param>
+        /// <param name="before">Its total before the change.</param>
+        public virtual void OnPlayerStatChanged(Player player, Stat stat, float before)
         {
         }
 

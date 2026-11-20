@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnStatChanged" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnStatChanged });
                 }
 
                 return componentHooks;
@@ -113,6 +113,13 @@ namespace Moonwell
         /// <param name="soldUnit">The unit sold.</param>
         /// <param name="buyer">The unit that bought it.</param>
         public virtual void OnUnitSold(Unit soldUnit, Unit buyer)
+        {
+        }
+
+        /// <summary>Runs when the total of one of the unit's own stats changes, after its class has seen it (see Unit.OnStatChanged).</summary>
+        /// <param name="stat">The stat whose total changed.</param>
+        /// <param name="before">Its total before the change.</param>
+        public virtual void OnStatChanged(Stat stat, float before)
         {
         }
 

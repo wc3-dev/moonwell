@@ -851,15 +851,33 @@ namespace Moonwell
             return Runtime.World.IsEnemyOf(Handle, other.Handle);
         }
 
-        /// <summary>Adds a flat amount to a stat while a scope holds it (decision 221), and returns the modifier, whose End takes it off sooner: Modify(Stats.GoldBonus, 10, heldBy: this). A holder that has ended adds nothing, reported in development builds.</summary>
-        public Modifier Modify(Stat stat, float amount, Scope heldBy) => Stats.Add(stat, amount, 0.0f, heldBy, "Player.Modify");
+        /// <summary>Adds a flat amount to a stat while a scope holds it (decision 221), and returns the modifier, whose End takes it off sooner: Modify(Stat.GoldBonus, 5, heldBy: this). A holder that has ended adds nothing, reported in development builds. A group names what it stacks with: modifiers of one group on one stat of this player stack by the stacking rule (with a group and no rule, Strongest: only the one farthest from no change counts, and when it ends the next does; Refresh: a new one ends the older ones; PerSource: as Refresh among those with the same source; Separate: all add up), and with no group all add up. A rule with no group is reported in development builds and ignored.</summary>
+        public Modifier Modify(Stat stat, float amount, Scope heldBy, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, amount, 0.0f, 1.0f, 0.0f, heldBy, group, stacking, source, "Player.Modify");
 
-        /// <summary>Adds a percent to a stat while a scope holds it (decision 221), and returns the modifier: Modify(Stats.GoldBonus, percent: 20, heldBy: this). Percents add up, then multiply the base and the flat amounts.</summary>
-        public Modifier Modify(Stat stat, Scope heldBy, float percent) => Stats.Add(stat, 0.0f, percent, heldBy, "Player.Modify");
+        /// <summary>Adds percents, multipliers and a late flat amount to a stat while a scope holds it (decision 385), and returns the modifier: Modify(Stat.GoldBonus, percent: 20, heldBy: this). The stages are (base + flat) × (1 + the percents added up / 100) × each multiplier + the late flats added up, held to the stat's least and most. Group, stacking and source are as for the flat Modify.</summary>
+        public Modifier Modify(Stat stat, Scope heldBy, float percent = 0.0f, float times = 1.0f, float late = 0.0f, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, 0.0f, percent, times, late, heldBy, group, stacking, source, "Player.Modify");
 
-        /// <summary>A stat's value now: (base + flat) Ã— (1 + percents / 100). A player takes the map's own stats only: a game stat is refused, in every build.</summary>
+        /// <summary>A stat's value now, by the four stages and held to the stat's limits. A player takes the map's own stats only: a game stat is refused, in every build.</summary>
         [LocalSafe]
         public float Get(Stat stat) => Stats.Get(stat);
+
+        /// <summary>A stat's base, with what its From and Formula give: the player's own (SetBase), else the stat's own base. A game stat is 0: a player takes the map's own stats only.</summary>
+        [LocalSafe]
+        public float GetBase(Stat stat) => Stats.GetBase(stat);
+
+        /// <summary>The total less the base: what the modifiers add, as a card's "bonus armor". A game stat's is Moonwell's part.</summary>
+        [LocalSafe]
+        public float GetBonus(Stat stat) => Stats.Get(stat) - Stats.GetBase(stat);
+
+        /// <summary>Sets the base of a map's own stat on this player, which the modifiers then work on. A game stat is refused and reported, in every build.</summary>
+        public void SetBase(Stat stat, float value) => Stats.SetBase(stat, value, "Player.SetBase");
+
+        /// <summary>Adds an amount to the base: a set of the base plus the amount, for a tome or a level. A game stat is refused and reported, in every build.</summary>
+        public void AddBase(Stat stat, float amount) => Stats.AddBase(stat, amount, "Player.AddBase");
+
+        /// <summary>The modifiers on a stat, a copy in the order they were made, so a loop may end them. Those a stacking rule leaves out are in it; Counts says which.</summary>
+        [LocalSafe]
+        public IReadOnlyList<Modifier> Modifiers(Stat stat) => Stats.Modifiers(stat);
 
         internal StatSheet? stats;
 
