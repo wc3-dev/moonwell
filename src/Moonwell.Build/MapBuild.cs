@@ -142,6 +142,7 @@ namespace Moonwell.Build
             var data = GameData.Of(settings.DataSet, settings.DataVersion);
             var standard = StandardData.Read(objectsDll);
             var declarations = Declarations.Read(targetPath, project, standard, data.ValueSet);
+            HeroBonusWriter.Write(project, declarations.Bonus);
             BalanceCheck.Run(declarations, standard, data);
 
             var sourceMapIds = MapObjectIds.Defined(project);
@@ -238,6 +239,7 @@ namespace Moonwell.Build
 
             ObjectStubs.Delete(project);
             SaveCodecWriter.Delete(project);
+            HeroBonusWriter.Delete(project);
 
             // The table of tree types is made from the standard destructable data, which only Moonwell.Objects carries.
             if (Declarations.References(targetPath, InteractionsAssemblyName))

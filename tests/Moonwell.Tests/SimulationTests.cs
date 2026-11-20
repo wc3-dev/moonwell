@@ -1,6 +1,10 @@
 using Moonwell.Objects;
 using Moonwell.Testing;
 
+// The hero bonus a built map's HeroBonus.g.cs gives its assembly: the game's standard 25 life a point of strength and 15 mana a point of intelligence.
+[assembly: System.Reflection.AssemblyMetadata("Moonwell.LifePerStrength", "25")]
+[assembly: System.Reflection.AssemblyMetadata("Moonwell.ManaPerIntelligence", "15")]
+
 namespace Moonwell.Tests
 {
     /// <summary>The fast simulation with Moonwell.Objects, on .NET only: a standard unit plays by its object data, with no SetNumbers.</summary>
@@ -11,6 +15,18 @@ namespace Moonwell.Tests
         /// <summary>A map with nothing in it: Start(map) registers the standard classes this assembly names, as a built map's registry would.</summary>
         private sealed class EmptyMap : Map
         {
+        }
+
+        /// <summary>A Mountain King of the map's own that keeps the life his strength gives while it takes his strength down to 1.</summary>
+        [ObjectId("H0K1")]
+        private sealed class SteadyKing : Human.Units.MountainKing
+        {
+            public SteadyKing()
+            {
+                var life = MaxLife;
+                Strength = 1;
+                MaxLife = life;
+            }
         }
 
         /// <summary>A map with a name, and slots with names: a person's, a computer's, and a computer's with none.</summary>
@@ -66,6 +82,31 @@ namespace Moonwell.Tests
             Expect.Near(420.0f, footman.MaxLife, "max life");
             Expect.Near(270.0f, footman.Get(Stat.MoveSpeed), "move speed");
             Expect.Near(2.0f, footman.Get(Stat.Armor), "armor");
+        }
+
+        /// <summary>
+        /// Start(map) reads a hero's life with its strength counted, by the bonus the map's build used, so a class's constructor
+        /// reads MaxLife as the build does: 100 and 24 strength at 25 a point make the Mountain King's 700.
+        /// </summary>
+        [Fact]
+        public void HeroLifeCountsStrengthAsTheBuildDoes()
+        {
+            Simulation.Start(new EmptyMap());
+            var steady = Unit.Create<SteadyKing>(Player.One, 0.0f, 0.0f, Game.Instance);
+            var standard = Unit.Create(ObjectTypes.FourCC("Hmkg"), Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.Near(700.0f, steady.MaxLife, "the class that keeps the total");
+            Expect.Near(700.0f, steady.Life, "and starts with it");
+            Expect.Near(700.0f, standard.MaxLife, "the standard Mountain King");
+        }
+
+        /// <summary>Start() has no map and so no build's bonus: a hero reads its base field, after a Start(map) too.</summary>
+        [Fact]
+        public void HeroLifeWithNoMapIsItsBaseField()
+        {
+            Simulation.Start(new EmptyMap());
+            Simulation.Start();
+            var king = Unit.Create(ObjectTypes.FourCC("Hmkg"), Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.Near(100.0f, king.MaxLife, "the base field");
         }
 
         /// <summary>Two footmen of enemy players, made by their id near each other, acquire each other and fight until one dies.</summary>
