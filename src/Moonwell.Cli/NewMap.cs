@@ -1,3 +1,4 @@
+using System.Text;
 using Moonwell.Build;
 
 namespace Moonwell.Tool
@@ -38,7 +39,9 @@ namespace Moonwell.Tool
                 if (IsText(relative))
                 {
                     using var reader = new StreamReader(source);
-                    File.WriteAllText(target, reader.ReadToEnd().Replace(TemplateName, name, StringComparison.Ordinal).Replace("MOONWELL_VERSION", version, StringComparison.Ordinal));
+                    var text = reader.ReadToEnd().Replace(TemplateName, name, StringComparison.Ordinal).Replace("MOONWELL_VERSION", version, StringComparison.Ordinal);
+                    // World Editor's strings file keeps the byte order mark World Editor writes.
+                    File.WriteAllText(target, text, relative.EndsWith(".wts", StringComparison.Ordinal) ? new UTF8Encoding(true) : new UTF8Encoding(false));
                 }
                 else
                 {
@@ -50,10 +53,10 @@ namespace Moonwell.Tool
             return folder;
         }
 
-        // The code and project files; the World Editor map's files are copied byte for byte.
+        // The code and project files, and World Editor's strings, which hold the map's name; the map's other files are copied byte for byte.
         private static bool IsText(string relative)
         {
-            return Path.GetExtension(relative) is ".cs" or ".csproj" || Path.GetFileName(relative) == ".gitignore";
+            return Path.GetExtension(relative) is ".cs" or ".csproj" or ".wts" || Path.GetFileName(relative) == ".gitignore";
         }
     }
 }

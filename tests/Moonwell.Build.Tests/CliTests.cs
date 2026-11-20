@@ -254,6 +254,10 @@ namespace Moonwell.Build.Tests
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".gitignore")), File.ReadAllBytes(Path.Combine(folder, ".gitignore")));
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, ".editorconfig")), File.ReadAllBytes(Path.Combine(folder, ".editorconfig")));
             Assert.Equal(File.ReadAllBytes(Path.Combine(template, "map.w3x", "war3map.w3e")), File.ReadAllBytes(Path.Combine(folder, "map.w3x", "war3map.w3e")));
+            var strings = File.ReadAllBytes(Path.Combine(template, "map.w3x", "war3map.wts"));
+            Assert.Equal(
+                System.Text.Encoding.UTF8.GetBytes(System.Text.Encoding.UTF8.GetString(strings).Replace("MoonwellMap", "MyMap", StringComparison.Ordinal)),
+                File.ReadAllBytes(Path.Combine(folder, "map.w3x", "war3map.wts")));
             Assert.False(Directory.Exists(Path.Combine(folder, ".template.config")));
             Assert.Equal(Directory.GetFiles(Path.Combine(template, "map.w3x")).Length, Directory.GetFiles(Path.Combine(folder, "map.w3x")).Length);
         }
