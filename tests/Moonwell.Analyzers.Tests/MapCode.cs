@@ -15,6 +15,14 @@ internal static class MapCode
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .ToList();
 
+    // What a test project of a map's build code references: no Moonwell assembly but Moonwell.BuildTime.
+    private static readonly IReadOnlyList<MetadataReference> BuildTimeReferences =
+        ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
+            .Split(Path.PathSeparator)
+            .Where(path => Path.GetFileName(path) is var name && (name == "Moonwell.BuildTime.dll" || !name.StartsWith("Moonwell", StringComparison.Ordinal)))
+            .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
+            .ToList();
+
     /// <summary>
     /// The analyzer's diagnostics for a body run with a player p and a unit u, and members beside it, in source
     /// order, each as "id: the code it points at". A library is the source of another assembly the map references, read
@@ -37,19 +45,30 @@ internal static class MapCode
     /// </summary>
     public static List<string> CheckFiles(params (string Path, string Source)[] files)
     {
-        return AnalyzeFiles(files).Select(d => d.Location.SourceTree!.FilePath + ": " + d.Id + ": " + d.Location.SourceTree.GetText().ToString(d.Location.SourceSpan)).ToList();
+        return Located(AnalyzeFiles(files, References));
+    }
+
+    /// <summary>As <see cref="CheckFiles"/>, in a project that references Moonwell.BuildTime and no other Moonwell assembly.</summary>
+    public static List<string> CheckBuildTimeFiles(params (string Path, string Source)[] files)
+    {
+        return Located(AnalyzeFiles(files, BuildTimeReferences));
+    }
+
+    private static List<string> Located(List<Diagnostic> found)
+    {
+        return found.Select(d => d.Location.SourceTree!.FilePath + ": " + d.Id + ": " + d.Location.SourceTree.GetText().ToString(d.Location.SourceSpan)).ToList();
     }
 
     /// <summary>The messages of the analyzer's diagnostics for a project of several files, in file and source order.</summary>
     public static List<string> MessagesOfFiles(params (string Path, string Source)[] files)
     {
-        return AnalyzeFiles(files).Select(d => d.GetMessage()).ToList();
+        return AnalyzeFiles(files, References).Select(d => d.GetMessage()).ToList();
     }
 
-    private static List<Diagnostic> AnalyzeFiles((string Path, string Source)[] files)
+    private static List<Diagnostic> AnalyzeFiles((string Path, string Source)[] files, IReadOnlyList<MetadataReference> references)
     {
         var trees = files.Select(file => CSharpSyntaxTree.ParseText(file.Source, new CSharpParseOptions(LanguageVersion.Latest), file.Path)).ToList();
-        var compilation = CSharpCompilation.Create("Map" + Guid.NewGuid().ToString("N"), trees, References,
+        var compilation = CSharpCompilation.Create("Map" + Guid.NewGuid().ToString("N"), trees, references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
         var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
         Assert.True(errors.Count == 0, string.Join("\n", errors));

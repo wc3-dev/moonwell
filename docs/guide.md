@@ -2138,11 +2138,21 @@ public class GuardTests
   the game's seconds so far.
 - A unit plays by its type's numbers: on .NET those of its object data (the map's class for the type, else the standard
   object), or those `SetNumbers(typeId, new UnitNumbers { ... })` gives for units made from then on. A unit takes its
+<<<<<<< HEAD
   attack range, cooldown, damage, dice and acquisition range when it is made; its life, mana, move speed and armor start
   from them and count as they are at each step. From its object data it also starts with its type's abilities at level
   1, so a Priest has Heal and 75 of its 200 mana; a hero's hero abilities wait to be learned. Numbers from `SetNumbers`
   give no abilities, and mana only by their `Mana` and `MaxMana`. A unit of a type with no numbers never moves, and its
   orders are neither counted nor held.
+=======
+  attack range, cooldown, damage, dice and acquisition range when it is made; its life, move speed and armor start from
+  them and count as they are at each step. A unit of a type with no numbers never moves, and its orders are neither
+  counted nor held.
+- A hero's life counts its strength as the build counts it: `Start(map)` reads the hero bonus (life a point of strength,
+  mana a point of intelligence) that the map's last `moonwell build` wrote, so a hero class's constructor reads `MaxLife`
+  as the total there too (700 for the Mountain King). Build the map before its tests; a map never built, and `Start()`
+  with no map, read the base field (100).
+>>>>>>> origin/release/0.20.3
 - Every order holds the unit 0.16 s (8 steps) before it starts, a repeat of the same order too, as the game holds a
   unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
@@ -2168,7 +2178,7 @@ public class GuardTests
 - Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
   through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
   3.0.1.24371); turning, vision, buffs, and what spells do; an attack's damage point and a missile's flight
-  (a swing lands at once); heroes' attributes (a hero fights on its base numbers); units placed in World Editor; and the
+  (a swing lands at once); what heroes' attributes add to damage and armor; units placed in World Editor; and the
   Damage, Terrain, Areas, Input and Physics systems. A simulation shows how the map's own logic decides, not exactly how
   a fight goes in the game.
 - The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit

@@ -9,7 +9,7 @@ namespace Moonwell
     /// speed, chase and swing at what they attack, attack the nearest enemy in reach when idle, cast, spending the cooldown
     /// and mana, and stand 0.16 s at each order, while Moonwell's timers and reactions run as in the game. The same seed
     /// gives the same run. Pathing, collision, missiles' flight, what spells do, buffs, vision and turning are left to the
-    /// game, and heroes fight on their base numbers: their attributes add no life, damage or armor.
+    /// game, and a hero's attributes add no damage or armor. Its life counts its strength in a game started with a built map.
     /// </summary>
     public sealed class Simulation
     {
@@ -24,9 +24,12 @@ namespace Moonwell
         /// <summary>The game's seconds so far.</summary>
         public float Time => World.Time;
 
-        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's, with every standard class of Moonwell.Objects registered by its game id on .NET. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). Heroes fight on their base numbers: their attributes' bonuses are not applied.</summary>
+        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's, with every standard class of Moonwell.Objects registered by its game id on .NET. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). With no map there is no build's hero bonus, so a hero's life is its base field: its attributes add nothing.</summary>
         public static Simulation Start(int seed = 1)
         {
+#if !MOONWELL_LUA
+            ObjectNumbers.UseHeroBonus(null);
+#endif
             var simulation = Begin(seed);
 #if !MOONWELL_LUA
             Registry.RegisterStandard();
@@ -39,11 +42,16 @@ namespace Moonwell
         /// none), each team's slots allied, then its register step, its starting components, its player components on each
         /// playing slot, and every OnGameStart. On .NET the register step registers the object classes the map uses, as its
         /// build would, then every other standard class as an empty game does; in Lua it registers nothing. World Editor's placed units, and the damage, terrain, areas, input and physics
-        /// systems, are left out, and heroes fight on their base numbers: their attributes' bonuses are not applied.
+        /// systems, are left out. On .NET a hero's MaxLife, MaxMana and Mana read their totals by the hero bonus the map's last
+        /// build wrote into its assembly, as the build reads them, so a hero starts with the life its strength gives; a map not
+        /// built yet has none, and they read their base fields. A hero's attributes add no damage or armor.
         /// </summary>
         public static Simulation Start(Map map, int seed = 1)
         {
             var simulation = Begin(seed);
+#if !MOONWELL_LUA
+            ObjectNumbers.UseHeroBonus(map);
+#endif
             Seat(simulation.World, map.StartSlots);
             Runtime.InstallSaveFolder(FolderOf(map));
 #if MOONWELL_LUA

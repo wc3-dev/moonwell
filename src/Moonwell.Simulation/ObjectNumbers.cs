@@ -1,6 +1,7 @@
 #if !MOONWELL_LUA
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 
 namespace Moonwell
@@ -18,6 +19,45 @@ namespace Moonwell
 
         /// <summary>The standard ability classes of Moonwell.Objects by id, read once.</summary>
         private static Dictionary<int, Type>? abilityStandards;
+
+        /// <summary>
+        /// Gives Moonwell.Objects the hero bonus the map's build wrote into its assembly (HeroBonus.g.cs), so a hero's MaxLife,
+        /// MaxMana and Mana read their totals as in the build; with no map, or a map built before the file, it has none and they
+        /// read their base fields.
+        /// </summary>
+        internal static void UseHeroBonus(Map? map)
+        {
+            var property = Type.GetType("Moonwell.Objects.StandardValues, Moonwell.Objects")?.GetProperty("HeroBonus", BindingFlags.Public | BindingFlags.Static);
+            if (property == null)
+            {
+                return;
+            }
+
+            var life = map == null ? null : Metadata(map, "Moonwell.LifePerStrength");
+            var mana = map == null ? null : Metadata(map, "Moonwell.ManaPerIntelligence");
+            if (life == null || mana == null)
+            {
+                property.SetValue(null, null);
+                return;
+            }
+
+            var bonus = (life.Value, mana.Value);
+            property.SetValue(null, (Func<(float LifePerStrength, float ManaPerIntelligence)>)(() => bonus));
+        }
+
+        /// <summary>A number the map's assembly carries as metadata; null without it.</summary>
+        private static float? Metadata(Map map, string key)
+        {
+            foreach (var data in map.GetType().Assembly.GetCustomAttributes<AssemblyMetadataAttribute>())
+            {
+                if (data.Key == key && float.TryParse(data.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+                {
+                    return number;
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>The numbers of a unit type; null when its object data gives none.</summary>
         internal static UnitNumbers? Of(int typeId)
