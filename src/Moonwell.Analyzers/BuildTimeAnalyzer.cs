@@ -29,7 +29,7 @@ public sealed class BuildTimeAnalyzer : DiagnosticAnalyzer
     private static void Check(SyntaxNodeAnalysisContext context)
     {
         // var names no type in the code: the type it stands for is reported where it is written.
-        if (context.Node is IdentifierNameSyntax { IsVar: true } || context.SemanticModel.GetSymbolInfo(context.Node, context.CancellationToken).Symbol is not INamedTypeSymbol type)
+        if (!GameCode.HasGameCode(context.Compilation) || context.Node is IdentifierNameSyntax { IsVar: true } || context.SemanticModel.GetSymbolInfo(context.Node, context.CancellationToken).Symbol is not INamedTypeSymbol type)
         {
             return;
         }
