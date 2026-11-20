@@ -21,6 +21,7 @@ namespace Moonwell.Testing
             AddBoardsAndDialogs(list);
             AddStatsAndScores(list);
             AddStatsEngine(list);
+            AddStatsSaving(list);
             AddUnitAbilities(list);
             AddSpells(list);
             AddSummons(list);
@@ -2117,6 +2118,18 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.attribute-follows", Run = StatCases.AttributeFollows });
             list.Add(new Case { Name = "stats.keeps-percent", Run = StatCases.KeepsPercent });
             list.Add(new Case { Name = "stats.named-ready", Run = StatCases.NamedReady });
+        }
+
+        /// <summary>Adds the cases for saving stats, a base by text and the data recipe.</summary>
+        private static void AddStatsSaving(List<Case> list)
+        {
+            list.Add(new Case { Name = "stats.save-unit", Run = StatSaveCases.RoundTripUnit });
+            list.Add(new Case { Name = "stats.save-player", Run = StatSaveCases.RoundTripPlayer });
+            list.Add(new Case { Name = "stats.save-restore-twice", Run = StatSaveCases.RestoreTwice });
+            list.Add(new Case { Name = "stats.save-short-and-long", Run = StatSaveCases.ShortAndLong });
+            list.Add(new Case { Name = "stats.save-through-class", Run = StatSaveCases.ThroughSave });
+            list.Add(new Case { Name = "stats.base-by-text", Run = StatSaveCases.BaseByText });
+            list.Add(new Case { Name = "stats.data-recipe", Run = StatSaveCases.DataRecipe });
         }
 
         /// <summary>Adds the cases for the 3.0 bag and equipment slots (decision 215).</summary>
