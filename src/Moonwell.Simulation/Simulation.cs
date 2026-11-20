@@ -7,9 +7,10 @@ namespace Moonwell
     /// <summary>
     /// A game run flat out on the fake world, in steps of 0.02 s. Units of a type with numbers walk straight at their move
     /// speed, chase and swing at what they attack, attack the nearest enemy in reach when idle, cast, spending the cooldown
-    /// and mana, and stand 0.16 s at each order, while Moonwell's timers and reactions run as in the game. The same seed
-    /// gives the same run. Pathing, collision, missiles' flight, what spells do, buffs, vision and turning are left to the
-    /// game, and a hero's attributes add no damage or armor. Its life counts its strength in a game started with a built map.
+    /// and mana, and stand 0.16 s at each order, while Moonwell's timers and reactions run as in the game. Each swing and
+    /// each hit from code goes through the damage package's stages over the fake's armor, and a swing reads its unit's damage and
+    /// attack speed bonus as they are then. The same seed gives the same run. Pathing, collision, missiles' flight, what spells
+    /// do, buffs, vision and turning are left to the game, and a hero's attributes add no damage, armor or attack speed. Its life counts its strength in a game started with a built map.
     /// </summary>
     public sealed class Simulation
     {
@@ -24,7 +25,7 @@ namespace Moonwell
         /// <summary>The game's seconds so far.</summary>
         public float Time => World.Time;
 
-        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's, with every standard class of Moonwell.Objects registered by its game id on .NET. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). With no map there is no build's hero bonus, so a hero's life is its base field: its attributes add nothing.</summary>
+        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's, with the damage package running on it and every standard class of Moonwell.Objects registered by its game id on .NET. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). With no map there is no build's hero bonus, so a hero's life is its base field: its attributes add nothing.</summary>
         public static Simulation Start(int seed = 1)
         {
 #if !MOONWELL_LUA
@@ -41,8 +42,8 @@ namespace Moonwell
         /// Starts the map's game on a fresh fake world as the game would: its slots playing (slot 0 as a person when it lists
         /// none), each team's slots allied, then its register step, its starting components, its player components on each
         /// playing slot, and every OnGameStart. On .NET the register step registers the object classes the map uses, as its
-        /// build would, then every other standard class as an empty game does; in Lua it registers nothing. World Editor's placed units, and the damage, terrain, areas, input and physics
-        /// systems, are left out. On .NET a hero's MaxLife, MaxMana and Mana read their totals by the hero bonus the map's last
+        /// build would, then every other standard class as an empty game does; in Lua it registers nothing. World Editor's placed units, and the terrain, areas, input and physics
+        /// systems, are left out; the damage package runs, as in a map that uses it. On .NET a hero's MaxLife, MaxMana and Mana read their totals by the hero bonus the map's last
         /// build wrote into its assembly, as the build reads them, so a hero starts with the life its strength gives; a map not
         /// built yet has none, and they read their base fields. A hero's attributes add no damage or armor.
         /// </summary>
@@ -71,6 +72,7 @@ namespace Moonwell
         {
             var world = FakeWorld.Install();
             world.StartPlay(seed);
+            world.InstallDamage();
             return new Simulation(world);
         }
 
@@ -105,7 +107,7 @@ namespace Moonwell
             return false;
         }
 
-        /// <summary>Gives a unit type its numbers, for the units of the type made from now on; on .NET they replace what its object data gives. A unit takes its range, cooldown, damage, dice and acquisition range when it is made; its move speed and armor are read as they are at each step.</summary>
+        /// <summary>Gives a unit type its numbers, for the units of the type made from now on; on .NET they replace what its object data gives. A unit takes its range, cooldown, damage, dice and acquisition range when it is made, though a swing adds the unit's green damage bonus and divides the cooldown by 1 + its attack speed bonus as they are then; its move speed and armor are read as they are at each step.</summary>
         public void SetNumbers(int typeId, UnitNumbers numbers)
         {
             World.SetNumbers(typeId, numbers);

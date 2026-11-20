@@ -18,6 +18,18 @@ namespace Moonwell
         /// <summary>The play step an order given now is stamped with: the next one to run.</summary>
         private int nextPlay = 1;
 
+        /// <summary>The bonus ability Moonwell's stats put a unit's green damage on (field Iatt).</summary>
+        private static readonly int damageBonusAbility = ObjectTypes.FourCC("AMWd");
+
+        /// <summary>The bonus ability Moonwell's stats put a unit's attack speed on (field Isx1).</summary>
+        private static readonly int attackSpeedBonusAbility = ObjectTypes.FourCC("AMWs");
+
+        /// <summary>The least 1 + attack speed bonus a swing is played at, so a swing still comes: five times slower at most. The game's own slow limit is not measured.</summary>
+        private const float LeastAttackSpeedFactor = 0.2f;
+
+        /// <summary>The most 1 + attack speed bonus the game's attack rate keeps: a swing comes at most five times faster (game facts, the attack rate).</summary>
+        private const float MostAttackSpeedFactor = 5.0f;
+
         /// <summary>The play's own dice, which the damage of each swing is drawn from.</summary>
         private Dice playDice = null!;
 
@@ -143,6 +155,7 @@ namespace Moonwell
                 }
 
                 Act(made, unitPlay, k);
+                RunDamageZero();
             }
         }
 
@@ -187,7 +200,7 @@ namespace Moonwell
             acquireRanges[made] = numbers.AcquisitionRange;
             var unitPlay = new PlayedUnit();
             unitPlay.AttackRange = numbers.AttackRange;
-            unitPlay.CooldownSteps = Simulation.StepsOf(numbers.AttackCooldown);
+            unitPlay.AttackCooldown = numbers.AttackCooldown;
             unitPlay.Damage = numbers.Damage;
             unitPlay.DamageDice = numbers.DamageDice;
             unitPlay.DamageSides = numbers.DamageSides;
@@ -601,7 +614,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A swing: the damage plus a draw of the play's dice for each die, less the target's armor now, dealt as an attack, and the next swing a cooldown later.</summary>
+        /// <summary>A swing: the damage plus a draw of the play's dice for each die plus the green damage bonus the unit has now, dealt before armor as an attack of damage type normal, which the fake's play of the hit cuts by the armor then. The next swing comes a cooldown later: the base over 1 + the unit's attack speed bonus now.</summary>
         private void Swing(unit made, PlayedUnit unitPlay, unit target, int k)
         {
             var raw = unitPlay.Damage;
@@ -613,8 +626,26 @@ namespace Moonwell
                 }
             }
 
-            unitPlay.NextSwing = k + unitPlay.CooldownSteps;
-            Hurt(made, target, raw * ArmorFactor(ArmorAt(target)), true);
+            var amount = raw + BonusNow(made, damageBonusAbility);
+            var factor = 1.0f + BonusNow(made, attackSpeedBonusAbility);
+            factor = factor < LeastAttackSpeedFactor ? LeastAttackSpeedFactor : factor > MostAttackSpeedFactor ? MostAttackSpeedFactor : factor;
+            unitPlay.NextSwing = k + Simulation.StepsOf(unitPlay.AttackCooldown / factor);
+            Hurt(made, target, amount < 0.0f ? 0.0f : amount, true, SwingAttackType, NormalDamageType, 0);
+        }
+
+        /// <summary>The bonus field of a Moonwell bonus ability the unit has now; 0 without the ability.</summary>
+        private float BonusNow(unit unit, int abilityId)
+        {
+            return AbilityLevel(unit, abilityId) > 0 ? BonusOf(unit, abilityId) : 0.0f;
+        }
+
+        /// <summary>Sets how far a played unit's attack reaches from now on, centre to centre; a unit not played is left as it is. Called by the stats that change a unit's attack range.</summary>
+        internal void SetAttackRange(unit unit, float range)
+        {
+            if (played.TryGetValue(unit, out var unitPlay))
+            {
+                unitPlay.AttackRange = range;
+            }
         }
 
         /// <summary>A unit's armor as ArmorOf reads it, its own and its abilities' Idef bonus fields, with no call counted.</summary>
@@ -713,11 +744,11 @@ namespace Moonwell
     /// <summary>What the play keeps of one unit: its numbers, its counts, its order's point or target, and its walk.</summary>
     internal sealed class PlayedUnit
     {
-        /// <summary>How far its attack reaches, centre to centre.</summary>
+        /// <summary>How far its attack reaches now, centre to centre; starts as its type's.</summary>
         public float AttackRange;
 
-        /// <summary>The steps between its swings.</summary>
-        public int CooldownSteps;
+        /// <summary>The seconds between its swings with no attack speed bonus.</summary>
+        public float AttackCooldown;
 
         /// <summary>The damage of a swing before the dice.</summary>
         public int Damage;
