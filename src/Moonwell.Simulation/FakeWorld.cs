@@ -448,6 +448,16 @@ namespace Moonwell
             }
 
             levels[abilityId] = level;
+            if (!givenOrders.TryGetValue(u, out var order))
+            {
+                order = new List<int>();
+                givenOrders[u] = order;
+            }
+
+            if (!order.Contains(abilityId))
+            {
+                order.Add(abilityId);
+            }
         }
 
         /// <summary>Gives an ability its number of levels, which ChangeAbilityLevel keeps a level within.</summary>
@@ -636,6 +646,12 @@ namespace Moonwell
         public float SpellLasts(unit unit, int abilityId, int level)
         {
             return Dummies.Lasts(abilityId);
+        }
+
+        /// <summary>The duration a case set for the spell, for a hero target or another; 0 until set.</summary>
+        public float SpellLastsOn(unit unit, int abilityId, int level, bool hero)
+        {
+            return Dummies.LastsOn(abilityId, hero);
         }
 
         /// <summary>The missile speed a case set for the spell; 0 until set.</summary>

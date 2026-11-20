@@ -16,6 +16,12 @@ namespace Moonwell
         /// <summary>The bonus abilities the build declares (Moonwell.Build's BonusAbilities): copies of AItg, AId1 and AIsx that give nothing until set.</summary>
         internal const string DamageId = "AMWd", ArmorId = "AMWa", AttackSpeedId = "AMWs";
 
+        /// <summary>Whether an ability id is one of the three bonus abilities.</summary>
+        internal static bool IsBonusAbility(int abilityId)
+        {
+            return abilityId == ObjectTypes.FourCC(DamageId) || abilityId == ObjectTypes.FourCC(ArmorId) || abilityId == ObjectTypes.FourCC(AttackSpeedId);
+        }
+
         /// <summary>
         /// Changes nested deeper than this, each inside a reaction to the one before, are reported once and the innermost is not
         /// announced. 16 as the order and dummy guards are: each try in the compiled Lua takes one of the game's about 196 nested
@@ -46,6 +52,9 @@ namespace Moonwell
 
         /// <summary>Reads a stat's total on this holder, as the formulas are given; made once.</summary>
         private Func<Stat, float>? reader;
+
+        /// <summary>The unit's acquisition range from before Moonwell raised it to its attack range; null while it has not.</summary>
+        private float? acquireWas;
 
         /// <summary>Whether the hero's level-up is listened for, so its percents are put again.</summary>
         private bool levelWatch;
@@ -649,6 +658,8 @@ namespace Moonwell
                     return world.AgilityOf(handle, false) - mine;
                 case StatKind.Intelligence:
                     return world.IntelligenceOf(handle, false) - mine;
+                case StatKind.AttackRange:
+                    return world.AttackRangeOf(handle) - mine;
                 default:
                     return 0.0f;
             }
@@ -735,6 +746,42 @@ namespace Moonwell
                     world.SetIntelligence(handle, (int)Whole(total));
                     applied[stat] = world.IntelligenceOf(handle, false) - raw;
                     break;
+                case StatKind.AttackRange:
+                    PutRange(handle, total);
+                    applied[stat] = world.AttackRangeOf(handle) - raw;
+                    break;
+            }
+        }
+
+        // The game takes an attack range only as an add, so the difference to the range read is put. A unit picks no targets past its acquisition range, so one raised to the range goes up with it, and the unit's own comes back when the range drops under it.
+        private void PutRange(unit handle, float total)
+        {
+            var world = Runtime.World;
+            var delta = total - world.AttackRangeOf(handle);
+            if (delta != 0.0f)
+            {
+                world.AddAttackRange(handle, delta);
+            }
+
+            var reached = world.AttackRangeOf(handle);
+            if (acquireWas != null)
+            {
+                var own = acquireWas.Value;
+                acquireWas = null;
+                if (reached > own)
+                {
+                    acquireWas = own;
+                    world.SetAcquireRange(handle, reached);
+                }
+                else
+                {
+                    world.SetAcquireRange(handle, own);
+                }
+            }
+            else if (reached > world.AcquireRangeOf(handle))
+            {
+                acquireWas = world.AcquireRangeOf(handle);
+                world.SetAcquireRange(handle, reached);
             }
         }
 
