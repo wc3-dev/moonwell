@@ -113,6 +113,15 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.cast-refused", Run = SimulationCases.CastRefused });
             list.Add(new Case { Name = "simulation.no-dummy", Run = SimulationCases.NoDummy });
             list.Add(new Case { Name = "simulation.replan", Run = SimulationCases.Replan });
+            list.Add(new Case { Name = "simulation.hits.halving", Run = SimulationHitCases.HalvingChangesTheFight });
+            list.Add(new Case { Name = "simulation.hits.miss", Run = SimulationHitCases.MissedSwings });
+            list.Add(new Case { Name = "simulation.hits.heal", Run = SimulationHitCases.HealDuringAFight });
+            list.Add(new Case { Name = "simulation.hits.spare", Run = SimulationHitCases.SpareInTheLethalStage });
+            list.Add(new Case { Name = "simulation.hits.seed", Run = SimulationHitCases.SameSeedSameRun });
+            list.Add(new Case { Name = "simulation.hits.code", Run = SimulationHitCases.CodeHitsGoThroughTheStages });
+            list.Add(new Case { Name = "simulation.hits.damage-modifier", Run = SimulationHitCases.DamageModifierShortensTheFight });
+            list.Add(new Case { Name = "simulation.hits.attack-speed", Run = SimulationHitCases.AttackSpeedRaisesTheSwings });
+            list.Add(new Case { Name = "simulation.hits.quiet-map", Run = SimulationHitCases.QuietMapPlaysAsBefore });
         }
 
         /// <summary>Adds the cases for the AI package: brains, their loop, facts and blackboards, brain orders, full control, and utility AI.</summary>
