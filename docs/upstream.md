@@ -1,6 +1,6 @@
 # Upstream workarounds
 
-The released Moonwell 0.20.2 and main build with `Moonwell.CSharpLua` 2.0.4-moonwell.27 (0.11.0 with 2.0.4-moonwell.21, 0.15.0 with 2.0.4-moonwell.23, 0.15.1 to 0.18.0 with 2.0.4-moonwell.24, 0.18.1 to 0.19.1 with 2.0.4-moonwell.25, 0.19.2 to 0.20.1 with 2.0.4-moonwell.26),
+The released Moonwell 0.20.3 and main build with `Moonwell.CSharpLua` 2.0.4-moonwell.27 (0.11.0 with 2.0.4-moonwell.21, 0.15.0 with 2.0.4-moonwell.23, 0.15.1 to 0.18.0 with 2.0.4-moonwell.24, 0.18.1 to 0.19.1 with 2.0.4-moonwell.25, 0.19.2 to 0.20.1 with 2.0.4-moonwell.26),
 `Moonwell.CSharpLua.CoreSystem` 2.0.3-moonwell.13 and `Moonwell.War3Net.Build` 6.1.2-moonwell.6 (0.6.0 with
 6.1.2-moonwell.4).
 
