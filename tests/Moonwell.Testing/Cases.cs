@@ -2260,7 +2260,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "damage-package.heal-is-no-hit", Run = HealCases.HealIsNoHit });
         }
 
-        /// <summary>Adds the stats package's cases: each ready-made stat's effect on hits and heals, barriers, stagger, and fights in the simulation (its own method: the others are near Lua's 200 locals).</summary>
+        /// <summary>Adds the stats package's cases: each ready-made stat's effect on hits and heals, barriers, stagger, abilities, cast speed and kills' gains, and fights in the simulation (its own method: the others are near Lua's 200 locals).</summary>
         private static void AddStatsPackage(List<Case> list)
         {
             list.Add(new Case { Name = "stats-package.no-stats-no-effect", Run = StatEffectCases.NoStatsNoEffect });
@@ -2290,6 +2290,24 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats-package.fight-evasion-halves-the-hits", Run = StatFightCases.EvasionHalvesTheHits });
             list.Add(new Case { Name = "stats-package.fight-crit-build-kills-sooner", Run = StatFightCases.CritBuildKillsSooner });
             list.Add(new Case { Name = "stats-package.fight-barrier-lengthens-the-fight", Run = StatFightCases.BarrierLengthensTheFight });
+            list.Add(new Case { Name = "stats-package.ability-cooldown-reduction", Run = StatAbilityCases.CooldownReduction });
+            list.Add(new Case { Name = "stats-package.ability-mana-cost-reduction", Run = StatAbilityCases.ManaCostReduction });
+            list.Add(new Case { Name = "stats-package.ability-cast-range", Run = StatAbilityCases.CastRange });
+            list.Add(new Case { Name = "stats-package.ability-new-abilities-and-levels", Run = StatAbilityCases.NewAbilitiesAndLevels });
+            list.Add(new Case { Name = "stats-package.ability-unit-without-stats-untouched", Run = StatAbilityCases.UnitWithoutStatsUntouched });
+            list.Add(new Case { Name = "stats-package.ability-cast-speed", Run = StatAbilityCases.CastSpeed });
+            list.Add(new Case { Name = "stats-package.gain-experience", Run = StatGainCases.ExperienceGain });
+            list.Add(new Case { Name = "stats-package.gain-gold-bonus", Run = StatGainCases.GoldBonus });
+            list.Add(new Case { Name = "stats-package.gain-unit-and-player-add", Run = StatGainCases.UnitAndPlayerAdd });
+            list.Add(new Case { Name = "stats-package.gain-negative-percent", Run = StatGainCases.NegativePercent });
+            list.Add(new Case { Name = "stats-package.gain-rounding-over-kills", Run = StatGainCases.RoundingOverKills });
+            list.Add(new Case { Name = "stats-package.gain-spared-hit-leaves-nothing", Run = StatGainCases.SparedHitLeavesNothing });
+            list.Add(new Case { Name = "stats-package.gain-maps-own-gift-comes-after", Run = StatGainCases.MapsOwnGiftComesAfter });
+            list.Add(new Case { Name = "stats-package.gain-neither-stat-costs-nothing", Run = StatGainCases.NeitherStatCostsNothing });
+            list.Add(new Case { Name = "stats-package.gain-typed-experience", Run = StatGainCases.TypedExperienceGain });
+            list.Add(new Case { Name = "stats-package.gain-typed-gold-bonus", Run = StatGainCases.TypedGoldBonus });
+            list.Add(new Case { Name = "stats-package.gain-no-type-base-costs-nothing", Run = StatGainCases.NoTypeBaseCostsNothing });
+            list.Add(new Case { Name = "stats-package.ability-typed-bases", Run = StatAbilityCases.TypedBases });
         }
 
         /// <summary>Adds the item, destructable, damage, ability and buff cases, and the rest (Lua allows 200 locals in a function, and each case made here is one).</summary>
