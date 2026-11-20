@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -11,11 +12,18 @@ namespace Moonwell.Analyzers;
 /// Tells a map's game code from its build code, the files in the project's <c>buildtime</c> folder (decision 371), which runs
 /// on .NET while the map builds and never reaches the game. The rules about the game and its Lua register their actions
 /// through the methods here, so they leave build code alone: there an unseeded <c>Random</c>, a local named <c>end</c> or
-/// a form CSharp.lua cannot compile is nothing wrong. Only <see cref="BuildTimeAnalyzer"/> looks at both.
+/// a form CSharp.lua cannot compile is nothing wrong. Only <see cref="BuildTimeAnalyzer"/> looks at both. A project that
+/// does not reference Moonwell's game library, such as a test project that compiles a map's build code, has no game code.
 /// </summary>
 internal static class GameCode
 {
     private const string Folder = "buildtime";
+
+    private static readonly ConditionalWeakTable<Compilation, StrongBox<bool>> GameLibrary = new();
+
+    /// <summary>Whether the project references the Moonwell assembly, the one game code is written against.</summary>
+    public static bool HasGameCode(Compilation compilation) =>
+        GameLibrary.GetValue(compilation, one => new StrongBox<bool>(one.ReferencedAssemblyNames.Any(name => name.Name == "Moonwell"))).Value;
 
     /// <summary>Whether a file is build code: in the project's buildtime folder, or, with no project folder known, in any folder of that name.</summary>
     public static bool IsBuildCode(SyntaxTree tree, AnalyzerOptions options)
@@ -57,7 +65,7 @@ internal static class GameCode
 
     private static Action<OperationAnalysisContext> Game(Action<OperationAnalysisContext> action) => context =>
     {
-        if (!IsBuildCode(context.Operation.Syntax.SyntaxTree, context.Options))
+        if (HasGameCode(context.Compilation) && !IsBuildCode(context.Operation.Syntax.SyntaxTree, context.Options))
         {
             action(context);
         }
@@ -65,7 +73,7 @@ internal static class GameCode
 
     private static Action<SyntaxNodeAnalysisContext> Game(Action<SyntaxNodeAnalysisContext> action) => context =>
     {
-        if (!IsBuildCode(context.Node.SyntaxTree, context.Options))
+        if (HasGameCode(context.Compilation) && !IsBuildCode(context.Node.SyntaxTree, context.Options))
         {
             action(context);
         }
@@ -74,6 +82,11 @@ internal static class GameCode
     // A symbol is build code's when every place that declares it is: a partial class with one part outside is game code.
     private static Action<SymbolAnalysisContext> Game(Action<SymbolAnalysisContext> action) => context =>
     {
+        if (!HasGameCode(context.Compilation))
+        {
+            return;
+        }
+
         var declared = context.Symbol.DeclaringSyntaxReferences;
         var options = context.Options;
         if (declared.Length == 0 || declared.Any(one => !IsBuildCode(one.SyntaxTree, options)))
