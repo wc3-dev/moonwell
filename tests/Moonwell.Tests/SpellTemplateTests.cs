@@ -285,5 +285,83 @@ namespace Moonwell.Tests
             Expect.Equal("leap 500", string.Join(",", TestLog.Lines), "the unit at the landing");
             Expect.True(caster.X > 400.0f, "the caster landed near the place: " + caster.X);
         }
+
+        /// <summary>Runs a scenario with a game component that records each damage as an area's or not, and returns what it saw.</summary>
+        private static string Marks(System.Action<FakeWorld> scenario)
+        {
+            var world = FakeWorld.Install();
+            Packages();
+            var watch = new AreaWatch();
+            Game.Instance.Add(watch);
+            scenario(world);
+            return string.Join("|", watch.Seen);
+        }
+
+        /// <summary>The templates that hit everything in a radius or a line (a blast, a pulse, a dash, a wave, a leap) mark each hit as an area's, with the power 1.</summary>
+        [Fact]
+        public void AreaTemplatesMarkTheirHits()
+        {
+            Expect.Equal("area 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestBlast(false));
+                var caster = At(world, 0, 0.0f, 0.0f);
+                At(world, 1, 1100.0f, 0.0f);
+                Cast(world, caster, null, 1000.0f, 0.0f);
+            }), "a blast");
+            Expect.Equal("area 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestPulse());
+                var caster = At(world, 0, 0.0f, 0.0f);
+                At(world, 1, 100.0f, 0.0f);
+                Cast(world, caster, null, 100.0f, 0.0f);
+            }), "a pulse");
+            Expect.Equal("area 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestDash());
+                var caster = At(world, 0, 0.0f, 300.0f);
+                At(world, 1, 200.0f, 300.0f);
+                Cast(world, caster, null, 400.0f, 300.0f);
+                Steps(world, 32);
+            }), "a dash");
+            Expect.Equal("area 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestWave());
+                var caster = At(world, 0, 0.0f, 500.0f);
+                At(world, 1, 300.0f, 500.0f);
+                Cast(world, caster, null, 200.0f, 500.0f);
+                Steps(world, 64);
+            }), "a wave");
+            Expect.Equal("area 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestLeap());
+                var caster = At(world, 0, 0.0f, 500.0f);
+                At(world, 1, 500.0f, 500.0f);
+                Cast(world, caster, null, 500.0f, 500.0f);
+                Steps(world, 96);
+            }), "a leap");
+        }
+
+        /// <summary>A bolt and a chain jump hit one unit each, so their hits are not marked as an area's.</summary>
+        [Fact]
+        public void SingleTargetTemplatesDoNotMarkTheirHits()
+        {
+            Expect.Equal("plain 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestBolt());
+                var caster = At(world, 0, 100.0f, 500.0f);
+                var target = At(world, 1, 400.0f, 500.0f);
+                Cast(world, caster, target, 400.0f, 500.0f);
+                Steps(world, 64);
+            }), "a bolt");
+            Expect.Equal("plain 10|plain 10", Marks(world =>
+            {
+                ObjectTypes.Ability(Id, () => new TestChain());
+                var caster = At(world, 0, 0.0f, 0.0f);
+                var first = At(world, 1, 100.0f, 0.0f);
+                At(world, 1, 400.0f, 0.0f);
+                Cast(world, caster, first, 100.0f, 0.0f);
+                world.Advance(0.25f);
+            }), "a chain's first two hits");
+        }
     }
 }

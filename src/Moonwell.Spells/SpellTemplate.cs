@@ -40,12 +40,12 @@ namespace Moonwell.Spells
         {
         }
 
-        /// <summary>Hits a unit: the damage, from the caster, with this ability as the hit's tag, then OnHit.</summary>
-        internal void Hit(Cast cast, Unit target, float damage)
+        /// <summary>Hits a unit: the damage, from the caster, with this ability as the hit's tag, marked as an area's when the template hits everything in a radius or a line, then OnHit.</summary>
+        internal void Hit(Cast cast, Unit target, float damage, bool area = false)
         {
             if (damage > 0.0f)
             {
-                cast.Caster.Damage(target, damage, DamageKind, tag: this);
+                cast.Caster.Damage(target, damage, DamageKind, tag: this, area: area);
             }
 
             OnHit(cast, target);
@@ -57,7 +57,7 @@ namespace Moonwell.Spells
             var found = Find.InRange<Unit>(x, y, radius, unit => CanHit(cast, unit));
             for (var i = 0; i < found.Count; i++)
             {
-                Hit(cast, found[i], damage);
+                Hit(cast, found[i], damage, true);
             }
         }
 

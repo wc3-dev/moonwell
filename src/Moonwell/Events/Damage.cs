@@ -25,7 +25,7 @@ namespace Moonwell
 
         /// <summary>The amount of the damage; a reaction may change it.</summary>
         [LocalSafe]
-        public float Amount { get; set; } = 0.0f;
+        public virtual float Amount { get; set; } = 0.0f;
 
         /// <summary>The tag the code that dealt the damage gave it (Unit.Damage); null otherwise.</summary>
         [LocalSafe]
@@ -34,5 +34,13 @@ namespace Moonwell
         /// <summary>Whether the damage is an attack.</summary>
         [LocalSafe]
         public bool IsAttack { get; }
+
+        /// <summary>Whether the damage is one of a hit on everything in an area (Unit.Damage with area: true, and a spell template's area hits); false for a single target's and for damage the game made.</summary>
+        [LocalSafe]
+        public bool IsArea { get; internal set; }
+
+        /// <summary>How much of its spell's power the damage carries, as the caller of Unit.Damage gave it; 1 for damage the game made.</summary>
+        [LocalSafe]
+        public float Power { get; internal set; } = 1.0f;
     }
 }

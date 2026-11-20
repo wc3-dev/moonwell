@@ -52,8 +52,8 @@ namespace Moonwell
             pending = null;
             Reactions.Reset();
             Events.DamageListener = Listen;
-            Events.DamageDealer = (source, target, amount, kind, attackType, isAttack, ranged, sound, tag) =>
-                Deal(source, target, amount, TypeCodes.AttackCode(attackType), kind, isAttack, ranged, sound, tag);
+            Events.DamageDealer = (source, target, amount, kind, attackType, isAttack, ranged, sound, tag, area, power) =>
+                Deal(source, target, amount, TypeCodes.AttackCode(attackType), kind, isAttack, ranged, sound, tag, area, power);
             Hooks.Seen = Saw;
         }
 
@@ -72,6 +72,11 @@ namespace Moonwell
         /// <summary>A class seen for the first time: one implementing a damage interface has its reactions learned and makes the package listen.</summary>
         private static void Saw(object obj)
         {
+            if (obj is IHealSource || obj is IHealTarget || obj is IHealWatch)
+            {
+                Reactions.Learn(obj);
+            }
+
             if (obj is IDamageWatch)
             {
                 Watched = true;
@@ -92,7 +97,7 @@ namespace Moonwell
         }
 
         /// <summary>Deals damage from code: the hit its before-armor event makes is marked as code's and returned. A deal from a reaction continues the reacting hit's chain; one that would make the chain longer than MaxChain throws, which the reaction reports.</summary>
-        internal static Hit? Deal(Unit source, Unit target, float amount, int attackType, DamageKind type, bool isAttack, bool ranged, WeaponSound sound, object? tag)
+        internal static Hit? Deal(Unit source, Unit target, float amount, int attackType, DamageKind type, bool isAttack, bool ranged, WeaponSound sound, object? tag, bool area, float power)
         {
             var chain = Reactions.NextChain();
             if (chain >= MaxChain)
@@ -102,7 +107,7 @@ namespace Moonwell
 
             Listen();
             var previous = pending;
-            var deal = new PendingDeal(source.Handle, target.Handle, isAttack, ranged, tag, chain);
+            var deal = new PendingDeal(source.Handle, target.Handle, isAttack, ranged, tag, chain, area, power);
             pending = deal;
             try
             {
@@ -141,6 +146,8 @@ namespace Moonwell
                 hit.IsCode = true;
                 hit.Tag = deal.Tag;
                 hit.Chain = deal.Chain;
+                hit.IsArea = deal.Area;
+                hit.Power = deal.Power;
             }
             else
             {
@@ -298,7 +305,7 @@ namespace Moonwell
             hit.Stage = Stage.AfterArmor;
 
             // Core's OnDamaged family comes first, then the package's; a cut hit runs neither.
-            if (!hit.Cut)
+            if (!hit.Cut && !hit.Missed)
             {
                 Reactions.RunCore(hit);
             }
@@ -308,7 +315,7 @@ namespace Moonwell
             // The life is read only now: a hit those reactions dealt has already lowered it (game facts: the life drops
             // before UnitDamageTarget returns). A target such a hit killed is not this hit's to kill.
             hit.TargetLife = World.Life(targetHandle);
-            if (hit.Kills && !World.IsDead(targetHandle))
+            if (!hit.Missed && hit.Kills && !World.IsDead(targetHandle))
             {
                 hit.Stage = Stage.Lethal;
                 Reactions.Run(hit, Stage.Lethal);
@@ -316,7 +323,7 @@ namespace Moonwell
             }
 
             // Read again after the lethal stage: a hit a lethal reaction dealt may have killed the target first.
-            hit.WouldKill = hit.Kills && !World.IsDead(targetHandle);
+            hit.WouldKill = !hit.Missed && hit.Kills && !World.IsDead(targetHandle);
 
             if (hit.Amount != amount)
             {
@@ -438,8 +445,10 @@ namespace Moonwell
     internal sealed class PendingDeal
     {
         /// <summary>Makes the record of a deal.</summary>
-        internal PendingDeal(unit source, unit target, bool isAttack, bool ranged, object? tag, int chain)
+        internal PendingDeal(unit source, unit target, bool isAttack, bool ranged, object? tag, int chain, bool area, float power)
         {
+            Area = area;
+            Power = power;
             Source = source;
             Target = target;
             IsAttack = isAttack;
@@ -465,6 +474,12 @@ namespace Moonwell
 
         /// <summary>The hit's place in its chain.</summary>
         internal readonly int Chain;
+
+        /// <summary>Whether the hit is one of an area's.</summary>
+        internal readonly bool Area;
+
+        /// <summary>How much of its spell's power the hit carries.</summary>
+        internal readonly float Power;
 
         /// <summary>The hit the deal made; null until its before-armor event.</summary>
         internal Hit? Hit;
