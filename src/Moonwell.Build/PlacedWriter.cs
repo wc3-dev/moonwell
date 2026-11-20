@@ -23,6 +23,9 @@ namespace Moonwell.Build
         /// <summary>The file's name in the generated folder, which the map's project compiles.</summary>
         public const string FileName = "Placed.g.cs";
 
+        // The members of one class: below Lua's 200 locals in a function, with room for the class's own.
+        private const int PartSize = 150;
+
         private const string TypesResource = "Moonwell.Build.Data.Destructables.txt";
 
         private const War3Net.Build.MapFiles PlacedFiles = War3Net.Build.MapFiles.Units | War3Net.Build.MapFiles.Doodads | War3Net.Build.MapFiles.Regions | War3Net.Build.MapFiles.Cameras | War3Net.Build.MapFiles.Sounds;
@@ -63,65 +66,37 @@ namespace Moonwell.Build
             text.Append("    /// <summary>What an editor placed in the map, named as World Editor names its variables without gg_.</summary>\n");
             text.Append("    public static class Placed\n    {\n");
 
-            Open(text, "Units", "The placed units: null once one has left the game.");
-            var names = new HashSet<string>(StringComparer.Ordinal) { "Units" };
-            foreach (var unit in Units(map))
-            {
-                var name = UnitName(unit);
-                Lookup(text, names, name, Describe(unit.TypeId, unit.Position.X, unit.Position.Y), "Unit", classes, unit.TypeId);
-            }
-
-            Close(text);
-            Open(text, "Items", "The placed items: null once one has left the game.");
-            names = new HashSet<string>(StringComparer.Ordinal) { "Items" };
-            foreach (var item in Items(map))
-            {
-                Lookup(text, names, UnitName(item), Describe(item.TypeId, item.Position.X, item.Position.Y), "Item", classes, item.TypeId);
-            }
-
-            Close(text);
-            Open(text, "Destructables", "The placed destructables but the trees, which Destructable.Named finds: null once one is gone.");
-            names = new HashSet<string>(StringComparer.Ordinal) { "Destructables" };
-            foreach (var placed in Destructables(map, trees))
-            {
-                if (!placed.Tree)
-                {
-                    Lookup(text, names, placed.Name, Describe(placed.Doodad.TypeId, placed.Doodad.Position.X, placed.Doodad.Position.Y), "Destructable", classes, placed.Doodad.TypeId);
-                }
-            }
-
-            Close(text);
-            Open(text, "Regions", "The placed regions.");
-            names = new HashSet<string>(StringComparer.Ordinal) { "Regions" };
-            foreach (var region in map.Regions?.Regions ?? new List<War3Net.Build.Environment.Region>())
-            {
-                var member = Member(names, region.Name);
-                text.Append($"            /// <summary>{Escape(region.Name)}.</summary>\n");
-                text.Append($"            public static global::Moonwell.PlacedRegion {member} => new global::Moonwell.PlacedRegion({Quoted(region.Name)}, {Real(region.Left)}, {Real(region.Bottom)}, {Real(region.Right)}, {Real(region.Top)});\n");
-            }
-
-            Close(text);
-            Open(text, "Cameras", "The placed cameras.");
-            names = new HashSet<string>(StringComparer.Ordinal) { "Cameras" };
-            foreach (var camera in map.Cameras?.Cameras ?? new List<War3Net.Build.Environment.Camera>())
-            {
-                var member = Member(names, camera.Name);
-                text.Append($"            /// <summary>{Escape(camera.Name)}.</summary>\n");
-                text.Append($"            public static global::Moonwell.PlacedCamera {member} => new global::Moonwell.PlacedCamera({Quoted(camera.Name)});\n");
-            }
-
-            Close(text);
-            Open(text, "Sounds", "The sounds of the Sound Editor.");
-            names = new HashSet<string>(StringComparer.Ordinal) { "Sounds" };
-            foreach (var name in SoundNames(map))
-            {
-                var member = Member(names, name);
-                text.Append($"            /// <summary>{Escape(name)}.</summary>\n");
-                text.Append($"            public static global::Moonwell.PlacedSound? {member} => global::Moonwell.PlacedSound.Named({Quoted(name)});\n");
-            }
-
-            Close(text);
+            var parts = new StringBuilder();
+            WriteKind(text, parts, "Units", "The placed units: null once one has left the game.", Units(map)
+                .Select(unit => Placed(UnitName(unit), member => Lookup(member, UnitName(unit), Describe(unit.TypeId, unit.Position.X, unit.Position.Y), "Unit", classes, unit.TypeId)))
+                .ToList());
+            WriteKind(text, parts, "Items", "The placed items: null once one has left the game.", Items(map)
+                .Select(item => Placed(UnitName(item), member => Lookup(member, UnitName(item), Describe(item.TypeId, item.Position.X, item.Position.Y), "Item", classes, item.TypeId)))
+                .ToList());
+            WriteKind(text, parts, "Destructables", "The placed destructables but the trees, which Destructable.Named finds: null once one is gone.", Destructables(map, trees)
+                .Where(placed => !placed.Tree)
+                .Select(placed => Placed(placed.Name, member => Lookup(member, placed.Name, Describe(placed.Doodad.TypeId, placed.Doodad.Position.X, placed.Doodad.Position.Y), "Destructable", classes, placed.Doodad.TypeId)))
+                .ToList());
+            WriteKind(text, parts, "Regions", "The placed regions.", (map.Regions?.Regions ?? new List<War3Net.Build.Environment.Region>())
+                .Select(region => Placed(region.Name, member =>
+                    $"            /// <summary>{Escape(region.Name)}.</summary>\n"
+                    + $"            public static global::Moonwell.PlacedRegion {member} => new global::Moonwell.PlacedRegion({Quoted(region.Name)}, {Real(region.Left)}, {Real(region.Bottom)}, {Real(region.Right)}, {Real(region.Top)});\n"))
+                .ToList());
+            WriteKind(text, parts, "Cameras", "The placed cameras.", (map.Cameras?.Cameras ?? new List<War3Net.Build.Environment.Camera>())
+                .Select(camera => Placed(camera.Name, member =>
+                    $"            /// <summary>{Escape(camera.Name)}.</summary>\n"
+                    + $"            public static global::Moonwell.PlacedCamera {member} => new global::Moonwell.PlacedCamera({Quoted(camera.Name)});\n"))
+                .ToList());
+            WriteKind(text, parts, "Sounds", "The sounds of the Sound Editor.", SoundNames(map)
+                .Select(name => Placed(name, member =>
+                    $"            /// <summary>{Escape(name)}.</summary>\n"
+                    + $"            public static global::Moonwell.PlacedSound? {member} => global::Moonwell.PlacedSound.Named({Quoted(name)});\n"))
+                .ToList());
             text.Append("    }\n}\n");
+            if (parts.Length > 0)
+            {
+                text.Append("\nnamespace Moonwell.PlacedParts\n{\n").Append(parts).Append("}\n");
+            }
 
             Directory.CreateDirectory(project.GeneratedFolder);
             var path = Path.Combine(project.GeneratedFolder, FileName);
@@ -303,29 +278,52 @@ namespace Moonwell.Build
             return CompiledFiles.Sources(project, project.BuildFolder).Any(path => CompiledFiles.ReadSource(path).Contains(member, StringComparison.Ordinal));
         }
 
-        private static void Lookup(StringBuilder text, HashSet<string> names, string name, string summary, string kind, IReadOnlyDictionary<string, string> classes, int typeId)
+        private static string Lookup(string member, string name, string summary, string kind, IReadOnlyDictionary<string, string> classes, int typeId)
         {
-            var member = Member(names, name);
             var lookup = $"global::Moonwell.{kind}.Named({Quoted(name)})";
-            text.Append($"            /// <summary>{summary}</summary>\n");
-            text.Append(classes.TryGetValue(typeId.ToRawcode(), out var type)
-                ? $"            public static {type}? {member} => (object?){lookup} as {type};\n"
-                : $"            public static global::Moonwell.{kind}? {member} => {lookup};\n");
+            return $"            /// <summary>{summary}</summary>\n"
+                + (classes.TryGetValue(typeId.ToRawcode(), out var type)
+                    ? $"            public static {type}? {member} => (object?){lookup} as {type};\n"
+                    : $"            public static global::Moonwell.{kind}? {member} => {lookup};\n");
         }
+
+        private static (string Name, Func<string, string> Lines) Placed(string name, Func<string, string> lines) => (name, lines);
+
+        // A kind's class in Placed. Lua allows 200 locals in a function and CSharp.lua makes each member of a class one, so past
+        // PartSize members the class inherits the rest from a chain of classes in Moonwell.PlacedParts, each its own function in
+        // Lua; every member keeps its name and is reached through the kind's class as before.
+        private static void WriteKind(StringBuilder text, StringBuilder parts, string kind, string summary, IReadOnlyList<(string Name, Func<string, string> Lines)> members)
+        {
+            var count = (members.Count + PartSize - 1) / PartSize;
+            var names = new HashSet<string>(StringComparer.Ordinal) { kind };
+            for (var part = 1; part < count; part++)
+            {
+                names.Add(PartName(kind, part));
+            }
+
+            var lines = members.Select(placed => placed.Lines(Member(names, placed.Name))).ToList();
+            text.Append($"        /// <summary>{summary}</summary>\n");
+            text.Append(count <= 1
+                ? $"        public static class {kind}\n        {{\n"
+                : $"        public sealed class {kind} : global::Moonwell.PlacedParts.{PartName(kind, count - 1)}\n        {{\n            private {kind}()\n            {{\n            }}\n\n");
+            text.Append(string.Concat(lines.Take(PartSize)));
+            text.Append("        }\n\n");
+            for (var part = 1; part < count; part++)
+            {
+                parts.Append($"    /// <summary>Placed.{kind}'s members past the first {PartSize * part}, reached through Placed.{kind}.</summary>\n");
+                parts.Append("    [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n");
+                parts.Append(part == 1
+                    ? $"    public abstract class {PartName(kind, part)}\n    {{\n"
+                    : $"    public abstract class {PartName(kind, part)} : {PartName(kind, part - 1)}\n    {{\n");
+                parts.Append(string.Concat(lines.Skip(PartSize * part).Take(PartSize)));
+                parts.Append("    }\n\n");
+            }
+        }
+
+        private static string PartName(string kind, int part) => kind + "Part" + part.ToString(CultureInfo.InvariantCulture);
 
         private static string Describe(int typeId, float x, float y) =>
             $"{Escape(typeId.ToRawcode())} at ({Math.Round(x).ToString(CultureInfo.InvariantCulture)}, {Math.Round(y).ToString(CultureInfo.InvariantCulture)}).";
-
-        private static void Open(StringBuilder text, string name, string summary)
-        {
-            text.Append($"        /// <summary>{summary}</summary>\n");
-            text.Append($"        public static class {name}\n        {{\n");
-        }
-
-        private static void Close(StringBuilder text)
-        {
-            text.Append("        }\n\n");
-        }
 
         // A C# identifier for a name: letters, digits and _ of ASCII kept, anything else _, a leading digit or a keyword
         // guarded, and a name already taken in the class (or the class's own) given _2, _3 and so on.
