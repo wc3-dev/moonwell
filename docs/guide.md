@@ -881,8 +881,9 @@ seed fixes them. A chance of 0 never happens and 100 always does.
 | `Stagger`, `StaggerTime` | That percent of each hit taken is dealt instead over the seconds, in even ticks every half second, the last taking the rest | `Stagger` 0 to 100; `StaggerTime` base 4, 0 up |
 | `LifeSteal`, `ManaLeech` | That percent of an attack's landed amount heals its source, or is given to it as mana | 0 up |
 | `HealingBonus` | That percent more on the heals the unit gives | -100 up |
-| `CooldownReduction`, `ManaCostReduction`, `CastRange`, `CastSpeed`, `ExperienceGain`, `GoldBonus` | The package's too, but their effects come in a later release: for now bare numbers | the first two 0 to 100; `CastRange` -100 up; `CastSpeed` -90 up; the last two -100 up |
-| `CrowdControlReduction`, `LootBonus`, `DropRate`, `ItemLevel` | Bare numbers in core: nothing in Moonwell reads them yet | `CrowdControlReduction` 0 to 100; the others none, `ItemLevel` whole |
+| `CooldownReduction`, `ManaCostReduction`, `CastRange`, `CastSpeed`, `ExperienceGain`, `GoldBonus` | The package's too; until their effects are in, bare numbers | the first two 0 to 100; `CastRange` -100 up; `CastSpeed` -90 up; the last two -100 up |
+| `CrowdControlReduction` | A crowd control buff put on the unit lasts that percent shorter ([Components and reactions](#components-and-reactions)); it acts in core, with no package | 0 to 100 |
+| `LootBonus`, `DropRate`, `ItemLevel` | Bare numbers in core: nothing in Moonwell reads them | none, `ItemLevel` whole |
 
 A map whose code reads a stat that needs the package, without referencing it, does not build: the build says which
 stat and that it needs `Moonwell.Stats`. The build reads the map's code for it.
