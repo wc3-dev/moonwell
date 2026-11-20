@@ -2176,21 +2176,15 @@ public class GuardTests
   the game's seconds so far.
 - A unit plays by its type's numbers: on .NET those of its object data (the map's class for the type, else the standard
   object), or those `SetNumbers(typeId, new UnitNumbers { ... })` gives for units made from then on. A unit takes its
-<<<<<<< HEAD
   attack range, cooldown, damage, dice and acquisition range when it is made; its life, mana, move speed and armor start
   from them and count as they are at each step. From its object data it also starts with its type's abilities at level
   1, so a Priest has Heal and 75 of its 200 mana; a hero's hero abilities wait to be learned. Numbers from `SetNumbers`
   give no abilities, and mana only by their `Mana` and `MaxMana`. A unit of a type with no numbers never moves, and its
   orders are neither counted nor held.
-=======
-  attack range, cooldown, damage, dice and acquisition range when it is made; its life, move speed and armor start from
-  them and count as they are at each step. A unit of a type with no numbers never moves, and its orders are neither
-  counted nor held.
 - A hero's life counts its strength as the build counts it: `Start(map)` reads the hero bonus (life a point of strength,
   mana a point of intelligence) that the map's last `moonwell build` wrote, so a hero class's constructor reads `MaxLife`
   as the total there too (700 for the Mountain King). Build the map before its tests; a map never built, and `Start()`
   with no map, read the base field (100).
->>>>>>> origin/release/0.20.3
 - Every order holds the unit 0.16 s (8 steps) before it starts, a repeat of the same order too, as the game holds a
   unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to
@@ -2208,17 +2202,27 @@ public class GuardTests
   attack goes on. A spell's order of an ability the unit lacks is taken as a name the fake does not know.
 - A cast goes off where the unit stands, whatever its range, at once after its hold, with no cast or backswing time; it
   fires no spell events, deals no damage and gives no buff.
-- A swing deals its damage and dice, less the target's armor as the game counts it, as an attack: `OnDamaged` runs, and
-  a death runs `OnDeath` and `OnKill` with the attacker as the killer. An idle unit with an acquisition range and a
-  damage attacks the nearest enemy within that range, never Neutral Passive or Moonwell's dummies, with no order event,
-  not counted or held. A unit under a brain's full control is put on hold position at that moment instead, as in the
-  game.
+- A swing is an attack of damage type normal, its damage and dice plus the green damage bonus the unit has at that
+  swing (`Stat.Damage`), and the next one comes a cooldown later: the base cooldown over 1 plus the unit's attack speed
+  bonus then (`Stat.AttackSpeed`), held between a fifth and five times the base. The attack range is a number of the
+  unit's own that starts as its type's. An idle unit with an acquisition range and a damage attacks the nearest enemy
+  within that range, never Neutral Passive or Moonwell's dummies, with no order event, not counted or held. A unit under
+  a brain's full control is put on hold position at that moment instead, as in the game.
+- The [Damage](#damage) package runs on the simulation, as in a map that uses it: every swing and every
+  `source.Damage(...)` from code goes through the before-armor stage, the armor, the after-armor stage, the lethal stage
+  (`Spare` works), and landing and the burst 0 s later, with core's `OnDamaged` family as the package runs it. A miss
+  takes no life, and `healer.Heal(target, amount)` runs its two stages. The armor is the game's: it cuts only damage
+  type normal, so a before-armor reaction that changes `hit.Armor` or `hit.DamageKind` changes the hit. Attack types,
+  defense types and weapon types are carried through the reactions and change no amount, and a hit lands at its swing,
+  with no damage point or flight. A death runs `OnDeath` and `OnKill` with the attacker as the killer. A map with no
+  reaction to damage plays as it did before, apart from damage from code: a hit of damage type normal now loses armor,
+  where magic, the default, never did.
 - Left to the game: pathing round blocked ground, trees and other units; collision and crowding (units here pass
   through each other, where in the game 300 footmen ordered at once started 0.56 s after the order on average,
   3.0.1.24371); turning, vision, buffs, and what spells do; an attack's damage point and a missile's flight
-  (a swing lands at once); what heroes' attributes add to damage and armor; units placed in World Editor; and the
-  Damage, Terrain, Areas, Input and Physics systems. A simulation shows how the map's own logic decides, not exactly how
-  a fight goes in the game.
+  (a swing lands at once); what heroes' attributes add to damage, armor and attack speed; the game's own miss, crit and
+  evasion; units placed in World Editor; and the Terrain, Areas, Input and Physics systems. A simulation shows how the
+  map's own logic decides, not exactly how a fight goes in the game.
 - The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit
   from running tests side by side.
 

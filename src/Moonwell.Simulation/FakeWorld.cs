@@ -520,6 +520,7 @@ namespace Moonwell
         /// <summary>Moves time forward to a time of the world, as Advance does.</summary>
         internal void AdvanceTo(float target)
         {
+            RunDamageZero();
             DeliverPendingDrops();
             EndPendingRemovals();
             DeliverPendingSync();
@@ -548,6 +549,7 @@ namespace Moonwell
                 WakeAt = null;
                 GameBuffs.Step(Time);
                 Runtime.Wake();
+                RunDamageZero();
             }
 
             if (target > Time)
@@ -738,19 +740,26 @@ namespace Moonwell
                 return false;
             }
 
-            if (SpellImmune.Contains(target) && (attackType == 4 || IsMagicDamage(damageType)))
+            // With the damage package the hit is played in full, and spell immunity stops it after its before-armor event.
+            if (!damageInstalled && SpellImmune.Contains(target) && (attackType == 4 || IsMagicDamage(damageType)))
             {
                 return true;
             }
 
-            return Hurt(source, target, amount, false);
+            return Hurt(source, target, amount, false, attackType, damageType, weaponType);
         }
 
-        /// <summary>The damage itself, for DealDamage and the play's swings: delivered to Inbound inside the call, with isAttack as the event's, when the runtime listens for damage; then the life drops by what the reactions left, and 0.405 or less kills with the source as the killer; a unit whose life was never set keeps its 0. A dead unit gets no event and takes nothing, and the answer is true.</summary>
-        internal bool Hurt(unit source, unit target, float amount, bool isAttack)
+        /// <summary>The damage itself, for DealDamage and the play's swings. With the damage package installed it is played as the game plays it (PlayHit: the amount is before armor); otherwise it is delivered to Inbound inside the call, with isAttack as the event's, when the runtime listens for damage, and the amount is the one that lands. Then the life drops by what the reactions left, and 0.405 or less kills with the source as the killer; a unit whose life was never set keeps its 0. A dead unit gets no event and takes nothing, and the answer is true.</summary>
+        internal bool Hurt(unit source, unit target, float amount, bool isAttack, int attackType = 0, int damageType = 0, int weaponType = 0)
         {
             if (dead.Contains(target))
             {
+                return true;
+            }
+
+            if (damageInstalled)
+            {
+                PlayHit(source, target, amount, isAttack, attackType, damageType, weaponType);
                 return true;
             }
 
@@ -760,19 +769,24 @@ namespace Moonwell
                 left = Inbound.Damaged(target, source, amount, isAttack);
             }
 
+            LoseLife(source, target, left);
+            return true;
+        }
+
+        /// <summary>Takes the life a hit leaves, and kills with the source as the killer at 0.405 or less; a unit whose life was never set keeps its 0.</summary>
+        private void LoseLife(unit source, unit target, float amount)
+        {
             if (lives.TryGetValue(target, out var life))
             {
-                if (life - left <= 0.405f)
+                if (life - amount <= 0.405f)
                 {
                     Die(target, source);
                 }
                 else
                 {
-                    lives[target] = life - left;
+                    lives[target] = life - amount;
                 }
             }
-
-            return true;
         }
 
         /// <summary>Whether spell immunity stops a damage type with any attack type: fire, cold, lightning, divine, magic, sonic, force, death, mind, plant, defensive, spirit link and shadow strike (seen 10-31).</summary>
