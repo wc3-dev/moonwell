@@ -1,4 +1,5 @@
 using Moonwell.Tool;
+using War3Net.IO.Mpq;
 
 namespace Moonwell.Build.Tests
 {
@@ -130,6 +131,27 @@ namespace Moonwell.Build.Tests
             var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
             Assert.Contains("function Trig_Hello_Actions()", script);
             Assert.Contains("udg_Gold = ", script);
+        }
+
+        [Fact]
+        public void an_archive_with_no_file_list_gives_its_standard_files_by_their_names()
+        {
+            var parent = folders.TemporaryFolderOutsideRepository();
+            var project = NewMap.Write("Protected", parent, "1.2.3");
+            var map = Path.Combine(TestFolders.Fixture("Sample"), "map");
+            var archive = Path.Combine(parent, "protected.w3x");
+            var names = new[] { "war3map.w3i", "war3map.w3e", "war3map.wpm", "war3map.doo", "war3map.shd", "war3mapMap.blp", "war3map.lua" };
+            var files = names.Select(name => MpqFile.New(File.OpenRead(Path.Combine(map, name)), name)).ToList();
+            using (MpqArchive.Create(archive, files, new MpqArchiveCreateOptions { ListFileCreateMode = MpqFileCreateMode.None, AttributesCreateMode = MpqFileCreateMode.None }))
+            {
+            }
+
+            OldMapImport.Run(archive, project, new StringWriter());
+
+            foreach (var name in names.Where(name => name != "war3map.lua"))
+            {
+                Assert.Equal(File.ReadAllBytes(Path.Combine(map, name)), File.ReadAllBytes(Path.Combine(project, "map.w3x", name)));
+            }
         }
 
         // The JASS above as import makes it, with the names Moonwell's script for the Sample makes taken out.

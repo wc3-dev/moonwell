@@ -687,6 +687,9 @@ Placed.Sounds.Intro?.Play();                          // with the Sound Editor's
 - A unit or item placed of the map's own class comes back as that class, as `Unit.Of` gives it.
 - A destructable is found nearest its place among those of its type, as the game makes most of them itself.
 - `Placed` changes when the map does: after placing something in an editor, build once before naming it.
+- Any number of each kind builds. Past 150, as Lua allows 200 locals in a function, a kind's class takes the rest from
+  classes in `Moonwell.PlacedParts`; name them through `Placed.Units` and the others as ever (Rider may hint that the
+  member is declared in a base class).
 
 ## Stats and scores
 
