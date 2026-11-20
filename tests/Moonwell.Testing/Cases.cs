@@ -27,6 +27,7 @@ namespace Moonwell.Testing
             AddShops(list);
             AddInventory(list);
             AddLast(list);
+            AddHitsAndHeals(list);
             AddLiveDestructables(list);
             AddCompiler(list);
             AddMaths(list);
@@ -2153,6 +2154,26 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "heroes.skill-raised", Run = HeroReactionCases.SkillRaised });
             list.Add(new Case { Name = "heroes.ability-learned-listens", Run = HeroReactionCases.AbilityLearnedListens });
             list.Add(new Case { Name = "heroes.skill-without-point", Run = HeroReactionCases.SkillWithoutPoint });
+        }
+
+        /// <summary>Adds the damage package's cases for a miss, the marks on a hit, area and power, and heals (AddLast is full: Lua allows 200 locals in a function).</summary>
+        private static void AddHitsAndHeals(List<Case> list)
+        {
+            list.Add(new Case { Name = "damage.deal-area-and-power", Run = DamageCases.DealAreaAndPower });
+            list.Add(new Case { Name = "damage-package.miss-takes-nothing", Run = HitMarkCases.MissTakesNothing });
+            list.Add(new Case { Name = "damage-package.miss-readable-later", Run = HitMarkCases.MissReadableLater });
+            list.Add(new Case { Name = "damage-package.miss-after-armor-reported", Run = HitMarkCases.MissAfterArmorReported });
+            list.Add(new Case { Name = "damage-package.miss-text", Run = HitMarkCases.MissText });
+            list.Add(new Case { Name = "damage-package.marks", Run = HitMarkCases.Marks });
+            list.Add(new Case { Name = "damage-package.area-and-power", Run = HitMarkCases.AreaAndPower });
+            list.Add(new Case { Name = "damage-package.heal-adds-life", Run = HealCases.HealAddsLife });
+            list.Add(new Case { Name = "damage-package.heal-order", Run = HealCases.HealOrder });
+            list.Add(new Case { Name = "damage-package.heal-done-and-over", Run = HealCases.HealDoneAndOver });
+            list.Add(new Case { Name = "damage-package.heal-changed-amount", Run = HealCases.HealChangedAmount });
+            list.Add(new Case { Name = "damage-package.heal-crit", Run = HealCases.HealCrit });
+            list.Add(new Case { Name = "damage-package.heal-refused", Run = HealCases.HealRefused });
+            list.Add(new Case { Name = "damage-package.heal-chain-shared-with-hits", Run = HealCases.HealChainSharedWithHits });
+            list.Add(new Case { Name = "damage-package.heal-is-no-hit", Run = HealCases.HealIsNoHit });
         }
 
         /// <summary>Adds the item, destructable, damage, ability and buff cases, and the rest (Lua allows 200 locals in a function, and each case made here is one).</summary>

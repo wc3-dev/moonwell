@@ -274,10 +274,16 @@ namespace Moonwell
             return Make(new FloatingText(text, x, y, null, false, shownTo), scope);
         }
 
-        /// <summary>Plays a text once at a place: it rises 64 a second, lasts 2 s and fades over the last 1. Given shownTo, only that player sees it.</summary>
-        public static void Pop(string text, float x, float y, Color? color = null, Player? shownTo = null)
+        /// <summary>Plays a text once at a place: it rises 64 a second, lasts 2 s and fades over the last 1. Given shownTo, only that player sees it. Given height, it starts that high above the ground there.</summary>
+        public static void Pop(string text, float x, float y, Color? color = null, Player? shownTo = null, float height = 0.0f)
         {
-            Popped(Make(new FloatingText(text, x, y, null, false, shownTo), Game.Instance), color);
+            var popped = Make(new FloatingText(text, x, y, null, false, shownTo), Game.Instance);
+            if (height != 0.0f)
+            {
+                popped.Height = height;
+            }
+
+            Popped(popped, color);
         }
 
         /// <summary>Moves the text to a place, keeping its height above the ground there. Does nothing on a unit, and once it has ended.</summary>

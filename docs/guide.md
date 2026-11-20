@@ -1116,11 +1116,46 @@ after armor, the target's armor has cut it and only the amount can change. The l
 - A hit of 0 that the game starts and that is no attack, such as Storm Bolt's first and Fireball's extra two, runs no
   reaction of the package; `OnDamaged` still sees it. An attack of 0, and a hit of 0 from `source.Damage`, are not
   silenced.
-- A reaction the package would never call is an error, MW0036, for the physics interfaces (`IPushTarget`,
-  `IMissileTarget`) as for these: one that is not public or takes another parameter, a
+- A reaction the package would never call is an error, MW0036, for the heal interfaces (`IHealSource`, `IHealTarget`,
+  `IHealWatch`) and the physics interfaces (`IPushTarget`, `IMissileTarget`) as for these: one that is not public or takes another parameter, a
   public one a letter off a reaction's name, a name from before 0.3, a reaction in a unit or component without its
   interface, or an interface on a class the package does not call it on. `#pragma warning disable MW0036` keeps a
   helper's name.
+
+A miss, the marks and area hits:
+
+- `hit.Miss()` before armor makes the hit a miss as the game's own look: the amount is 0, the weapon sound is none,
+  `hit.Missed` is true and a red "miss" shows over the target. `hit.Miss("dodge")` shows another word, `""` none. The
+  rest of that stage's reactions still run and can read `Missed`, and setting `Amount` on the hit does nothing. No later
+  stage runs for it, nor `OnDamaged` and the rest of core's family, and it takes no life; a burst still lists it. Called
+  later than before armor, it is reported and does nothing. The game's own on-hit effects, such as a poison or a bash,
+  still land on a missed hit, which Moonwell cannot stop, and the game's own Evasion sends no event, so it stays outside.
+- `hit.IsCrit` is a mark for a before-armor reaction to set and later stages to read. `hit.Blocked` and `hit.Absorbed`
+  are plain amounts, 0 unless a reaction writes them, for a map's texts and bars; nothing in the package reads them.
+- `source.Damage(target, 10f, area: true)` marks the hit as one of an area's, which `hit.IsArea` reads; `power:` (1
+  unless given) is carried as `hit.Power`. The spell templates mark the hits of a blast, a pulse, a dash, a wave and a
+  leap as an area's, and those of a bolt and a chain jump not. A hit the game made reads false and 1, so the game's own
+  splash cannot be told.
+
+### Heals
+
+`healer.Heal(target, 120f)` heals through two stages of its own, with `tag:` as for a hit. It returns the `Heal`, or null
+for a target that is dead or gone, or an amount of 0 or less. The first stage runs before the life is set and may change
+`Amount`; then the life is set, never past the most life; the second stage sees `Done`, the life that went in, and
+`Over`, the part that did not fit. Setting `Amount` in the second stage does nothing. `heal.IsCrit` is a plain mark, as
+on a hit.
+
+| Stage | When | `IHealSource` | `IHealTarget` | `IHealWatch` |
+|---|---|---|---|---|
+| First | before the life is set | `OnHealing` | `OnReceiving` | `OnUnitReceiving` |
+| Second | the life is set | `OnHealed` | `OnReceived` | `OnUnitReceived` |
+
+- The interfaces go on the same classes as the damage ones, and run in the same order: the source and its components,
+  the target and its components, the game's, the target's player's, then the source's player's. A hit's reactions never
+  see a heal, nor a heal's a hit.
+- A heal made from a reaction, or a hit made from a heal's reaction, belongs to the chain that reaction is in, and the
+  chain of 8 counts both: the ninth `Heal` or `Damage` throws.
+- `unit.Life += 10f` stays raw, with no reaction, and the game's own heals send no event, so they stay outside.
 
 ## Maths
 

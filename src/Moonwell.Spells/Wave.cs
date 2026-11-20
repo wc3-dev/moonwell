@@ -67,7 +67,7 @@ namespace Moonwell.Spells
             {
                 if (impact.Unit != null)
                 {
-                    wave.Hit(cast, impact.Unit, wave.Damage.At(cast.Level));
+                    wave.Hit(cast, impact.Unit, wave.Damage.At(cast.Level), true);
                 }
             }
         }

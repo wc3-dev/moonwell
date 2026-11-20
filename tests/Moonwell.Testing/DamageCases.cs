@@ -69,6 +69,22 @@ namespace Moonwell.Testing
             Expect.Equal("5 attack:True ranged:True 3 8 1", world.Dealt[1], "the given numbers");
         }
 
+        /// <summary>Unit.Damage carries its area and power to the damage the reactions see and the call returns; damage the game made, and a call with neither given, is no area's with a power of 1.</summary>
+        public static void DealAreaAndPower(FakeWorld world)
+        {
+            var watch = new AreaWatch();
+            Game.Instance.Add(watch);
+            var source = Unit.Of(world.NewUnit(ObjectTypes.FourCC("ofoo"), slot: 0))!;
+            var target = Unit.Of(world.NewUnit(ObjectTypes.FourCC("ofoo"), slot: 1))!;
+            var area = source.Damage(target, 5f, area: true, power: 0.5f);
+            var plain = source.Damage(target, 5f);
+            Inbound.Damaged(target.Handle, source.Handle, 5f, false);
+            Expect.Equal("area 5|plain 10|plain 10", string.Join("|", watch.Seen), "what the reactions saw");
+            Expect.True(area!.IsArea && plain!.IsArea == false, "the damage each call returned: area");
+            Expect.Near(0.5f, area.Power, "the returned power");
+            Expect.Near(1f, plain!.Power, "the default power");
+        }
+
         /// <summary>Damage from code to a dead unit gives null: the game answers true, but deals nothing and fires no event (seen 10-31). The hit that kills is dealt.</summary>
         public static void DealToTheDead(FakeWorld world)
         {
@@ -232,6 +248,19 @@ namespace Moonwell.Testing
         public override void OnUnitDamaged(Damage damage)
         {
             Seen.Add(damage.Tag);
+        }
+    }
+
+    /// <summary>A game component that records whether each damage it sees is an area's, and its power.</summary>
+    public class AreaWatch : GameComponent
+    {
+        /// <summary>"area" or "plain" with ten times the power, for each damage, in order.</summary>
+        public readonly System.Collections.Generic.List<string> Seen = new System.Collections.Generic.List<string>();
+
+        /// <summary>Records the damage.</summary>
+        public override void OnUnitDamaged(Damage damage)
+        {
+            Seen.Add((damage.IsArea ? "area " : "plain ") + (int)(damage.Power * 10.0f));
         }
     }
 
