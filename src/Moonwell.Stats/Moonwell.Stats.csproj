@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>The effects of Moonwell's ready-made stats: crit, hit chance, evasion, parry, block, power, penetration, resistance, barriers, stagger, life steal and healing bonus, acting on every hit and heal without the map writing a line.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets none, so that a map that references only Moonwell.Stats still gets Moonwell's analyzer and Moonwell.Damage. -->
+    <ProjectReference Include="..\Moonwell\Moonwell.csproj" PrivateAssets="none" />
+    <ProjectReference Include="..\Moonwell.Damage\Moonwell.Damage.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <!--
+    The package carries its C# source beside its library, like Moonwell (see Moonwell.csproj). A map without it
+    carries none of its code: CSharp.lua compiles only the packages a map references.
+  -->
+  <ItemGroup>
+    <Content Include="**/*.cs" Exclude="obj/**;bin/**" Pack="true" PackagePath="contentFiles/cs/net10.0/Moonwell.Stats/" BuildAction="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Moonwell.Testing" />
+    <InternalsVisibleTo Include="Moonwell.Tests" />
+  </ItemGroup>
+
+</Project>

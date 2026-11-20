@@ -12,6 +12,8 @@
     <PackageReference Include="Moonwell.Objects" Version="MOONWELL_VERSION" />
     <!-- For damage reactions in stages (before and after armor, lethal, landed), take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Damage" Version="MOONWELL_VERSION" /> -->
+    <!-- For the ready-made stats' effects (crit, evasion, block, resistance, barriers, stagger, life steal and the rest), take the comment off the next line; it needs Moonwell.Damage too. -->
+    <!-- <PackageReference Include="Moonwell.Stats" Version="MOONWELL_VERSION" /> -->
     <!-- For vectors, angles, easing, polygons and raycasts, take the comment off the next line. -->
     <!-- <PackageReference Include="Moonwell.Maths" Version="MOONWELL_VERSION" /> -->
     <!-- For interactions between things that come near each other, gizmos, and finding units, items and destructables, take the comment off the next line. -->
