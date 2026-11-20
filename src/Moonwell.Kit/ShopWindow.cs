@@ -85,6 +85,7 @@ namespace Moonwell
         public ShopEntry Sell<T>(ShopEntry entry) where T : Item
         {
             entry.Left = entry.Stock;
+            entry.restocking = false;
             var button = Put(entry);
             button.Clicked += who => Buy<T>(who, entry, button);
             return entry;
@@ -146,7 +147,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Starts the good's restock, unless it is full, never restocks, or one is under way: one back each Restock seconds, on the window's scope.</summary>
+        /// <summary>Starts the good's restock, unless it is full, never restocks, or one is under way: one back each Restock seconds, on the good's button, so removing the good ends it.</summary>
         private void Restock(ShopEntry entry, IconButton button)
         {
             if (entry.restocking || entry.Restock <= 0.0f || entry.Left >= entry.Stock)
@@ -155,16 +156,16 @@ namespace Moonwell
             }
 
             entry.restocking = true;
-            After(entry.Restock, () =>
+            button.After(entry.Restock, () =>
             {
                 entry.restocking = false;
-                entry.Left++;
+                entry.Left = Math.Min(entry.Left + 1, entry.Stock);
                 button.Enabled = true;
                 Restock(entry, button);
             });
         }
 
-        /// <summary>Takes a good out of the shop; the others close up. One not in it is let be.</summary>
+        /// <summary>Takes a good out of the shop, ending its restock; the others close up. One not in it is let be; one put back starts full.</summary>
         public void Remove(ShopEntry entry)
         {
             var index = entries.IndexOf(entry);
