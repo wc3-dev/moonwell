@@ -196,6 +196,10 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
             {
                 Report(member.Locations[0], $"'{member.Name}' is a {type.ToDisplayString()}, which cannot be saved: a saved field is an int, float, bool, string, enum, RealTime, a List or array of those, or a part class of the map's own with [Saved] fields");
             }
+            else if (ElementOf(type) is INamedTypeSymbol { EnumUnderlyingType.SpecialType: SpecialType.System_Int64 or SpecialType.System_UInt64 or SpecialType.System_UInt32 } wide)
+            {
+                Report(member.Locations[0], $"'{member.Name}' is a {type.ToDisplayString()}, and {wide.ToDisplayString()} is an enum of {wide.EnumUnderlyingType.ToDisplayString()}, which cannot be saved: a save writes an enum as an int, so a saved enum is an int or smaller");
+            }
         }
 
         // The numbers of a class and of the classes it derives from are one set, as a save writes them all.
@@ -302,13 +306,18 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
 
         private INamedTypeSymbol? PartOf(ITypeSymbol type)
         {
-            var element = type switch
+            var element = ElementOf(type);
+            return IsPart(element) ? (INamedTypeSymbol)element.OriginalDefinition : null;
+        }
+
+        private ITypeSymbol ElementOf(ITypeSymbol type)
+        {
+            return type switch
             {
                 IArrayTypeSymbol array => array.ElementType,
                 INamedTypeSymbol { IsGenericType: true } named when Same(named.OriginalDefinition, list) => named.TypeArguments[0],
                 _ => type,
             };
-            return IsPart(element) ? (INamedTypeSymbol)element.OriginalDefinition : null;
         }
 
         private IEnumerable<(ISymbol Member, AttributeData Attribute)> SavedOf(INamedTypeSymbol type)

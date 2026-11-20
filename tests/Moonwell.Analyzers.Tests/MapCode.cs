@@ -34,9 +34,9 @@ internal static class MapCode
     }
 
     /// <summary>The analyzer's diagnostics for a whole file, in source order, each as "id: the code it points at"; path names the file.</summary>
-    public static List<string> CheckFile(string source, string path = "")
+    public static List<string> CheckFile(string source, string path = "", string library = "")
     {
-        return Found(Analyze(source, path: path));
+        return Found(Analyze(source, path: path, library: library));
     }
 
     /// <summary>
