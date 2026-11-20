@@ -15,6 +15,7 @@ public class EncapsulationTests
         (typeof(ObjectTypes), new[] { "Unit", "Item", "Destructable", "Ability", "Id", "BuffDisplay" }),
         (typeof(Runtime), new[] { "Start" }),
         (typeof(DamageSystem), new[] { "Install" }),
+        (typeof(StatsSystem), new[] { "Install" }),
         (typeof(Terrain), new[] { "Install" }),
         (typeof(AreaSystem), new[] { "Install" }),
         (typeof(InputSystem), new[] { "Install" }),

@@ -9,6 +9,7 @@ internal static class Packages
     {
         typeof(Moonwell.Unit).Assembly,
         typeof(Moonwell.Hit).Assembly,
+        typeof(Moonwell.StatsSystem).Assembly,
         typeof(Moonwell.Gizmo).Assembly,
         typeof(Moonwell.Maths).Assembly,
         typeof(Moonwell.Terrain).Assembly,

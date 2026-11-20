@@ -72,6 +72,20 @@ namespace Moonwell.Build
             return CompiledFiles.MapAssemblies(assemblyPath).Any(path => CompiledFiles.ReferencedAssemblies(path).Contains(assemblyName));
         }
 
+        /// <summary>Whether a map depends on a package: its code or a library of its own, or a package it uses, references it (<see cref="Needs"/>), or its project or package references list it in the map's <c>deps.json</c>, whatever the code names of it. For a package whose use the code cannot show, as the stats package's, which acts on core's stats.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <param name="assemblyName">The package's assembly name, such as <c>Moonwell.Stats</c>.</param>
+        public static bool Depends(string assemblyPath, string assemblyName)
+        {
+            if (Needs(assemblyPath, assemblyName))
+            {
+                return true;
+            }
+
+            var deps = Path.ChangeExtension(Path.GetFullPath(assemblyPath), ".deps.json");
+            return File.Exists(deps) && File.ReadAllText(deps).Contains("\"" + assemblyName + "/", StringComparison.Ordinal);
+        }
+
         /// <summary>Whether a package must be installed for a map: its code or a library of its own references it, or another package it uses does (the terrain under the spell templates), which the map's assembly does not show.</summary>
         /// <param name="assemblyPath">The map's built assembly.</param>
         /// <param name="assemblyName">The package's assembly name, such as <c>Moonwell.Terrain</c>.</param>

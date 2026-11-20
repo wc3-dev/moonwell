@@ -848,12 +848,77 @@ public override void OnStatChanged(Stat stat, float before)
 }
 ```
 
-Ready-made stats are on `Stat`, as bare numbers for now, with a name, a base and limits of their own: `CritChance`,
-`CritDamage`, `HitChance`, `Evasion`, `Parry`, `BlockChance`, `BlockAmount`, `AttackPower`, `SpellPower`,
-`ArmorPenetration`, `SpellPenetration`, `AreaDamageReduction`, `Barrier`, `Stagger`, `StaggerTime`, `LifeSteal`,
-`ManaLeech`, `HealingBonus`, `CooldownReduction`, `ManaCostReduction`, `CastRange`, `CastSpeed`, `CrowdControlReduction`,
-`ExperienceGain`, `GoldBonus`, `LootBonus`, `DropRate` and `ItemLevel`, and `Stat.Resistance(kind)`, one stat for each
-damage kind. Nothing in the core reads them yet.
+### Ready-made stats
+
+The stats most maps want are on `Stat` already, each with a name, a base and limits of its own: `Stat.CritChance`,
+`Stat.Evasion`, `Stat.Resistance(DamageKind.Fire)` and the rest of the table below. Read and modify them as any stat.
+On their own they are bare numbers; add the `Moonwell.Stats` package (the template's `.csproj` has the line, commented;
+it needs `Moonwell.Damage`, which comes with it) and they act on every hit and heal, with no line in the map. The
+package adds one game component, so every hit in the game then goes through the damage package's stages. A unit that
+never had one of these stats set costs a hit no more than a lookup or two.
+
+```csharp
+Stat.CritChance.SetBase<Blademaster>(15);                  // a base for a type, as for any stat
+hero.Modify(Stat.Evasion, 20, heldBy: Item.Carry);         // 20% of attacks on the hero miss while the item is carried
+hero.Modify(Stat.LifeSteal, 10, heldBy: this);             // a tenth of each attack's damage comes back as life
+hero.AddBarrier(200, heldBy: this, seconds: 8);            // a shield of 200 for 8 s
+```
+
+Percent stats are in percent points (20 is 20%) and roll with `Game.Random`, so every machine agrees and a simulation's
+seed fixes them. A chance of 0 never happens and 100 always does.
+
+| Stat | What it does | Base and limits |
+|---|---|---|
+| `CritChance`, `CritDamage` | A hit or a heal the unit gives rolls the chance; a crit is the amount times crit damage over 100, and `IsCrit` is set. Not the hits the package deals itself | `CritChance` 0 to 100; `CritDamage` base 200, 0 up |
+| `HitChance`, `Evasion` | An attack misses at 100 - the attacker's hit chance + the target's evasion, held to 0 to 100. A spell never misses | `HitChance` base 100, 0 up; `Evasion` 0 to 100 |
+| `Parry` | A melee attack from the front half of the target (within 90 degrees of where it faces) is parried, a miss with the text "parry" | 0 to 100 |
+| `BlockChance`, `BlockAmount` | An attack is blocked at the chance, after armor, and loses up to the amount, written to `hit.Blocked`; the text "block" shows when nothing is left | `BlockChance` 0 to 100; `BlockAmount` 0 up |
+| `AttackPower` | Added to each attack's amount, before armor | no limits |
+| `SpellPower` | Added to each spell hit's amount, times the hit's `power:` (1 unless the caller says) | no limits |
+| `ArmorPenetration` | The target's armor is that many points lower for the hit, down to 0; an armor already below 0 stays | 0 up |
+| `Resistance(kind)` | That percent off hits of the kind, after armor; below 0 adds damage. One stat for each `DamageKind` | most 100 |
+| `SpellPenetration` | The target's resistance is that many points lower for the hit; a positive one never goes below 0, a negative one is left as it is | 0 up |
+| `AreaDamageReduction` | That percent off hits marked as an area's (`area: true`, and the spell templates' area hits) | 0 to 100 |
+| `Barrier` | What the unit's barriers have left; `unit.AddBarrier` adds one | 0 up |
+| `Stagger`, `StaggerTime` | That percent of each hit taken is dealt instead over the seconds, in even ticks every half second, the last taking the rest | `Stagger` 0 to 100; `StaggerTime` base 4, 0 up |
+| `LifeSteal`, `ManaLeech` | That percent of an attack's landed amount heals its source, or is given to it as mana | 0 up |
+| `HealingBonus` | That percent more on the heals the unit gives | -100 up |
+| `CooldownReduction`, `ManaCostReduction`, `CastRange`, `CastSpeed`, `ExperienceGain`, `GoldBonus` | The package's too; until their effects are in, bare numbers | the first two 0 to 100; `CastRange` -100 up; `CastSpeed` -90 up; the last two -100 up |
+| `CrowdControlReduction` | A crowd control buff put on the unit lasts that percent shorter ([Components and reactions](#components-and-reactions)); it acts in core, with no package | 0 to 100 |
+| `LootBonus`, `DropRate`, `ItemLevel` | Bare numbers in core: nothing in Moonwell reads them | none, `ItemLevel` whole |
+
+A map whose code reads a stat that needs the package, without referencing it, does not build: the build says which
+stat and that it needs `Moonwell.Stats`. The build reads the map's code for it.
+
+For each hit the steps run in this order, each with its own roll, and the reactions of units and their components run
+before them (the package is a game component, so it comes after the unit's own):
+
+1. Before armor, for an attack with a source: the **miss** (hit chance and evasion), then the **parry**. A missed or
+   parried hit gets none of the steps below, and no later stage runs for it.
+2. Before armor: **attack power**, or **spell power** for a spell, then the **crit**, then **armor penetration**.
+3. After armor: **resistance** (less the source's spell penetration), **area damage reduction**, **block**, the
+   **barriers**, then **stagger**, each on what the one before left.
+4. Landed: **life steal** (a heal from the attacker to itself, through `Heal`) and **mana leech**, on the landed amount,
+   and the crit's text.
+
+A heal's first stage takes the source's **healing bonus**, then its **crit**. The hits and heals the package makes itself,
+a staggered hit's ticks (damage kind `Universal`, which armor does not cut) and life steal's heals, are tagged and get none
+of the effects, so nothing feeds itself. A hit that started at 0 gets none either.
+
+`unit.AddBarrier(200f, heldBy: this, seconds: 8f)` gives the unit a barrier, a `Barrier` with `Left` and `End()`. It ends
+with the scope that holds it, after its seconds (none, by default), or when nothing is left. A hit's barriers take what is
+left after armor and block, the one ending soonest first and one with no end last, and `hit.Absorbed` says how much.
+`Stat.Barrier` on the unit reads the total its barriers have left: the package keeps the unit's base of it equal to that,
+so `OnStatChanged` and a bar follow. Do not set that base yourself.
+
+The package shows texts, in the game's red: "miss" and "parry" where the game shows its own miss, "block" when a block
+leaves nothing, and a crit's landed amount as a whole number with "!" over the target when the hit lands.
+`StatsSystem.ShowTexts = false` turns all of them off; a miss still misses, with no text (`hit.Miss("")`).
+
+The limits are the game's. Its own Evasion (`ACes`), crit and bash send no event, so they stay outside the stats, and a
+missed hit still gets a poison or a bash from the game: Moonwell cannot stop what the game puts on a hit. The game's own
+heals send no event either, so healing bonus and a heal's crit work on `healer.Heal(...)` only, and a unit's life steal
+heals through the same call. A hit with no source is never missed, parried or crit.
 
 A score is a whole number for each player that the map counts itself, as a kill means something else in each map:
 
