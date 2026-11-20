@@ -127,7 +127,7 @@ namespace Moonwell.Build
         }
 
         /// <summary>
-        /// The Lua table <c>MoonwellPlacedDestructables = { [name] = { typeId, x, y } }</c> the runtime finds a placed destructable by,
+        /// The Lua table <c>MoonwellPlacedDestructables = { name, typeId, x, y, ... }</c> the runtime matches placed destructables by,
         /// its type id in the game's order, as FourCC gives it and not as war3map.doo stores it,
         /// for a map whose code calls <c>Destructable.Named</c> (every one) or reads <c>Placed.Destructables</c> (all but the trees);
         /// empty for any other map, which needs none.
@@ -146,7 +146,7 @@ namespace Moonwell.Build
             var text = new StringBuilder("MoonwellPlacedDestructables = {\n");
             foreach (var each in Destructables(map, Trees(project)).Where(each => named || !each.Tree))
             {
-                text.Append($"[{Quoted(each.Name)}] = {{ {ObjectLua.FourCC(each.Doodad.TypeId.ToRawcode())}, {LuaReal(each.Doodad.Position.X)}, {LuaReal(each.Doodad.Position.Y)} }},\n");
+                text.Append($"{Quoted(each.Name)}, {ObjectLua.FourCC(each.Doodad.TypeId.ToRawcode())}, {LuaReal(each.Doodad.Position.X)}, {LuaReal(each.Doodad.Position.Y)},\n");
             }
 
             return text.Append("}\n").ToString();

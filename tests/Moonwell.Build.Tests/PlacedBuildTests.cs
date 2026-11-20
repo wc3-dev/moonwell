@@ -52,7 +52,7 @@ namespace Moonwell.Build.Tests
 
             Assert.True(exitCode == 0, output);
             var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
-            Assert.Contains("MoonwellPlacedDestructables = {\n[\"LTlt_0012\"] = { 1280601204, 256, -128 },", script);
+            Assert.Contains("MoonwellPlacedDestructables = {\n\"LTlt_0012\", 1280601204, 256, -128,\n", script);
         }
 
         [Fact]
@@ -66,7 +66,7 @@ namespace Moonwell.Build.Tests
 
             Assert.True(exitCode == 0, output);
             var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
-            Assert.Contains("[\"LTlt_0012\"]", script);
+            Assert.Contains("\"LTlt_0012\", ", script);
         }
 
         [Fact]
@@ -95,8 +95,8 @@ namespace Moonwell.Build.Tests
 
             Assert.True(exitCode == 0, output);
             var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
-            Assert.Contains("[\"YTpb_0013\"]", script);
-            Assert.DoesNotContain("[\"LTlt_0012\"]", script);
+            Assert.Contains("\"YTpb_0013\", ", script);
+            Assert.DoesNotContain("\"LTlt_0012\", ", script);
         }
 
         [Fact]

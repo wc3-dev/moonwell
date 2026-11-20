@@ -94,10 +94,10 @@ namespace Moonwell.Build.Tests
             Assert.Equal(string.Empty, PlacedWriter.DestructableTable(project, map, false, false));
 
             var some = PlacedWriter.DestructableTable(project, map, false, true);
-            Assert.Contains("[\"LTg1_0002\"] = { 1280599857, 64, -32 },", some);
+            Assert.Contains("\"LTg1_0002\", 1280599857, 64, -32,\n", some);
             Assert.DoesNotContain("LTlt_0012", some);
 
-            Assert.Contains("[\"LTlt_0012\"] = { 1280601204, 128.5, 0 },", PlacedWriter.DestructableTable(project, map, true, false));
+            Assert.Contains("\"LTlt_0012\", 1280601204, 128.5, 0,\n", PlacedWriter.DestructableTable(project, map, true, false));
         }
 
         private MapProject Project()
