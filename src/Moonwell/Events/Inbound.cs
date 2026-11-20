@@ -325,6 +325,7 @@ namespace Moonwell
         /// <summary>A unit dies: its type's OnDeath and components, then the killer's OnKill and components, then the map's and the players' reactions, then the buffs a death ends end, of those on the unit as it died; a killer equal to the dying unit counts as none, and a dummy is the unit it casts for, or none for a player's cast (decisions 168, 172).</summary>
         private static void HandleDied(unit dying, unit? killer)
         {
+            Events.DeathListener?.Invoke(dying);
             unit? slain = killer == dying ? null : killer;
             var byDummy = slain != null && Dummies.IsDummy(slain);
             Unit? slayer = byDummy ? Dummies.CastFor(slain!) : null;

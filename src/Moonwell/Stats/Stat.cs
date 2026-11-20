@@ -280,6 +280,9 @@ namespace Moonwell
             typeBases[typeId] = value;
         }
 
+        /// <summary>Whether a base was set for any class or type id: a stat with none is not looked up for a unit coming in.</summary>
+        internal bool HasTypeBase => classBases != null || typeBases != null;
+
         /// <summary>The base a unit's class or type gives this stat: the most derived class set that the unit's class is, then the type id the unit came in as.</summary>
         internal bool TypeBaseOf(Unit unit, out float value)
         {

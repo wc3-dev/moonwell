@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>The effects of Moonwell's ready-made stats: crit, hit chance, evasion, parry, block, power, penetration, resistance, barriers, stagger, life steal and healing bonus, acting on every hit and heal without the map writing a line.</Description>
+    <Description>The effects of Moonwell's ready-made stats: crit, hit chance, evasion, parry, block, power, penetration, resistance, barriers, stagger, life steal and healing bonus, and the ability, cast speed, experience and gold stats, acting on every hit, heal, ability and kill without the map writing a line.</Description>
   </PropertyGroup>
 
   <ItemGroup>
