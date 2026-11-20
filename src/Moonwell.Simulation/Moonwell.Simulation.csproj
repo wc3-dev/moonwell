@@ -8,6 +8,7 @@
     <!-- PrivateAssets none, so that a project that references only Moonwell.Simulation still gets Moonwell's analyzer. -->
     <ProjectReference Include="..\Moonwell\Moonwell.csproj" PrivateAssets="none" />
     <ProjectReference Include="..\Moonwell.Damage\Moonwell.Damage.csproj" />
+    <ProjectReference Include="..\Moonwell.Stats\Moonwell.Stats.csproj" />
     <ProjectReference Include="..\Moonwell.Interactions\Moonwell.Interactions.csproj" />
     <ProjectReference Include="..\Moonwell.Physics\Moonwell.Physics.csproj" />
   </ItemGroup>

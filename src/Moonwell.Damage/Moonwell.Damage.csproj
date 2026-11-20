@@ -21,6 +21,7 @@
     <InternalsVisibleTo Include="Moonwell.Testing" />
     <InternalsVisibleTo Include="Moonwell.Tests" />
     <InternalsVisibleTo Include="Moonwell.Simulation" />
+    <InternalsVisibleTo Include="Moonwell.Stats" />
   </ItemGroup>
 
 </Project>

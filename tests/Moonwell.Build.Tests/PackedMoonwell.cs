@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Moonwell.Build.Tests
 {
-    /// <summary>Moonwell, Moonwell.Natives, Moonwell.Objects, Moonwell.Damage, Moonwell.Maths, Moonwell.Interactions, Moonwell.Terrain, Moonwell.Pathing, Moonwell.Procgen, Moonwell.AI, Moonwell.AI.Combat, Moonwell.Physics, Moonwell.Areas, Moonwell.Input, Moonwell.Frames, Moonwell.Kit, Moonwell.Spells, Moonwell.Json, Moonwell.Simulation and Moonwell.Templates packed with a version of their own into a feed in the temporary folder; removes everything it made, including what a restore left in the NuGet folder.</summary>
+    /// <summary>Moonwell, Moonwell.Natives, Moonwell.Objects, Moonwell.Damage, Moonwell.Stats, Moonwell.Maths, Moonwell.Interactions, Moonwell.Terrain, Moonwell.Pathing, Moonwell.Procgen, Moonwell.AI, Moonwell.AI.Combat, Moonwell.Physics, Moonwell.Areas, Moonwell.Input, Moonwell.Frames, Moonwell.Kit, Moonwell.Spells, Moonwell.Json, Moonwell.Simulation and Moonwell.Templates packed with a version of their own into a feed in the temporary folder; removes everything it made, including what a restore left in the NuGet folder.</summary>
     public sealed class PackedMoonwell : IDisposable
     {
         private readonly string root = Path.Combine(Path.GetTempPath(), "moonwell-feed-" + Guid.NewGuid().ToString("N"));
@@ -21,7 +21,7 @@ namespace Moonwell.Build.Tests
             Directory.CreateDirectory(Feed);
 
             var repository = Path.GetFullPath(Path.Combine(TestFolders.Fixture("."), "..", "..", ".."));
-            var projects = new[] { "Moonwell.Natives", "Moonwell", "Moonwell.Objects", "Moonwell.Damage", "Moonwell.Maths", "Moonwell.Interactions", "Moonwell.Terrain", "Moonwell.Pathing", "Moonwell.Procgen", "Moonwell.AI", "Moonwell.AI.Combat", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input", "Moonwell.Frames", "Moonwell.Kit", "Moonwell.Spells", "Moonwell.Json", "Moonwell.Simulation" }
+            var projects = new[] { "Moonwell.Natives", "Moonwell", "Moonwell.Objects", "Moonwell.Damage", "Moonwell.Stats", "Moonwell.Maths", "Moonwell.Interactions", "Moonwell.Terrain", "Moonwell.Pathing", "Moonwell.Procgen", "Moonwell.AI", "Moonwell.AI.Combat", "Moonwell.Physics", "Moonwell.Areas", "Moonwell.Input", "Moonwell.Frames", "Moonwell.Kit", "Moonwell.Spells", "Moonwell.Json", "Moonwell.Simulation" }
                 .Select(name => Path.Combine("src", name, name + ".csproj"))
                 .Append(Path.Combine("template", "Moonwell.Templates.csproj"));
             var filter = Path.Combine(root, "packed.slnf");
@@ -87,7 +87,7 @@ namespace Moonwell.Build.Tests
         public void Dispose()
         {
             var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
-            foreach (var id in new[] { "moonwell", "moonwell.natives", "moonwell.objects", "moonwell.damage", "moonwell.maths", "moonwell.interactions", "moonwell.terrain", "moonwell.physics", "moonwell.areas", "moonwell.input", "moonwell.frames", "moonwell.json" })
+            foreach (var id in new[] { "moonwell", "moonwell.natives", "moonwell.objects", "moonwell.damage", "moonwell.stats", "moonwell.maths", "moonwell.interactions", "moonwell.terrain", "moonwell.physics", "moonwell.areas", "moonwell.input", "moonwell.frames", "moonwell.json" })
             {
                 TestFolders.Delete(Path.Combine(packages, id, Version.ToLowerInvariant()));
 

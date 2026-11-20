@@ -29,6 +29,7 @@ namespace Moonwell.Testing
             AddInventory(list);
             AddLast(list);
             AddHitsAndHeals(list);
+            AddStatsPackage(list);
             AddLiveDestructables(list);
             AddCompiler(list);
             AddMaths(list);
@@ -2211,6 +2212,38 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "damage-package.heal-refused", Run = HealCases.HealRefused });
             list.Add(new Case { Name = "damage-package.heal-chain-shared-with-hits", Run = HealCases.HealChainSharedWithHits });
             list.Add(new Case { Name = "damage-package.heal-is-no-hit", Run = HealCases.HealIsNoHit });
+        }
+
+        /// <summary>Adds the stats package's cases: each ready-made stat's effect on hits and heals, barriers, stagger, and fights in the simulation (its own method: the others are near Lua's 200 locals).</summary>
+        private static void AddStatsPackage(List<Case> list)
+        {
+            list.Add(new Case { Name = "stats-package.no-stats-no-effect", Run = StatEffectCases.NoStatsNoEffect });
+            list.Add(new Case { Name = "stats-package.reading-matches-get", Run = StatEffectCases.ReadingMatchesGet });
+            list.Add(new Case { Name = "stats-package.miss-and-hit-chance", Run = StatEffectCases.MissAndHitChance });
+            list.Add(new Case { Name = "stats-package.miss-rate", Run = StatEffectCases.MissRate });
+            list.Add(new Case { Name = "stats-package.parry", Run = StatEffectCases.Parry });
+            list.Add(new Case { Name = "stats-package.missed-hit-gets-nothing", Run = StatEffectCases.MissedHitGetsNothing });
+            list.Add(new Case { Name = "stats-package.power", Run = StatEffectCases.Power });
+            list.Add(new Case { Name = "stats-package.crit", Run = StatEffectCases.Crit });
+            list.Add(new Case { Name = "stats-package.crit-rate", Run = StatEffectCases.CritRate });
+            list.Add(new Case { Name = "stats-package.armor-penetration", Run = StatEffectCases.ArmorPenetration });
+            list.Add(new Case { Name = "stats-package.resistance", Run = StatEffectCases.Resistance });
+            list.Add(new Case { Name = "stats-package.area-reduction", Run = StatEffectCases.AreaReduction });
+            list.Add(new Case { Name = "stats-package.block", Run = StatEffectCases.Block });
+            list.Add(new Case { Name = "stats-package.barrier-absorbs", Run = StatEffectCases.BarrierAbsorbs });
+            list.Add(new Case { Name = "stats-package.barrier-ends", Run = StatEffectCases.BarrierEnds });
+            list.Add(new Case { Name = "stats-package.barrier-order", Run = StatEffectCases.BarrierOrder });
+            list.Add(new Case { Name = "stats-package.stagger", Run = StatEffectCases.Stagger });
+            list.Add(new Case { Name = "stats-package.stagger-ticks", Run = StatEffectCases.StaggerTicks });
+            list.Add(new Case { Name = "stats-package.order-after-armor", Run = StatEffectCases.OrderAfterArmor });
+            list.Add(new Case { Name = "stats-package.order-before-armor", Run = StatEffectCases.OrderBeforeArmor });
+            list.Add(new Case { Name = "stats-package.steal-and-leech", Run = StatEffectCases.StealAndLeech });
+            list.Add(new Case { Name = "stats-package.healing-bonus-and-crit", Run = StatEffectCases.HealingBonusAndCrit });
+            list.Add(new Case { Name = "stats-package.zero-hit-gets-nothing", Run = StatEffectCases.ZeroHitGetsNothing });
+            list.Add(new Case { Name = "stats-package.texts-off", Run = StatEffectCases.TextsOff });
+            list.Add(new Case { Name = "stats-package.fight-evasion-halves-the-hits", Run = StatFightCases.EvasionHalvesTheHits });
+            list.Add(new Case { Name = "stats-package.fight-crit-build-kills-sooner", Run = StatFightCases.CritBuildKillsSooner });
+            list.Add(new Case { Name = "stats-package.fight-barrier-lengthens-the-fight", Run = StatFightCases.BarrierLengthensTheFight });
         }
 
         /// <summary>Adds the item, destructable, damage, ability and buff cases, and the rest (Lua allows 200 locals in a function, and each case made here is one).</summary>
