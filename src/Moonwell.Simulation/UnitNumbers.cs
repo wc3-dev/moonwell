@@ -29,5 +29,14 @@ namespace Moonwell
 
         /// <summary>The sides of each die.</summary>
         public int DamageSides;
+
+        /// <summary>The mana a unit starts with, at most its most mana.</summary>
+        public float Mana;
+
+        /// <summary>The most mana.</summary>
+        public float MaxMana;
+
+        /// <summary>The abilities a unit starts with at level 1, by id: on .NET its object data's, a hero's hero abilities left out; none for numbers a test gives.</summary>
+        internal int[] Abilities = new int[0];
     }
 }

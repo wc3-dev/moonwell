@@ -246,6 +246,34 @@ namespace Moonwell
             ids[typeof(T)] = id;
         }
 
+#if !MOONWELL_LUA
+        /// <summary>Registers a standard class with its game id and maker, each unless one is registered already, with no listen as a standard class has no reactions: a simulation knows every standard class (decision 382).</summary>
+        internal static void Standard(Type type, int id, Func<object> make)
+        {
+            if (!ids.ContainsKey(type))
+            {
+                ids[type] = id;
+            }
+
+            if (typeof(Moonwell.Unit).IsAssignableFrom(type) && !makers.ContainsKey(id))
+            {
+                makers[id] = () => (Moonwell.Unit)make();
+            }
+            else if (typeof(Moonwell.Item).IsAssignableFrom(type) && !itemMakers.ContainsKey(id))
+            {
+                itemMakers[id] = () => (Moonwell.Item)make();
+            }
+            else if (typeof(Moonwell.Destructable).IsAssignableFrom(type) && !destructableMakers.ContainsKey(id))
+            {
+                destructableMakers[id] = () => (Moonwell.Destructable)make();
+            }
+            else if (typeof(Moonwell.Ability).IsAssignableFrom(type) && !abilityMakers.ContainsKey(id))
+            {
+                abilityMakers[id] = () => (Moonwell.Ability)make();
+            }
+        }
+#endif
+
         /// <summary>Registers a buff class with the game buff it shows and the hidden ability that carries it on its unit; a buff of the class shows only with this.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void BuffDisplay<T>(int buffId, int carrierId)
