@@ -86,21 +86,18 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void the_destructable_table_is_written_only_for_code_that_names_them()
+        public void the_destructable_table_is_written_only_for_code_that_uses_them()
         {
             var project = Project();
             var map = Map();
-            var code = Path.Combine(project.Folder, "Code.cs");
 
-            Assert.Equal(string.Empty, PlacedWriter.DestructableTable(project, map));
+            Assert.Equal(string.Empty, PlacedWriter.DestructableTable(project, map, false, false));
 
-            File.WriteAllText(code, "class A { object B => Placed.Destructables.LTg1_0002; }");
-            var some = PlacedWriter.DestructableTable(project, map);
+            var some = PlacedWriter.DestructableTable(project, map, false, true);
             Assert.Contains("[\"LTg1_0002\"] = { 1280599857, 64, -32 },", some);
             Assert.DoesNotContain("LTlt_0012", some);
 
-            File.WriteAllText(code, "class A { object B => Destructable.Named(\"LTlt_0012\"); }");
-            Assert.Contains("[\"LTlt_0012\"] = { 1280601204, 128.5, 0 },", PlacedWriter.DestructableTable(project, map));
+            Assert.Contains("[\"LTlt_0012\"] = { 1280601204, 128.5, 0 },", PlacedWriter.DestructableTable(project, map, true, false));
         }
 
         private MapProject Project()
