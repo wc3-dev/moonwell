@@ -19,6 +19,26 @@ namespace Moonwell
             Original = amount;
         }
 
+        /// <summary>How far left of the target a miss's text starts, where the game starts its own: a first guess from one screenshot, which a game check sets.</summary>
+        private const float MissLeft = 74.0f;
+
+        /// <summary>How high above the ground a miss's text starts: about 50 lower than a PopText over the same unit starts. A first guess from one screenshot, which a game check sets.</summary>
+        private const float MissHeight = 100.0f;
+
+        /// <summary>The amount of the hit; a reaction may change it, and a missed hit keeps 0.</summary>
+        [LocalSafe]
+        public override float Amount
+        {
+            get => base.Amount;
+            set
+            {
+                if (!Missed)
+                {
+                    base.Amount = value;
+                }
+            }
+        }
+
         /// <summary>The amount the hit started with, before any reaction changed it.</summary>
         [LocalSafe]
         public float Original { get; } = 0.0f;
@@ -105,6 +125,22 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether a reaction made the hit miss (<see cref="Miss"/>).</summary>
+        [LocalSafe]
+        public bool Missed { get; private set; }
+
+        /// <summary>Whether the hit is a critical one: a plain mark a before-armor reaction sets and later stages read, for texts and for a map's own reactions.</summary>
+        [LocalSafe]
+        public bool IsCrit { get; set; }
+
+        /// <summary>How much of the hit a block took, 0 unless a reaction writes it: a plain amount for texts and bars.</summary>
+        [LocalSafe]
+        public float Blocked { get; set; } = 0.0f;
+
+        /// <summary>How much of the hit a barrier took, 0 unless a reaction writes it: a plain amount for texts and bars.</summary>
+        [LocalSafe]
+        public float Absorbed { get; set; } = 0.0f;
+
         /// <summary>Whether the hit killed its target; known once the hit has landed.</summary>
         [LocalSafe]
         public bool Killed { get; internal set; }
@@ -147,6 +183,29 @@ namespace Moonwell
 
         /// <summary>The target's own defense type, to be put back.</summary>
         internal int DefenseRestore;
+
+        /// <summary>
+        /// Before armor only: makes the hit miss, as the game's own miss does. The amount becomes 0, the weapon sound none,
+        /// and <see cref="Missed"/> true; the text is shown once over the target in red, and an empty text shows nothing.
+        /// The rest of the stage's reactions still run and read Missed, no later stage's reactions run for the hit (nor
+        /// core's OnDamaged family), it takes no life, and a burst still lists it. The game's own on-hit effects still land.
+        /// </summary>
+        public void Miss(string text = "miss")
+        {
+            CheckBeforeArmor("Miss");
+            if (Stage != Stage.BeforeArmor || Missed)
+            {
+                return;
+            }
+
+            Amount = 0.0f;
+            Missed = true;
+            weaponSound = WeaponSound.None;
+            if (!string.IsNullOrEmpty(text) && !Target.IsGone)
+            {
+                FloatingText.Pop(text, Target.X - MissLeft, Target.Y, Color.Red, null, MissHeight);
+            }
+        }
 
         /// <summary>In the lethal stage: lowers the amount so that the target keeps that much life.</summary>
         public void Spare(float life = 1.0f)

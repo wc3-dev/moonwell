@@ -22,14 +22,16 @@ namespace Moonwell
         /// <param name="ranged">Whether an attack is ranged; melee otherwise.</param>
         /// <param name="sound">The sound of the hit; none by default.</param>
         /// <param name="tag">Anything of the map's own, which reactions read as the damage's Tag.</param>
-        public static Damage? Damage(this Unit source, Unit target, float amount, DamageKind kind = DamageKind.Magic, AttackType attackType = AttackType.Spells, bool isAttack = false, bool ranged = false, WeaponSound sound = WeaponSound.None, object? tag = null)
+        /// <param name="area">Whether the damage is one of a hit on everything in an area, which reactions read as the damage's IsArea.</param>
+        /// <param name="power">How much of its spell's power the damage carries, which reactions read as the damage's Power; 1 by default.</param>
+        public static Damage? Damage(this Unit source, Unit target, float amount, DamageKind kind = DamageKind.Magic, AttackType attackType = AttackType.Spells, bool isAttack = false, bool ranged = false, WeaponSound sound = WeaponSound.None, object? tag = null, bool area = false, float power = 1.0f)
         {
             if (Events.DamageDealer != null)
             {
-                return Events.DamageDealer(source, target, amount, kind, attackType, isAttack, ranged, sound, tag);
+                return Events.DamageDealer(source, target, amount, kind, attackType, isAttack, ranged, sound, tag, area, power);
             }
 
-            return Inbound.Deal(source, target, amount, kind, attackType, isAttack, ranged, sound, tag);
+            return Inbound.Deal(source, target, amount, kind, attackType, isAttack, ranged, sound, tag, area, power);
         }
 
         /// <summary>
