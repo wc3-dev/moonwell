@@ -170,6 +170,62 @@ namespace Moonwell.Build.Tests
             Assert.Equal(string.Empty, log.ToString());
         }
 
+        [Theory]
+        [InlineData("Survival Harmony", "", "note: the map's name \"TypeScript Template\" in World Editor is replaced by the map class's \"Survival Harmony\"")]
+        [InlineData("", "4", "note: the map's recommended players \"Any\" in World Editor is replaced by the map class's \"4\"")]
+        [InlineData("TypeScript Template", "Any", null)]
+        [InlineData("", "", null)]
+        public void a_setting_that_replaces_world_editors_text_is_noted(string name, string players, string? note)
+        {
+            // The Sample's World Editor map holds its name and recommended players as trigger strings: "TypeScript Template" and "Any".
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var log = new StringWriter { NewLine = "\n" };
+
+            var info = SourceMap.Open(project, new MapSettings("Sample.SampleMap", name, string.Empty, string.Empty, players), log).Info!;
+
+            Assert.Equal(note == null ? string.Empty : note + "\n", log.ToString());
+            if (name.Length > 0)
+            {
+                Assert.Equal(name, info.MapName);
+            }
+        }
+
+        [Fact]
+        public void computers_a_run_game_leaves_empty_are_noted()
+        {
+            var copy = folders.TemporaryCopyOfSample();
+            var infoPath = Path.Combine(copy, "map", "war3map.w3i");
+            MapInfo info;
+            using (var reader = new BinaryReader(File.OpenRead(infoPath)))
+            {
+                info = reader.ReadMapInfo();
+            }
+
+            info.MapFlags = (info.MapFlags | MapFlags.UseCustomForces) & ~MapFlags.FixedPlayerSettingsForCustomForces;
+            // The Sample has a computer in slot 11 already.
+            info.Players[1].Controller = PlayerController.Computer;
+            using (var writer = new BinaryWriter(File.Create(infoPath)))
+            {
+                writer.Write(info);
+            }
+
+            var project = MapProject.Find(copy);
+            var log = new StringWriter { NewLine = "\n" };
+
+            SourceMap.Open(project, new MapSettings("Sample.SampleMap", string.Empty, string.Empty, string.Empty, string.Empty), log);
+            Assert.Equal("note: slots 1, 11 are computers in World Editor, but a moonwell run game leaves them empty, as the map has custom forces without fixed player settings; set up Slots in the map class, or turn on Fixed Player Settings in World Editor's forces\n", log.ToString());
+
+            info.MapFlags |= MapFlags.FixedPlayerSettingsForCustomForces;
+            using (var writer = new BinaryWriter(File.Create(infoPath)))
+            {
+                writer.Write(info);
+            }
+
+            log.GetStringBuilder().Clear();
+            SourceMap.Open(project, new MapSettings("Sample.SampleMap", string.Empty, string.Empty, string.Empty, string.Empty), log);
+            Assert.Equal(string.Empty, log.ToString());
+        }
+
         [Fact]
         public void unknown_data_set_or_version_is_an_error()
         {
