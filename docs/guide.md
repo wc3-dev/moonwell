@@ -2121,8 +2121,10 @@ public class GuardTests
 - `Simulation.Start(map)` starts the map as the game would: its slots playing on their teams (slot 0 as a person when
   it lists none), its object classes registered, its `Components`, its `PlayerComponents` on each playing slot, then
   every `OnGameStart`. `Simulation.Start()` starts an empty game, with nothing of the map's, for units and brains the
-  test makes by id. Either takes a `seed`: it gives the dice of the attacks, and the seed after it the map's own random
-  numbers (`Game.Random` and a `Dice` made without a seed).
+  test makes by id. Either knows every standard class by its game id, so `hero.AddAbility<Human.Abilities.StormBolt>()`,
+  `Unit.Create<Human.Units.Footman>(...)` and `ObjectTypes.IdOf<T>` work in both; the map's own classes, its
+  `[Replaces]` ones too, are known only with the map's start. Either takes a `seed`: it gives the dice of the attacks,
+  and the seed after it the map's own random numbers (`Game.Random` and a `Dice` made without a seed).
 - With a map, a player's files go in the folder the build would pick: the map's `SaveFolder`, else its name, else the
   map project's name, in letters and digits only, so `sim.World.Files` holds `MyRpg\settings.txt`. An empty game writes
   under `Map`. A computer's slot has its `Slot`'s `Name`, as in the game; a person's slot stays `Player 1`, where the
@@ -2136,9 +2138,11 @@ public class GuardTests
   the game's seconds so far.
 - A unit plays by its type's numbers: on .NET those of its object data (the map's class for the type, else the standard
   object), or those `SetNumbers(typeId, new UnitNumbers { ... })` gives for units made from then on. A unit takes its
-  attack range, cooldown, damage, dice and acquisition range when it is made; its life, move speed and armor start from
-  them and count as they are at each step. A unit of a type with no numbers never moves, and its orders are neither
-  counted nor held.
+  attack range, cooldown, damage, dice and acquisition range when it is made; its life, mana, move speed and armor start
+  from them and count as they are at each step. From its object data it also starts with its type's abilities at level
+  1, so a Priest has Heal and 75 of its 200 mana; a hero's hero abilities wait to be learned. Numbers from `SetNumbers`
+  give no abilities, and mana only by their `Mana` and `MaxMana`. A unit of a type with no numbers never moves, and its
+  orders are neither counted nor held.
 - Every order holds the unit 0.16 s (8 steps) before it starts, a repeat of the same order too, as the game holds a
   unit up at each order. Then a move walks straight at the move speed and ends on the point. An attack on a unit chases
   to its range and swings at each cooldown, until the target is dead or gone. `smart` attacks an enemy and walks to

@@ -24,32 +24,46 @@ namespace Moonwell
         /// <summary>The game's seconds so far.</summary>
         public float Time => World.Time;
 
-        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). Heroes fight on their base numbers: their attributes' bonuses are not applied.</summary>
+        /// <summary>Starts an empty game on a fresh fake world, which becomes the runtime's, with every standard class of Moonwell.Objects registered by its game id on .NET. The seed gives the dice of the attacks' damage, and the seed after it the map's own random numbers (Game.Random and a Dice made without a seed). Heroes fight on their base numbers: their attributes' bonuses are not applied.</summary>
         public static Simulation Start(int seed = 1)
         {
-            var world = FakeWorld.Install();
-            world.StartPlay(seed);
-            return new Simulation(world);
+            var simulation = Begin(seed);
+#if !MOONWELL_LUA
+            Registry.RegisterStandard();
+#endif
+            return simulation;
         }
 
         /// <summary>
         /// Starts the map's game on a fresh fake world as the game would: its slots playing (slot 0 as a person when it lists
         /// none), each team's slots allied, then its register step, its starting components, its player components on each
         /// playing slot, and every OnGameStart. On .NET the register step registers the object classes the map uses, as its
-        /// build would; in Lua it registers nothing. World Editor's placed units, and the damage, terrain, areas, input and physics
+        /// build would, then every other standard class as an empty game does; in Lua it registers nothing. World Editor's placed units, and the damage, terrain, areas, input and physics
         /// systems, are left out, and heroes fight on their base numbers: their attributes' bonuses are not applied.
         /// </summary>
         public static Simulation Start(Map map, int seed = 1)
         {
-            var simulation = Start(seed);
+            var simulation = Begin(seed);
             Seat(simulation.World, map.StartSlots);
             Runtime.InstallSaveFolder(FolderOf(map));
 #if MOONWELL_LUA
             Runtime.Begin(() => Runtime.Install(map, () => { }));
 #else
-            Runtime.Begin(() => Runtime.Install(map, () => Registry.Register(map)));
+            Runtime.Begin(() => Runtime.Install(map, () =>
+            {
+                Registry.Register(map);
+                Registry.RegisterStandard();
+            }));
 #endif
             return simulation;
+        }
+
+        /// <summary>A fresh fake world, made the runtime's, with the play started.</summary>
+        private static Simulation Begin(int seed)
+        {
+            var world = FakeWorld.Install();
+            world.StartPlay(seed);
+            return new Simulation(world);
         }
 
         /// <summary>Runs the seconds in whole steps: rounded to whole milliseconds, then to whole steps with a half step up, and at least one; none for 0 or less. Each step's time is its number of steps since the start, so a World.Advance between runs, which moves time without the play, is not to be mixed with it.</summary>
