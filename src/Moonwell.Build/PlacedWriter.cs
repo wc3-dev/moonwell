@@ -1,4 +1,8 @@
 using System.Globalization;
+using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -123,25 +127,26 @@ namespace Moonwell.Build
         }
 
         /// <summary>
-        /// The Lua table <c>MoonwellPlacedDestructables = { [name] = { typeId, x, y } }</c> the runtime finds a placed destructable by,
+        /// The Lua table <c>MoonwellPlacedDestructables = { name, typeId, x, y, ... }</c> the runtime matches placed destructables by,
         /// its type id in the game's order, as FourCC gives it and not as war3map.doo stores it,
-        /// for a map whose code names <c>Destructable.Named</c> (every one) or <c>Placed.Destructables</c> (all but the trees); empty
-        /// for any other map, which needs none.
+        /// for a map whose code calls <c>Destructable.Named</c> (every one) or reads <c>Placed.Destructables</c> (all but the trees);
+        /// empty for any other map, which needs none.
         /// </summary>
-        /// <param name="project">The map project, whose source says which it names.</param>
+        /// <param name="project">The map project.</param>
         /// <param name="map">The opened map.</param>
-        public static string DestructableTable(MapProject project, War3Net.Build.Map map)
+        /// <param name="named">Whether the map's code calls <c>Destructable.Named</c> (<see cref="Lookups"/>).</param>
+        /// <param name="placed">Whether the map's code reads <c>Placed.Destructables</c> (<see cref="Lookups"/>).</param>
+        public static string DestructableTable(MapProject project, War3Net.Build.Map map, bool named, bool placed)
         {
-            var named = Names(project, "Destructable.Named");
-            if (!named && !Names(project, "Placed.Destructables"))
+            if (!named && !placed)
             {
                 return string.Empty;
             }
 
             var text = new StringBuilder("MoonwellPlacedDestructables = {\n");
-            foreach (var placed in Destructables(map, Trees(project)).Where(placed => named || !placed.Tree))
+            foreach (var each in Destructables(map, Trees(project)).Where(each => named || !each.Tree))
             {
-                text.Append($"[{Quoted(placed.Name)}] = {{ {ObjectLua.FourCC(placed.Doodad.TypeId.ToRawcode())}, {LuaReal(placed.Doodad.Position.X)}, {LuaReal(placed.Doodad.Position.Y)} }},\n");
+                text.Append($"{Quoted(each.Name)}, {ObjectLua.FourCC(each.Doodad.TypeId.ToRawcode())}, {LuaReal(each.Doodad.Position.X)}, {LuaReal(each.Doodad.Position.Y)},\n");
             }
 
             return text.Append("}\n").ToString();
@@ -272,10 +277,83 @@ namespace Moonwell.Build
             return "global::" + string.Join(".", parts);
         }
 
-        // Whether any of the map's code names a member, as text: a mention in a comment counts too, which costs only the table.
-        private static bool Names(MapProject project, string member)
+        /// <summary>
+        /// Whether a map's built assembly, or a library of its own, calls <c>Destructable.Named</c> and whether it reads a member of
+        /// <c>Placed.Destructables</c>, from the calls in its methods' bodies, however the code names them. The calls in
+        /// <c>Placed.g.cs</c>, which give each member through <c>Named</c>, are not counted.
+        /// </summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        public static (bool Named, bool Placed) Lookups(string assemblyPath)
         {
-            return CompiledFiles.Sources(project, project.BuildFolder).Any(path => CompiledFiles.ReadSource(path).Contains(member, StringComparison.Ordinal));
+            var named = false;
+            var placed = false;
+            foreach (var path in CompiledFiles.MapAssemblies(assemblyPath))
+            {
+                using var stream = File.OpenRead(path);
+                using var pe = new PEReader(stream);
+                var metadata = pe.GetMetadataReader();
+                foreach (var handle in metadata.MethodDefinitions)
+                {
+                    var method = metadata.GetMethodDefinition(handle);
+                    if (method.RelativeVirtualAddress == 0 || IsPlacedClass(metadata, method.GetDeclaringType()))
+                    {
+                        continue;
+                    }
+
+                    foreach (var token in CalledMethods(pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!))
+                    {
+                        var called = MetadataTokens.EntityHandle(token);
+                        if (called.Kind == HandleKind.MemberReference)
+                        {
+                            var member = metadata.GetMemberReference((MemberReferenceHandle)called);
+                            if (member.Parent.Kind == HandleKind.TypeReference && metadata.GetString(member.Name) == "Named")
+                            {
+                                var type = metadata.GetTypeReference((TypeReferenceHandle)member.Parent);
+                                named |= metadata.GetString(type.Name) == "Destructable" && metadata.GetString(type.Namespace) == "Moonwell";
+                            }
+                        }
+                        else if (called.Kind == HandleKind.MethodDefinition)
+                        {
+                            var type = metadata.GetTypeDefinition(metadata.GetMethodDefinition((MethodDefinitionHandle)called).GetDeclaringType());
+                            var name = metadata.GetString(type.Name);
+                            placed |= type.IsNested
+                                ? name == "Destructables" && IsPlacedClass(metadata, type.GetDeclaringType())
+                                : metadata.GetString(type.Namespace) == "Moonwell.PlacedParts" && name.StartsWith("DestructablesPart", StringComparison.Ordinal);
+                        }
+                    }
+                }
+            }
+
+            return (named, placed);
+        }
+
+        // Whether a type is one Placed.g.cs writes: Moonwell.Placed, a class inside it, or a part in Moonwell.PlacedParts.
+        private static bool IsPlacedClass(MetadataReader metadata, TypeDefinitionHandle handle)
+        {
+            var type = metadata.GetTypeDefinition(handle);
+            while (type.IsNested)
+            {
+                type = metadata.GetTypeDefinition(type.GetDeclaringType());
+            }
+
+            var space = metadata.GetString(type.Namespace);
+            return (space == "Moonwell" && metadata.GetString(type.Name) == "Placed") || space == "Moonwell.PlacedParts";
+        }
+
+        // The tokens of the methods a body calls, takes as a delegate or constructs.
+        private static IEnumerable<int> CalledMethods(byte[] il)
+        {
+            for (var position = 0; position < il.Length;)
+            {
+                var code = il[position++];
+                var opCode = SetterScan.OpCodesByValue[code == 0xFE ? unchecked((short)(0xFE00 | il[position++])) : code];
+                if (opCode.OperandType == OperandType.InlineMethod)
+                {
+                    yield return BitConverter.ToInt32(il, position);
+                }
+
+                position += SetterScan.OperandSize(opCode.OperandType, il, position);
+            }
         }
 
         private static string Lookup(string member, string name, string summary, string kind, IReadOnlyDictionary<string, string> classes, int typeId)

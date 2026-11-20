@@ -52,7 +52,51 @@ namespace Moonwell.Build.Tests
 
             Assert.True(exitCode == 0, output);
             var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
-            Assert.Contains("MoonwellPlacedDestructables = {\n[\"LTlt_0012\"] = { 1280601204, 256, -128 },", script);
+            Assert.Contains("MoonwellPlacedDestructables = {\n\"LTlt_0012\", 1280601204, 256, -128,\n", script);
+        }
+
+        [Fact]
+        public void code_naming_a_placed_destructable_through_using_static_gets_the_table()
+        {
+            var project = folders.TemporaryCopyOf("Sample");
+            AddDestructable(project, "LTlt", 12);
+            File.WriteAllText(Path.Combine(project, "Settings.cs"), "using static Moonwell.Destructable;\n" + Code.Replace("BODY", "Named(\"LTlt_0012\")?.Kill();"));
+
+            var (exitCode, output) = Build(project);
+
+            Assert.True(exitCode == 0, output);
+            var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
+            Assert.Contains("\"LTlt_0012\", ", script);
+        }
+
+        [Fact]
+        public void a_comment_naming_destructable_named_or_placed_destructables_gets_no_table()
+        {
+            var project = folders.TemporaryCopyOf("Sample");
+            AddDestructable(project, "LTlt", 12);
+            Write(project, "// Destructable.Named and Placed.Destructables are not used here." + Environment.NewLine + "            Game.Print(\"hi\");");
+
+            var (exitCode, output) = Build(project);
+
+            Assert.True(exitCode == 0, output);
+            var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
+            Assert.DoesNotContain("MoonwellPlacedDestructables = {", script);
+        }
+
+        [Fact]
+        public void placed_destructables_named_only_in_placed_destructables_get_the_table_but_the_trees()
+        {
+            var project = folders.TemporaryCopyOf("Sample");
+            AddDestructable(project, "LTlt", 12);
+            AddDestructable(project, "YTpb", 13);
+            Write(project, "Placed.Destructables.YTpb_0013?.Kill();");
+
+            var (exitCode, output) = Build(project);
+
+            Assert.True(exitCode == 0, output);
+            var script = File.ReadAllText(Path.Combine(project, "build", "Sample", "war3map.lua"));
+            Assert.Contains("\"YTpb_0013\", ", script);
+            Assert.DoesNotContain("\"LTlt_0012\", ", script);
         }
 
         [Fact]

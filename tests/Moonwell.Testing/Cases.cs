@@ -279,6 +279,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "placed.unit-gone", Run = PlacedCases.UnitGone });
             list.Add(new Case { Name = "placed.item-by-name", Run = PlacedCases.ItemByName });
             list.Add(new Case { Name = "placed.destructable-by-name", Run = PlacedCases.DestructableByName });
+            list.Add(new Case { Name = "placed.destructable-gone", Run = PlacedCases.DestructableGone });
             list.Add(new Case { Name = "placed.sound", Run = PlacedCases.Sound });
             list.Add(new Case { Name = "placed.region-centre", Run = PlacedCases.RegionCentre });
         }
