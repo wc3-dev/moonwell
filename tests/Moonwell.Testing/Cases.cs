@@ -609,6 +609,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "dice.seeded-sequence", Run = DiceCases.SeededSequence });
             list.Add(new Case { Name = "dice.int-bounds", Run = DiceCases.IntBounds });
             list.Add(new Case { Name = "dice.real-and-chance", Run = DiceCases.RealAndChance });
+            list.Add(new Case { Name = "dice.real-top-draw", Run = DiceCases.RealTopDraw });
             list.Add(new Case { Name = "dice.pick-and-shuffle", Run = DiceCases.PickAndShuffle });
             list.Add(new Case { Name = "dice.game-generator", Run = DiceCases.GameGenerator });
             list.Add(new Case { Name = "lua-library.call-through-binding", Run = LuaLibraryCases.CallThroughBinding });

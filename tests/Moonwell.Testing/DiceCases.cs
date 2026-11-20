@@ -56,6 +56,24 @@ namespace Moonwell.Testing
             Expect.Equal(true, always, "Chance(1)");
         }
 
+        /// <summary>Real leaves high out at the top draw too, where the sum would round up to high in 32-bit floats; the draws after it are the same as before (J143).</summary>
+        public static void RealTopDraw(FakeWorld world)
+        {
+            // Seed 1071806939's first draw is the top one, 16777215.
+            Expect.Equal(true, new Dice(1071806939).Real(1.0f, 2.0f) < 2.0f, "Real(1, 2)");
+            Expect.Equal(true, new Dice(1071806939).Real(10.0f, 20.0f) < 20.0f, "Real(10, 20)");
+            Expect.Equal(true, new Dice(1071806939).Real(1000.0f, 1001.0f) < 1001.0f, "Real(1000, 1001)");
+            Expect.Equal(true, new Dice(1071806939).Real(-1001.0f, -1000.0f) < -1000.0f, "Real(-1001, -1000)");
+            Expect.Equal(true, new Dice(1071806939).Real(1001.0f, 1000.0f) > 1000.0f, "Real(1001, 1000), the bounds the other way");
+            Expect.True(new Dice(1071806939).Real(5.0f, 5.0f) == 5.0f, "Real(5, 5)");
+            var dice = new Dice(1071806939);
+            dice.Real(1000.0f, 1001.0f);
+            var after = new Dice(1071806939);
+            after.Int(0, 16777215);
+            Expect.Equal(after.Int(0, 999), dice.Int(0, 999), "the next draw");
+            Expect.True(1000.0f + new Dice(42).Int(0, 16777215) / 16777216.0f == new Dice(42).Real(1000.0f, 1001.0f), "a draw below the top, as before");
+        }
+
         /// <summary>Shuffle keeps every item and Pick gives one of them; an empty list cannot be picked from.</summary>
         public static void PickAndShuffle(FakeWorld world)
         {
