@@ -14,8 +14,8 @@ namespace Moonwell.Objects
         /// <summary>
         /// Gives what a point of a hero's attribute adds, by the map's gameplay constants: most life for each point of strength,
         /// and most and starting mana for each point of intelligence. A hero's MaxLife, MaxMana and Mana read the total, its
-        /// base field plus these (<see cref="HeroTotals"/>). The build sets it; with none, both are 0 and a hero's totals are its
-        /// base fields.
+        /// base field plus these (<see cref="HeroTotals"/>). The build sets it, and Moonwell.Simulation's Start(map) to the
+        /// build's; with none, both are 0 and a hero's totals are its base fields.
         /// </summary>
         public static Func<(float LifePerStrength, float ManaPerIntelligence)>? HeroBonus { get; set; }
 #endif
