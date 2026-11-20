@@ -326,6 +326,7 @@ namespace Moonwell.Build.Tests
             Directory.CreateDirectory(Path.Combine(copy, "build", "generated"));
             File.WriteAllText(Path.Combine(copy, "build", "generated", "ObjectRegistry.g.cs"), "namespace Left { public class Over : DoesNotExist { } }\n");
             File.WriteAllText(Path.Combine(copy, "build", "generated", "ObjectStubs.g.cs"), "namespace Left { public class Stub : DoesNotExist { } }\n");
+            File.WriteAllText(Path.Combine(copy, "build", "generated", "HeroBonus.g.cs"), "[assembly: System.Reflection.AssemblyMetadata(\"Moonwell.LifePerStrength\", \"25\")]\n");
 
             var log = new StringWriter();
             var archive = MapBuild.Run(copy, new BuildOptions(), log);
@@ -334,6 +335,7 @@ namespace Moonwell.Build.Tests
             Assert.DoesNotContain("warning", log.ToString());
             Assert.False(File.Exists(Path.Combine(copy, "build", "generated", "ObjectRegistry.g.cs")));
             Assert.False(File.Exists(Path.Combine(copy, "build", "generated", "ObjectStubs.g.cs")));
+            Assert.False(File.Exists(Path.Combine(copy, "build", "generated", "HeroBonus.g.cs")));
             foreach (var name in new[] { "war3map.w3u", "war3mapSkin.w3u" })
             {
                 Assert.Equal(File.ReadAllBytes(Path.Combine(fixture, name)), File.ReadAllBytes(Path.Combine(copy, "build", "Sample", name)));
@@ -494,6 +496,37 @@ namespace Moonwell.Build.Tests
             // Its experience and day constants are the standard ones, which the runtime has: nothing to install.
             Assert.DoesNotContain("HeroExperience", File.ReadAllText(Path.Combine(copy, "build", "generated", "MapMain.g.cs")));
             Assert.DoesNotContain("InstallDay", File.ReadAllText(Path.Combine(copy, "build", "generated", "MapMain.g.cs")));
+        }
+
+        [Fact]
+        public void the_hero_bonus_the_build_read_is_compiled_into_the_maps_assembly()
+        {
+            // Moonwell.Simulation's Start(map) reads it, so a hero's life reads in a test as in the build. The build writes it after
+            // its compile, so the map's assembly has it from the next compile on, a test project's among them.
+            var copy = folders.TemporaryCopyOfSample();
+            File.WriteAllText(Path.Combine(copy, "map", "war3mapMisc.txt"), "[Misc]\nStrHitPointBonus=30\nIntManaBonus=12.5\n");
+
+            MapBuild.Run(copy, new BuildOptions(), new StringWriter());
+            var text = File.ReadAllText(Path.Combine(copy, "build", "generated", "HeroBonus.g.cs"));
+            Assert.Contains("#if !MOONWELL_LUA", text);
+            Assert.Contains("AssemblyMetadata(\"Moonwell.LifePerStrength\", \"30\")", text);
+            Assert.Contains("AssemblyMetadata(\"Moonwell.ManaPerIntelligence\", \"12.5\")", text);
+
+            MapBuild.Run(copy, new BuildOptions(), new StringWriter());
+            var context = new System.Runtime.Loader.AssemblyLoadContext("hero-bonus", true);
+            try
+            {
+                using var stream = File.OpenRead(Path.Combine(copy, "bin", "Debug", "net10.0", "Sample.dll"));
+                var metadata = context.LoadFromStream(stream).GetCustomAttributesData()
+                    .Where(data => data.AttributeType.FullName == "System.Reflection.AssemblyMetadataAttribute")
+                    .ToDictionary(data => (string)data.ConstructorArguments[0].Value!, data => (string?)data.ConstructorArguments[1].Value);
+                Assert.Equal("30", metadata["Moonwell.LifePerStrength"]);
+                Assert.Equal("12.5", metadata["Moonwell.ManaPerIntelligence"]);
+            }
+            finally
+            {
+                context.Unload();
+            }
         }
 
         [Fact]
