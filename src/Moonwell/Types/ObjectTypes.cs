@@ -612,16 +612,23 @@ namespace Moonwell
         /// <summary>The id of the map's unit class of that name, in any case ("footman" for a Footman class), or 0 when none is registered: the debug mode's -spawn.</summary>
         internal static int UnitIdOfName(string name)
         {
+            var kind = UnitClassOfName(name);
+            return kind == null ? 0 : ids[kind];
+        }
+
+        /// <summary>The map's registered unit class of that name, in any case, or null when none is: a Stat's base by text.</summary>
+        internal static Type? UnitClassOfName(string name)
+        {
             var wanted = name.ToLower();
             foreach (var pair in ids)
             {
                 if (makers.ContainsKey(pair.Value) && pair.Key.Name.ToLower() == wanted)
                 {
-                    return pair.Value;
+                    return pair.Key;
                 }
             }
 
-            return 0;
+            return null;
         }
 
         /// <summary>The object id made from four characters, the first one the highest byte.</summary>

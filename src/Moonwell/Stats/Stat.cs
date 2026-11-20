@@ -267,9 +267,32 @@ namespace Moonwell
         public void SetBase<T>(float value)
             where T : Unit
         {
+            SetBaseOfClass(typeof(T), value);
+        }
+
+        private void SetBaseOfClass(Type kind, float value)
+        {
             NoteGameBase();
             classBases ??= new Dictionary<Type, float>();
-            classBases[typeof(T)] = value;
+            classBases[kind] = value;
+        }
+
+        /// <summary>Sets a base by text, for rows read from the data folder: a unit type's four-letter id ("hfoo"), or the name of a declared unit class in any case ("Paladin"), which is SetBase&lt;Paladin&gt; and so reaches the classes that inherit it. A class's name is tried first. Text that is neither is reported in a development build and sets nothing; a four-letter id nothing has is not told from a typo.</summary>
+        public void SetBase(string unitType, float value)
+        {
+            var kind = ObjectTypes.UnitClassOfName(unitType);
+            if (kind != null)
+            {
+                SetBaseOfClass(kind, value);
+            }
+            else if (unitType.Length == 4)
+            {
+                SetBase(ObjectTypes.FourCC(unitType), value);
+            }
+            else
+            {
+                Dev.Report("Stat.SetBase", "'" + unitType + "' is neither a unit type's four-letter id nor the name of a unit class the map declares, so the base of " + Name + " was not set");
+            }
         }
 
         /// <summary>Sets the base of a stat for the units of a type id (hfoo, or a declared class's id), after a unit's own base and a class's. For a game stat, Moonwell owns that stat on those units from then on, as for the class form; units already there announce nothing and are not worked out again until the stat next changes on them.</summary>

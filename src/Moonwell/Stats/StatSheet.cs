@@ -426,6 +426,18 @@ namespace Moonwell
             SetBase(stat, RawBase(stat) + amount, label);
         }
 
+        /// <summary>Whether a base was set for this holder itself, not for its class or type, and what: what a save keeps.</summary>
+        internal bool OwnBase(Stat stat, out float value)
+        {
+            if (bases != null && bases.TryGetValue(stat, out value))
+            {
+                return true;
+            }
+
+            value = 0.0f;
+            return false;
+        }
+
         /// <summary>Whether Moonwell owns a game stat on this holder: the holder's own base or its type's is set (decision 387).</summary>
         private bool IsOwned(Stat stat)
         {
