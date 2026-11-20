@@ -14,7 +14,7 @@ namespace Moonwell
     public sealed class Stat
     {
         // Made at their first use: a public type has no static initializer (StaticSetupTests).
-        private static Stat? damage, armor, attackSpeed, moveSpeed, maxLife, maxMana, lifeRegen, manaRegen, strength, agility, intelligence;
+        private static Stat? damage, armor, attackSpeed, moveSpeed, maxLife, maxMana, lifeRegen, manaRegen, strength, agility, intelligence, attackRange;
 
         private static Stat? critChance, critDamage, hitChance, evasion, parry, blockChance, blockAmount, attackPower, spellPower, armorPenetration, spellPenetration;
 
@@ -220,6 +220,7 @@ namespace Moonwell
                 case "Strength": return Strength;
                 case "Agility": return Agility;
                 case "Intelligence": return Intelligence;
+                case "Attack range": return AttackRange;
                 case "Crit chance": return CritChance;
                 case "Crit damage": return CritDamage;
                 case "Hit chance": return HitChance;
@@ -385,6 +386,9 @@ namespace Moonwell
         /// <summary>A hero's intelligence. Whole numbers.</summary>
         public static Stat Intelligence => intelligence ??= new Stat("Intelligence", StatKind.Intelligence);
 
+        /// <summary>How far the unit's first weapon reaches, in game units, centre to centre. The game takes a change only as an add, so Moonwell puts the difference between the range wanted and the range read; when the range goes above the unit's acquisition range, the acquisition range is raised to it, and put back when the range falls under it again. Never below 0.</summary>
+        public static Stat AttackRange => attackRange ??= new Stat("Attack range", StatKind.AttackRange);
+
         /// <summary>The chance, in percent points, that a hit the unit gives is a crit: 0 to 100. A bare number for now: the stats package gives it its effect.</summary>
         public static Stat CritChance => critChance ??= new Stat("Crit chance", 0.0f, 0.0f, 100.0f);
 
@@ -512,5 +516,6 @@ namespace Moonwell
         Strength,
         Agility,
         Intelligence,
+        AttackRange,
     }
 }
