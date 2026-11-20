@@ -35,7 +35,14 @@ namespace Moonwell
             armors[unit] = armor;
         }
 
-        /// <summary>The middle of a unit's white damage.</summary>
+        /// <summary>The armor a unit has without the bonus abilities' fields: what BlzSetUnitArmor sets.</summary>
+        public void SetBaseArmor(unit unit, float armor)
+        {
+            NoteGone(unit);
+            armors[unit] = armor;
+        }
+
+        /// <summary>The middle of a unit's white damage, as the number it was set to (the real world keeps it to a whole number less its dice).</summary>
         public void SetAverageDamage(unit unit, float damage)
         {
             averageDamages[unit] = damage;
