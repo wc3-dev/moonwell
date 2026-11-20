@@ -56,7 +56,8 @@ build, which names it.
 ## The map's settings
 
 `Map.cs` holds the one class of the project that inherits `Map`. Its constructor sets `Name`, `Author`, `Description`
-and `RecommendedPlayers`; one left empty keeps World Editor's value. `DataSet` and `DataVersion` pick the balance the
+and `RecommendedPlayers`; one left empty keeps World Editor's value, and one that replaces a different value there is
+noted by the build. `DataSet` and `DataVersion` pick the balance the
 map plays with, as World Editor's Data Set and Data Version. `Components` lists the game components the game
 starts with: `Components.Add(new Start(), new Rules());` adds them, and `Components = new() { new Start(), new Rules() };`
 replaces the list.
@@ -94,6 +95,10 @@ their team or race there, and the game starts with each team's alliances set. Te
 slots first name them. A slot starts at its start location placed in World Editor; one without starts in the map's
 middle, and the build notes it. Fixed settings lock alliance changes: the Allies menu (F11) is greyed out, and only
 code changes alliances. A map with no slots keeps World Editor's setup.
+
+A `moonwell run` game seats the computers World Editor's players set up on a map without custom forces, or with custom
+forces and fixed player settings, as `Slots` writes them. With custom forces and fixed player settings off, it leaves
+them empty and seats a computer in slot 1 instead; the build notes such a map.
 
 ## Objects
 
