@@ -68,6 +68,7 @@ namespace Moonwell
         {
             internal Unit? Source;
             internal int Level;
+            internal int Ability;
             internal bool ByCast;
             internal bool ByAura;
         }
@@ -212,7 +213,7 @@ namespace Moonwell
         /// <summary>Checks a cast's target, or for a spell with no target the unit that cast it, when no dummy, and the units in its area around it, as given by that cast.</summary>
         private static void AfterCast(Recent cast)
         {
-            Func<int, Giver?> giver = buffId => Listed(cast.Ability, buffId) ? new Giver { Source = cast.Caster, Level = cast.Level, ByCast = true } : null;
+            Func<int, Giver?> giver = buffId => Listed(cast.Ability, buffId) ? new Giver { Source = cast.Caster, Level = cast.Level, Ability = cast.Ability, ByCast = true } : null;
             if (cast.Target != null)
             {
                 Check(cast.Target, giver, true);
@@ -270,7 +271,7 @@ namespace Moonwell
                     var giver = AuraGiver(unit, buff.gameBuff, buff.Source);
                     if (giver != null && (giver.Source != buff.Source || giver.Level != buff.Level))
                     {
-                        buff.GiveAgain(giver.Source, giver.Level);
+                        buff.GiveAgain(giver.Source, giver.Level, giver.Ability);
                     }
                 }
             }
@@ -385,6 +386,7 @@ namespace Moonwell
             buff.gameBuff = buffId;
             buff.Source = giver?.Source;
             buff.Level = giver == null ? 0 : giver.Level;
+            buff.gameAbility = giver == null ? 0 : giver.Ability;
             buff.byAura = giver == null ? AuraListed(buffId) : giver.ByAura;
             buff.givenBy = giver?.Source;
             buff.givenAt = Runtime.World.Now();
@@ -421,7 +423,7 @@ namespace Moonwell
             giving++;
             try
             {
-                buff.GiveAgain(giver.Source, giver.Level);
+                buff.GiveAgain(giver.Source, giver.Level, giver.Ability);
             }
             finally
             {
@@ -458,7 +460,7 @@ namespace Moonwell
                 var level = Runtime.World.AbilityLevel(dealer, abilities[i]);
                 if (level > 0)
                 {
-                    return new Giver { Source = source, Level = level };
+                    return new Giver { Source = source, Level = level, Ability = abilities[i] };
                 }
             }
 
@@ -479,7 +481,7 @@ namespace Moonwell
 
                 if (cast.Target == unit || (cast.Target == null && (cast.Self == unit || Within(unit, cast.X, cast.Y, cast.Area))))
                 {
-                    return new Giver { Source = cast.Caster, Level = cast.Level, ByCast = true };
+                    return new Giver { Source = cast.Caster, Level = cast.Level, Ability = cast.Ability, ByCast = true };
                 }
             }
 
@@ -563,7 +565,7 @@ namespace Moonwell
                     || (aura.Level == best.Level && best.Source != keep && (aura.Holder == keep || distance < bestDistance));
                 if (better)
                 {
-                    best = new Giver { Source = aura.Holder, Level = aura.Level, ByAura = true };
+                    best = new Giver { Source = aura.Holder, Level = aura.Level, Ability = aura.Ability, ByAura = true };
                     bestDistance = distance;
                 }
             }

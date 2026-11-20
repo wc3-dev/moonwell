@@ -42,6 +42,7 @@ namespace Moonwell.Testing
             AddAuditAreas(list);
             AddInput(list);
             AddFrames(list);
+            AddKitStats(list);
             AddKeys(list);
             AddOrders(list);
             AddSelection(list);
@@ -66,7 +67,26 @@ namespace Moonwell.Testing
             AddCombat(list);
             AddAITools(list);
             AddSimulation(list);
+            AddAbilitiesAndControl(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for a unit's abilities, the live numbers an ability keeps a base for, attack range as a stat, an owned damage in a simulated swing, the buff marks and the crowd control reduction.</summary>
+        private static void AddAbilitiesAndControl(List<Case> list)
+        {
+            list.Add(new Case { Name = "abilities.list", Run = AbilityControlCases.AbilitiesList });
+            list.Add(new Case { Name = "abilities.notice", Run = AbilityControlCases.AbilitiesNotice });
+            list.Add(new Case { Name = "abilities.live-numbers-keep-a-base", Run = AbilityControlCases.LiveNumbersKeepABase });
+            list.Add(new Case { Name = "abilities.live-numbers-need-the-ability", Run = AbilityControlCases.LiveNumbersNeedTheAbility });
+            list.Add(new Case { Name = "stats.attack-range", Run = AbilityControlCases.AttackRange });
+            list.Add(new Case { Name = "stats.attack-range-owned", Run = AbilityControlCases.AttackRangeOwned });
+            list.Add(new Case { Name = "simulation.attack-range-stat", Run = AbilityControlCases.SimulationAttackRange });
+            list.Add(new Case { Name = "simulation.owned-damage", Run = AbilityControlCases.SimulationOwnedDamage });
+            list.Add(new Case { Name = "buffs.marks", Run = AbilityControlCases.BuffMarks });
+            list.Add(new Case { Name = "kit.buff-row-harmful", Run = AbilityControlCases.BuffRowHarmful });
+            list.Add(new Case { Name = "buffs.crowd-control-own", Run = AbilityControlCases.CrowdControlOwnBuff });
+            list.Add(new Case { Name = "buffs.crowd-control-strongest", Run = AbilityControlCases.CrowdControlStrongest });
+            list.Add(new Case { Name = "spellbuff.crowd-control-game-buff", Run = AbilityControlCases.CrowdControlGameBuff });
         }
 
         /// <summary>Adds the cases for the AI combat package: meeting, target choice, casting, pulling back, the leash and the lane walker.</summary>
@@ -1913,6 +1933,19 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fdf.child-makes-its-own", Run = FdfCases.ChildMakesItsOwn });
             list.Add(new Case { Name = "fdf.found-label-lets-clicks-through", Run = FdfCases.FoundLabelLetsClicksThrough });
             list.Add(new Case { Name = "fdf.ended-part-refused", Run = FdfCases.EndedPartRefused });
+        }
+
+        /// <summary>Adds the kit's stat cases, apart from AddFrames, which is near Lua's limit of 200 locals.</summary>
+        private static void AddKitStats(List<Case> list)
+        {
+            list.Add(new Case { Name = "kit.stat-bar-follows-stats", Run = KitStatCases.StatBarFollowsStats });
+            list.Add(new Case { Name = "kit.stat-bar-follows-one-thing", Run = KitStatCases.StatBarFollowsOneThing });
+            list.Add(new Case { Name = "kit.overlay-on-life", Run = KitStatCases.OverlayOnLife });
+            list.Add(new Case { Name = "kit.overlay-on-stat-bar", Run = KitStatCases.OverlayOnStatBar });
+            list.Add(new Case { Name = "kit.experience-bar", Run = KitStatCases.ExperienceBar });
+            list.Add(new Case { Name = "kit.stat-list-rows", Run = KitStatCases.StatListRows });
+            list.Add(new Case { Name = "kit.stat-list-tooltip", Run = KitStatCases.StatListTooltip });
+            list.Add(new Case { Name = "kit.unit-frame-stats", Run = KitStatCases.UnitFrameStats });
         }
 
         /// <summary>Adds the special effect cases.</summary>

@@ -19,6 +19,9 @@ namespace Moonwell
 
         internal Unit? unit;
 
+        /// <summary>Which buffs show: null all, true only the harmful, false only the others.</summary>
+        internal bool? harmfulOnly;
+
         internal bool ticking;
 
         /// <summary>Makes a row that shows no unit yet, to be added to the screen or to another frame.</summary>
@@ -35,8 +38,8 @@ namespace Moonwell
         [LocalSafe]
         public Unit? Unit => unit;
 
-        /// <summary>Shows a unit's buffs from now on; null shows none.</summary>
-        public void Show(Unit? shown)
+        /// <summary>Shows a unit's buffs from now on; null shows none. With harmful null every buff with an icon shows; true shows only the harmful ones (a buff class's IsHarmful, which a crowd control buff is too), false only the others.</summary>
+        public void Show(Unit? shown, bool? harmful = null)
         {
             if (HasEnded)
             {
@@ -44,6 +47,7 @@ namespace Moonwell
             }
 
             unit = shown;
+            harmfulOnly = harmful;
             Read();
             if (shown != null && !ticking)
             {
@@ -74,6 +78,11 @@ namespace Moonwell
                 for (var i = 0; i < buffs.Count; i++)
                 {
                     var buff = buffs[i];
+                    if (harmfulOnly != null && buff.IsHarmful != harmfulOnly.Value)
+                    {
+                        continue;
+                    }
+
                     var icon = buff.HudIcon.Length > 0 ? buff.HudIcon : ObjectTypes.BuffIconOf(buff);
                     if (icon.Length == 0)
                     {

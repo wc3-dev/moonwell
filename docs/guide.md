@@ -419,6 +419,18 @@ public sealed class KillCounter : UnitComponent
   `Strength` (set in the constructor) is the strongest of its applies still on: `OnApply` runs again whenever that
   changes, up or down, so a stronger aura takes over at once and a weaker one takes over again with no gap when it
   leaves. A buff class's own member named `Strength` hides it.
+- A buff class marks itself in its constructor, as it sets `Stacking`: `IsHarmful = true` for a buff that hurts the
+  unit it is on, and `IsCrowdControl = true` for a stun, a slow, a root or a silence. A crowd control buff reads
+  harmful too. A `BuffRow` can show only the harmful buffs or only the others.
+- `Stat.CrowdControlReduction`, in percent points from 0 to 100, shortens a crowd control buff on the unit that has
+  it. A buff put on by `Apply` lasts that percent shorter, worked out when its time starts: at its first apply, at a
+  refresh (the reduction then) and at each apply of a `Stacking.Strongest` buff, for the time of that apply. `Duration`
+  stays what the class set and `Remaining` tells the shortened time; a buff with no `Duration` stays until removed, and
+  at 100 a buff ends at once. A crowd control buff a spell lists is taken off early, as `Remove<T>()` takes it off, at
+  the spell's duration (the hero duration for a hero, the normal one for another unit, at the level of the spell that
+  gave it) shortened the same way, and the time starts again each time it is given again. When that duration cannot be
+  known (the buff has no `Source`, which has lost the ability, or the spell has no duration, as an aura's) the game ends
+  it as before.
 - The game's dispels (Dispel Magic, Abolish Magic, Purge) and spell immunity do not reach a buff put on by `Apply`: it
   goes on and its icon stays, on a spell-immune unit too. A dispel of the map's own removes it, with `unit.Remove<Burn>()`, which takes
   the first of a class, whoever added it.
@@ -741,6 +753,11 @@ resistance"), even when nothing has used it yet. The game's stats are units' onl
 | `MoveSpeed` | the unit's own, held to the map's least and most speed (150 to 400 unless its gameplay constants say otherwise) |
 | `LifeRegen`, `ManaRegen` | the unit's own a second, to which a hero's strength and intelligence add |
 | `Strength`, `Agility`, `Intelligence` | a hero's base, shown white; whole numbers |
+| `AttackRange` | the first weapon's range, in game units; the game takes a change only as an add, so Moonwell puts the difference between the range wanted and the range read |
+
+A unit picks no target past its acquisition range by itself, so when the attack range Moonwell puts is above the unit's
+acquisition range, the acquisition range is raised to it, and the unit's own is put back when the range falls under it
+again.
 
 A game stat never goes below 0. Until the map sets a base for it, its base is the game's number less Moonwell's part, read
 live, so what the game changes meanwhile (a tome) stays. `Get` reads what the game shows, without what items and the
@@ -953,7 +970,26 @@ hero.AbilityOf<Execute>().ResetCooldown();
   shown on the button, and 0 makes the spell ready, as `ResetCooldown()` does. `LiveCooldown` and `LiveManaCost` read
   and set the full cooldown and the cost at the ability's level now, for its next casts, where the declared fields
   `Cooldown` and `ManaCost` set every unit's in the constructor; a level gained later has its own. On a unit without
-  the ability they read 0 and setting does nothing; a development build reports it.
+  the ability they read 0 and setting does nothing; a development build reports it. `LiveRange` does the same for the
+  cast range, as the game's `ABILITY_RLF_CAST_RANGE`.
+- Each of the three keeps the ability's own number for each level as its base, read from the game the first time it is
+  needed. A number you set becomes that base, and a percent from a package (the cooldown reduction of
+  `Moonwell.Stats`) multiplies the base into what the game gets, so putting a percent again never compounds it. What
+  the three read is always what the game has, scaled.
+- `unit.LiveAbilities` is the abilities the unit has in the game now, not the ones its type starts with, as the same objects `AbilityOf` gives, in the game's
+  order. It is a new list each read, so a loop may add or remove abilities. Moonwell's own helper abilities are not in
+  it: the three bonus abilities the stats use, a buff's carrier and its game buff, and the game buffs a buff class of
+  the map watches. A carried item's ability counts, as `HasAbility` says. It makes the object of an ability not asked
+  for before, so it is not for `Local.For` code. A declared unit class's `Abilities` is the other thing: the abilities
+  its type starts with, in its object data. An ability the unit loses or gains through a morph, or another change the
+  game makes itself, is in the list at the next read, but no notice comes for it.
+
+  ```csharp
+  foreach (var ability in hero.LiveAbilities)
+  {
+      if (ability.LiveCooldown > 30f) { ability.LiveCooldown = 30f; }   // every ability the hero has, cooldowns capped at 30
+  }
+  ```
 
 ## Casting real spells
 
@@ -3162,13 +3198,29 @@ var party = Screen.Add(new SelectionList { Anchor = FramePoint.Left }, this, sho
 party.Follow(player);
 ```
 
-- `StatusBar` is a `Backing`, a `Bar` and a `Label` over both. `Follow(unit, Vital.Life)` or `Vital.Mana` follows a
-  unit, read 20 times a second on one timer for every part, and drawn again only when it changed; a dead or gone unit
-  reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life rounded up as the game shows it),
-  `Percent` or `None`.
-- `UnitFrame` has `Portrait`, `NameLabel`, `LevelLabel`, `Life`, `Mana`, `Buffs` (a `BuffRow` below the frame) and
-  `Art`, an empty image over the bars and under the texts for a map's own frame art. It is hidden until `Show(unit)`,
-  and `Show(null)` hides it again. The portrait is the unit's icon, each machine its own as the graphics mode can give
+- `StatusBar` is a `Backing`, a `Bar`, an `OverlayBar` and a `Label` over both. `Follow(unit, Vital.Life)`, `Vital.Mana`
+  or `Vital.Experience` follows a unit, read 20 times a second on one timer for every part, and drawn again only when it
+  changed; a dead or gone unit reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life
+  rounded up as the game shows it), `Percent` or `None`.
+- `Follow(unit, stat, outOf)` makes the bar any stat out of another stat or a number, as `bar.Follow(hero, Energy,
+  MaxEnergy)`; the text works as for life. It is drawn again at once when either stat changes on that unit, not by the
+  20-a-second poll. Following something else, or `null`, drops the old following.
+- `Overlay(stat)` draws a second layer over the bar for another stat of the followed unit, as a share of the bar's own
+  most and never wider than the bar: `frame.Life.Overlay(Stat.Barrier)` fills a quarter of a life bar of 800 for a
+  barrier of 200. `Overlay(null)` takes it off. `OverlayBar` is the layer's frame, in the theme's `OverlayBar` texture at
+  `OverlayAlpha`, which a map may restyle.
+- `Vital.Experience` is a hero's progress to its next level: the fill is `Hero.LevelProgress` and the `Values` text its
+  experience past its level's out of what the next level needs (`300 / 600`); at the top level the last step shows
+  full, and a unit that is no hero shows an empty bar.
+- `StatList` is rows of a stat's name and value for one unit: `list.Show(hero, Stat.Armor, Stat.CritChance)`. A whole
+  stat shows whole, another with at most one decimal, and a row is drawn again when its stat changes. A row's tooltip
+  lists the base, then each modifier that counts (`+5`, `+20%`, `x1.5`, `+10 after` for a late flat) with what holds it,
+  then those a stacking rule leaves out under "Left out:". A modifier is named by its holder: an item's carry by its
+  item's class, a buff or a component by its class. `Show(null)` or no stats empties it.
+- `UnitFrame` has `Portrait`, `NameLabel`, `LevelLabel`, `Life`, `Mana`, `Buffs` (a `BuffRow` below the frame), `Stats`
+  (a `StatList` below the buffs, empty until the map calls `frame.Stats.Show(...)`, and emptied when the frame shows
+  another unit) and `Art`, an empty image over the bars and under the texts for a map's own frame art. It is hidden
+  until `Show(unit)`, and `Show(null)` hides it again. The portrait is the unit's icon, each machine its own as the graphics mode can give
   another, so its `Texture` reads empty; the name is each machine's own, as `ShowNameOf` gives it. To put the game's
   moving portrait in it, `player.GameUi().Portrait.Fill(frame.Portrait)`.
 - `ActionButton` is an icon button with `Hotkey` (the key's text in the top right corner; it only shows the key, see
@@ -3193,7 +3245,9 @@ party.Follow(player);
   `Interrupt()` fills it in the theme's `Interrupted` texture, says `InterruptedText` and fades it out over half a
   second. A `Start` replaces a cast running or fading. It does not follow a unit's own game casts.
 - `BuffRow.Show(unit)` shows the unit's buffs that have an icon, in the order they came on, with the seconds left under
-  each (`2m` from a minute on, nothing for a buff with no expiry). The icon is the buff class's `HudIcon`, set in its
+  each (`2m` from a minute on, nothing for a buff with no expiry). `Show(unit, harmful: true)` shows only the buffs
+  marked `IsHarmful` (crowd control reads harmful too) and `harmful: false` only the others, for a row of buffs and
+  one of debuffs. The icon is the buff class's `HudIcon`, set in its
   constructor; with none, a declared buff class shows its object data's `Icon`, which the build writes into the map, as
   the game gives no buff's icon while it runs. A buff with neither is left out, and so are the game's own buffs that
   have no Moonwell class. Eight to a line unless `Columns` says otherwise.
