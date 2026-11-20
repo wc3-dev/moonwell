@@ -19,6 +19,9 @@ namespace Moonwell
         /// <summary>Set by an interactions package: given each unit, item and destructable the runtime takes in, after its OnCreated; null without one.</summary>
         internal static Action<Widget>? TakenIn;
 
+        /// <summary>Added by the packages that share the take-in with the interactions package (stats): each is given every unit, item and destructable the runtime takes in, after its OnCreated and after TakenIn ran, in the order added; empty without one.</summary>
+        private static readonly List<Action<Widget>> takenInListeners = new List<Action<Widget>>();
+
         /// <summary>Added by the packages that need it (interactions, areas): each is given every unit, item and destructable as it ends, before its OnLeave runs and while its place can still be read, so the interactions package has it out of its grid by its OnLeave (a gizmo, the package's own, leaves after). In the order added; empty without one.</summary>
         private static readonly List<Action<Widget>> endings = new List<Action<Widget>>();
 
@@ -111,6 +114,24 @@ namespace Moonwell
                     Errors.Report("Moonwell.Hooks", error);
                 }
             }
+
+            for (var i = 0; i < takenInListeners.Count; i++)
+            {
+                try
+                {
+                    takenInListeners[i](widget);
+                }
+                catch (Exception error)
+                {
+                    Errors.Report("Moonwell.Hooks", error);
+                }
+            }
+        }
+
+        /// <summary>Adds a listener to the take-in of every unit, item and destructable, beside the interactions package's own hook, which it does not replace. Runtime.Reset removes them all.</summary>
+        internal static void AddTakenIn(Action<Widget> listener)
+        {
+            takenInListeners.Add(listener);
         }
 
         /// <summary>The rank of the interactions package's ending listener.</summary>
@@ -155,6 +176,7 @@ namespace Moonwell
             masks2.Clear();
             Seen = null;
             TakenIn = null;
+            takenInListeners.Clear();
             endings.Clear();
             endingRanks.Clear();
         }

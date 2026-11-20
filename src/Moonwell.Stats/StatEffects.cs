@@ -4,7 +4,8 @@ namespace Moonwell
 {
     /// <summary>
     /// The one game component of the stats package: it sees every hit and heal, after the reactions of the units and their components, and
-    /// does what the ready-made stats say. A hit or heal the package made itself, or one that started at 0, gets none of it.
+    /// does what the ready-made stats say. A hit or heal the package made itself, or one that started at 0, gets none of it. It also hears each
+    /// stat change, which puts the ability stats and the cast speed, and keeps who has a gain to apply at a kill.
     /// </summary>
     internal sealed class StatEffects : GameComponent, IDamageWatch, IHealWatch
     {
@@ -12,6 +13,92 @@ namespace Moonwell
 
         /// <summary>How often a staggered hit's share is dealt, in seconds.</summary>
         internal const float StaggerPeriod = 0.5f;
+
+        /// <summary>The ability stats and cast speed, put when a stat changes or a unit's abilities do.</summary>
+        internal readonly AbilityStats Abilities = new AbilityStats();
+
+        /// <summary>The experience and gold added at a kill.</summary>
+        internal readonly Gains Gains = new Gains();
+
+        /// <summary>A unit's stat changed: the three ability stats put its abilities' scales, cast speed its cast point and backswing, and a gain is kept for the kill.</summary>
+        public override void OnUnitStatChanged(Unit unit, Stat stat, float before)
+        {
+            if (stat == Stat.CooldownReduction || stat == Stat.ManaCostReduction || stat == Stat.CastRange)
+            {
+                Abilities.PutScales(unit);
+            }
+            else if (stat == Stat.CastSpeed)
+            {
+                Abilities.PutCastSpeed(unit);
+            }
+            else if (stat == Stat.ExperienceGain || stat == Stat.GoldBonus)
+            {
+                Gains.Changed(unit, stat, unit.Get(stat));
+            }
+        }
+
+        /// <summary>A player's stat changed: a gain is kept for the kill.</summary>
+        public override void OnPlayerStatChanged(Player player, Stat stat, float before)
+        {
+            if (stat == Stat.ExperienceGain || stat == Stat.GoldBonus)
+            {
+                Gains.Changed(player, stat, player.Get(stat));
+            }
+        }
+
+        /// <summary>A unit comes in: a stat of the package that has a base for its class or type, which no change announces, takes effect as the unit's own change would. Nothing is looked up while none of the six has a type base.</summary>
+        internal void TakenIn(Widget widget)
+        {
+            var unit = widget as Unit;
+            if (unit == null || !(Stat.CooldownReduction.HasTypeBase || Stat.ManaCostReduction.HasTypeBase || Stat.CastRange.HasTypeBase || Stat.CastSpeed.HasTypeBase || Stat.ExperienceGain.HasTypeBase || Stat.GoldBonus.HasTypeBase))
+            {
+                return;
+            }
+
+            if (Typed(unit, Stat.CooldownReduction) || Typed(unit, Stat.ManaCostReduction) || Typed(unit, Stat.CastRange))
+            {
+                Abilities.PutScales(unit);
+            }
+
+            if (Typed(unit, Stat.CastSpeed))
+            {
+                Abilities.PutCastSpeed(unit);
+            }
+
+            if (Typed(unit, Stat.ExperienceGain))
+            {
+                Gains.Changed(unit, Stat.ExperienceGain, Reading.Of(unit, Stat.ExperienceGain));
+            }
+
+            if (Typed(unit, Stat.GoldBonus))
+            {
+                Gains.Changed(unit, Stat.GoldBonus, Reading.Of(unit, Stat.GoldBonus));
+            }
+        }
+
+        private static bool Typed(Unit unit, Stat stat)
+        {
+            return stat.HasTypeBase && stat.TypeBaseOf(unit, out var ignored);
+        }
+
+        /// <summary>The death of a unit, heard before any reaction of Moonwell's: the experience and bounty the game gave are added to.</summary>
+        internal void Died(unit dying)
+        {
+            try
+            {
+                Gains.Died(dying);
+            }
+            catch (Exception error)
+            {
+                Errors.Report(this, ".Died", error);
+            }
+        }
+
+        /// <summary>The lethal stage: the experience and gold the game is about to give are noted.</summary>
+        public void OnUnitDying(Hit hit)
+        {
+            Gains.Dying(hit);
+        }
 
         /// <summary>Before armor: the miss and the parry, the powers, the crit and the armor penetration.</summary>
         public void OnUnitTaking(Hit hit)
@@ -132,6 +219,7 @@ namespace Moonwell
         /// <summary>Landed: the crit's text, life steal and mana leech.</summary>
         public void OnUnitHurt(Hit hit)
         {
+            Gains.Landed(hit);
             if (Skipped(hit) || hit.Amount <= 0.0f)
             {
                 return;

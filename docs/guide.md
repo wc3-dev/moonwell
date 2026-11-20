@@ -1009,7 +1009,10 @@ seed fixes them. A chance of 0 never happens and 100 always does.
 | `Stagger`, `StaggerTime` | That percent of each hit taken is dealt instead over the seconds, in even ticks every half second, the last taking the rest | `Stagger` 0 to 100; `StaggerTime` base 4, 0 up |
 | `LifeSteal`, `ManaLeech` | That percent of an attack's landed amount heals its source, or is given to it as mana | 0 up |
 | `HealingBonus` | That percent more on the heals the unit gives | -100 up |
-| `CooldownReduction`, `ManaCostReduction`, `CastRange`, `CastSpeed`, `ExperienceGain`, `GoldBonus` | The package's too; until their effects are in, bare numbers | the first two 0 to 100; `CastRange` -100 up; `CastSpeed` -90 up; the last two -100 up |
+| `CooldownReduction`, `ManaCostReduction` | That percent off the cooldown and the mana cost of every ability the unit has, kept through levels and new abilities; a mana cost is a whole number, rounded half up | 0 to 100 |
+| `CastRange` | That percent more cast range on every ability of the unit: 50 is half as far again, -50 half as far | -100 up |
+| `CastSpeed` | The unit's cast point and backswing are its own numbers divided by 1 + cast speed / 100: 100 halves them, -50 doubles them; its own come back exactly at 0 | -90 up |
+| `ExperienceGain`, `GoldBonus` | At a kill, Moonwell adds that percent of the experience (to each hero) or the bounty (to the killer's player) the game gave; a unit's and its player's add up | -100 up |
 | `CrowdControlReduction` | A crowd control buff put on the unit lasts that percent shorter ([Components and reactions](#components-and-reactions)); it acts in core, with no package | 0 to 100 |
 | `LootBonus`, `DropRate`, `ItemLevel` | Bare numbers in core: nothing in Moonwell reads them | none, `ItemLevel` whole |
 
@@ -1040,6 +1043,25 @@ so `OnStatChanged` and a bar follow. Do not set that base yourself.
 The package shows texts, in the game's red: "miss" and "parry" where the game shows its own miss, "block" when a block
 leaves nothing, and a crit's landed amount as a whole number with "!" over the target when the hit lands.
 `StatsSystem.ShowTexts = false` turns all of them off; a miss still misses, with no text (`hit.Miss("")`).
+
+The ability stats and cast speed take effect from the ability's next cast: a cooldown that is already running is not
+touched (`ResetCooldown` and `StartCooldown` stay yours). They work on each ability's own number, so setting a stat again
+never compounds, and a number the map sets itself (`ability.LiveCooldown = 12`, `LiveManaCost`, `LiveRange`) becomes
+that base, which the stat then works on. Moonwell puts them when one of the stats changes and when the unit's abilities
+or an ability's level change through Moonwell (`AddAbility`, `RemoveAbility`, `Level`, a hero learning a skill). An
+ability the game gives or takes by itself, in a morph, is scaled at the unit's next such change. A unit that never had
+one of these stats set is never touched. A base set for a type (`Stat.CastSpeed.SetBase<Blademaster>(30)`) acts on each unit as it
+comes in, for all six of these stats; units already in the game get it at their next change of the stat.
+
+Experience and gold are added by Moonwell at the kill, as the game's XP handicap (`SetPlayerHandicapXP`) does nothing
+for kills. The game gives its experience and bounty when a hit kills, before the death event; at the start of that death
+event, before any `OnKill` or `OnUnitDied` of the map runs, Moonwell adds the percent of what the game gave each hero,
+and of the bounty the killer's player got, as a whole number rounded half up, with each kill rounded on its own. A
+negative percent takes away, down to all of it at -100. A hero's `ExperienceGain` adds to its player's, and the killing
+unit's `GoldBonus` to its player's. It acts on kills made by a hit that goes through the damage package (the game's
+attacks, `Damage` from code), not on `Kill()` or any death no hit made. Experience or gold the map gives itself
+in `OnKill` is not multiplied, and the game's own bonuses (a tome, a bounty item) stay outside: the game sends no event
+for them.
 
 The limits are the game's. Its own Evasion (`ACes`), crit and bash send no event, so they stay outside the stats, and a
 missed hit still gets a poison or a bash from the game: Moonwell cannot stop what the game puts on a hit. The game's own
