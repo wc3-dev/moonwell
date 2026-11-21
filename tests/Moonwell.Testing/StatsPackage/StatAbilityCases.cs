@@ -198,5 +198,48 @@ namespace Moonwell.Testing
             unit.SetBase(Stat.CastSpeed, 100.0f);
             Expect.Near(0.25f, world.CastPointOf(unit.Handle), "and it can go again");
         }
+
+        private static Stat? castBoost;
+
+        private static Stat? rangeCap;
+
+        /// <summary>
+        /// A unit made after a stat of the package got a formula or a cap that gives it a number from the start has it put on its abilities as it comes in, though no type has a base for any of the six
+        /// stats: a cast speed from a formula, a cooldown reduction from a formula, a cast range held down by a cap. A unit the formula gives nothing is untouched, with no sheet of stats.
+        /// </summary>
+        public static void FormulaOrCapFromTheStart(FakeWorld world)
+        {
+            StatsSystem.Install();
+            if (castBoost == null)
+            {
+                castBoost = new Stat("Review cast boost");
+                Stat.CastSpeed.From(castBoost, 1.0f);
+                Stat.CooldownReduction.From(castBoost, 0.2f);
+                rangeCap = new Stat("Review range cap", 1000.0f);
+                Stat.CastRange.CappedBy(rangeCap);
+            }
+
+            var type = ObjectTypes.FourCC("h0fm");
+            castBoost.SetBase(type, 100.0f);
+            rangeCap!.SetBase(type, -50.0f);
+            var handle = world.NewUnit(type, slot: 0);
+            world.SetCastPoint(handle, 0.5f);
+            world.SetCastBackswing(handle, 1.0f);
+            world.SetLevelCount(Slow, 3);
+            world.SetAbilityLevel(handle, Slow, 1);
+            world.SetAbilityCooldown(handle, Slow, 0, 10.0f);
+            world.SetAbilityRange(handle, Slow, 0, 600.0f);
+            var unit = Unit.Of(handle)!;
+            Expect.Near(0.25f, world.CastPointOf(handle), "the cast point halved by a cast speed of 100 from a formula");
+            Expect.Near(0.5f, world.CastBackswingOf(handle), "and the backswing");
+            Expect.Near(8.0f, unit.AbilityOf(Slow).LiveCooldown, "20 percent off 10 from a formula");
+            Expect.Near(300.0f, unit.AbilityOf(Slow).LiveRange, "a cast range of -50 from a cap: half of 600");
+            Expect.True(unit.stats == null, "with no sheet of stats");
+            var plain = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo"), slot: 0))!;
+            world.SetAbilityLevel(plain.Handle, Slow, 1);
+            world.SetAbilityCooldown(plain.Handle, Slow, 0, 10.0f);
+            Expect.Near(10.0f, plain.AbilityOf(Slow).LiveCooldown, "a unit the formula gives nothing is untouched");
+            Expect.True(plain.stats == null, "with no sheet of stats");
+        }
     }
 }

@@ -31,6 +31,7 @@ namespace Moonwell
             // A hero learning a skill, by the game's own button too, has its scales put at once: no class of the map need react to it.
             Events.Need(Hook.OnHeroSkillLearned);
             Events.DeathListener = effects.Died;
+            Pipeline.KillListener = effects.Killing;
         }
     }
 }

@@ -24,10 +24,10 @@ namespace Moonwell
         }
 
         /// <summary>The unit's stats as a list for a [Saved] member. A game stat's base is kept only when the unit has one of its own: Moonwell owns that stat on it.</summary>
-        public List<float> Save(Unit unit) => Write(unit, unit.Stats);
+        public List<float> Save(Unit unit) => Write(unit, unit.stats);
 
         /// <summary>The player's stats as a list for a [Saved] member. A game stat is a unit's: it takes six numbers of nothing.</summary>
-        public List<float> Save(Player player) => Write(player, player.Stats);
+        public List<float> Save(Player player) => Write(player, player.stats);
 
         /// <summary>Puts a list Save gave back on the unit: each base it had is set, and the modifiers the unit holds itself come back as one modifier for each stat, which a second restore replaces, never adding to. A list that does not fit the set restores what fits and is reported in a development build; a null list does nothing. What the list does not mention is left as it is.</summary>
         public void Restore(Unit unit, List<float> saved) => Put(unit, unit.Stats, saved);
@@ -35,7 +35,7 @@ namespace Moonwell
         /// <summary>Puts a list Save gave back on the player, as Restore does for a unit.</summary>
         public void Restore(Player player, List<float> saved) => Put(player, player.Stats, saved);
 
-        private List<float> Write(Actor holder, StatSheet sheet)
+        private List<float> Write(Actor holder, StatSheet? sheet)
         {
             var saved = new List<float>();
             for (var i = 0; i < stats.Length; i++)
@@ -48,7 +48,7 @@ namespace Moonwell
                 var percent = 0.0f;
                 var times = 1.0f;
                 var late = 0.0f;
-                if (kept)
+                if (kept && sheet != null)
                 {
                     has = sheet.OwnBase(stat, out value);
                     var held = sheet.Modifiers(stat);

@@ -626,6 +626,97 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.Texts.Count, "with no text");
             StatsSystem.ShowTexts = true;
         }
+
+        /// <summary>What the gold bonus formula adds, in percent points, for every holder; 0 unless a case sets it.</summary>
+        internal static float GoldBoost;
+
+        private static Stat? goldBoostSource;
+
+        /// <summary>Gives Stat.GoldBonus a formula that adds GoldBoost, once for the whole run: the stat is static, so it keeps the formula for the cases after.</summary>
+        internal static void GoldBoostFormula()
+        {
+            if (goldBoostSource == null)
+            {
+                goldBoostSource = new Stat("Review gold boost source");
+                Stat.GoldBonus.Formula(read => GoldBoost, goldBoostSource);
+            }
+        }
+
+        /// <summary>A player with no sheet of stats is read as Get reads it: its formulas and its cap count, as a unit's do, and the read makes no sheet for the player or the unit.</summary>
+        public static void ReadingCountsFormulasAndCaps(FakeWorld world)
+        {
+            Arena(world, out var source, out var target);
+            GoldBoostFormula();
+            var capped = new Stat("Review plain player cap", 80.0f).CappedBy(new Stat("Review plain cap", 30.0f));
+            GoldBoost = 40.0f;
+            try
+            {
+                Expect.Near(40.0f, Reading.Of(Player.Two, Stat.GoldBonus), "a player's formula counts");
+                Expect.Near(40.0f, Reading.Of(target, Stat.GoldBonus), "and a unit's");
+                Expect.Near(30.0f, Reading.Of(Player.Two, capped), "a player's cap counts");
+                Expect.Near(30.0f, Reading.Of(target, capped), "and a unit's");
+                Expect.Near(Player.Two.Get(capped), Reading.Of(Player.Two, capped), "the same as Get");
+                Expect.True(Player.Two.stats == null && target.stats == null, "no sheet was made for either");
+            }
+            finally
+            {
+                GoldBoost = 0.0f;
+            }
+        }
+
+        /// <summary>A barrier given with a holder that has ended, or none, is given back ended with nothing left, publishes nothing, and is reported in a development build.</summary>
+        public static void BarrierOfEndedHolder(FakeWorld world)
+        {
+            Arena(world, out var source, out var target);
+            var log = target.Add(new StatChangeLog());
+            var holder = Game.Instance.Add(new StatHolder());
+            holder.End();
+            var before = world.Printed.Count;
+            var ended = target.AddBarrier(50.0f, holder);
+            Expect.True(ended.HasEnded, "it has ended");
+            Expect.Near(0.0f, ended.Left, "with nothing left");
+            Expect.Near(0.0f, target.Get(Stat.Barrier), "Stat.Barrier was never raised");
+            Expect.Equal(0, log.Lines.Count, "no change reaction ran");
+            Expect.True(target.Get<BarrierBook>() == null, "no book of barriers was made");
+#if DEBUG
+            Expect.True(world.Printed.Count > before, "and it is reported in a development build");
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports nothing");
+#endif
+            var none = target.AddBarrier(50.0f, null!);
+            Expect.True(none.HasEnded && none.Left == 0.0f, "no holder at all is the same");
+            Expect.Near(0.0f, target.Get(Stat.Barrier), "and raises nothing");
+            Spell(source, target);
+            Expect.Near(100.0f, Lost(target), "a hit is not absorbed");
+            var live = Game.Instance.Add(new StatHolder());
+            target.AddBarrier(50.0f, live);
+            Expect.Near(50.0f, target.Get(Stat.Barrier), "a live holder still gives one");
+        }
+
+        /// <summary>Parry's front half takes the attacker at exactly 90 degrees on either side as in front, for each of the four compass facings.</summary>
+        public static void ParryAtTheLimit(FakeWorld world)
+        {
+            Arena(world, out var source, out var target);
+            target.SetBase(Stat.Parry, 100.0f);
+            target.MoveTo(0.0f, 0.0f);
+            var lost = 0.0f;
+            for (var facing = 0; facing < 360; facing += 90)
+            {
+                target.FaceNow((float)facing);
+                for (var side = -90; side <= 90; side += 180)
+                {
+                    var angle = (facing + side) * 0.017453292f;
+                    source.MoveTo((float)System.Math.Round(System.Math.Cos(angle)) * 100.0f, (float)System.Math.Round(System.Math.Sin(angle)) * 100.0f);
+                    Swing(source, target);
+                    Expect.Near(lost, Lost(target), "a melee attack at " + (side > 0 ? "+" : "-") + "90 degrees of the facing " + facing + " is parried");
+                }
+            }
+
+            target.FaceNow(0.0f);
+            source.MoveTo(-100.0f, 0.0f);
+            Swing(source, target);
+            Expect.Near(100.0f, Lost(target), "from directly behind it still lands");
+        }
     }
 
     /// <summary>A unit component that adds up the heals its unit gives, to show what the package's own heals do.</summary>
