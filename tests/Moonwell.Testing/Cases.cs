@@ -31,6 +31,7 @@ namespace Moonwell.Testing
             AddLast(list);
             AddHitsAndHeals(list);
             AddStatsPackage(list);
+            AddStatsReview(list);
             AddLiveDestructables(list);
             AddCompiler(list);
             AddMaths(list);
@@ -2116,6 +2117,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats.level-up", Run = StatCases.LevelUp });
             list.Add(new Case { Name = "stats.attribute-follows", Run = StatCases.AttributeFollows });
             list.Add(new Case { Name = "stats.keeps-percent", Run = StatCases.KeepsPercent });
+            list.Add(new Case { Name = "stats.owned-most-through-level", Run = StatCases.OwnedMostThroughLevel });
             list.Add(new Case { Name = "stats.named-ready", Run = StatCases.NamedReady });
         }
 
@@ -2249,6 +2251,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "damage-package.miss-readable-later", Run = HitMarkCases.MissReadableLater });
             list.Add(new Case { Name = "damage-package.miss-after-armor-reported", Run = HitMarkCases.MissAfterArmorReported });
             list.Add(new Case { Name = "damage-package.miss-text", Run = HitMarkCases.MissText });
+            list.Add(new Case { Name = "damage-package.miss-text-over-the-source", Run = HitMarkCases.MissTextOverTheSource });
             list.Add(new Case { Name = "damage-package.marks", Run = HitMarkCases.Marks });
             list.Add(new Case { Name = "damage-package.area-and-power", Run = HitMarkCases.AreaAndPower });
             list.Add(new Case { Name = "damage-package.heal-adds-life", Run = HealCases.HealAddsLife });
@@ -2288,6 +2291,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats-package.healing-bonus-and-crit", Run = StatEffectCases.HealingBonusAndCrit });
             list.Add(new Case { Name = "stats-package.zero-hit-gets-nothing", Run = StatEffectCases.ZeroHitGetsNothing });
             list.Add(new Case { Name = "stats-package.texts-off", Run = StatEffectCases.TextsOff });
+            list.Add(new Case { Name = "stats-package.texts-where", Run = StatEffectCases.TextsWhere });
             list.Add(new Case { Name = "stats-package.fight-evasion-halves-the-hits", Run = StatFightCases.EvasionHalvesTheHits });
             list.Add(new Case { Name = "stats-package.fight-crit-build-kills-sooner", Run = StatFightCases.CritBuildKillsSooner });
             list.Add(new Case { Name = "stats-package.fight-barrier-lengthens-the-fight", Run = StatFightCases.BarrierLengthensTheFight });
@@ -2297,6 +2301,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats-package.ability-new-abilities-and-levels", Run = StatAbilityCases.NewAbilitiesAndLevels });
             list.Add(new Case { Name = "stats-package.ability-unit-without-stats-untouched", Run = StatAbilityCases.UnitWithoutStatsUntouched });
             list.Add(new Case { Name = "stats-package.ability-cast-speed", Run = StatAbilityCases.CastSpeed });
+            list.Add(new Case { Name = "stats-package.ability-skill-learned-later", Run = StatAbilityCases.SkillLearnedLater });
             list.Add(new Case { Name = "stats-package.gain-experience", Run = StatGainCases.ExperienceGain });
             list.Add(new Case { Name = "stats-package.gain-gold-bonus", Run = StatGainCases.GoldBonus });
             list.Add(new Case { Name = "stats-package.gain-unit-and-player-add", Run = StatGainCases.UnitAndPlayerAdd });
@@ -2309,6 +2314,25 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "stats-package.gain-typed-gold-bonus", Run = StatGainCases.TypedGoldBonus });
             list.Add(new Case { Name = "stats-package.gain-no-type-base-costs-nothing", Run = StatGainCases.NoTypeBaseCostsNothing });
             list.Add(new Case { Name = "stats-package.ability-typed-bases", Run = StatAbilityCases.TypedBases });
+        }
+
+        /// <summary>Adds the cases for what an outside review found in the stats (its own method: the others are near Lua's 200 locals).</summary>
+        private static void AddStatsReview(List<Case> list)
+        {
+            list.Add(new Case { Name = "stats.review-whole-rounds-exactly", Run = StatReviewCases.WholeRoundsExactly });
+            list.Add(new Case { Name = "stats.review-reads-make-nothing", Run = StatReviewCases.ReadsMakeNothing });
+            list.Add(new Case { Name = "stats.review-bare-reads-match-a-sheet", Run = StatReviewCases.BareReadsMatchASheet });
+            list.Add(new Case { Name = "stats.review-read-first-or-not", Run = StatReviewCases.ReadFirstOrNot });
+            list.Add(new Case { Name = "stats.review-capped-by-replaced", Run = StatReviewCases.CappedByReplaced });
+            list.Add(new Case { Name = "stats.review-announced-from-the-last-total", Run = StatReviewCases.AnnouncedFromTheLastTotal });
+            list.Add(new Case { Name = "stats.review-attributes-are-whole", Run = StatReviewCases.AttributesAreWhole });
+            list.Add(new Case { Name = "stats.review-game-numbers-as-the-game-has-them", Run = StatReviewCases.GameNumbersAsTheGameHasThem });
+            list.Add(new Case { Name = "stats-package.review-late-gift-is-not-multiplied", Run = StatGainCases.LateGiftIsNotMultiplied });
+            list.Add(new Case { Name = "stats-package.review-player-formula-counts-at-a-kill", Run = StatGainCases.PlayerFormulaCountsAtAKill });
+            list.Add(new Case { Name = "stats-package.review-reading-counts-formulas-and-caps", Run = StatEffectCases.ReadingCountsFormulasAndCaps });
+            list.Add(new Case { Name = "stats-package.review-barrier-of-ended-holder", Run = StatEffectCases.BarrierOfEndedHolder });
+            list.Add(new Case { Name = "stats-package.review-parry-at-the-limit", Run = StatEffectCases.ParryAtTheLimit });
+            list.Add(new Case { Name = "stats-package.review-formula-or-cap-from-the-start", Run = StatAbilityCases.FormulaOrCapFromTheStart });
         }
 
         /// <summary>Adds the item, destructable, damage, ability and buff cases, and the rest (Lua allows 200 locals in a function, and each case made here is one).</summary>

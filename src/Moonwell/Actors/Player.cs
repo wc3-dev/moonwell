@@ -857,17 +857,17 @@ namespace Moonwell
         /// <summary>Adds percents, multipliers and a late flat amount to a stat while a scope holds it (decision 385), and returns the modifier: Modify(Stat.GoldBonus, percent: 20, heldBy: this). The stages are (base + flat) × (1 + the percents added up / 100) × each multiplier + the late flats added up, held to the stat's least and most. Group, stacking and source are as for the flat Modify.</summary>
         public Modifier Modify(Stat stat, Scope heldBy, float percent = 0.0f, float times = 1.0f, float late = 0.0f, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, 0.0f, percent, times, late, heldBy, group, stacking, source, "Player.Modify");
 
-        /// <summary>A stat's value now, by the four stages and held to the stat's limits. A player takes the map's own stats only: a game stat is refused, in every build.</summary>
+        /// <summary>A stat's value now, by the four stages and held to the stat's limits. A player takes the map's own stats only: a game stat is refused, in every build. Reading makes nothing: a player that never had a stat set keeps no sheet of them and nothing is made for the read, so it may be done inside Local.For.</summary>
         [LocalSafe]
-        public float Get(Stat stat) => Stats.Get(stat);
+        public float Get(Stat stat) => stats != null ? stats.Get(stat) : StatSheet.BareGet(this, stat);
 
         /// <summary>A stat's base, with what its From and Formula give: the player's own (SetBase), else the stat's own base. A game stat is 0: a player takes the map's own stats only.</summary>
         [LocalSafe]
-        public float GetBase(Stat stat) => Stats.GetBase(stat);
+        public float GetBase(Stat stat) => stats != null ? stats.GetBase(stat) : StatSheet.BareGetBase(this, stat);
 
         /// <summary>The total less the base: what the modifiers add, as a card's "bonus armor". A game stat's is Moonwell's part.</summary>
         [LocalSafe]
-        public float GetBonus(Stat stat) => Stats.Get(stat) - Stats.GetBase(stat);
+        public float GetBonus(Stat stat) => stats != null ? stats.Get(stat) - stats.GetBase(stat) : StatSheet.BareGet(this, stat) - StatSheet.BareGetBase(this, stat);
 
         /// <summary>Sets the base of a map's own stat on this player, which the modifiers then work on. A game stat is refused and reported, in every build.</summary>
         public void SetBase(Stat stat, float value) => Stats.SetBase(stat, value, "Player.SetBase");
@@ -877,7 +877,7 @@ namespace Moonwell
 
         /// <summary>The modifiers on a stat, a copy in the order they were made, so a loop may end them. Those a stacking rule leaves out are in it; Counts says which.</summary>
         [LocalSafe]
-        public IReadOnlyList<Modifier> Modifiers(Stat stat) => Stats.Modifiers(stat);
+        public IReadOnlyList<Modifier> Modifiers(Stat stat) => stats != null ? stats.Modifiers(stat) : StatSheet.NoModifiers;
 
         internal StatSheet? stats;
 

@@ -747,12 +747,16 @@ var rage = hero.Get(Stats.Rage);
 
 A map's own stat is only a number the map reads, on units and players. `Least` and `Most` can be set afterwards, so a
 map can move a ready-made stat's limits, and `energy.CappedBy(maxEnergy)` makes another stat's total on the same unit
-the most:
+the most. A second `CappedBy` replaces the first: the stat follows the new cap only.
 
 ```csharp
 Stat.CooldownReduction.Most = 40;
 Stats.Energy.CappedBy(Stats.MaxEnergy);
 ```
+
+Reading a stat (`Get`, `GetBase`, `GetBonus`, `Modifiers`) makes and stores nothing, so it may be done inside `Local.For`: a
+unit or player that never had a stat set or a modifier added keeps none, and reads the same whether or not something read it
+first.
 
 `Stat.Named("Rage")` finds the stat made with a name, the first when two share one (a second is reported in development
 builds). It finds a ready-made or game stat by its display name too ("Life", "Crit chance", "Fire resistance"), even
@@ -808,7 +812,9 @@ component or a player component has `OnUnitStatChanged(unit, stat, before)` for 
 for that player's units) and `OnPlayerStatChanged(player, stat, before)` for a player's own. It runs once for each
 change of a total, after the game has the new number, with `before` the old total, for the unit, its components, the
 game's components, then the unit's player's. It does not run when the total did not change: a modifier a stacking rule
-leaves out, a value a limit holds. A reaction may change stats; more than 16 nested changes in one instant are reported
+leaves out, a value a limit holds. A change made inside a reaction to another is announced from the total last announced, so a
+listener that adds up `Get(stat) - before` counts each change once, and a stat already announced at its present total is not
+announced again. A reaction may change stats; more than 16 nested changes in one instant are reported
 once and the innermost is not announced (the game drops deeper chains without a word). Nothing is worked out for it
 until some class overrides one.
 
@@ -841,12 +847,12 @@ The game's stats are units' only, and change the unit in the game:
 
 | Stat | |
 |---|---|
-| `Damage`, `Armor` | the card's green bonus, red when negative; whole numbers; a percent of damage is of the middle of the white damage |
+| `Damage`, `Armor` | the card's green bonus, red when negative; whole numbers; a percent of damage is of the middle of the white damage; for a stat Moonwell owns, `Get` is the number the game has: the white number and a whole green bonus on it |
 | `AttackSpeed` | percent points, as an item's "+15% attack speed": no base |
-| `MaxLife`, `MaxMana` | the unit's own most, shown white; the most life never goes below 1 |
+| `MaxLife`, `MaxMana` | the unit's own most, shown white; whole numbers, and `Get` gives the whole number the game has; the most life never goes below 1 |
 | `MoveSpeed` | the unit's own, held to the map's least and most speed (150 to 400 unless its gameplay constants say otherwise) |
 | `LifeRegen`, `ManaRegen` | the unit's own a second, to which a hero's strength and intelligence add |
-| `Strength`, `Agility`, `Intelligence` | a hero's base, shown white; whole numbers |
+| `Strength`, `Agility`, `Intelligence` | a hero's base, shown white; whole numbers, in `Get` too: a base of 10.5 reads 11, as the hero has |
 | `AttackRange` | the first weapon's range, in game units; the game takes a change only as an add, so Moonwell puts the difference between the range wanted and the range read |
 
 A unit picks no target past its acquisition range by itself, so when the attack range Moonwell puts is above the unit's
@@ -997,7 +1003,7 @@ seed fixes them. A chance of 0 never happens and 100 always does.
 |---|---|---|
 | `CritChance`, `CritDamage` | A hit or a heal the unit gives rolls the chance; a crit is the amount times crit damage over 100, and `IsCrit` is set. Not the hits the package deals itself | `CritChance` 0 to 100; `CritDamage` base 200, 0 up |
 | `HitChance`, `Evasion` | An attack misses at 100 - the attacker's hit chance + the target's evasion, held to 0 to 100. A spell never misses | `HitChance` base 100, 0 up; `Evasion` 0 to 100 |
-| `Parry` | A melee attack from the front half of the target (within 90 degrees of where it faces) is parried, a miss with the text "parry" | 0 to 100 |
+| `Parry` | A melee attack from the front half of the target (within 90 degrees of where it faces, an attacker at exactly 90 degrees on either side included) is parried, a miss with the text "parry" | 0 to 100 |
 | `BlockChance`, `BlockAmount` | An attack is blocked at the chance, after armor, and loses up to the amount, written to `hit.Blocked`; the text "block" shows when nothing is left | `BlockChance` 0 to 100; `BlockAmount` 0 up |
 | `AttackPower` | Added to each attack's amount, before armor | no limits |
 | `SpellPower` | Added to each spell hit's amount, times the hit's `power:` (1 unless the caller says) | no limits |
@@ -1038,11 +1044,51 @@ of the effects, so nothing feeds itself. A hit that started at 0 gets none eithe
 with the scope that holds it, after its seconds (none, by default), or when nothing is left. A hit's barriers take what is
 left after armor and block, the one ending soonest first and one with no end last, and `hit.Absorbed` says how much.
 `Stat.Barrier` on the unit reads the total its barriers have left: the package keeps the unit's base of it equal to that,
-so `OnStatChanged` and a bar follow. Do not set that base yourself.
+so `OnStatChanged` and a bar follow. Do not set that base yourself. A holder that has ended gives a barrier that has ended, with
+nothing raised and no change reaction, reported in development builds.
 
-The package shows texts, in the game's red: "miss" and "parry" where the game shows its own miss, "block" when a block
-leaves nothing, and a crit's landed amount as a whole number with "!" over the target when the hit lands.
-`StatsSystem.ShowTexts = false` turns all of them off; a miss still misses, with no text (`hit.Miss("")`).
+The package shows texts, in the game's red. "miss", "parry" and a crit's landed amount (a whole number with "!", shown
+when the hit lands) start over the attacker, a little right of it and low, where the game starts its own miss and crit
+text; a hit with no source shows them over the target. "block", shown when a block leaves nothing, starts over the target
+the same way, as the game has no text for it. The place is a first reading from screenshots, which a game check will
+set. `StatsSystem.ShowTexts = false` turns all of them off at once; a miss still misses, with no text (`hit.Miss("")`).
+That one switch is all there is: a map that wants other words, places or colours turns the texts off and draws its own
+from a game component that reads the hit:
+
+```csharp
+public sealed class Texts : GameComponent, IDamageWatch
+{
+    public void OnUnitTaking(Hit hit)                    // before armor: Missed is set by now
+    {
+        if (hit.Missed)
+        {
+            hit.Target.PopText("Missed", Color.White);
+        }
+    }
+
+    public void OnUnitHurt(Hit hit)                      // landed: the crit and the block are written
+    {
+        if (hit.IsCrit)
+        {
+            hit.Target.PopText((int)hit.Amount + "!", Color.Orange);
+        }
+        else if (hit.Blocked > 0f)
+        {
+            hit.Target.PopText("-" + (int)hit.Blocked, Color.Gray);
+        }
+    }
+}
+
+// in the map's Settings:  Components.Add(new Texts());   and, once the game has started:  StatsSystem.ShowTexts = false;
+```
+
+The order matters for `Missed`: the package makes the miss in the before-armor stage, as a game component, and game
+components run in the order they were added. The package is added first, in the build's start-up step, before the map's
+own `Components`, so a component listed in `Components` or added with `Game.Instance.Add` comes after it and reads
+`Missed` already set. A component added before the package, or a unit's own `OnTaking`, runs earlier and sees
+`Missed` false. What the example cannot tell: a parry is a miss too, so `Missed` is true for both and nothing on the hit
+says which it was. A missed hit runs no later stage, so a miss is seen only before armor; `IsCrit` and `Blocked` are
+seen in the landed stage (`OnUnitHurt`), where a hit blocked down to nothing still arrives with `Amount` 0.
 
 The ability stats and cast speed take effect from the ability's next cast: a cooldown that is already running is not
 touched (`ResetCooldown` and `StartCooldown` stay yours). They work on each ability's own number, so setting a stat again
@@ -1051,16 +1097,17 @@ that base, which the stat then works on. Moonwell puts them when one of the stat
 or an ability's level change through Moonwell (`AddAbility`, `RemoveAbility`, `Level`, a hero learning a skill). An
 ability the game gives or takes by itself, in a morph, is scaled at the unit's next such change. A unit that never had
 one of these stats set is never touched. A base set for a type (`Stat.CastSpeed.SetBase<Blademaster>(30)`) acts on each unit as it
-comes in, for all six of these stats; units already in the game get it at their next change of the stat.
+comes in, for all six of these stats, as does a `From`, a `Formula` or a `CappedBy` on one of them; units already in the game get it at their next change of the stat.
 
 Experience and gold are added by Moonwell at the kill, as the game's XP handicap (`SetPlayerHandicapXP`) does nothing
-for kills. The game gives its experience and bounty when a hit kills, before the death event; at the start of that death
-event, before any `OnKill` or `OnUnitDied` of the map runs, Moonwell adds the percent of what the game gave each hero,
+for kills. The game gives its experience and bounty when a hit kills, before the death event; Moonwell notes what each hero
+and the killer's player have once every reaction to the killing hit has run, and at the start of that death event, before
+any `OnKill` or `OnUnitDied` of the map runs, adds the percent of what the game gave each hero,
 and of the bounty the killer's player got, as a whole number rounded half up, with each kill rounded on its own. A
 negative percent takes away, down to all of it at -100. A hero's `ExperienceGain` adds to its player's, and the killing
 unit's `GoldBonus` to its player's. It acts on kills made by a hit that goes through the damage package (the game's
 attacks, `Damage` from code), not on `Kill()` or any death no hit made. Experience or gold the map gives itself
-in `OnKill` is not multiplied, and the game's own bonuses (a tome, a bounty item) stay outside: the game sends no event
+in `OnKill`, or in a reaction to the killing hit, is not multiplied, and the game's own bonuses (a tome, a bounty item) stay outside: the game sends no event
 for them.
 
 The limits are the game's. Its own Evasion (`ACes`), crit and bash send no event, so they stay outside the stats, and a
@@ -1478,7 +1525,8 @@ after armor, the target's armor has cut it and only the amount can change. The l
 A miss, the marks and area hits:
 
 - `hit.Miss()` before armor makes the hit a miss as the game's own look: the amount is 0, the weapon sound is none,
-  `hit.Missed` is true and a red "miss" shows over the target. `hit.Miss("dodge")` shows another word, `""` none. The
+  `hit.Missed` is true and a red "miss" shows over the source, as the game shows its own (over the target for a hit with
+  no source). `hit.Miss("dodge")` shows another word, `""` none. The
   rest of that stage's reactions still run and can read `Missed`, and setting `Amount` on the hit does nothing. No later
   stage runs for it, nor `OnDamaged` and the rest of core's family, and it takes no life; a burst still lists it. Called
   later than before armor, it is reported and does nothing. The game's own on-hit effects, such as a poison or a bash,

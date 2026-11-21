@@ -46,11 +46,11 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit comes in: a stat of the package that has a base for its class or type, which no change announces, takes effect as the unit's own change would. Nothing is looked up while none of the six has a type base.</summary>
+        /// <summary>A unit comes in: a stat of the package that has a base for its class or type, a formula or a cap, which no change announces, takes effect as the unit's own change would. Nothing is looked up while none of the six has a type base, a formula or a cap.</summary>
         internal void TakenIn(Widget widget)
         {
             var unit = widget as Unit;
-            if (unit == null || !(Stat.CooldownReduction.HasTypeBase || Stat.ManaCostReduction.HasTypeBase || Stat.CastRange.HasTypeBase || Stat.CastSpeed.HasTypeBase || Stat.ExperienceGain.HasTypeBase || Stat.GoldBonus.HasTypeBase))
+            if (unit == null || !(Given(Stat.CooldownReduction) || Given(Stat.ManaCostReduction) || Given(Stat.CastRange) || Given(Stat.CastSpeed) || Given(Stat.ExperienceGain) || Given(Stat.GoldBonus)))
             {
                 return;
             }
@@ -76,9 +76,16 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether a stat may give a unit a number from the start: a base for some class or type, a formula, or a cap (which can hold the total away from no change).</summary>
+        private static bool Given(Stat stat)
+        {
+            return stat.HasTypeBase || stat.HasFormulas || stat.Cap != null;
+        }
+
+        /// <summary>Whether a stat gives this unit a number from the start: its type's base, a formula or a cap.</summary>
         private static bool Typed(Unit unit, Stat stat)
         {
-            return stat.HasTypeBase && stat.TypeBaseOf(unit, out var ignored);
+            return stat.HasFormulas || stat.Cap != null || (stat.HasTypeBase && stat.TypeBaseOf(unit, out var ignored));
         }
 
         /// <summary>The death of a unit, heard before any reaction of Moonwell's: the experience and bounty the game gave are added to.</summary>
@@ -94,10 +101,17 @@ namespace Moonwell
             }
         }
 
-        /// <summary>The lethal stage: the experience and gold the game is about to give are noted.</summary>
-        public void OnUnitDying(Hit hit)
+        /// <summary>A hit will kill and every reaction to it has run, the last moment before the game acts: the experience and gold the game is about to give are noted.</summary>
+        internal void Killing(Hit hit)
         {
-            Gains.Dying(hit);
+            try
+            {
+                Gains.Dying(hit);
+            }
+            catch (Exception error)
+            {
+                Errors.Report(this, ".Killing", error);
+            }
         }
 
         /// <summary>Before armor: the miss and the parry, the powers, the crit and the armor penetration.</summary>
@@ -192,7 +206,7 @@ namespace Moonwell
                 hit.Blocked = blocked;
                 if (hit.Amount <= 0.0f && StatsSystem.ShowTexts)
                 {
-                    FloatingText.Pop("block", target.X - Hit.MissLeft, target.Y, Color.Red, null, Hit.MissHeight);
+                    Hit.ShowText("block", target);
                 }
             }
 
@@ -227,7 +241,7 @@ namespace Moonwell
 
             if (hit.IsCrit && StatsSystem.ShowTexts)
             {
-                FloatingText.Pop(((int)MathF.Floor(hit.Amount + 0.5f)).ToString() + "!", hit.Target.X, hit.Target.Y, Color.Red);
+                Hit.ShowText(((int)MathF.Floor(hit.Amount + 0.5f)).ToString() + "!", hit.TextUnit);
             }
 
             var source = hit.Source;
@@ -275,11 +289,14 @@ namespace Moonwell
             return hit.Missed || hit.Original == 0.0f || ReferenceEquals(hit.Tag, StatsSystem.Own);
         }
 
-        /// <summary>Whether the source stands in the front half of the target: within 90 degrees of where the target faces.</summary>
+        /// <summary>How far behind the line at 90 degrees the dot product of the facing and the way to the source may fall and still count as in front: cos of 90 degrees comes out near -4.4e-8, so a source exactly at 90 degrees would be decided by the rounding.</summary>
+        private const float FrontTolerance = 0.01f;
+
+        /// <summary>Whether the source stands in the front half of the target: within 90 degrees of where the target faces, both sides of the limit counting.</summary>
         private static bool InFront(Unit target, Unit source)
         {
             var facing = target.Facing * RadiansPerDegree;
-            return MathF.Cos(facing) * (source.X - target.X) + MathF.Sin(facing) * (source.Y - target.Y) >= 0.0f;
+            return MathF.Cos(facing) * (source.X - target.X) + MathF.Sin(facing) * (source.Y - target.Y) >= -FrontTolerance;
         }
     }
 

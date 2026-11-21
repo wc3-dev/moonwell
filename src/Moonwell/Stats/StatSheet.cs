@@ -37,6 +37,9 @@ namespace Moonwell
 
         private readonly Actor actor;
 
+        /// <summary>Reads a stat's total on this holder, as the formulas are given; made with the sheet, so a read stores nothing.</summary>
+        private readonly Func<Stat, float> reader;
+
         private readonly Dictionary<Stat, List<Modifier>> held = new Dictionary<Stat, List<Modifier>>();
 
         private readonly Dictionary<Stat, float> applied = new Dictionary<Stat, float>();
@@ -50,8 +53,11 @@ namespace Moonwell
         /// <summary>While the total a stat had before a change is worked out: the total each stat changed so far had, which what reads them sees instead of their present total; null otherwise.</summary>
         private Dictionary<Stat, float>? olds;
 
-        /// <summary>Reads a stat's total on this holder, as the formulas are given; made once.</summary>
-        private Func<Stat, float>? reader;
+        /// <summary>While changes are being announced on this holder: the total of each stat its listeners last heard, or the total it had when the first change not yet announced began; empty when no change is running.</summary>
+        private Dictionary<Stat, float>? heard;
+
+        /// <summary>How many changes of this holder are between starting to announce and having announced, each inside a reaction to the one before.</summary>
+        private int announcing;
 
         /// <summary>The unit's acquisition range from before Moonwell raised it to its attack range; null while it has not.</summary>
         private float? acquireWas;
@@ -62,9 +68,13 @@ namespace Moonwell
         /// <summary>Whether the hero's other stats are being put again after a level or an attribute, so a put of an attribute inside does not start another round.</summary>
         private bool following;
 
+        /// <summary>The most life and the most mana as the game read them back when Moonwell last put an owned one; null while the stat is not owned or none was put.</summary>
+        private float? mostLife, mostMana;
+
         internal StatSheet(Actor actor)
         {
             this.actor = actor;
+            reader = Read;
         }
 
         /// <summary>Whether any class overrides a change reaction: nothing is worked out for the reactions until one does.</summary>
@@ -174,13 +184,35 @@ namespace Moonwell
             var thens = new Dictionary<Stat, float>();
             thens[stat] = before;
             Spread(stat, thens, batch);
+
+            // A change made inside a reaction to this one is announced first, so each stat is announced from the total its listeners last heard, and not again when that is already the total.
+            heard ??= new Dictionary<Stat, float>();
+            if (announcing == 0)
+            {
+                heard.Clear();
+            }
+
             for (var i = 0; i < batch.Count; i++)
             {
-                if (Get(batch[i]) != thens[batch[i]])
+                if (!heard.ContainsKey(batch[i]))
                 {
-                    Announce(batch[i], thens[batch[i]]);
+                    heard[batch[i]] = thens[batch[i]];
                 }
             }
+
+            announcing++;
+            for (var i = 0; i < batch.Count; i++)
+            {
+                var now = Get(batch[i]);
+                var was = heard[batch[i]];
+                if (now != was)
+                {
+                    heard[batch[i]] = now;
+                    Announce(batch[i], was);
+                }
+            }
+
+            announcing--;
         }
 
         /// <summary>Works out again, and puts in the game, every stat that reads the stat; while a change is watched (thens is not null), the total each had before is noted in thens, worked out as the stats changed so far were, and the stat is added to the batch.</summary>
@@ -506,7 +538,6 @@ namespace Moonwell
                 return 0.0f;
             }
 
-            reader ??= new Func<Stat, float>(Read);
             return stat.Given(reader);
         }
 
@@ -526,10 +557,23 @@ namespace Moonwell
 
             if (Owned(stat, out var ownedBase))
             {
-                return Value(stat, ownedBase + Given(stat));
+                var baseValue = ownedBase + Given(stat);
+                return Shown(unit.Handle, stat, baseValue, Value(stat, baseValue));
             }
 
             return BaseOf(unit.Handle, stat) + (applied.TryGetValue(stat, out var part) ? part : 0.0f);
+        }
+
+        // What the game has of an owned stat's total: damage and armor are a white number and a whole green bonus on it (Put gives the bonus as Whole(total - white)), so the total is that number. The other stats' totals are what Put gives the game, whole ones being rounded by Limited.
+        private static float Shown(unit handle, Stat stat, float baseValue, float total)
+        {
+            if (stat.Kind == StatKind.Damage)
+            {
+                var white = Runtime.World.AverageDamageOf(handle);
+                return white + Whole(total - white);
+            }
+
+            return stat.Kind == StatKind.Armor ? baseValue + Whole(total - baseValue) : total;
         }
 
         // (base + flat) × (1 + percents / 100) × each multiplier + late flat, then held to the limits.
@@ -561,6 +605,12 @@ namespace Moonwell
         // The least, then the most (the stat's own and its cap's total, the smaller), then whole.
         private float Limited(Stat stat, float total)
         {
+            return Limit(stat, total, stat.Cap != null ? Read(stat.Cap) : 0.0f);
+        }
+
+        // The same, with the cap's total given when the stat has a cap.
+        private static float Limit(Stat stat, float total, float cap)
+        {
             if (stat.Least != null && total < stat.Least.Value)
             {
                 total = stat.Least.Value;
@@ -569,7 +619,6 @@ namespace Moonwell
             var most = stat.Most;
             if (stat.Cap != null)
             {
-                var cap = Read(stat.Cap);
                 if (most == null || cap < most.Value)
                 {
                     most = cap;
@@ -646,8 +695,13 @@ namespace Moonwell
         // The game's number less Moonwell's part; damage's green bonus and attack speed are not in the number read.
         private float BaseOf(unit handle, Stat stat)
         {
+            return GameBase(handle, stat, applied.TryGetValue(stat, out var part) ? part : 0.0f);
+        }
+
+        // The game's number of a stat less Moonwell's part of it.
+        private static float GameBase(unit handle, Stat stat, float mine)
+        {
             var world = Runtime.World;
-            var mine = applied.TryGetValue(stat, out var part) ? part : 0.0f;
             switch (stat.Kind)
             {
                 case StatKind.Damage:
@@ -734,11 +788,11 @@ namespace Moonwell
                     applied[stat] = world.MoveSpeedOf(handle) - raw;
                     break;
                 case StatKind.MaxLife:
-                    PutMost(handle, false, Whole(total));
+                    PutMost(handle, false, Whole(total), owned);
                     applied[stat] = world.MaxLifeOf(handle) - raw;
                     break;
                 case StatKind.MaxMana:
-                    PutMost(handle, true, Whole(total));
+                    PutMost(handle, true, Whole(total), owned);
                     applied[stat] = world.MaxManaOf(handle) - raw;
                     break;
                 case StatKind.LifeRegen:
@@ -762,6 +816,12 @@ namespace Moonwell
                     PutRange(handle, total);
                     applied[stat] = world.AttackRangeOf(handle) - raw;
                     break;
+            }
+
+            // What Get now gives is what a later level-up counts as the total before, so a total the game's whole green bonus rounds does not read as a change.
+            if (stat.Kind == StatKind.Damage || stat.Kind == StatKind.Armor)
+            {
+                last[stat] = Get(stat);
             }
         }
 
@@ -798,12 +858,27 @@ namespace Moonwell
         }
 
         // Sets a unit's most life or mana, and keeps its current life or mana at the same percent of the most (decision 391): 650 of 650 becomes 750 of 750, 325 of 650 becomes 375 of 750. A dead unit is left alone, and a most of 0 before or after is not divided by. A unit alive keeps at least 1 life, as the game kills at 0.405.
-        private static void PutMost(unit handle, bool mana, float most)
+        // An owned most is Moonwell's own number, so when the game has moved it since Moonwell last put it (a level, an attribute), the game's shift is taken back off the current value first: the game adds a level's life to the current life as well as to the most (probe 11-21), and the unit keeps the life it had. A most that is not owned keeps the game's gift.
+        private void PutMost(unit handle, bool mana, float most, bool owned)
         {
             var world = Runtime.World;
             var before = mana ? world.MaxManaOf(handle) : world.MaxLifeOf(handle);
             var amount = mana ? world.ManaOf(handle) : world.LifeOf(handle);
             var alive = world.IsAlive(handle);
+            var put = mana ? mostMana : mostLife;
+            var shifted = false;
+            if (owned && put != null && alive && before != put.Value)
+            {
+                shifted = true;
+                amount -= before - put.Value;
+                if (amount < (mana ? 0.0f : 1.0f))
+                {
+                    amount = mana ? 0.0f : 1.0f;
+                }
+
+                before = put.Value;
+            }
+
             if (mana)
             {
                 world.SetMaxMana(handle, most);
@@ -814,7 +889,16 @@ namespace Moonwell
             }
 
             var now = mana ? world.MaxManaOf(handle) : world.MaxLifeOf(handle);
-            if (!alive || amount <= 0.0f || before <= 0.0f || now <= 0.0f || now == before)
+            if (mana)
+            {
+                mostMana = owned ? now : (float?)null;
+            }
+            else
+            {
+                mostLife = owned ? now : (float?)null;
+            }
+
+            if (!alive || (amount <= 0.0f && !shifted) || before <= 0.0f || now <= 0.0f || (now == before && !shifted))
             {
                 return;
             }
@@ -845,9 +929,90 @@ namespace Moonwell
             return value;
         }
 
-        private static float Whole(float value)
+        // A holder with no sheet has no modifiers, no base of its own and nothing put in the game, so its stats are worked out here from
+        // the stat's own base, its type's, its formulas, its cap and its limits, as a sheet with nothing in it would, and with nothing made:
+        // a read inside Local.For must leave nothing on one machine only, and the package reads about ten stats at each hit.
+        // The holder whose formulas are being read; they are read by one function made once, so nothing is made for a read.
+        private static Actor? bareActor;
+
+        private static Func<Stat, float>? bareReader;
+
+        private static float BareRead(Stat stat)
         {
-            return (float)Math.Floor(value + 0.5f);
+            return BareGet(bareActor!, stat);
+        }
+
+        private static float BareGiven(Actor actor, Stat stat)
+        {
+            if (!stat.HasFormulas)
+            {
+                return 0.0f;
+            }
+
+            var before = bareActor;
+            bareActor = actor;
+            bareReader ??= new Func<Stat, float>(BareRead);
+            var sum = stat.Given(bareReader);
+            bareActor = before;
+            return sum;
+        }
+
+        private static float BareLimited(Actor actor, Stat stat, float total)
+        {
+            return Limit(stat, total, stat.Cap != null ? BareGet(actor, stat.Cap) : 0.0f);
+        }
+
+        /// <summary>A stat's total on a holder with no sheet: what Get gives it, with nothing made.</summary>
+        internal static float BareGet(Actor actor, Stat stat)
+        {
+            var unit = actor as Unit;
+            if (stat.Kind == StatKind.Own)
+            {
+                var own = unit != null && stat.TypeBaseOf(unit, out var typedOwn) ? typedOwn : stat.Base;
+                return BareLimited(actor, stat, own + BareGiven(actor, stat));
+            }
+
+            if (unit == null || unit.Handle == null || unit.IsGone)
+            {
+                return 0.0f;
+            }
+
+            if (stat.TypeBaseOf(unit, out var ownedBase))
+            {
+                var baseValue = ownedBase + BareGiven(actor, stat);
+                return Shown(unit.Handle, stat, baseValue, BareLimited(actor, stat, baseValue));
+            }
+
+            return GameBase(unit.Handle, stat, 0.0f);
+        }
+
+        /// <summary>A stat's base on a holder with no sheet, with what its formulas give, as GetBase says it.</summary>
+        internal static float BareGetBase(Actor actor, Stat stat)
+        {
+            var unit = actor as Unit;
+            if (stat.Kind == StatKind.Own)
+            {
+                return (unit != null && stat.TypeBaseOf(unit, out var typedOwn) ? typedOwn : stat.Base) + BareGiven(actor, stat);
+            }
+
+            if (unit == null || unit.Handle == null || unit.IsGone)
+            {
+                return 0.0f;
+            }
+
+            return (stat.TypeBaseOf(unit, out var typed) ? typed : GameBase(unit.Handle, stat, 0.0f)) + BareGiven(actor, stat);
+        }
+
+        /// <summary>The modifiers of a holder with no sheet: none, the one list for every holder.</summary>
+        internal static IReadOnlyList<Modifier> NoModifiers => noModifiers ??= new Modifier[0];
+
+        private static Modifier[]? noModifiers;
+
+        /// <summary>A number rounded half up. The half is found from what is left over the floor, which is exact: adding 0.5 first moves a value from 2^23 up, where a float has no halves.</summary>
+        internal static float Whole(float value)
+        {
+            var floor = (float)Math.Floor(value);
+            return value - floor >= 0.5f ? floor + 1.0f : floor;
         }
     }
 }

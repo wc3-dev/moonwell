@@ -12,6 +12,29 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>A game component that gives gold to player one and experience to a hero in the lethal stage, after the stats package has acted on it, as a map's own reaction does.</summary>
+    public sealed class LateGift : GameComponent, IDamageWatch
+    {
+        /// <summary>The gold given.</summary>
+        public int Gold;
+
+        /// <summary>The experience given to the hero.</summary>
+        public int Experience;
+
+        /// <summary>The hero that gets the experience.</summary>
+        public Hero? Hero;
+
+        /// <summary>Gives both.</summary>
+        public void OnUnitDying(Hit hit)
+        {
+            Player.One.Gold += Gold;
+            if (Hero != null)
+            {
+                Hero.AddExperience(Experience, false);
+            }
+        }
+    }
+
     /// <summary>A hero component that gives its hero 10 experience of its own at each kill, as a map's OnKill would.</summary>
     public sealed class OwnKillGift : UnitComponent
     {
@@ -243,6 +266,46 @@ namespace Moonwell.Testing
             Expect.Equal(start + 8, Player.One.Gold, "and its bounty");
             Expect.True(first.stats == null && second.stats == null, "no sheet of stats was made");
             Expect.True(!world.Listening.Contains(GameEvent.Death), "the death event was never asked for");
+        }
+
+        /// <summary>Gold or experience a later reaction of the lethal stage gives is not the game's gift: the bonus is on what the game gave alone.</summary>
+        public static void LateGiftIsNotMultiplied(FakeWorld world)
+        {
+            Arena(world);
+            var late = Game.Instance.Add(new LateGift());
+            late.Gold = 100;
+            late.Experience = 100;
+            late.Hero = first;
+            first.SetBase(Stat.GoldBonus, 50.0f);
+            first.SetBase(Stat.ExperienceGain, 50.0f);
+            var start = Player.One.Gold;
+            Kill(40, 20);
+            Expect.Equal(start + 100 + 20 + 10, Player.One.Gold, "the map's 100 and the bounty of 20 and half of the 20 more, not of 120");
+            Expect.Equal(100 + 40 + 20, first.Experience, "the map's 100, the game's 40 and half of the 40 more");
+        }
+
+        /// <summary>A killer's player whose gold bonus comes from a formula, with no sheet of stats, gets it at a kill, and a read inside Local.For leaves it with none.</summary>
+        public static void PlayerFormulaCountsAtAKill(FakeWorld world)
+        {
+            Arena(world);
+            StatEffectCases.GoldBoostFormula();
+            first.SetBase(Stat.GoldBonus, 10.0f);
+            var start = Player.One.Gold;
+            StatEffectCases.GoldBoost = 40.0f;
+            try
+            {
+                var seen = 0.0f;
+                Local.For(Player.One, () => seen = Player.One.Get(Stat.GoldBonus));
+                Expect.Near(40.0f, seen, "the read inside Local.For");
+                Expect.True(Player.One.stats == null, "made no sheet for the player");
+                Kill(0, 8);
+                Expect.Equal(start + 8 + 7, Player.One.Gold, "the bounty of 8 and 90 percent of it more: the unit's 10 and 40 from the formula, and the player's 40 from it (7.2 rounds to 7)");
+                Expect.True(Player.One.stats == null, "still no sheet");
+            }
+            finally
+            {
+                StatEffectCases.GoldBoost = 0.0f;
+            }
         }
     }
 }
