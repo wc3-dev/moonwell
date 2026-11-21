@@ -292,7 +292,7 @@ public sealed class SaveAnalyzer : DiagnosticAnalyzer
         {
             return type.SpecialType is SpecialType.System_Int32 or SpecialType.System_Single or SpecialType.System_Boolean or SpecialType.System_String
                 || type.TypeKind == TypeKind.Enum
-                || type is { Name: "RealTime", ContainingNamespace.Name: "Moonwell" }
+                || type.ToDisplayString() == "Moonwell.RealTime"
                 || IsPart(type);
         }
 
