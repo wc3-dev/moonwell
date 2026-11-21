@@ -49,7 +49,7 @@ namespace Moonwell
             var distance = Trig.Sqrt(dx * dx + dy * dy);
             if (distance < Vertical)
             {
-                return Straight(dz, speed, gravity, out velocity);
+                return Straight(dz, speed, high, gravity, out velocity);
             }
 
             // With t the tangent of the launch angle, the height at the point is
@@ -115,8 +115,8 @@ namespace Moonwell
             return true;
         }
 
-        /// <summary>The velocity of a vertical shot to a height above or below the start, at a speed: up while the height is within what the speed climbs to, down while it is within what a fall at that speed reaches.</summary>
-        private static bool Straight(float dz, float speed, float gravity, out Vector3 velocity)
+        /// <summary>The velocity of a vertical shot to a height above or below the start, at a speed: up while the height is within what the speed climbs to, down while it is within what a fall at that speed reaches. The high arc to a point below goes up first when gravity pulls down.</summary>
+        private static bool Straight(float dz, float speed, bool high, float gravity, out Vector3 velocity)
         {
             velocity = Vector3.Zero;
             if (dz == 0.0f)
@@ -125,7 +125,7 @@ namespace Moonwell
             }
 
             var reach = speed * speed / (2.0f * gravity);
-            if (dz > 0.0f)
+            if (dz > 0.0f || (high && gravity > 0.0f))
             {
                 if (gravity > 0.0f && dz > reach)
                 {

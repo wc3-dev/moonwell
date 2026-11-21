@@ -333,6 +333,27 @@ public class SaveRuleTests
     }
 
     [Fact]
+    public void a_real_time_of_the_maps_own_is_rejected()
+    {
+        Assert.Equal(new[] { "MW0052: Claimed" }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Campaign.Moonwell
+            {
+                public struct RealTime { }
+            }
+
+            namespace Map
+            {
+                public sealed class RpgSave : SaveGame
+                {
+                    [Saved(1)] public Campaign.Moonwell.RealTime Claimed;
+                }
+            }
+            """));
+    }
+
+    [Fact]
     public void an_override_keeps_its_bases_saved_number()
     {
         Assert.Empty(Check("""
