@@ -48,6 +48,7 @@ namespace Moonwell
             UnitPool.Reset();
             KnownItems.Reset();
             KnownDestructables.Reset();
+            PlacedDestructables.Reset();
             ObjectTypes.Reset();
             Dummies.Reset();
             HeroTable.Reset();
@@ -224,6 +225,7 @@ namespace Moonwell
         internal static void Begin(Action setup)
         {
             ListenForCarriers();
+            PlacedDestructables.Match();
             try
             {
                 setup();

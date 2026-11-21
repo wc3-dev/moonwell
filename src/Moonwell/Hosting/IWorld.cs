@@ -983,8 +983,8 @@ namespace Moonwell.Hosting
         /// <summary>A placed item the script made, by World Editor's name for it without <c>gg_item_</c>; null when there is none.</summary>
         item? PlacedItem(string name);
 
-        /// <summary>A placed destructable, by World Editor's name for it without <c>gg_dest_</c>: found nearest its place among those of its type; null when the map has none of that name or it is gone.</summary>
-        destructable? PlacedDestructable(string name);
+        /// <summary>Adds the placed destructables the build wrote for Destructable.Named, in its order: each one's World Editor name without <c>gg_dest_</c>, its type and its place in war3map.doo.</summary>
+        void ReadPlacedDestructables(List<string> names, List<int> types, List<float> xs, List<float> ys);
 
         /// <summary>A sound of the map's Sound Editor, by its name without <c>gg_snd_</c>; null when there is none.</summary>
         sound? PlacedSound(string name);

@@ -41,6 +41,8 @@ namespace Moonwell.Build.Tests
                 doodads = reader.ReadMapDoodads();
             }
 
+            // The sample holds none, so War3Net would write the layout without skin ids, which its war3map.w3i of 3.0 refuses.
+            doodads.UseNewFormat = true;
             var before = doodads.Doodads.Count;
             // The game's: normal, normal with a z, and two sharing a creation number (Ekrezem's Maze has such a pair).
             doodads.Doodads.Add(Destructable(DoodadState.Normal, 9000));

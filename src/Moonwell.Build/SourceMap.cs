@@ -1,5 +1,6 @@
 using War3Net.Build;
 using War3Net.Build.Info;
+using War3Net.Build.Widget;
 
 namespace Moonwell.Build
 {
@@ -31,6 +32,7 @@ namespace Moonwell.Build
             }
 
             var info = map.Info ?? throw new BuildException($@"no World Editor map: {project.MapName}\war3map.w3i is missing");
+            CheckLayouts(map, info, project.MapName);
             info.ScriptLanguage = ScriptLanguage.Lua;
             var set = info.GameDataSet;
             var version = info.GameDataVersion;
@@ -83,6 +85,31 @@ namespace Moonwell.Build
             if (computers.Count > 0)
             {
                 log.WriteLine($"note: {(computers.Count == 1 ? "slot" : "slots")} {string.Join(", ", computers)} {(computers.Count == 1 ? "is a computer" : "are computers")} in World Editor, but a moonwell run game leaves {(computers.Count == 1 ? "it" : "them")} empty, as the map has custom forces without fixed player settings; set up Slots in the map class, or turn on Fixed Player Settings in World Editor's forces");
+            }
+        }
+
+        /// <summary>
+        /// Stops the build at placed doodads or units in a layout the game reads wrongly with the map's <c>war3map.w3i</c>: one naming
+        /// game 1.32 or later makes it read a skin id after each one's scale, an older one none (J139). A file holding none passes.
+        /// </summary>
+        /// <exception cref="BuildException"><c>war3map.doo</c> or <c>war3mapUnits.doo</c> is in the other layout.</exception>
+        internal static void CheckLayouts(War3Net.Build.Map map, MapInfo info, string mapName)
+        {
+            var skins = info.GameVersion is { } version && version >= new Version(1, 32);
+            var game = info.GameVersion is { } named ? $"names game {named.Major}.{named.Minor}" : $"names no game version (format {(int)info.FormatVersion})";
+            Check(map.Doodads is { Doodads.Count: > 0 } doodads ? doodads.UseNewFormat : null, MapDoodads.FileName, "doodads");
+            Check(map.Units is { Units.Count: > 0 } units ? units.UseNewFormat : null, MapUnits.FileName, "units");
+
+            void Check(bool? hasSkins, string file, string what)
+            {
+                if (hasSkins is { } has && has != skins)
+                {
+                    var layout = has ? "has skin ids (the layout of 1.32 on)" : "has no skin ids (the layout before 1.32)";
+                    var wanted = skins ? "with" : "without";
+                    throw new BuildException(
+                        $@"{mapName}\{file} {layout}, but {mapName}\war3map.w3i {game}, so the game reads it {wanted} them and places its {what} wrong; "
+                        + $"write the {what} again {wanted} skin ids, the layout that war3map.w3i wants (the two files likely come from different maps)");
+                }
             }
         }
     }

@@ -9,7 +9,13 @@ namespace Moonwell
 
         private readonly Dictionary<string, item> placedItems = new Dictionary<string, item>();
 
-        private readonly Dictionary<string, destructable> placedDestructables = new Dictionary<string, destructable>();
+        private readonly List<string> placedDestructableNames = new List<string>();
+
+        private readonly List<int> placedDestructableTypes = new List<int>();
+
+        private readonly List<float> placedDestructableXs = new List<float>();
+
+        private readonly List<float> placedDestructableYs = new List<float>();
 
         private readonly Dictionary<string, sound> placedSounds = new Dictionary<string, sound>();
 
@@ -29,11 +35,16 @@ namespace Moonwell
             return made;
         }
 
-        /// <summary>Makes a destructable as the game makes a placed one, under its name.</summary>
-        public destructable PlaceDestructable(string name, int typeId)
+        /// <summary>Makes a destructable as the game makes a placed one, under its name, standing at its war3map.doo place; the game may move it from there (PlaceDestructable with a handle). Destructable.Named matches it at the start, or at its first call when Runtime.Begin has not run.</summary>
+        public destructable PlaceDestructable(string name, int typeId, float x = 0.0f, float y = 0.0f)
         {
             var made = NewDestructable(typeId);
-            placedDestructables[name] = made;
+            PlacedDestructables.Add(made);
+            PlaceDestructable(made, x, y);
+            placedDestructableNames.Add(name);
+            placedDestructableTypes.Add(typeId);
+            placedDestructableXs.Add(x);
+            placedDestructableYs.Add(y);
             return made;
         }
 
@@ -57,10 +68,13 @@ namespace Moonwell
             return placedItems.TryGetValue(name, out var found) ? found : null;
         }
 
-        /// <summary>The placed destructable of the name, as the search near its place finds it.</summary>
-        public destructable? PlacedDestructable(string name)
+        /// <summary>The placed destructables, as the build writes them for the game.</summary>
+        public void ReadPlacedDestructables(List<string> names, List<int> types, List<float> xs, List<float> ys)
         {
-            return placedDestructables.TryGetValue(name, out var found) ? found : null;
+            names.AddRange(placedDestructableNames);
+            types.AddRange(placedDestructableTypes);
+            xs.AddRange(placedDestructableXs);
+            ys.AddRange(placedDestructableYs);
         }
 
         /// <summary>The sound of the name, as its gg_snd_ global holds it.</summary>

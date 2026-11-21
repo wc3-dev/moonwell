@@ -22,9 +22,6 @@ namespace Moonwell.Engine
         /// <summary>How far a patch of vision reaches around a place; the probe's 128 let a unit there be targeted (11-03).</summary>
         private const float PatchReach = 128.0f;
 
-        /// <summary>How far from its place a placed destructable is looked for: a rect of 32 found nothing in the game, one of 512 found it (game facts, 10-26).</summary>
-        private const float PlacedReach = 512.0f;
-
         /// <summary>The clock: the game time is the laps it has run plus its elapsed time.</summary>
         private readonly timer clock;
 
@@ -54,21 +51,6 @@ namespace Moonwell.Engine
 
         /// <summary>The destructables the last DestructablesInWorld call has found.</summary>
         private List<destructable> foundDestructables = new List<destructable>();
-
-        /// <summary>The type PlacedDestructable looks for, while it enumerates.</summary>
-        private int placedType;
-
-        /// <summary>The place PlacedDestructable looks around: x.</summary>
-        private float placedX;
-
-        /// <summary>The place PlacedDestructable looks around: y.</summary>
-        private float placedY;
-
-        /// <summary>The squared distance of the nearest destructable PlacedDestructable has found so far.</summary>
-        private float placedBest;
-
-        /// <summary>The nearest destructable PlacedDestructable has found so far; null while none.</summary>
-        private destructable? placedFound;
 
         /// <summary>The location GroundZ reads the ground through; made on the first read.</summary>
         private location? spot;
@@ -3076,46 +3058,16 @@ namespace Moonwell.Engine
         /// <summary>StopSound, not freed, with the sound's own fade.</summary>
         public void StopPlacedSound(sound sound) => Natives.StopSound(sound, false, true);
 
-        /// <summary>
-        /// Looks for a placed destructable near its place, as the physics package finds a placed bridge: the game makes most
-        /// placed destructables itself, so no global holds them. The build appends the type and place of each by its name.
-        /// </summary>
-        public destructable? PlacedDestructable(string name)
+        /// <summary>The placed destructables the build wrote, in its order: the game makes most of them itself, so no global holds them.</summary>
+        public void ReadPlacedDestructables(List<string> names, List<int> types, List<float> xs, List<float> ys)
         {
-            var type = PlacedDestructableType(name);
-            if (type == 0)
+            var count = PlacedDestructableCount();
+            for (var i = 0; i < count; i += 4)
             {
-                return null;
-            }
-
-            placedType = type;
-            placedX = PlacedDestructableX(name);
-            placedY = PlacedDestructableY(name);
-            placedFound = null;
-            var area = Natives.Rect(placedX - PlacedReach, placedY - PlacedReach, placedX + PlacedReach, placedY + PlacedReach);
-            Natives.EnumDestructablesInRect(area, null, ConsiderPlaced);
-            Natives.RemoveRect(area);
-            var result = placedFound;
-            placedFound = null;
-            return result;
-        }
-
-        /// <summary>Keeps the destructable the enumeration is at when it is of the type and nearer than the best so far.</summary>
-        private void ConsiderPlaced()
-        {
-            var candidate = Natives.GetEnumDestructable();
-            if (Natives.GetDestructableTypeId(candidate) != placedType)
-            {
-                return;
-            }
-
-            var dx = Natives.GetDestructableX(candidate) - placedX;
-            var dy = Natives.GetDestructableY(candidate) - placedY;
-            var distance = dx * dx + dy * dy;
-            if (placedFound == null || distance < placedBest)
-            {
-                placedFound = candidate;
-                placedBest = distance;
+                names.Add(PlacedDestructableName(i + 1));
+                types.Add(PlacedDestructableNumber(i + 2));
+                xs.Add(PlacedDestructablePlace(i + 3));
+                ys.Add(PlacedDestructablePlace(i + 4));
             }
         }
 
@@ -3137,21 +3089,27 @@ namespace Moonwell.Engine
             return null;
         }
 
-        // MoonwellPlacedDestructables = { [name] = { typeId, x, y } }, appended by the build; 0 when there is no table or no entry.
-        /// @CSharpLua.Template = "(MoonwellPlacedDestructables and MoonwellPlacedDestructables[{0}] and MoonwellPlacedDestructables[{0}][1] or 0)"
-        private static int PlacedDestructableType(string name)
+        // MoonwellPlacedDestructables = { name, typeId, x, y, name, typeId, x, y, ... }, appended by the build; none when there is no table.
+        /// @CSharpLua.Template = "(MoonwellPlacedDestructables and #MoonwellPlacedDestructables or 0)"
+        private static int PlacedDestructableCount()
         {
             return 0;
         }
 
-        /// @CSharpLua.Template = "MoonwellPlacedDestructables[{0}][2]"
-        private static float PlacedDestructableX(string name)
+        /// @CSharpLua.Template = "MoonwellPlacedDestructables[{0}]"
+        private static string PlacedDestructableName(int index)
         {
-            return 0.0f;
+            return string.Empty;
         }
 
-        /// @CSharpLua.Template = "MoonwellPlacedDestructables[{0}][3]"
-        private static float PlacedDestructableY(string name)
+        /// @CSharpLua.Template = "MoonwellPlacedDestructables[{0}]"
+        private static int PlacedDestructableNumber(int index)
+        {
+            return 0;
+        }
+
+        /// @CSharpLua.Template = "MoonwellPlacedDestructables[{0}]"
+        private static float PlacedDestructablePlace(int index)
         {
             return 0.0f;
         }

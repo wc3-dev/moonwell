@@ -1,7 +1,7 @@
 # Making a map with Moonwell
 
-This guide describes Moonwell 0.20.4; the guide for 0.20.3 is at the
-[`v0.20.3` tag](https://github.com/wc3-dev/moonwell/blob/v0.20.3/docs/guide.md).
+This guide describes Moonwell 0.20.5; the guide for 0.20.4 is at the
+[`v0.20.4` tag](https://github.com/wc3-dev/moonwell/blob/v0.20.4/docs/guide.md).
 
 ## Start a map
 
@@ -702,7 +702,9 @@ Placed.Sounds.Intro?.Play();                          // with the Sound Editor's
 - A lookup gives null for a name the map does not have, and once the thing has left the game; the build fails at the
   line of a name written as text that the map does not have.
 - A unit or item placed of the map's own class comes back as that class, as `Unit.Of` gives it.
-- A destructable is found nearest its place among those of its type, as the game makes most of them itself.
+- A destructable is matched once, as the game starts, to the nearest of its type to its place, as the game makes most
+  of them itself and may move one a little. The match costs a pass over the map's destructables at the start, made only
+  when the code uses `Destructable.Named` or `Placed.Destructables` (and over the trees only for `Named`).
 - `Placed` changes when the map does: after placing something in an editor, build once before naming it.
 - Any number of each kind builds. Past 150, as Lua allows 200 locals in a function, a kind's class takes the rest from
   classes in `Moonwell.PlacedParts`; name them through `Placed.Units` and the others as ever (Rider may hint that the

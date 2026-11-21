@@ -52,6 +52,29 @@ namespace Moonwell.Testing
             Expect.Same(null, Destructable.Named("LTlt_0012"), "an unknown name");
         }
 
+        /// <summary>
+        /// Placed destructables are matched at the start to the nearest of their type to their place, though the game moved them,
+        /// each taken once; one removed later gives null, not a neighbour of its type, and one killed still comes back (J142).
+        /// </summary>
+        public static void DestructableGone(FakeWorld world)
+        {
+            var tree = ObjectTypes.FourCC("LTlt");
+            var first = world.PlaceDestructable("LTlt_0001", tree, 0.0f, 0.0f);
+            var second = world.PlaceDestructable("LTlt_0002", tree, 64.0f, 0.0f);
+            world.PlaceDestructable(first, 32.0f, 0.0f);
+            world.PlaceDestructable(second, 96.0f, 0.0f);
+            Runtime.Begin(() => { });
+
+            Expect.Same(Destructable.Of(first), Destructable.Named("LTlt_0001"), "the first");
+            Expect.Same(Destructable.Of(second), Destructable.Named("LTlt_0002"), "the second, though the first is as near its place");
+
+            Destructable.Of(first)!.Remove();
+            Expect.Same(null, Destructable.Named("LTlt_0001"), "the first once removed");
+
+            Destructable.Of(second)!.Kill();
+            Expect.Same(Destructable.Of(second), Destructable.Named("LTlt_0002"), "the second once killed");
+        }
+
         /// <summary>A sound of the Sound Editor plays, at a place and on a unit, and stops without being freed, so it plays again.</summary>
         public static void Sound(FakeWorld world)
         {
