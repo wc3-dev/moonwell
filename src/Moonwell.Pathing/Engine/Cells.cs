@@ -47,9 +47,11 @@ namespace Moonwell.Engine
             return cell * Size + Size / 2f;
         }
 
-        /// <summary>A cell's key.</summary>
+        /// <summary>A cell's key. A column or row past what a key holds is held to its last, off every map, so it never shares a key with a cell on one.</summary>
         internal static int Key(int col, int row)
         {
+            col = col < -Offset ? -Offset : col >= Offset ? Offset - 1 : col;
+            row = row < -Offset ? -Offset : row >= Offset ? Offset - 1 : row;
             return (col + Offset) * (Offset * 2) + row + Offset;
         }
 

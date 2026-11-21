@@ -143,6 +143,9 @@ namespace Moonwell.Testing
             Wall(terrain, 0, 1, -2, 1, FakeTerrainWorld.NoWalk);
             Expect.True(!Paths.FindPath(31f, -200f, 0f, 32f, 0f).Reaches, "inside the wall");
             Expect.True(!Paths.FindPath(31f, -200f, 0f, 2000f, 0f).Reaches, "outside the area");
+            var far = Paths.FindPath(31f, -200f, 0f, -200f, 131088f);
+            Expect.True(!far.Reaches, "past what a cell's key holds, where row 4096 would share a key with an open cell");
+            Expect.True(far.Points[far.Points.Count - 1].Y <= 256f, "it ends on the map");
         }
 
         /// <summary>Destructables and buildings come from the item trick, asked once a cell; Refresh asks again.</summary>
