@@ -167,7 +167,7 @@ namespace Moonwell.Testing
             }
         }
 
-        /// <summary>A deconstruction into new names, elements as targets, and a tuple as text (MW0022).</summary>
+        /// <summary>A deconstruction into new names, elements as targets, a tuple as text (MW0022), and a tuple holding a lambda (J165).</summary>
         public static void Tuples(FakeWorld world)
         {
             var (a, b) = (1, 2);
@@ -180,6 +180,12 @@ namespace Moonwell.Testing
             Expect.Equal("(1, x)", tuple.ToString(), "ToString");
             Expect.Equal("t=(1, x)", "t=" + tuple, "joined");
             Expect.Equal("(1, x)", $"{tuple}", "interpolated");
+            var clicked = 0;
+            var buttons = new List<(string Name, Action<int> Click)> { ("Research", who => clicked += who), ("Build", who => clicked *= who) };
+            buttons[0].Click(3);
+            buttons[1].Click(5);
+            Expect.Equal("Build", buttons[1].Name, "a tuple holding a lambda in a collection initializer, its name");
+            Expect.Equal(15, clicked, "a tuple holding a lambda in a collection initializer, its lambda");
         }
 
         /// <summary>A user-defined ++, --, true and false, a record derived from a record, and with on an anonymous type (MW0023).</summary>
