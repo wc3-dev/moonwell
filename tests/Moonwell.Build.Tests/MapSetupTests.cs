@@ -9,7 +9,7 @@ namespace Moonwell.Build.Tests
     {
         private const string Teams =
             "        public static readonly Team West = new Team(\"West\") { SharedVision = true };\n"
-            + "        public static readonly Team East = new Team(\"East\") { SharedControl = true };\n";
+            + "        public static readonly Team East = new Team(\"East\") { SharedControl = true, AlliedVictory = true };\n";
 
         private readonly TestFolders folders;
 
@@ -30,7 +30,7 @@ namespace Moonwell.Build.Tests
             var settings = MapSettingsReader.Read(assembly, project);
             var info = SourceMap.Open(project, settings, log).Info!;
 
-            Assert.Equal(new[] { new TeamSetting("East", false, true), new TeamSetting("West", true, false) }, settings.Teams);
+            Assert.Equal(new[] { new TeamSetting("East", false, true, true), new TeamSetting("West", true, false) }, settings.Teams);
             Assert.Equal(new SlotSetting(5, 0, 1, 2, "The Scourge"), settings.Slots![0]);
             Assert.Equal(new SlotSetting(0, 1, 0, -1, ""), settings.Slots[1]);
 
@@ -47,12 +47,33 @@ namespace Moonwell.Build.Tests
 
             Assert.Equal(2, info.Forces.Count);
             Assert.Equal("East", info.Forces[0].Name);
-            Assert.Equal(ForceFlags.Allied | ForceFlags.ShareUnitControl, info.Forces[0].Flags);
+            Assert.Equal(ForceFlags.Allied | ForceFlags.ShareUnitControl | ForceFlags.AlliedVictory, info.Forces[0].Flags);
             Assert.Equal((1 << 2) | (1 << 5), (int)info.Forces[0].Players);
             Assert.Equal(ForceFlags.Allied | ForceFlags.ShareVision, info.Forces[1].Flags);
             Assert.Equal(1, (int)info.Forces[1].Players);
             Assert.True(info.MapFlags.HasFlag(MapFlags.UseCustomForces | MapFlags.FixedPlayerSettingsForCustomForces));
             Assert.Contains("note: slot 5 has no start location", log.ToString());
+        }
+
+        [Fact]
+        public void a_start_in_code_replaces_world_editors()
+        {
+            var folder = SampleWithSlots(
+                "var middle = new StartLocation(64, 512); Slots.Add(new Slot(0, West, Controller.User) { Start = middle }, new Slot(5, East, Controller.Computer) { Start = middle }, new Slot(1, East, Controller.User));");
+            var project = MapProject.Find(folder);
+            var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
+            var log = new StringWriter();
+
+            var settings = MapSettingsReader.Read(assembly, project);
+            var info = SourceMap.Open(project, settings, log).Info!;
+
+            Assert.Equal(new System.Numerics.Vector2(64, 512), settings.Slots![0].Start);
+            Assert.Null(settings.Slots[2].Start);
+            Assert.Equal(new System.Numerics.Vector2(64, 512), info.Players[0].StartPosition);
+            Assert.Equal(new System.Numerics.Vector2(64, 512), info.Players[2].StartPosition);
+            Assert.NotEqual(new System.Numerics.Vector2(64, 512), info.Players[1].StartPosition);
+            Assert.Contains("note: slot 0 has a start in code and a start location for Player 1", log.ToString());
+            Assert.DoesNotContain("slot 5 has", log.ToString());
         }
 
         [Fact]

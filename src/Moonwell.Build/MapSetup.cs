@@ -23,7 +23,7 @@ namespace Moonwell.Build
         /// <summary>Replaces the map's players and forces with the settings' slots and teams, with fixed player settings; does nothing when the map class sets up no slot.</summary>
         /// <param name="map">The opened map, with its info file and its placed units.</param>
         /// <param name="settings">The map class's settings.</param>
-        /// <param name="log">The build log; a slot with no start location placed in World Editor is noted in it.</param>
+        /// <param name="log">The build log; a slot with no start, in code or placed in World Editor, is noted in it, and one with both.</param>
         /// <param name="mapName">The map folder's name, for the note.</param>
         public static void Apply(War3Net.Build.Map map, MapSettings settings, TextWriter log, string mapName = "map")
         {
@@ -48,7 +48,17 @@ namespace Moonwell.Build
             info.Players.Clear();
             foreach (var slot in slots.OrderBy(slot => slot.Number))
             {
-                if (!starts.TryGetValue(slot.Number, out var start))
+                var placed = starts.TryGetValue(slot.Number, out var start);
+                if (slot.Start is { } code)
+                {
+                    if (placed)
+                    {
+                        log.WriteLine($"note: slot {slot.Number} has a start in code and a start location for Player {slot.Number + 1} in {mapName}\\; it starts at the code's");
+                    }
+
+                    start = code;
+                }
+                else if (!placed)
                 {
                     start = middle;
                     log.WriteLine($"note: slot {slot.Number} has no start location in {mapName}\\, so it starts in the map's middle; place one for Player {slot.Number + 1} in World Editor");
@@ -82,6 +92,11 @@ namespace Moonwell.Build
                 if (team.SharedControl)
                 {
                     flags |= ForceFlags.ShareUnitControl;
+                }
+
+                if (team.AlliedVictory)
+                {
+                    flags |= ForceFlags.AlliedVictory;
                 }
 
                 var members = 0;

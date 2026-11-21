@@ -71,7 +71,8 @@ single player or a neutral one, does not.
 `Slots` sets up the player slots in place of World Editor's players and forces. Each slot, numbered from 0 as
 `Player.Get` takes it, is on a team, played by a person or a computer, with a race or, without one, the player's pick.
 A team is declared on the map class as a static field, so code finds it by name; its players are allies, and
-`SharedVision` and `SharedControl` share more between them.
+`SharedVision` and `SharedControl` share more between them. `AlliedVictory` is World Editor's Allied Victory: the
+team's players win together in the game's own victory checks, such as the melee ones.
 
 ```csharp
 public sealed class Arena : Map
@@ -93,7 +94,10 @@ public sealed class Arena : Map
 The build writes them into the map's `war3map.w3i` with fixed player settings: the lobby shows the teams, nobody changes
 their team or race there, and the game starts with each team's alliances set. Teams are numbered in the order the
 slots first name them. A slot starts at its start location placed in World Editor; one without starts in the map's
-middle, and the build notes it. Fixed settings lock alliance changes: the Allies menu (F11) is greyed out, and only
+middle, and the build notes it. `Start` sets it in code instead, `new Slot(0, West, Controller.User) { Start = new(64,
+5120) }`, and two slots may share one. The game reads only the code's start then: World Editor's start location for
+that slot is left in the map but not used, and the build notes a slot with both. The lobby's map preview still shows
+World Editor's markers, as it draws them from `war3map.mmp`. Fixed settings lock alliance changes: the Allies menu (F11) is greyed out, and only
 code changes alliances. A map with no slots keeps World Editor's setup.
 
 A `moonwell run` game seats the computers World Editor's players set up on a map without custom forces, or with custom

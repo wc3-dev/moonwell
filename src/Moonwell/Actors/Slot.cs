@@ -26,5 +26,8 @@ namespace Moonwell
 
         /// <summary>The slot's name, which a computer's player has in the game; empty is "Player" and the slot's number from 1.</summary>
         public string Name { get; set; } = "";
+
+        /// <summary>Where the slot starts, written into the map's war3map.w3i in place of its start location placed in World Editor; null keeps World Editor's. Two slots may share one.</summary>
+        public StartLocation? Start { get; set; }
     }
 }
