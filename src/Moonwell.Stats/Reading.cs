@@ -1,5 +1,3 @@
-using System;
-
 namespace Moonwell
 {
     /// <summary>What the effects read of a stat, and the dice they roll, kept cheap for a unit that never had a stat set.</summary>
@@ -16,10 +14,10 @@ namespace Moonwell
             return Plain(stat);
         }
 
-        /// <summary>A player's stat: its total, or the stat's own base held to its limits for a player with no sheet of stats.</summary>
+        /// <summary>A player's stat: its total, as Get gives it, or the stat's own base held to its limits for a player with no sheet of stats and a stat with no formula and no cap: nothing is made for the player.</summary>
         internal static float Of(Player player, Stat stat)
         {
-            return player.stats != null ? player.Get(stat) : Plain(stat);
+            return player.stats != null || stat.HasFormulas || stat.Cap != null ? player.Get(stat) : Plain(stat);
         }
 
         /// <summary>A stat's own base, held to its limits.</summary>
@@ -36,7 +34,7 @@ namespace Moonwell
                 value = stat.Most.Value;
             }
 
-            return stat.Whole ? MathF.Floor(value + 0.5f) : value;
+            return stat.Whole ? StatSheet.Whole(value) : value;
         }
 
         /// <summary>Whether a roll at a chance in percent points succeeds: never at 0 or less and always at 100 or more, drawing nothing for either, and otherwise from the game's own generator, the same on every machine.</summary>

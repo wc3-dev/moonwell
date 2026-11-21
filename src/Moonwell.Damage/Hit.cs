@@ -19,11 +19,25 @@ namespace Moonwell
             Original = amount;
         }
 
-        /// <summary>How far left of the target a miss's text starts, where the game starts its own: a first guess from one screenshot, which a game check sets.</summary>
-        internal const float MissLeft = 74.0f;
+        /// <summary>
+        /// How far right of a unit's x the package's texts (miss, parry, block, a crit's number) are put, and how high above the ground,
+        /// so they start where the game starts its own miss and crit text. Worked out from screenshots at 1920x1080 on the default
+        /// camera, where 100 world units across are about 70 px and a height unit about 0.39 px, a unit's health bar about 56 px wide:
+        /// the game's miss has its left edge 28 px right of the attacker's centre and its middle 8 px below the top of the bar, its
+        /// crit number 18 px right and 20 px below. A text put at a unit's x shows its left edge 3 to 11 px right of the centre, and
+        /// at height 100 about 15 px above the bar, so about 23 right (miss 25, crit 21) and a height of 26 (miss 41, crit 10).
+        /// A game check sets the final numbers.
+        /// </summary>
+        internal const float TextRight = 23.0f, TextHeight = 26.0f;
 
-        /// <summary>How high above the ground a miss's text starts: about 50 lower than a PopText over the same unit starts. A first guess from one screenshot, which a game check sets.</summary>
-        internal const float MissHeight = 100.0f;
+        /// <summary>Shows a red text over a unit where the game starts its own: the unit's place moved by <see cref="TextRight"/> and <see cref="TextHeight"/>.</summary>
+        internal static void ShowText(string text, Unit over)
+        {
+            FloatingText.Pop(text, over.X + TextRight, over.Y, Color.Red, null, TextHeight);
+        }
+
+        /// <summary>The unit the game shows a miss or a crit over: the attacker, or the target for a hit with no source.</summary>
+        internal Unit TextUnit => Source != null && !Source.IsGone ? Source : Target;
 
         /// <summary>The amount of the hit; a reaction may change it, and a missed hit keeps 0.</summary>
         [LocalSafe]
@@ -186,7 +200,8 @@ namespace Moonwell
 
         /// <summary>
         /// Before armor only: makes the hit miss, as the game's own miss does. The amount becomes 0, the weapon sound none,
-        /// and <see cref="Missed"/> true; the text is shown once over the target in red, and an empty text shows nothing.
+        /// and <see cref="Missed"/> true; the text is shown once in red over the source, as the game shows its own miss (over the target
+        /// for a hit with no source), and an empty text shows nothing.
         /// The rest of the stage's reactions still run and read Missed, no later stage's reactions run for the hit (nor
         /// core's OnDamaged family), it takes no life, and a burst still lists it. The game's own on-hit effects still land.
         /// </summary>
@@ -203,7 +218,7 @@ namespace Moonwell
             weaponSound = WeaponSound.None;
             if (!string.IsNullOrEmpty(text) && !Target.IsGone)
             {
-                FloatingText.Pop(text, Target.X - MissLeft, Target.Y, Color.Red, null, MissHeight);
+                ShowText(text, TextUnit);
             }
         }
 

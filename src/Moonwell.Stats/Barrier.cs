@@ -70,7 +70,8 @@ namespace Moonwell
         /// Gives the unit a barrier of an amount, which absorbs what hits have left after armor (and block) until it is used up. It
         /// ends with the scope that holds it, after the seconds when given (0 for none), or when nothing is left. The unit's
         /// <see cref="Stat.Barrier"/> is the total its barriers have left, and its change reactions follow. A holder that has ended, or
-        /// an amount of 0 or less, gives a barrier that has ended.
+        /// an amount of 0 or less, gives a barrier that has ended, with nothing published: <see cref="Stat.Barrier"/> is not raised and no
+        /// change reaction runs. A holder that has ended is reported in a development build.
         /// </summary>
         /// <param name="unit">The unit the barrier protects.</param>
         /// <param name="amount">What it can absorb.</param>
@@ -80,6 +81,14 @@ namespace Moonwell
         {
             if (amount <= 0.0f || unit.IsGone || unit.HasEnded)
             {
+                var none = new Barrier(unit, null, 0.0f, 0.0f, false);
+                none.End();
+                return none;
+            }
+
+            if (heldBy == null || heldBy.HasEnded || heldBy.childrenEnded)
+            {
+                Dev.Report("Unit.AddBarrier", "the barrier is held by " + (heldBy == null ? "nothing" : Names.NameOf(heldBy) + ", which has ended") + ", so it was not added");
                 var none = new Barrier(unit, null, 0.0f, 0.0f, false);
                 none.End();
                 return none;

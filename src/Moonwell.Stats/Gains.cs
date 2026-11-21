@@ -6,7 +6,8 @@ namespace Moonwell
 {
     /// <summary>
     /// The gain stats' effect at a kill. The game gives a kill's experience and bounty after the killing hit's lethal stage and before the
-    /// death event, so the package notes what each hero and the killer's player have in the lethal stage and, at the start of the death event
+    /// death event, so the package notes what each hero and the killer's player have at the end of the damage package's handling of a hit
+    /// that will kill (after every reaction to it, a map's own gift in the lethal stage included) and, at the start of the death event
     /// (before any reaction of Moonwell's runs, so before a map's own gift in OnKill), adds the percent of what the game gave.
     /// </summary>
     internal sealed class Gains
@@ -46,7 +47,7 @@ namespace Moonwell
             set.Add(actor);
         }
 
-        /// <summary>The lethal stage of a hit: notes the experience of each hero with a gain and the gold of the killer's player when the killer has a bonus.</summary>
+        /// <summary>A hit will kill, and every reaction to it has run: notes the experience of each hero with a gain and the gold of the killer's player when the killer has a bonus. A hit a reaction spared does not come here.</summary>
         internal void Dying(Hit hit)
         {
             if (!Any)

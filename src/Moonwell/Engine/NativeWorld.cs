@@ -1183,15 +1183,23 @@ namespace Moonwell.Engine
             Natives.BlzSetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_CAST_RANGE, levelIndex, range);
         }
 
-        /// <summary>The ids of the abilities a unit has: BlzGetUnitAbilityByIndex from 0 until it answers nothing, each by BlzGetAbilityId.</summary>
+        /// <summary>The most abilities a walk over a unit's ability list goes through, far above what a unit has: a world that never answers nothing (a stub) cannot hang the map.</summary>
+        private const int MostAbilities = 256;
+
+        /// <summary>The ids of the abilities a unit has: BlzGetUnitAbilityByIndex from 0 until it answers nothing, each by BlzGetAbilityId, at most MostAbilities. A development build reports a walk that reaches the most.</summary>
         public List<int> AbilityIdsOf(unit unit)
         {
             var ids = new List<int>();
             var ability = Natives.BlzGetUnitAbilityByIndex(unit, 0);
-            while (ability != null)
+            while (ability != null && ids.Count < MostAbilities)
             {
                 ids.Add(Natives.BlzGetAbilityId(ability));
                 ability = Natives.BlzGetUnitAbilityByIndex(unit, ids.Count);
+            }
+
+            if (ability != null)
+            {
+                Dev.Report("Moonwell.AbilityIdsOf", "stopped at " + MostAbilities + " abilities: the game never said a unit's ability list ended");
             }
 
             return ids;
@@ -2630,7 +2638,7 @@ namespace Moonwell.Engine
         // shortcut: a map's own cargo hold is found by a capacity above 0, so one set to 0 is found no more; keep the hold per unit if that matters.
         private ability? CargoHold(unit unit)
         {
-            for (var i = 0; ; i++)
+            for (var i = 0; i < MostAbilities; i++)
             {
                 var found = Natives.BlzGetUnitAbilityByIndex(unit, i);
                 if (found == null)
@@ -2644,6 +2652,8 @@ namespace Moonwell.Engine
                     return found;
                 }
             }
+
+            return null;
         }
 
         /// <summary>The game's cargo holds: ship, zeppelin, the others with one, the orc burrow, Devour Cargo and the entangled gold mine.</summary>

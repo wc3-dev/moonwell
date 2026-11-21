@@ -983,6 +983,65 @@ namespace Moonwell.Testing
             Expect.Near(50.0f, striker.Get(Stat.Damage), "and Get");
         }
 
+        /// <summary>An owned most life or mana through a level keeps the life or mana the unit had: the game adds the level's part to both, and Moonwell takes the part back off the current value when it puts its own most again (probe 11-21). A change Moonwell makes itself keeps the percent as before; a most that is not owned keeps the game's gift.</summary>
+        public static void OwnedMostThroughLevel(FakeWorld world)
+        {
+            var holder = Game.Instance.Add(new Holder());
+            var handle = world.NewUnit(Id("Hpal"), hero: true);
+            var hero = Unit.Of(handle)!;
+            world.SetStats(handle, 22, 13, 17);
+            world.SetMaxLife(handle, 650.0f);
+            world.SetLife(handle, 650.0f);
+            world.SetMaxMana(handle, 255.0f);
+            world.SetMana(handle, 255.0f);
+            hero.SetBase(Stat.MaxLife, 800.0f);
+            hero.SetBase(Stat.MaxMana, 300.0f);
+            hero.Modify(Stat.MaxLife, holder, percent: 10.0f);
+            Expect.Near(880.0f, world.MaxLifeOf(handle), "800 and 10 percent");
+            world.SetLife(handle, 440.0f);
+            world.SetMana(handle, 150.0f);
+
+            // The game's level: 50 more life and 45 more mana, on the most and on the current number alike.
+            world.SetMaxLife(handle, 930.0f);
+            world.SetLife(handle, 490.0f);
+            world.SetMaxMana(handle, 345.0f);
+            world.SetMana(handle, 195.0f);
+            world.LevelHero(handle, 2, false);
+            Expect.Near(880.0f, world.MaxLifeOf(handle), "the most is Moonwell's again");
+            Expect.Near(440.0f, world.LifeOf(handle), "and the life is what it was, 50 percent of 880, not 52.75");
+            Expect.Near(300.0f, world.MaxManaOf(handle), "the most mana the same");
+            Expect.Near(150.0f, world.ManaOf(handle), "and the mana");
+
+            // A change Moonwell makes itself keeps the percent: 440 of 880 is 480 of 960.
+            hero.Modify(Stat.MaxLife, holder, percent: 10.0f);
+            Expect.Near(960.0f, world.MaxLifeOf(handle), "the most with another 10 percent");
+            Expect.Near(480.0f, world.LifeOf(handle), "the percent kept for a change of Moonwell's own");
+
+            // A hero at full life stays at full life through the level.
+            var full = Unit.Of(world.NewUnit(Id("Hpal"), hero: true))!;
+            world.SetMaxLife(full.Handle, 650.0f);
+            world.SetLife(full.Handle, 650.0f);
+            full.SetBase(Stat.MaxLife, 800.0f);
+            Expect.Near(800.0f, world.LifeOf(full.Handle), "a full unit is full at the most it was given");
+            world.SetMaxLife(full.Handle, 850.0f);
+            world.SetLife(full.Handle, 850.0f);
+            world.LevelHero(full.Handle, 2, false);
+            Expect.Near(800.0f, world.MaxLifeOf(full.Handle), "the most is 800");
+            Expect.Near(800.0f, world.LifeOf(full.Handle), "and the life is still full");
+
+            // A most that is not owned keeps the game's gift: 50 percent of 715, then the level's 50 with it.
+            var plain = Unit.Of(world.NewUnit(Id("Hpal"), hero: true))!;
+            world.SetMaxLife(plain.Handle, 650.0f);
+            world.SetLife(plain.Handle, 650.0f);
+            plain.Modify(Stat.MaxLife, holder, percent: 10.0f);
+            world.SetLife(plain.Handle, 357.5f);
+            world.SetMaxLife(plain.Handle, 765.0f);
+            world.SetLife(plain.Handle, 407.5f);
+            world.LevelHero(plain.Handle, 2, false);
+            Expect.Near(770.0f, world.MaxLifeOf(plain.Handle), "700 and 10 percent");
+            Expect.Near(407.5f / 765.0f * 770.0f, world.LifeOf(plain.Handle), "the level's part stays in the life, at the same percent");
+        }
+
         /// <summary>Changing the most life or most mana through a stat keeps the current amount at the same percent, up and down; a dead unit is left alone and a most of 0 is not divided by.</summary>
         public static void KeepsPercent(FakeWorld world)
         {

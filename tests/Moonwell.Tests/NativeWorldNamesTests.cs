@@ -56,6 +56,15 @@ public class NativeWorldNamesTests
         var shared = methods.Where(natives.Contains).Distinct().OrderBy(name => name).ToList();
         Assert.True(shared.Count == 0, "NativeDamageWorld methods named like natives: " + string.Join(", ", shared));
     }
+
+    // A walk over a unit's ability list ends when the game answers nothing; a world that never does (the gate tool's stub) must not hang the map.
+    [Fact]
+    public void NativeWorldAbilityWalksAreCapped()
+    {
+        var world = typeof(Moonwell.Hosting.IWorld).Assembly.GetType("Moonwell.Engine.NativeWorld", throwOnError: true)!;
+        var most = world.GetField("MostAbilities", BindingFlags.NonPublic | BindingFlags.Static)!;
+        Assert.Equal(256, most.GetRawConstantValue());
+    }
 }
 
 public class ClassMethodsShadowingNativesTests

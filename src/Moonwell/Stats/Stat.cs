@@ -62,6 +62,9 @@ namespace Moonwell
             Kind = kind;
             // Never below 0, and a unit's most life never below 1.
             Least = kind == StatKind.MaxLife ? 1.0f : 0.0f;
+
+            // The game keeps these whole: a hero's attributes, the most life and the most mana, so Get gives what the game has.
+            Whole = kind == StatKind.MaxLife || kind == StatKind.MaxMana || kind == StatKind.Strength || kind == StatKind.Agility || kind == StatKind.Intelligence;
             Register(this);
         }
 
@@ -90,13 +93,18 @@ namespace Moonwell
         /// <summary>The stat whose total on the same holder is this one's most; null when none.</summary>
         internal Stat? Cap => cappedBy;
 
-        /// <summary>Makes another stat's total on the same holder this stat's most, as energy out of most energy, and gives this stat back. This stat is worked out again when the other changes. A cap that would loop back to this stat, through any mix of CappedBy, From and Formula, is refused and reported.</summary>
+        /// <summary>Makes another stat's total on the same holder this stat's most, as energy out of most energy, and gives this stat back. This stat is worked out again when the other changes. A second call replaces the cap: the stat is no longer worked out again when the old cap changes, unless a From or Formula of it still reads that one. A cap that would loop back to this stat, through any mix of CappedBy, From and Formula, is refused and reported.</summary>
         public Stat CappedBy(Stat other)
         {
             if (other == this || other.ReadsFrom(this))
             {
                 Errors.Refuse("Stat.CappedBy", Name + " cannot be capped by " + other.Name + ": that stat reads " + Name + " in the end");
                 return this;
+            }
+
+            if (cappedBy != null && cappedBy != other)
+            {
+                cappedBy.DropReader(this);
             }
 
             cappedBy = other;
@@ -170,6 +178,32 @@ namespace Moonwell
             {
                 readers.Add(reader);
             }
+        }
+
+        /// <summary>Takes a stat off this one's readers once nothing links it any more: its cap is another stat now, and none of its formulas reads this one.</summary>
+        private void DropReader(Stat reader)
+        {
+            if (readers == null)
+            {
+                return;
+            }
+
+            if (reader.formulas != null)
+            {
+                for (var i = 0; i < reader.formulas.Count; i++)
+                {
+                    var from = reader.formulas[i].From;
+                    for (var j = 0; j < from.Length; j++)
+                    {
+                        if (from[j] == this)
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            readers.Remove(reader);
         }
 
         /// <summary>The stats that read this one; null when none.</summary>
@@ -391,10 +425,10 @@ namespace Moonwell
         /// <summary>Move speed, which the game holds to the map's least and most speed (150 to 400 unless the map's gameplay constants say otherwise).</summary>
         public static Stat MoveSpeed => moveSpeed ??= new Stat("Move speed", StatKind.MoveSpeed);
 
-        /// <summary>The most life; a modifier never takes it below 1.</summary>
+        /// <summary>The most life; a modifier never takes it below 1. Whole numbers.</summary>
         public static Stat MaxLife => maxLife ??= new Stat("Life", StatKind.MaxLife);
 
-        /// <summary>The most mana.</summary>
+        /// <summary>The most mana. Whole numbers.</summary>
         public static Stat MaxMana => maxMana ??= new Stat("Mana", StatKind.MaxMana);
 
         /// <summary>Life regeneration a second, the unit's own, to which a hero's strength adds.</summary>
