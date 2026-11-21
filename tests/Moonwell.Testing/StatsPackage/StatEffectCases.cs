@@ -572,6 +572,43 @@ namespace Moonwell.Testing
             Expect.Equal(0, world.Texts.Count, "no text");
         }
 
+        /// <summary>The package's texts start where the game starts its own: "miss", "parry" and a crit's number over the attacker, low and a little right of it; "block", which the game has no text for, over the target the same way.</summary>
+        public static void TextsWhere(FakeWorld world)
+        {
+            Arena(world, out var source, out var target);
+            source.MoveTo(100.0f, 200.0f);
+            target.MoveTo(600.0f, 700.0f);
+            target.FaceNow(225.0f);
+            target.SetBase(Stat.Evasion, 100.0f);
+            Swing(source, target);
+            Expect.Equal("miss", world.Texts[0].Words, "the miss");
+            ExpectOver(world.Texts[0], source, "the miss is over the attacker");
+            target.SetBase(Stat.Evasion, 0.0f);
+            target.SetBase(Stat.Parry, 100.0f);
+            Swing(source, target);
+            Expect.Equal("parry", world.Texts[1].Words, "the parry");
+            ExpectOver(world.Texts[1], source, "the parry is over the attacker");
+            target.SetBase(Stat.Parry, 0.0f);
+            source.SetBase(Stat.CritChance, 100.0f);
+            Attack(source, target);
+            Expect.Equal("200!", world.Texts[2].Words, "the crit's number");
+            ExpectOver(world.Texts[2], source, "the crit's number is over the attacker");
+            source.SetBase(Stat.CritChance, 0.0f);
+            target.SetBase(Stat.BlockChance, 100.0f);
+            target.SetBase(Stat.BlockAmount, 500.0f);
+            Attack(source, target);
+            Expect.Equal("block", world.Texts[3].Words, "the block");
+            ExpectOver(world.Texts[3], target, "the block is over the target");
+        }
+
+        /// <summary>Whether a text starts where the package puts its texts over a unit.</summary>
+        private static void ExpectOver(FakeText text, Unit unit, string what)
+        {
+            Expect.Near(unit.X + Hit.TextRight, text.X, what + ": x");
+            Expect.Near(unit.Y, text.Y, what + ": y");
+            Expect.Near(Hit.TextHeight, text.Height, what + ": height");
+        }
+
         /// <summary>With the texts off a miss still misses, with no text, and a block that leaves nothing shows none.</summary>
         public static void TextsOff(FakeWorld world)
         {

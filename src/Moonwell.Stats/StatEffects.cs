@@ -192,7 +192,7 @@ namespace Moonwell
                 hit.Blocked = blocked;
                 if (hit.Amount <= 0.0f && StatsSystem.ShowTexts)
                 {
-                    FloatingText.Pop("block", target.X - Hit.MissLeft, target.Y, Color.Red, null, Hit.MissHeight);
+                    Hit.ShowText("block", target);
                 }
             }
 
@@ -227,7 +227,7 @@ namespace Moonwell
 
             if (hit.IsCrit && StatsSystem.ShowTexts)
             {
-                FloatingText.Pop(((int)MathF.Floor(hit.Amount + 0.5f)).ToString() + "!", hit.Target.X, hit.Target.Y, Color.Red);
+                Hit.ShowText(((int)MathF.Floor(hit.Amount + 0.5f)).ToString() + "!", hit.TextUnit);
             }
 
             var source = hit.Source;

@@ -1040,9 +1040,48 @@ left after armor and block, the one ending soonest first and one with no end las
 `Stat.Barrier` on the unit reads the total its barriers have left: the package keeps the unit's base of it equal to that,
 so `OnStatChanged` and a bar follow. Do not set that base yourself.
 
-The package shows texts, in the game's red: "miss" and "parry" where the game shows its own miss, "block" when a block
-leaves nothing, and a crit's landed amount as a whole number with "!" over the target when the hit lands.
-`StatsSystem.ShowTexts = false` turns all of them off; a miss still misses, with no text (`hit.Miss("")`).
+The package shows texts, in the game's red. "miss", "parry" and a crit's landed amount (a whole number with "!", shown
+when the hit lands) start over the attacker, a little right of it and low, where the game starts its own miss and crit
+text; a hit with no source shows them over the target. "block", shown when a block leaves nothing, starts over the target
+the same way, as the game has no text for it. The place is a first reading from screenshots, which a game check will
+set. `StatsSystem.ShowTexts = false` turns all of them off at once; a miss still misses, with no text (`hit.Miss("")`).
+That one switch is all there is: a map that wants other words, places or colours turns the texts off and draws its own
+from a game component that reads the hit:
+
+```csharp
+public sealed class Texts : GameComponent, IDamageWatch
+{
+    public void OnUnitTaking(Hit hit)                    // before armor: Missed is set by now
+    {
+        if (hit.Missed)
+        {
+            hit.Target.PopText("Missed", Color.White);
+        }
+    }
+
+    public void OnUnitHurt(Hit hit)                      // landed: the crit and the block are written
+    {
+        if (hit.IsCrit)
+        {
+            hit.Target.PopText((int)hit.Amount + "!", Color.Orange);
+        }
+        else if (hit.Blocked > 0f)
+        {
+            hit.Target.PopText("-" + (int)hit.Blocked, Color.Gray);
+        }
+    }
+}
+
+// in the map's Settings:  Components.Add(new Texts());   and, once the game has started:  StatsSystem.ShowTexts = false;
+```
+
+The order matters for `Missed`: the package makes the miss in the before-armor stage, as a game component, and game
+components run in the order they were added. The package is added first, in the build's start-up step, before the map's
+own `Components`, so a component listed in `Components` or added with `Game.Instance.Add` comes after it and reads
+`Missed` already set. A component added before the package, or a unit's own `OnTaking`, runs earlier and sees
+`Missed` false. What the example cannot tell: a parry is a miss too, so `Missed` is true for both and nothing on the hit
+says which it was. A missed hit runs no later stage, so a miss is seen only before armor; `IsCrit` and `Blocked` are
+seen in the landed stage (`OnUnitHurt`), where a hit blocked down to nothing still arrives with `Amount` 0.
 
 The ability stats and cast speed take effect from the ability's next cast: a cooldown that is already running is not
 touched (`ResetCooldown` and `StartCooldown` stay yours). They work on each ability's own number, so setting a stat again
@@ -1478,7 +1517,8 @@ after armor, the target's armor has cut it and only the amount can change. The l
 A miss, the marks and area hits:
 
 - `hit.Miss()` before armor makes the hit a miss as the game's own look: the amount is 0, the weapon sound is none,
-  `hit.Missed` is true and a red "miss" shows over the target. `hit.Miss("dodge")` shows another word, `""` none. The
+  `hit.Missed` is true and a red "miss" shows over the source, as the game shows its own (over the target for a hit with
+  no source). `hit.Miss("dodge")` shows another word, `""` none. The
   rest of that stage's reactions still run and can read `Missed`, and setting `Amount` on the hit does nothing. No later
   stage runs for it, nor `OnDamaged` and the rest of core's family, and it takes no life; a burst still lists it. Called
   later than before armor, it is reported and does nothing. The game's own on-hit effects, such as a poison or a bash,

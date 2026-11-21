@@ -62,6 +62,9 @@ namespace Moonwell
         /// <summary>Whether the hero's other stats are being put again after a level or an attribute, so a put of an attribute inside does not start another round.</summary>
         private bool following;
 
+        /// <summary>The most life and the most mana as the game read them back when Moonwell last put an owned one; null while the stat is not owned or none was put.</summary>
+        private float? mostLife, mostMana;
+
         internal StatSheet(Actor actor)
         {
             this.actor = actor;
@@ -734,11 +737,11 @@ namespace Moonwell
                     applied[stat] = world.MoveSpeedOf(handle) - raw;
                     break;
                 case StatKind.MaxLife:
-                    PutMost(handle, false, Whole(total));
+                    PutMost(handle, false, Whole(total), owned);
                     applied[stat] = world.MaxLifeOf(handle) - raw;
                     break;
                 case StatKind.MaxMana:
-                    PutMost(handle, true, Whole(total));
+                    PutMost(handle, true, Whole(total), owned);
                     applied[stat] = world.MaxManaOf(handle) - raw;
                     break;
                 case StatKind.LifeRegen:
@@ -798,12 +801,27 @@ namespace Moonwell
         }
 
         // Sets a unit's most life or mana, and keeps its current life or mana at the same percent of the most (decision 391): 650 of 650 becomes 750 of 750, 325 of 650 becomes 375 of 750. A dead unit is left alone, and a most of 0 before or after is not divided by. A unit alive keeps at least 1 life, as the game kills at 0.405.
-        private static void PutMost(unit handle, bool mana, float most)
+        // An owned most is Moonwell's own number, so when the game has moved it since Moonwell last put it (a level, an attribute), the game's shift is taken back off the current value first: the game adds a level's life to the current life as well as to the most (probe 11-21), and the unit keeps the life it had. A most that is not owned keeps the game's gift.
+        private void PutMost(unit handle, bool mana, float most, bool owned)
         {
             var world = Runtime.World;
             var before = mana ? world.MaxManaOf(handle) : world.MaxLifeOf(handle);
             var amount = mana ? world.ManaOf(handle) : world.LifeOf(handle);
             var alive = world.IsAlive(handle);
+            var put = mana ? mostMana : mostLife;
+            var shifted = false;
+            if (owned && put != null && alive && before != put.Value)
+            {
+                shifted = true;
+                amount -= before - put.Value;
+                if (amount < (mana ? 0.0f : 1.0f))
+                {
+                    amount = mana ? 0.0f : 1.0f;
+                }
+
+                before = put.Value;
+            }
+
             if (mana)
             {
                 world.SetMaxMana(handle, most);
@@ -814,7 +832,16 @@ namespace Moonwell
             }
 
             var now = mana ? world.MaxManaOf(handle) : world.MaxLifeOf(handle);
-            if (!alive || amount <= 0.0f || before <= 0.0f || now <= 0.0f || now == before)
+            if (mana)
+            {
+                mostMana = owned ? now : (float?)null;
+            }
+            else
+            {
+                mostLife = owned ? now : (float?)null;
+            }
+
+            if (!alive || (amount <= 0.0f && !shifted) || before <= 0.0f || now <= 0.0f || (now == before && !shifted))
             {
                 return;
             }

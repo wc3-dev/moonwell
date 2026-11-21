@@ -113,6 +113,28 @@ namespace Moonwell.Testing
             Expect.Near(10.0f, slow.LiveCooldown, "level 1 had its own number, put when the level was set");
         }
 
+        /// <summary>A hero that learns a skill after its stats were set has the skill scaled the moment it is learned, at the level it has, and again at the next level: the package listens for the game's skill event itself, though no class of the map reacts to it.</summary>
+        public static void SkillLearnedLater(FakeWorld world)
+        {
+            StatsSystem.Install();
+            var hero = Unit.Of(world.NewUnit(ObjectTypes.FourCC("Hpal"), slot: 0, hero: true))!;
+            world.SetLevelCount(Slow, 3);
+            world.SetAbilityCooldown(hero.Handle, Slow, 0, 10.0f);
+            world.SetAbilityCooldown(hero.Handle, Slow, 1, 20.0f);
+            world.SetAbilityRange(hero.Handle, Slow, 0, 600.0f);
+            world.SetAbilityRange(hero.Handle, Slow, 1, 700.0f);
+            world.SetSkillPoints(hero.Handle, 2);
+            hero.SetBase(Stat.CastRange, 100.0f);
+            hero.SetBase(Stat.CooldownReduction, 50.0f);
+            Expect.True(world.LearnSkill(hero.Handle, Slow), "the hero learns the skill");
+            var slow = hero.AbilityOf(Slow);
+            Expect.Near(1200.0f, slow.LiveRange, "scaled at level 1: 600 and 100 percent");
+            Expect.Near(5.0f, slow.LiveCooldown, "half of 10");
+            Expect.True(world.LearnSkill(hero.Handle, Slow), "and the second level");
+            Expect.Near(1400.0f, slow.LiveRange, "scaled at level 2: 700 and 100 percent");
+            Expect.Near(10.0f, slow.LiveCooldown, "half of 20");
+        }
+
         /// <summary>A unit that never had one of the three stats is never walked: no sheet of stats, and its abilities keep their numbers when they change.</summary>
         public static void UnitWithoutStatsUntouched(FakeWorld world)
         {
