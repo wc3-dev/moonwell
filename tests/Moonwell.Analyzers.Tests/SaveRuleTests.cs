@@ -110,6 +110,71 @@ public class SaveRuleTests
     }
 
     [Fact]
+    public void an_enum_wider_than_an_int_from_a_library_is_rejected_single_list_and_array()
+    {
+        const string library = """
+            namespace MyLib
+            {
+                public enum Big : long { Small, Huge = 5000000000 }
+                public enum Unsigned : uint { Top = 4000000000 }
+                public enum Wide : ulong { Top = 10000000000 }
+            }
+            """;
+        const string source = """
+            using System.Collections.Generic;
+            using Moonwell;
+            using MyLib;
+
+            namespace Map
+            {
+                public sealed class RpgSave : SaveGame
+                {
+                    [Saved(1)] public Big One;
+                    [Saved(2)] public List<Big> Many = new List<Big>();
+                    [Saved(3)] public Unsigned[] Tops = new Unsigned[0];
+                    [Saved(4)] public Wide Far;
+                }
+            }
+            """;
+
+        Assert.Equal(new[] { "MW0052: One", "MW0052: Many", "MW0052: Tops", "MW0052: Far" }, MapCode.CheckFile(source, library: library));
+        Assert.Contains("MyLib.Big is an enum of long", MapCode.Message("", "public sealed class RpgSave : SaveGame { [Saved(1)] public MyLib.Big One; }", library));
+    }
+
+    [Fact]
+    public void a_long_enum_of_the_maps_own_is_rejected_by_the_save_rule_beside_mw0005()
+    {
+        Assert.Equal(new[] { "MW0005: Big", "MW0005: 5000000000", "MW0052: One", "MW0052: Many" }, Check("""
+            public enum Big : long { Small, Huge = 5000000000 }
+
+            public sealed class RpgSave : SaveGame
+            {
+                [Saved(1)] public Big One;
+                [Saved(2)] public List<Big> Many = new List<Big>();
+            }
+            """));
+    }
+
+    [Fact]
+    public void an_enum_of_an_int_or_smaller_is_clean_single_and_list()
+    {
+        Assert.Empty(Check("""
+            public enum Plain { A, B }
+            public enum Tiny : byte { A, B = 200 }
+            public enum Short : short { A = -3 }
+
+            public sealed class RpgSave : SaveGame
+            {
+                [Saved(1)] public Plain One;
+                [Saved(2)] public List<Plain> Ones = new List<Plain>();
+                [Saved(3)] public Tiny Two;
+                [Saved(4)] public List<Tiny> Twos = new List<Tiny>();
+                [Saved(5)] public Short[] Threes = new Short[0];
+            }
+            """));
+    }
+
+    [Fact]
     public void a_type_that_cannot_be_saved_is_rejected()
     {
         Assert.Equal(new[] { "MW0052: Gold", "MW0052: Hero", "MW0052: Maybe", "MW0052: Nested" }, Check("""
@@ -263,6 +328,27 @@ public class SaveRuleTests
             public sealed class Named : SaveGame
             {
                 public required string Name { get; set; }
+            }
+            """));
+    }
+
+    [Fact]
+    public void a_real_time_of_the_maps_own_is_rejected()
+    {
+        Assert.Equal(new[] { "MW0052: Claimed" }, MapCode.CheckFile("""
+            using Moonwell;
+
+            namespace Campaign.Moonwell
+            {
+                public struct RealTime { }
+            }
+
+            namespace Map
+            {
+                public sealed class RpgSave : SaveGame
+                {
+                    [Saved(1)] public Campaign.Moonwell.RealTime Claimed;
+                }
             }
             """));
     }

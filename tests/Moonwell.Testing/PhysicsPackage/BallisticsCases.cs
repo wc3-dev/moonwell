@@ -177,6 +177,10 @@ namespace Moonwell.Testing
             Expect.True(!Ballistics.Velocity(from, new Vector3(10.0f, 20.0f, 200.0f), 500.0f, false, 800.0f, out velocity), "200 up is above the peak of 156");
             Expect.True(Ballistics.Velocity(from, new Vector3(10.0f, 20.0f, -100.0f), 500.0f, false, 800.0f, out velocity), "100 down is within reach");
             Expect.True(velocity.X == 0.0f && velocity.Y == 0.0f && Math.Abs(velocity.Z + 500.0f) < 0.001f, "it goes straight down at the speed");
+            Expect.True(Ballistics.Velocity(from, new Vector3(10.0f, 20.0f, -100.0f), 500.0f, true, 800.0f, out velocity), "the high arc to 100 down");
+            Expect.True(Math.Abs(velocity.Z - 500.0f) < 0.001f, "it goes up first and falls past the start");
+            Expect.True(Ballistics.Velocity(from, new Vector3(10.0f, 20.0f, 100.0f), 500.0f, true, 800.0f, out velocity), "the high arc to 100 up");
+            Expect.True(Math.Abs(velocity.Z - 500.0f) < 0.001f, "it goes up, passing 100 again on the way down");
         }
     }
 }
