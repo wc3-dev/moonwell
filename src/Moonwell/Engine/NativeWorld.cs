@@ -3090,7 +3090,7 @@ namespace Moonwell.Engine
         }
 
         // MoonwellPlacedDestructables = { name, typeId, x, y, name, typeId, x, y, ... }, appended by the build; none when there is no table.
-        /// @CSharpLua.Template = "(MoonwellPlacedDestructables and #MoonwellPlacedDestructables or 0)"
+        /// @CSharpLua.Template = "(type(MoonwellPlacedDestructables) == 'table' and #MoonwellPlacedDestructables or 0)"
         private static int PlacedDestructableCount()
         {
             return 0;
