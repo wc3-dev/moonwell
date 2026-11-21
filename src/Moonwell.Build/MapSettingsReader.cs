@@ -150,10 +150,12 @@ namespace Moonwell.Build
                 {
                     index = teamObjects.Count;
                     teamObjects.Add(team);
-                    teams.Add(new TeamSetting((string)Value(team, "Name")!, (bool)Value(team, "SharedVision")!, (bool)Value(team, "SharedControl")!));
+                    teams.Add(new TeamSetting((string)Value(team, "Name")!, (bool)Value(team, "SharedVision")!, (bool)Value(team, "SharedControl")!, (bool)Value(team, "AlliedVictory")!));
                 }
 
-                slots.Add(new SlotSetting(number, index, controllerNumber, raceNumber, (string?)Value(slot, "Name") ?? string.Empty));
+                var start = Value(slot, "Start");
+                var position = start == null ? (System.Numerics.Vector2?)null : new System.Numerics.Vector2((float)Field(start, "X"), (float)Field(start, "Y"));
+                slots.Add(new SlotSetting(number, index, controllerNumber, raceNumber, (string?)Value(slot, "Name") ?? string.Empty, position));
             }
 
             return (slots, teams);
@@ -162,6 +164,11 @@ namespace Moonwell.Build
         private static object? Value(object target, string property)
         {
             return target.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!.GetValue(target);
+        }
+
+        private static object Field(object target, string field)
+        {
+            return target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.Public)!.GetValue(target)!;
         }
 
         private static bool IsMapClass(Type type)
