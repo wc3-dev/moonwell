@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Moonwell.Hosting;
 
@@ -38,6 +39,9 @@ namespace Moonwell
         /// <summary>The hits that finished their after-armor stage since the 0 s timer last ran, in order: they land when it runs.</summary>
         private static List<Hit> moment = new List<Hit>();
 
+        /// <summary>Told of a hit that will kill, as the last thing the package does with it before the game acts: every reaction to it has run. The stats package notes the kill's experience and gold here. Cleared by Install.</summary>
+        internal static Action<Hit>? KillListener;
+
         /// <summary>The deal from code waiting for its before-armor event; null when none.</summary>
         private static PendingDeal? pending;
 
@@ -50,6 +54,7 @@ namespace Moonwell
             open.Clear();
             moment = new List<Hit>();
             pending = null;
+            KillListener = null;
             Reactions.Reset();
             Events.DamageListener = Listen;
             Events.DamageDealer = (source, target, amount, kind, attackType, isAttack, ranged, sound, tag, area, power) =>
@@ -324,6 +329,10 @@ namespace Moonwell
 
             // Read again after the lethal stage: a hit a lethal reaction dealt may have killed the target first.
             hit.WouldKill = !hit.Missed && hit.Kills && !World.IsDead(targetHandle);
+            if (hit.WouldKill)
+            {
+                KillListener?.Invoke(hit);
+            }
 
             if (hit.Amount != amount)
             {

@@ -96,7 +96,26 @@ namespace Moonwell.Testing
             fake.Hit(source.Handle, target.Handle, 10f, damageType: 4);
             Expect.Equal(1, world.Texts.Count, "one text");
             Expect.Equal("dodge", world.Texts[0].Words, "the first call's words");
-            Expect.True(world.Texts[0].X < target.X, "it starts left of the target");
+            Expect.True(world.Texts[0].X > source.X, "it starts right of the source, not over the target");
+        }
+
+        /// <summary>A miss's text starts over the source, a little right of it and low, as the game's own miss does; a hit with no source shows it over the target.</summary>
+        public static void MissTextOverTheSource(FakeWorld world)
+        {
+            StageCases.Arena(world, out var source, out var target);
+            var fake = StageCases.Fake;
+            source.MoveTo(100f, 200f);
+            target.MoveTo(900f, -700f);
+            target.Taking = hit => hit.Miss();
+            fake.Hit(source.Handle, target.Handle, 10f, damageType: 4);
+            Expect.Equal(1, world.Texts.Count, "one text");
+            Expect.Near(source.X + Hit.TextRight, world.Texts[0].X, "right of the source's centre");
+            Expect.Near(source.Y, world.Texts[0].Y, "at the source's y");
+            Expect.Near(Hit.TextHeight, world.Texts[0].Height, "its height");
+            fake.Hit(null, target.Handle, 10f, damageType: 4);
+            Expect.Equal(2, world.Texts.Count, "a hit with no source shows one too");
+            Expect.Near(target.X + Hit.TextRight, world.Texts[1].X, "right of the target's centre");
+            Expect.Near(target.Y, world.Texts[1].Y, "at the target's y");
         }
 
         /// <summary>The crit, blocked and absorbed marks set before armor are read at the landing; a hit starts with none.</summary>

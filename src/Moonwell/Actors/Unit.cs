@@ -1608,17 +1608,17 @@ namespace Moonwell
         /// <summary>Adds percents, multipliers and a late flat amount to a stat while a scope holds it (decision 385), and returns the modifier: Modify(Stat.Damage, percent: 20, heldBy: this). The stages are (base + flat) × (1 + the percents added up / 100) × each multiplier + the late flats added up, held to the stat's least and most. Group, stacking and source are as for the flat Modify.</summary>
         public Modifier Modify(Stat stat, Scope heldBy, float percent = 0.0f, float times = 1.0f, float late = 0.0f, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, 0.0f, percent, times, late, heldBy, group, stacking, source, "Unit.Modify");
 
-        /// <summary>A stat's value now, by the four stages and held to the stat's limits. A game stat Moonwell owns (a base was set for the unit or its type) is Moonwell's total. Another game stat reads what the game shows, less what its items and the game's own bonuses add to damage and attack speed: its percents cover the base as it was at the stat's last change, so what the game added since (strength's life) adds unscaled until the stat next changes; a hero's level-up works it out again; 0 once the unit is gone.</summary>
+        /// <summary>A stat's value now, by the four stages and held to the stat's limits. A game stat Moonwell owns (a base was set for the unit or its type) is Moonwell's total. Another game stat reads what the game shows, less what its items and the game's own bonuses add to damage and attack speed: its percents cover the base as it was at the stat's last change, so what the game added since (strength's life) adds unscaled until the stat next changes; a hero's level-up works it out again; 0 once the unit is gone. Reading makes nothing: a unit that never had a stat set keeps no sheet of them and nothing is made for the read, so it may be done inside Local.For.</summary>
         [LocalSafe]
-        public float Get(Stat stat) => Stats.Get(stat);
+        public float Get(Stat stat) => stats != null ? stats.Get(stat) : StatSheet.BareGet(this, stat);
 
         /// <summary>A stat's base, with what its From and Formula give: the unit's own (SetBase), else its type's (Stat.SetBase) by the class it came in as, else the stat's own base. For a game stat nobody set a base for, the game's number less Moonwell's part, read live; once a base is set, Moonwell owns the stat and the base is that number.</summary>
         [LocalSafe]
-        public float GetBase(Stat stat) => Stats.GetBase(stat);
+        public float GetBase(Stat stat) => stats != null ? stats.GetBase(stat) : StatSheet.BareGetBase(this, stat);
 
         /// <summary>The total less the base: what the modifiers add, as a card's "bonus armor". A game stat's is Moonwell's part.</summary>
         [LocalSafe]
-        public float GetBonus(Stat stat) => Stats.Get(stat) - Stats.GetBase(stat);
+        public float GetBonus(Stat stat) => stats != null ? stats.Get(stat) - stats.GetBase(stat) : StatSheet.BareGet(this, stat) - StatSheet.BareGetBase(this, stat);
 
         /// <summary>Sets the base of a stat on this unit, which the modifiers then work on. For a game stat, Moonwell owns that stat on this unit from then on: the base is Moonwell's number, the total by the four stages goes to the game (most life and mana, move speed, regeneration and attributes as the unit's own number; armor as its own base armor and damage as its own base damage, the dice kept, with the green bonus for the rest; attack speed as the green bonus), and Get is Moonwell's total. What a game item's own ability adds still shows in the game on top and is not in Get. A hero's level-up puts it again, so what the level added is overwritten.</summary>
         public void SetBase(Stat stat, float value) => Stats.SetBase(stat, value, "Unit.SetBase");
@@ -1628,7 +1628,7 @@ namespace Moonwell
 
         /// <summary>The modifiers on a stat, a copy in the order they were made, so a loop may end them. Those a stacking rule leaves out are in it; Counts says which.</summary>
         [LocalSafe]
-        public IReadOnlyList<Modifier> Modifiers(Stat stat) => Stats.Modifiers(stat);
+        public IReadOnlyList<Modifier> Modifiers(Stat stat) => stats != null ? stats.Modifiers(stat) : StatSheet.NoModifiers;
 
         internal StatSheet? stats;
 
