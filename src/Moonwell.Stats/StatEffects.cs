@@ -241,7 +241,7 @@ namespace Moonwell
 
             if (hit.IsCrit && StatsSystem.ShowTexts)
             {
-                Hit.ShowText(((int)MathF.Floor(hit.Amount + 0.5f)).ToString() + "!", hit.TextUnit);
+                Hit.ShowText(((int)MathF.Floor(hit.Amount + 0.5f)).ToString() + "!", hit.TextUnit, Hit.NumberRight);
             }
 
             var source = hit.Source;
