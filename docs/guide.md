@@ -1050,10 +1050,10 @@ so `OnStatChanged` and a bar follow. Do not set that base yourself. A holder tha
 nothing raised and no change reaction, reported in development builds.
 
 The package shows texts, in the game's red. "miss", "parry" and a crit's landed amount (a whole number with "!", shown
-when the hit lands) start over the attacker, a little right of it and low, where the game starts its own miss and crit
-text; a hit with no source shows them over the target. "block", shown when a block leaves nothing, starts over the target
-the same way, as the game has no text for it. The place is a first reading from screenshots, which a game check will
-set. `StatsSystem.ShowTexts = false` turns all of them off at once; a miss still misses, with no text (`hit.Miss("")`).
+when the hit lands) start over the attacker and low, where the game starts its own miss and crit text: the words a little
+right of the unit, the crit's number at its x. A hit with no source shows them over the target. "block", shown when a
+block leaves nothing, starts over the target like the words, as the game has no text for it. The place is what a game
+check left it at. `StatsSystem.ShowTexts = false` turns all of them off at once; a miss still misses, with no text (`hit.Miss("")`).
 That one switch is all there is: a map that wants other words, places or colours turns the texts off and draws its own
 from a game component that reads the hit:
 
