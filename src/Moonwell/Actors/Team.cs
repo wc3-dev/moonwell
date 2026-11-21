@@ -30,6 +30,10 @@ namespace Moonwell
         [LocalSafe]
         public bool SharedControl { get; set; }
 
+        /// <summary>Whether the team's players win together in the game's own victory checks (World Editor's Allied Victory, the players' allied victory state); read when the build writes the map.</summary>
+        [LocalSafe]
+        public bool AlliedVictory { get; set; }
+
         /// <summary>The game's number of the team, from 0, in the order the map's slots first name the teams; -1 for a team no slot names.</summary>
         [LocalSafe]
         public int Number { get; private set; } = -1;

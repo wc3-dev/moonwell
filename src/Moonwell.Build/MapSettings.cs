@@ -21,11 +21,13 @@ namespace Moonwell.Build
     /// <param name="Controller">The slot's <c>Moonwell.Controller</c> as its number: 0 User, 1 Computer, 2 Rescuable, 3 Neutral.</param>
     /// <param name="Race">The slot's <c>Moonwell.Race</c> as its number, 0 Human to 3 NightElf; -1 for the player's pick.</param>
     /// <param name="Name">The slot's name; empty is "Player" and its number from 1.</param>
-    public sealed record SlotSetting(int Number, int Team, int Controller, int Race, string Name);
+    /// <param name="Start">Where the map class starts the slot; null keeps its start location placed in World Editor.</param>
+    public sealed record SlotSetting(int Number, int Team, int Controller, int Race, string Name, System.Numerics.Vector2? Start = null);
 
     /// <summary>A team of the map class's slots, read on .NET.</summary>
     /// <param name="Name">The team's name.</param>
     /// <param name="SharedVision">Whether its players see what each other sees.</param>
     /// <param name="SharedControl">Whether its players control each other's units.</param>
-    public sealed record TeamSetting(string Name, bool SharedVision, bool SharedControl);
+    /// <param name="AlliedVictory">Whether its players win together.</param>
+    public sealed record TeamSetting(string Name, bool SharedVision, bool SharedControl, bool AlliedVictory = false);
 }
