@@ -109,12 +109,12 @@ namespace Moonwell.Testing
             target.Taking = hit => hit.Miss();
             fake.Hit(source.Handle, target.Handle, 10f, damageType: 4);
             Expect.Equal(1, world.Texts.Count, "one text");
-            Expect.Near(source.X + Hit.TextRight, world.Texts[0].X, "right of the source's centre");
+            Expect.Near(source.X + Hit.WordsRight, world.Texts[0].X, "right of the source's centre");
             Expect.Near(source.Y, world.Texts[0].Y, "at the source's y");
             Expect.Near(Hit.TextHeight, world.Texts[0].Height, "its height");
             fake.Hit(null, target.Handle, 10f, damageType: 4);
             Expect.Equal(2, world.Texts.Count, "a hit with no source shows one too");
-            Expect.Near(target.X + Hit.TextRight, world.Texts[1].X, "right of the target's centre");
+            Expect.Near(target.X + Hit.WordsRight, world.Texts[1].X, "right of the target's centre");
             Expect.Near(target.Y, world.Texts[1].Y, "at the target's y");
         }
 
