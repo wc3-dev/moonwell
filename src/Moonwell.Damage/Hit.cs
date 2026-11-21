@@ -20,20 +20,22 @@ namespace Moonwell
         }
 
         /// <summary>
-        /// How far right of a unit's x the package's texts (miss, parry, block, a crit's number) are put, and how high above the ground,
-        /// so they start where the game starts its own miss and crit text. Worked out from screenshots at 1920x1080 on the default
-        /// camera, where 100 world units across are about 70 px and a height unit about 0.39 px, a unit's health bar about 56 px wide:
-        /// the game's miss has its left edge 28 px right of the attacker's centre and its middle 8 px below the top of the bar, its
-        /// crit number 18 px right and 20 px below. A text put at a unit's x shows its left edge 3 to 11 px right of the centre, and
-        /// at height 100 about 15 px above the bar, so about 23 right (miss 25, crit 21) and a height of 26 (miss 41, crit 10).
-        /// A game check sets the final numbers.
+        /// How far right of a unit's x the package's words (miss, parry, block) and a crit's number are put, and how high above the
+        /// ground, so they start where the game starts its own miss and crit text. First look, from screenshots at 1920x1080 on the
+        /// default camera, where 100 world units across are about 70 px and a height unit about 0.39 px, a unit's health bar about
+        /// 56 px wide: the game's miss has its left edge 28 px right of the attacker's centre and its middle 8 px below the top of
+        /// the bar, its crit number 18 px right and 20 px below. A text put at a unit's x shows its left edge 3 to 11 px right of the
+        /// centre, and at height 100 about 15 px above the bar, so about 23 right (miss 25, crit 21) and a height of 26.
+        /// Second look, a game check on 3.0.1.24371 (11-21): the miss was very close and the game's lower, nearer the ground, and
+        /// the crit number too far right, the game's starting from about the middle of the unit. So the height went from 26 to 14
+        /// for all, and the crit number's offset from 23 to 0. The numbers are what the game check left them at.
         /// </summary>
-        internal const float TextRight = 23.0f, TextHeight = 26.0f;
+        internal const float WordsRight = 23.0f, NumberRight = 0.0f, TextHeight = 14.0f;
 
-        /// <summary>Shows a red text over a unit where the game starts its own: the unit's place moved by <see cref="TextRight"/> and <see cref="TextHeight"/>.</summary>
-        internal static void ShowText(string text, Unit over)
+        /// <summary>Shows a red text over a unit where the game starts its own: the unit's place moved right by <paramref name="right"/> (<see cref="WordsRight"/> for words, <see cref="NumberRight"/> for a crit's number) and up by <see cref="TextHeight"/>.</summary>
+        internal static void ShowText(string text, Unit over, float right = WordsRight)
         {
-            FloatingText.Pop(text, over.X + TextRight, over.Y, Color.Red, null, TextHeight);
+            FloatingText.Pop(text, over.X + right, over.Y, Color.Red, null, TextHeight);
         }
 
         /// <summary>The unit the game shows a miss or a crit over: the attacker, or the target for a hit with no source.</summary>
