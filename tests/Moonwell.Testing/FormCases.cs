@@ -474,6 +474,30 @@ namespace Moonwell.Testing
         }
 
         /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
+        public static void InterpolatedOperators(FakeWorld world)
+        {
+            int a = 6, b = 3;
+            int? none = null;
+            var yes = a > b;
+            Expect.Equal("2", $"{a & b}", "&");
+            Expect.Equal("7", $"{a | b}", "|");
+            Expect.Equal("5", $"{a ^ b}", "^");
+            Expect.Equal("12", $"{a << 1}", "<<");
+            Expect.Equal("3", $"{a >> 1}", ">>");
+            Expect.Equal("-7", $"{~a}", "~");
+            Expect.Equal("x2y", $"x{a & b}y", "& between text");
+            Expect.Equal("x7y12z", $"x{a | b}y{a << 1}z", "two operators between text");
+            Expect.Equal("6", $"{(yes ? a : b)}", "a conditional");
+            Expect.Equal("x3y", $"x{(!yes ? a : b)}y", "a conditional between text");
+            Expect.Equal("5", $"{none ?? 5}", "??");
+            Expect.Equal("x5y", $"x{none ?? 5}y", "?? between text");
+            Expect.Equal("002", $"{a & b:D3}", "& with a format");
+            Expect.Equal("   7", $"{a | b,4}", "| with a width");
+            Expect.Equal("xTruey", $"x{a > b}y", "a comparison");
+            Expect.Equal("xFalsey", $"x{yes && a == b}y", "logic");
+            Expect.Equal("x7", "x" + (a | b), "| joined with +");
+        }
+
         public static void EnumText(FakeWorld world)
         {
             Expect.Equal("Read, Write", (Access.Read | Access.Write).ToString(), "a [Flags] combination");
