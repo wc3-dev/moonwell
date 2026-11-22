@@ -194,6 +194,64 @@ namespace Moonwell.Tool
             }
         }
 
+        /// <summary>Whether a Ctrl+C waits: the first in a watch cancels it and waits for its build, a second ends the run at once.</summary>
+        public static bool WaitsOnCtrlC(string[] args, CancellationTokenSource cancel)
+        {
+            if (args.Length == 0 || args[0] != "watch" || cancel.IsCancellationRequested)
+            {
+                return false;
+            }
+
+            cancel.Cancel();
+            return true;
+        }
+
+        /// <summary>Ends the game and what it started (its BlizzardBrowser processes outlive it otherwise), if it still runs.</summary>
+        public static void EndGame(System.Diagnostics.Process? game)
+        {
+            if (game is { HasExited: false })
+            {
+                game.Kill(entireProcessTree: true);
+                game.WaitForExit();
+            }
+        }
+
+        /// <summary>
+        /// Watches a project's files: <paramref name="changed"/> runs for a change outside <see cref="Unwatched"/>, and when the
+        /// watcher loses events, but not for a folder made or touched with no file in it changing.
+        /// </summary>
+        public static FileSystemWatcher WatchFiles(string folder, Action changed)
+        {
+            var watcher = new FileSystemWatcher(folder)
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Size,
+                InternalBufferSize = 64 * 1024,
+            };
+            void OnChange(object sender, FileSystemEventArgs change)
+            {
+                // A folder removed or renamed may take files with it, so only one that was made or written to is left out.
+                if (change.ChangeType is WatcherChangeTypes.Changed or WatcherChangeTypes.Created && Directory.Exists(change.FullPath))
+                {
+                    return;
+                }
+
+                var first = Path.GetRelativePath(folder, change.FullPath).Split(Path.DirectorySeparatorChar)[0];
+                if (!Unwatched.Contains(first, StringComparer.OrdinalIgnoreCase))
+                {
+                    changed();
+                }
+            }
+
+            watcher.Changed += OnChange;
+            watcher.Created += OnChange;
+            watcher.Deleted += OnChange;
+            watcher.Renamed += OnChange;
+            watcher.Error += (_, _) => changed();
+            watcher.EnableRaisingEvents = true;
+            return watcher;
+        }
+
         // Builds now and again after each change to the project, until cancelled; a failed build is reported and the watch goes on.
         private static void Watch(Options options, TextWriter output, TextWriter error, Action<string, string> start, Action stop, CancellationToken cancel)
         {
@@ -204,25 +262,7 @@ namespace Moonwell.Tool
             }
 
             using var changed = new SemaphoreSlim(0);
-            using var watcher = new FileSystemWatcher(project.Folder)
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Size,
-            };
-            void OnChange(object sender, FileSystemEventArgs change)
-            {
-                var first = Path.GetRelativePath(project.Folder, change.FullPath).Split(Path.DirectorySeparatorChar)[0];
-                if (!Unwatched.Contains(first, StringComparer.OrdinalIgnoreCase))
-                {
-                    changed.Release();
-                }
-            }
-
-            watcher.Changed += OnChange;
-            watcher.Created += OnChange;
-            watcher.Deleted += OnChange;
-            watcher.Renamed += OnChange;
-            watcher.EnableRaisingEvents = true;
+            using var watcher = WatchFiles(project.Folder, () => changed.Release());
             while (true)
             {
                 Report(error, () => Build(options, output, error, start));

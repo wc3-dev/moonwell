@@ -8,15 +8,12 @@ using var cancel = new CancellationTokenSource();
 // The checklist's marks and the spinner are not in the console's old code page.
 Console.OutputEncoding = Encoding.UTF8;
 
-// Ctrl+C ends a watch after its build; any other command stops at once, as it always has, showing the cursor the spinner hid.
+// Ctrl+C ends a watch after its build, and a second one at once; any other command stops at once, as it always has,
+// showing the cursor the spinner hid.
 Console.CancelKeyPress += (_, press) =>
 {
-    if (args.Length > 0 && args[0] == "watch")
-    {
-        press.Cancel = true;
-        cancel.Cancel();
-    }
-    else if (!Console.IsOutputRedirected)
+    press.Cancel = Cli.WaitsOnCtrlC(args, cancel);
+    if (!press.Cancel && !Console.IsOutputRedirected)
     {
         Console.Write("\u001b[?25h");
     }
@@ -27,12 +24,5 @@ return Cli.Run(
     Console.Out,
     Console.Error,
     (exe, arguments) => game = Process.Start(new ProcessStartInfo(exe, arguments) { UseShellExecute = false }),
-    () =>
-    {
-        if (game is { HasExited: false })
-        {
-            game.Kill();
-            game.WaitForExit();
-        }
-    },
+    () => Cli.EndGame(game),
     cancel.Token);
