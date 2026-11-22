@@ -96,7 +96,7 @@ their team or race there, and the game starts with each team's alliances set. Te
 slots first name them. A slot starts at its start location placed in World Editor; one without starts in the map's
 middle, and the build notes it. `Start` sets it in code instead, `new Slot(0, West, Controller.User) { Start = new(64,
 5120) }`, and two slots may share one. The game reads only the code's start then: World Editor's start location for
-that slot is left in the map but not used, and the build notes a slot with both. The lobby's map preview still shows
+that slot is left in the map but not used, and the build notes a slot whose two starts are in different places. The lobby's map preview still shows
 World Editor's markers, as it draws them from `war3map.mmp`. Fixed settings lock alliance changes: the Allies menu (F11) is greyed out, and only
 code changes alliances. A map with no slots keeps World Editor's setup.
 

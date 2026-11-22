@@ -23,7 +23,7 @@ namespace Moonwell.Build
         /// <summary>Replaces the map's players and forces with the settings' slots and teams, with fixed player settings; does nothing when the map class sets up no slot.</summary>
         /// <param name="map">The opened map, with its info file and its placed units.</param>
         /// <param name="settings">The map class's settings.</param>
-        /// <param name="log">The build log; a slot with no start, in code or placed in World Editor, is noted in it, and one with both.</param>
+        /// <param name="log">The build log; a slot with no start, in code or placed in World Editor, is noted in it, and one with both in different places.</param>
         /// <param name="mapName">The map folder's name, for the note.</param>
         public static void Apply(War3Net.Build.Map map, MapSettings settings, TextWriter log, string mapName = "map")
         {
@@ -51,9 +51,9 @@ namespace Moonwell.Build
                 var placed = starts.TryGetValue(slot.Number, out var start);
                 if (slot.Start is { } code)
                 {
-                    if (placed)
+                    if (placed && start != code)
                     {
-                        log.WriteLine($"note: slot {slot.Number} has a start in code and a start location for Player {slot.Number + 1} in {mapName}\\; it starts at the code's");
+                        log.WriteLine($"note: slot {slot.Number} has a start in code and a start location for Player {slot.Number + 1} elsewhere in {mapName}\\; it starts at the code's");
                     }
 
                     start = code;
