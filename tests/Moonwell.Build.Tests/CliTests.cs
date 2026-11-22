@@ -420,6 +420,74 @@ namespace Moonwell.Build.Tests
             Assert.Equal(0, await watching);
         }
 
+        [Fact]
+        public void a_second_ctrl_c_ends_a_watch_at_once()
+        {
+            using var cancel = new CancellationTokenSource();
+            Assert.False(Cli.WaitsOnCtrlC(new[] { "build" }, cancel));
+            Assert.False(cancel.IsCancellationRequested);
+            Assert.True(Cli.WaitsOnCtrlC(new[] { "watch" }, cancel));
+            Assert.True(cancel.IsCancellationRequested);
+            Assert.False(Cli.WaitsOnCtrlC(new[] { "watch" }, cancel));
+        }
+
+        [Fact]
+        public void ending_the_game_ends_what_it_started()
+        {
+            var childFile = Path.Combine(Path.GetTempPath(), "moonwell-child-" + Guid.NewGuid().ToString("N") + ".txt");
+            temporaryFiles.Add(childFile);
+            var script = $"$p = Start-Process ping.exe -ArgumentList '-n','60','127.0.0.1' -PassThru -WindowStyle Hidden; [IO.File]::WriteAllText('{childFile}', $p.Id); Start-Sleep 60";
+            using var parent = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("powershell.exe", $"-NoProfile -Command \"{script}\"") { UseShellExecute = false, CreateNoWindow = true })!;
+            var waited = System.Diagnostics.Stopwatch.StartNew();
+            while (!File.Exists(childFile) || new FileInfo(childFile).Length == 0)
+            {
+                Assert.True(waited.Elapsed < TimeSpan.FromSeconds(30), "the parent started no child");
+                Thread.Sleep(100);
+            }
+
+            using var child = System.Diagnostics.Process.GetProcessById(int.Parse(File.ReadAllText(childFile)));
+            Cli.EndGame(parent);
+            Assert.True(parent.HasExited);
+            Assert.True(child.WaitForExit(5000), "the child outlived the game");
+        }
+
+        [Fact]
+        public void the_watcher_builds_for_files_and_lost_events_but_not_for_a_folder_alone()
+        {
+            var folder = Directory.CreateTempSubdirectory("moonwell-watch-").FullName;
+            try
+            {
+                var changes = 0;
+                using var watcher = Cli.WatchFiles(folder, () => Interlocked.Increment(ref changes));
+                Assert.Equal(64 * 1024, watcher.InternalBufferSize);
+
+                var sub = Directory.CreateDirectory(Path.Combine(folder, "Spells")).FullName;
+                Directory.SetLastWriteTime(sub, DateTime.Now.AddMinutes(-1));
+                Thread.Sleep(1000);
+                Assert.Equal(0, Volatile.Read(ref changes));
+
+                File.WriteAllText(Path.Combine(sub, "Bolt.cs"), "// a spell");
+                var waited = System.Diagnostics.Stopwatch.StartNew();
+                while (Volatile.Read(ref changes) == 0 && waited.Elapsed < TimeSpan.FromSeconds(10))
+                {
+                    Thread.Sleep(50);
+                }
+
+                Assert.NotEqual(0, Volatile.Read(ref changes));
+
+                // A watcher whose buffer overflows raises Error, and the watch builds again for what it may have missed.
+                Thread.Sleep(500);
+                var before = Volatile.Read(ref changes);
+                typeof(FileSystemWatcher).GetMethod("OnError", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                    .Invoke(watcher, new object[] { new ErrorEventArgs(new InternalBufferOverflowException()) });
+                Assert.Equal(before + 1, Volatile.Read(ref changes));
+            }
+            finally
+            {
+                Directory.Delete(folder, true);
+            }
+        }
+
         [InstallFact]
         public void game_find_names_the_storage_path_and_lists_a_folder()
         {
