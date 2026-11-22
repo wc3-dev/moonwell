@@ -72,8 +72,23 @@ namespace Moonwell.Build.Tests
             Assert.Equal(new System.Numerics.Vector2(64, 512), info.Players[0].StartPosition);
             Assert.Equal(new System.Numerics.Vector2(64, 512), info.Players[2].StartPosition);
             Assert.NotEqual(new System.Numerics.Vector2(64, 512), info.Players[1].StartPosition);
-            Assert.Contains("note: slot 0 has a start in code and a start location for Player 1", log.ToString());
+            Assert.Contains("note: slot 0 has a start in code and a start location for Player 1 elsewhere", log.ToString());
             Assert.DoesNotContain("slot 5 has", log.ToString());
+        }
+
+        [Fact]
+        public void a_start_in_code_where_world_editors_is_is_not_noted()
+        {
+            var folder = SampleWithSlots(
+                "Slots.Add(new Slot(0, West, Controller.User) { Start = new StartLocation(128, -896) }, new Slot(1, East, Controller.User));");
+            var project = MapProject.Find(folder);
+            var assembly = DotnetBuild.Run(project, false, TextWriter.Null);
+            var log = new StringWriter();
+
+            var info = SourceMap.Open(project, MapSettingsReader.Read(assembly, project), log).Info!;
+
+            Assert.Equal(new System.Numerics.Vector2(128, -896), info.Players[0].StartPosition);
+            Assert.DoesNotContain("slot 0 has", log.ToString());
         }
 
         [Fact]
