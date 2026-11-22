@@ -2592,6 +2592,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "compiler.forms.out-across-or", Run = FormCases.OutAcrossOr });
             list.Add(new Case { Name = "compiler.forms.pattern-after-or", Run = FormCases.PatternAfterOr });
             list.Add(new Case { Name = "compiler.forms.cast-calls-in-a-row", Run = FormCases.CastCallsInARow });
+            list.Add(new Case { Name = "compiler.forms.interpolated-operators", Run = FormCases.InterpolatedOperators });
             list.Add(new Case { Name = "compiler.forms.enum-text", Run = FormCases.EnumText });
             list.Add(new Case { Name = "compiler.forms.handle-casts", Run = FormCases.HandleCasts });
             list.Add(new Case { Name = "compiler.forms.silent", Run = FormCases.Silent });
