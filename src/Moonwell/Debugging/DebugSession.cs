@@ -165,6 +165,8 @@ namespace Moonwell
                 {
                     listening = true;
                     world.ListenInput(KeyHeard, LeftPressed);
+                    // -kill and the other cheats act on the typer's selection when nothing is Ctrl + click selected.
+                    Events.Need(Hook.OnSelection);
                 }
 
                 Game.Print("Debug mode on: Ctrl + click selects, Ctrl + H halts, Ctrl + N steps, Ctrl + - and = change the speed.");

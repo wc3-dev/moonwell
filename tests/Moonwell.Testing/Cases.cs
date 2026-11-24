@@ -781,6 +781,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.profile.reactions", Run = ToolsCases.ProfileReactions });
             list.Add(new Case { Name = "debug.tools.map-command-wins", Run = ToolsCases.MapCommandWins });
             list.Add(new Case { Name = "debug.tools.cheats", Run = ToolsCases.Cheats });
+            list.Add(new Case { Name = "debug.tools.cheats-on-the-selection", Run = ToolsCases.CheatsOnTheSelection });
             list.Add(new Case { Name = "debug.tools.sections", Run = ToolsCases.Sections });
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
             list.Add(new Case { Name = "debug.session.halt-holds-unknown-units", Run = InputReviewCases.HaltHoldsUnknownUnits });
