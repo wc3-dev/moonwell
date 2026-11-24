@@ -11,13 +11,14 @@ namespace Moonwell.Lua.Tests;
 /// <summary>
 /// Times the path search on PathMeasure's long routes (backlog J173), in Lua as a development build runs it and in .NET,
 /// and checks both give the routes the search gave before it was made faster. Each route is found once on cells not yet
-/// asked (cold, as a map's first search) and then Warm times more (warm, as every later one); the times are written to the
-/// test's output (dotnet test --logger "console;verbosity=detailed"). NLua's Lua 5.4 on a desktop is not the game's Lua,
-/// so the times compare one search with another, not with the game's 84 ms.
+/// asked (cold, as a map's first search, with the cells it asks the game about counted) and then Warm times more, the
+/// fastest kept (warm, as every later one, and the least moved by other work on the machine). The times are written to
+/// the test's output (dotnet test --logger "console;verbosity=detailed"). NLua's Lua 5.4 on a desktop is not the game's
+/// Lua, so the times compare one search with another, not with the game's 84 ms.
 /// </summary>
 public class PathSpeedTests
 {
-    private const int Warm = 5;
+    private const int Warm = 10;
 
     /// <summary>The routes the search gave before J173, which a faster search keeps.</summary>
     private static readonly string[] Expected =
@@ -43,18 +44,20 @@ public class PathSpeedTests
         PathMeasure.Setup();
         for (var i = 0; i < count; i++)
         {
+            var asked = PathMeasure.Asked;
             var watch = Stopwatch.StartNew();
             var route = PathMeasure.Route(i);
             var cold = watch.Elapsed.TotalMilliseconds;
-            watch.Restart();
+            asked = PathMeasure.Asked - asked;
+            var warm = double.MaxValue;
             for (var k = 0; k < Warm; k++)
             {
+                watch.Restart();
                 PathMeasure.Route(i);
+                warm = Math.Min(warm, watch.Elapsed.TotalMilliseconds);
             }
-
-            var warm = watch.Elapsed.TotalMilliseconds / Warm;
             net.Add(route);
-            output.WriteLine($".NET {i} ({PathMeasure.Name(i)}): cold {cold:0.0} ms, warm {warm:0.0} ms");
+            output.WriteLine($".NET {i} ({PathMeasure.Name(i)}): cold {cold:0.0} ms ({asked} cells asked), warm {warm:0.0} ms");
         }
 
         var project = Path.Combine(LuaScript.RepoRoot, "tests", "Moonwell.Testing", "Moonwell.Testing.csproj");
@@ -73,9 +76,13 @@ public class PathSpeedTests
                   local t = os.clock()
                   local route = M.Route(i)
                   local cold = os.clock() - t
-                  t = os.clock()
-                  for k = 1, {{Warm}} do M.Route(i) end
-                  print(string.format("TIME %d %.1f %.1f", i, cold * 1000, (os.clock() - t) * 1000 / {{Warm}}))
+                  local warm = math.huge
+                  for k = 1, {{Warm}} do
+                    t = os.clock()
+                    M.Route(i)
+                    warm = math.min(warm, os.clock() - t)
+                  end
+                  print(string.format("TIME %d %.1f %.1f", i, cold * 1000, warm * 1000))
                   print("ROUTE " .. route)
                 end
                 """;

@@ -20,6 +20,11 @@ namespace Moonwell.Testing
             new[] { 48f, -2500f, -2600f, 2500f, -2600f },
         };
 
+        private static FakeTerrainWorld? terrain;
+
+        /// <summary>How many cells the item was put in since Setup: in the game each is a call to it, the cost of a cold search.</summary>
+        public static int Asked => terrain!.PlaceCalls;
+
         /// <summary>How many routes there are.</summary>
         public static int Count => Routes.Length;
 
@@ -39,7 +44,7 @@ namespace Moonwell.Testing
         public static void Setup()
         {
             FakeWorld.Install();
-            var terrain = new FakeTerrainWorld { AreaMinX = -3000f, AreaMinY = -3000f, AreaMaxX = 3000f, AreaMaxY = 3000f };
+            terrain = new FakeTerrainWorld { AreaMinX = -3000f, AreaMinY = -3000f, AreaMaxX = 3000f, AreaMaxY = 3000f };
             const int corners = 49;
             var text = new StringBuilder();
             for (var k = 0; k < corners * corners; k++)
