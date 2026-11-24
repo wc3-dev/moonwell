@@ -308,6 +308,30 @@ namespace Moonwell.Testing
             Expect.True(unit.NearestSpot(-200f, 40f) == new Vector2(-200f, 40f), "where it stands is free: units are not in the helper's fake");
         }
 
+        /// <summary>A unit type's size and movement come from the table the build writes, and its path is the path of that size and movement; a type not in it fails (decision 396).</summary>
+        public static void UnitTypes(FakeWorld world)
+        {
+            var terrain = new FakeTerrainWorld();
+            Setup(terrain);
+            Gap64(terrain);
+            Paths.UnitTypes("hfoog31,hkniy48.5,hpeaa8,xxx,f32");
+            var footman = ObjectTypes.FourCC("hfoo");
+            Expect.Near(31f, Paths.CollisionOf(footman), "the footman's size");
+            Expect.True(Paths.MovementOf(footman) == Movement.Ground, "the footman walks");
+            Expect.Near(48.5f, Paths.CollisionOf(ObjectTypes.FourCC("hkni")), "a size with a fraction");
+            Expect.True(Paths.MovementOf(ObjectTypes.FourCC("hkni")) == Movement.Fly, "y flies");
+            Expect.True(Paths.MovementOf(ObjectTypes.FourCC("hpea")) == Movement.Amphibious, "a is amphibious");
+            Expect.True(Paths.MovementOf(ObjectTypes.FourCC("xxx,")) == Movement.Float, "an id with a comma in it, floating");
+            Expect.Near(32f, Paths.CollisionOf(ObjectTypes.FourCC("xxx,")), "and its size");
+            var route = Paths.FindPathFor(footman, -200f, 40f, 200f, 40f);
+            var bySize = Paths.FindPath(31f, -200f, 40f, 200f, 40f);
+            Expect.True(route.Reaches && route.Points.Count == bySize.Points.Count && route.Points[1] == bySize.Points[1], "a 31 goes through the gap, as by size");
+            Expect.True(Paths.FindPathFor(ObjectTypes.FourCC("hkni"), -200f, 40f, 200f, 0f).Points.Count == 2, "a flier goes straight");
+            Expect.Throws<ArgumentException>(() => Paths.CollisionOf(ObjectTypes.FourCC("hgry")), "a type not in the table");
+            Paths.Install(new FakePathingWorld(terrain));
+            Expect.Throws<ArgumentException>(() => Paths.MovementOf(footman), "a new install drops the table");
+        }
+
         /// <summary>A unit's own fit and nearest spot leave the unit itself out; another unit, and fit by size, still count it.</summary>
         public static void UnitLeavesItselfOut(FakeWorld world)
         {

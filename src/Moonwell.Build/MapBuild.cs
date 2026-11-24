@@ -160,6 +160,12 @@ namespace Moonwell.Build
             if (pathing)
             {
                 installs.Add(PathingTypes.Install);
+
+                // A map that asks a unit type's size or movement by its id gets the table of them (decision 396).
+                if (PathingTypes.TypesUsedBy(targetPath))
+                {
+                    installs.Add(PathingTypes.TypesInstall(PathingTypes.Table(standard, data, project.MapFolder, declarations.Objects, ids)));
+                }
             }
 
             EntryWriter.Write(project, settings, true, installs, Loading(targetPath));

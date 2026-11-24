@@ -1708,6 +1708,7 @@ paths by its size. It brings `Moonwell.Terrain` and `Moonwell.Objects` with it.
 if (!caster.CanStand(x, y)) { var landing = caster.NearestSpot(x, y); }
 var spots = Paths.Spots(31f, x, y, 5);           // five free spots, nearest first, not overlapping
 var route = unit.FindPath(x, y);                   // route.Points, route.Length, route.Reaches
+var lane = Paths.FindPathFor(kind, x1, y1, x2, y2); // the route a unit of a type would get, with no unit made
 if (unit.CanReach(x, y)) { /* it can walk there and stand */ }
 Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cross it while the scope holds it
 ```
@@ -1723,6 +1724,10 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
   where the game's own walker would stop, with `Reaches` false. The game's walkers also go round units that stand in
   the way when they are ordered, and stop farther from a unit than its square needs.
 - A route never squeezes between two blocked cells that touch only at a corner, as the game's walkers don't.
+- `Paths.FindPathFor(typeId, ...)`, `Paths.CollisionOf(typeId)` and `Paths.MovementOf(typeId)` read a unit type's
+  collision size and movement from the map's object data (the standard unit, the map's own change of it in World
+  Editor, or its declared class), so no unit of the type has to be made to ask. The build writes the table only into a
+  map whose code calls one of them. A unit's own collision can change in the game; these give its type's.
 - `Paths.Wall` takes walking and floating from the cells along a line through `Terrain.Block`, one cell thick; fliers
   cross it. It ends with its scope.
 - Ships take `Movement.Float`, amphibious units `Movement.Amphibious` and fliers `Movement.Fly` (a straight line); a
