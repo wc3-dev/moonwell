@@ -738,6 +738,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });
             list.Add(new Case { Name = "lifecycle.pair-buff-belongs-to-unit", Run = LifecycleCases.PairBuffBelongsToUnit });
             list.Add(new Case { Name = "lifecycle.illusion-is-plain", Run = LifecycleCases.IllusionIsPlain });
+            list.Add(new Case { Name = "lifecycle.kinds", Run = LifecycleCases.Kinds });
             list.Add(new Case { Name = "lifecycle.shared-component-refused", Run = LifecycleCases.SharedComponentRefused });
             list.Add(new Case { Name = "lifecycle.buff-reapplied-to-itself-refused", Run = LifecycleCases.BuffReappliedToItselfRefused });
             list.Add(new Case { Name = "lifecycle.remove-others-component-refused", Run = LifecycleCases.RemoveOthersComponentRefused });

@@ -100,7 +100,37 @@ namespace Moonwell
                 Mana = Convert.ToSingle(Value(declared, "Mana")),
                 MaxMana = Convert.ToSingle(Value(declared, "MaxMana")),
                 Abilities = IdsOf(Value(declared, "Abilities")),
+                Kinds = KindsOf(declared),
             };
+        }
+
+        /// <summary>The classification bits of Moonwell.Objects' UnitClass, beside the kind each gives; Tree, Ward, Walkable and Neutral have no UNIT_TYPE and give none.</summary>
+        private static readonly (int Bit, UnitKind Kind)[] ClassKinds =
+        {
+            (1, UnitKind.Giant), (2, UnitKind.Undead), (4, UnitKind.Summoned), (8, UnitKind.Mechanical), (16, UnitKind.Worker),
+            (32, UnitKind.Suicidal), (64, UnitKind.TownHall), (512, UnitKind.Ancient), (4096, UnitKind.Tauren),
+        };
+
+        /// <summary>The kinds a unit type's object data gives: a structure for IsABuilding, and one for each classification the game reads as a UNIT_TYPE.</summary>
+        private static UnitKind[] KindsOf(object declared)
+        {
+            var found = new List<UnitKind>();
+            if (Value(declared, "IsABuilding") is bool building && building)
+            {
+                found.Add(UnitKind.Structure);
+            }
+
+            var classification = Value(declared, "UnitClassification");
+            var bits = classification == null ? 0 : Convert.ToInt32(classification);
+            foreach (var (bit, kind) in ClassKinds)
+            {
+                if ((bits & bit) != 0)
+                {
+                    found.Add(kind);
+                }
+            }
+
+            return found.ToArray();
         }
 
         /// <summary>The ids of an object list's entries, a class's by its attributes and a standard object's with no class by its id text; an entry with no id is left out.</summary>
