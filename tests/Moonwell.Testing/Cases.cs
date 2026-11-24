@@ -1504,6 +1504,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.raycast.ray-at", Run = RaycastCases.RayAt });
             list.Add(new Case { Name = "maths.actors.position", Run = ActorMathsCases.Position });
             list.Add(new Case { Name = "maths.actors.place-and-move", Run = ActorMathsCases.PlaceAndMove });
+            list.Add(new Case { Name = "maths.actors.vector-forms", Run = ActorMathsCases.VectorForms });
             list.Add(new Case { Name = "maths.actors.distance-and-angle", Run = ActorMathsCases.DistanceAndAngle });
             list.Add(new Case { Name = "maths.actors.face", Run = ActorMathsCases.Face });
             list.Add(new Case { Name = "maths.actors.effect-position", Run = ActorMathsCases.EffectPosition });
