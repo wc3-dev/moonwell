@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using Moonwell.Engine;
 using Moonwell.Hosting;
 
@@ -20,6 +21,12 @@ namespace Moonwell
 
         private static IPathingWorld? world;
 
+        /// <summary>Each unit type's collision size, by its id, as UnitTypes took them in.</summary>
+        private static Dictionary<int, float> typeSizes = new Dictionary<int, float>();
+
+        /// <summary>Each unit type's movement, by its id, as UnitTypes took them in.</summary>
+        private static Dictionary<int, Movement> typeMovements = new Dictionary<int, Movement>();
+
         /// <summary>Installs the package on the game with the helper types the build declares: cells 1 to 4, each for ground, float and amphibious.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Install(int[] helperTypes)
@@ -32,10 +39,39 @@ namespace Moonwell
             Install(new NativePathingWorld(helperTypes));
         }
 
+        /// <summary>
+        /// Takes in the unit types' collision sizes and movements the build read from the map's object data, for
+        /// <c>CollisionOf</c>, <c>MovementOf</c> and <c>FindPathFor</c>: one entry for each type, the entries split by commas,
+        /// each the type's four-character id, its movement's letter (g ground, f float, a amphibious, y fly) and its collision
+        /// size as invariant text. The generated Main calls it after Install, only in a map whose code asks a type's size.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void UnitTypes(string table)
+        {
+            var start = 0;
+            while (start < table.Length)
+            {
+                // The id is the first four characters, so a comma in an id cannot end the entry.
+                var end = table.IndexOf(',', start + 5);
+                if (end < 0)
+                {
+                    end = table.Length;
+                }
+
+                var id = ObjectTypes.FourCC(table.Substring(start, 4));
+                var letter = table[start + 4];
+                typeMovements[id] = letter == 'y' ? Movement.Fly : letter == 'f' ? Movement.Float : letter == 'a' ? Movement.Amphibious : Movement.Ground;
+                typeSizes[id] = float.Parse(table.Substring(start + 5, end - start - 5), CultureInfo.InvariantCulture);
+                start = end + 1;
+            }
+        }
+
         /// <summary>Installs the package on a world; tests give a fake one.</summary>
         internal static void Install(IPathingWorld host)
         {
             world = host;
+            typeSizes = new Dictionary<int, float>();
+            typeMovements = new Dictionary<int, Movement>();
             Cells.Reset();
             host.Listen(Cells.Changed);
             PathingHook.Changed = Cells.Changed;
@@ -128,6 +164,49 @@ namespace Moonwell
         public static Route FindPath(float size, float fromX, float fromY, float toX, float toY, Movement movement = Movement.Ground)
         {
             return Search.Find(Cells.Across(size), movement, fromX, fromY, toX, toY);
+        }
+
+        /// <summary>
+        /// A path a unit of a type can walk from one point to another, by the type's collision size and movement as the map's
+        /// object data gives them: the path a unit of it would get from <c>unit.FindPath</c>, with no unit made. Units are not
+        /// in it; see Route.
+        /// </summary>
+        /// <exception cref="ArgumentException">The map's object data has no unit type of that id.</exception>
+        [ChangesState]
+        public static Route FindPathFor(int unitTypeId, float fromX, float fromY, float toX, float toY)
+        {
+            return FindPath(CollisionOf(unitTypeId), fromX, fromY, toX, toY, MovementOf(unitTypeId));
+        }
+
+        /// <summary>A unit type's collision size, as the map's object data gives it (the standard unit's, the map's own change of it, or the map's new type's), with no unit of it made. A unit's own collision can change in the game; this is its type's.</summary>
+        /// <exception cref="ArgumentException">The map's object data has no unit type of that id.</exception>
+        [LocalSafe]
+        public static float CollisionOf(int unitTypeId)
+        {
+            if (!typeSizes.TryGetValue(unitTypeId, out var size))
+            {
+                throw NoType(unitTypeId);
+            }
+
+            return size;
+        }
+
+        /// <summary>How units of a type get about, from the map's object data: foot, horse, hover and none walk the ground, float floats, amphibious does either, fly flies.</summary>
+        /// <exception cref="ArgumentException">The map's object data has no unit type of that id.</exception>
+        [LocalSafe]
+        public static Movement MovementOf(int unitTypeId)
+        {
+            if (!typeMovements.TryGetValue(unitTypeId, out var movement))
+            {
+                throw NoType(unitTypeId);
+            }
+
+            return movement;
+        }
+
+        private static ArgumentException NoType(int unitTypeId)
+        {
+            return new ArgumentException("the map's object data has no unit type " + unitTypeId + ", or the build wrote no unit types (it writes them for a map whose code calls Paths.CollisionOf, MovementOf or FindPathFor)", nameof(unitTypeId));
         }
 
         /// <summary>Asks the game again where destructables and buildings stand in an area, for a map that changed them where Moonwell did not see it. Pathing set by code is seen at once.</summary>
