@@ -16,6 +16,8 @@ namespace Moonwell.Lua.Tests;
 /// the test's output (dotnet test --logger "console;verbosity=detailed"). NLua's Lua 5.4 on a desktop is not the game's
 /// Lua, so the times compare one search with another, not with the game's 84 ms.
 /// </summary>
+// One at a time with LuaRuntimeTests: LuaScript keeps a run's printed lines, and the compiled script's copy, in one place.
+[Collection("LuaScript")]
 public class PathSpeedTests
 {
     private const int Warm = 10;
