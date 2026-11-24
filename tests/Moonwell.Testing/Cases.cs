@@ -738,6 +738,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "lifecycle.refresh-takes-new-duration", Run = LifecycleCases.RefreshTakesNewDuration });
             list.Add(new Case { Name = "lifecycle.pair-buff-belongs-to-unit", Run = LifecycleCases.PairBuffBelongsToUnit });
             list.Add(new Case { Name = "lifecycle.illusion-is-plain", Run = LifecycleCases.IllusionIsPlain });
+            list.Add(new Case { Name = "lifecycle.kinds", Run = LifecycleCases.Kinds });
             list.Add(new Case { Name = "lifecycle.shared-component-refused", Run = LifecycleCases.SharedComponentRefused });
             list.Add(new Case { Name = "lifecycle.buff-reapplied-to-itself-refused", Run = LifecycleCases.BuffReappliedToItselfRefused });
             list.Add(new Case { Name = "lifecycle.remove-others-component-refused", Run = LifecycleCases.RemoveOthersComponentRefused });
@@ -780,6 +781,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.profile.reactions", Run = ToolsCases.ProfileReactions });
             list.Add(new Case { Name = "debug.tools.map-command-wins", Run = ToolsCases.MapCommandWins });
             list.Add(new Case { Name = "debug.tools.cheats", Run = ToolsCases.Cheats });
+            list.Add(new Case { Name = "debug.tools.cheats-on-the-selection", Run = ToolsCases.CheatsOnTheSelection });
             list.Add(new Case { Name = "debug.tools.sections", Run = ToolsCases.Sections });
             list.Add(new Case { Name = "debug.session.halt-holds", Run = SessionCases.HaltHolds });
             list.Add(new Case { Name = "debug.session.halt-holds-unknown-units", Run = InputReviewCases.HaltHoldsUnknownUnits });
@@ -1504,6 +1506,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "maths.raycast.ray-at", Run = RaycastCases.RayAt });
             list.Add(new Case { Name = "maths.actors.position", Run = ActorMathsCases.Position });
             list.Add(new Case { Name = "maths.actors.place-and-move", Run = ActorMathsCases.PlaceAndMove });
+            list.Add(new Case { Name = "maths.actors.vector-forms", Run = ActorMathsCases.VectorForms });
             list.Add(new Case { Name = "maths.actors.distance-and-angle", Run = ActorMathsCases.DistanceAndAngle });
             list.Add(new Case { Name = "maths.actors.face", Run = ActorMathsCases.Face });
             list.Add(new Case { Name = "maths.actors.effect-position", Run = ActorMathsCases.EffectPosition });

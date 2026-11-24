@@ -109,6 +109,23 @@ namespace Moonwell.Tests
             Expect.Near(100.0f, king.MaxLife, "the base field");
         }
 
+        /// <summary>A unit's kinds come from its type's object data: a Peasant is a worker, a Town Hall a structure and a town hall, a Barracks a mechanical structure, a Ghoul undead, a Footman none of them.</summary>
+        [Fact]
+        public void KindsComeFromTheObjectData()
+        {
+            Simulation.Start();
+            var peasant = Unit.Create(ObjectTypes.FourCC("hpea"), Player.One, 0.0f, 0.0f, Game.Instance);
+            var hall = Unit.Create(ObjectTypes.FourCC("htow"), Player.One, 500.0f, 0.0f, Game.Instance);
+            var barracks = Unit.Create(ObjectTypes.FourCC("hbar"), Player.One, 0.0f, 500.0f, Game.Instance);
+            var ghoul = Unit.Create(ObjectTypes.FourCC("ugho"), Player.Two, 900.0f, 900.0f, Game.Instance);
+            var footman = Unit.Create(Footman, Player.One, 100.0f, 100.0f, Game.Instance);
+            Expect.True(peasant.IsWorker && !peasant.IsStructure, "the Peasant is a worker");
+            Expect.True(hall.IsStructure && hall.IsTownHall && !hall.IsWorker, "the Town Hall");
+            Expect.True(barracks.IsStructure && barracks.IsMechanical && !barracks.IsTownHall, "the Barracks");
+            Expect.True(ghoul.IsUndead && !ghoul.IsStructure, "the Ghoul");
+            Expect.True(!footman.IsStructure && !footman.IsWorker && !footman.IsSummoned && !footman.IsMechanical, "the Footman");
+        }
+
         /// <summary>Two footmen of enemy players, made by their id near each other, acquire each other and fight until one dies.</summary>
         [Fact]
         public void FootmenFightToADeath()

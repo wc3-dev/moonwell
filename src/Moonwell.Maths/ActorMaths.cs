@@ -1,7 +1,7 @@
 namespace Moonwell
 {
     /// <summary>
-    /// Vector methods on units, items, destructables and special effects, from the maths package. Position is a method, not a property, as the package can
+    /// Vector methods on units, items, destructables, special effects and players, from the maths package. Position is a method, not a property, as the package can
     /// add only methods. Distances and angles are worked out from the floats, with no vector made. Angles are in degrees.
     /// </summary>
     public static class ActorMaths
@@ -17,6 +17,32 @@ namespace Moonwell
         public static void MoveTo(this Unit unit, Vector2 place)
         {
             unit.MoveTo(place.X, place.Y);
+        }
+
+        /// <summary>Gives the unit an order to a place, as Unit.OrderAt(order, x, y), and returns the game's answer.</summary>
+        public static bool OrderAt(this Unit unit, string order, Vector2 place)
+        {
+            return unit.OrderAt(order, place.X, place.Y);
+        }
+
+        /// <summary>Creates a unit of a registered class for the player at a place, as Unit.Create&lt;T&gt;(owner, x, y, scope, facing). It is a method of the owner, as the package can add no static method to Unit.</summary>
+        public static T CreateUnit<T>(this Player owner, Vector2 place, Scope scope, float facing = Unit.DefaultFacing)
+            where T : Unit
+        {
+            return Unit.Create<T>(owner, place.X, place.Y, scope, facing);
+        }
+
+        /// <summary>Creates a unit of a type by id for the player at a place, as Unit.Create(typeId, owner, x, y, scope, facing).</summary>
+        public static Unit CreateUnit(this Player owner, int typeId, Vector2 place, Scope scope, float facing = Unit.DefaultFacing)
+        {
+            return Unit.Create(typeId, owner, place.X, place.Y, scope, facing);
+        }
+
+        /// <summary>The player's start location (its StartX and StartY).</summary>
+        [LocalSafe]
+        public static Vector2 Start(this Player player)
+        {
+            return new Vector2(player.StartX, player.StartY);
         }
 
         /// <summary>Puts the unit at a place with no pathing and no bounds, as Unit.PlaceAt(x, y): its order goes on, which a push wants. Keep it inside the map yourself.</summary>

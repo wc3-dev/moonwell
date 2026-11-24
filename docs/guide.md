@@ -551,6 +551,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `Level` | read; a hero's hero level; a unit's level is set only in its declared class's constructor |
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run |
 | `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
+| `IsStructure`, `IsWorker`, `IsTownHall`, `IsSummoned` | read; the kinds the game gives the unit's type (a building; a classification of worker, town hall or summoned); a unit summoned in play (`Summon`, a timed life) is summoned too. `IsMechanical`, `IsUndead`, `IsAncient`, `IsGiant`, `IsTauren` and `IsSuicidal` read the other classifications. A hero is `unit is Hero` |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Icon` | its type's icon path, read inside `Local.For` only, as the game picks a type's icon by each player's graphics mode (the game's Phoenix names one icon for Reforged and another for the other modes); set only in its declared class's constructor, as the game has no icon per unit |
@@ -1588,6 +1589,9 @@ target.PlaceAt(Vector2.Lerp(start, end, Ease.OutQuad(t)));
   `Maths` (`Maths.Distance`, `Maths.AngleToPoint`, `Maths.Polar`), which make none.
 - `unit.Position()` is a method. `PlaceAt` ignores pathing and keeps the unit's order, which a push wants; `MoveTo`
   goes through pathing and ends it.
+- `unit.OrderAt("move", place)`, `owner.CreateUnit<Footman>(place, scope)` and `player.Start()` take or give a
+  `Vector2` where core takes two floats. `CreateUnit` is the owner's method, as a package can add no static method to
+  `Unit`.
 - `Raycast.Circle`, `Segment`, `Bounds` and `Polygon` give the first hit along a segment in an `out` value, with a
   normal for `Bounce` and `Slide`. After a hit, a step goes on for the rest of its time with the new velocity, as
   below; moved only to `hit.Point`, something pulled into a surface at every step (by gravity) hits at the start of each
@@ -2598,6 +2602,8 @@ public class GuardTests
   1, so a Priest has Heal and 75 of its 200 mana; a hero's hero abilities wait to be learned. Numbers from `SetNumbers`
   give no abilities, and mana only by their `Mana` and `MaxMana`. A unit of a type with no numbers never moves, and its
   orders are neither counted nor held.
+- From its object data a unit also has its type's kinds, so a Peasant `IsWorker` and a Barracks `IsStructure`. Numbers
+  from `SetNumbers` give none: a test gives a unit a kind with `sim.World.MakeKind(unit.Handle, UnitKind.Worker)`.
 - A hero's life counts its strength as the build counts it: `Start(map)` reads the hero bonus (life a point of strength,
   mana a point of intelligence) that the map's last `moonwell build` wrote, so a hero class's constructor reads `MaxLife`
   as the total there too (700 for the Mountain King). Build the map before its tests; a map never built, and `Start()`
@@ -4462,12 +4468,24 @@ outlines (one colour), its ticking pairs (another) and its waiting or paused pai
 | Ctrl + N | while halted, one step (`Interactions.Step`, else 1/32 s); held down, it repeats |
 | Ctrl + `-` / Ctrl + `=` | slower / faster: ¼, ½, 1, 2, 4, 8 times |
 | `-step 10`, `-speed 4`, `-stats` | in chat: that many steps while halted (1 to 320; `-step` alone, one), a speed (`-speed` alone lists them), the statistics shown or hidden |
+| `-leaks`, `-profile`, `-scopes`, `-timers`, `-help` | in the panel: the scopes holding the most, the time the map's code takes, the scope tree from the selected object, the next timers, every command; the same command again hides it |
+| `-find Footman` | counts the units of a class and selects the next |
+| `-gold 500`, `-lumber 500`, `-time 12` | gives you gold or lumber; sets the time of day |
+| `-spawn Footman 5`, `-spawn hfoo` | units of a map's class or a type id for you (at most 100), at the selected object or your start |
+| `-level 10` | sets the selected hero's level |
+| `-kill`, `-hurt 100`, `-heal`, `-god` | on the unit Ctrl + click selected, else on the units you have selected: kills; takes that much life off, with no damage event; fills life and mana; makes it unhurtable, again to undo |
+| `-nocd`, `-reveal` | for you: cooldowns end after each cast; the whole map seen; again to undo |
 
 Either Ctrl works. A halt and the speed change Moonwell's time only: its timers, interactions and areas. The game's
 own attacks, buffs, cooldowns and timers made with the raw natives do not halt (Ctrl + H holds units, nothing more),
 and the speed does not make units faster or slower. With units held, a step lets them go for one step, but they come
 back to their orders slowly and move only about a quarter of a step. Units are always selectable; items, destructables and gizmos only
 once the interactions grid tracks their kind. `-debug` off resumes at speed 1 and clears the selection.
+
+The chat commands past `-debug` answer only while the mode is on; a map's own command of the same name wins and the
+built-in one steps aside. `-kill` and the rest see the units you select in the game from the first `-debug` on, so
+select them after it. `DebugMode.Command("wave", "starts the next wave", (player, rest) => ...)` adds a command of the
+map's own, heard all game whether the mode is on or not, and listed by `-help`; a release build leaves it out.
 
 A map writes nothing to have it. Two optional things: its own lines in the panel for a class or component that
 implements `IDebugShown`, and `DebugMode` for code that speaks only about the selected object, or halts like a breakpoint.

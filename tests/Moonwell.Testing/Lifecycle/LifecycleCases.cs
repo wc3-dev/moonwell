@@ -160,6 +160,29 @@ namespace Moonwell.Testing
             Expect.True(watch.Seen.Contains(taken), "OnUnitCreated sees the illusion");
         }
 
+        /// <summary>A unit's Is... properties read the kinds the world gives it: a structure, a worker, a summon by its type or a timed life; none once the game has removed it.</summary>
+        public static void Kinds(FakeWorld world)
+        {
+            var handle = world.NewUnit(ObjectTypes.FourCC("hpea"));
+            var unit = Unit.Of(handle)!;
+            Expect.True(!unit.IsWorker && !unit.IsStructure && !unit.IsSummoned, "no kind until given");
+            world.MakeKind(handle, UnitKind.Worker);
+            world.MakeKind(handle, UnitKind.Mechanical);
+            Expect.True(unit.IsWorker && unit.IsMechanical && !unit.IsUndead, "a worker and mechanical");
+            var tower = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hgtw")))!;
+            world.MakeStructure(tower.Handle);
+            Expect.True(tower.IsStructure && !tower.IsTownHall, "MakeStructure makes a structure");
+            var hall = Unit.Of(world.NewUnit(ObjectTypes.FourCC("htow")))!;
+            world.MakeKind(hall.Handle, UnitKind.Structure);
+            world.MakeKind(hall.Handle, UnitKind.TownHall);
+            Expect.True(hall.IsStructure && hall.IsTownHall, "MakeKind makes a structure too");
+            var summon = Unit.Of(world.NewUnit(ObjectTypes.FourCC("hfoo")))!;
+            world.ApplyTimedLife(summon.Handle, 10.0f);
+            Expect.True(summon.IsSummoned, "a timed life makes a summon, as in the game");
+            unit.Remove();
+            Expect.True(!unit.IsWorker, "none once removed");
+        }
+
         /// <summary>The lines of the log that hold a text.</summary>
         private static int Logged(FakeWorld world, string text)
         {
