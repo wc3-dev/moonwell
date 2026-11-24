@@ -3022,8 +3022,10 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   changing them later does nothing (seen). The build writes a template for each height from 0.005 to 0.04 of the
   game's units, in steps of 0.0005, for the game's font and each `.ttf` in the assets, and a label takes the nearest.
   `Scale` sizes the text too, and leaves the label's place and box alone: the game scales a label's offset and box with
-  it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`; a piece, a colour or a round cut of one
-  is a copy the build makes ([Assets](#assets)). A map's own panel inherits `Panel` and keeps its frames in fields.
+  it (seen), so Moonwell gives them divided by it. That is so since 0.17.0, where a scaled label used to move: a map
+  that divides a label's place or box by its `Scale` itself should stop, or the label is off by the scale twice.
+  `Image` shows a `Texture`; a piece, a colour or a round cut of one is a copy the build makes ([Assets](#assets)). A
+  map's own panel inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
   Labels, images and empty panels let clicks through, until they are listened to for the mouse.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
