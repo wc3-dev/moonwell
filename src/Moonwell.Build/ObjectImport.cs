@@ -41,7 +41,20 @@ namespace Moonwell.Build
             PlacedWriter.Write(project, placed, false);
             LuaLibraries.WriteBindings(project);
             DataWriter.Write(project);
-            var targetPath = DotnetBuild.Run(project, false, TextWriter.Null);
+            // The build's output is kept from the import's log, but a failure names its error lines: a version whose packages are
+            // not on nuget.org yet fails with NU1102, which "dotnet build failed" alone did not say (I63).
+            var output = new StringWriter();
+            string targetPath;
+            try
+            {
+                targetPath = DotnetBuild.Run(project, false, output);
+            }
+            catch (BuildException failure)
+            {
+                var errors = DotnetBuild.ErrorLines(output.ToString().Split('\n'));
+                throw errors.Count == 0 ? failure : new BuildException(failure.Message + ":" + Environment.NewLine + string.Join(Environment.NewLine, errors));
+            }
+
             var objectsDll = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(targetPath))!, Declarations.ObjectsAssemblyName + ".dll");
             var context = new MapLoadContext(Path.GetDirectoryName(objectsDll)!);
             try
