@@ -10,6 +10,8 @@ namespace Moonwell.Lua.Tests;
 /// Every case compiled as a map's development build and as its release build, each run in Lua: a development build keeps the
 /// runtime's Dev.Check calls, the development error path and the cases' #if DEBUG checks, which a release build leaves out.
 /// </summary>
+// One at a time with PathSpeedTests: LuaScript keeps a run's printed lines, and the compiled script's copy, in one place.
+[Collection("LuaScript")]
 public class LuaRuntimeTests
 {
     [Fact]
