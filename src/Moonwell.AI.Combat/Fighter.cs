@@ -122,6 +122,14 @@ namespace Moonwell.AI.Combat
         [LocalSafe]
         public float Leash { get; set; } = 2100f;
 
+        /// <summary>
+        /// Which units the fighter fights, asked at each check for every unit it finds, enemy or ally, an attacker too: one
+        /// it says false for is neither met nor counted in EnemiesNear and AlliesNear, so an arena's fighter leaves out units
+        /// of the same players outside its battle. Null, the default, takes every unit.
+        /// </summary>
+        [LocalSafe]
+        public Func<Unit, bool>? Fights { get; set; }
+
         /// <summary>The rules the target is picked by, in the order added; with none, the nearest.</summary>
         public List<Target> Targets { get; } = new List<Target>();
 
@@ -352,6 +360,7 @@ namespace Moonwell.AI.Combat
             var fromX = hasSpot ? spotX : x;
             var fromY = hasSpot ? spotY : y;
             var range = MeetRange > 0f ? MeetRange : Runtime.World.AcquireRangeOf(unit.Handle);
+            var fights = Fights;
             allies.Add(unit);
             AlliesNear = 1;
             if (range > 0f)
@@ -360,7 +369,7 @@ namespace Moonwell.AI.Combat
                 for (var i = 0; i < found.Count; i++)
                 {
                     var other = Unit.Of(found[i]);
-                    if (other == null || other == unit || !other.IsAlive)
+                    if (other == null || other == unit || !other.IsAlive || (fights != null && !fights(other)))
                     {
                         continue;
                     }
@@ -390,7 +399,7 @@ namespace Moonwell.AI.Combat
             for (var i = 0; i < attackers.Count; i++)
             {
                 var attacker = attackers[i];
-                if (attacker.IsAlive && !met.Contains(attacker) && owner.IsEnemy(attacker.Owner))
+                if (attacker.IsAlive && !met.Contains(attacker) && owner.IsEnemy(attacker.Owner) && (fights == null || fights(attacker)))
                 {
                     var attackerX = attacker.X;
                     var attackerY = attacker.Y;
