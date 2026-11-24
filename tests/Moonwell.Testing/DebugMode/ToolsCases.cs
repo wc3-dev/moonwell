@@ -257,6 +257,38 @@ namespace Moonwell.Testing
             Expect.True(!unit.IsAlive, "-kill");
         }
 
+        /// <summary>With nothing Ctrl + click selected, -hurt, -kill and -god act on the units the typer selected in the game (J166); -hurt takes an amount.</summary>
+        public static void CheatsOnTheSelection(FakeWorld world)
+        {
+            var debug = On(world);
+            var first = UnitAt(world, 1000.0f, 0.0f);
+            var second = UnitAt(world, 1100.0f, 0.0f);
+            var other = UnitAt(world, 1200.0f, 0.0f);
+            world.PlayerSelects(first.Handle, 0);
+            world.PlayerSelects(second.Handle, 0);
+            world.PlayerSelects(other.Handle, 1);
+            debug.Chat(0, "-hurt");
+            Expect.True(world.PrintedTexts[world.PrintedTexts.Count - 1].IndexOf("-hurt takes an amount") >= 0, "-hurt asks for an amount");
+            first.Life = 300.0f;
+            second.Life = 300.0f;
+            other.Life = 300.0f;
+            var life = first.Life;
+            debug.Chat(0, "-hurt 100");
+            Expect.Near(life - 100.0f, first.Life, "-hurt 100 on the first");
+            Expect.Near(life - 100.0f, second.Life, "and on the second");
+            Expect.Near(life, other.Life, "not on another player's selection");
+            debug.Chat(0, "-god");
+            Expect.True(debug.Invulnerable.Contains(first.Handle) && debug.Invulnerable.Contains(second.Handle), "-god on both");
+            debug.Chat(0, "-god");
+            Expect.True(!debug.Invulnerable.Contains(first.Handle) && !debug.Invulnerable.Contains(second.Handle), "-god again on both");
+            debug.Chat(0, "-kill");
+            Expect.True(!first.IsAlive && !second.IsAlive, "-kill kills the selection");
+            Expect.True(other.IsAlive, "and not another player's");
+            debug.CtrlClick(0, 1200.0f, 0.0f);
+            debug.Chat(0, "-kill");
+            Expect.True(!other.IsAlive, "a Ctrl + click selection comes first");
+        }
+
         /// <summary>-timers lists the next timers; -leaks the scopes holding most and the counts; -scopes the tree (decisions 262 and 265).</summary>
         public static void Sections(FakeWorld world)
         {
