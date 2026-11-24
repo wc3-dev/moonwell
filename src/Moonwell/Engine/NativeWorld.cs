@@ -924,6 +924,36 @@ namespace Moonwell.Engine
             return Natives.IsUnitType(unit, Natives.UNIT_TYPE_STRUCTURE);
         }
 
+        /// <summary>Whether a unit is of a kind: IsUnitType with the kind's UNIT_TYPE.</summary>
+        public bool IsKind(unit unit, UnitKind kind)
+        {
+            switch (kind)
+            {
+                case UnitKind.Structure:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_STRUCTURE);
+                case UnitKind.Worker:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_PEON);
+                case UnitKind.TownHall:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_TOWNHALL);
+                case UnitKind.Summoned:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_SUMMONED);
+                case UnitKind.Mechanical:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_MECHANICAL);
+                case UnitKind.Undead:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_UNDEAD);
+                case UnitKind.Ancient:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_ANCIENT);
+                case UnitKind.Giant:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_GIANT);
+                case UnitKind.Tauren:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_TAUREN);
+                case UnitKind.Suicidal:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_SAPPER);
+                default:
+                    return false;
+            }
+        }
+
         /// <summary>The player that owns a unit.</summary>
         public player OwnerOf(unit unit)
         {

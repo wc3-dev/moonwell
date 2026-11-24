@@ -209,6 +209,9 @@ namespace Moonwell.Hosting
         /// <summary>Whether a unit is a structure.</summary>
         bool IsStructure(unit unit);
 
+        /// <summary>Whether a unit is of a kind, as IsUnitType reads it now.</summary>
+        bool IsKind(unit unit, UnitKind kind);
+
         /// <summary>The player that owns a unit; null a while after the game has removed it.</summary>
         player OwnerOf(unit unit);
 
