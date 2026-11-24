@@ -55,6 +55,12 @@ namespace Moonwell
 
         internal bool visible = true;
 
+        /// <summary>Whether Visible was set inside Local.For on this machine since it was last set outside it, so this machine shows shownLocally.</summary>
+        internal bool setLocally;
+
+        /// <summary>What Visible was last set inside Local.For on this machine; read while setLocally.</summary>
+        internal bool shownLocally;
+
         internal bool enabled = true;
 
         internal bool keepsKeyboard;
@@ -189,11 +195,13 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Whether the frame is shown, with its children; true unless set. A frame for another player stays hidden on this machine whatever it reads.</summary>
+        /// <summary>Whether the frame is shown, with its children; true unless set. A frame for another player stays hidden on this machine whatever it reads. Set inside Local.For, it shows or hides the frame on that machine only and reads the shared value still; set outside it, it shows that everywhere again.</summary>
         [LocalSafe]
         public bool Visible
         {
             get { return visible; }
+
+            [LocalSafe]
             set
             {
                 if (HasEnded)
@@ -201,10 +209,20 @@ namespace Moonwell
                     return;
                 }
 
-                visible = value;
+                if (Local.Depth > 0)
+                {
+                    setLocally = true;
+                    shownLocally = value;
+                }
+                else
+                {
+                    visible = value;
+                    setLocally = false;
+                }
+
                 if (handle != null)
                 {
-                    FramesSystem.World.ShowFrame(handle, visible && ShownHere());
+                    FramesSystem.World.ShowFrame(handle, ShowsHere());
                 }
             }
         }
@@ -1239,7 +1257,7 @@ namespace Moonwell
                 TakeMouse(true);
             }
 
-            if (visible && ShownHere())
+            if (ShowsHere())
             {
                 world.ShowFrame(handle!, true);
             }
@@ -1278,7 +1296,7 @@ namespace Moonwell
                 world.ScaleFrame(handle!, scale);
             }
 
-            if (!(visible && ShownHere()))
+            if (!ShowsHere())
             {
                 world.ShowFrame(handle!, false);
             }
@@ -1573,6 +1591,12 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether the game's frame shows on this machine: Visible, or what it was set inside Local.For here, and shown here.</summary>
+        internal bool ShowsHere()
+        {
+            return (setLocally ? shownLocally : visible) && ShownHere();
+        }
+
         /// <summary>Whether the frame is to be shown on this machine: it is everyone's, or this machine's player's.</summary>
         internal bool ShownHere()
         {
@@ -1584,7 +1608,7 @@ namespace Moonwell
         {
             if (handle != null && !HasEnded)
             {
-                FramesSystem.World.ShowFrame(handle, visible && ShownHere());
+                FramesSystem.World.ShowFrame(handle, ShowsHere());
             }
         }
 

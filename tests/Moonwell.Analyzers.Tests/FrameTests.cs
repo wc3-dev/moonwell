@@ -29,6 +29,20 @@ public class FrameTests
     }
 
     [Fact]
+    public void visible_is_set_inside_local_for_and_the_other_setters_are_still_mw0001()
+    {
+        var found = MapCode.Check("""
+            var label = Screen.Add(new Label(), Game.Instance);
+            Local.For(p, () => label.Visible = false);
+            Local.For(p, () => { label.Visible = !label.Visible; });
+            Local.For(p, () => label.Alpha = 10);
+            Local.For(p, () => label.Enabled = false);
+            """);
+
+        Assert.Equal(new[] { "MW0001: label.Alpha", "MW0001: label.Enabled" }, found);
+    }
+
+    [Fact]
     public void tweens_inside_local_for_are_refused()
     {
         var found = MapCode.Check("""
