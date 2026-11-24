@@ -473,7 +473,7 @@ namespace Moonwell.Testing
             Expect.Equal(1, ((Panel)second).Shown, "the second cast call ran once");
         }
 
-        /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
+        /// <summary>An int operator, a conditional, ?? and a comparison in an interpolated string's hole (J168, 2.0.4-moonwell.29).</summary>
         public static void InterpolatedOperators(FakeWorld world)
         {
             int a = 6, b = 3;
@@ -498,6 +498,46 @@ namespace Moonwell.Testing
             Expect.Equal("x7", "x" + (a | b), "| joined with +");
         }
 
+        /// <summary>
+        /// A method group of what a call gives (J175, 2.0.4-moonwell.30): the call before the dot was written twice, once for
+        /// the object and once for its method, so Every(1f, Screen.Add(...).Tick) added two frames and ticked one.
+        /// </summary>
+        public static void MethodGroupOfACall(FakeWorld world)
+        {
+            var made = new List<Panel>();
+            Panel Make()
+            {
+                var panel = new Panel();
+                made.Add(panel);
+                return panel;
+            }
+
+            Game.Instance.Every(1f, Make().Refresh);
+            world.Advance(3.5f);
+            Expect.Equal(1, made.Count, "the call before the dot, passed to Every, ran once");
+            Expect.Equal(3, made[0].Shown, "Every ran the method on what the call gave");
+            Action refresh = Make().Refresh;
+            refresh();
+            Expect.Equal(2, made.Count, "the call before the dot, kept in a local, ran once");
+            Expect.Equal(1, made[1].Shown, "the local ran the method on what the call gave");
+        }
+
+        /// <summary>
+        /// A float or double const (J174, 2.0.4-moonwell.30) was written as its nearest nine or seventeen digits (0.6f as
+        /// 0.600000024), and the same literal as typed (0.6), so naming a number changed the sums it was in.
+        /// </summary>
+        public static void ConstNumbers(FakeWorld world)
+        {
+            const float local = 0.4f;
+            var pixels = 100f;
+            Expect.True(pixels * GameHeight / 768f == pixels * 0.6f / 768f, "a const float and its literal");
+            Expect.True(pixels * Small == pixels * 0.139f, "a const float and its literal, another");
+            Expect.True(pixels * local == pixels * 0.4f, "a local const float and its literal");
+            var x = 7.0;
+            Expect.True(x * Tenth == x * 0.1, "a const double and its literal");
+        }
+
+        /// <summary>An enum as text: a [Flags] combination, the order of values and names, formats, a constant joined to text, and Parse (MW0032).</summary>
         public static void EnumText(FakeWorld world)
         {
             Expect.Equal("Read, Write", (Access.Read | Access.Write).ToString(), "a [Flags] combination");
@@ -589,6 +629,12 @@ namespace Moonwell.Testing
         }
 
         private const string Prefix = "A constant";
+
+        private const float GameHeight = 0.6f;
+
+        private const float Small = 0.139f;
+
+        private const double Tenth = 0.1;
 
         private static string IsOneTwo(Pair? p) => p is (1, 2) ? "one-two" : "not";
 
