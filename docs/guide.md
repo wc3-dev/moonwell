@@ -4468,12 +4468,24 @@ outlines (one colour), its ticking pairs (another) and its waiting or paused pai
 | Ctrl + N | while halted, one step (`Interactions.Step`, else 1/32 s); held down, it repeats |
 | Ctrl + `-` / Ctrl + `=` | slower / faster: ¼, ½, 1, 2, 4, 8 times |
 | `-step 10`, `-speed 4`, `-stats` | in chat: that many steps while halted (1 to 320; `-step` alone, one), a speed (`-speed` alone lists them), the statistics shown or hidden |
+| `-leaks`, `-profile`, `-scopes`, `-timers`, `-help` | in the panel: the scopes holding the most, the time the map's code takes, the scope tree from the selected object, the next timers, every command; the same command again hides it |
+| `-find Footman` | counts the units of a class and selects the next |
+| `-gold 500`, `-lumber 500`, `-time 12` | gives you gold or lumber; sets the time of day |
+| `-spawn Footman 5`, `-spawn hfoo` | units of a map's class or a type id for you (at most 100), at the selected object or your start |
+| `-level 10` | sets the selected hero's level |
+| `-kill`, `-hurt 100`, `-heal`, `-god` | on the unit Ctrl + click selected, else on the units you have selected: kills; takes that much life off, with no damage event; fills life and mana; makes it unhurtable, again to undo |
+| `-nocd`, `-reveal` | for you: cooldowns end after each cast; the whole map seen; again to undo |
 
 Either Ctrl works. A halt and the speed change Moonwell's time only: its timers, interactions and areas. The game's
 own attacks, buffs, cooldowns and timers made with the raw natives do not halt (Ctrl + H holds units, nothing more),
 and the speed does not make units faster or slower. With units held, a step lets them go for one step, but they come
 back to their orders slowly and move only about a quarter of a step. Units are always selectable; items, destructables and gizmos only
 once the interactions grid tracks their kind. `-debug` off resumes at speed 1 and clears the selection.
+
+The chat commands past `-debug` answer only while the mode is on; a map's own command of the same name wins and the
+built-in one steps aside. `-kill` and the rest see the units you select in the game from the first `-debug` on, so
+select them after it. `DebugMode.Command("wave", "starts the next wave", (player, rest) => ...)` adds a command of the
+map's own, heard all game whether the mode is on or not, and listed by `-help`; a release build leaves it out.
 
 A map writes nothing to have it. Two optional things: its own lines in the panel for a class or component that
 implements `IDebugShown`, and `DebugMode` for code that speaks only about the selected object, or halts like a breakpoint.

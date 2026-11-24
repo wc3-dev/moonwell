@@ -13,7 +13,7 @@ namespace Moonwell
     internal static class DebugTools
     {
         /// <summary>The built-in commands this class answers, without the dash.</summary>
-        private static readonly string[] BuiltIn = { "leaks", "profile", "scopes", "timers", "help", "find", "gold", "lumber", "time", "spawn", "level", "kill", "heal", "god", "nocd", "reveal" };
+        private static readonly string[] BuiltIn = { "leaks", "profile", "scopes", "timers", "help", "find", "gold", "lumber", "time", "spawn", "level", "kill", "hurt", "heal", "god", "nocd", "reveal" };
 
         /// <summary>The most units one -spawn makes.</summary>
         private const int MostSpawned = 100;
@@ -145,7 +145,7 @@ namespace Moonwell
                     ToggleReveal(player);
                     break;
                 default:
-                    OnSelectedUnit(word);
+                    OnSelectedUnits(word, player, rest);
                     break;
             }
         }
@@ -338,7 +338,7 @@ namespace Moonwell
             lines.Add("-find <class>: count its units, select the next");
             lines.Add("-gold <n>  -lumber <n>  -time <hour>");
             lines.Add("-spawn <class or id> [n]  -level <n>");
-            lines.Add("-kill  -heal  -god: on the selected unit");
+            lines.Add("-kill  -hurt <n>  -heal  -god: on the selected unit, else on your selection");
             lines.Add("-nocd  -reveal: for you, again to undo");
             for (var i = 0; i < packageHelps.Count; i++)
             {
@@ -479,39 +479,82 @@ namespace Moonwell
             }
         }
 
-        /// <summary>-kill, -heal and -god, on the selected unit.</summary>
-        private static void OnSelectedUnit(string word)
+        /// <summary>The units -kill, -hurt, -heal and -god act on: the unit Ctrl + click selected, else the units the typer has selected in the game, those alive.</summary>
+        private static List<Unit> Targets(Player player)
         {
-            var unit = DebugSession.Selected as Unit;
-            if (unit == null || unit.HasEnded)
+            var targets = new List<Unit>();
+            var selected = DebugSession.Selected as Unit;
+            if (selected != null && !selected.HasEnded)
             {
-                Game.Print("Select a unit first: Ctrl + click.");
+                targets.Add(selected);
+                return targets;
+            }
+
+            var selection = player.Selection;
+            for (var i = 0; i < selection.Count; i++)
+            {
+                if (!selection[i].HasEnded && selection[i].IsAlive)
+                {
+                    targets.Add(selection[i]);
+                }
+            }
+
+            return targets;
+        }
+
+        /// <summary>-kill, -hurt 100, -heal and -god, on the unit Ctrl + click selected, else on the typer's selection: -hurt takes life off with no damage event, and kills at 0.405 or less, as setting Life does.</summary>
+        private static void OnSelectedUnits(string word, Player player, string rest)
+        {
+            var amount = 0.0f;
+            if (word == "hurt" && (!DebugSession.Number(rest, out amount) || amount <= 0.0f))
+            {
+                Game.Print("-hurt takes an amount of life: -hurt 100.");
                 return;
             }
 
-            if (word == "kill")
+            var units = Targets(player);
+            if (units.Count == 0)
             {
-                unit.Kill();
+                Game.Print("Select a unit first: click, or Ctrl + click.");
+                return;
             }
-            else if (word == "heal")
+
+            var god = word == "god" && !gods.Contains(units[0]);
+            for (var i = 0; i < units.Count; i++)
             {
-                unit.Life = unit.MaxLife;
-                unit.Mana = unit.MaxMana;
-            }
-            else
-            {
-                var god = !gods.Contains(unit);
-                if (god)
+                var unit = units[i];
+                if (word == "kill")
                 {
-                    gods.Add(unit);
+                    unit.Kill();
+                }
+                else if (word == "hurt")
+                {
+                    unit.Life = unit.Life - amount;
+                }
+                else if (word == "heal")
+                {
+                    unit.Life = unit.MaxLife;
+                    unit.Mana = unit.MaxMana;
                 }
                 else
                 {
-                    gods.Remove(unit);
-                }
+                    if (god && !gods.Contains(unit))
+                    {
+                        gods.Add(unit);
+                    }
+                    else if (!god)
+                    {
+                        gods.Remove(unit);
+                    }
 
-                DebugSession.SetInvulnerable(unit, god);
-                Game.Print(DebugPanel.NameOf(unit) + (god ? " can't be hurt." : " can be hurt again."));
+                    DebugSession.SetInvulnerable(unit, god);
+                }
+            }
+
+            if (word == "god")
+            {
+                var named = units.Count == 1 ? DebugPanel.NameOf(units[0]) : units.Count + " units";
+                Game.Print(named + (god ? " can't be hurt." : " can be hurt again."));
             }
         }
 
