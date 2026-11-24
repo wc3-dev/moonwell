@@ -40,6 +40,27 @@ namespace Moonwell.Testing
             Expect.True(item.Position() == new Vector2(5f, 6f), "item moved to (5, 6)");
         }
 
+        /// <summary>OrderAt, CreateUnit and Start take and give vectors, reaching the same world calls as core's float forms.</summary>
+        public static void VectorForms(FakeWorld world)
+        {
+            var unit = UnitAt(world, 0f, 0f);
+            world.OrderPoints.Clear();
+            unit.OrderAt("move", new Vector2(30f, -40f));
+            Expect.Equal("point move", world.Orders[world.Orders.Count - 1], "OrderAt gives a point order");
+            Expect.True(world.OrderPoints[0] == 30f && world.OrderPoints[1] == -40f, "to (30, -40)");
+            var id = ObjectTypes.FourCC("h0vf");
+            ObjectTypes.Id<Dummy>(id);
+            ObjectTypes.Unit(id, () => new Dummy());
+            var made = Player.One.CreateUnit<Dummy>(new Vector2(50f, 60f), Game.Instance);
+            Expect.True(made.Position() == new Vector2(50f, 60f), "CreateUnit<T> at (50, 60)");
+            Expect.True(world.LastFacing == 270f, "CreateUnit<T> faces 270 without a facing");
+            var byId = Player.One.CreateUnit(id, new Vector2(-5f, 5f), Game.Instance, 90f);
+            Expect.True(byId is Dummy && byId.Position() == new Vector2(-5f, 5f), "CreateUnit by id at (-5, 5)");
+            Expect.True(world.LastFacing == 90f, "CreateUnit by id with a facing");
+            world.SetStart(0, 128f, -256f);
+            Expect.True(Player.One.Start() == new Vector2(128f, -256f), "Start");
+        }
+
         /// <summary>Distance and facing between units, items and points.</summary>
         public static void DistanceAndAngle(FakeWorld world)
         {
