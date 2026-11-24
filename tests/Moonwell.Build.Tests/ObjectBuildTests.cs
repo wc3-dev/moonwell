@@ -869,6 +869,35 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void the_build_error_lines_are_each_said_once_without_the_project()
+        {
+            var errors = DotnetBuild.ErrorLines(new[]
+            {
+                "  Determining projects to restore...\r",
+                @"C:\Map\Map.csproj : error NU1102: Unable to find package Moonwell with version (>= 0.21.5) [C:\Map\Map.csproj]" + "\r",
+                @"C:\Map\Map.csproj : warning NU1603: Moonwell.Objects 0.21.4 was not found [C:\Map\Map.csproj]",
+                @"C:\Map\Code.cs(3,9): error CS0103: The name 'x' does not exist in the current context [C:\Map\Map.csproj]",
+                "Build FAILED.",
+                @"C:\Map\Map.csproj : error NU1102: Unable to find package Moonwell with version (>= 0.21.5) [C:\Map\Map.csproj]",
+            });
+
+            Assert.Equal(new[]
+            {
+                @"C:\Map\Map.csproj : error NU1102: Unable to find package Moonwell with version (>= 0.21.5)",
+                @"C:\Map\Code.cs(3,9): error CS0103: The name 'x' does not exist in the current context",
+            }, errors);
+        }
+
+        [Fact]
+        public void the_build_error_lines_stop_at_ten_and_count_the_rest()
+        {
+            var errors = DotnetBuild.ErrorLines(Enumerable.Range(1, 13).Select(at => $@"C:\Map\Code.cs({at},1): error CS0103: The name 'x' does not exist [C:\Map\Map.csproj]"));
+
+            Assert.Equal(11, errors.Count);
+            Assert.Equal("and 3 more", errors[10]);
+        }
+
+        [Fact]
         public void a_referenced_name_brings_every_overload_into_the_stubs()
         {
             // The constructor calls only Set(field, value); CSharp.lua names overloads by their order, so the stub keeps both.
