@@ -32,6 +32,9 @@ namespace Moonwell
         /// <summary>The units made structures.</summary>
         private readonly HashSet<unit> structures = new HashSet<unit>();
 
+        /// <summary>The kinds given each unit with MakeKind but a structure, which has its own set.</summary>
+        private readonly Dictionary<unit, List<UnitKind>> kinds = new Dictionary<unit, List<UnitKind>>();
+
         /// <summary>The bonus field set on each unit's abilities, by ability id.</summary>
         private readonly Dictionary<unit, Dictionary<int, float>> bonuses = new Dictionary<unit, Dictionary<int, float>>();
 
@@ -160,6 +163,48 @@ namespace Moonwell
         public bool IsStructure(unit unit)
         {
             return structures.Contains(unit);
+        }
+
+        /// <summary>Gives a unit a kind, as its type's object data gives it in the game: a unit made while a Simulation plays has its type's on .NET. A structure is made as MakeStructure makes one; Summoned, which MakeSummoned records, holds only the type added in play.</summary>
+        public void MakeKind(unit unit, UnitKind kind)
+        {
+            if (kind == UnitKind.Structure)
+            {
+                structures.Add(unit);
+            }
+            else
+            {
+                if (!kinds.TryGetValue(unit, out var held))
+                {
+                    held = new List<UnitKind>();
+                    kinds[unit] = held;
+                }
+
+                if (!held.Contains(kind))
+                {
+                    held.Add(kind);
+                }
+            }
+        }
+
+        /// <summary>Whether a unit is of a kind given with MakeKind or MakeStructure; a summon also when given the summoned type or a timed life, as in the game (seen 11-08).</summary>
+        public bool IsKind(unit unit, UnitKind kind)
+        {
+            Refuse();
+            if (kind == UnitKind.Structure)
+            {
+                return structures.Contains(unit);
+            }
+
+            if (kind == UnitKind.Summoned)
+            {
+                if (Summoned.Contains(unit) || TimedLives.ContainsKey(unit))
+                {
+                    return true;
+                }
+            }
+
+            return kinds.TryGetValue(unit, out var held) && held.Contains(kind);
         }
 
         /// <summary>The bonus field a unit's ability holds; 0 until set.</summary>

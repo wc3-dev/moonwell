@@ -38,5 +38,8 @@ namespace Moonwell
 
         /// <summary>The abilities a unit starts with at level 1, by id: on .NET its object data's, a hero's hero abilities left out; none for numbers a test gives.</summary>
         internal int[] Abilities = new int[0];
+
+        /// <summary>The kinds a unit of the type is, from its object data's IsABuilding and classification on .NET; none for numbers a test gives.</summary>
+        internal UnitKind[] Kinds = new UnitKind[0];
     }
 }
