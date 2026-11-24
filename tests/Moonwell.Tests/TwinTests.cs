@@ -9,8 +9,9 @@ namespace Moonwell.Tests;
 /// and with the same values, or the two would fall out of step in a real game. The second machine's own checks are
 /// kept, not thrown (Expect.Kept): a case checks what the player at its own machine sees.
 ///
-/// It is not a network: the second machine gets no shared message from the first, and the package worlds
-/// (frames, input, terrain and the rest) are not recorded.
+/// The package worlds (frames, input, terrain and the rest) are recorded with IWorld, in one list: each package's Install
+/// passes the world it is given through Worlds.Around. It is not a network: the second machine gets no shared message
+/// from the first.
 /// </summary>
 public class TwinTests
 {
@@ -55,6 +56,20 @@ public class TwinTests
     }
 
     [Fact]
+    public void A_package_worlds_change_inside_Local_For_is_found()
+    {
+        var difference = Difference(new Case
+        {
+            Run = world =>
+            {
+                AreaSystem.Install(new FakeAreaWorld(), [], []);
+                Local.For(Player.Get(0), () => AreaSystem.World.NewRegion());
+            },
+        });
+        Assert.Contains("IAreaWorld.NewRegion() -> region 1", difference);
+    }
+
+    [Fact]
     public void A_check_of_what_one_player_sees_is_no_difference()
     {
         Assert.Null(Difference(new Case
@@ -74,7 +89,7 @@ public class TwinTests
         Assert.DoesNotContain(Differing.Keys, name => !cases.Contains(name));
 
         // A member no longer marked needs no entry, and one that never was has a wrong name.
-        var marked = GameChanging.OneMachineMembers.Keys.Select(member => member.Name).ToHashSet();
+        var marked = GameChanging.OneMachineMembers.Keys.Select(GameChanging.Name).ToHashSet();
         Assert.DoesNotContain(GameChanging.OneMachine.Keys, name => !marked.Contains(name));
     }
 
@@ -88,6 +103,22 @@ public class TwinTests
         Assert.DoesNotContain(nameof(IWorld.LifeOf), marked);
         Assert.DoesNotContain(nameof(IWorld.IsLocal), marked);
         Assert.DoesNotContain(nameof(IWorld.PrintTo), marked);
+    }
+
+    [Fact]
+    public void Every_world_is_recorded()
+    {
+        // Every world interface of the runtime and the packages, so one added since is recorded too, or fails here.
+        var found = typeof(TwinTests).Assembly.GetReferencedAssemblies()
+            .Concat(typeof(Cases).Assembly.GetReferencedAssemblies())
+            .Where(name => name.Name!.StartsWith("Moonwell", StringComparison.Ordinal))
+            .Select(System.Reflection.Assembly.Load)
+            .Distinct()
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(type => type.IsInterface && type.Namespace == "Moonwell.Hosting" && type.Name.StartsWith('I') && type.Name.EndsWith("World", StringComparison.Ordinal))
+            .ToHashSet();
+        Assert.Empty(found.Except(GameChanging.AllWorlds).Select(type => type.Name + ": add it to GameChanging.AllWorlds"));
+        Assert.All(GameChanging.AllWorlds, world => Assert.NotNull(GameChanging.NativeOf(world)));
     }
 
     /// <summary>Where the two machines' calls part, with the calls around it; null when they are the same.</summary>
@@ -125,8 +156,10 @@ public class TwinTests
     private static List<string> Calls(Case testCase, int machine)
     {
         var calls = new List<string>();
+        var recording = new Recording(calls);
         FakeWorld.MachineShift = machine;
-        FakeWorld.Around = world => RecordingWorld.Around(world, calls);
+        FakeWorld.Around = recording.Around;
+        Worlds.Around = recording.Wrap;
         Expect.Kept = machine == 0 ? null : new List<string>();
         try
         {
@@ -140,6 +173,7 @@ public class TwinTests
         {
             FakeWorld.MachineShift = 0;
             FakeWorld.Around = null;
+            Worlds.Around = null;
             Expect.Kept = null;
         }
 

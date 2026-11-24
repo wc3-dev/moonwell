@@ -105,6 +105,9 @@ namespace Moonwell
         /// <summary>Makes a debug world the session's, and listens to the chat for -debug; Runtime.Start calls it after Reset.</summary>
         internal static void Install(IDebugWorld debugWorld)
         {
+#if !MOONWELL_LUA
+            debugWorld = Worlds.Wrap(debugWorld);
+#endif
             world = debugWorld;
             held = new HeldUnits(debugWorld);
             debugWorld.ListenChat(Heard);

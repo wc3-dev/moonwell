@@ -74,6 +74,9 @@ namespace Moonwell
         /// <summary>Installs the package on a world; tests give a fake one.</summary>
         internal static void Install(IFramesWorld host)
         {
+#if !MOONWELL_LUA
+            host = Worlds.Wrap(host);
+#endif
             world = host;
             screenRoot = null;
             overRoot = null;

@@ -48,6 +48,9 @@ namespace Moonwell
         /// <summary>Makes a world the package's world, clears its state and plugs it into the runtime.</summary>
         internal static void Install(IDamageWorld world)
         {
+#if !MOONWELL_LUA
+            world = Worlds.Wrap(world);
+#endif
             World = world;
             listening = false;
             Watched = false;

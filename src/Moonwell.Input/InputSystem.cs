@@ -73,6 +73,9 @@ namespace Moonwell
         /// <summary>Installs the package on a world; tests give a fake one. With the mouse, it listens for the mouse of every user player playing now, in slot order: its presses and releases, and its moves when <paramref name="moves"/> is true.</summary>
         internal static void Install(IInputWorld host, bool mouse, bool moves, string[] cameraNames, float[] cameras)
         {
+#if !MOONWELL_LUA
+            host = Worlds.Wrap(host);
+#endif
             var starts = CameraStarts(cameraNames, cameras);
             world = host;
             mice = new Mouse[Player.MaxSlots];
@@ -140,6 +143,9 @@ namespace Moonwell
         /// <summary>Installs the keyboard on a world; tests give a fake one. It makes a keyboard for each slot and listens for the keys of every user player playing now, in slot order.</summary>
         internal static void InstallKeyboard(IKeyWorld host)
         {
+#if !MOONWELL_LUA
+            host = Worlds.Wrap(host);
+#endif
             keyWorld = host;
             keyboards = new Keyboard[Player.MaxSlots];
             for (var slot = 0; slot < Player.MaxSlots; slot++)
