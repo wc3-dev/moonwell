@@ -1,3 +1,7 @@
+using System.Globalization;
+using Moonwell.GameData;
+using Moonwell.MapFiles;
+
 namespace Moonwell.Build
 {
     /// <summary>
@@ -26,6 +30,119 @@ namespace Moonwell.Build
 
         /// <summary>The line of the map's generated Main that installs the package with the helper types.</summary>
         public static string Install => "global::Moonwell.Paths.Install(new int[] { " + string.Join(", ", Ids.Select(id => $"{Types}.FourCC({ObjectLua.Quote(id)})")) + " });";
+
+        /// <summary>The members of <c>Moonwell.Paths</c> that read a unit type's size or movement by its id (decision 396).</summary>
+        private static readonly string[] TypeMembers = { "CollisionOf", "MovementOf", "FindPathFor" };
+
+        // The game's text of each MoveType, by its number in a declared class's changes.
+        private static readonly string[] MoveTexts = { "foot", "horse", "fly", "hover", "float", "amph" };
+
+        /// <summary>Whether the map's code, or a library of its own, calls Paths.CollisionOf, MovementOf or FindPathFor, so it needs the unit types' table.</summary>
+        public static bool TypesUsedBy(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(AsksTypes);
+        }
+
+        /// <summary>The line of the map's generated Main that gives the package the unit types' table, after Install.</summary>
+        public static string TypesInstall(string table) => "global::Moonwell.Paths.UnitTypes(" + ObjectLua.Quote(table) + ");";
+
+        /// <summary>
+        /// Each unit type's collision size and movement as the map will have them (decision 396), for <c>Paths.UnitTypes</c>:
+        /// the standard units the map's set of tables keeps, then the map's own unit file's (a changed standard unit or a new
+        /// one, from its standard base's values), then the declared classes' (from their standard root's), each replacing an
+        /// object of its id before it, as the object files are written (<see cref="ObjectFiles.Write"/>). Ordered by id.
+        /// </summary>
+        /// <param name="standard">The standard data.</param>
+        /// <param name="data">The map's sets of tables.</param>
+        /// <param name="mapFolder">The source map's folder, which holds its unit file.</param>
+        /// <param name="declared">The declared objects.</param>
+        /// <param name="ids">The object id of each declared class.</param>
+        /// <returns>The entries, split by commas: id, movement letter, collision size.</returns>
+        public static string Table(StandardData standard, GameData data, string mapFolder, IReadOnlyList<DeclaredObject> declared, IReadOnlyDictionary<string, string> ids)
+        {
+            var types = new SortedDictionary<string, (string Move, float Size)>(StringComparer.Ordinal);
+            (string Move, float Size) Standard(string id) => (standard.Value(id, "umvt", 0, data.ValueSet) ?? "", Number(standard.Value(id, "ucol", 0, data.ValueSet)));
+            foreach (var id in standard.Ids("unit"))
+            {
+                if (!standard.IsMissing(id, data.ExistenceSet))
+                {
+                    types[id] = Standard(id);
+                }
+            }
+
+            foreach (var entry in SourceObjectFile.Read(Path.Combine(mapFolder, Kinds.MainName(Kind.Unit)), Kind.Unit).Entries)
+            {
+                var type = Standard(entry.BaseId);
+                foreach (var mod in entry.Mods)
+                {
+                    if (mod.Field == "ucol")
+                    {
+                        type.Size = Convert.ToSingle(SourceObjectFile.ValueOf(mod), CultureInfo.InvariantCulture);
+                    }
+                    else if (mod.Field == "umvt")
+                    {
+                        type.Move = SourceObjectFile.ValueOf(mod) as string ?? "";
+                    }
+                }
+
+                types[SourceObjectFile.IdOf(entry)] = type;
+            }
+
+            foreach (var one in declared.Where(one => one.Kind is "unit" or "hero"))
+            {
+                var type = Standard(one.StandardRoot);
+                if (one.Changed.TryGetValue("ucol", out var size) && size != null)
+                {
+                    type.Size = Convert.ToSingle(size, CultureInfo.InvariantCulture);
+                }
+
+                if (one.Changed.TryGetValue("umvt", out var move) && move is int number && number >= 0 && number < MoveTexts.Length)
+                {
+                    type.Move = MoveTexts[number];
+                }
+
+                types[one.Replaces ? one.StandardRoot : ids[one.ClassName]] = type;
+            }
+
+            return string.Join(",", types.Select(type => type.Key + Letter(type.Value.Move) + type.Value.Size.ToString("R", CultureInfo.InvariantCulture)));
+        }
+
+        // The letter Paths.UnitTypes reads for a movement's game text: foot, horse, hover and none walk the ground.
+        private static char Letter(string move) => move switch
+        {
+            "fly" => 'y',
+            "float" => 'f',
+            "amph" => 'a',
+            _ => 'g',
+        };
+
+        private static float Number(string? text)
+        {
+            return float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ? number : 0f;
+        }
+
+        private static bool AsksTypes(string assemblyPath)
+        {
+            using var stream = File.OpenRead(assemblyPath);
+            using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
+            var metadata = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+            foreach (var handle in metadata.MemberReferences)
+            {
+                var member = metadata.GetMemberReference(handle);
+                if (member.Parent.Kind != System.Reflection.Metadata.HandleKind.TypeReference)
+                {
+                    continue;
+                }
+
+                var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
+                if (metadata.GetString(type.Name) == "Paths" && metadata.GetString(type.Namespace) == "Moonwell" && TypeMembers.Contains(metadata.GetString(member.Name)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         /// <summary>Fails the build when one of the map's classes or the map's object files has a helper's id.</summary>
         /// <exception cref="BuildException">An id is taken.</exception>

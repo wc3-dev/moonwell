@@ -52,6 +52,54 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_map_that_asks_by_unit_type_gets_the_unit_types_table_after_the_install()
+        {
+            var main = File.ReadAllText(Path.Combine(fixtures.Of("Pathing").Folder, "build", "generated", "MapMain.g.cs"));
+            var install = main.IndexOf(PathingTypes.Install, StringComparison.Ordinal);
+            var table = main.IndexOf("global::Moonwell.Paths.UnitTypes(\"", StringComparison.Ordinal);
+            Assert.True(install >= 0 && table > install, main);
+            Assert.Contains(",hfoog31,", main);
+            Assert.Contains(",hgryy8,", main);
+            Assert.Contains(",Hpalg32,", main);
+        }
+
+        [Fact]
+        public void the_unit_types_table_takes_the_map_file_over_the_standard_and_the_declared_classes_over_both()
+        {
+            var fixture = fixtures.Of("Pathing").Folder;
+            var standard = StandardData.Read(Directory.EnumerateFiles(fixture, "Moonwell.Objects.dll", SearchOption.AllDirectories).First());
+            var folder = Directory.CreateTempSubdirectory("moonwell-unit-types-");
+            try
+            {
+                var units = Moonwell.MapFiles.ObjectFile.Empty(Moonwell.GameData.Kind.Unit);
+                units.AddOriginal("hfoo").Set("ucol", 0, 0, new Moonwell.MapFiles.FieldValue.Unreal(40f));
+                units.AddCustom("hgry", "h000").Set("umvt", 0, 0, new Moonwell.MapFiles.FieldValue.Text("foot"));
+                units.AddCustom("hgry", "h002").Set("ucol", 0, 0, new Moonwell.MapFiles.FieldValue.Unreal(99f));
+                File.WriteAllBytes(Path.Combine(folder.FullName, "war3map.w3u"), units.ToBytes());
+                var declared = new List<DeclaredObject>
+                {
+                    new DeclaredObject("Objects.Boat", "unit", "hfoo", false, null, null, new Dictionary<string, object?> { ["ucol"] = 20.5f, ["umvt"] = 4 }, Array.Empty<string>()),
+                    new DeclaredObject("Objects.Peasant", "unit", "hpea", true, null, null, new Dictionary<string, object?> { ["ucol"] = 12f }, Array.Empty<string>()),
+                    new DeclaredObject("Objects.Over", "unit", "hkni", false, "h002", null, new Dictionary<string, object?>(), Array.Empty<string>()),
+                    new DeclaredObject("Objects.Spell", "ability", "AHbz", false, null, null, new Dictionary<string, object?>(), Array.Empty<string>()),
+                };
+                var ids = new Dictionary<string, string> { ["Objects.Boat"] = "h001", ["Objects.Peasant"] = "hpea", ["Objects.Over"] = "h002", ["Objects.Spell"] = "A000" };
+                var entries = PathingTypes.Table(standard, GameData.Of(0, 1), folder.FullName, declared, ids).Split(',');
+                Assert.Contains("hfoog40", entries);
+                Assert.Contains("h000g8", entries);
+                Assert.Contains("h001f20.5", entries);
+                Assert.Contains("hpeag12", entries);
+                Assert.Contains("h002g" + standard.Value("hkni", "ucol", 0, null), entries);
+                Assert.DoesNotContain(entries, entry => entry.StartsWith("A000", StringComparison.Ordinal));
+                Assert.Equal(entries.OrderBy(entry => entry.Substring(0, 4), StringComparer.Ordinal), entries);
+            }
+            finally
+            {
+                folder.Delete(true);
+            }
+        }
+
+        [Fact]
         public void map_without_pathing_gets_no_helpers()
         {
             Assert.Equal(0, builds.Development.ExitCode);

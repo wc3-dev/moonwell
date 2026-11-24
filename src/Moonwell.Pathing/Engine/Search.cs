@@ -66,19 +66,133 @@ namespace Moonwell.Engine
                 return new Route(points, reached);
             }
 
+            // A turn is kept at the cell before the first one the line from the last turn is not clear to (J173). The lines from
+            // one turn are tested a chunk of cells at a time, the chunk doubling while they are clear, through Blocked.
             var anchor = points[0];
-            for (var i = 1; i < keys.Count; i++)
+            var i = 2;
+            var chunk = FirstChunk;
+            while (i < keys.Count)
             {
-                var next = i == keys.Count - 1 ? last : Middle(keys[i]);
-                if (i > 1 && !search.Clear(anchor, next))
+                var to = System.Math.Min(i + chunk - 1, keys.Count - 1);
+                var blocked = search.Blocked(anchor, keys, last, i, to);
+                if (blocked < 0)
                 {
-                    anchor = Middle(keys[i - 1]);
-                    points.Add(anchor);
+                    i = to + 1;
+                    chunk *= 2;
+                    continue;
                 }
+
+                anchor = Middle(keys[blocked - 1]);
+                points.Add(anchor);
+                i = blocked + 1;
+                chunk = FirstChunk;
             }
 
             points.Add(last);
             return new Route(points, reached);
+        }
+
+        /// <summary>The cells of the path whose lines from a turn are first tested together.</summary>
+        private const int FirstChunk = 8;
+
+        /// <summary>The widest a band round a line is let grow before its lines are tested in parts: 4 cells.</summary>
+        private const float BandCap = 128f;
+
+        /// <summary>How far a cell Clear asks can lie from its line: a step of 8 across a corner asks the two cells beside it, and 1 for rounding.</summary>
+        private const float BandMargin = 9f;
+
+        /// <summary>
+        /// The first of the path's cells from one to another whose line from the anchor is not clear (Clear), or -1 when all are.
+        /// The lines all lie within the band round the line to the last of them, as wide as the farthest of their ends is from
+        /// it: when every cell the band touches fits, so does every cell Clear asks on them, and they are clear without walking
+        /// each (J173: walking each made a route 5,000 long about 50,000 steps). Else the cells are halved and each half tested
+        /// so, down to two, which are walked.
+        /// </summary>
+        private int Blocked(Vector2 anchor, List<int> keys, Vector2 last, int from, int to)
+        {
+            var end = Point(keys, last, to);
+            var width = 0f;
+            for (var j = from; j <= to; j++)
+            {
+                var distance = FromLine(Point(keys, last, j), anchor, end);
+                if (distance > width || float.IsNaN(distance))
+                {
+                    width = distance;
+                }
+            }
+
+            // A NaN point keeps the width NaN, which fails the cap, so its lines are walked.
+            if (width <= BandCap && BandFits(anchor, end, width + BandMargin))
+            {
+                return -1;
+            }
+
+            if (to - from < 2)
+            {
+                for (var j = from; j <= to; j++)
+                {
+                    if (!Clear(anchor, Point(keys, last, j)))
+                    {
+                        return j;
+                    }
+                }
+
+                return -1;
+            }
+
+            var half = (from + to) / 2;
+            var first = Blocked(anchor, keys, last, from, half);
+            return first >= 0 ? first : Blocked(anchor, keys, last, half + 1, to);
+        }
+
+        // The point of the path at one of its cells: the cell's middle, or for the last the route's end.
+        private static Vector2 Point(List<int> keys, Vector2 last, int index)
+        {
+            return index == keys.Count - 1 ? last : Middle(keys[index]);
+        }
+
+        // How far a point is from the line between two others.
+        private static float FromLine(Vector2 point, Vector2 a, Vector2 b)
+        {
+            var dx = b.X - a.X;
+            var dy = b.Y - a.Y;
+            var length = dx * dx + dy * dy;
+            var t = length > 0f ? ((point.X - a.X) * dx + (point.Y - a.Y) * dy) / length : 0f;
+            t = t < 0f ? 0f : t > 1f ? 1f : t;
+            var ex = point.X - a.X - t * dx;
+            var ey = point.Y - a.Y - t * dy;
+            return System.MathF.Sqrt(ex * ex + ey * ey);
+        }
+
+        /// <summary>Whether the square fits in every cell that has a point within a distance of the line between two points: a column at a time, the rows from the line's lowest to its highest in the columns' reach, widened by the distance.</summary>
+        private bool BandFits(Vector2 a, Vector2 b, float distance)
+        {
+            var left = System.Math.Min(a.X, b.X);
+            var right = System.Math.Max(a.X, b.X);
+            var lastCol = Cells.Of(right + distance);
+            for (var col = Cells.Of(left - distance); col <= lastCol; col++)
+            {
+                var x0 = System.Math.Max(col * Cells.Size - distance, left);
+                var x1 = System.Math.Min(col * Cells.Size + Cells.Size + distance, right);
+                var y0 = a.Y;
+                var y1 = b.Y;
+                if (b.X != a.X)
+                {
+                    y0 = a.Y + (b.Y - a.Y) * (x0 - a.X) / (b.X - a.X);
+                    y1 = a.Y + (b.Y - a.Y) * (x1 - a.X) / (b.X - a.X);
+                }
+
+                var lastRow = Cells.Of(System.Math.Max(y0, y1) + distance);
+                for (var row = Cells.Of(System.Math.Min(y0, y1) - distance); row <= lastRow; row++)
+                {
+                    if (!Fits(Cells.Key(col, row)))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private readonly Dictionary<int, int> came = new Dictionary<int, int>();
@@ -157,6 +271,12 @@ namespace Moonwell.Engine
                     best = key;
                 }
 
+                // The cells beside it, asked once: a step across a corner needs the two of them it passes (J173).
+                var here = cost[key];
+                var west = Fits(Cells.Key(col - 1, row));
+                var east = Fits(Cells.Key(col + 1, row));
+                var south = Fits(Cells.Key(col, row - 1));
+                var north = Fits(Cells.Key(col, row + 1));
                 for (var i = -1; i <= 1; i++)
                 {
                     for (var j = -1; j <= 1; j++)
@@ -167,18 +287,21 @@ namespace Moonwell.Engine
                         }
 
                         var next = Cells.Key(col + i, row + j);
-                        if (closed.Contains(next) || !Fits(next))
+                        if (closed.Contains(next))
                         {
                             continue;
                         }
 
                         var diagonal = i != 0 && j != 0;
-                        if (diagonal && (!Fits(Cells.Key(col + i, row)) || !Fits(Cells.Key(col, row + j))))
+                        var beside = i < 0 ? west : east;
+                        var above = j < 0 ? south : north;
+                        var fits = diagonal ? Fits(next) && beside && above : i != 0 ? beside : above;
+                        if (!fits)
                         {
                             continue;
                         }
 
-                        var g = cost[key] + (diagonal ? Diagonal : Straight);
+                        var g = here + (diagonal ? Diagonal : Straight);
                         if (!cost.TryGetValue(next, out var old) || g < old)
                         {
                             cost[next] = g;
@@ -305,73 +428,126 @@ namespace Moonwell.Engine
             return new Vector2(Cells.Middle(Cells.ColOf(key)), Cells.Middle(Cells.RowOf(key)));
         }
 
-        /// <summary>A binary heap of cell keys, least score first.</summary>
+        /// <summary>
+        /// A binary heap of cell keys, least score first. A key moving up or down is held aside and put once where it stops,
+        /// with the same comparisons as swapping it each step, so keys come off in the same order. In Lua its lists are read
+        /// and written in their slots (At, Put, Append, Drop), with no bounds check and no version: they never hold null, no
+        /// foreach walks them, and every index is below the count (J173: the lists' checked reads and writes were most of a
+        /// search round a wall).
+        /// </summary>
         private sealed class Heap
         {
             private readonly List<int> keys = new List<int>();
             private readonly List<float> scores = new List<float>();
+            private int count;
 
-            internal int Count => keys.Count;
+            internal int Count => count;
 
             internal void Push(int key, float score)
             {
-                keys.Add(key);
-                scores.Add(score);
-                var i = keys.Count - 1;
+                var keys = this.keys;
+                var scores = this.scores;
+                var i = count++;
+                Append(keys, i, key);
+                Append(scores, i, score);
                 while (i > 0)
                 {
                     var parent = (i - 1) / 2;
-                    if (scores[parent] <= scores[i])
+                    var parentScore = At(scores, parent);
+                    if (parentScore <= score)
                     {
                         break;
                     }
 
-                    Swap(i, parent);
+                    Put(keys, i, At(keys, parent));
+                    Put(scores, i, parentScore);
                     i = parent;
                 }
+
+                Put(keys, i, key);
+                Put(scores, i, score);
             }
 
             internal int Pop()
             {
-                var top = keys[0];
-                var last = keys.Count - 1;
-                Swap(0, last);
-                keys.RemoveAt(last);
-                scores.RemoveAt(last);
+                var keys = this.keys;
+                var scores = this.scores;
+                var top = At(keys, 0);
+                var last = --count;
+                var key = At(keys, last);
+                var score = At(scores, last);
+                Drop(keys, last);
+                Drop(scores, last);
+                if (last == 0)
+                {
+                    return top;
+                }
+
                 var i = 0;
                 while (true)
                 {
                     var left = i * 2 + 1;
-                    var right = left + 1;
-                    var least = i;
-                    if (left < keys.Count && scores[left] < scores[least])
+                    var least = -1;
+                    var leastScore = score;
+                    if (left < last && At(scores, left) < leastScore)
                     {
                         least = left;
+                        leastScore = At(scores, left);
                     }
 
-                    if (right < keys.Count && scores[right] < scores[least])
+                    var right = left + 1;
+                    if (right < last && At(scores, right) < leastScore)
                     {
                         least = right;
+                        leastScore = At(scores, right);
                     }
 
-                    if (least == i)
+                    if (least < 0)
                     {
-                        return top;
+                        break;
                     }
 
-                    Swap(i, least);
+                    Put(keys, i, At(keys, least));
+                    Put(scores, i, leastScore);
                     i = least;
                 }
+
+                Put(keys, i, key);
+                Put(scores, i, score);
+                return top;
             }
 
-            private void Swap(int a, int b)
+            // Raw: the slot of a List item in Lua. Safe: the index is below the count and the item a number.
+            /// <summary>The item at an index below the count.</summary>
+            /// @CSharpLua.Template = "{0}[({1}) + 1]"
+            internal static T At<T>(List<T> list, int index)
             {
-                var key = keys[a];
-                keys[a] = keys[b];
-                keys[b] = key;
-                var score = scores[a];
-                scores[a] = scores[b];
-                scores[b] = score;
+                return list[index];
+            }
+
+            // Raw: a write to the slot of a List item in Lua, with no version counted. Safe: the index is below the count.
+            /// <summary>Sets the item at an index below the count.</summary>
+            /// @CSharpLua.Template = "{0}[({1}) + 1] = {2}"
+            internal static void Put<T>(List<T> list, int index, T item)
+            {
+                list[index] = item;
+            }
+
+            // Raw: a write to the slot after the last in Lua, with no version counted. Safe: the index is the count, so the
+            // table keeps no hole.
+            /// <summary>Adds an item at the end of a list whose count is index.</summary>
+            /// @CSharpLua.Template = "{0}[({1}) + 1] = {2}"
+            internal static void Append<T>(List<T> list, int index, T item)
+            {
+                list.Add(item);
+            }
+
+            // Raw: the last slot cleared in Lua, with no version counted. Safe: the index is the last, so the table keeps no hole.
+            /// <summary>Takes the last item, at index, off a list.</summary>
+            /// @CSharpLua.Template = "{0}[({1}) + 1] = nil"
+            internal static void Drop<T>(List<T> list, int index)
+            {
+                list.RemoveAt(index);
             }
         }
     }
