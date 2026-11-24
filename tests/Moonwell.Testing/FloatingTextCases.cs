@@ -149,6 +149,21 @@ namespace Moonwell.Testing
             footman.Remove();
         }
 
+        /// <summary>A unit's held text is hidden while the unit is inside a transport and shows again when it comes out, though the map reads no Transport.</summary>
+        public static void HiddenInTransport(FakeWorld world)
+        {
+            var footman = NewFootman(world, out var handle);
+            var burrow = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            footman.AddText("Peon", Game.Instance);
+            world.Load(handle, burrow);
+            world.Advance(0.1f);
+            Expect.Equal(false, world.Texts[0].Shown, "hidden while loaded");
+            world.LetOut(handle);
+            world.Advance(0.1f);
+            Expect.Equal(true, world.Texts[0].Shown, "shows again once out");
+            footman.Remove();
+        }
+
         /// <summary>A unit's text ends with the unit, once, and nothing is made on a unit that is gone.</summary>
         public static void EndsWithUnit(FakeWorld world)
         {
