@@ -2340,6 +2340,9 @@ unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen 
 - An enemy it can't attack is set aside for 3 s, and the next best is fought at once: one whose attack the game
   refuses, or one still alive when the unit is found idle after its attack on it, as it can't reach or see it. It
   still counts near.
+- `Fights = u => ...` keeps it to a set of units: asked at each think for every unit it finds, enemy or ally, an
+  attacker too, a unit it says false for is neither met nor counted in `EnemiesNear`, `AlliesNear` or the outnumbering,
+  so an arena's walkers leave out units of the same players outside their battle. With none, every unit.
 - It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
   `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
   and walks back to where its fight started.

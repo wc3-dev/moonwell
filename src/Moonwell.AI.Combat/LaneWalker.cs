@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using static Moonwell.AI.Nodes;
 
@@ -47,6 +48,14 @@ namespace Moonwell.AI.Combat
         {
             get { return Fighter.Leash; }
             set { Fighter.Leash = value; }
+        }
+
+        /// <summary>Which units it fights, as the fighter's <c>Fights</c>: a unit it says false for is neither met nor counted. Null, the default, takes every unit.</summary>
+        [LocalSafe]
+        public Func<Unit, bool>? Fights
+        {
+            get { return Fighter.Fights; }
+            set { Fighter.Fights = value; }
         }
 
         /// <summary>The rules its target is picked by, the fighter's <c>Targets</c>; with none, the nearest.</summary>
