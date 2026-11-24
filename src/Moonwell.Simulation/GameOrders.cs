@@ -5,7 +5,8 @@ namespace Moonwell
     /// <summary>
     /// The game's order ids, as its OrderId gave them for every order string of the ability data and the seven base orders
     /// (3.0.1.24371, seen 11-14): 272 ids, in any case of the string, "challengingcall" giving taunt's. The 28 strings the game
-    /// read 0 for are left out, so they read 0 as any string it does not know.
+    /// read 0 for are left out, so they read 0 as any string it does not know. "board" is added: the probe of 11-24 read 852043
+    /// for it, the order a unit takes to go into a transport.
     /// </summary>
     internal static class GameOrders
     {
@@ -14,7 +15,7 @@ namespace Moonwell
         private const string Table =
             "smart 851971 stop 851972 attack 851983 attackground 851984 move 851986 patrol 851990 holdposition "
             + "851993 build 851994 humanbuild 851995 orcbuild 851996 nightelfbuild 851997 undeadbuild 851998 harvest "
-            + "852018 repair 852024 repairon 852025 repairoff 852026 revive 852039 selfdestruct 852040 load 852046 "
+            + "852018 repair 852024 repairon 852025 repairoff 852026 revive 852039 selfdestruct 852040 board 852043 load 852046 "
             + "unload 852047 loadcorpse 852050 defend 852055 undefend 852056 dispel 852057 flare 852060 heal 852063 "
             + "healon 852064 healoff 852065 innerfire 852066 innerfireon 852067 innerfireoff 852068 invisibility "
             + "852069 militia 852072 militiaoff 852073 polymorph 852074 slow 852075 slowon 852076 slowoff 852077 "
