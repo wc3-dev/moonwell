@@ -4221,19 +4221,19 @@ Moonwell builds with.
 | MW0032 | `Enum.Parse(typeof(Color), text)` (gives the number) | `Enum.Parse<Color>(text)` |
 | MW0035 | `data as unit`, `data is unit`, `case unit u` from an `object`, a `widget` or a `T`, a cast to a `T` limited to handles, `widgets.OfType<unit>()` and `widgets.Cast<unit>()`: a game handle fails every check for its type | a cast (`(unit)data` and `foreach (unit u in widgets)` work), a field or variable of the handle's type |
 | MW0042 | `float.NaN` and `double.NaN` (1 in the game), `IsNaN` (never true), `PositiveInfinity`, `NegativeInfinity`, `IsInfinity` and `IsFinite` (`1 / 0` is 2^127 there) | a `bool` or a `float?` for no value, `float.MaxValue` for no limit, a test before dividing |
-| MW0053 | a native as a method group, `xs.Select(Natives.Cos)` or `Func<float, float> f = Natives.Cos`: it is written `Moonwell.Natives.Cos`, which the game's Lua does not have, so the script stops there | a lambda that calls it, `x => Natives.Cos(x)` |
 | MW0056 | `new Dictionary<Quest, int>()` or `new OrderedMap<Quest, int>()` where `Quest` is a class of the map's with static setup, a static field given a value that is no constant or a static constructor: the setup runs while the script loads, and the map can stop there with nothing on the screen (see The build) | the static field in another class or set on first use, or another key; a `HashSet` or an `OrderedSet` is fine |
 
-MW0044 is about names, and the Lua is why: there a native is a global, and `Natives.Cos(x)` is written `Cos(x)`.
+MW0044 is about names, and the Lua is why: there a namespace's first name and a type in no namespace are globals, beside
+the natives. A native is written `_G.Cos(x)`, so a method, local or parameter called `Cos` takes nothing's place, and
+`xs.Select(Natives.Cos)` works.
 
 | It rejects | In the game | Write instead |
 |---|---|---|
 | `namespace Rect`: a first name that is a native or a function of Lua | the script stops while it loads | another name; `MyMap.Rect` is fine |
 | a type in no namespace named like a native, or like `math`, `string` or another global | the same | a namespace |
 | a type with the full name of one of Moonwell's, such as `Moonwell.Hero` | the build's Lua step or the script stops | another name or namespace |
-| `Natives.Cos(x)` where the class, or a class around it, writes a method `Cos`, or a local, parameter or local function is called `Cos` | that runs in the native's place; `float Cos(float x) => Natives.Cos(x)` never returns, and the game freezes | another name; a local made from the call itself, `var Cos = Natives.Cos(a)`, is fine, as the Lua reads the call first |
 
-A method of a base class, a field, a property and a type in a namespace pass.
+A type in a namespace passes.
 
 The analyzer does not see these, so they build and then go wrong in the game:
 

@@ -93,7 +93,11 @@ namespace Moonwell.Build
             var symbols = CompiledFiles.LuaSymbols(project, release);
             var marked = MarkedProject.Stage(project, symbols, !release);
             files = marked.Files;
-            var compiler = new Compiler(marked.ProjectFile, project.GeneratedFolder, string.Empty, null!, null!, "*", "-define:" + string.Join(";", symbols), false, null!, string.Empty)
+            // A native's call is its template, _G.X(...), so no name of the map's hides it; this meta file makes the class Natives the
+            // table _G, so a native as a method group is _G.X too, where CSharp.lua would write Moonwell.Natives.X, a table the game lacks.
+            var meta = Path.Combine(project.GeneratedFolder, "natives.meta.xml");
+            File.WriteAllText(meta, "<meta><assembly><namespace name=\"Moonwell\"><class name=\"Natives\" Name=\"_G\" /></namespace></assembly></meta>");
+            var compiler = new Compiler(marked.ProjectFile, project.GeneratedFolder, string.Empty, meta, null!, "*", "-define:" + string.Join(";", symbols), false, null!, string.Empty)
             {
                 IsExportMetadata = false,
                 IsModule = false,
