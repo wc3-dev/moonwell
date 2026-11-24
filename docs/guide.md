@@ -1369,8 +1369,8 @@ sign.Effect = TextEffect.Rainbow();                                         // i
 - `FloatingText.Create(text, x, y, scope)` and `unit.AddText(text, scope)` hold one in a scope, which ends it when it
   ends, as `End()` and its `Duration` do. A unit's follows the unit, stays over its corpse after a death, and ends when
   the unit ends, if that comes first. It does not move by its `Speed`.
-- Text on a unit shows only to the players who see the unit: in the fog, or invisible, it is hidden. A Pop is checked
-  when it is made, a held text as it follows.
+- Text on a unit shows only to the players who see the unit: in the fog, invisible, or inside a transport, it is
+  hidden. A Pop is checked when it is made, a held text as it follows, so it shows again when the unit comes out.
 - `shownTo: player` makes the text on that player's machine only, so each player has the game's room for text to
   themselves. A text takes no handle id (seen in single player); with two players it is not checked yet. Who sees it
   cannot change later.

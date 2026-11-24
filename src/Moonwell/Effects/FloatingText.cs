@@ -5,9 +5,9 @@ namespace Moonwell
     /// PopText play one once: it rises, fades and goes by itself. Create and a unit's AddText make one in a scope, which
     /// ends it when it ends, as End and its Duration do. Moonwell times and fades every text itself, on the timers' clock,
     /// and never lets the game free one: the game gives a freed text's id to the next one made (seen 11-06). Text on a unit
-    /// shows only to the players who see the unit. An Effect moves its colours by itself. Given shownTo, a text is made on
-    /// that player's machine only, as a text takes no handle id (seen 11-06). Every read gives what was set, the same on
-    /// every machine.
+    /// shows only to the players who see the unit, and to none while it is inside a transport. An Effect moves its colours
+    /// by itself. Given shownTo, a text is made on that player's machine only, as a text takes no handle id (seen 11-06).
+    /// Every read gives what was set, the same on every machine.
     /// </summary>
     public sealed class FloatingText : Scoped
     {
@@ -261,7 +261,7 @@ namespace Moonwell
         [LocalSafe]
         public Unit? Unit => carrier;
 
-        /// <summary>Whether a player is meant to see the text: the one it was shown to, or everyone. The same on every machine; a text on a unit is also hidden while the player does not see the unit.</summary>
+        /// <summary>Whether a player is meant to see the text: the one it was shown to, or everyone. The same on every machine; a text on a unit is also hidden while the player does not see the unit or it is inside a transport.</summary>
         [LocalSafe]
         public bool IsShownTo(Player player)
         {
@@ -443,7 +443,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Gives the game the place, over the unit or at the place, and on a unit shows it only where the unit is seen.</summary>
+        /// <summary>Gives the game the place, over the unit or at the place, and on a unit shows it only where the unit is seen and not inside a transport.</summary>
         private void Place()
         {
             if (handle == null)
@@ -460,7 +460,8 @@ namespace Moonwell
             if (!carrier.IsGone)
             {
                 Runtime.World.PlaceTextOver(handle, carrier.Handle, height);
-                var sees = Runtime.World.LocalSees(carrier.Handle);
+                // The game keeps drawing text over a unit inside a transport (seen 11-14), so a loaded unit counts as unseen.
+                var sees = Runtime.World.LocalSees(carrier.Handle) && !Runtime.World.IsLoaded(carrier.Handle);
                 if (sees != visible)
                 {
                     visible = sees;

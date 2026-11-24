@@ -2011,6 +2011,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "floating-text.ended-scope", Run = FloatingTextCases.EndedScope });
             list.Add(new Case { Name = "floating-text.on-unit-follows", Run = FloatingTextCases.OnUnitFollows });
             list.Add(new Case { Name = "floating-text.hidden-from-unseen", Run = FloatingTextCases.HiddenFromUnseen });
+            list.Add(new Case { Name = "floating-text.hidden-in-transport", Run = FloatingTextCases.HiddenInTransport });
             list.Add(new Case { Name = "floating-text.ends-with-unit", Run = FloatingTextCases.EndsWithUnit });
             list.Add(new Case { Name = "floating-text.shown-to", Run = FloatingTextCases.ShownTo });
             list.Add(new Case { Name = "floating-text.effect", Run = FloatingTextCases.Effect });
