@@ -136,15 +136,6 @@ public static class Rules
         isEnabledByDefault: true,
         description: "CSharp.lua checks is, as or a type pattern against the value's CSharp.lua class. A game handle is the game's own value (userdata), which has no such class, so a check for a handle type (unit, lightning, or a type parameter limited to one) never passes in the game: is, as and patterns give false or null. A cast to a handle type checks nothing since the fork's 2.0.4-moonwell.15, also the one in foreach (unit u in widgets). The same checks hide in OfType<unit>(), which tests each item with is, and in Cast<unit>() unless the items already are units. The Lua cases do not show it: there the fake world's handles are CSharp.lua objects.");
 
-    public static readonly DiagnosticDescriptor NativeGroup = new(
-        "MW0053",
-        "A native as a method group",
-        "Natives.{0} as a method group is nil in the game's Lua: call it in a lambda, ({1}) => Natives.{0}({1})",
-        LuaCategory,
-        DiagnosticSeverity.Error,
-        isEnabledByDefault: true,
-        description: "CSharp.lua writes a call of a native as the game's own function (Natives.Cos(x) is Cos(x)), but a native given as a method group (xs.Select(Natives.Cos), Func<float, float> f = Natives.Cos, an event's += Natives.X) by its full name, Moonwell.Natives.Cos. The game's Lua has no Moonwell.Natives table, so the script stops there: attempt to index a nil value. A lambda that calls the native is written as a call.");
-
     public static readonly DiagnosticDescriptor LoadStop = new(
         "MW0056",
         "A dictionary keyed by a class with static setup",
@@ -155,7 +146,7 @@ public static class Rules
         description: "CSharp.lua runs a class's static setup the first time the class is read: a static field, auto-property or event given a value that is no constant, a static field or auto-property of a struct of the map's or Moonwell's with no value (it gets its default there), and a static constructor's statements. The Lua of Dictionary<TKey, TValue> reads its key class when the type is made, and so does Moonwell's OrderedMap, which holds one; CSharp.lua makes every type a file names while the script loads, wherever in the file the new is. So the key class's setup runs then, when the names its own file uses may not be filled in yet, and reading one stops the script with nothing on the screen (seen 2026-11-11 in the tests' Lua, also for a setup in a base class of the key). Whether it stops depends on the order of the files' names and on what the setup reads, so the rule rejects every new of such a type, also as a type argument (new List<Dictionary<Quest, int>>()). A constant (static int next = 1) is no setup. HashSet, OrderedSet, List, and the class as a dictionary's value, do not read the class, and Moonwell's own classes have no setup. Not seen: a key class of a library, a generic class of the map's own that makes a dictionary keyed by its type parameter, a type named without new (typeof, a cast), and EqualityComparer<T>.Default or Comparer<T>.Default of such a class, which read it the same way.");
 
     /// <summary>The rules of C# that CSharp.lua cannot compile.</summary>
-    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck, NativeGroup, LoadStop);
+    public static ImmutableArray<DiagnosticDescriptor> Lua { get; } = ImmutableArray.Create(StaticNatives, ChoiceNames, HandleCheck, LoadStop);
 
     private const string ObjectsCategory = "Objects";
 
@@ -273,7 +264,7 @@ public static class Rules
         LuaCategory,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "CSharp.lua keeps a map's names in Lua's own scopes, where the game's natives are globals of the same names. A namespace's first name is a global, so one named like a native or a function of Lua stops the script while it loads, and so does a type in no namespace named like any global of the game's Lua. The script holds one type of a full name, so a type with the full name of one of Moonwell's stops the Lua step or the script. And a class's methods, those of the classes around it, and a local, a parameter or a local function are Lua locals, so Natives.Cos(x) where one of them is called Cos runs that instead of the native: a method calling itself this way never returns. A method of a base class, a field, a property and a type in a namespace are not locals in the Lua, and pass.");
+        description: "CSharp.lua keeps a map's names in Lua's own scopes, where the game's natives are globals of the same names. A namespace's first name is a global, so one named like a native or a function of Lua stops the script while it loads, and so does a type in no namespace named like any global of the game's Lua. The script holds one type of a full name, so a type with the full name of one of Moonwell's stops the Lua step or the script. A type in a namespace passes. A native is written _G.Cos(x), so a method, local or parameter called Cos takes nothing's place.");
 
     /// <summary>The rule for a map's names in the game's Lua.</summary>
     public static ImmutableArray<DiagnosticDescriptor> Names { get; } = ImmutableArray.Create(LuaName);

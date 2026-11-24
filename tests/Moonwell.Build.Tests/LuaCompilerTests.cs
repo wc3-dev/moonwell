@@ -374,8 +374,8 @@ namespace Moonwell.Build.Tests
         public void whole_number_floats_reach_lua_as_floats()
         {
             // Hello.cs passes 0f, 0f; the player number stays an integer (C18).
-            Assert.Contains("DisplayTextToPlayer(Player(0), 0.0, 0.0, \"sample: started (development)\")", builds.Development.Script);
-            Assert.Contains("DisplayTextToPlayer(Player(0), 0.0, 0.0, \"sample: started (release)\")", builds.Release.Script);
+            Assert.Contains("_G.DisplayTextToPlayer(_G.Player(0), 0.0, 0.0, \"sample: started (development)\")", builds.Development.Script);
+            Assert.Contains("_G.DisplayTextToPlayer(_G.Player(0), 0.0, 0.0, \"sample: started (release)\")", builds.Release.Script);
 
             // Hello.Footman leaves out Player.Print's seconds and Unit.Create's facing, and reads Unit.DefaultFacing: all three
             // come from Moonwell's library, so the build resolved it.
