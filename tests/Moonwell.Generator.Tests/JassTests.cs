@@ -93,7 +93,7 @@ public class JassTests
         Assert.Contains("public const float bj_PI = 3.14159f;", natives);
         Assert.Contains("public const float bj_UNIT_FACING = 270.0f;", natives);
         Assert.Contains("public static extern playerunitevent EVENT_PLAYER_UNIT_DEATH { get; }", natives);
-        Assert.Contains("/// @CSharpLua.Set = \"counter = {0}\"", natives);
+        Assert.Contains("/// @CSharpLua.Set = \"_G.counter = {0}\"", natives);
         Assert.Contains("public static extern int counter { get; set; }", natives);
         Assert.Contains("/// @CSharpLua.Template = \"_G.bj_FORCE_PLAYER[{0}]\"", natives);
         Assert.Contains("public static extern force bj_FORCE_PLAYER(int index);", natives);
