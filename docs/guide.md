@@ -1588,6 +1588,9 @@ target.PlaceAt(Vector2.Lerp(start, end, Ease.OutQuad(t)));
   `Maths` (`Maths.Distance`, `Maths.AngleToPoint`, `Maths.Polar`), which make none.
 - `unit.Position()` is a method. `PlaceAt` ignores pathing and keeps the unit's order, which a push wants; `MoveTo`
   goes through pathing and ends it.
+- `unit.OrderAt("move", place)`, `owner.CreateUnit<Footman>(place, scope)` and `player.Start()` take or give a
+  `Vector2` where core takes two floats. `CreateUnit` is the owner's method, as a package can add no static method to
+  `Unit`.
 - `Raycast.Circle`, `Segment`, `Bounds` and `Polygon` give the first hit along a segment in an `out` value, with a
   normal for `Bounce` and `Slide`. After a hit, a step goes on for the rest of its time with the new velocity, as
   below; moved only to `hit.Point`, something pulled into a surface at every step (by gravity) hits at the start of each
