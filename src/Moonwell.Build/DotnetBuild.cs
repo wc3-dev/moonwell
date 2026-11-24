@@ -16,6 +16,13 @@ namespace Moonwell.Build
         // CS0246 names a type that binds to nothing, such as AttackType in a file with only using Moonwell.Objects.
         private static readonly Regex UnboundName = new Regex(@"error CS0246:[^\[]*\W(AttackType|DefenseType)\W", RegexOptions.CultureInvariant);
 
+        // An error line of dotnet's output, a compiler's (path(line,column): error CS0103: text [project]) or NuGet's
+        // (path : error NU1102: text [project]), with the project's path in brackets after it left out.
+        private static readonly Regex ErrorLine = new Regex(@"^(?<line>.*?:\s*error\s+[A-Za-z]+\d+\s*:.*?)(?:\s+\[[^\]]*\])?\s*$", RegexOptions.CultureInvariant);
+
+        // The error lines ErrorLines keeps: enough to say why, short enough to read in a terminal.
+        private const int MostErrorLines = 10;
+
         /// <summary>
         /// Builds the project, streaming dotnet's output to the log, and returns the path of the built assembly; the project's
         /// <see cref="MapProject.Symbols"/> and sources become the ones the compiler had.
@@ -102,6 +109,24 @@ namespace Moonwell.Build
             }
 
             return hints;
+        }
+
+        /// <summary>
+        /// The error lines of <c>dotnet build</c>'s output, each once (dotnet repeats them in its summary), without the project's
+        /// path after them, at most ten, and a last line counting the rest.
+        /// </summary>
+        /// <param name="lines">The lines <c>dotnet build</c> wrote.</param>
+        /// <returns>The error lines, in the order first written.</returns>
+        internal static IReadOnlyList<string> ErrorLines(IEnumerable<string> lines)
+        {
+            var errors = lines.Select(line => ErrorLine.Match(line))
+                .Where(found => found.Success)
+                .Select(found => found.Groups["line"].Value.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            return errors.Count <= MostErrorLines
+                ? errors
+                : errors.Take(MostErrorLines).Append($"and {errors.Count - MostErrorLines} more").ToList();
         }
 
         private static int Dotnet(MapProject project, string[] arguments, TextWriter output, Action<string>? seen = null)
