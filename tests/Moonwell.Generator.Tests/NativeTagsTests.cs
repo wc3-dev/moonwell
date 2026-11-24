@@ -220,7 +220,7 @@ public class NativeTagsTests
 
         Assert.Contains("        [CreatesHandle]\n        public static extern unit CreateUnit(", natives);
         Assert.Contains("        [MachineLocal, CreatesHandle]\n        public static extern location GetCameraTargetPositionLoc(", natives);
-        Assert.Contains("\"GetUnitX({0})\"\n        public static extern float GetUnitX(", natives);
+        Assert.Contains("\"_G.GetUnitX({0})\"\n        public static extern float GetUnitX(", natives);
         Assert.Contains("        [ChangesState, Desyncs]\n        public static extern void SelectGroupForPlayerBJ(", natives);
     }
 }

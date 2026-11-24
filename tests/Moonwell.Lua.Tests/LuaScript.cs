@@ -173,7 +173,7 @@ internal static class LuaScript
     private static readonly Lazy<IReadOnlyList<string>> NativeNames = new Lazy<IReadOnlyList<string>>(() =>
     {
         var natives = File.ReadAllText(Path.Combine(RepoRoot, "src", "Moonwell.Natives", "Generated", "Natives.g.cs"));
-        return Regex.Matches(natives, "@CSharpLua\\.(?:Template|Get|Set) = \"([A-Za-z_][A-Za-z0-9_]*)|public const \\w+ ([A-Za-z_][A-Za-z0-9_]*) =")
+        return Regex.Matches(natives, "@CSharpLua\\.(?:Template|Get|Set) = \"(?:_G\\.)?([A-Za-z_][A-Za-z0-9_]*)|public const \\w+ ([A-Za-z_][A-Za-z0-9_]*) =")
             .Select(match => match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value)
             .Distinct(StringComparer.Ordinal)
             .ToList();
