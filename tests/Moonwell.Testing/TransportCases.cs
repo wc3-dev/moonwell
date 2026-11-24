@@ -144,17 +144,36 @@ namespace Moonwell.Testing
             Expect.Equal(true, world.RemovedUnits.Contains(inside.Handle), "the loaded unit removed");
         }
 
-        /// <summary>The cargo capacity reads and sets the game's; Load, Unload and UnloadAll are the game's orders.</summary>
+        /// <summary>The cargo capacity reads and sets the game's; Load is the cargo's board order on the transport, Unload and UnloadAll the transport's orders.</summary>
         public static void CapacityAndOrders(FakeWorld world)
         {
             var zeppelin = Footman(world, 0);
             var footman = Footman(world, 0);
             zeppelin.CargoCapacity = 4;
             Expect.Equal(4, zeppelin.CargoCapacity, "the capacity set");
-            zeppelin.Load(footman);
+            Expect.Equal(true, zeppelin.Load(footman), "the load taken");
+            Expect.Equal(852043, world.CurrentOrderOf(footman.Handle), "the footman boards");
             zeppelin.Unload(footman);
             zeppelin.UnloadAll(100.0f, 200.0f);
-            Expect.Equal("target load, target unload, point unloadall", string.Join(", ", world.Orders.ToArray()), "the orders given");
+            Expect.Equal("target board, target unload, point unloadall", string.Join(", ", world.Orders.ToArray()), "the orders given");
+            Expect.Same(zeppelin.Handle, world.OrderTargets[0], "on the zeppelin");
+        }
+
+        /// <summary>Several loads in one instant each order their own unit to board, so none replaces another (J176: the transport's load order took only the last, seen 11-24).</summary>
+        public static void SeveralLoads(FakeWorld world)
+        {
+            var zeppelin = Footman(world, 0);
+            var a = Footman(world, 0);
+            var b = Footman(world, 0);
+            zeppelin.Load(a);
+            zeppelin.Load(b);
+            Expect.Equal(852043, world.CurrentOrderOf(a.Handle), "a boards");
+            Expect.Equal(852043, world.CurrentOrderOf(b.Handle), "b boards");
+            Expect.Equal(0, world.CurrentOrderOf(zeppelin.Handle), "the zeppelin is given no order of its own");
+            Expect.Same(zeppelin.Handle, world.OrderTargets[0], "a on the zeppelin");
+            Expect.Same(zeppelin.Handle, world.OrderTargets[1], "b on the zeppelin");
+            b.Remove();
+            Expect.Equal(false, zeppelin.Load(b), "a unit gone is not loaded");
         }
     }
 }

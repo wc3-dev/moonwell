@@ -1080,10 +1080,12 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Orders the transport to load a unit: it goes to the unit, or the unit to it, as the game's load order does; OnCargoLoaded runs once it is aboard.</summary>
+        /// <summary>Loads a unit into this transport: the unit is ordered to board it, and a zeppelin comes for it; OnCargoLoaded runs once it is aboard. Several in one instant all go in, one after another, and a burrow takes them too (seen 11-24). False when the game refuses the order.</summary>
         public bool Load(Unit cargoUnit)
         {
-            return OrderOn("load", cargoUnit);
+            // The game's load order on the transport takes one unit at a time, a second replacing the first, and a burrow
+            // refuses it; the cargo's board order waits its turn (game facts, 11-24, J176).
+            return cargoUnit.OrderOn(Orders.Board, this);
         }
 
         /// <summary>Orders the transport to let one unit out where it is.</summary>
