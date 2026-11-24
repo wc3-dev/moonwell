@@ -669,7 +669,9 @@ removed inside runs no unload reaction.
 `unit.Transport` is the transport carrying it, or null, and `transport.Cargo` the units aboard in the order they were
 loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
 read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
-zeppelin). `transport.Load(unit)`, `Unload(unit)` and `UnloadAll(x, y)` are the game's orders.
+zeppelin). `transport.Load(unit)` orders the unit to board the transport, and a zeppelin comes for it; loading several
+in one instant takes them all, one after another, a burrow too. `Unload(unit)` and `UnloadAll(x, y)` are the
+transport's orders.
 
 ```csharp
 public sealed class Ferry : Unit
