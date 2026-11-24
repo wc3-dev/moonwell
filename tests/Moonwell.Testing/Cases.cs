@@ -1430,6 +1430,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "pathing.spots", Run = PathCases.Spots });
             list.Add(new Case { Name = "pathing.unit-calls", Run = PathCases.UnitCalls });
             list.Add(new Case { Name = "pathing.unit-leaves-itself-out", Run = PathCases.UnitLeavesItselfOut });
+            list.Add(new Case { Name = "pathing.unit-types", Run = PathCases.UnitTypes });
             list.Add(new Case { Name = "pathing.game-deaths", Run = PathCases.GameDeaths });
             list.Add(new Case { Name = "pathing.moonwell-changes", Run = PathCases.MoonwellChanges });
             list.Add(new Case { Name = "pathing.walls", Run = PathCases.Walls });
