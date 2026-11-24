@@ -390,10 +390,11 @@ public sealed class KillCounter : UnitComponent
   actor only: adding it to a second, applying a buff that is on a unit already, or removing a component from an actor
   it is not on is reported and refused, in a release build too. A component's `Actor` is set from `OnAdded` on: read in
   its constructor, a development build reports it.
-- Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDied`, `OnUnitCast`, `OnHeroLevelUp`,
-  `OnHeroSkillLearned`, `OnLeave`, `OnAllianceChanged`) go on a game or player component. A game component hears them for every unit; a
-  player's components only for its own player's units: the unit's owner (the caster's for `OnUnitCast`), and for
-  `OnUnitDied` the dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
+- Reactions to the whole map (`OnGameStart`, `OnUnitCreated`, `OnUnitDamaged`, `OnUnitDied`, `OnUnitCast`,
+  `OnHeroLevelUp`, `OnHeroSkillLearned`, `OnLeave`, `OnAllianceChanged`) go on a game or player component. A game
+  component hears them for every unit; a player's components only for its own player's units: the unit's owner (the
+  caster's for `OnUnitCast`), for `OnUnitDamaged` the damaged unit's owner, then the source's, and for `OnUnitDied` the
+  dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
   `OnUnitSelected` and `OnUnitDeselected` go there too, and run for the selecting player's components ([Players](#players)).
   `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before anything wanted it
   runs none); a unit's own is `OnCreated`. `OnDawn` and `OnDusk` go on a game component only (see the time of day
@@ -1505,8 +1506,9 @@ after armor, the target's armor has cut it and only the amount can change. The l
 
 - Each stage runs the source and its components, then the target and its components, then the game's components that
   implement `IDamageWatch`, then the target's player's and the source's player's (once when one player owns both; the
-  burst, the source's player's only). A damage meter of every hit goes on a game component. `OnDamaged` and
-  `OnDealtDamage` still run, first in the after-armor stage.
+  burst, the source's player's only). A damage meter of every hit goes on a game component; one that only adds up what
+  each hit dealt needs no package: core's `OnUnitDamaged(Damage)` on a game component sees every hit after armor.
+  `OnDamaged` and `OnDealtDamage` still run, first in the after-armor stage.
 - A `Hit` has the amount, `Original`, `IsAttack`, `IsSpell`, `IsMelee`, `IsRanged`, `IsCode` and `Tag`. Before armor
   a reaction may also change `DamageKind`, `WeaponSound`, `AttackType`, the target's `DefenseType` and its `Armor` for
   this hit; the target has its own defense type and armor back afterwards. A `DamageKind` or `WeaponSound` the game
@@ -3022,8 +3024,10 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   changing them later does nothing (seen). The build writes a template for each height from 0.005 to 0.04 of the
   game's units, in steps of 0.0005, for the game's font and each `.ttf` in the assets, and a label takes the nearest.
   `Scale` sizes the text too, and leaves the label's place and box alone: the game scales a label's offset and box with
-  it (seen), so Moonwell gives them divided by it. `Image` shows a `Texture`; a piece, a colour or a round cut of one
-  is a copy the build makes ([Assets](#assets)). A map's own panel inherits `Panel` and keeps its frames in fields.
+  it (seen), so Moonwell gives them divided by it. That is so since 0.17.0, where a scaled label used to move: a map
+  that divides a label's place or box by its `Scale` itself should stop, or the label is off by the scale twice.
+  `Image` shows a `Texture`; a piece, a colour or a round cut of one is a copy the build makes ([Assets](#assets)). A
+  map's own panel inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
   Labels, images and empty panels let clicks through, until they are listened to for the mouse.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
