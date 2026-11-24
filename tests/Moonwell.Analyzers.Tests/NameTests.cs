@@ -73,132 +73,12 @@ public class NameTests
         Assert.Empty(MapCode.CheckFile("namespace Moonwell { public class MyOwnThing { } }"));
     }
 
-    [Theory]
-    [InlineData("public static float Cos(float x) { return 0f; }")]
-    [InlineData("private static void Cos(int a, int b) { }")]
-    public void a_native_called_in_a_class_with_a_method_of_its_name_is_an_error(string method)
-    {
-        Assert.Equal(new[] { "MW0044: Natives.Cos(1f)" }, MapCode.Check("var a = Natives.Cos(1f);", method));
-    }
-
+    // A native is written _G.Cos(x), so a name of the map's takes nothing's place (NameClashTests runs these in Lua).
     [Fact]
-    public void an_instance_method_counts()
+    public void a_native_called_or_given_where_a_method_or_local_has_its_name_passes()
     {
-        Assert.Equal(new[] { "MW0044: Natives.Cos(1f)" }, MapCode.CheckFile("""
-            using Moonwell;
-
-            namespace Map
-            {
-                public class Reader
-                {
-                    public float Cos() { return 0f; }
-
-                    public float Read() { return Natives.Cos(1f); }
-                }
-            }
-            """));
-    }
-
-    [Fact]
-    public void a_method_is_seen_from_a_lambda()
-    {
-        Assert.Equal(new[] { "MW0044: Natives.Cos(x)" }, MapCode.Check(
-            "Func<float, float> run = x => Natives.Cos(x);",
-            "private static float Cos(float x) { return 0f; }"));
-    }
-
-    [Fact]
-    public void a_method_of_an_outer_class_shadows_too()
-    {
-        Assert.Equal(new[] { "MW0044: Natives.Cos(1f)" }, MapCode.CheckFile("""
-            using Moonwell;
-
-            namespace Map
-            {
-                public class Outer
-                {
-                    public float Cos(float x) { return x; }
-
-                    public class Inner
-                    {
-                        public float Read() { return Natives.Cos(1f); }
-                    }
-                }
-            }
-            """));
-    }
-
-    [Theory]
-    [InlineData("var Cos = 1f; var a = Natives.Cos(Cos);", "Natives.Cos(Cos)")]
-    [InlineData("float Cos(float x) => x; var a = Natives.Cos(1f) + Cos(1f);", "Natives.Cos(1f)")]
-    public void a_local_or_a_local_function_of_a_natives_name_is_an_error(string body, string call)
-    {
-        Assert.Equal(new[] { "MW0044: " + call }, MapCode.Check(body));
-    }
-
-    [Fact]
-    public void a_parameter_of_a_natives_name_is_an_error()
-    {
-        Assert.Equal(new[] { "MW0044: Natives.Cos(Cos)" }, MapCode.Check("", "private static float Read(float Cos) { return Natives.Cos(Cos); }"));
-    }
-
-    [Fact]
-    public void a_local_made_after_the_call_passes()
-    {
-        Assert.Empty(MapCode.Check("var a = Natives.Cos(1f); var Cos = 2f; var b = Cos;"));
-    }
-
-    [Fact]
-    public void a_local_made_from_the_call_passes()
-    {
-        // CSharp.lua writes local Cos = Cos(a) and local Sin, Tan = Sin(a), Tan(a): Lua reads the right side before the locals are made.
-        Assert.Empty(MapCode.Check("var Cos = Natives.Cos(1f); var (Sin, Tan) = (Natives.Sin(1f), Natives.Tan(1f)); (var Asin, var Acos) = (Natives.Asin(1f), Natives.Acos(1f));"));
-    }
-
-    [Fact]
-    public void a_method_of_a_base_class_shadows_nothing()
-    {
-        Assert.Empty(MapCode.CheckFile("""
-            using Moonwell;
-
-            namespace Map
-            {
-                public class Base
-                {
-                    public float Cos(float x) { return x; }
-                }
-
-                public class Derived : Base
-                {
-                    public float Read() { return Natives.Cos(1f) + Cos(1f); }
-                }
-            }
-            """));
-    }
-
-    [Fact]
-    public void a_field_a_property_or_another_class_shadows_nothing()
-    {
-        Assert.Empty(MapCode.CheckFile("""
-            using Moonwell;
-
-            namespace Map
-            {
-                public class Reader
-                {
-                    private static float Cos = 1f;
-
-                    private static float Sin => 2f;
-
-                    public float Read() { return Natives.Cos(1f) + Natives.Sin(1f) + Cos + Sin + Other.Tan(1f) + Natives.Tan(1f); }
-                }
-
-                public static class Other
-                {
-                    public static float Tan(float x) { return x; }
-                }
-            }
-            """));
+        Assert.Empty(MapCode.Check("var a = Natives.Cos(1f);", "private static float Cos(float x) { return Natives.Cos(x); }"));
+        Assert.Empty(MapCode.Check("var Cos = 1f; var a = Natives.Cos(Cos); Func<float, float> f = Natives.Cos;"));
     }
 
     [Fact]
@@ -216,12 +96,6 @@ public class NameTests
         {
             "'Moonwell.Hero' is a type of Moonwell, and the game's Lua cannot hold two of one full name: rename it or use another namespace",
         }, MapCode.MessagesOfFile("namespace Moonwell { public class Hero { } }"));
-        Assert.Equal(
-            "'Natives.Cos' runs the method Cos in the game's Lua, not the native, as the two share a name there: rename the method",
-            MapCode.Message("var a = Natives.Cos(1f);", "private static float Cos(float x) { return 0f; }"));
-        Assert.Equal(
-            "'Natives.Cos' runs the local Cos in the game's Lua, not the native, as the two share a name there: rename the local",
-            MapCode.Message("var Cos = 1f; var a = Natives.Cos(Cos);"));
     }
 
     [Theory]

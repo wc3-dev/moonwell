@@ -1,8 +1,9 @@
 namespace Moonwell.Build.Tests
 {
     /// <summary>
-    /// What MW0044 keeps a map from: each probe silences the rule, is built as a map and is run in Lua, with the natives it
-    /// meets as functions, as the game has them. If the fork stops any of these, that part of the rule can go.
+    /// What MW0044 keeps a map from, and the names it lets through since natives are written _G.X: each probe silences the
+    /// rule, is built as a map and is run in Lua, with the natives it meets as functions, as the game has them. If the fork
+    /// stops any of these, that part of the rule can go.
     /// </summary>
     [Collection("Sample")]
     public sealed class NameClashTests : IDisposable
@@ -118,10 +119,10 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void a_static_method_named_like_the_native_it_calls_never_returns()
+        public void a_static_method_named_like_the_native_it_calls_runs_the_native()
         {
             var shown = Run(Start + """
-                        private static string Text() => "cos " + Cos(0.0f);
+                        private static string Text() => "cos " + (int)Cos(0.0f);
 
                         private static float Cos(float x)
                         {
@@ -129,14 +130,14 @@ namespace Moonwell.Build.Tests
                         }
                 """ + End);
 
-            Assert.Contains("no end after", shown);
+            Assert.Equal("cos 1", shown);
         }
 
         [Fact]
-        public void an_instance_method_named_like_the_native_it_calls_never_returns()
+        public void an_instance_method_named_like_the_native_it_calls_runs_the_native()
         {
             var shown = Run(Start + """
-                        private static string Text() => "cos " + new Probe().Cos(0.0f);
+                        private static string Text() => "cos " + (int)new Probe().Cos(0.0f);
 
                         private float Cos(float x)
                         {
@@ -144,11 +145,11 @@ namespace Moonwell.Build.Tests
                         }
                 """ + End);
 
-            Assert.Contains("failed", shown);
+            Assert.Equal("cos 1", shown);
         }
 
         [Fact]
-        public void a_method_named_like_a_native_another_method_calls_takes_its_place()
+        public void a_method_named_like_a_native_another_method_calls_takes_nothings_place()
         {
             var shown = Run(Start + """
                         private static string Text() => "sin " + (int)Natives.Sin(0.0f);
@@ -159,7 +160,36 @@ namespace Moonwell.Build.Tests
                         }
                 """ + End);
 
-            Assert.Equal("sin 5", shown);
+            Assert.Equal("sin 0", shown);
+        }
+
+        [Fact]
+        public void a_parameter_named_like_a_native_takes_nothings_place()
+        {
+            var shown = Run(Start + """
+                        private static string Text() => "cos " + (int)Read(0.0f);
+
+                        private static float Read(float Cos)
+                        {
+                            return Natives.Cos(Cos);
+                        }
+                """ + End);
+
+            Assert.Equal("cos 1", shown);
+        }
+
+        [Fact]
+        public void a_native_as_a_method_group_runs()
+        {
+            var shown = Run(Start + """
+                        private static string Text()
+                        {
+                            System.Func<float, float> cos = Natives.Cos;
+                            return "cos " + (int)cos(0.0f);
+                        }
+                """ + End);
+
+            Assert.Equal("cos 1", shown);
         }
 
         [Fact]
