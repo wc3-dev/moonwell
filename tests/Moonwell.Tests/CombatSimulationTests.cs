@@ -155,6 +155,63 @@ namespace Moonwell.Tests
             Assert.True(farthest < 2200.0f, "it went no farther than its leash and its reach: " + farthest);
         }
 
+        /// <summary>
+        /// A guard whose Fights rules out two grunts of the enemy 400 away and one of its own player's beside it, as an arena
+        /// leaves out units outside its battle, neither targets the grunts nor counts any of the three (J132); with no filter
+        /// it targets one and counts them all; ruling out only its ally leaves it outnumbered two to one.
+        /// </summary>
+        [Fact]
+        public void AGuardLeavesOutTheUnitsItsFilterRulesOut()
+        {
+            var sim = Start();
+            var unit = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var guard = unit.Add(new Guard());
+            var fighter = guard.Fighter;
+            // 400 away: in the guard's meet range of 500, beyond the grunts' own 300, so they never start a fight.
+            var north = Unit.Create(Grunt, Player.Two, 400.0f, 50.0f, Game.Instance);
+            var south = Unit.Create(Grunt, Player.Two, 400.0f, -50.0f, Game.Instance);
+            var ally = Unit.Create(Grunt, Player.One, -200.0f, 0.0f, Game.Instance);
+            fighter.Fights = u => u != north && u != south && u != ally;
+
+            sim.Run(2.0f);
+            Assert.Null(fighter.Target);
+            Assert.Equal(0, fighter.EnemiesNear);
+            Assert.Equal(1, fighter.AlliesNear);
+            Assert.False(fighter.ShouldPullBack(), "not outnumbered");
+            Assert.Equal(100.0f, north.Life);
+            Assert.Equal(100.0f, south.Life);
+
+            fighter.Fights = null;
+            sim.Run(0.25f);
+            Assert.True(fighter.Target == north || fighter.Target == south, "with no filter it targets a grunt");
+            Assert.Equal(2, fighter.EnemiesNear);
+            Assert.Equal(2, fighter.AlliesNear);
+            Assert.False(fighter.ShouldPullBack(), "two to two");
+
+            fighter.Fights = u => u != ally;
+            sim.Run(0.25f);
+            Assert.Equal(2, fighter.EnemiesNear);
+            Assert.Equal(1, fighter.AlliesNear);
+            Assert.True(fighter.ShouldPullBack(), "two to one");
+        }
+
+        /// <summary>A grunt a guard's Fights rules out is not met even once it hits the guard: an attacker is asked too.</summary>
+        [Fact]
+        public void AGuardDoesNotMeetAnAttackerItsFilterRulesOut()
+        {
+            var sim = Start();
+            var unit = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var guard = unit.Add(new Guard());
+            // 200 away, in the grunt's own range of 300, so it attacks.
+            var grunt = Unit.Create(Grunt, Player.Two, 200.0f, 0.0f, Game.Instance);
+            guard.Fighter.Fights = u => u != grunt;
+
+            Assert.True(sim.RunUntil(() => unit.Life < 400.0f, 10.0f), "the grunt hits the guard");
+            sim.Run(0.5f);
+            Assert.Null(guard.Fighter.Target);
+            Assert.Equal(0, guard.Fighter.EnemiesNear);
+        }
+
         /// <summary>A walker fighting a brute it cannot beat pulls back below 30% of its life, walks back to its lane's start with moves, and stands there, still pulled back below 70%.</summary>
         [Fact]
         public void AWalkerPullsBackWhenHurt()
