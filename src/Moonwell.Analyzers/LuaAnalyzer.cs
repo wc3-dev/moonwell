@@ -30,7 +30,6 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
         context.RegisterGameOperationAction(HandleConversion, OperationKind.Conversion);
         context.RegisterGameOperationAction(HandleIsType, OperationKind.IsType);
         context.RegisterGameOperationAction(HandlePattern, OperationKind.DeclarationPattern, OperationKind.TypePattern, OperationKind.RecursivePattern);
-        context.RegisterGameOperationAction(NativeGroup, OperationKind.MethodReference);
         context.RegisterGameOperationAction(KeyedBySetup, OperationKind.ObjectCreation);
     }
 
@@ -132,16 +131,6 @@ public sealed class LuaAnalyzer : DiagnosticAnalyzer
 
         return holds is { TypeKind: TypeKind.Struct } && holds.ContainingNamespace?.ToDisplayString() is { } space
             && space != "System" && !space.StartsWith("System.", System.StringComparison.Ordinal) ? "the default value of " : null;
-    }
-
-    /// <summary>MW0053: a native as a method group, which CSharp.lua writes by its full name, Moonwell.Natives.X, a table the game's Lua does not have.</summary>
-    private static void NativeGroup(OperationAnalysisContext context)
-    {
-        var method = ((IMethodReferenceOperation)context.Operation).Method;
-        if (method.ContainingType is { Name: "Natives", ContainingNamespace: { Name: "Moonwell", ContainingNamespace.IsGlobalNamespace: true } })
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Rules.NativeGroup, context.Operation.Syntax.GetLocation(), method.Name, string.Join(", ", method.Parameters.Select(p => p.Name))));
-        }
     }
 
     // The methods of System.Enum that read an enum's names or members from its type.

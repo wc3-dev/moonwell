@@ -6,7 +6,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace Moonwell.Analyzers;
 
@@ -14,8 +13,7 @@ namespace Moonwell.Analyzers;
 /// MW0044: a name of the map's that the game's Lua takes for a native's or for one of Moonwell's. A namespace's first
 /// name is a global in the Lua, so one named like a function stops the script while it loads, and a type in no namespace
 /// named like any global does the same. A type with the full name of one of Moonwell's stops the Lua step or the script.
-/// And <c>Natives.Cos(x)</c> is written as <c>Cos(x)</c>, so where a method of the class or of a class around it, a
-/// local, a parameter or a local function has that name, it runs in the native's place. It does nothing in a map
+/// A native is written <c>_G.Cos(x)</c>, so a method or local of its name takes nothing's place. It does nothing in a map
 /// without Moonwell.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -50,7 +48,6 @@ public sealed class NameAnalyzer : DiagnosticAnalyzer
             var checker = new Checker(natives, moonwell);
             start.RegisterGameSyntaxNodeAction(checker.Namespace, SyntaxKind.NamespaceDeclaration, SyntaxKind.FileScopedNamespaceDeclaration);
             start.RegisterGameSymbolAction(checker.Type, SymbolKind.NamedType);
-            start.RegisterGameOperationAction(checker.Call, OperationKind.Invocation);
         });
     }
 
@@ -60,13 +57,11 @@ public sealed class NameAnalyzer : DiagnosticAnalyzer
     /// <summary>The checks of one compilation, with the natives and Moonwell's assemblies found once.</summary>
     private sealed class Checker
     {
-        private readonly INamedTypeSymbol natives;
         private readonly HashSet<string> nativeNames;
         private readonly List<IAssemblySymbol> moonwell;
 
         public Checker(INamedTypeSymbol natives, List<IAssemblySymbol> moonwell)
         {
-            this.natives = natives;
             this.moonwell = moonwell;
             nativeNames = new HashSet<string>(natives.MemberNames, StringComparer.Ordinal);
         }
@@ -123,72 +118,6 @@ public sealed class NameAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(Diagnostic.Create(Rules.LuaName, location, space + "." + type.Name,
                     "is a type of Moonwell, and the game's Lua cannot hold two of one full name: rename it or use another namespace"));
             }
-        }
-
-        /// <summary>Reports a native called where a name in the Lua's scope takes its place.</summary>
-        public void Call(OperationAnalysisContext context)
-        {
-            var call = (IInvocationOperation)context.Operation;
-            if (!SymbolEqualityComparer.Default.Equals(call.TargetMethod.ContainingType, natives))
-            {
-                return;
-            }
-
-            var name = call.TargetMethod.Name;
-            var kind = LocalNamed(call, name) ?? (MethodAround(context.ContainingSymbol, name) ? "method" : null);
-            if (kind != null)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Rules.LuaName, call.Syntax.GetLocation(), "Natives." + name,
-                    "runs the " + kind + " " + name + " in the game's Lua, not the native, as the two share a name there: rename the " + kind));
-            }
-        }
-
-        // What of the name is in the method at the call: a local only from where it is made, as a Lua local is.
-        private static string? LocalNamed(IInvocationOperation call, string name)
-        {
-            var start = call.Syntax.SpanStart;
-            foreach (var symbol in call.SemanticModel!.LookupSymbols(start, name: name))
-            {
-                switch (symbol)
-                {
-                    case ILocalSymbol local when local.Locations[0].SourceSpan.Start < start && !MadeFrom(local, call.Syntax):
-                        return "local";
-                    case IParameterSymbol:
-                        return "parameter";
-                    case IMethodSymbol { MethodKind: MethodKind.LocalFunction }:
-                        return "local function";
-                }
-            }
-
-            return null;
-        }
-
-        // Whether a local is made from the call's value: local Cos = Cos(a), and local Sin, Cos = Sin(a), Cos(a), read the call before the local is made.
-        private static bool MadeFrom(ILocalSymbol local, SyntaxNode call)
-        {
-            var declared = local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-            var value = declared switch
-            {
-                VariableDeclaratorSyntax declarator => declarator.Initializer?.Value,
-                SingleVariableDesignationSyntax => declared.Ancestors().OfType<AssignmentExpressionSyntax>().FirstOrDefault() is { } assignment
-                    && assignment.Left.Span.Contains(declared.Span) ? assignment.Right : null,
-                _ => null,
-            };
-            return value != null && value.Span.Contains(call.Span);
-        }
-
-        // Whether the class at the call, or a class around it, writes a method of the name; one of a base class is no local in the Lua.
-        private static bool MethodAround(ISymbol? symbol, string name)
-        {
-            for (var type = symbol as INamedTypeSymbol ?? symbol?.ContainingType; type != null; type = type.ContainingType)
-            {
-                if (type.GetMembers(name).OfType<IMethodSymbol>().Any(method => method.MethodKind == MethodKind.Ordinary))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }

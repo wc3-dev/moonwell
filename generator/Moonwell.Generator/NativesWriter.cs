@@ -92,7 +92,8 @@ public static class NativesWriter
         var parameters = string.Join(", ", function.Parameters.Select(p =>
             $"{CsType(p.Type, function.Name)} {Identifier(p.Name)}"));
         var arguments = string.Join(", ", function.Parameters.Select((_, i) => $"{{{i}}}"));
-        text.Append($"\n        /// @CSharpLua.Template = \"{function.Name}({arguments})\"\n");
+        // Through _G, so a method or local of the map's named like the native never takes its place in the Lua (J171).
+        text.Append($"\n        /// @CSharpLua.Template = \"_G.{function.Name}({arguments})\"\n");
         if (Attributes(tag) is { } attributes)
         {
             text.Append($"        [{attributes}]\n");
@@ -107,7 +108,7 @@ public static class NativesWriter
         var name = Identifier(global.Name);
         if (global.IsArray)
         {
-            text.Append($"\n        /// @CSharpLua.Template = \"{global.Name}[{{0}}]\"\n");
+            text.Append($"\n        /// @CSharpLua.Template = \"_G.{global.Name}[{{0}}]\"\n");
             text.Append($"        public static extern {type} {name}(int index);\n");
             return;
         }
@@ -119,10 +120,10 @@ public static class NativesWriter
             return;
         }
 
-        text.Append($"\n        /// @CSharpLua.Get = \"{global.Name}\"\n");
+        text.Append($"\n        /// @CSharpLua.Get = \"_G.{global.Name}\"\n");
         if (!global.IsConstant)
         {
-            text.Append($"        /// @CSharpLua.Set = \"{global.Name} = {{0}}\"\n");
+            text.Append($"        /// @CSharpLua.Set = \"_G.{global.Name} = {{0}}\"\n");
         }
 
         var accessors = global.IsConstant ? "get;" : "get; set;";
