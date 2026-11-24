@@ -102,6 +102,46 @@ namespace Moonwell
         [LocalSafe]
         public bool IsIllusion { get; internal set; }
 
+        /// <summary>Whether the unit is a building (UNIT_TYPE_STRUCTURE), as its type's object data says, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsStructure => !IsGone && Runtime.World.IsStructure(Handle);
+
+        /// <summary>Whether the unit is a worker (UNIT_TYPE_PEON): its type's classification has Worker, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsWorker => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Worker);
+
+        /// <summary>Whether the unit is a town hall (UNIT_TYPE_TOWNHALL): its type's classification has TownHall, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsTownHall => !IsGone && Runtime.World.IsKind(Handle, UnitKind.TownHall);
+
+        /// <summary>Whether the unit is a summon (UNIT_TYPE_SUMMONED): its type's classification has Summoned, or it was summoned in play (Summon, a timed life), read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsSummoned => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Summoned);
+
+        /// <summary>Whether the unit is mechanical (UNIT_TYPE_MECHANICAL): its type's classification has Mechanical, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsMechanical => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Mechanical);
+
+        /// <summary>Whether the unit is undead (UNIT_TYPE_UNDEAD): its type's classification has Undead, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsUndead => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Undead);
+
+        /// <summary>Whether the unit is an ancient (UNIT_TYPE_ANCIENT): its type's classification has Ancient, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsAncient => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Ancient);
+
+        /// <summary>Whether the unit is a giant (UNIT_TYPE_GIANT): its type's classification has Giant, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsGiant => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Giant);
+
+        /// <summary>Whether the unit is a tauren (UNIT_TYPE_TAUREN): its type's classification has Tauren, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsTauren => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Tauren);
+
+        /// <summary>Whether the unit is suicidal, a sapper (UNIT_TYPE_SAPPER): its type's classification has Suicidal, read from the game now; false once the game has removed it.</summary>
+        [LocalSafe]
+        public bool IsSuicidal => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Suicidal);
+
         /// <summary>The default object of the unit's type, as Unreal's class default object: the values its class declares (a type no class of the map's declares, its values as World Editor made them, standard where World Editor left them), the same whatever this unit's are now and once it is gone. One per type, shared by its units, with no handle; it is gone, so its live actions do nothing. A unit that has morphed keeps the default object of the type it came in as, as it keeps its class.</summary>
         [LocalSafe]
         public Unit Default => ObjectTypes.DefaultOf(this, firstTypeId != 0 ? firstTypeId : DeclaredTypeId);

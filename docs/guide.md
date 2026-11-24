@@ -551,6 +551,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `Level` | read; a hero's hero level; a unit's level is set only in its declared class's constructor |
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run |
 | `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
+| `IsStructure`, `IsWorker`, `IsTownHall`, `IsSummoned` | read; the kinds the game gives the unit's type (a building; a classification of worker, town hall or summoned); a unit summoned in play (`Summon`, a timed life) is summoned too. `IsMechanical`, `IsUndead`, `IsAncient`, `IsGiant`, `IsTauren` and `IsSuicidal` read the other classifications. A hero is `unit is Hero` |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Icon` | its type's icon path, read inside `Local.For` only, as the game picks a type's icon by each player's graphics mode (the game's Phoenix names one icon for Reforged and another for the other modes); set only in its declared class's constructor, as the game has no icon per unit |
@@ -2601,6 +2602,8 @@ public class GuardTests
   1, so a Priest has Heal and 75 of its 200 mana; a hero's hero abilities wait to be learned. Numbers from `SetNumbers`
   give no abilities, and mana only by their `Mana` and `MaxMana`. A unit of a type with no numbers never moves, and its
   orders are neither counted nor held.
+- From its object data a unit also has its type's kinds, so a Peasant `IsWorker` and a Barracks `IsStructure`. Numbers
+  from `SetNumbers` give none: a test gives a unit a kind with `sim.World.MakeKind(unit.Handle, UnitKind.Worker)`.
 - A hero's life counts its strength as the build counts it: `Start(map)` reads the hero bonus (life a point of strength,
   mana a point of intelligence) that the map's last `moonwell build` wrote, so a hero class's constructor reads `MaxLife`
   as the total there too (700 for the Mountain King). Build the map before its tests; a map never built, and `Start()`
