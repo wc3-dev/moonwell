@@ -15,7 +15,7 @@ namespace Moonwell
 
         internal readonly Label label;
 
-        internal readonly Theme theme;
+        internal Theme theme;
 
         internal float seconds;
 
@@ -31,16 +31,41 @@ namespace Moonwell
         public CastBar()
         {
             theme = Kit.Theme;
-            Template = theme.Hud;
             width = 0.2f;
             height = 0.028f;
             sized = true;
             Visible = false;
             // Inside the border's edge, 0.0065 deep in the game's control border; the icon covers the left end whole.
-            bar = KitTicks.Place(this, new ProgressBar { Texture = theme.CastBar }, 0.0345f, 0.0065f, 0.159f, 0.015f);
+            bar = KitTicks.Place(this, new ProgressBar(), 0.0345f, 0.0065f, 0.159f, 0.015f);
             icon = KitTicks.Place(this, new Image(), 0.0f, 0.0f, 0.028f, 0.028f);
-            label = Add(new Label { Alignment = FramePoint.Center, Color = theme.Text });
+            label = Add(new Label { Alignment = FramePoint.Center });
             label.Fill(bar);
+            Dress();
+        }
+
+        /// <summary>The bar's look, Kit.Theme as it was made unless set: the Hud border, the CastBar and Interrupted fills (each cast starts in the theme's), and the text's colour, size and font. Set it before the bar is added, as the size and font are read when the label is made.</summary>
+        [LocalSafe]
+        public Theme Theme
+        {
+            get { return theme; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                theme = value;
+                Dress();
+            }
+        }
+
+        private void Dress()
+        {
+            Template = theme.Hud;
+            bar.Texture = casting || fading == null ? theme.CastBar : theme.Interrupted;
+            label.Color = theme.Text;
+            theme.Style(label, theme.BarTextSize);
         }
 
         /// <summary>The cast's icon at the left; hidden for a cast with none.</summary>

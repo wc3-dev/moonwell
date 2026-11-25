@@ -33,19 +33,47 @@ namespace Moonwell
 
         internal bool ticking;
 
+        internal Theme theme;
+
         /// <summary>Makes an action button with no icon, to be added to the screen or to another frame.</summary>
         public ActionButton()
         {
             width = 0.04f;
             height = 0.04f;
             sized = true;
-            var theme = Kit.Theme;
+            theme = Kit.Theme;
             sweep = Add(new Image { Texture = Image.Blank });
             sweep.Fill(this);
-            hotkeyLabel = Add(new Label { Alignment = FramePoint.TopRight, Color = theme.Text });
+            hotkeyLabel = Add(new Label { Alignment = FramePoint.TopRight });
             hotkeyLabel.Fill(this);
-            countLabel = Add(new Label { Alignment = FramePoint.BottomRight, Color = theme.Text });
+            countLabel = Add(new Label { Alignment = FramePoint.BottomRight });
             countLabel.Fill(this);
+            Dress();
+        }
+
+        /// <summary>The button's look, Kit.Theme as it was made unless set: the hotkey's and count's colour, size and font. Set it before the button is added, as the sizes and font are read when the labels are made.</summary>
+        [LocalSafe]
+        public Theme Theme
+        {
+            get { return theme; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                theme = value;
+                Dress();
+            }
+        }
+
+        private void Dress()
+        {
+            hotkeyLabel.Color = theme.Text;
+            countLabel.Color = theme.Text;
+            theme.Style(hotkeyLabel, theme.TextSize);
+            theme.Style(countLabel, theme.TextSize);
         }
 
         /// <summary>The key's text in the top right corner, as Q; empty unless set. It only shows the key.</summary>

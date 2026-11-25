@@ -20,9 +20,18 @@ namespace Moonwell
         /// <summary>The title bar: an icon button with no icon over the title, which takes the clicks that move the window.</summary>
         internal readonly IconButton bar;
 
+        /// <summary>The game's dialog button that closes the window, with closeMark over it, while the theme names no Close texture.</summary>
         internal readonly Button close;
 
+        /// <summary>The X over the game's close button, a label at the game's text height, which fits inside the button where the button's own text is cut by its edge (J84).</summary>
+        internal readonly Label closeMark;
+
+        /// <summary>The icon button that closes the window when the theme names a Close texture; null until one does.</summary>
+        internal IconButton? closeIcon;
+
         internal Theme theme;
+
+        internal bool closable = true;
 
         internal bool movable = true;
 
@@ -40,14 +49,16 @@ namespace Moonwell
             height = 0.3f;
             sized = true;
             theme = Kit.Theme;
-            Template = theme.Window;
-            title = Add(new Label { Anchor = FramePoint.Top, Offset = new Vector2(0.0f, -BarTop - BarHeight / 2.0f), Alignment = FramePoint.Center, Color = theme.Title });
+            title = Add(new Label { Anchor = FramePoint.Top, Offset = new Vector2(0.0f, -BarTop - BarHeight / 2.0f), Alignment = FramePoint.Center });
             bar = Add(new IconButton { Height = BarHeight });
             bar.Attach(FramePoint.TopLeft, this, FramePoint.TopLeft, Inset + BarHeight, -BarTop);
             bar.Attach(FramePoint.TopRight, this, FramePoint.TopRight, -Inset - BarHeight, -BarTop);
             bar.Clicked += Grab;
-            close = Add(new Button { Text = "X", Width = BarHeight, Height = BarHeight, Anchor = FramePoint.TopRight, Offset = new Vector2(-BarTop, -BarTop) });
+            close = Add(new Button { Anchor = FramePoint.TopRight });
             close.Clicked += Close;
+            closeMark = close.Add(new Label { Text = "X", Alignment = FramePoint.Center });
+            closeMark.Fill(close);
+            Dress();
         }
 
         /// <summary>The title, centred at the top; empty unless set.</summary>
@@ -58,7 +69,7 @@ namespace Moonwell
             set { title.Text = value; }
         }
 
-        /// <summary>The window's look, Kit.Theme as the window was made unless set; set it before the window is added.</summary>
+        /// <summary>The window's look, Kit.Theme as the window was made unless set, passed down to the frames the window makes (its title, close button, and a ready window's tooltips and texts); set it before the window is added, as the text sizes and font are read when the labels are made.</summary>
         [LocalSafe]
         public Theme Theme
         {
@@ -66,17 +77,24 @@ namespace Moonwell
             set
             {
                 theme = value;
-                Template = value.Window;
-                title.Color = value.Title;
+                TakeTheme();
             }
         }
+
+        /// <summary>The close button the theme gives: an icon button of its Close texture, or the game's dialog button with an X; a map may place it again.</summary>
+        [LocalSafe]
+        public Frame CloseButton => theme.Close.Length > 0 && closeIcon != null ? closeIcon : close;
 
         /// <summary>Whether the close button shows; true unless set.</summary>
         [LocalSafe]
         public bool Closable
         {
-            get { return close.Visible; }
-            set { close.Visible = value; }
+            get { return closable; }
+            set
+            {
+                closable = value;
+                ShowClose();
+            }
         }
 
         /// <summary>Whether a click on the title picks the window up to move it; true unless set. Only a window added to the screen moves.</summary>
@@ -99,6 +117,59 @@ namespace Moonwell
             }
 
             remove { Unsubscribe(closed, value); }
+        }
+
+        /// <summary>Runs when Theme is set: the window's own frames take it, and a ready window passes it on to what it made.</summary>
+        internal virtual void TakeTheme()
+        {
+            Dress();
+        }
+
+        /// <summary>Gives the window's own frames the theme: its template, the title's colour, size and font, and the close button.</summary>
+        private void Dress()
+        {
+            Template = theme.Window;
+            title.Color = theme.Title;
+            theme.Style(title, theme.TitleSize);
+            closeMark.Color = theme.Title;
+            theme.Style(closeMark, 0.0f);
+            if (theme.Close.Length > 0 && closeIcon == null)
+            {
+                closeIcon = Add(new IconButton { Anchor = FramePoint.TopRight });
+                closeIcon.Clicked += Close;
+            }
+
+            PlaceClose();
+        }
+
+        /// <summary>Puts the close buttons at the theme's size and inset, the icon one with its texture, and shows the one the theme names.</summary>
+        private void PlaceClose()
+        {
+            var size = theme.CloseSize;
+            var inset = new Vector2(-theme.CloseInset, -theme.CloseInset);
+            close.Width = size;
+            close.Height = size;
+            close.Offset = inset;
+            if (closeIcon != null)
+            {
+                closeIcon.Icon = theme.Close;
+                closeIcon.Width = size;
+                closeIcon.Height = size;
+                closeIcon.Offset = inset;
+            }
+
+            ShowClose();
+        }
+
+        /// <summary>Shows the close button the theme names while the window is Closable, and hides the other.</summary>
+        private void ShowClose()
+        {
+            var icon = theme.Close.Length > 0;
+            close.Visible = closable && !icon;
+            if (closeIcon != null)
+            {
+                closeIcon.Visible = closable && icon;
+            }
         }
 
         /// <summary>A frame added with no place or size of its own covers the body, inside the border and below the title.</summary>

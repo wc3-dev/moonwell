@@ -45,7 +45,7 @@ namespace Moonwell
 
         internal readonly Label label;
 
-        internal readonly Theme theme;
+        internal Theme theme;
 
         internal Unit? unit;
 
@@ -59,8 +59,11 @@ namespace Moonwell
         /// <summary>The stat drawn as the second layer; null for none.</summary>
         internal Stat? overlayStat;
 
-        /// <summary>The texture the theme last gave the fill, so a texture the map set is kept while the same kind is followed.</summary>
+        /// <summary>The texture the bar last gave the fill itself: while the fill still has it, Follow and Theme give the fill the theme's; once the map set another, the map's is kept (J64).</summary>
         internal string look = "";
+
+        /// <summary>The theme textures the bar last gave its backing and its second layer, kept on the same terms as look.</summary>
+        internal string backingLook = "", overlayLook = "";
 
         /// <summary>Whether StatWatch tells the bar of the stats' changes.</summary>
         internal bool watching;
@@ -83,21 +86,76 @@ namespace Moonwell
             height = 0.014f;
             sized = true;
             theme = Kit.Theme;
-            backing = Add(new Image { Texture = theme.Backing, Alpha = 160 });
+            backing = Add(new Image { Alpha = 160 });
             backing.Fill(this);
-            bar = Add(new ProgressBar { Texture = theme.LifeBar });
+            bar = Add(new ProgressBar());
             bar.Fill(this);
-            overlay = Add(new ProgressBar { Texture = theme.OverlayBar, Alpha = theme.OverlayAlpha, Visible = false });
+            overlay = Add(new ProgressBar { Visible = false });
             overlay.Fill(this);
-            label = Add(new Label { Alignment = FramePoint.Center, Color = theme.Text });
+            label = Add(new Label { Alignment = FramePoint.Center });
             label.Fill(this);
+            Dress();
+        }
+
+        /// <summary>The bar's look, Kit.Theme as it was made unless set: the backing's, the fill's and the second layer's textures (a texture the map set on one is kept), and the text's colour, size and font, which are read when the label is made, so set it before the bar is added.</summary>
+        [LocalSafe]
+        public Theme Theme
+        {
+            get { return theme; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                theme = value;
+                Dress();
+            }
+        }
+
+        /// <summary>Gives the pieces the theme's looks, each texture only while the piece still has the one the bar gave it.</summary>
+        private void Dress()
+        {
+            if (backing.Texture == backingLook)
+            {
+                backingLook = theme.Backing;
+                backing.Texture = backingLook;
+            }
+
+            Fill(Wanted());
+            if (overlay.Texture == overlayLook)
+            {
+                overlayLook = theme.OverlayBar;
+                overlay.Texture = overlayLook;
+                overlay.Alpha = theme.OverlayAlpha;
+            }
+
+            label.Color = theme.Text;
+            theme.Style(label, theme.BarTextSize);
+        }
+
+        /// <summary>The theme's texture for what the bar follows.</summary>
+        private string Wanted()
+        {
+            return stat != null ? theme.StatBar : vital == Vital.Mana ? theme.ManaBar : vital == Vital.Experience ? theme.ExperienceBar : theme.LifeBar;
+        }
+
+        /// <summary>Gives the fill a texture of the theme's, unless the map gave it one of its own.</summary>
+        private void Fill(string wanted)
+        {
+            if (bar.Texture == look)
+            {
+                look = wanted;
+                bar.Texture = wanted;
+            }
         }
 
         /// <summary>The image under the fill: the theme's Backing, seen through.</summary>
         [LocalSafe]
         public Image Backing => backing;
 
-        /// <summary>The fill: the theme's LifeBar, ManaBar, ExperienceBar or StatBar, as Follow sets; a texture set after Follow is kept.</summary>
+        /// <summary>The fill: the theme's LifeBar, ManaBar, ExperienceBar or StatBar, as Follow sets; a texture the map sets, before or after Follow, is kept.</summary>
         [LocalSafe]
         public ProgressBar Bar => bar;
 
@@ -126,7 +184,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Follows a unit's life, mana or experience from now on, giving the fill the theme's texture for it; null follows nothing and empties the bar. Read 20 times a second. A unit gone or dead reads 0.</summary>
+        /// <summary>Follows a unit's life, mana or experience from now on, giving the fill the theme's texture for it unless the map gave it its own; null follows nothing and empties the bar. Read 20 times a second. A unit gone or dead reads 0.</summary>
         public void Follow(Unit? followed, Vital what = Vital.Life)
         {
             Take(followed, what, null, null, 0.0f);
@@ -151,16 +209,10 @@ namespace Moonwell
                 return;
             }
 
-            var wanted = followedStat != null ? theme.StatBar : what == Vital.Mana ? theme.ManaBar : what == Vital.Experience ? theme.ExperienceBar : theme.LifeBar;
-            if (unit == null || wanted != look)
-            {
-                look = wanted;
-                bar.Texture = wanted;
-            }
-
             unit = followed;
             vital = what;
             stat = followedStat;
+            Fill(Wanted());
             outOfStat = outOf;
             outOfNumber = outOfValue;
             Read();

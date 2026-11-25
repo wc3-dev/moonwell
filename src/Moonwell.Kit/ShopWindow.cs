@@ -101,7 +101,7 @@ namespace Moonwell
             }
 
             var button = goods.Add(new IconButton { Icon = entry.Icon, Width = GoodSize, Height = GoodSize });
-            button.Tooltip = new RichTooltip { Icon = entry.Icon, Title = entry.Name, Text = entry.Text, Cost = cost };
+            button.Tooltip = new RichTooltip { Theme = theme, Icon = entry.Icon, Title = entry.Name, Text = entry.Text, Cost = cost };
             entries.Add(entry);
             buttons.Add(button);
             Fit();
@@ -181,6 +181,16 @@ namespace Moonwell
         }
 
         /// <summary>Sizes the grid to its goods, so it sits centred under the title.</summary>
+        /// <summary>The window's theme passed on to the goods' tooltips.</summary>
+        internal override void TakeTheme()
+        {
+            base.TakeTheme();
+            for (var i = 0; i < buttons.Count; i++)
+            {
+                ((RichTooltip)buttons[i].Tooltip!).Theme = theme;
+            }
+        }
+
         private void Fit()
         {
             var columns = goods.Columns;

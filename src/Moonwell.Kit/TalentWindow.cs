@@ -48,6 +48,7 @@ namespace Moonwell
             Hero = hero;
             Title = "Talents";
             pointsLabel = Add(new Label { Anchor = FramePoint.BottomLeft, Offset = new Vector2(Inset, Inset) });
+            theme.Style(pointsLabel, theme.TextSize);
             Refresh();
         }
 
@@ -142,10 +143,26 @@ namespace Moonwell
             }
 
             var button = parent.Add(new IconButton { Icon = kind.Icon, Width = TalentSize, Height = TalentSize, Anchor = FramePoint.TopLeft, Offset = new Vector2(x, y) });
-            button.Tooltip = new RichTooltip { Icon = kind.Icon, Title = kind.Name };
+            button.Tooltip = new RichTooltip { Theme = theme, Icon = kind.Icon, Title = kind.Name };
             button.Clicked += who => Clicked(who, at);
             buttons.Add(button);
-            rankLabels.Add(parent.Add(new Label { Anchor = FramePoint.TopLeft, Offset = new Vector2(x + TalentSize - 0.012f, y - TalentSize + 0.008f) }));
+            var rank = new Label { Anchor = FramePoint.TopLeft, Offset = new Vector2(x + TalentSize - 0.012f, y - TalentSize + 0.008f) };
+            theme.Style(rank, theme.TextSize);
+            rankLabels.Add(parent.Add(rank));
+            Refresh();
+        }
+
+        /// <summary>The window's theme passed on to the talents' tooltips and texts, and their colours drawn again.</summary>
+        internal override void TakeTheme()
+        {
+            base.TakeTheme();
+            theme.Style(pointsLabel, theme.TextSize);
+            for (var i = 0; i < buttons.Count; i++)
+            {
+                ((RichTooltip)buttons[i].Tooltip!).Theme = theme;
+                theme.Style(rankLabels[i], theme.TextSize);
+            }
+
             Refresh();
         }
 
