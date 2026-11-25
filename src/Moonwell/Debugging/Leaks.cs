@@ -52,7 +52,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Runs with every sweep: every 10 s it drops a canary and counts the ended objects still held, and reports them at 100 and each doubling.</summary>
+        /// <summary>Runs with every sweep: every 10 s it drops a canary and counts the ended objects still held, and reports them at 100 and each doubling, with the tables that hold them when Lua's walk finds them.</summary>
         internal static void Swept()
         {
             sweeps++;
@@ -67,7 +67,9 @@ namespace Moonwell
             if (Held >= heldReportAt)
             {
                 heldReportAt = Held * 2;
-                Dev.Report("Moonwell.Leak", DebugPanel.Count(Held) + " objects that ended over a minute ago are still held by code (" + HeldObjects.Summary() + "); let go of what has ended");
+                // Only at a report: the walk over every table is slow.
+                var holders = HeldObjects.Holders();
+                Dev.Report("Moonwell.Leak", DebugPanel.Count(Held) + " objects that ended over a minute ago are still held by code (" + HeldObjects.Summary() + (holders.Length > 0 ? "; held by " + holders : string.Empty) + "); let go of what has ended");
             }
         }
 

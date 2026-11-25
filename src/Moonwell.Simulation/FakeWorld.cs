@@ -65,6 +65,9 @@ namespace Moonwell
         /// <summary>Whether the game deals no damage the runtime asks for, as for a target that cannot take it.</summary>
         public bool RefuseDamage;
 
+        /// <summary>When set, a unit the runtime removes keeps reading its type id, as the game's does for a unit removed and then killed in the same callback (game facts, 11-06): for a case where the game never shows a removal.</summary>
+        public bool RemovedUnitsStay;
+
         /// <summary>The spell-immune units: a hit of a magic damage type, or of attack type magic, fires no damage event and takes no life, though the game answers true (seen 10-31).</summary>
         public HashSet<unit> SpellImmune = new HashSet<unit>();
 
@@ -594,6 +597,12 @@ namespace Moonwell
         /// <summary>Makes the units removed in the frame that ends read as the game reads them from the next frame: a type id of 0, every number 0 and no owner (seen 10-17, 10-21).</summary>
         private void EndPendingRemovals()
         {
+            if (RemovedUnitsStay)
+            {
+                pendingRemovals.Clear();
+                return;
+            }
+
             foreach (var removed in pendingRemovals)
             {
                 VanishUnit(removed);

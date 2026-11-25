@@ -10,6 +10,29 @@ namespace Moonwell.Testing
     {
     }
 
+    /// <summary>A list in a static field, which the leak report names as what holds the units in it.</summary>
+    public static class LeakKeeper
+    {
+        /// <summary>The units kept.</summary>
+        public static List<Unit>? Units;
+    }
+
+    /// <summary>A page of units, each with a text, made in the component and ended with it, as survival-harmony's model viewer does (J184).</summary>
+    public sealed class LeakPage : GameComponent
+    {
+        /// <summary>The newest page, the only one the map keeps.</summary>
+        public static LeakPage? Newest;
+
+        protected override void OnAdded()
+        {
+            for (var i = 0; i < 50; i++)
+            {
+                var unit = Unit.Create(ObjectTypes.FourCC("hfoo"), Player.One, i * 64.0f, 0.0f, this, 270.0f);
+                unit.AddText("" + i, this);
+            }
+        }
+    }
+
     /// <summary>A unit component whose OnAdded takes 3 ms of the fake debug world's clock, for the profiler's reactions.</summary>
     public sealed class SlowPart : UnitComponent
     {
@@ -150,6 +173,63 @@ namespace Moonwell.Testing
             Expect.Equal("Unit 100", HeldObjects.Summary(), "by class");
             Expect.Equal(1, Logged(world, "Moonwell: Moonwell.Leak failed: 100 objects that ended over a minute ago are still held by code (Unit 100)"), "the report: " + Last(world));
             Expect.Equal(100, kept.Count, "the list still holds them");
+        }
+
+        /// <summary>Ends the newest page, if any, and adds a new one in its place; out of line, so .NET keeps no reference to the pages in the case.</summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void TurnPage()
+        {
+            LeakPage.Newest?.End();
+            LeakPage.Newest = Game.Instance.Add(new LeakPage());
+        }
+
+        /// <summary>Units made in a component and ended with it, each with a text over it, are let go once the game has removed them: pages ended a minute ago are not reported as held (J184).</summary>
+        public static void EndedPagesLetGo(FakeWorld world)
+        {
+            TurnPages(world);
+        }
+
+        /// <summary>Moonwell holds no ended unit while the game still reads a removed unit's type id: it keeps only the handle, so its own table is no holder (J184).</summary>
+        public static void EndedPagesLetGoWhileTypeReads(FakeWorld world)
+        {
+            world.RemovedUnitsStay = true;
+            TurnPages(world);
+        }
+
+        /// <summary>Turns six pages, ten seconds apart, and checks two minutes on that no ended page or unit is held.</summary>
+        private static void TurnPages(FakeWorld world)
+        {
+            // A page of a run before, on another world, is not ended here.
+            LeakPage.Newest = null;
+            for (var i = 0; i < 6; i++)
+            {
+                TurnPage();
+                world.Advance(10.0f);
+            }
+
+            for (var i = 0; i < 12; i++)
+            {
+                Collect();
+                world.Advance(10.0f);
+            }
+
+            Expect.Equal(0, Leaks.Held, "held: " + HeldObjects.Summary());
+            Expect.Equal(0, Logged(world, "Moonwell.Leak"), "no report: " + Last(world));
+            LeakPage.Newest = null;
+        }
+
+        /// <summary>The report names the table that holds the ended objects, in Lua, where it walks the tables from the globals; .NET names none (J184).</summary>
+        public static void HeldNamesHolder(FakeWorld world)
+        {
+            LeakKeeper.Units = new List<Unit>();
+            MakeAndRemove(world, 100, LeakKeeper.Units);
+            world.Advance(10.5f);
+            Collect();
+            world.Advance(50.0f);
+            Expect.Equal(100, Leaks.Held, "held a minute on");
+            var holder = InLua() ? "; held by Moonwell.Testing.LeakKeeper.Units 100" : string.Empty;
+            Expect.Equal(1, Logged(world, "still held by code (Unit 100" + holder + "); let go of what has ended"), "the report: " + Last(world));
+            LeakKeeper.Units = null;
         }
 
         /// <summary>The profiler times a timer's runs and a map's section, shows them in the panel, and writes every line to profile.txt at its stop (decision 263).</summary>
