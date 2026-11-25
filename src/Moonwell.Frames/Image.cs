@@ -1,6 +1,6 @@
 namespace Moonwell
 {
-    /// <summary>A texture, stretched over the frame. An image lets clicks through to what is under it (seen 11-03).</summary>
+    /// <summary>A texture, stretched over the frame. An image lets clicks through to what is under it (seen 11-03) unless CatchesClicks is set or it is listened to.</summary>
     public class Image : Frame
     {
         /// <summary>A texture that draws nothing (seen 10-14), for an image given an ended one's frame and no texture of its own.</summary>
@@ -38,6 +38,14 @@ namespace Moonwell
                     FramesSystem.World.PaintFrame(handle, value);
                 }
             }
+        }
+
+        /// <summary>Whether the image catches the clicks on it, so they do not reach the world under it, by an empty text over it, as an empty text takes the clicks (seen 11-03); false unless set.</summary>
+        [LocalSafe]
+        public bool CatchesClicks
+        {
+            get { return catchesClicks; }
+            set { CatchClicks(value); }
         }
 
         /// <summary>The texture follows the cursor while the image is held, unless DragIcon is set.</summary>
