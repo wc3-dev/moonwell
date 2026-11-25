@@ -3042,7 +3042,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   `Image` shows a `Texture`; a piece, a colour or a round cut of one is a copy the build makes ([Assets](#assets)). A
   map's own panel inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
-  Labels, images and empty panels let clicks through, until they are listened to for the mouse.
+  Labels, images and empty panels let clicks through, until they are listened to for the mouse. `CatchesClicks = true`
+  on an empty panel or an image catches them, by an empty text over it as a panel's look has, so a click on a panel of
+  the map's own art does not order the hero to walk there; the frames on the panel still take their own clicks.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
   may change the game. Every frame has `Wheel` (notches, up positive); `Button` has
   `Clicked` and `DoubleClicked` (two clicks by one player within 0.3 s), `IconButton` `Clicked`, `CheckBox` `Toggled`,
@@ -3137,6 +3139,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   ties itself to a piece with `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`,
   with the label added by `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The chat and the
   game's messages are not offered, nor moving the hero icons, as the game crashes or draws them wrong (seen).
+  `OpenMenu()`, `OpenAllies()`, `OpenQuests()` and `OpenLog()` open the game's menu, allies, quest log and message log
+  on that player's screen, as a click on the top bar's button does, even with the top bar or the HUD hidden, so a map's
+  own button can stand in for them: `menu.Clicked += who => who.GameUi().OpenMenu();`.
   `Portrait.Fill(frame)` puts the portrait, the first unit selected, on a map's frame at its place and size: the game
   places the portrait across the whole window's width, not the 4:3 middle, so Moonwell works out where the frame is
   from how the map placed it and squeezes it for the window's shape, again every second and when the window changes
@@ -3298,7 +3303,10 @@ heroes.Picked += (who, hero) => who.Select(hero);
   items move through them, with the wheel or the two buttons at its side. `Show` writes an item onto its row, a button
   (its text unless set), and `Picked` runs with a clicked row's item. After changing the list itself, call `Refresh()`.
 - `SlotGrid` is `Columns` by `Rows` icon slots (`IconSlot`, with its `Grid` and `Index`), 0.04 square unless
-  `SlotSize` is set, sized by them. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
+  `SlotSize` is set, sized by them. `new IconSlot()` is a slot the map places alone, as a paper doll's slots round the
+  hero: 0.04 square unless sized, its `Grid` null and `Index` -1, dragged and swapped as a grid's are, and its own
+  `Moved` runs when a slot is dropped on it. `EmptyIcon` is what a slot draws while it shows no icon, the game's black
+  unless set. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
   which runs that grid's `Moved` with the two slots; an empty slot only takes drops. The grid keeps nothing but icons,
   so the map moves what the slots hold. `from.SwapWith(to)` in `Moved` swaps the two slots' icons and tooltips, and
   the tooltips move and do not end, as one set in place of another does; a handler that does not call it leaves both
