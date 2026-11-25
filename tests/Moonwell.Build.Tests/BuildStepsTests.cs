@@ -1,6 +1,5 @@
-using System.Drawing;
 using Moonwell.BuildTime;
-using War3Net.Build.Environment;
+using Region = War3Net.Build.Environment.Region;
 using Xunit;
 
 namespace Moonwell.Build.Tests
@@ -64,7 +63,7 @@ namespace Moonwell.Build.Tests
         public void a_test_can_run_a_step_on_regions_and_files_of_its_own()
         {
             var map = new MapReader(Path.Combine(folders.TemporaryCopyOf("BuildTime"), "map"));
-            var harbor = new Region { Name = "Harbor", Left = -256f, Bottom = -256f, Right = 256f, Top = 256f, Color = Color.Blue };
+            var harbor = new Region { Name = "Harbor", Left = -256f, Bottom = -256f, Right = 256f, Top = 256f, Color = System.Drawing.Color.Blue };
 
             var withHarbor = map.WithRegions(new[] { harbor });
             var result = BuildSteps.Run<Counted>(withHarbor);
@@ -96,7 +95,7 @@ namespace Moonwell.Build.Tests
 
                 Give("Regions", new RegionCount(regions.Count, regions.Last().Name));
                 Report("regions.txt", string.Concat(regions.Select(region => region.Name + "\n")));
-                Report("water.png", new Picture(Map).Fill(Map.Cells.Where(cell => cell.IsWater), Color.Blue));
+                Report("water.png", new Picture(Map).Fill(Map.Cells.Where(cell => cell.IsWater), System.Drawing.Color.Blue));
             }
         }
 
