@@ -10559,7 +10559,6 @@ namespace Moonwell
         public static extern void PauseGame(bool flag);
 
         /// @CSharpLua.Template = "_G.UnitAddIndicator({0}, {1}, {2}, {3}, {4})"
-        [ChangesState]
         public static extern void UnitAddIndicator(unit whichUnit, int red, int green, int blue, int alpha);
 
         /// @CSharpLua.Template = "_G.AddIndicator({0}, {1}, {2}, {3}, {4})"
@@ -10593,7 +10592,6 @@ namespace Moonwell
         public static extern void DestroyMinimapIcon(minimapicon pingId);
 
         /// @CSharpLua.Template = "_G.SetMinimapIconVisible({0}, {1})"
-        [ChangesState]
         public static extern void SetMinimapIconVisible(minimapicon whichMinimapIcon, bool visible);
 
         /// @CSharpLua.Template = "_G.SetMinimapIconOrphanDestroy({0}, {1})"
@@ -10601,7 +10599,6 @@ namespace Moonwell
         public static extern void SetMinimapIconOrphanDestroy(minimapicon whichMinimapIcon, bool doDestroy);
 
         /// @CSharpLua.Template = "_G.EnableOcclusion({0})"
-        [ChangesState]
         public static extern void EnableOcclusion(bool flag);
 
         /// @CSharpLua.Template = "_G.SetIntroShotText({0})"
@@ -11527,7 +11524,6 @@ namespace Moonwell
         public static extern void RemoveWeatherEffect(weathereffect whichEffect);
 
         /// @CSharpLua.Template = "_G.EnableWeatherEffect({0}, {1})"
-        [ChangesState]
         public static extern void EnableWeatherEffect(weathereffect whichEffect, bool enable);
 
         /// @CSharpLua.Template = "_G.TerrainDeformCrater({0}, {1}, {2}, {3}, {4}, {5})"
@@ -15823,7 +15819,6 @@ namespace Moonwell
         public static extern void EnableWorldFogBoundaryBJ(bool enable, force f);
 
         /// @CSharpLua.Template = "_G.EnableOcclusionBJ({0}, {1})"
-        [ChangesState]
         public static extern void EnableOcclusionBJ(bool enable, force f);
 
         /// @CSharpLua.Template = "_G.CancelCineSceneBJ()"
