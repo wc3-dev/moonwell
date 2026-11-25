@@ -364,6 +364,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "transports.burrow-in-and-out", Run = TransportCases.BurrowInAndOut });
             list.Add(new Case { Name = "transports.capacity-and-orders", Run = TransportCases.CapacityAndOrders });
             list.Add(new Case { Name = "transports.several-loads", Run = TransportCases.SeveralLoads });
+            list.Add(new Case { Name = "transports.other-players-transport", Run = TransportCases.OtherPlayersTransport });
+            list.Add(new Case { Name = "transports.full-or-too-big", Run = TransportCases.FullOrTooBig });
             list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
