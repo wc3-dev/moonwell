@@ -73,7 +73,7 @@ internal static class MapCode
     /// <summary>Global options from a build, as the SDK writes them into its .editorconfig; no file has options of its own.</summary>
     private sealed class GlobalOptionsOnly(Dictionary<string, string> values) : AnalyzerConfigOptionsProvider
     {
-        private static readonly AnalyzerConfigOptions None = new Values([]);
+        private static readonly AnalyzerConfigOptions None = new Values(new Dictionary<string, string>());
 
         public override AnalyzerConfigOptions GlobalOptions { get; } = new Values(values);
 
