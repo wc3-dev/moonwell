@@ -95,6 +95,18 @@ namespace Moonwell.Testing
             Expect.True(Terrain.IsCliff(32f, 96f), "an L tile is a cliff");
         }
 
+        /// <summary>CliffLevel reads the level of the corner nearest a point, and the edge outside the grid (J122).</summary>
+        public static void CliffLevel(FakeWorld world)
+        {
+            OneTile(GridText.Tile(GridText.Corner(0f, 2), GridText.Corner(128f, 3), GridText.Corner(-128f, 1), GridText.Corner(256f, 4)));
+            Expect.True(Terrain.CliffLevel(10f, 10f) == 2, "near the bottom left");
+            Expect.True(Terrain.CliffLevel(70f, 60f) == 3, "past halfway across, below halfway up: the bottom right");
+            Expect.True(Terrain.CliffLevel(60f, 70f) == 1, "the top left");
+            Expect.True(Terrain.CliffLevel(128f, 128f) == 4, "on the top right corner");
+            Expect.True(Terrain.CliffLevel(-500f, 1000f) == 1, "outside, past the top left");
+            Expect.True(Terrain.CliffLevel(new Vector2(70f, 60f)) == 3, "a Vector2 reads as its X and Y");
+        }
+
         /// <summary>The same levels with a ramp flag are blended and are no cliff.</summary>
         public static void Ramp(FakeWorld world)
         {

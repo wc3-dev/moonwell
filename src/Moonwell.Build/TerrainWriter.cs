@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Moonwell.BuildTime;
 using War3Net.Build.Environment;
 
 namespace Moonwell.Build
@@ -44,13 +45,9 @@ namespace Moonwell.Build
             for (var index = 0; index < environment.TerrainTiles.Count; index++)
             {
                 var tile = environment.TerrainTiles[index];
-                var ground = Ground(environment, columns, rows, index);
-
-                var surface = (tile.WaterHeight * 128f) - 89.6f;
 
                 // Water counts only where its surface is above the ground; below it, the game reads the ground.
-                var water = tile.IsWater && surface > ground;
-                var z = water ? surface : ground;
+                var z = GroundHeights.Corner(environment, index, out var water);
                 var h = (int)MathF.Round(z * 20f) + ZeroHeight;
                 if (h < 0 || h >= HeightLimit)
                 {
@@ -80,21 +77,14 @@ namespace Moonwell.Build
         /// <returns>The height.</returns>
         public static float GroundBeneath(MapEnvironment environment, float x, float y)
         {
-            var columns = Columns(environment);
-            var rows = Rows(environment);
-            var u = Math.Clamp((x - environment.Left) / 128f, 0f, columns - 1);
-            var v = Math.Clamp((y - environment.Bottom) / 128f, 0f, rows - 1);
-            var i = Math.Min((int)MathF.Floor(u), Math.Max(columns - 2, 0));
-            var j = Math.Min((int)MathF.Floor(v), Math.Max(rows - 2, 0));
-            var right = i + 1 < columns ? i + 1 : i;
-            var top = j + 1 < rows ? j + 1 : j;
-            var fx = u - i;
-            var fy = v - j;
-            var z00 = Kept(Ground(environment, columns, rows, (j * columns) + i));
-            var z10 = Kept(Ground(environment, columns, rows, (j * columns) + right));
-            var z01 = Kept(Ground(environment, columns, rows, (top * columns) + i));
-            var z11 = Kept(Ground(environment, columns, rows, (top * columns) + right));
-            return ((1f - fy) * (((1f - fx) * z00) + (fx * z10))) + (fy * (((1f - fx) * z01) + (fx * z11)));
+            return GroundHeights.Blend(
+                Columns(environment),
+                Rows(environment),
+                environment.Left,
+                environment.Bottom,
+                x,
+                y,
+                index => GroundHeights.Kept(GroundHeights.Ground(environment, index)));
         }
 
         /// <summary>
@@ -156,80 +146,10 @@ namespace Moonwell.Build
             }
         }
 
-        // A corner's ground: its height and cliff level, raised on a ramp, whatever water is above it.
-        private static float Ground(MapEnvironment environment, int columns, int rows, int index)
-        {
-            var tile = environment.TerrainTiles[index];
-            var ground = (tile.Height * 128f) + ((tile.CliffLevel - 2) * 128f);
-            return ground + (32f * HigherRampTiles(environment, columns, rows, index));
-        }
-
-        // A height kept to a twentieth, as the grid keeps it.
-        private static float Kept(float z)
-        {
-            return MathF.Round(z * 20f) / 20f;
-        }
-
-        // A ramp corner is raised 32 for each tile around it (up to four) that has another corner with the ramp flag and
-        // a cliff level exactly one higher. A corner outside the grid is not there to be that corner.
-        private static int HigherRampTiles(MapEnvironment environment, int columns, int rows, int index)
-        {
-            var tile = environment.TerrainTiles[index];
-            if (!tile.IsRamp)
-            {
-                return 0;
-            }
-
-            var column = index % columns;
-            var row = index / columns;
-            var count = 0;
-            for (var tileRow = row - 1; tileRow <= row; tileRow++)
-            {
-                for (var tileColumn = column - 1; tileColumn <= column; tileColumn++)
-                {
-                    if (TileHasHigherRamp(environment, tile, column, row, tileColumn, tileRow, columns, rows))
-                    {
-                        count++;
-                    }
-                }
-            }
-
-            return count;
-        }
-
-        // The tile whose bottom-left corner is (tileColumn, tileRow): does one of its other corners read as a higher ramp?
-        private static bool TileHasHigherRamp(MapEnvironment environment, TerrainTile tile, int column, int row, int tileColumn, int tileRow, int columns, int rows)
-        {
-            for (var y = tileRow; y <= tileRow + 1; y++)
-            {
-                for (var x = tileColumn; x <= tileColumn + 1; x++)
-                {
-                    if ((x == column && y == row) || x < 0 || x >= columns || y < 0 || y >= rows)
-                    {
-                        continue;
-                    }
-
-                    var other = environment.TerrainTiles[(y * columns) + x];
-                    if (other.IsRamp && other.CliffLevel == tile.CliffLevel + 1)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
         // War3Net's Width and Height count tiles; the grid counts the corners between and around them, one more each way.
-        private static int Columns(MapEnvironment environment)
-        {
-            return (int)environment.Width + 1;
-        }
+        private static int Columns(MapEnvironment environment) => GroundHeights.Columns(environment);
 
-        private static int Rows(MapEnvironment environment)
-        {
-            return (int)environment.Height + 1;
-        }
+        private static int Rows(MapEnvironment environment) => GroundHeights.Rows(environment);
 
         private static string Literal(float value)
         {

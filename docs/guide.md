@@ -1650,8 +1650,9 @@ if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at
 - A height blends the four corners of each 128 tile, as the game does. It is the game's at the corners, and on Lost
   Temple it fit the game's within 0.05 on 8,536 of the 8,648 sloped tiles away from cliffs, ramps and water. Within 128
   of a cliff or ramp it is rough, up to 96 off, and it can miss at water's edge; over the rest of the ground it was 0.05
-  off on average and 77 at worst. `IsCliff` tells a cliff tile, for treating it as a wall. Water reads its surface where
-  that is above the ground. Over the water at the map's outer edge, far outside the playable area, heights can differ
+  off on average and 77 at worst. `IsCliff` tells a cliff tile, for treating it as a wall, and `CliffLevel(x, y)` the
+  cliff level of the corner nearest a point, the number World Editor saved (2 is the ground at height 0, each level 128
+  higher). Water reads its surface where that is above the ground. Over the water at the map's outer edge, far outside the playable area, heights can differ
   from the game's.
 - `IsWalkable`, `IsFlyable`, `IsBuildable` and `IsWater` are terrain only, as the game's own. After changing pathing with
   natives, call `Terrain.Refresh(area)`. `CanStand` also sees trees and buildings and needs walkable ground, but it
@@ -2625,6 +2626,10 @@ MyMap.Tests\GuardTests.cs
 `dotnet test MyMap.Tests` runs them. A map whose code names `Data`, `Placed` or `Lua` needs a `moonwell build` first,
 which writes those classes for the compile.
 
+Moonwell's analyzer leaves a test project alone (one the test SDK marks with `IsTestProject`, as
+`Microsoft.NET.Test.Sdk` does): its code runs only on .NET, so a test may loop over a dictionary such as
+`sim.World.Files`. The map's own code is checked in the map's project as before.
+
 ```csharp
 using Moonwell;
 using MyMap;
@@ -2738,6 +2743,24 @@ public class GuardTests
   (a swing lands at once); what heroes' attributes add to damage, armor and attack speed; the game's own miss, crit and
   evasion; units placed in World Editor; and the Terrain, Areas, Input and Physics systems. A simulation shows how the
   map's own logic decides, not exactly how a fight goes in the game.
+- A raw native (`Natives.X`) is the game's own and has no body on .NET: a call throws there, so the map's code must not
+  reach one in a simulation. `Start`, `Run` and `RunUntil` throw it again as an `InvalidOperationException` naming the
+  native and the reaction it failed in. Keep each raw native inside `#if MOONWELL_LUA`, which the map's build defines,
+  with what the simulation should do in `#else`, best in one class of the map's:
+
+  ```csharp
+  public static class Raw // the map's raw natives
+  {
+      public static int CliffLevel(float x, float y)
+      {
+  #if MOONWELL_LUA
+          return Natives.GetTerrainCliffLevel(x, y);
+  #else
+          return 2; // flat ground in a simulation
+  #endif
+      }
+  }
+  ```
 - The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit
   from running tests side by side.
 
@@ -4229,6 +4252,7 @@ value and read it from `Data` in the object's constructor.
 | `Map.ImportedFiles`, `Map.TriggerStrings` | `war3map.imp` and `war3map.wts` |
 | `Map.ShadowMap`, `Map.PreviewIcons` | `war3map.shd` and `war3map.mmp` |
 | `Map.Bytes(name)`, `Map.Has(name)`, `Map.Files` | Any file by its name, as its bytes |
+| `Map.HeightAt(x, y)` | The ground's height at a point, as `Terrain.Height` gives it in the game: cliffs, ramps and water's surface counted, worked out from `war3map.w3e` by the rule the build writes the game's terrain with |
 
 - The files are read as World Editor saved them. What the map's `Map` class sets (the name, the slots, the tiles) is
   not in them yet.
@@ -4247,6 +4271,8 @@ value and read it from `Data` in the object's constructor.
 | `cells.Count`, `cells.IsEmpty`, `cells.Contains(x, y)` | How many, and whether a point's cell is one |
 | `a.And(b)`, `a.Or(b)`, `a.Except(b)` | The cells in both, in either, and in the first only |
 | `cells.FloodFrom(x, y)` | The cells joined to a point, stepping left, right, up and down inside the set |
+| `cells.FloodFrom(start)` | The cells joined to any cell of another set: every piece of the set that `start` touches, whole |
+| `Cells.Empty` | A set of no cells, to add pieces to with `Or` |
 | `water.Distances()` | How far every cell of the map is from the set: `toWater.At(x, y)`, `toWater[cell]` |
 | `cells.DistanceTo(water)` | The shortest straight line between two sets, centre to centre |
 | `cells.LargestRectangle()` | The largest rectangle of cells that fits in the set: `Columns`, `Rows`, and its sides in world coordinates |
@@ -4255,6 +4281,9 @@ value and read it from `Data` in the object's constructor.
 - The pathing file holds the ground, cliffs, water, doodads and bridges. Trees and other destructables, and placed
   units and buildings, are not in it: the game adds them while it runs. Take them from `Map.Doodads` and `Map.Units`.
 - `new Picture(Map).Fill(water, Color.Blue)` draws sets of cells, a pixel a cell, for `Report("water.png", picture)`.
+  `new Picture(Map, left, bottom, right, top, scale)` draws only the cells that rectangle reaches into, each `scale`
+  pixels across, and its `Left`, `Bottom`, `Right` and `Top` say what it shows. `Outline(cells, Color.White)` draws a
+  line a pixel wide round a set, such as a region's `Map.Cells.In(region)`. A picture is at most 4096 pixels a side.
 
 **What can be given.** A value is anything `System.Text.Json` writes: an anonymous object, a record, a list, a
 dictionary by name, a number, a text.
