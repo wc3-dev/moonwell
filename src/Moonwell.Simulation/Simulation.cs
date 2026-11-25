@@ -76,7 +76,7 @@ namespace Moonwell
             var world = FakeWorld.Install();
             world.StartPlay(seed);
             world.InstallDamage();
-            world.InstallInteractions();
+            SimulatedInteractionWorld.Install(world);
             // The stats package acts on a unit only for a stat the map set, so a map that does not use it sees no change.
             StatsSystem.Install();
             return new Simulation(world);
