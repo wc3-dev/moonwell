@@ -13,11 +13,8 @@ namespace Moonwell.AI
         /// <summary>The node's parent; null for a tree's root and for an option.</summary>
         internal readonly Branch? Parent;
 
-        /// <summary>The option's choice; null for a node.</summary>
-        internal readonly Choice? Choice;
-
-        /// <summary>The option; null for a node.</summary>
-        internal readonly Option? Option;
+        /// <summary>The option's choice, a Choice or a Choice over a list; null for a node.</summary>
+        internal readonly IChoice? Choice;
 
         /// <summary>The node's place among its parent's children, or the option's among its choice's options.</summary>
         internal readonly int Index;
@@ -36,11 +33,10 @@ namespace Moonwell.AI
         }
 
         /// <summary>An option's line.</summary>
-        internal BrainLine(Mind mind, Choice choice, int number, int index)
+        internal BrainLine(Mind mind, IChoice choice, int number, int index)
         {
             Mind = mind;
             Choice = choice;
-            Option = choice.options[index];
             Index = index;
             Depth = number;
         }

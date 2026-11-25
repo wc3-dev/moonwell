@@ -780,6 +780,48 @@ namespace Moonwell.Testing
             Expect.Equal(0, Logged(world, "Moonwell.Debug"), "the tools report no error");
         }
 
+        /// <summary>
+        /// A choice over a list shows as a choice does (J56): each option's best score over the list, > on the current one with
+        /// the thing it picked and its inputs' values for it; -force has an option win with the thing it scored best for, and
+        /// -force alone lets go; the log has a line when the option or the thing changes, naming both.
+        /// </summary>
+        public static void ViewListChoice(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var brain = unit.Add(new WorkerBrain());
+            var farm = new ListJob("farm", 0.9f, 1000f);
+            var mill = new ListJob("mill", 0.5f, 200f);
+            brain.Jobs.Add(farm);
+            brain.Jobs.Add(mill);
+            var debug = On(world);
+            DebugMode.Select(unit);
+            Steps(debug, 1);
+            var lines = Panel(debug);
+            Expect.True(Find(lines, "choice 1") != null, "the choice's head: " + debug.PanelText);
+            var build = Numbered(lines, 1);
+            Expect.True(Holds(build, "> build 0.82") && Holds(build, "farm") && Holds(build, "urgency 0.90") && Holds(build, "distance 1,000.00"), "1 is build, current, at 0.82 with the farm and its inputs: " + build);
+            var repair = Numbered(lines, 2);
+            Expect.True(Holds(repair, "repair 0.30") && !Holds(repair, ">"), "2 is repair at 0.30: " + repair);
+
+            debug.Chat(0, "-force 2");
+            Steps(debug, 1);
+            Expect.Equal("farm farm", string.Join(" ", brain.Took), "the forced repair takes the job it scored best for, the first of a tie");
+            Expect.True(Holds(Numbered(Panel(debug), 2), "> repair") && Holds(Numbered(Panel(debug), 2), "forced") && Holds(Numbered(Panel(debug), 2), "farm"), "> on repair, forced, with the farm: " + debug.PanelText);
+            debug.Chat(0, "-force");
+            debug.Chat(0, "-brainlog");
+            Steps(debug, 1);
+            Expect.True(Holds(Numbered(Panel(debug), 1), "> build"), "let go, build wins again: " + debug.PanelText);
+
+            mill.Urgency = 0.85f;
+            mill.Distance = 0f;
+            Steps(debug, 1);
+            debug.Chat(0, "-brainlog");
+            var written = Written(debug);
+            var all = string.Join(" | ", written);
+            Expect.True(FindBoth(written, "choice 1: build farm", "was repair farm") != null, "a line when the forced repair gave way: " + all);
+            Expect.True(FindBoth(written, "choice 1: build mill 0.92", "was build farm 0.82") != null, "and one when the thing changed, naming both: " + all);
+        }
+
         /// <summary>-wake has the selected unit's brains, both of them, think at the next step, within 0.02 s, and once.</summary>
         public static void Wake(FakeWorld world)
         {
