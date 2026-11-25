@@ -36,6 +36,12 @@ namespace Moonwell
         /// <summary>The most mana.</summary>
         public float MaxMana;
 
+        /// <summary>The food a unit of the type uses, its food cost.</summary>
+        public int Food;
+
+        /// <summary>The gold a mine of the type starts with: on .NET its Gold Mine ability's Max Gold; 0 for a type with none and for numbers a test gives.</summary>
+        internal int Gold;
+
         /// <summary>The abilities a unit starts with at level 1, by id: on .NET its object data's, a hero's hero abilities left out; none for numbers a test gives.</summary>
         internal int[] Abilities = new int[0];
 

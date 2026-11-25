@@ -332,6 +332,33 @@ namespace Moonwell.Testing
             Expect.Equal("move", unit.CurrentOrder, "and the unit goes on with the move");
         }
 
+        /// <summary>The load the game gives a transport for a unit Load sent to board it counts as code's, so a transport under full control is not held, for the second unit too, which the game loads only as the first is in (J178); a load on a unit Load did not send is a person's, and held.</summary>
+        public static void GameLoad(FakeWorld world)
+        {
+            var zeppelin = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            zeppelin.Add(new StepBrain { FullControl = true });
+            var a = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var b = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var c = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            zeppelin.Load(a);
+            zeppelin.Load(b);
+            world.Orders.Clear();
+
+            world.PlayerOrdersOn(zeppelin.Handle, Orders.Load, a.Handle);
+            BrainCases.Steps(world, 2);
+            Expect.Equal("", Given(world), "the game's load on the first is left");
+            Expect.Equal("load", zeppelin.CurrentOrder, "and the zeppelin goes for it");
+
+            world.Load(a.Handle, zeppelin.Handle);
+            world.PlayerOrdersOn(zeppelin.Handle, Orders.Load, b.Handle);
+            BrainCases.Steps(world, 2);
+            Expect.Equal("", Given(world), "the game's load on the second, as the first is in, is left too");
+
+            world.PlayerOrdersOn(zeppelin.Handle, Orders.Load, c.Handle);
+            BrainCases.Steps(world, 1);
+            Expect.Equal("immediate holdposition", Given(world), "a load on a unit not boarding is held");
+        }
+
         /// <summary>Two brains on one unit: it is under full control while either has it, both are woken by an answer, and the last to give it up gives the unit back; its picks are watched once.</summary>
         public static void TwoBrains(FakeWorld world)
         {

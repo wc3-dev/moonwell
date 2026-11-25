@@ -86,6 +86,7 @@ namespace Moonwell
                 declared = Activator.CreateInstance(standard, true)!;
             }
 
+            var abilities = IdsOf(Value(declared, "Abilities"));
             return new UnitNumbers
             {
                 Life = Convert.ToSingle(Value(declared, "MaxLife")),
@@ -99,9 +100,27 @@ namespace Moonwell
                 DamageSides = Convert.ToInt32(Value(declared, "DamageSides")),
                 Mana = Convert.ToSingle(Value(declared, "Mana")),
                 MaxMana = Convert.ToSingle(Value(declared, "MaxMana")),
-                Abilities = IdsOf(Value(declared, "Abilities")),
+                Food = Convert.ToInt32(Value(declared, "Food")),
+                Abilities = abilities,
                 Kinds = KindsOf(declared),
+                Gold = GoldOf(abilities),
             };
+        }
+
+        /// <summary>The gold a unit type's abilities give a mine: the level 1 Max Gold of the first of them that has the field (the Gold Mine ability's), else 0.</summary>
+        private static int GoldOf(int[] abilities)
+        {
+            foreach (var abilityId in abilities)
+            {
+                var ability = AbilityObject(abilityId);
+                var gold = ability == null ? null : At(Value(ability, "MaxGold"), 1);
+                if (gold != null)
+                {
+                    return Convert.ToInt32(gold);
+                }
+            }
+
+            return 0;
         }
 
         /// <summary>The classification bits of Moonwell.Objects' UnitClass, beside the kind each gives; Tree, Ward, Walkable and Neutral have no UNIT_TYPE and give none.</summary>
@@ -111,7 +130,7 @@ namespace Moonwell
             (32, UnitKind.Suicidal), (64, UnitKind.TownHall), (512, UnitKind.Ancient), (4096, UnitKind.Tauren),
         };
 
-        /// <summary>The kinds a unit type's object data gives: a structure for IsABuilding, and one for each classification the game reads as a UNIT_TYPE.</summary>
+        /// <summary>The kinds a unit type's object data gives: a structure for IsABuilding, one for each classification the game reads as a UNIT_TYPE, and a ranged attacker when its first enabled attack's weapon type is any but Normal.</summary>
         private static UnitKind[] KindsOf(object declared)
         {
             var found = new List<UnitKind>();
@@ -128,6 +147,14 @@ namespace Moonwell
                 {
                     found.Add(kind);
                 }
+            }
+
+            var attacks = Value(declared, "AttacksEnabled");
+            var enabled = attacks == null ? 0 : Convert.ToInt32(attacks);
+            var weapon = (enabled & 1) != 0 ? Value(declared, "Attack1WeaponType") : (enabled & 2) != 0 ? Value(declared, "Attack2WeaponType") : null;
+            if (weapon != null && Convert.ToInt32(weapon) != 0)
+            {
+                found.Add(UnitKind.Ranged);
             }
 
             return found.ToArray();
@@ -153,6 +180,28 @@ namespace Moonwell
         /// <summary>An ability type's order string, and its cooldown and mana cost at each level, read from its object data as a unit type's numbers are; null when it has none.</summary>
         internal static SpellNumbers? SpellOf(int abilityId)
         {
+            var declared = AbilityObject(abilityId);
+            if (declared == null)
+            {
+                return null;
+            }
+
+            var levels = Math.Max(1, Convert.ToInt32(Value(declared, "LevelCount")));
+            var cooldown = Value(declared, "Cooldown");
+            var manaCost = Value(declared, "ManaCost");
+            var numbers = new SpellNumbers { Order = Value(declared, "Order") as string ?? "", Cooldowns = new float[levels], ManaCosts = new int[levels] };
+            for (var level = 1; level <= levels; level++)
+            {
+                numbers.Cooldowns[level - 1] = Convert.ToSingle(At(cooldown, level));
+                numbers.ManaCosts[level - 1] = Convert.ToInt32(At(manaCost, level));
+            }
+
+            return numbers;
+        }
+
+        /// <summary>An ability type's object: the map's class registered for the id when it is a standard ability, else a new object of the Moonwell.Objects standard class of the id; null with neither.</summary>
+        private static object? AbilityObject(int abilityId)
+        {
             var standardAbility = Type.GetType("Moonwell.Objects.StandardAbility, Moonwell.Objects");
             if (standardAbility == null)
             {
@@ -171,17 +220,7 @@ namespace Moonwell
                 declared = Activator.CreateInstance(standard, true)!;
             }
 
-            var levels = Math.Max(1, Convert.ToInt32(Value(declared, "LevelCount")));
-            var cooldown = Value(declared, "Cooldown");
-            var manaCost = Value(declared, "ManaCost");
-            var numbers = new SpellNumbers { Order = Value(declared, "Order") as string ?? "", Cooldowns = new float[levels], ManaCosts = new int[levels] };
-            for (var level = 1; level <= levels; level++)
-            {
-                numbers.Cooldowns[level - 1] = Convert.ToSingle(At(cooldown, level));
-                numbers.ManaCosts[level - 1] = Convert.ToInt32(At(manaCost, level));
-            }
-
-            return numbers;
+            return declared;
         }
 
         /// <summary>A Levels value at a level counted from 1, a counted one's last level past its count; null for none.</summary>

@@ -204,6 +204,12 @@ namespace Moonwell
             attackCooldowns[made] = numbers.AttackCooldown;
             acquireRanges[made] = numbers.AcquisitionRange;
             attackRanges[made] = numbers.AttackRange;
+            foods[made] = numbers.Food;
+            if (numbers.Gold > 0)
+            {
+                resources[made] = numbers.Gold;
+            }
+
             var unitPlay = new PlayedUnit();
             unitPlay.AttackRange = numbers.AttackRange;
             unitPlay.AttackCooldown = numbers.AttackCooldown;

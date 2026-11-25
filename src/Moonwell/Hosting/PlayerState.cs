@@ -29,5 +29,8 @@ namespace Moonwell.Hosting
 
         /// <summary>The percent of gathered lumber the player loses to upkeep.</summary>
         LumberUpkeepRate,
+
+        /// <summary>The free heroes the player may still take, as a melee start's altar gives one.</summary>
+        HeroTokens,
     }
 }

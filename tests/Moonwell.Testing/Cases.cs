@@ -71,7 +71,18 @@ namespace Moonwell.Testing
             AddAITools(list);
             AddSimulation(list);
             AddAbilitiesAndControl(list);
+            AddUnitPlayerReads(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the unit and player reads: a unit's food, attack numbers, range kind, a mine's gold and CanCast; a player's units, hero limits and Sees.</summary>
+        private static void AddUnitPlayerReads(List<Case> list)
+        {
+            list.Add(new Case { Name = "units.reads", Run = UnitPlayerReadCases.UnitReads });
+            list.Add(new Case { Name = "units.can-cast", Run = UnitPlayerReadCases.CanCast });
+            list.Add(new Case { Name = "players.units", Run = UnitPlayerReadCases.PlayerUnits });
+            list.Add(new Case { Name = "players.hero-limits", Run = UnitPlayerReadCases.PlayerHeroLimits });
+            list.Add(new Case { Name = "players.sees", Run = UnitPlayerReadCases.PlayerSees });
         }
 
         /// <summary>Adds the cases for a unit's abilities, the live numbers an ability keeps a base for, attack range as a stat, an owned damage in a simulated swing, the buff marks and the crowd control reduction.</summary>
@@ -169,6 +180,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.orders.held-while-boarding", Run = BrainOrderCases.HeldWhileBoarding });
             list.Add(new Case { Name = "ai.full-control.acquire", Run = FullControlCases.Acquire });
             list.Add(new Case { Name = "ai.full-control.foreign-order", Run = FullControlCases.ForeignOrder });
             list.Add(new Case { Name = "ai.full-control.one-answer", Run = FullControlCases.OneAnswer });
@@ -179,6 +191,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.full-control.code-calls", Run = FullControlCases.CodeCalls });
             list.Add(new Case { Name = "ai.full-control.code-hold", Run = FullControlCases.CodeHold });
             list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
+            list.Add(new Case { Name = "ai.full-control.game-load", Run = FullControlCases.GameLoad });
             list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
             list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
             list.Add(new Case { Name = "ai.full-control.in-play", Run = FullControlCases.InPlay });
