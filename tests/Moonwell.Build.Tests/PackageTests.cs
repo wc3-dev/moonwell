@@ -362,6 +362,26 @@ namespace Moonwell.Build.Tests
             Assert.Equal(new[] { "Moonwell.War3Net.Build.Core" }, dependencies);
         }
 
+        // The fixture packs a prerelease version, where NuGet allows a prerelease dependency; a release is stable, and there
+        // NU5104 stops any package that depends on a prerelease (the War3Net fork) without saying so in its project. 0.22.0's
+        // publish failed that way, so this packs the solution as the publish workflow does, at the release's own version.
+        [Fact]
+        public void the_solution_packs_as_a_stable_release_into_as_many_packages_as_the_publish_workflow_expects()
+        {
+            var repository = Path.GetFullPath(Path.Combine(TestFolders.Fixture("."), "..", "..", ".."));
+            var props = File.ReadAllText(Path.Combine(repository, "Directory.Build.props"));
+            var version = Regex.Match(props, "<Version>([^<-]+)").Groups[1].Value;
+            var workflow = File.ReadAllText(Path.Combine(repository, ".github", "workflows", "release.yml"));
+            var expected = int.Parse(Regex.Match(workflow, @"\$packages\.Count -ne (\d+)").Groups[1].Value);
+            var feed = folders.TemporaryFolderOutsideRepository();
+
+            PackedMoonwell.Dotnet(repository, "pack", "Moonwell.slnx", "-c", "Release", "-o", feed, "-p:Version=" + version, "--disable-build-servers");
+
+            var packages = Directory.GetFiles(feed, "*.nupkg").Select(Path.GetFileName).ToList();
+            Assert.Equal(expected, packages.Count);
+            Assert.Contains("Moonwell.BuildTime." + version + ".nupkg", packages);
+        }
+
         [Fact]
         public void a_test_project_in_the_maps_tests_folder_runs_a_build_step_from_the_buildtime_package()
         {

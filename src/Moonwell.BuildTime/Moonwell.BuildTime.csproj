@@ -13,6 +13,8 @@
     <Description>What a Moonwell map's build code is written against: BuildStep, the map reader and the cell helpers, and BuildSteps to run a step from a test.</Description>
     <!-- War3Net's libraries beside the output, for the Moonwell package to carry. -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- NU5104: the War3Net fork is published only as prereleases (6.1.2-moonwell.N), so a stable Moonwell.BuildTime depends on one. -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
