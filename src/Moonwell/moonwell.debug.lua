@@ -4,10 +4,11 @@
 
 -- Ended objects, kept weakly with the time each ended, and canaries, so that only an object that outlived a full
 -- collection counts: the collector runs on what is made, not on time (game facts, 11-10).
-local heldObjects, heldCanaries, canaryTimes, collectedAt, heldSummary
+local heldObjects, heldCanaries, canaryTimes, collectedAt, heldSummary, heldCounted
 
 function MoonwellHeldReset()
   heldObjects = setmetatable({}, { __mode = "k" })
+  heldCounted = setmetatable({}, { __mode = "k" })
   heldCanaries = setmetatable({}, { __mode = "k" })
   canaryTimes = {}
   collectedAt = -math.huge
@@ -49,9 +50,11 @@ function MoonwellHeldCount(now, age)
   end
   canaryTimes = kept
   local counts, total = {}, 0
+  heldCounted = setmetatable({}, { __mode = "k" })
   for obj, ended in pairs(heldObjects) do
     if ended < collectedAt and now - ended >= age then
       total = total + 1
+      heldCounted[obj] = true
       local name = System.typeof(getmetatable(obj)):getName()
       counts[name] = (counts[name] or 0) + 1
     end
@@ -62,6 +65,67 @@ end
 
 function MoonwellHeldSummary()
   return heldSummary
+end
+
+-- "Map.Pages 300, Moonwell.KnownUnits.removed 9": the tables that hold the objects the last count found, each named by
+-- the shortest path of keys from the globals, as a walk over every table reachable from _G finds them (J184). The walk
+-- does not go into a counted object, so one held only through another counted object (a unit's Parent) is named by
+-- none; nor can it see a local or a closure's upvalue, as the game's Lua has no debug library. "" when it finds none.
+function MoonwellHeldHolders()
+  local left = 0
+  for _ in pairs(heldCounted) do left = left + 1 end
+  if left == 0 then return "" end
+  local parentOf, keyOf = {}, {}
+  local seen = { [_G] = true, [heldObjects] = true, [heldCanaries] = true, [heldCounted] = true }
+  local queue, head = { _G }, 1
+  local holderOf = {}
+  local function visit(t, parent, key)
+    if type(t) == "table" and not seen[t] then
+      seen[t] = true
+      parentOf[t], keyOf[t] = parent, key
+      queue[#queue + 1] = t
+    end
+  end
+  local function found(obj, holder)
+    if holderOf[obj] == nil then
+      holderOf[obj] = holder
+      left = left - 1
+    end
+  end
+  while head <= #queue and left > 0 do
+    local t = queue[head]
+    head = head + 1
+    local mt = getmetatable(t)
+    local mode = type(mt) == "table" and rawget(mt, "__mode") or ""
+    local weakKeys = type(mode) == "string" and string.find(mode, "k", 1, true) ~= nil
+    local weakValues = type(mode) == "string" and string.find(mode, "v", 1, true) ~= nil
+    for k, v in next, t do
+      if not weakKeys then
+        if heldCounted[k] then found(k, t) else visit(k, t, nil) end
+      end
+      if not weakValues then
+        if heldCounted[v] then found(v, t) else visit(v, t, k) end
+      end
+    end
+    if type(mt) == "table" then visit(mt, t, nil) end
+  end
+  local names, counts = {}, {}
+  for _, holder in pairs(holderOf) do
+    local name = names[holder]
+    if name == nil then
+      local parts, at = {}, holder
+      while at ~= _G and at ~= nil do
+        local key = keyOf[at]
+        table.insert(parts, 1, type(key) == "string" and key or "[]")
+        at = parentOf[at]
+      end
+      name = table.concat(parts, "."):gsub("%.%[%]", "[]")
+      if name == "" then name = "_G" end
+      names[holder] = name
+    end
+    counts[name] = (counts[name] or 0) + 1
+  end
+  return kinds(counts)
 end
 
 -- The game's handles, counted as made and destroyed: each native that makes a handle of a kind that leaks is wrapped

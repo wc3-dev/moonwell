@@ -13,8 +13,8 @@ namespace Moonwell
         /// <summary>The units the runtime holds, in the order they were taken in.</summary>
         internal static LiveSet<Unit> Live = new LiveSet<Unit>();
 
-        /// <summary>The units the runtime removed whose type id still read when they ended, as the game's does in the frame of RemoveUnit, keyed by the handle, in the order removed: each handle stays mapped to its ended object, which TakeIn does not take in again, so an event the game fires after the removal (an item's drop, the enter of a unit made in the same instant) makes no second object. The sweep forgets each once its type id reads 0.</summary>
-        private static OrderedMap<unit, Unit> removed = new OrderedMap<unit, Unit>();
+        /// <summary>The handles of the units the runtime removed whose type id still read when they ended, as the game's does in the frame of RemoveUnit, in the order removed: TakeIn does not take one in again, so an event the game fires after the removal (an item's drop, the enter of a unit made in the same instant) makes no second object. Only the handle is kept, not the ended object, so Moonwell holds no ended unit however long the game keeps its type id (J184). The sweep forgets each once its type id reads 0.</summary>
+        private static OrderedSet<unit> removed = new OrderedSet<unit>();
 
         /// <summary>The units whose class's constructor threw, which are not taken in again, so it does not run at each of their events; the sweep forgets each once its type id reads 0.</summary>
         private static HashSet<unit> failed = new HashSet<unit>();
@@ -43,7 +43,7 @@ namespace Moonwell
             }
 
             // A unit the runtime removed is not taken in again, though its type id still reads in that frame, nor one the pool keeps.
-            if (removed.ContainsKey(handle) || failed.Contains(handle) || UnitPool.Holds(handle))
+            if (removed.Contains(handle) || failed.Contains(handle) || UnitPool.Holds(handle))
             {
                 return null;
             }
@@ -172,7 +172,7 @@ namespace Moonwell
             // A unit the pool keeps is taken in again, as a new object, when Unit.Create gives it out.
             if (!kept && Runtime.World.UnitTypeId(unit.Handle) != 0)
             {
-                removed[unit.Handle] = unit;
+                removed.Add(unit.Handle);
             }
         }
 
@@ -181,7 +181,7 @@ namespace Moonwell
         {
             for (var i = removed.Count - 1; i >= 0; i--)
             {
-                var handle = removed.KeyAt(i);
+                var handle = removed[i];
                 if (Runtime.World.UnitTypeId(handle) == 0)
                 {
                     removed.Remove(handle);
