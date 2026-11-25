@@ -37,10 +37,15 @@ namespace Moonwell.Build
         // The game's text of each MoveType, by its number in a declared class's changes.
         private static readonly string[] MoveTexts = { "foot", "horse", "fly", "hover", "float", "amph" };
 
-        /// <summary>Whether the map's code, or a library of its own, calls Paths.CollisionOf, MovementOf or FindPathFor, so it needs the unit types' table.</summary>
+        /// <summary>Whether the map's code, a library of its own, or a Moonwell package the map uses calls Paths.CollisionOf, MovementOf or FindPathFor, so it needs the unit types' table (J180: a package's call would otherwise throw in a map that makes none itself).</summary>
         public static bool TypesUsedBy(string assemblyPath)
         {
-            return CompiledFiles.MapAssemblies(assemblyPath).Any(AsksTypes);
+            var folder = Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!;
+            var packages = CompiledFiles.UsedPackages(assemblyPath)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .Select(name => Path.Combine(folder, name + ".dll"))
+                .Where(File.Exists);
+            return CompiledFiles.MapAssemblies(assemblyPath).Concat(packages).Any(AsksTypes);
         }
 
         /// <summary>The line of the map's generated Main that gives the package the unit types' table, after Install.</summary>
