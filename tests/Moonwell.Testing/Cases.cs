@@ -45,6 +45,7 @@ namespace Moonwell.Testing
             AddInput(list);
             AddFrames(list);
             AddKitStats(list);
+            AddKitTheme(list);
             AddKeys(list);
             AddOrders(list);
             AddSelection(list);
@@ -71,6 +72,7 @@ namespace Moonwell.Testing
             AddSimulation(list);
             AddAbilitiesAndControl(list);
             AddUnitPlayerReads(list);
+            AddCatchAndOpen(list);
             return list;
         }
 
@@ -82,6 +84,15 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "players.units", Run = UnitPlayerReadCases.PlayerUnits });
             list.Add(new Case { Name = "players.hero-limits", Run = UnitPlayerReadCases.PlayerHeroLimits });
             list.Add(new Case { Name = "players.sees", Run = UnitPlayerReadCases.PlayerSees });
+        }
+
+        /// <summary>Adds the cases of an empty panel or an image catching clicks, an icon slot placed alone and the top bar's dialogs opened from code (J79, J80, J162).</summary>
+        private static void AddCatchAndOpen(List<Case> list)
+        {
+            list.Add(new Case { Name = "frames.panel-catches-clicks", Run = CatchAndOpenCases.PanelCatchesClicks });
+            list.Add(new Case { Name = "frames.image-catches-clicks", Run = CatchAndOpenCases.ImageCatchesClicks });
+            list.Add(new Case { Name = "kit.icon-slot-alone", Run = CatchAndOpenCases.IconSlotAlone });
+            list.Add(new Case { Name = "hud.open-top-bar-dialogs", Run = CatchAndOpenCases.OpenTopBarDialogs });
         }
 
         /// <summary>Adds the cases for a unit's abilities, the live numbers an ability keeps a base for, attack range as a stat, an owned damage in a simulated swing, the buff marks and the crowd control reduction.</summary>
@@ -137,6 +148,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.stop", Run = SimulationCases.Stop });
             list.Add(new Case { Name = "simulation.alive", Run = SimulationCases.Alive });
             list.Add(new Case { Name = "simulation.map-start", Run = SimulationCases.MapStart });
+            list.Add(new Case { Name = "simulation.map-components", Run = SimulationCases.MapComponents });
+            list.Add(new Case { Name = "simulation.find", Run = SimulationCases.FindsUnits });
+            list.Add(new Case { Name = "simulation.interact", Run = SimulationCases.Interacts });
             list.Add(new Case { Name = "simulation.smart", Run = SimulationCases.Smart });
             list.Add(new Case { Name = "simulation.removed-target", Run = SimulationCases.RemovedTarget });
             list.Add(new Case { Name = "simulation.reaction-order", Run = SimulationCases.ReactionOrder });
@@ -255,6 +269,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.ai-tools.log-keeps-newest", Run = BrainToolsCases.LogKeepsNewest });
             list.Add(new Case { Name = "debug.ai-tools.force", Run = BrainToolsCases.Force });
             list.Add(new Case { Name = "debug.ai-tools.fact", Run = BrainToolsCases.SetFact });
+            list.Add(new Case { Name = "debug.ai-tools.fact-up-the-chain", Run = BrainToolsCases.FactUpTheChain });
+            list.Add(new Case { Name = "debug.ai-tools.log-written", Run = BrainToolsCases.LogWritten });
             list.Add(new Case { Name = "debug.ai-tools.wake", Run = BrainToolsCases.Wake });
             list.Add(new Case { Name = "debug.ai-tools.off-and-map-commands", Run = BrainToolsCases.OffAndMapCommands });
             list.Add(new Case { Name = "debug.ai-tools.enum-and-nullable-facts", Run = BrainToolsCases.EnumAndNullableFacts });
@@ -364,6 +380,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "transports.burrow-in-and-out", Run = TransportCases.BurrowInAndOut });
             list.Add(new Case { Name = "transports.capacity-and-orders", Run = TransportCases.CapacityAndOrders });
             list.Add(new Case { Name = "transports.several-loads", Run = TransportCases.SeveralLoads });
+            list.Add(new Case { Name = "transports.other-players-transport", Run = TransportCases.OtherPlayersTransport });
+            list.Add(new Case { Name = "transports.full-or-too-big", Run = TransportCases.FullOrTooBig });
             list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
@@ -1957,6 +1975,17 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fdf.child-makes-its-own", Run = FdfCases.ChildMakesItsOwn });
             list.Add(new Case { Name = "fdf.found-label-lets-clicks-through", Run = FdfCases.FoundLabelLetsClicksThrough });
             list.Add(new Case { Name = "fdf.ended-part-refused", Run = FdfCases.EndedPartRefused });
+        }
+
+        /// <summary>Adds the cases of a theme on every kit part (J64, J84, J63, J70, J110), apart from AddFrames, which is near Lua's limit of 200 locals.</summary>
+        private static void AddKitTheme(List<Case> list)
+        {
+            list.Add(new Case { Name = "kit.theme-parts-take-their-own", Run = KitThemeCases.PartsTakeTheirOwn });
+            list.Add(new Case { Name = "kit.theme-other-parts", Run = KitThemeCases.OtherParts });
+            list.Add(new Case { Name = "kit.theme-bar-keeps-map-texture", Run = KitThemeCases.BarKeepsMapTexture });
+            list.Add(new Case { Name = "kit.theme-close-button", Run = KitThemeCases.CloseButton });
+            list.Add(new Case { Name = "kit.theme-list-when-made", Run = KitThemeCases.ListThemeWhenMade });
+            list.Add(new Case { Name = "kit.theme-talent-tips", Run = KitThemeCases.TalentTipsTakeWindowTheme });
         }
 
         /// <summary>Adds the kit's stat cases, apart from AddFrames, which is near Lua's limit of 200 locals.</summary>

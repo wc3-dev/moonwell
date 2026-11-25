@@ -7,10 +7,11 @@ namespace Moonwell.AI.Combat
     /// One fighter's settings, and what it found at its last check, for a unit brain: a <c>LaneWalker</c> has one, and a
     /// map's own brain makes one, <c>new Fighter(this)</c>, for the combat nodes of its tree. A check runs once an instant,
     /// from <c>Meets</c> or <c>ShouldPullBack</c>: it finds the enemies the fighter meets and picks its target. It meets a
-    /// living enemy unit, structures too, that its unit's owner sees, within its meet range or one that damaged its unit in
-    /// the last 3 s however far, and none farther than its leash from where its fight started. That spot is forgotten when
-    /// the fight is over, so the next fight's leash counts from where that one starts; a fighter that <c>WalkLane</c> walks
-    /// keeps it until it is back. An enemy its unit couldn't attack is set aside for 3 s, and the next best is picked.
+    /// living enemy unit its <c>Fights</c> takes (by default none of Neutral Passive's), structures too, that its unit's
+    /// owner sees, within its meet range or one that damaged its unit in the last 3 s however far, and none farther than its
+    /// leash from where its fight started. That spot is forgotten when the fight is over, so the next fight's leash counts
+    /// from where that one starts; a fighter that <c>WalkLane</c> walks keeps it until it is back. An enemy its unit
+    /// couldn't attack is set aside for 3 s, and the next best is picked.
     /// </summary>
     public sealed class Fighter
     {
@@ -125,10 +126,12 @@ namespace Moonwell.AI.Combat
         /// <summary>
         /// Which units the fighter fights, asked at each check for every unit it finds, enemy or ally, an attacker too: one
         /// it says false for is neither met nor counted in EnemiesNear and AlliesNear, so an arena's fighter leaves out units
-        /// of the same players outside its battle. Null, the default, takes every unit.
+        /// of the same players outside its battle. The default leaves out Neutral Passive's units (a gold mine, critters, a
+        /// shop), which count as enemies; a map's own filter replaces it, so one that should still leave them out says so
+        /// (<c>u =&gt; u.Owner != Player.NeutralPassive &amp;&amp; ...</c>). Null takes every unit.
         /// </summary>
         [LocalSafe]
-        public Func<Unit, bool>? Fights { get; set; }
+        public Func<Unit, bool>? Fights { get; set; } = unit => unit.Owner != Player.NeutralPassive;
 
         /// <summary>The rules the target is picked by, in the order added; with none, the nearest.</summary>
         public List<Target> Targets { get; } = new List<Target>();
@@ -168,7 +171,9 @@ namespace Moonwell.AI.Combat
         /// in meet range at least its Outnumbered times the allies there. Once pulling back, it holds until the unit is back
         /// where it pulls back to (within 64 of its To, its route's start, or where its fight started), then until its own
         /// reason is gone: pulled back hurt, its life at or above ComeBackAt; outnumbered, no longer outnumbered where it
-        /// stands. Then it is judged afresh. False for a dead unit. A <c>When</c> watches it.
+        /// stands. Then it is judged afresh. The settings are read at each check, so a Below set to 0 while it walks back for
+        /// its life, or an Outnumbered set to 0 while it walks back outnumbered, lets go at once, wherever it is, and it is
+        /// judged afresh. False for a dead unit. A <c>When</c> watches it.
         /// </summary>
         public bool ShouldPullBack()
         {
@@ -184,7 +189,9 @@ namespace Moonwell.AI.Combat
             var share = ShareOf(unit);
             var outnumbered = settings.Outnumbered > 0f && EnemiesNear >= settings.Outnumbered * AlliesNear;
             var wasBack = pulledFor != 0;
-            if (wasBack)
+            // A reason the settings have since turned off (Below or Outnumbered 0) is let go wherever the unit is (J102).
+            var calledOff = pulledFor == ForLife ? !(settings.Below > 0f) : !(settings.Outnumbered > 0f);
+            if (wasBack && !calledOff)
             {
                 if (!IsHome(unit.X, unit.Y) || (pulledFor == ForLife ? share < settings.ComeBackAt : outnumbered))
                 {
