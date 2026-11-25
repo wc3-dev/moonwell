@@ -179,6 +179,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.orders.held-while-boarding", Run = BrainOrderCases.HeldWhileBoarding });
             list.Add(new Case { Name = "ai.full-control.acquire", Run = FullControlCases.Acquire });
             list.Add(new Case { Name = "ai.full-control.foreign-order", Run = FullControlCases.ForeignOrder });
             list.Add(new Case { Name = "ai.full-control.one-answer", Run = FullControlCases.OneAnswer });
@@ -189,6 +190,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.full-control.code-calls", Run = FullControlCases.CodeCalls });
             list.Add(new Case { Name = "ai.full-control.code-hold", Run = FullControlCases.CodeHold });
             list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
+            list.Add(new Case { Name = "ai.full-control.game-load", Run = FullControlCases.GameLoad });
             list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
             list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
             list.Add(new Case { Name = "ai.full-control.in-play", Run = FullControlCases.InPlay });
@@ -362,6 +364,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "transports.burrow-in-and-out", Run = TransportCases.BurrowInAndOut });
             list.Add(new Case { Name = "transports.capacity-and-orders", Run = TransportCases.CapacityAndOrders });
             list.Add(new Case { Name = "transports.several-loads", Run = TransportCases.SeveralLoads });
+            list.Add(new Case { Name = "transports.other-players-transport", Run = TransportCases.OtherPlayersTransport });
+            list.Add(new Case { Name = "transports.full-or-too-big", Run = TransportCases.FullOrTooBig });
             list.Add(new Case { Name = "transports.pool-skips-transports", Run = TransportCases.PoolSkipsTransports });
             list.Add(new Case { Name = "pool.kept-and-given-out", Run = PoolCases.KeptAndGivenOut });
             list.Add(new Case { Name = "pool.not-kept", Run = PoolCases.NotKept });
