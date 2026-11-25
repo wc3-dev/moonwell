@@ -3312,6 +3312,19 @@ heroes.Picked += (who, hero) => who.Select(hero);
   `Orc`, `NightElf` and `Undead` show that race's to everyone. A theme is the template windows are made from and the
   colours of titles and text, so `new Theme { Window = "MyWindow" }` uses a window of the map's own `.fdf`. The build
   writes the four races' templates into a map that uses the kit, before the map's own `.fdf` files.
+- Every part, the HUD parts below too, takes `Kit.Theme` when it is made unless it is given a `Theme` of its own
+  (`new UnitFrame { Theme = wow }`), and passes it down to its pieces: a unit frame to its bars, buffs and stats, a
+  window to its title, close button and a ready window's tooltips, a talent window to its talents' tooltips. Setting
+  `Kit.Theme` changes only the parts made after.
+- A theme's `TitleSize`, `TextSize` and `BarTextSize` (in `Label.Size`'s units, 0 for the game's) and `Font` (a `.ttf`
+  in the map's assets, as `Label.Font`) are the parts' text: titles of windows and tooltips, other text, and the text
+  over a bar. A label takes them only when it is made, as the game reads a label's font and height from its template,
+  so give a part its `Theme` before it is added; set later, a part's colours and textures change and its text keeps
+  its size.
+- A window's close button is the game's dialog button with an X label inside it, which fits where the button's own
+  text was cut by its edge. `Theme.Close` names a texture for an icon button instead (WoW's red cross), at `CloseSize`
+  (0.024 unless set) and `CloseInset` from the top right corner (0.014); `CloseButton` is the one shown, which a map
+  may place again.
 - `ShopWindow` is a ready shop: `Sell(new ShopEntry { Icon, Name, Text, Cost })` puts a good in it (four a line unless
   `Columns` is set), as an icon button with a rich tooltip, and `Remove` takes one out. A click runs `Bought` with the
   player and the good; the shop takes no gold and gives nothing, so the map does both there. Inherit `ShopEntry` to
@@ -3428,7 +3441,9 @@ var party = Screen.Add(new SelectionList { Anchor = FramePoint.Left }, this, sho
 party.Follow(player);
 ```
 
-- `StatusBar` is a `Backing`, a `Bar`, an `OverlayBar` and a `Label` over both. `Follow(unit, Vital.Life)`, `Vital.Mana`
+- `StatusBar` is a `Backing`, a `Bar`, an `OverlayBar` and a `Label` over both. A texture the map gives one of them,
+  before or after `Follow`, is kept: following life, then mana, or another `Theme` changes only a piece still in the
+  theme's texture. `Follow(unit, Vital.Life)`, `Vital.Mana`
   or `Vital.Experience` follows a unit, read 20 times a second on one timer for every part, and drawn again only when it
   changed; a dead or gone unit reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life
   rounded up as the game shows it), `Percent` or `None`.
@@ -3498,7 +3513,9 @@ party.Follow(player);
   `OnSelectionChanged` and drops a unit that dies or goes at once. It is as high as the entries showing, so it is best
   placed by its top (`Anchor = FramePoint.TopLeft`). A click on an entry selects that unit alone, for the player who
   clicked; frames do not see Shift, so there is no Shift-click. `Entry = () => new PartyFrame()` makes a
-  map's own `UnitFrame` class for each, set before `Follow`. The game's active subgroup (Tab) is not shown: no native
+  map's own `UnitFrame` class for each, set before `Follow`; `Compact()` lays a unit frame out as Kit's own entries are
+  (icon, name and two thin bars, 0.14 by 0.036), for an entry that adds a backing or textures to the default. Kit's own
+  entries take the list's `Theme`, the one of the moment the list was made. The game's active subgroup (Tab) is not shown: no native
   reads it.
 
 ## Boards and dialogs
