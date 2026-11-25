@@ -16,6 +16,11 @@ namespace Moonwell
         /// <summary>How many errors have happened that are not remembered, as a hundred other errors came first: one count for them all, so a storm of errors whose messages change is throttled too and does not write the log file at every error.</summary>
         private static int unremembered;
 
+#if !MOONWELL_LUA
+        /// <summary>Told of every error reported, before it is shown, on .NET only: a Simulation sets it to catch a raw native's failure in the map's code. Reset clears it.</summary>
+        internal static Action<string, Exception>? Reported;
+#endif
+
         /// <summary>Reports an error from a hook, shown at its first time and then at every power of ten. An error past the hundred remembered is shown, with no count, at the first time and every power of ten of the count of all such errors.</summary>
         internal static void Report(string label, Exception error)
         {
@@ -46,6 +51,9 @@ namespace Moonwell
             const bool release = false;
 #else
             const bool release = true;
+#endif
+#if !MOONWELL_LUA
+            Reported?.Invoke(label, error);
 #endif
             var where = Where(error);
             var key = label + "\n" + error.Message + "\n" + First(where);
@@ -108,6 +116,9 @@ namespace Moonwell
         {
             counts.Clear();
             unremembered = 0;
+#if !MOONWELL_LUA
+            Reported = null;
+#endif
         }
 
         /// <summary>

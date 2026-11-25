@@ -2625,6 +2625,10 @@ MyMap.Tests\GuardTests.cs
 `dotnet test MyMap.Tests` runs them. A map whose code names `Data`, `Placed` or `Lua` needs a `moonwell build` first,
 which writes those classes for the compile.
 
+Moonwell's analyzer leaves a test project alone (one the test SDK marks with `IsTestProject`, as
+`Microsoft.NET.Test.Sdk` does): its code runs only on .NET, so a test may loop over a dictionary such as
+`sim.World.Files`. The map's own code is checked in the map's project as before.
+
 ```csharp
 using Moonwell;
 using MyMap;
@@ -2666,6 +2670,12 @@ public class GuardTests
   `Unit.Create<Human.Units.Footman>(...)` and `ObjectTypes.IdOf<T>` work in both; the map's own classes, its
   `[Replaces]` ones too, are known only with the map's start. Either takes a `seed`: it gives the dice of the attacks,
   and the seed after it the map's own random numbers (`Game.Random` and a `Dice` made without a seed).
+- `Simulation.Start(map, components: [new Melee(), new MeleeAi()])` starts those components in place of the map's
+  `Components`, each with its `OnGameStart`, to test a mode the map's start leaves out; the map's slots, classes and
+  `PlayerComponents` stay. A component added after the start hears no `OnGameStart`, as in the game.
+- With the [Interactions](#interactions-and-finding) package in the map, `Find`, interactions and gizmos answer from the
+  simulation's units where they stand: a unit has a place while it is alive, shown and not in a transport, and an item
+  while it lies on the ground. No destructable is a tree there: `IsTree()` reads false.
 - With a map, a player's files go in the folder the build would pick: the map's `SaveFolder`, else its name, else the
   map project's name, in letters and digits only, so `sim.World.Files` holds `MyRpg\settings.txt`. An empty game writes
   under `Map`. A computer's slot has its `Slot`'s `Name`, as in the game; a person's slot stays `Player 1`, where the
@@ -2732,6 +2742,24 @@ public class GuardTests
   (a swing lands at once); what heroes' attributes add to damage, armor and attack speed; the game's own miss, crit and
   evasion; units placed in World Editor; and the Terrain, Areas, Input and Physics systems. A simulation shows how the
   map's own logic decides, not exactly how a fight goes in the game.
+- A raw native (`Natives.X`) is the game's own and has no body on .NET: a call throws there, so the map's code must not
+  reach one in a simulation. `Start`, `Run` and `RunUntil` throw it again as an `InvalidOperationException` naming the
+  native and the reaction it failed in. Keep each raw native inside `#if MOONWELL_LUA`, which the map's build defines,
+  with what the simulation should do in `#else`, best in one class of the map's:
+
+  ```csharp
+  public static class Raw // the map's raw natives
+  {
+      public static int CliffLevel(float x, float y)
+      {
+  #if MOONWELL_LUA
+          return Natives.GetTerrainCliffLevel(x, y);
+  #else
+          return 2; // flat ground in a simulation
+  #endif
+      }
+  }
+  ```
 - The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit
   from running tests side by side.
 
