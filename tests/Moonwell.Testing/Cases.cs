@@ -1376,6 +1376,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.height.step", Run = HeightCases.Step });
             list.Add(new Case { Name = "terrain.height.cliff-blend", Run = HeightCases.CliffBlend });
             list.Add(new Case { Name = "terrain.height.ramp", Run = HeightCases.Ramp });
+            list.Add(new Case { Name = "terrain.height.cliff-level", Run = HeightCases.CliffLevel });
             list.Add(new Case { Name = "terrain.height.normal-and-slope", Run = HeightCases.NormalAndSlope });
             list.Add(new Case { Name = "terrain.height.not-a-number", Run = HeightCases.NotANumber });
             list.Add(new Case { Name = "terrain.height.vector-point", Run = HeightCases.VectorPoint });

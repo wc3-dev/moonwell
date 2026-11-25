@@ -99,6 +99,24 @@ namespace Moonwell
         }
 
         /// <summary>
+        /// The cliff level of the 128 corner nearest a point, as World Editor saved it in the map's terrain: the number
+        /// <c>war3map.w3e</c> keeps, so build code reads the same from <c>Map.Environment</c>. Level 2 is the ground at
+        /// height 0 and each level is 128 above the one below. A point outside the map reads the edge.
+        /// </summary>
+        [LocalSafe]
+        public static int CliffLevel(float x, float y)
+        {
+            return Grid.CliffLevelAt(x, y);
+        }
+
+        /// <summary>The cliff level of the corner nearest a point, as <c>CliffLevel(x, y)</c>.</summary>
+        [LocalSafe]
+        public static int CliffLevel(Vector2 point)
+        {
+            return CliffLevel(point.X, point.Y);
+        }
+
+        /// <summary>
         /// The direction straight out of the ground at a point, a unit vector for bounces and slides, from the blended
         /// ground's slope in every tile, cliff tiles included. Outside the grid it is the slope of the edge tile.
         /// </summary>

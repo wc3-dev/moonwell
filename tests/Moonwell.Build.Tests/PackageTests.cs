@@ -349,6 +349,88 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void buildtime_package_carries_its_library_and_needs_only_war3net()
+        {
+            using var archive = ZipFile.OpenRead(packed.BuildTimePackage);
+            var names = archive.Entries.Select(entry => entry.FullName).ToList();
+            Assert.Contains("lib/net10.0/Moonwell.BuildTime.dll", names);
+            Assert.Contains("lib/net10.0/Moonwell.BuildTime.xml", names);
+            Assert.DoesNotContain(names, name => name.StartsWith("analyzers/", StringComparison.Ordinal) || name.StartsWith("buildTransitive/", StringComparison.Ordinal));
+
+            using var reader = new StreamReader(archive.Entries.Single(entry => entry.FullName == "Moonwell.BuildTime.nuspec").Open());
+            var dependencies = XDocument.Parse(reader.ReadToEnd()).Descendants().Where(element => element.Name.LocalName == "dependency").Select(element => element.Attribute("id")!.Value).ToList();
+            Assert.Equal(new[] { "Moonwell.War3Net.Build.Core" }, dependencies);
+        }
+
+        [Fact]
+        public void a_test_project_in_the_maps_tests_folder_runs_a_build_step_from_the_buildtime_package()
+        {
+            var copy = PackagedSample(false, false);
+            Directory.CreateDirectory(Path.Combine(copy, "buildtime"));
+            File.WriteAllText(Path.Combine(copy, "buildtime", "Ground.cs"), """
+                using System.Linq;
+                using Moonwell.BuildTime;
+
+                namespace Sample.BuildTime
+                {
+                    public sealed class Ground : BuildStep
+                    {
+                        public override void Run()
+                        {
+                            var walkable = Map.Cells.Count(cell => cell.CanWalk);
+                            Warn("walkable " + walkable);
+                            Give("Ground", new { Walkable = walkable });
+                        }
+                    }
+                }
+                """);
+
+            // The map's project leaves tests\ out, as the template's does.
+            var project = Path.Combine(copy, "Sample.csproj");
+            File.WriteAllText(project, File.ReadAllText(project).Replace("<Compile Remove=\"build/**\" />", "<Compile Remove=\"build/**\" />\n    <Compile Remove=\"tests/**\" />", StringComparison.Ordinal));
+            Assert.Contains("tests/**", File.ReadAllText(project));
+
+            // A program, not xunit, so that the test restores from the test feed alone; it runs the step as a test would.
+            var tests = Path.Combine(copy, "tests", "BuildTime");
+            Directory.CreateDirectory(tests);
+            File.WriteAllText(Path.Combine(tests, "BuildTime.Tests.csproj"), $"""
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <OutputType>Exe</OutputType>
+                    <TargetFramework>net10.0</TargetFramework>
+                    <Nullable>enable</Nullable>
+                    <ImplicitUsings>disable</ImplicitUsings>
+                    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+                  </PropertyGroup>
+                  <ItemGroup>
+                    <Compile Include="..\..\buildtime\**\*.cs" LinkBase="buildtime" />
+                  </ItemGroup>
+                  <ItemGroup>
+                    <PackageReference Include="Moonwell.BuildTime" Version="{packed.Version}" />
+                  </ItemGroup>
+                </Project>
+                """);
+            File.WriteAllText(Path.Combine(tests, "Program.cs"), """
+                using System.IO;
+                using Moonwell.BuildTime;
+
+                var result = BuildSteps.Run<Sample.BuildTime.Ground>(Path.Combine("..", "..", "map"));
+                File.WriteAllText("result.txt", result.Failed + "|" + string.Join(",", result.Warnings) + "|" + result.GivenJson["Ground"].Replace("\r", "").Replace("\n", "").Replace(" ", ""));
+                """);
+
+            PackedMoonwell.Dotnet(tests, "run", "--disable-build-servers");
+
+            var line = File.ReadAllText(Path.Combine(tests, "result.txt"));
+            Assert.Matches(@"^False\|walkable \d+\|\{""Walkable"":\d+\}$", line);
+
+            // The map still builds, with no test code in it.
+            var log = new StringWriter();
+            var archive = MapBuild.Run(copy, Packed(), log);
+            Assert.True(File.Exists(archive), log.ToString());
+            Assert.DoesNotContain("BuildSteps", File.ReadAllText(Path.Combine(copy, "build", "Sample", "war3map.lua")));
+        }
+
+        [Fact]
         public void packaged_map_with_build_code_builds_and_an_editors_build_knows_its_types()
         {
             var copy = PackagedSample(false, false);
