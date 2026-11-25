@@ -43,7 +43,7 @@ namespace Moonwell.AI
         internal List<Tree>? trees;
 
         /// <summary>The choices picked on this blackboard, in the order first picked, for the AI tools; null until one is.</summary>
-        internal List<Choice>? choices;
+        internal List<IChoice>? choices;
 #endif
 
         internal Blackboard(int kind, Player? player)
@@ -129,11 +129,11 @@ namespace Moonwell.AI
         }
 
         /// <summary>Notes a choice picked on this blackboard for the first time, for the AI tools.</summary>
-        internal void AddChoice(Choice choice)
+        internal void AddChoice(IChoice choice)
         {
             if (choices == null)
             {
-                choices = new List<Choice>();
+                choices = new List<IChoice>();
             }
 
             choices.Add(choice);
