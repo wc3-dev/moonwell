@@ -1110,9 +1110,18 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Loads a unit into this transport: the unit is ordered to board it, and a zeppelin comes for it; OnCargoLoaded runs once it is aboard. Several in one instant all go in, one after another, and a burrow takes them too (seen 11-24). While the unit boards, its brains send it no orders, and the load the game then gives the transport counts as code's, which full control leaves alone. False when the game refuses the order.</summary>
+        /// <summary>Loads a unit into this transport: the unit is ordered to board it, and a zeppelin comes for it; OnCargoLoaded runs once it is aboard. Several in one instant all go in, one after another, and a burrow takes them too (seen 11-24). A ship stays where it is, and the unit walks to the water's edge and is taken in from there (seen 11-25). While the unit boards, its brains send it no orders, and the load the game then gives the transport counts as code's, which full control leaves alone. False when the game refuses the order, as it does for a full transport and a unit too big for the room left (seen 11-25). False, with no order given, for another player's transport, an ally's too: the game takes the order there and loads nothing (seen 11-25), and a development build reports it.</summary>
         public bool Load(Unit cargoUnit)
         {
+            // The game answers true for a board on another player's transport, even an ally's with shared and advanced
+            // control, and drops the order at once (game facts, 11-25, J182). Checked before the order, so no boarding mark
+            // is left behind.
+            if (!cargoUnit.IsGone && !IsGone && cargoUnit.Owner.Slot != Owner.Slot)
+            {
+                Dev.Report(Names.NameOf(this) + ".Load", Names.NameOf(cargoUnit) + " belongs to player " + cargoUnit.Owner.Slot + " and the transport to player " + Owner.Slot + ": the game loads a unit only into its own player's transport, so it was not ordered to board");
+                return false;
+            }
+
             // The game's load order on the transport takes one unit at a time, a second replacing the first, and a burrow
             // refuses it; the cargo's board order waits its turn (game facts, 11-24, J176). Marked first, as the game may give
             // the transport its load inside the call (J177, J178).
