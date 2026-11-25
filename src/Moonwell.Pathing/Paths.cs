@@ -69,6 +69,9 @@ namespace Moonwell
         /// <summary>Installs the package on a world; tests give a fake one.</summary>
         internal static void Install(IPathingWorld host)
         {
+#if !MOONWELL_LUA
+            host = Worlds.Wrap(host);
+#endif
             world = host;
             typeSizes = new Dictionary<int, float>();
             typeMovements = new Dictionary<int, Movement>();

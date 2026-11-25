@@ -30,6 +30,9 @@ namespace Moonwell
         /// <summary>Installs the package on a world; tests give a fake one. Throws ArgumentException, and changes nothing, when the text is not the length the grid needs.</summary>
         internal static void Install(ITerrainWorld host, int columns, int rows, float left, float bottom, string corners)
         {
+#if !MOONWELL_LUA
+            host = Worlds.Wrap(host);
+#endif
             var made = new HeightGrid(columns, rows, left, bottom, corners);
             host.PlayableArea(out var minX, out var minY, out var maxX, out var maxY);
             playable = Bounds.FromCorners(new Vector2(minX, minY), new Vector2(maxX, maxY));

@@ -26,6 +26,9 @@ namespace Moonwell
         /// <summary>Installs the package on a world; tests give a fake one. Throws ArgumentException, and changes nothing, when the rects are not four floats for each name.</summary>
         internal static void Install(IAreaWorld host, string[] names, float[] rects)
         {
+#if !MOONWELL_LUA
+            host = Worlds.Wrap(host);
+#endif
             if (rects.Length != names.Length * 4)
             {
                 throw new ArgumentException("Each region needs four floats: " + names.Length + " names and " + rects.Length + " floats.");
