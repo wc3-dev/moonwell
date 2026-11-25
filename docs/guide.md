@@ -2612,6 +2612,12 @@ public class GuardTests
   `Unit.Create<Human.Units.Footman>(...)` and `ObjectTypes.IdOf<T>` work in both; the map's own classes, its
   `[Replaces]` ones too, are known only with the map's start. Either takes a `seed`: it gives the dice of the attacks,
   and the seed after it the map's own random numbers (`Game.Random` and a `Dice` made without a seed).
+- `Simulation.Start(map, components: [new Melee(), new MeleeAi()])` starts those components in place of the map's
+  `Components`, each with its `OnGameStart`, to test a mode the map's start leaves out; the map's slots, classes and
+  `PlayerComponents` stay. A component added after the start hears no `OnGameStart`, as in the game.
+- With the [Interactions](#interactions-and-finding) package in the map, `Find`, interactions and gizmos answer from the
+  simulation's units where they stand: a unit has a place while it is alive, shown and not in a transport, and an item
+  while it lies on the ground. No destructable is a tree there: `IsTree()` reads false.
 - With a map, a player's files go in the folder the build would pick: the map's `SaveFolder`, else its name, else the
   map project's name, in letters and digits only, so `sim.World.Files` holds `MyRpg\settings.txt`. An empty game writes
   under `Map`. A computer's slot has its `Slot`'s `Name`, as in the game; a person's slot stays `Player 1`, where the

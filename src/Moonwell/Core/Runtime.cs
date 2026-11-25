@@ -177,13 +177,13 @@ namespace Moonwell
             ((NativeWorld)World).OpenLog(map.Name);
         }
 
-        /// <summary>Runs the register step, with every maker registered before any class's constructor runs (ObjectTypes.Registering), then adds the map's starting components to the game, in list order, and its player components to each player in the game; Start runs it as the setup.</summary>
-        internal static void Install(Map map, Action register)
+        /// <summary>Runs the register step, with every maker registered before any class's constructor runs (ObjectTypes.Registering), then adds the map's starting components to the game, in list order, or those given in their place (a Simulation's), and its player components to each player in the game; Start runs it as the setup.</summary>
+        internal static void Install(Map map, Action register, List<GameComponent>? startComponents = null)
         {
             SaveGame.Key = map.SaveKey;
             Team.Install(map.StartSlots);
             ObjectTypes.Registering(register);
-            var components = map.StartComponents;
+            var components = startComponents ?? map.StartComponents;
             for (var i = 0; i < components.Count; i++)
             {
                 Game.Instance.Add(components[i]);

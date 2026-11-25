@@ -10,7 +10,8 @@ namespace Moonwell
     /// and mana, and stand 0.16 s at each order, while Moonwell's timers and reactions run as in the game. Each swing and
     /// each hit from code goes through the damage package's stages over the fake's armor, and a swing reads its unit's damage and
     /// attack speed bonus as they are then. The same seed gives the same run. Pathing, collision, missiles' flight, what spells
-    /// do, buffs, vision and turning are left to the game, and a hero's attributes add no damage, armor or attack speed. Its life counts its strength in a game started with a built map.
+    /// do, buffs, vision and turning are left to the game, and a hero's attributes add no damage, armor or attack speed. Find and
+    /// the interactions package answer from the fake's units. Its life counts its strength in a game started with a built map.
     /// </summary>
     public sealed class Simulation
     {
@@ -45,9 +46,11 @@ namespace Moonwell
         /// build would, then every other standard class as an empty game does; in Lua it registers nothing. World Editor's placed units, and the terrain, areas, input and physics
         /// systems, are left out; the damage and stats packages run, as in a map that uses them. On .NET a hero's MaxLife, MaxMana and Mana read their totals by the hero bonus the map's last
         /// build wrote into its assembly, as the build reads them, so a hero starts with the life its strength gives; a map not
-        /// built yet has none, and they read their base fields. A hero's attributes add no damage or armor.
+        /// built yet has none, and they read their base fields. A hero's attributes add no damage or armor. Components given
+        /// start in place of the map's own starting components, in list order, each hearing OnGameStart, for a test of a part of
+        /// the map its start leaves out; the map's slots, classes and player components stay. An empty list starts none.
         /// </summary>
-        public static Simulation Start(Map map, int seed = 1)
+        public static Simulation Start(Map map, int seed = 1, List<GameComponent>? components = null)
         {
             var simulation = Begin(seed);
 #if !MOONWELL_LUA
@@ -56,13 +59,13 @@ namespace Moonwell
             Seat(simulation.World, map.StartSlots);
             Runtime.InstallSaveFolder(FolderOf(map));
 #if MOONWELL_LUA
-            Runtime.Begin(() => Runtime.Install(map, () => { }));
+            Runtime.Begin(() => Runtime.Install(map, () => { }, components));
 #else
             Runtime.Begin(() => Runtime.Install(map, () =>
             {
                 Registry.Register(map);
                 Registry.RegisterStandard();
-            }));
+            }, components));
 #endif
             return simulation;
         }
@@ -73,6 +76,7 @@ namespace Moonwell
             var world = FakeWorld.Install();
             world.StartPlay(seed);
             world.InstallDamage();
+            SimulatedInteractionWorld.Install(world);
             // The stats package acts on a unit only for a stat the map set, so a map that does not use it sees no change.
             StatsSystem.Install();
             return new Simulation(world);

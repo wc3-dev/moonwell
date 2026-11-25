@@ -73,6 +73,48 @@ namespace Moonwell.Testing
         }
     }
 
+    /// <summary>The map-components case's game component, given in place of the map's own: counts the game's starts.</summary>
+    public sealed class StandInStart : GameComponent
+    {
+        /// <summary>How many times the game started.</summary>
+        public int Starts;
+
+        /// <summary>Counts the start.</summary>
+        public override void OnGameStart()
+        {
+            Starts++;
+        }
+    }
+
+    /// <summary>The interactions case's aura: 300 around its holder, ticking every half second, counting its meetings and partings.</summary>
+    public sealed class SimulatedAura : Interaction<Unit, Unit>
+    {
+        /// <summary>How many pairs met.</summary>
+        public int Meets;
+
+        /// <summary>How many pairs parted.</summary>
+        public int Parts;
+
+        /// <summary>A range of 300 and a tick of 0.5 s.</summary>
+        public SimulatedAura()
+        {
+            Range = 300.0f;
+            Tick = 0.5f;
+        }
+
+        /// <summary>Counts the meeting.</summary>
+        public override void OnMeet(Pair pair)
+        {
+            Meets++;
+        }
+
+        /// <summary>Counts the parting.</summary>
+        public override void OnPart(Pair pair)
+        {
+            Parts++;
+        }
+    }
+
     /// <summary>A unit component that orders a walker to walk the first time its unit is hit, inside the damage reaction.</summary>
     public sealed class OrderOnHit : UnitComponent
     {
@@ -522,6 +564,66 @@ namespace Moonwell.Testing
             Expect.True(sim.RunUntil(() => marcher.CurrentOrder == "", 2.0f), "and arrives");
             Expect.Near(1.26f, sim.Time, "at step 63"); // 63 / 50
             Expect.Equal(1, start.Starts, "the game started once");
+        }
+
+        /// <summary>Start(map, components) starts the components given in place of the map's own, each hearing OnGameStart once; the map's slots and player components stay, and an empty list starts none.</summary>
+        public static void MapComponents(FakeWorld world)
+        {
+            var standIn = new StandInStart();
+            Simulation.Start(new MarchMap(), components: new List<GameComponent> { standIn });
+            Expect.Equal(1, standIn.Starts, "the given component started once");
+            Expect.Equal(1, Game.Instance.GetAll<StandInStart>().Count, "on the game");
+            Expect.Equal(0, Game.Instance.GetAll<MarchStart>().Count, "the map's own is left out");
+            Expect.Equal(1, Player.Two.GetAll<MarchSeat>().Count, "the map's player components stay");
+            Expect.True(Player.One.IsAlly(Player.Three) && Player.One.IsEnemy(Player.Two), "and its teams");
+
+            Simulation.Start(new MarchMap(), components: new List<GameComponent>());
+            Expect.True(Game.Instance.GetAll<StandInStart>().Count == 0 && Game.Instance.GetAll<MarchStart>().Count == 0, "an empty list starts none");
+            Expect.Equal(1, Player.One.GetAll<MarchSeat>().Count, "the player components still");
+        }
+
+        /// <summary>Find answers from the simulated units: those in range, alive and shown, at the place they walked to.</summary>
+        public static void FindsUnits(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Walker, WalkerNumbers());
+            var near = Make(Walker, Player.One, 100.0f, 0.0f);
+            var far = Make(Walker, Player.Two, 1000.0f, 0.0f);
+            var found = Find.InRange<Unit>(0.0f, 0.0f, 300.0f);
+            Expect.True(found.Count == 1 && found[0] == near, "the near unit alone, not " + found.Count);
+            Expect.True(Find.Closest<Unit>(1000.0f, 0.0f, 100.0f) == far, "the far one where it stands");
+
+            far.OrderAt("move", 200.0f, 0.0f);
+            Expect.True(sim.RunUntil(() => far.CurrentOrder == "", 5.0f), "it walks in");
+            sim.Run(0.2f); // past a CellCheck
+            Expect.Equal(2, Find.InRange<Unit>(0.0f, 0.0f, 300.0f).Count, "both once it stands at 200");
+            near.Kill();
+            sim.Run(0.2f);
+            found = Find.InRange<Unit>(0.0f, 0.0f, 300.0f);
+            Expect.True(found.Count == 1 && found[0] == far, "the dead one has no place");
+        }
+
+        /// <summary>An interaction meets a unit that walks into its range and parts from it when it walks out.</summary>
+        public static void Interacts(FakeWorld world)
+        {
+            var sim = Simulation.Start();
+            sim.SetNumbers(Walker, WalkerNumbers());
+            var holder = Make(Walker, Player.One, 0.0f, 0.0f);
+            var other = Make(Walker, Player.Two, 1000.0f, 0.0f);
+            var aura = holder.Interact(new SimulatedAura(), Game.Instance);
+            sim.Run(1.0f);
+            Expect.Equal(0, aura.Meets, "none while it is 1000 away");
+
+            other.OrderAt("move", 200.0f, 0.0f);
+            Expect.True(sim.RunUntil(() => other.CurrentOrder == "", 5.0f), "it walks in");
+            sim.Run(1.0f); // two ticks
+            Expect.Equal(1, aura.Meets, "met once within 300");
+            Expect.Equal(0, aura.Parts, "and not parted");
+
+            other.OrderAt("move", 1000.0f, 0.0f);
+            Expect.True(sim.RunUntil(() => other.CurrentOrder == "", 5.0f), "it walks out");
+            sim.Run(1.0f);
+            Expect.Equal(1, aura.Parts, "parted once it left");
         }
 
         /// <summary>Alive counts the units a player owns that the fake made, alive and not removed, before and after a death and a removal.</summary>
