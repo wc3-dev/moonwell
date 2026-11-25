@@ -148,6 +148,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "simulation.stop", Run = SimulationCases.Stop });
             list.Add(new Case { Name = "simulation.alive", Run = SimulationCases.Alive });
             list.Add(new Case { Name = "simulation.map-start", Run = SimulationCases.MapStart });
+            list.Add(new Case { Name = "simulation.map-components", Run = SimulationCases.MapComponents });
+            list.Add(new Case { Name = "simulation.find", Run = SimulationCases.FindsUnits });
+            list.Add(new Case { Name = "simulation.interact", Run = SimulationCases.Interacts });
             list.Add(new Case { Name = "simulation.smart", Run = SimulationCases.Smart });
             list.Add(new Case { Name = "simulation.removed-target", Run = SimulationCases.RemovedTarget });
             list.Add(new Case { Name = "simulation.reaction-order", Run = SimulationCases.ReactionOrder });
