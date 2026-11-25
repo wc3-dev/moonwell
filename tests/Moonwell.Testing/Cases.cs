@@ -45,6 +45,7 @@ namespace Moonwell.Testing
             AddInput(list);
             AddFrames(list);
             AddKitStats(list);
+            AddKitTheme(list);
             AddKeys(list);
             AddOrders(list);
             AddSelection(list);
@@ -1959,6 +1960,17 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "fdf.child-makes-its-own", Run = FdfCases.ChildMakesItsOwn });
             list.Add(new Case { Name = "fdf.found-label-lets-clicks-through", Run = FdfCases.FoundLabelLetsClicksThrough });
             list.Add(new Case { Name = "fdf.ended-part-refused", Run = FdfCases.EndedPartRefused });
+        }
+
+        /// <summary>Adds the cases of a theme on every kit part (J64, J84, J63, J70, J110), apart from AddFrames, which is near Lua's limit of 200 locals.</summary>
+        private static void AddKitTheme(List<Case> list)
+        {
+            list.Add(new Case { Name = "kit.theme-parts-take-their-own", Run = KitThemeCases.PartsTakeTheirOwn });
+            list.Add(new Case { Name = "kit.theme-other-parts", Run = KitThemeCases.OtherParts });
+            list.Add(new Case { Name = "kit.theme-bar-keeps-map-texture", Run = KitThemeCases.BarKeepsMapTexture });
+            list.Add(new Case { Name = "kit.theme-close-button", Run = KitThemeCases.CloseButton });
+            list.Add(new Case { Name = "kit.theme-list-when-made", Run = KitThemeCases.ListThemeWhenMade });
+            list.Add(new Case { Name = "kit.theme-talent-tips", Run = KitThemeCases.TalentTipsTakeWindowTheme });
         }
 
         /// <summary>Adds the kit's stat cases, apart from AddFrames, which is near Lua's limit of 200 locals.</summary>
