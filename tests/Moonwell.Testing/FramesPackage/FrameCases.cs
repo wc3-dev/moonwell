@@ -1027,6 +1027,13 @@ namespace Moonwell.Testing
             Expect.Near(0.4f, fill.Width, "a new width");
             bar.Max = 4.0f;
             Expect.Near(0.1f, fill.Width, "a new range");
+            Expect.Equal(true, fill.Shown, "shown while it fills some");
+            bar.Value = 0.0f;
+            Expect.Equal(false, fill.Shown, "empty: the fill hidden");
+            Expect.Near(Moonwell.ProgressBar.EmptyWidth, fill.Width, "and shrunk, never sized 0, which the game does not take");
+            bar.Value = 2.0f;
+            Expect.Equal(true, fill.Shown, "shown again");
+            Expect.Near(0.2f, fill.Width, "at its share");
         }
 
         /// <summary>A bar's look (its path ends in .Bar.blp) is cut: the fill shows the build's step copy nearest its share in 64ths, the look itself when full and nothing when empty, painted again only when the step changes (decision 322); any other texture is squashed whole.</summary>
