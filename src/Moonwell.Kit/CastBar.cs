@@ -35,15 +35,15 @@ namespace Moonwell
             height = 0.028f;
             sized = true;
             Visible = false;
-            // Inside the border's edge, 0.0065 deep in the game's control border; the icon covers the left end whole.
-            bar = KitTicks.Place(this, new ProgressBar(), 0.0345f, 0.0065f, 0.159f, 0.015f);
+            // Laid by Dress, by the theme's border; the icon covers the left end whole.
+            bar = Add(new ProgressBar());
             icon = KitTicks.Place(this, new Image(), 0.0f, 0.0f, 0.028f, 0.028f);
             label = Add(new Label { Alignment = FramePoint.Center });
             label.Fill(bar);
             Dress();
         }
 
-        /// <summary>The bar's look, Kit.Theme as it was made unless set: the Hud border, the CastBar and Interrupted fills (each cast starts in the theme's), and the text's colour, size and font. Set it before the bar is added, as the size and font are read when the label is made.</summary>
+        /// <summary>The bar's look, Kit.Theme as it was made unless set: the Hud border, the bar laid inside the border, or against the icon with none, the CastBar and Interrupted fills (each cast starts in the theme's), and the text's colour, size and font. Set it before the bar is added, as the size and font are read when the label is made.</summary>
         [LocalSafe]
         public Theme Theme
         {
@@ -60,9 +60,19 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Gives the pieces the theme, and lays the bar by its border: inside the border's edge, 0.0065 deep in the game's control border, or, with no border (Hud ""), against the icon's right edge across the rest, as nothing fills a gap there (Sven's gate run, 11-25).</summary>
         private void Dress()
         {
             Template = theme.Hud;
+            if (theme.Hud.Length > 0)
+            {
+                KitTicks.Place(this, bar, 0.0345f, 0.0065f, 0.159f, 0.015f);
+            }
+            else
+            {
+                KitTicks.Place(this, bar, 0.028f, 0.0065f, 0.172f, 0.015f);
+            }
+
             bar.Texture = casting || fading == null ? theme.CastBar : theme.Interrupted;
             label.Color = theme.Text;
             theme.Style(label, theme.BarTextSize);
