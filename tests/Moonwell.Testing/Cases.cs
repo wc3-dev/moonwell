@@ -72,6 +72,7 @@ namespace Moonwell.Testing
             AddSimulation(list);
             AddAbilitiesAndControl(list);
             AddUnitPlayerReads(list);
+            AddCatchAndOpen(list);
             return list;
         }
 
@@ -83,6 +84,15 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "players.units", Run = UnitPlayerReadCases.PlayerUnits });
             list.Add(new Case { Name = "players.hero-limits", Run = UnitPlayerReadCases.PlayerHeroLimits });
             list.Add(new Case { Name = "players.sees", Run = UnitPlayerReadCases.PlayerSees });
+        }
+
+        /// <summary>Adds the cases of an empty panel or an image catching clicks, an icon slot placed alone and the top bar's dialogs opened from code (J79, J80, J162).</summary>
+        private static void AddCatchAndOpen(List<Case> list)
+        {
+            list.Add(new Case { Name = "frames.panel-catches-clicks", Run = CatchAndOpenCases.PanelCatchesClicks });
+            list.Add(new Case { Name = "frames.image-catches-clicks", Run = CatchAndOpenCases.ImageCatchesClicks });
+            list.Add(new Case { Name = "kit.icon-slot-alone", Run = CatchAndOpenCases.IconSlotAlone });
+            list.Add(new Case { Name = "hud.open-top-bar-dialogs", Run = CatchAndOpenCases.OpenTopBarDialogs });
         }
 
         /// <summary>Adds the cases for a unit's abilities, the live numbers an ability keeps a base for, attack range as a stat, an owned damage in a simulated swing, the buff marks and the crowd control reduction.</summary>

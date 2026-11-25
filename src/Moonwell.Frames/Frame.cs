@@ -89,6 +89,9 @@ namespace Moonwell
         /// <summary>The frame's tooltip; null unless set.</summary>
         internal Tooltip? tooltip;
 
+        /// <summary>Whether the map set the frame to catch the clicks on it (Panel.CatchesClicks, Image.CatchesClicks).</summary>
+        internal bool catchesClicks;
+
         /// <summary>The template the game's frame was made from, which the pool matches; empty until made.</summary>
         internal string madeTemplate = "";
 
@@ -506,10 +509,30 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Whether the frame takes the mouse for the map's sake: it is listened to, or has a tooltip.</summary>
+        /// <summary>Whether the frame takes the mouse for the map's sake: it is listened to, has a tooltip, or is set to catch clicks.</summary>
         internal bool WantsMouse()
         {
-            return listened != 0 || tooltip != null;
+            return listened != 0 || tooltip != null || catchesClicks;
+        }
+
+        /// <summary>Sets whether the frame catches the clicks on it: its catcher, an empty text over it, is made or turned on, or let go once nothing else wants the mouse.</summary>
+        internal void CatchClicks(bool value)
+        {
+            if (HasEnded || value == catchesClicks)
+            {
+                return;
+            }
+
+            var wanted = WantsMouse();
+            catchesClicks = value;
+            if (value && !wanted)
+            {
+                PrepareMouse();
+            }
+            else if (!value && wanted)
+            {
+                LetMouseGo();
+            }
         }
 
         /// <summary>Gives the game again whether the frame takes the mouse once nothing the map set wants it, so a catcher over an empty panel or an image lets clicks through again.</summary>

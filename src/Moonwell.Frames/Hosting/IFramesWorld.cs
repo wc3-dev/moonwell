@@ -116,6 +116,9 @@ namespace Moonwell.Hosting
         /// <summary>Hides the game's HUD on this machine, or shows it again; the command buttons and life bars stay.</summary>
         void HideHud(bool hidden);
 
+        /// <summary>Clicks a frame of the game's on this machine, as the player would: a top bar button opens its dialog.</summary>
+        void ClickFrame(framehandle frame);
+
         /// <summary>Gives a frame another parent.</summary>
         void ParentFrame(framehandle frame, framehandle parent);
 
