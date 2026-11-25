@@ -10,7 +10,7 @@ namespace Moonwell.AI
     /// not flip between two options scoring about the same. A choice belongs to one brain, as it holds the option it picked:
     /// make it in the brain's constructor, where the options' actions are the brain's methods.
     /// </summary>
-    public sealed class Choice : IEnumerable<Option>
+    public sealed class Choice : IEnumerable<Option>, IChoice
     {
         /// <summary>The options, in the order added.</summary>
         internal readonly List<Option> options = new List<Option>();
@@ -26,10 +26,10 @@ namespace Moonwell.AI
         private bool listed;
 
         /// <summary>The option the AI tools' -force has win at every Pick, whatever the scores; null for none.</summary>
-        internal Option? forced;
+        private Option? forced;
 
         /// <summary>The option the AI tools' log last saw as Current.</summary>
-        internal Option? logged;
+        private Option? logged;
 #endif
 
         /// <summary>Adds an option, after those added before.</summary>
@@ -122,11 +122,73 @@ namespace Moonwell.AI
         }
 #if DEBUG
 
-        /// <summary>-force: has an option win at every Pick whatever the scores, or no longer with null.</summary>
-        internal void Force(Option? option)
+        /// <summary>How many options the choice has.</summary>
+        int IChoice.OptionCount => options.Count;
+
+        /// <summary>The place of the current option; -1 for none.</summary>
+        int IChoice.CurrentIndex => Current != null ? options.IndexOf(Current) : -1;
+
+        /// <summary>The name of the option at a place.</summary>
+        string IChoice.OptionName(int index)
         {
-            forced = option;
+            return options[index].Name;
+        }
+
+        /// <summary>The last score of the option at a place.</summary>
+        float IChoice.OptionScore(int index)
+        {
+            return options[index].lastScore;
+        }
+
+        /// <summary>Whether -force has the option at a place win.</summary>
+        bool IChoice.IsForced(int index)
+        {
+            return forced == options[index];
+        }
+
+        /// <summary>-force: has the option at a place win at every Pick whatever the scores, or no longer with -1.</summary>
+        void IChoice.Force(int index)
+        {
+            forced = index >= 0 ? options[index] : null;
             tooled = true;
+        }
+
+        /// <summary>"  life 0.20, enemies near 4.00": the current option's inputs with their last values; empty with none.</summary>
+        string IChoice.CurrentText()
+        {
+            var text = string.Empty;
+            var inputs = Current != null ? Current.inputs : null;
+            for (var k = 0; inputs != null && k < inputs.Count; k++)
+            {
+                text = text + (k == 0 ? "  " : ", ") + inputs[k].Name + " " + BrainTools.Hundredths(inputs[k].lastValue);
+            }
+
+            return text;
+        }
+
+        /// <summary>Notes the current option for the log.</summary>
+        void IChoice.LogNote()
+        {
+            logged = Current;
+        }
+
+        /// <summary>"flee 0.61 (was fight 0.40)" when the current option changed since it was noted, noting it anew; null when it didn't.</summary>
+        string? IChoice.LogChange()
+        {
+            if (Current == logged)
+            {
+                return null;
+            }
+
+            var text = Picked(Current) + " (was " + Picked(logged) + ")";
+            logged = Current;
+            return text;
+        }
+
+        /// <summary>"flee 0.61" for an option and its last score, "none" for null.</summary>
+        private static string Picked(Option? option)
+        {
+            return option != null ? option.Name + " " + BrainTools.Hundredths(option.lastScore) : "none";
         }
 
         /// <summary>Lists the choice on the blackboard of its first Pick, for the AI tools' view, and has a forced option win.</summary>

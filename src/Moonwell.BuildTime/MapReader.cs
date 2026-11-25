@@ -27,6 +27,8 @@ namespace Moonwell.BuildTime
 
         private Cells? cells;
 
+        private float[]? heights;
+
         /// <summary>Makes a reader of a World Editor map folder.</summary>
         /// <param name="mapFolder">The map's folder, <c>map</c> in a map project.</param>
         /// <param name="assetsFolder">The project's <c>assets</c> folder, whose files stand in for the map's, or null for none.</param>
@@ -110,6 +112,22 @@ namespace Moonwell.BuildTime
         /// <summary>Every pathing cell of the map, to narrow to a region, filter and measure.</summary>
         /// <exception cref="BuildFailure">The map has no pathing or ground file, or one cannot be read.</exception>
         public Cells Cells => cells ??= Cells.All(new PathingGrid(PathingMap, Environment));
+
+        /// <summary>
+        /// The ground's height at a point, as <c>Terrain.Height</c> gives it in the game before anything changes it: the four
+        /// corners of its 128 tile blended, each from <c>war3map.w3e</c> by the rule the build writes the game's terrain with
+        /// (cliff level 2 is 0, ramps raised as the game raises them, water's surface where it is above the ground). A point
+        /// outside the map reads its edge; on a bridge it reads the water or ground beneath, as <c>Terrain.Height</c> does.
+        /// </summary>
+        /// <param name="x">The point's x.</param>
+        /// <param name="y">The point's y.</param>
+        /// <exception cref="BuildFailure">The map has no ground file, or it cannot be read.</exception>
+        public float HeightAt(float x, float y)
+        {
+            var environment = Environment;
+            var corners = heights ??= Corners(environment);
+            return GroundHeights.Blend(GroundHeights.Columns(environment), GroundHeights.Rows(environment), environment.Left, environment.Bottom, x, y, index => corners[index]);
+        }
 
         /// <summary>The names of every file of the map, folders with <c>\</c>, in name order: those in <c>assets\</c> and those in <c>map.w3x\</c>, and any a test added.</summary>
         public IReadOnlyList<string> Files
@@ -212,6 +230,24 @@ namespace Moonwell.BuildTime
 
         // A file's name with \ between folders, as the map's names are listed.
         private static string Normal(string name) => name.Replace('/', '\\');
+
+        // Every corner's height as the game's grid keeps it, worked out once.
+        private static float[] Corners(MapEnvironment environment)
+        {
+            var count = GroundHeights.Columns(environment) * GroundHeights.Rows(environment);
+            if (environment.TerrainTiles.Count != count)
+            {
+                throw new BuildFailure($"war3map.w3e lists {environment.TerrainTiles.Count} corners, but a map of {environment.Width} by {environment.Height} tiles has {count}");
+            }
+
+            var corners = new float[count];
+            for (var index = 0; index < count; index++)
+            {
+                corners[index] = GroundHeights.Kept(GroundHeights.Corner(environment, index, out _));
+            }
+
+            return corners;
+        }
 
         private string? PathOf(string name)
         {

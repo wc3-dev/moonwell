@@ -20,6 +20,15 @@ namespace Moonwell
             World = world;
         }
 
+#if !MOONWELL_LUA
+        /// <summary>The first raw native's failure reported in the map's reactions and not yet thrown, with the native's name and the reaction; null for none.</summary>
+        private Exception? nativeFailure;
+
+        private string nativeName = string.Empty;
+
+        private string nativeWhere = string.Empty;
+#endif
+
         /// <summary>The fake world the game runs on. Its own Advance moves time without the play: units neither walk nor fight, and the steps Run counts fall behind, so it is not to be mixed with Run.</summary>
         public FakeWorld World { get; }
 
@@ -35,6 +44,7 @@ namespace Moonwell
             var simulation = Begin(seed);
 #if !MOONWELL_LUA
             Registry.RegisterStandard();
+            simulation.ThrowNative();
 #endif
             return simulation;
         }
@@ -66,6 +76,7 @@ namespace Moonwell
                 Registry.Register(map);
                 Registry.RegisterStandard();
             }, components));
+            simulation.ThrowNative();
 #endif
             return simulation;
         }
@@ -79,7 +90,11 @@ namespace Moonwell
             SimulatedInteractionWorld.Install(world);
             // The stats package acts on a unit only for a stat the map set, so a map that does not use it sees no change.
             StatsSystem.Install();
-            return new Simulation(world);
+            var simulation = new Simulation(world);
+#if !MOONWELL_LUA
+            Errors.Reported = simulation.Noted;
+#endif
+            return simulation;
         }
 
         /// <summary>Runs the seconds in whole steps: rounded to whole milliseconds, then to whole steps with a half step up, and at least one; none for 0 or less. Each step's time is its number of steps since the start, so a World.Advance between runs, which moves time without the play, is not to be mixed with it.</summary>
@@ -88,14 +103,14 @@ namespace Moonwell
             var steps = StepsOf(seconds);
             for (var i = 0; i < steps; i++)
             {
-                World.PlayOneStep();
+                PlayStep();
             }
         }
 
         /// <summary>Runs step by step, for at most the seconds as Run counts them, until the check holds: true when it held, before the first step too; false when it never did.</summary>
         public bool RunUntil(Func<bool> check, float seconds)
         {
-            if (check())
+            if (Holds(check))
             {
                 return true;
             }
@@ -103,8 +118,8 @@ namespace Moonwell
             var steps = StepsOf(seconds);
             for (var i = 0; i < steps; i++)
             {
-                World.PlayOneStep();
-                if (check())
+                PlayStep();
+                if (Holds(check))
                 {
                     return true;
                 }
@@ -112,6 +127,74 @@ namespace Moonwell
 
             return false;
         }
+
+        /// <summary>Plays one step; on .NET a raw native's failure in it, thrown or reported by a reaction, is thrown again with the native's name and the way round it.</summary>
+        private void PlayStep()
+        {
+#if MOONWELL_LUA
+            World.PlayOneStep();
+#else
+            try
+            {
+                World.PlayOneStep();
+            }
+            catch (BadImageFormatException error) when (RawNatives.NameOf(error) != null)
+            {
+                throw RawNatives.Explained(RawNatives.NameOf(error)!, string.Empty, error);
+            }
+
+            ThrowNative();
+#endif
+        }
+
+        /// <summary>Whether a RunUntil's check holds; on .NET a raw native's failure in it is thrown again as PlayStep throws one.</summary>
+        private static bool Holds(Func<bool> check)
+        {
+#if MOONWELL_LUA
+            return check();
+#else
+            try
+            {
+                return check();
+            }
+            catch (BadImageFormatException error) when (RawNatives.NameOf(error) != null)
+            {
+                throw RawNatives.Explained(RawNatives.NameOf(error)!, string.Empty, error);
+            }
+#endif
+        }
+
+#if !MOONWELL_LUA
+        /// <summary>Keeps the first raw native's failure among the errors the runtime reports, which it shows and goes on from, for the next ThrowNative.</summary>
+        private void Noted(string label, Exception error)
+        {
+            if (nativeFailure != null)
+            {
+                return;
+            }
+
+            var name = RawNatives.NameOf(error);
+            if (name != null)
+            {
+                nativeFailure = error;
+                nativeName = name;
+                nativeWhere = label;
+            }
+        }
+
+        /// <summary>Throws the raw native's failure kept since the last, with the native's name, the reaction it failed in and the way round it.</summary>
+        private void ThrowNative()
+        {
+            if (nativeFailure == null)
+            {
+                return;
+            }
+
+            var error = nativeFailure;
+            nativeFailure = null;
+            throw RawNatives.Explained(nativeName, nativeWhere, error);
+        }
+#endif
 
         /// <summary>Gives a unit type its numbers, for the units of the type made from now on; on .NET they replace what its object data gives. A unit takes its range, cooldown, damage, dice and acquisition range when it is made, though a swing adds the unit's green damage bonus and divides the cooldown by 1 + its attack speed bonus as they are then; its move speed and armor are read as they are at each step.</summary>
         public void SetNumbers(int typeId, UnitNumbers numbers)

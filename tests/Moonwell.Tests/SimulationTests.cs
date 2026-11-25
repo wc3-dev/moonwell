@@ -99,6 +99,74 @@ namespace Moonwell.Tests
             Expect.Near(700.0f, standard.MaxLife, "the standard Mountain King");
         }
 
+        /// <summary>A map whose game component calls a raw native: at its start, or 0.1 s after, or never.</summary>
+        private sealed class RawNativeMap : Map
+        {
+            public RawNativeMap(bool atStart, bool later)
+            {
+                Components.Add(new RawNativeStart { AtStart = atStart, Later = later });
+            }
+        }
+
+        /// <summary>Calls GetWorldBounds, the game's own, where its map says; Moonwell catches and reports what a reaction throws.</summary>
+        private sealed class RawNativeStart : GameComponent
+        {
+            public bool AtStart;
+            public bool Later;
+
+            public override void OnGameStart()
+            {
+                if (AtStart)
+                {
+                    Natives.GetWorldBounds();
+                }
+
+                After(0.1f, () =>
+                {
+                    if (Later)
+                    {
+                        Natives.GetWorldBounds();
+                    }
+                });
+            }
+        }
+
+        /// <summary>The error a simulation throws for a raw native: named, with the reaction it failed in and the way round it.</summary>
+        private static void ExpectExplained(Exception error, string where)
+        {
+            var explained = Assert.IsType<InvalidOperationException>(error);
+            Assert.Contains("Natives.GetWorldBounds runs only in the game", explained.Message);
+            Assert.Contains("#if MOONWELL_LUA", explained.Message);
+            Assert.Contains("#else", explained.Message);
+            if (where.Length > 0)
+            {
+                Assert.Contains("(in " + where + ")", explained.Message);
+            }
+
+            Assert.IsType<BadImageFormatException>(explained.InnerException);
+        }
+
+        /// <summary>A raw native in a reaction at the start, which Moonwell reports and goes on from, makes Start throw with its name and the way round it.</summary>
+        [Fact]
+        public void ARawNativeAtTheStartIsNamed()
+        {
+            ExpectExplained(Record.Exception(() => Simulation.Start(new RawNativeMap(atStart: true, later: false)))!, "RawNativeStart.OnGameStart");
+        }
+
+        /// <summary>A raw native in a timer makes Run throw at that step, and one in a RunUntil's check makes RunUntil throw; a native on a path never taken throws nothing.</summary>
+        [Fact]
+        public void ARawNativeInARunIsNamed()
+        {
+            var sim = Simulation.Start(new RawNativeMap(atStart: false, later: true));
+            sim.Run(0.08f);
+            ExpectExplained(Record.Exception(() => sim.Run(0.04f))!, "");
+            Expect.Near(0.1f, sim.Time, "at the timer's step");
+
+            sim = Simulation.Start(new RawNativeMap(atStart: false, later: false));
+            sim.Run(1.0f);
+            ExpectExplained(Record.Exception(() => sim.RunUntil(() => Natives.GetWorldBounds() == null, 1.0f))!, "");
+        }
+
         /// <summary>Start(map, components) registers the map's classes as Start(map) does, with the components given in place of the map's own.</summary>
         [Fact]
         public void GivenComponentsKeepTheMapsClasses()

@@ -219,6 +219,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.utility.keep", Run = UtilityCases.Keep });
             list.Add(new Case { Name = "ai.utility.run", Run = UtilityCases.Run });
             list.Add(new Case { Name = "ai.utility.in-a-brain", Run = UtilityCases.InABrain });
+            list.Add(new Case { Name = "ai.utility.list-scores", Run = ListChoiceCases.Scores });
+            list.Add(new Case { Name = "ai.utility.list-pick", Run = ListChoiceCases.Pick });
+            list.Add(new Case { Name = "ai.utility.list-in-a-brain", Run = ListChoiceCases.InABrain });
             list.Add(new Case { Name = "ai.simulation.brains-win", Run = SimulationBrainCases.BrainsWin });
         }
 
@@ -271,6 +274,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.ai-tools.fact", Run = BrainToolsCases.SetFact });
             list.Add(new Case { Name = "debug.ai-tools.fact-up-the-chain", Run = BrainToolsCases.FactUpTheChain });
             list.Add(new Case { Name = "debug.ai-tools.log-written", Run = BrainToolsCases.LogWritten });
+            list.Add(new Case { Name = "debug.ai-tools.view-list-choice", Run = BrainToolsCases.ViewListChoice });
             list.Add(new Case { Name = "debug.ai-tools.wake", Run = BrainToolsCases.Wake });
             list.Add(new Case { Name = "debug.ai-tools.off-and-map-commands", Run = BrainToolsCases.OffAndMapCommands });
             list.Add(new Case { Name = "debug.ai-tools.enum-and-nullable-facts", Run = BrainToolsCases.EnumAndNullableFacts });
@@ -1372,6 +1376,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "terrain.height.step", Run = HeightCases.Step });
             list.Add(new Case { Name = "terrain.height.cliff-blend", Run = HeightCases.CliffBlend });
             list.Add(new Case { Name = "terrain.height.ramp", Run = HeightCases.Ramp });
+            list.Add(new Case { Name = "terrain.height.cliff-level", Run = HeightCases.CliffLevel });
             list.Add(new Case { Name = "terrain.height.normal-and-slope", Run = HeightCases.NormalAndSlope });
             list.Add(new Case { Name = "terrain.height.not-a-number", Run = HeightCases.NotANumber });
             list.Add(new Case { Name = "terrain.height.vector-point", Run = HeightCases.VectorPoint });
