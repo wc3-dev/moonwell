@@ -167,6 +167,16 @@ namespace Moonwell.Tests
             ExpectExplained(Record.Exception(() => sim.RunUntil(() => Natives.GetWorldBounds() == null, 1.0f))!, "");
         }
 
+        /// <summary>Start(map, components) registers the map's classes as Start(map) does, with the components given in place of the map's own.</summary>
+        [Fact]
+        public void GivenComponentsKeepTheMapsClasses()
+        {
+            Simulation.Start(new EmptyMap(), components: []);
+            var steady = Unit.Create<SteadyKing>(Player.One, 0.0f, 0.0f, Game.Instance);
+            Expect.True(steady is SteadyKing, "the map's own class");
+            Expect.Near(700.0f, steady.MaxLife, "with the build's hero bonus");
+        }
+
         /// <summary>Start() has no map and so no build's bonus: a hero reads its base field, after a Start(map) too.</summary>
         [Fact]
         public void HeroLifeWithNoMapIsItsBaseField()
