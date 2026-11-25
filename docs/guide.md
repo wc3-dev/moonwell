@@ -2355,7 +2355,9 @@ unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen 
   still counts near.
 - `Fights = u => ...` keeps it to a set of units: asked at each think for every unit it finds, enemy or ally, an
   attacker too, a unit it says false for is neither met nor counted in `EnemiesNear`, `AlliesNear` or the outnumbering,
-  so an arena's walkers leave out units of the same players outside their battle. With none, every unit.
+  so an arena's walkers leave out units of the same players outside their battle. The default leaves out Neutral
+  Passive's units (a gold mine, critters, a shop), which count as enemies; a map's own filter replaces it, so one that
+  should still leave them out says so (`u => u.Owner != Player.NeutralPassive && ...`). Set to null, every unit.
 - It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
   `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
   and walks back to where its fight started.
@@ -2399,7 +2401,8 @@ the best of them scores 1 and none scores 0:
   `To`, and stands there on hold position, or as near as it gets in a crowd. Only there does it judge again, and it
   comes back when its own reason is gone: pulled back hurt, at or above 70% of its life (`ComeBackAt`); outnumbered,
   once no longer outnumbered in its meet range where it stands, at any life. Then it is judged afresh. A `Below` and an
-  `Outnumbered` of 0 never pull back.
+  `Outnumbered` of 0 never pull back. The settings are read at each think, so a `Below` set to 0 while it walks back
+  for its life, or an `Outnumbered` set to 0 while it walks back outnumbered, lets it go at once, wherever it is.
 
 A map's own brain makes a `Fighter` and builds a tree of its own from the same nodes:
 
@@ -2488,7 +2491,8 @@ facts
 | `-brain Guard` | counts the brains of a class (in any case) and selects the next object holding one |
 | `-brainlog` | logs the selected object's brains; `-brainlog Guard` every brain of a class, those made later too; either again stops the log and writes it to `CustomMapData\Moonwell\brains.txt` |
 | `-force 3` | forces line 3: a `Select`'s or `Pick`'s child runs, the parent trying no other; a `When`'s condition reads true; a choice's option wins whatever the scores. `-force` alone lets go of every force on the selected object |
-| `-fact hurt true` | sets a written fact on the selected object's brains' blackboards: the value is the last word, read as the fact's `int`, `float`, `bool` (`true`, `false`, `1`, `0`) or `string` |
+| `-fact hurt true` | sets a written fact for the selected object's brains where each one's read finds it, up its chain (its own blackboard, its player's, the game's), or on its own when none holds it: the value is the last word, read as the fact's `int`, `float`, `bool` (`true`, `false`, `1`, `0`) or `string` |
+| `-fact game food 0` | sets it on the game's blackboard; `-fact player food 0` on the selected brain's player's, or with nothing selected yours |
 | `-wake` | wakes the selected object's brains |
 
 - The log keeps a line only when what won changes: a choice's `Current`, a `Select` or `Pick` running another child, or
@@ -2501,10 +2505,25 @@ facts
   ```
 
   One log runs at a time. It keeps the newest 2,000 lines, and the panel shows the last 5 while it runs.
+- A brain adds lines of its own reasoning with `Log(text)`, for a rule-based brain whose decisions are no choice or
+  tree: written in a think, a line is kept at the think's end, before its choices' and trees' changes, with the facts
+  read in that think; written anywhere else, at once with none. Nothing while the log doesn't follow the brain, and a
+  release build leaves the call out, text and all.
+
+  ```csharp
+  if (Read(FarmsMake) < Read(ColonyEats))
+  {
+      Log("farms short: " + Read(FarmsMake) + " for " + Read(ColonyEats));
+      PostFarm();
+  }
+  ```
+
 - A force holds until `-force` alone, with the mode off too. A `When` forced in a `Select` is both: the select runs it,
   and its condition reads true.
 - `-fact` finds the fact by its name, in any case, among the facts made so far. It refuses a worked-out fact, a name
-  two facts share, and a fact of another type.
+  two facts share, and a fact of another type. A fact whose own name starts with `game` or `player` is still found by
+  its whole name. Up the chain, `-fact food 0` on a unit whose player holds `food` changes it for every brain of that
+  player, as their reads find it there; a brain holding its own copy reads that first.
 - The commands answer only while the mode is on and are listed by `-help`; a map's own command of the same name wins.
   Everything they read and change is the same on every machine. A release build has none of it.
 

@@ -8,11 +8,11 @@ namespace Moonwell.AI.Combat
     /// </summary>
     public sealed class PullBack
     {
-        /// <summary>The share of its most life below which the fighter pulls back: 0.3, the default; 0 never pulls back for its life.</summary>
+        /// <summary>The share of its most life below which the fighter pulls back: 0.3, the default; 0 never pulls back for its life, and set to 0 while the fighter walks back for its life lets it go at its next check.</summary>
         [LocalSafe]
         public float Below { get; set; } = 0.3f;
 
-        /// <summary>How many enemies to each ally outnumber the fighter: 2, the default, pulls back with at least two enemies in its meet range to each ally there, its own unit counted and structures on neither side; 0 never pulls back for numbers.</summary>
+        /// <summary>How many enemies to each ally outnumber the fighter: 2, the default, pulls back with at least two enemies in its meet range to each ally there, its own unit counted and structures on neither side; 0 never pulls back for numbers, and set to 0 while the fighter walks back outnumbered lets it go at its next check.</summary>
         [LocalSafe]
         public float Outnumbered { get; set; } = 2f;
 

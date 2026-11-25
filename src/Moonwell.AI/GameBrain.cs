@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Moonwell.AI
 {
     /// <summary>
@@ -44,6 +46,23 @@ namespace Moonwell.AI
         public float Age<T>(Fact<T> fact)
         {
             return mind.Board.Age(fact);
+        }
+
+        /// <summary>
+        /// Writes a line of the brain's own reasoning in the AI tools' decision log while -brainlog follows the brain, as the log's own
+        /// lines show and with the facts the brain read in that think: "farms short: they make 8, the colony eats 10". Lines
+        /// written in a think are kept at its end, before its choices' and trees' changes; one written outside a think at once,
+        /// with no facts. Nothing while the log doesn't follow the brain; a release build leaves the call out, text and all.
+        /// </summary>
+        [Conditional("DEBUG")]
+        public void Log(string text)
+        {
+#if DEBUG
+            if (BrainLog.On)
+            {
+                BrainLog.Log(mind, text);
+            }
+#endif
         }
 
         /// <summary>The brain's work, run at its tick and when woken. One that throws is reported, and the other brains still think.</summary>

@@ -7,8 +7,8 @@ namespace Moonwell.AI
     /// <summary>
     /// The decision log of the debug mode (decision 346): -brainlog follows the selected object's brains, or every brain of a
     /// class, those made later too, and notes a line at a think when what won changes: a choice's Current, or a tree's running
-    /// branch (a Select or Pick running another child, a When cutting in or ending). Each line has the facts the brain read
-    /// in that think. It keeps the newest 2,000 lines, the panel shows the last 5, and stopping writes them to brains.txt.
+    /// branch (a Select or Pick running another child, a When cutting in or ending), and keeps each line the brain writes
+    /// with its Log. Each line has the facts the brain read in that think. It keeps the newest 2,000 lines, the panel shows the last 5, and stopping writes them to brains.txt.
     /// </summary>
     internal static class BrainLog
     {
@@ -60,6 +60,12 @@ namespace Moonwell.AI
         /// <summary>Each fact read, beside its name: "life 0.31 0.2s".</summary>
         private static List<string> reads = new List<string>();
 
+        /// <summary>The logged brain thinking now; null between thinks.</summary>
+        private static Mind? thinking;
+
+        /// <summary>The lines the thinking brain's Log wrote in this think, kept at its end with every fact it read.</summary>
+        private static List<string> written = new List<string>();
+
         /// <summary>Stops without writing and forgets the lines; the AI tools' install calls it with each game state.</summary>
         internal static void Reset()
         {
@@ -74,6 +80,8 @@ namespace Moonwell.AI
             thinkers = new List<Mind>();
             readNames = new List<string>();
             reads = new List<string>();
+            thinking = null;
+            written = new List<string>();
         }
 
         /// <summary>Starts the log, empty, for an object's brains, or with null for every brain of a class.</summary>
@@ -149,7 +157,37 @@ namespace Moonwell.AI
 
             readNames.Clear();
             reads.Clear();
+            written.Clear();
+            thinking = mind;
             Reading = true;
+        }
+
+        /// <summary>
+        /// A brain's own line, from its Log, while the log follows it: written in its think, it is kept at the think's end,
+        /// before the choices' and trees' lines, with every fact read in that think; written anywhere else, at once and with no
+        /// facts.
+        /// </summary>
+        internal static void Log(Mind mind, string text)
+        {
+            if (!Follows(mind) || mind.brain.actor == null)
+            {
+                return;
+            }
+
+            if (thinking == mind)
+            {
+                written.Add(text);
+                return;
+            }
+
+            try
+            {
+                KeepLine(mind, text, BrainTools.MindsOf(mind.brain.actor).Count, null);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Debug", error);
+            }
         }
 
         /// <summary>A fact a logged brain read in its think, with its value and age; one read again keeps its last value, and past 8 none is added.</summary>
@@ -172,8 +210,15 @@ namespace Moonwell.AI
         internal static void After(Mind mind)
         {
             Reading = false;
+            thinking = null;
             try
             {
+                for (var i = 0; i < written.Count; i++)
+                {
+                    Add(mind, written[i]);
+                }
+
+                written.Clear();
                 Changes(mind);
             }
             catch (Exception error)
@@ -312,16 +357,22 @@ namespace Moonwell.AI
         /// <summary>Keeps a line: "12.25 Footman 3  choice 1: flee 0.61 (was fight 0.40)  life 0.31 0.2s", the brain's class after its object when the object held more than one brain as the think began.</summary>
         private static void Add(Mind mind, string change)
         {
+            KeepLine(mind, change, thinkers.Count, reads);
+        }
+
+        /// <summary>Keeps a line, the brain's class after its object when the object holds more than one brain, and the facts read, if any.</summary>
+        private static void KeepLine(Mind mind, string change, int brains, List<string>? read)
+        {
             var name = DebugPanel.NameOf(mind.brain.actor!);
-            if (thinkers.Count > 1)
+            if (brains > 1)
             {
                 name = name + " " + Names.NameOf(mind.brain);
             }
 
             var line = BrainTools.Hundredths(Minds.Now()) + " " + name + "  " + change;
-            for (var i = 0; i < reads.Count; i++)
+            for (var i = 0; read != null && i < read.Count; i++)
             {
-                line = line + (i == 0 ? "  " : ", ") + reads[i];
+                line = line + (i == 0 ? "  " : ", ") + read[i];
             }
 
             if (count < MostLines)
