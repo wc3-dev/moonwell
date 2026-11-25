@@ -360,6 +360,8 @@ namespace Moonwell
             world.Restart();
             RealClock.Wanted = false;
             Interactions.ResetSettings();
+            // A world a Simulation made the interactions package's is let go, so no later case reads a world gone by.
+            Interactions.native = null;
             Physics.ResetSettings();
             Runtime.ListenForCarriers();
             return world;
