@@ -60,13 +60,13 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Gives the pieces the theme, and lays the bar by its border: inside the border's edge, 0.0065 deep in the game's control border, or, with no border (Hud ""), against the icon's right edge across the rest, as nothing fills a gap there (Sven's gate run, 11-25).</summary>
+        /// <summary>Gives the pieces the theme, and lays the bar from the icon's right edge, as the icon covers the border's left end and a gap there shows (Sven's gate runs, 11-25): inside the border's other edges, 0.0065 deep in the game's control border, or, with no border (Hud ""), across the rest.</summary>
         private void Dress()
         {
             Template = theme.Hud;
             if (theme.Hud.Length > 0)
             {
-                KitTicks.Place(this, bar, 0.0345f, 0.0065f, 0.159f, 0.015f);
+                KitTicks.Place(this, bar, 0.028f, 0.0065f, 0.1655f, 0.015f);
             }
             else
             {

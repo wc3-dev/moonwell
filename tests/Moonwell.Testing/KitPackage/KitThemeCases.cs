@@ -87,7 +87,8 @@ namespace Moonwell.Testing
             Expect.Equal("WowBorder", frames.FrameOf(cast.Handle!).Template, "the cast bar's border");
             Expect.Equal("wow-cast.blp", cast.Bar.Texture, "its fill");
             Expect.Equal(Text(16), frames.FrameOf(cast.Label.Handle!).Template, "its text at the bar text's size");
-            Expect.Near(0.0345f, frames.FrameOf(cast.Bar.Handle!).Points[0].X, "with a border, the bar inside its edge");
+            Expect.Near(0.028f, frames.FrameOf(cast.Bar.Handle!).Points[0].X, "with a border, the bar from the icon too");
+            Expect.Near(0.1655f, frames.FrameOf(cast.Bar.Handle!).Width, "to inside the border's right edge");
             var bare = Screen.Add(new CastBar { Theme = new Theme { Hud = "" } }, Game.Instance);
             Expect.Near(0.028f, frames.FrameOf(bare.Bar.Handle!).Points[0].X, "with no border, the bar against the icon");
             Expect.Near(0.172f, frames.FrameOf(bare.Bar.Handle!).Width, "across the rest");

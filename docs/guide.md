@@ -3610,8 +3610,8 @@ party.Follow(player);
 
 - `CastBar` is driven by the map: `Start(name, seconds, icon)` shows it and fills it over the seconds, then hides it;
   `Interrupt()` fills it in the theme's `Interrupted` texture, says `InterruptedText` and fades it out over half a
-  second. A `Start` replaces a cast running or fading. It does not follow a unit's own game casts. Its bar sits inside
-  the theme's `Hud` border, or, in a theme with none (`Hud = ""`), against the icon across the rest.
+  second. A `Start` replaces a cast running or fading. It does not follow a unit's own game casts. Its bar starts at
+  the icon's edge and runs to inside the theme's `Hud` border, or, in a theme with none (`Hud = ""`), across the rest.
 - `BuffRow.Show(unit)` shows the unit's buffs that have an icon, in the order they came on, with the seconds left under
   each (`2m` from a minute on, nothing for a buff with no expiry). `Show(unit, harmful: true)` shows only the buffs
   marked `IsHarmful` (crowd control reads harmful too) and `harmful: false` only the others, for a row of buffs and
