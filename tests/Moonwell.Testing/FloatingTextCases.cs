@@ -153,9 +153,9 @@ namespace Moonwell.Testing
         public static void HiddenInTransport(FakeWorld world)
         {
             var footman = NewFootman(world, out var handle);
-            var burrow = world.NewUnit(ObjectTypes.FourCC("hfoo"));
+            var transport = world.NewUnit(ObjectTypes.FourCC("hfoo"));
             footman.AddText("Peon", Game.Instance);
-            world.Load(handle, burrow);
+            world.Load(handle, transport);
             world.Advance(0.1f);
             Expect.Equal(false, world.Texts[0].Shown, "hidden while loaded");
             world.LetOut(handle);

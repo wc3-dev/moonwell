@@ -32,5 +32,8 @@ namespace Moonwell
 
         /// <summary>A suicidal unit, a sapper (UNIT_TYPE_SAPPER): the classification Suicidal.</summary>
         Suicidal,
+
+        /// <summary>A ranged attacker (UNIT_TYPE_RANGED_ATTACKER), as the game reads its attack; a simulation reads its type's first attack's weapon type, any but Normal.</summary>
+        Ranged,
     }
 }
