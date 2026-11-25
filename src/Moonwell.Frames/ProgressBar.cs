@@ -23,6 +23,12 @@ namespace Moonwell
         /// <summary>The image that draws the filled share; null until the bar is made.</summary>
         internal framehandle? fill;
 
+        /// <summary>Whether the fill was last given shown (1) or hidden (0); -1 when the game's frame is new to the bar, so the next fill gives it.</summary>
+        internal int fillShown = -1;
+
+        /// <summary>The fill's width while the bar is empty: an emptied bar drew its old fill until its next value (Sven's gate run, 11-25), as the game seems not to take a width of 0; Moonwell shrinks a game frame to 0.0001 wherever it hides one by size.</summary>
+        internal const float EmptyWidth = 0.0001f;
+
         /// <summary>Makes an empty bar from 0 to 1, to be added to the screen or to another frame, then sized.</summary>
         public ProgressBar()
         {
@@ -113,6 +119,7 @@ namespace Moonwell
             var world = FramesSystem.World;
             world.PaintFrame(handle!, Image.Blank);
             fill = world.MakeFrame("BACKDROP", "", handle!)!;
+            fillShown = -1;
             world.PlaceFrame(fill, (int)FramePoint.TopLeft, handle!, (int)FramePoint.TopLeft, 0.0f, 0.0f);
             world.PlaceFrame(fill, (int)FramePoint.BottomLeft, handle!, (int)FramePoint.BottomLeft, 0.0f, 0.0f);
         }
@@ -121,6 +128,7 @@ namespace Moonwell
         internal override void TakeOver(Frame old)
         {
             fill = ((ProgressBar)old).fill;
+            fillShown = -1;
             base.TakeOver(old);
         }
 
@@ -162,7 +170,16 @@ namespace Moonwell
                 size = size.filled;
             }
 
-            FramesSystem.World.SizeFrame(fill, size.width * Share(), size.height);
+            // An empty bar's fill is hidden and shrunk, never sized 0.
+            var width = size.width * Share();
+            var shown = width > 0.0f ? 1 : 0;
+            FramesSystem.World.SizeFrame(fill, shown == 1 ? width : EmptyWidth, size.height);
+            if (shown != fillShown)
+            {
+                fillShown = shown;
+                FramesSystem.World.ShowFrame(fill, shown == 1);
+            }
+
             Paint(false);
         }
 
