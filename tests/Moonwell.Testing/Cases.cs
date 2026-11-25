@@ -168,6 +168,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.orders.target-and-plain", Run = BrainOrderCases.TargetAndPlainOrders });
             list.Add(new Case { Name = "ai.orders.idle-just-after", Run = BrainOrderCases.IdleJustAfter });
             list.Add(new Case { Name = "ai.orders.second-try", Run = BrainOrderCases.SecondTry });
+            list.Add(new Case { Name = "ai.orders.held-while-boarding", Run = BrainOrderCases.HeldWhileBoarding });
             list.Add(new Case { Name = "ai.full-control.acquire", Run = FullControlCases.Acquire });
             list.Add(new Case { Name = "ai.full-control.foreign-order", Run = FullControlCases.ForeignOrder });
             list.Add(new Case { Name = "ai.full-control.one-answer", Run = FullControlCases.OneAnswer });
@@ -178,6 +179,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "ai.full-control.code-calls", Run = FullControlCases.CodeCalls });
             list.Add(new Case { Name = "ai.full-control.code-hold", Run = FullControlCases.CodeHold });
             list.Add(new Case { Name = "ai.full-control.refused", Run = FullControlCases.Refused });
+            list.Add(new Case { Name = "ai.full-control.game-load", Run = FullControlCases.GameLoad });
             list.Add(new Case { Name = "ai.full-control.two-brains", Run = FullControlCases.TwoBrains });
             list.Add(new Case { Name = "ai.full-control.set-early", Run = FullControlCases.SetEarly });
             list.Add(new Case { Name = "ai.full-control.in-play", Run = FullControlCases.InPlay });
