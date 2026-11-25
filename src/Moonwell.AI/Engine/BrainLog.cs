@@ -247,7 +247,7 @@ namespace Moonwell.AI
 
                 if (line.Choice != null)
                 {
-                    line.Choice.logged = line.Choice.Current;
+                    line.Choice.LogNote();
                     continue;
                 }
 
@@ -275,11 +275,10 @@ namespace Moonwell.AI
             var choices = mind.Board.choices;
             for (var i = 0; choices != null && i < choices.Count; i++)
             {
-                var choice = choices[i];
-                if (choice.Current != choice.logged)
+                var change = choices[i].LogChange();
+                if (change != null)
                 {
-                    Add(mind, "choice " + (i + 1) + ": " + Picked(choice.Current) + " (was " + Picked(choice.logged) + ")");
-                    choice.logged = choice.Current;
+                    Add(mind, "choice " + (i + 1) + ": " + change);
                 }
             }
 
@@ -346,12 +345,6 @@ namespace Moonwell.AI
         private static string Joined(string before, string part)
         {
             return before.Length > 0 ? before + ", " + part : part;
-        }
-
-        /// <summary>"flee 0.61" for an option and its last score, "none" for null.</summary>
-        private static string Picked(Option? option)
-        {
-            return option != null ? option.Name + " " + BrainTools.Hundredths(option.lastScore) : "none";
         }
 
         /// <summary>Keeps a line: "12.25 Footman 3  choice 1: flee 0.61 (was fight 0.40)  life 0.31 0.2s", the brain's class after its object when the object held more than one brain as the think began.</summary>
