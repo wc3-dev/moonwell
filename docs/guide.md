@@ -2595,7 +2595,8 @@ The `Moonwell.Simulation` package runs a map's own code in .NET on a fake of the
 components, brains, reactions and timers, with units that walk, chase and fight by their object data. A test plays a
 map's AI through a fight or a long game and checks what it decided. The same seed gives the same run.
 
-It goes in a test project beside the map project, not in its folder: the build compiles every `.cs` under the map
+It goes in a test project beside the map project, or in the map project's `tests` folder, which a new project's
+`.csproj` leaves out of the map (`<Compile Remove="tests/**" />`): the build compiles every other `.cs` under the map
 project into the map. Only the test project references `Moonwell.Simulation`; a package the map project uses goes into
 the map's Lua.
 
@@ -4306,6 +4307,88 @@ project in the editor after making the folder, so that it knows `BuildStep`.
 the last run, and otherwise keeps the last run's results and prints its warnings again. `moonwell watch` builds again
 on a change to build code as on any other. Write steps so that the same files give the same result: one that reads
 the clock or the network gives a map that differs from build to build.
+
+**Testing build code.** A test project compiles the `buildtime` files into itself and references the
+`Moonwell.BuildTime` package, not `Moonwell`, so the game's rules stay out of it. Put it in the map project's `tests`
+folder, which a new project's `.csproj` leaves out of the map (`<Compile Remove="tests/**" />`; add the line to an
+older project), so the tests sit in the map's repository:
+
+```
+MyMap\MyMap.csproj                          the map, with <Compile Remove="tests/**" />
+MyMap\buildtime\CreepPath.cs                the build code
+MyMap\tests\BuildTime\BuildTime.Tests.csproj
+MyMap\tests\BuildTime\CreepPathTests.cs
+```
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\buildtime\**\*.cs" LinkBase="buildtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Moonwell.BuildTime" Version="0.22.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>
+```
+
+`BuildSteps.Run` runs a step as the build would and gives back what it left:
+
+```csharp
+using Moonwell.BuildTime;
+using War3Net.Build.Environment;
+using Xunit;
+
+public class CreepPathTests
+{
+    private static readonly MapReader Map = new MapReader(@"..\..\..\..\..\map.w3x");   // from bin\Debug\net10.0
+
+    [Fact]
+    public void TheCreepsReachTheGoal()
+    {
+        var result = BuildSteps.Run<CreepPath>(Map);
+
+        Assert.False(result.Failed, result.Failure);
+        Assert.Empty(result.Warnings);
+        Assert.Contains("\"Goal\"", result.GivenJson["Trees"]);
+    }
+
+    [Fact]
+    public void AGoalBehindTheCliffStopsTheBuild()
+    {
+        var goal = new Region { Name = "Goal", Left = 2048, Bottom = 2048, Right = 2304, Top = 2304 };
+        var result = BuildSteps.Run<CreepPath>(Map.WithRegions(new[] { Map.Region("Spawn"), goal }));
+
+        Assert.Equal("the creeps cannot walk from Spawn to Goal", result.Failure);
+    }
+}
+```
+
+| On the result | What it holds |
+|---|---|
+| `Given["Trees"]` | A value as the step gave it, to cast to its type |
+| `GivenJson["Trees"]` | The same as the JSON the build writes `Data` from |
+| `Warnings` | Each warning, in order |
+| `Failed`, `Failure` | Whether it stopped the build, and its line; what it gave and warned before is kept |
+| `Reports["water.png"]`, `ReportText("trees.txt")` | A report's bytes, or a text report's text |
+
+- `BuildSteps.Run<CreepPath>(mapFolder)` reads a map folder, and `BuildSteps.Run(new CreepPath(), map)` runs a step a
+  test made itself.
+- `map.WithRegions(regions)` is the same map with a test's own regions in place of its `war3map.w3r`, and
+  `map.WithFile(name, bytes)` with one file added or stood in. The reader they come from is left as it was.
+- A `Fail`, or any `BuildFailure`, is kept as the result's `Failure`. Any other exception goes up to the test as it was
+  thrown, with its stack.
+- `dotnet test tests\BuildTime` runs them. `moonwell build` does not.
 
 ## Lua libraries
 

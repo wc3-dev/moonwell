@@ -62,6 +62,7 @@ namespace Moonwell.BuildTime
             try
             {
                 Current.Gives.Add(name, JsonSerializer.Serialize(value, value.GetType(), Written));
+                Current.Values.Add(name, value);
             }
             catch (Exception failure) when (failure is NotSupportedException or JsonException or ArgumentException)
             {
@@ -304,6 +305,9 @@ namespace Moonwell.BuildTime
 
         // Each give's JSON by its name, in the order given.
         public Dictionary<string, string> Gives { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        // Each give's value as it was given, for a test (BuildSteps).
+        public Dictionary<string, object> Values { get; } = new Dictionary<string, object>(StringComparer.Ordinal);
 
         public List<string> Warnings { get; } = new List<string>();
 
