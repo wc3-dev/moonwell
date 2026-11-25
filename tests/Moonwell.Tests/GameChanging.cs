@@ -26,10 +26,7 @@ internal static class GameChanging
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> OneMachine = new Dictionary<string, string>
     {
-        ["ShowWeather"] = "EnableWeatherEffect: weather shown to one player is made on every machine and turned on at theirs",
-        ["ShowIcon"] = "SetMinimapIconVisible: a minimap icon shown to one player is made on every machine and hidden at the others",
         ["ShowQuest"] = "QuestSetEnabled: a quest shown to one player is made on every machine and enabled at theirs",
-        ["Letterbox"] = "EnableOcclusion, beside ShowInterface: a cinematic changes only its watchers' screens (decision 208)",
         ["CinematicSounds"] = "SetCineModeVolumeGroupsBJ: a cinematic changes only its watchers' sound mix (decision 208)",
         ["MakeText"] = "CreateTextTag: one player's floating text is made on their machine only (decision 201); the game counts text tags apart from handle ids",
         ["EndText"] = "DestroyTextTag: ends a text made on this machine only (decision 201)",

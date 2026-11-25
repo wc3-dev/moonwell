@@ -30,7 +30,7 @@ public enum NativeTag
 /// known to be the same everywhere, <see cref="SyncedResults"/>). It desyncs when, inside its
 /// own <c>if</c> on <c>GetLocalPlayer()</c>, it creates a handle or calls a native known to desync there, or when it
 /// calls a function that desyncs. Other state changes in Blizzard's local blocks (pausing for a dialog, setting bj_
-/// globals, fog and occlusion) are left to Blizzard; map code still may not make them inside <c>Local.For</c>.
+/// globals, fog) are left to Blizzard; map code still may not make them inside <c>Local.For</c>.
 /// </summary>
 public static partial class NativeTags
 {
@@ -94,6 +94,11 @@ public static partial class NativeTags
         "ShowImage", "ShowUbersplat", "SetTerrainFog", "SetTerrainFogEx", "ResetTerrainFog",
         "MultiboardDisplay", "MultiboardMinimize", "LeaderboardDisplay", "TimerDialogDisplay",
         "Preload", "PreloadGenClear", "PreloadGenStart", "PreloadGenEnd",
+        // Only drawn, and Moonwell calls them on one machine itself (I71): weather shown or hidden (its handle is made
+        // by AddWeatherEffect on every machine), a minimap icon shown or hidden, occlusion, which CinematicModeExBJ
+        // turns in its own local block, and the flash TransmissionFromUnitWithNameBJ adds in its own. None has a reader
+        // that would give the change back to synced code.
+        "EnableWeatherEffect", "SetMinimapIconVisible", "EnableOcclusion", "UnitAddIndicator",
         // They send this machine's value (sync data, a stored gamecache value, the selection) to every machine:
         // running in local code is what they are for.
         "BlzSendSyncData", "SyncStoredInteger", "SyncStoredReal", "SyncStoredBoolean", "SyncStoredUnit", "SyncStoredString",
