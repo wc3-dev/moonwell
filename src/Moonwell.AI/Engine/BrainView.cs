@@ -94,14 +94,14 @@ namespace Moonwell.AI
             while (i < end)
             {
                 var line = numbered[i];
-                if (line.Option != null)
+                if (line.Choice != null)
                 {
                     if (line.Index == 0)
                     {
                         into.Add("choice " + line.Depth);
                     }
 
-                    into.Add(OptionText(i + 1, line.Choice!, line.Option));
+                    into.Add(OptionText(i + 1, line.Choice, line.Index));
                     i++;
                     continue;
                 }
@@ -147,26 +147,17 @@ namespace Moonwell.AI
             return text;
         }
 
-        /// <summary>"8   > flee 0.73  life 0.20, enemies near 4.00": the option's number, > on the current one, its last score, forced, and the current one's inputs with their last values.</summary>
-        private static string OptionText(int number, Choice choice, Option option)
+        /// <summary>"8   > flee 0.73  life 0.20, enemies near 4.00": the option's number, > on the current one, its last score, forced, and the current one's inputs with their last values, after the thing it picked for a choice over a list.</summary>
+        private static string OptionText(int number, IChoice choice, int index)
         {
-            var current = option == choice.Current;
-            var text = number + "   " + (current ? "> " : string.Empty) + option.Name + " " + BrainTools.Hundredths(option.lastScore);
-            if (option == choice.forced)
+            var current = index == choice.CurrentIndex;
+            var text = number + "   " + (current ? "> " : string.Empty) + choice.OptionName(index) + " " + BrainTools.Hundredths(choice.OptionScore(index));
+            if (choice.IsForced(index))
             {
                 text = text + " forced";
             }
 
-            if (current)
-            {
-                var inputs = option.inputs;
-                for (var k = 0; k < inputs.Count; k++)
-                {
-                    text = text + (k == 0 ? "  " : ", ") + inputs[k].Name + " " + BrainTools.Hundredths(inputs[k].lastValue);
-                }
-            }
-
-            return text;
+            return current ? text + choice.CurrentText() : text;
         }
 
         /// <summary>"facts", then every fact held on the brain's blackboard and up its chain, with its value and age: "  food (Player 1) 12 3.0 s".</summary>
