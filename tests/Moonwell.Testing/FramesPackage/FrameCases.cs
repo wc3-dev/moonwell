@@ -215,6 +215,31 @@ namespace Moonwell.Testing
             Expect.Equal(true, theirs.Visible, "Visible reads what was set");
         }
 
+        /// <summary>Visible set inside Local.For shows or hides the frame on that machine only, reads the shared value, holds when the frame is shown again here, and gives way to Visible set outside it; another player's frame stays hidden here.</summary>
+        public static void VisibleLocal(FakeWorld world)
+        {
+            world.LocalSlot = 0;
+            var frames = Installed();
+            var panel = Screen.Add(new Panel(), Game.Instance);
+            var fake = frames.FrameOf(panel.Handle!);
+            Local.For(Player.One, () => panel.Visible = false);
+            Expect.Equal(false, fake.Shown, "hidden on this machine");
+            Expect.Equal(true, panel.Visible, "Visible reads the shared value");
+            panel.Reshow();
+            Expect.Equal(false, fake.Shown, "still hidden here when shown again, as after a letterbox");
+            Local.For(Player.Two, () => panel.Visible = true);
+            Expect.Equal(false, fake.Shown, "another machine's block runs nothing here");
+            panel.Visible = true;
+            Expect.Equal(true, fake.Shown, "set outside Local.For, shown everywhere again");
+            panel.Visible = false;
+            Local.For(Player.One, () => panel.Visible = true);
+            Expect.Equal(true, fake.Shown, "shown on this machine");
+            Expect.Equal(false, panel.Visible, "and reads the shared hidden");
+            var theirs = Screen.Add(new Panel(), Game.Instance, shownTo: Player.Two);
+            Local.For(Player.One, () => theirs.Visible = true);
+            Expect.Equal(false, frames.FrameOf(theirs.Handle!).Shown, "another player's stays hidden here");
+        }
+
         /// <summary>Everything set before the Add is given to the game when the frame is made.</summary>
         public static void SetBeforeAdd(FakeWorld world)
         {
