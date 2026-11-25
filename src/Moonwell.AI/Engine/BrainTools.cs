@@ -81,7 +81,7 @@ namespace Moonwell.AI
                 var choices = mind.Board.choices;
                 for (var c = 0; choices != null && c < choices.Count; c++)
                 {
-                    for (var o = 0; o < choices[c].options.Count; o++)
+                    for (var o = 0; o < choices[c].OptionCount; o++)
                     {
                         lines.Add(new BrainLine(mind, choices[c], c + 1, o));
                     }
@@ -323,9 +323,9 @@ namespace Moonwell.AI
         /// <summary>Forces a line: a Select's or Pick's child has the parent run only it, a When has its condition read true, and an option wins; false for a line with nothing to force.</summary>
         private static bool ForceLine(BrainLine line)
         {
-            if (line.Option != null)
+            if (line.Choice != null)
             {
-                line.Choice!.Force(line.Option);
+                line.Choice.Force(line.Index);
                 return true;
             }
 
@@ -351,7 +351,7 @@ namespace Moonwell.AI
         {
             if (line.Choice != null)
             {
-                line.Choice.Force(null);
+                line.Choice.Force(-1);
                 return;
             }
 

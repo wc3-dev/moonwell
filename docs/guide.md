@@ -2224,6 +2224,60 @@ unit.Add(new Grunt { HomeX = unit.X, HomeY = unit.Y, GoalX = camp.X, GoalY = cam
   curve of whole numbers, such as `0;1;1;0`, a list of `float`s, as `Points` takes. `Keep` can be set from data too.
 - An option's action is a plain method, so it can run anything, a behavior tree included.
 
+### Scoring a list
+
+A brain choosing among things it is given at each think, a colony worker among the jobs a planner posts or a gatherer
+among the trees near its mill, uses a `Choice<T>`: each option is scored for each thing, with inputs that read the
+thing, and the best option wins with its thing.
+
+```csharp
+public sealed class Worker : UnitBrain
+{
+    public Planner Planner = null!;                        // the map's own: posts Job objects
+    readonly Choice<Job> work;
+
+    public Worker()
+    {
+        work = new Choice<Job>
+        {
+            new Option<Job>("build", Build)
+            {
+                { "urgency", job => job.Urgency, Curve.Rising },                              // 0..1 already
+                { "distance", job => Maths.Distance(Unit.X, Unit.Y, job.X, job.Y), 0, 4096, Curve.Falling },
+            },
+            new Option<Job>("repair", Repair, weight: 0.3f) { { Tired, Curve.Falling } },     // a fact, as on an Option
+        };
+    }
+
+    protected override void OnAdded() => ThinkEvery = 0.5f;
+
+    protected override void Think() => work.Run(Blackboard, Planner.Jobs);   // scores every pair and runs the best
+
+    void Build(Job job) => OrderAt(Orders.Move, job.X, job.Y);
+    void Repair(Job job) => OrderOn(Orders.Repair, job.Building);
+}
+```
+
+- `Choice<T>` takes things of a class (a unit, a destructable, a job of the map's own), told apart by reference, and
+  `Option<T>`'s action takes the thing it won with. The list is the brain's to give at each think, as it changes:
+  any `IReadOnlyList<T>`, a `List<T>` or an array.
+- An input is a function of the thing and a curve, `{ job => value, curve }` for a value of 0..1, or with a range,
+  `{ job => value, min, max, curve }`, scaled and clamped as a fact's is; a name in front (`"urgency"`) is what the
+  brain view shows, and one with none shows as `input 1`, `input 2`. A fact input, as on an `Option`, reads the
+  blackboard and scores the same for every thing. The inputs are multiplied, evened out and weighted as an `Option`'s.
+- `Run(board, list)` scores every option for every thing, the options in the order added and for each the things in
+  the list's order, and runs the best pair: on a tie the option added first, then the thing first in the list. The
+  pair it picked stays, `Current` and `CurrentItem`, until another scores more than its score times 1 + `Keep`, as a
+  `Choice`'s option does. A current thing gone from the list scores 0, so the best above 0 takes over. An empty list,
+  or every pair at 0, runs nothing, and `Current` and `CurrentItem` are null.
+- `Pick(board, list)` gives the winning option without running it, its thing in `CurrentItem`, and
+  `option.Score(board, thing)` one pair's score. Scoring reads every input for every thing at every think: with 3
+  options and 40 trees that is 120 scores, so a long list wants a longer `ThinkEvery` or a shorter list.
+- The brain view and the log show it as a `Choice`: each option with its best score over the list, `>` on the current
+  one with its thing (a Moonwell object by its panel name, anything else by its `ToString()`) and its inputs' values
+  for that thing. `-force` has an option win with the thing it scored best for, and the log keeps a line when the
+  option or the thing changes: `choice 1: build Farm 2 0.92 (was build Farm 1 0.82)`.
+
 ## AI: behaviour trees
 
 A brain can think with a behaviour tree: nodes built once, run from the root at each think, going on where the last
