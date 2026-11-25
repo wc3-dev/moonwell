@@ -50,7 +50,7 @@ namespace Moonwell.AI.Combat
             set { Fighter.Leash = value; }
         }
 
-        /// <summary>Which units it fights, as the fighter's <c>Fights</c>: a unit it says false for is neither met nor counted. Null, the default, takes every unit.</summary>
+        /// <summary>Which units it fights, as the fighter's <c>Fights</c>: a unit it says false for is neither met nor counted. The default leaves out Neutral Passive's units; null takes every unit.</summary>
         [LocalSafe]
         public Func<Unit, bool>? Fights
         {
