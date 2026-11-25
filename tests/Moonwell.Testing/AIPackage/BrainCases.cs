@@ -227,9 +227,9 @@ namespace Moonwell.Testing
         public static void DueOrder(FakeWorld world)
         {
             var log = new List<string>();
-            var a = Game.Instance.Add(new StepGameBrain { Label = "a", Log = log });
-            var b = Game.Instance.Add(new StepGameBrain { Label = "b", Log = log });
-            var c = Game.Instance.Add(new StepGameBrain { Label = "c", Log = log });
+            var a = Game.Instance.Add(new StepGameBrain { Label = "a", Shared = log });
+            var b = Game.Instance.Add(new StepGameBrain { Label = "b", Shared = log });
+            var c = Game.Instance.Add(new StepGameBrain { Label = "c", Shared = log });
             c.Wake();
             a.Wake();
             b.Wake();
