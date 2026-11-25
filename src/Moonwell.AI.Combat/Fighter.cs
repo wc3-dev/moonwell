@@ -359,7 +359,7 @@ namespace Moonwell.AI.Combat
             var y = unit.Y;
             var fromX = hasSpot ? spotX : x;
             var fromY = hasSpot ? spotY : y;
-            var range = MeetRange > 0f ? MeetRange : Runtime.World.AcquireRangeOf(unit.Handle);
+            var range = MeetRange > 0f ? MeetRange : unit.AcquireRange;
             var fights = Fights;
             allies.Add(unit);
             AlliesNear = 1;
@@ -382,13 +382,13 @@ namespace Moonwell.AI.Combat
                         if (Meetable(owner, other, otherX, otherY, fromX, fromY))
                         {
                             Meet(other, otherX, otherY);
-                            if (!Runtime.World.IsStructure(other.Handle))
+                            if (!other.IsStructure)
                             {
                                 EnemiesNear++;
                             }
                         }
                     }
-                    else if (owner.IsAlly(otherOwner) && !Runtime.World.IsStructure(other.Handle))
+                    else if (owner.IsAlly(otherOwner) && !other.IsStructure)
                     {
                         allies.Add(other);
                         AlliesNear++;
@@ -455,7 +455,7 @@ namespace Moonwell.AI.Combat
         /// <summary>Whether an enemy is to be met: its owner's player sees it, which notes it as about, and it is within the leash of the spot.</summary>
         private bool Meetable(Player owner, Unit other, float otherX, float otherY, float fromX, float fromY)
         {
-            if (!Runtime.World.Sees(owner.Handle, other.Handle))
+            if (!owner.Sees(other))
             {
                 return false;
             }
@@ -644,7 +644,7 @@ namespace Moonwell.AI.Combat
                 case Combat.Target.WeakestRule:
                     return other.Life;
                 case Combat.Target.DangerRule:
-                    var cooldown = Runtime.World.AttackCooldownOf(other.Handle);
+                    var cooldown = other.LiveAttackCooldown;
                     var perSecond = cooldown > 0f ? Runtime.World.AverageDamageOf(other.Handle) / cooldown : 0f;
                     return Math.Max(DangerFloor, perSecond);
                 case Combat.Target.AttackerRule:

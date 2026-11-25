@@ -107,6 +107,9 @@ namespace Moonwell.Hosting
         /// <summary>Every unit in the world.</summary>
         List<unit> UnitsInWorld();
 
+        /// <summary>Every unit a player owns, as GroupEnumUnitsOfPlayer gives them: hidden ones and dead ones not yet gone too.</summary>
+        List<unit> UnitsOf(player player);
+
         /// <summary>Every item in the world.</summary>
         List<item> ItemsInWorld();
 
@@ -397,6 +400,15 @@ namespace Moonwell.Hosting
 
         /// <summary>Adds an amount, negative to take away, to the attack range of a unit's first weapon: the game takes a change only as an add, through weapon index 1 (probe-stats-1).</summary>
         void AddAttackRange(unit unit, float delta);
+
+        /// <summary>The food a unit uses: GetUnitFoodUsed.</summary>
+        int FoodUsedOf(unit unit);
+
+        /// <summary>The gold a mine holds: GetResourceAmount.</summary>
+        int ResourcesOf(unit unit);
+
+        /// <summary>Sets the gold a mine holds: SetResourceAmount.</summary>
+        void SetResources(unit unit, int amount);
 
         /// <summary>A unit's cast point, the seconds from the order's start of a cast to the spell's effect, as it has it now.</summary>
         float CastPointOf(unit unit);
