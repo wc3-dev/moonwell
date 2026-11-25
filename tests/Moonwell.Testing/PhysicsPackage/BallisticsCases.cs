@@ -58,12 +58,15 @@ namespace Moonwell.Testing
         {
             Interactions.Install(new FakeInteractionWorld());
             var fake = new FakePhysicsWorld();
+            // Read through the package's world rather than compared with it, as the twin run hands the package a world that records the fake's calls.
+            var probe = new unit();
+            fake.Sizes[probe] = 77.0f;
             Expect.True(!Physics.IsInstalled, "not installed before Install");
             Physics.Install(fake);
             Expect.True(Physics.IsInstalled, "installed after Install");
-            Expect.Same(fake, Physics.World, "the world is the fake");
+            Expect.True(Physics.World.CollisionSize(probe) == 77.0f, "the world is the fake");
             Physics.EnsureInstalled();
-            Expect.Same(fake, Physics.World, "EnsureInstalled leaves an installed package alone");
+            Expect.True(Physics.World.CollisionSize(probe) == 77.0f, "EnsureInstalled leaves an installed package alone");
             Interactions.Install(new FakeInteractionWorld());
             Expect.True(!Physics.IsInstalled, "installing interactions again clears the physics hook");
             Physics.Install(fake);
