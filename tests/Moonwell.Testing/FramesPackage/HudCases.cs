@@ -7,12 +7,12 @@ namespace Moonwell.Testing
         public static void LookedUpAtInstall(FakeWorld world)
         {
             var frames = FrameCases.Installed();
-            Expect.Equal(68, frames.Lookups, "29 by name, 39 by origin");
+            Expect.Equal(72, frames.Lookups, "33 by name, 39 by origin");
             Expect.True(frames.GameFrames.ContainsKey("MiniMapFrame"), "the minimap by its name");
             Expect.Equal(0, frames.Frames.Count, "no frame made");
             Player.One.GameUi();
             Player.Two.GameUi();
-            Expect.Equal(68, frames.Lookups, "no lookup at a player's first use");
+            Expect.Equal(72, frames.Lookups, "no lookup at a player's first use");
             Expect.Same(Player.One.GameUi(), Player.One.GameUi(), "one view per player");
         }
 

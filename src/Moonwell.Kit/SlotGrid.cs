@@ -131,13 +131,29 @@ namespace Moonwell
         }
     }
 
-    /// <summary>A slot of a SlotGrid: an icon button that can be picked up while it shows an icon, and takes a drop.</summary>
+    /// <summary>
+    /// An icon slot: an icon button that can be picked up while it shows an icon, and takes a drop. A SlotGrid makes its
+    /// own; new IconSlot() is one a map places alone (a paper doll's slots round the hero), 0.04 square unless sized,
+    /// whose own Moved runs when a slot is dropped on it.
+    /// </summary>
     public class IconSlot : IconButton
     {
-        /// <summary>What an empty slot draws: black, as the game's empty inventory and command slots.</summary>
+        /// <summary>What an empty slot draws unless EmptyIcon is set: black, as the game's empty inventory and command slots.</summary>
         internal const string Empty = @"Textures\Black32.blp";
 
-        internal IconSlot(SlotGrid grid, int index)
+        internal string emptyIcon = Empty;
+
+        internal List<Action<Player, IconSlot, IconSlot>>? moved;
+
+        /// <summary>Makes a slot that stands alone, in no grid, to be placed by the map: dragged, dropped on and swapped as a grid's slots are.</summary>
+        public IconSlot()
+            : this(null, -1)
+        {
+            Width = SlotGrid.DefaultSlotSize;
+            Height = SlotGrid.DefaultSlotSize;
+        }
+
+        internal IconSlot(SlotGrid? grid, int index)
         {
             Grid = grid;
             Index = index;
@@ -146,18 +162,59 @@ namespace Moonwell
             {
                 if (dragged is IconSlot from)
                 {
-                    grid.DroppedOn(who, from, this);
+                    if (Grid != null)
+                    {
+                        Grid.DroppedOn(who, from, this);
+                    }
+                    else
+                    {
+                        Kit.Raise(this, moved, who, from, this, "Moved");
+                    }
                 }
             };
         }
 
-        /// <summary>The grid it is in.</summary>
+        /// <summary>The grid it is in; null for a slot that stands alone.</summary>
         [LocalSafe]
-        public SlotGrid Grid { get; }
+        public SlotGrid? Grid { get; }
 
-        /// <summary>Its number in its grid, from 0.</summary>
+        /// <summary>Its number in its grid, from 0; -1 for a slot that stands alone.</summary>
         [LocalSafe]
         public int Index { get; }
+
+        /// <summary>What the slot draws while it shows no icon, as a paper doll's slot shows the outline of what it takes; the game's black unless set.</summary>
+        [LocalSafe]
+        public string EmptyIcon
+        {
+            get { return emptyIcon; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                emptyIcon = value;
+                if (icon.Length == 0)
+                {
+                    Icon = "";
+                }
+            }
+        }
+
+        /// <summary>Runs when a player drops a slot on this one while it stands alone, with the player, the slot dropped (of a grid or alone) and this slot; a grid's slot runs its grid's Moved instead. Synced: a handler may change the game. Not inside Local.For.</summary>
+        public event Action<Player, IconSlot, IconSlot>? Moved
+        {
+            add
+            {
+                if (!HasEnded && value != null)
+                {
+                    (moved ??= new List<Action<Player, IconSlot, IconSlot>>()).Add(value);
+                }
+            }
+
+            remove { Unsubscribe(moved, value); }
+        }
 
         /// <summary>Swaps this slot's icon and tooltip with another slot's, as a drop's Moved handler does: the tooltips move between them and do not end (Sven, 11-07).</summary>
         public void SwapWith(IconSlot other)
@@ -173,6 +230,6 @@ namespace Moonwell
             SwapTooltips(this, other);
         }
 
-        internal override string EmptyLook => Empty;
+        internal override string EmptyLook => emptyIcon;
     }
 }

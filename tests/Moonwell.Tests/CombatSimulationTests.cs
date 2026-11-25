@@ -230,6 +230,43 @@ namespace Moonwell.Tests
             Assert.True(brain.Fighter.PullingBack, "still back, below 70%");
         }
 
+        /// <summary>A walker pulling back hurt, its Below set to 0 on the way, lets go at its next check, far from its lane's start, and fights again (J102).</summary>
+        [Fact]
+        public void AWalkerPullingBackLetsGoWhenBelowIsSetTo0()
+        {
+            var sim = Start();
+            var walker = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var brain = walker.Add(new CountingWalker(Lane(0.0f, 3000.0f, 0.0f)));
+            var brute = Unit.Create(Brute, Player.Two, 1500.0f, 0.0f, Game.Instance);
+
+            Assert.True(sim.RunUntil(() => brain.Fighter.PullingBack, 60.0f), "it pulls back");
+            brain.Fighter.PullBack.Below = 0.0f;
+            Assert.True(sim.RunUntil(() => !brain.Fighter.PullingBack, 1.0f), "it lets go");
+            Assert.True(walker.X > 500.0f, "far from its lane's start: " + walker.X);
+            Assert.True(sim.RunUntil(() => brain.Fighter.Target == brute, 2.0f), "and meets the brute again");
+        }
+
+        /// <summary>A guard leaves out a unit of Neutral Passive beside it, which counts as an enemy in the simulation, by its default Fights (J98): no target and none counted; with Fights set to null it targets it.</summary>
+        [Fact]
+        public void AGuardLeavesOutNeutralPassiveByDefault()
+        {
+            var sim = Start();
+            var unit = Unit.Create(Walker, Player.One, 0.0f, 0.0f, Game.Instance);
+            var guard = unit.Add(new Guard());
+            var critter = Unit.Create(Runner, Player.NeutralPassive, 300.0f, 0.0f, Game.Instance);
+            Assert.True(Player.One.IsEnemy(Player.NeutralPassive), "Neutral Passive counts as an enemy here");
+
+            sim.Run(2.0f);
+            Assert.Null(guard.Fighter.Target);
+            Assert.Equal(0, guard.Fighter.EnemiesNear);
+            Assert.Equal(5000.0f, critter.Life);
+
+            guard.Fighter.Fights = null;
+            sim.Run(0.25f);
+            Assert.Same(critter, guard.Fighter.Target);
+            Assert.Equal(1, guard.Fighter.EnemiesNear);
+        }
+
         /// <summary>Four walkers of each side walk lanes toward each other and fight, never pulling back, until one side falls; the same seed gives the same fight.</summary>
         [Fact]
         public void TwoLanesFightToAWinner()
