@@ -552,6 +552,9 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `IsAlive`, `Kill()` | whether it lives; kills it, with `OnDeath` run |
 | `IsIllusion` | an illusion (Mirror Image, a Wand of Illusion) has its hero's type but is a plain unit, not the hero's class: no starting components, no `OnCreated`; map-wide reactions still see it |
 | `IsStructure`, `IsWorker`, `IsTownHall`, `IsSummoned` | read; the kinds the game gives the unit's type (a building; a classification of worker, town hall or summoned); a unit summoned in play (`Summon`, a timed life) is summoned too. `IsMechanical`, `IsUndead`, `IsAncient`, `IsGiant`, `IsTauren` and `IsSuicidal` read the other classifications. A hero is `unit is Hero` |
+| `FoodUsed`, `LiveAttackCooldown`, `AcquireRange`, `IsRanged` | read from the game now: the food the unit uses; the seconds between its first weapon's attacks, which attack speed bonuses do not shorten; how far it looks for an enemy when idle; whether it attacks from range. A standard class's `AttackCooldown` and `AcquisitionRange` are its type's, as an ability's `Cooldown` stands beside its `LiveCooldown`. The attack range is `Get(Stat.AttackRange)` |
+| `Resources` | read and set; the gold a gold mine holds; a mine made in play starts with its Gold Mine ability's Max Gold |
+| `CanCast<StormBolt>()`, `CanCast(id)` | whether the unit could cast the ability now: it has it, its cooldown is over and its mana is at least the cost, all read from the game; a stun, a silence and the range to a target are not asked |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Icon` | its type's icon path, read inside `Local.For` only, as the game picks a type's icon by each player's graphics mode (the game's Phoenix names one icon for Reforged and another for the other modes); set only in its declared class's constructor, as the game has no icon per unit |
@@ -670,7 +673,8 @@ removed inside runs no unload reaction.
 loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
 read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
 zeppelin). `transport.Load(unit)` orders the unit to board the transport, and a zeppelin comes for it; loading several
-in one instant takes them all, one after another, a burrow too. `Unload(unit)` and `UnloadAll(x, y)` are the
+in one instant takes them all, one after another, a burrow too. While a unit boards, its brains send it no orders, and
+a transport under a brain's full control lets the game's own load go on. `Unload(unit)` and `UnloadAll(x, y)` are the
 transport's orders.
 
 ```csharp
@@ -2437,8 +2441,8 @@ the best of them scores 1 and none scores 0:
   after them), and stays the target until another scores more than its score times 1.1, 10% more, so a walker does
   not flip between two enemies. A target that died, can't be seen or is no longer met is dropped.
 - Casting: at each think in a fight, the first spell in `Spells` whose aim has someone, whose condition holds and that
-  is ready is cast through the brain: ready, the unit has the ability, its cooldown is over and its mana is at least
-  the ability's mana cost now, all read from the game. The walker watches the cast as `Cast` does, while the unit's
+  is ready is cast through the brain: ready as `unit.CanCast(id)` says, the unit has the ability, its cooldown is over
+  and its mana is at least the ability's mana cost now, all read from the game. The walker watches the cast as `Cast` does, while the unit's
   order id is the one read just after it, then goes back to the attack. At a cast's end the game leaves the unit idle,
   so the brain is woken once the unit's order id changes and attacks again within 0.04 s, not at its next think. A cast
   on a target out of range walks up to it first. The brain forgets its last order before a cast, as `Cast` does, so
@@ -2679,6 +2683,10 @@ public class GuardTests
   orders are neither counted nor held.
 - From its object data a unit also has its type's kinds, so a Peasant `IsWorker` and a Barracks `IsStructure`. Numbers
   from `SetNumbers` give none: a test gives a unit a kind with `sim.World.MakeKind(unit.Handle, UnitKind.Worker)`.
+- From its object data a unit also has its type's food (`FoodUsed`, or `Food` in `SetNumbers`), and a Gold Mine its
+  ability's Max Gold (`Resources`, 12500). `IsRanged` holds when the type's first attack has a weapon type other than
+  Normal, so a Rifleman's instant one is ranged; a test gives it with `UnitKind.Ranged`. `player.Sees(unit)` is true
+  unless a test hides the unit: `sim.World.Dummies.Hide(player.Handle, unit.Handle)`.
 - A hero's life counts its strength as the build counts it: `Start(map)` reads the hero bonus (life a point of strength,
   mana a point of intelligence) that the map's last `moonwell build` wrote, so a hero class's constructor reads `MaxLife`
   as the total there too (700 for the Mountain King). Build the map before its tests; a map never built, and `Start()`
@@ -3709,7 +3717,14 @@ like its errors: the same letters and colour, with the error sound, one line abo
 as a message goes), and kept in the message log (F12). It is not allowed inside `Local.For`, as the sound is made on
 every machine. `player.ClearMessages()` clears the player's screen. A team has `Print`, `Hint`, `Warning`, `Error` and
 `ClearMessages` too, for each of its players. `Game.Log("wave 2 started")` writes a line to the log file instead (under The build). `Package.Version` is the version of Moonwell the map is built with. `Gold`, `Lumber`, `FoodUsed`, `FoodCap`, `FoodCapCeiling`, `GoldGathered`, `LumberGathered`,
-`GoldUpkeepRate` and `LumberUpkeepRate` are the player's own: `player.Gold += 25`.
+`GoldUpkeepRate` and `LumberUpkeepRate` are the player's own: `player.Gold += 25`. `HeroTokens` (the free heroes an
+altar still gives) and `MaxHeroes` (how many heroes the player may have, `Player.NoLimit` unless set) are read and set
+too.
+
+`player.Units` is a new list at each read of the player's living units, in the game's order: hidden ones too (inside a
+transport), Moonwell's dummies left out. It takes in a unit Moonwell has not met yet, so it is not for `Local.For`.
+`player.Sees(unit)` says whether the player sees the unit now, so that its units may target it: no fog, black mask or
+invisibility hides it from the player.
 
 `Player.Playing` is every player in the game, people and computers, and `Player.Users` the people:
 `foreach (var player in Player.Users)`. `player.SlotState` is `Empty`, `Playing` or `Left`, and `player.Controller`
@@ -3728,8 +3743,10 @@ game. The victory box's Continue ends their game with the score screen: `Win(sco
 Restart in single player. A loser's slot turns `Left` and a winner's stays `Playing`; the units of both stay, and
 neither runs `OnLeave`, which is for a player who quits. `Game.Over(Arena.West)` ends the game: the team's players in
 the game win and everyone else in it loses, the losers first; `Game.Over(player)` has one winner. A player who has won
-or lost already is left as they are, and a second `Win` or `Lose`, or one for a player not in the game, is refused. The
-game and the players are not scopes to end: `Game.Instance.End()` is refused.
+or lost already is left as they are, and a second `Win` or `Lose`, or one for a player not in the game, is refused.
+`player.HasWon` and `player.HasLost` read the result a player took through Moonwell; the game has no read of a result,
+so a victory it gives by itself is not seen. The game and the players are not scopes to end: `Game.Instance.End()` is
+refused.
 
 `Command("zoom", (player, rest) => ...)` on a scope hears a chat command: a line a person types that starts with `-zoom`,
 in any case. `rest` is what follows, trimmed, so `-zoom 2000` gives `"2000"`. It runs on every machine, as chat reaches

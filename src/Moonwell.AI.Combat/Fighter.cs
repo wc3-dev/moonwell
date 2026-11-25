@@ -10,7 +10,8 @@ namespace Moonwell.AI.Combat
     /// living enemy unit its <c>Fights</c> takes (by default none of Neutral Passive's), structures too, that its unit's
     /// owner sees, within its meet range or one that damaged its unit in the last 3 s however far, and none farther than its
     /// leash from where its fight started. That spot is forgotten when the fight is over, so the next fight's leash counts
-    /// from where that one starts; a fighter that <c>WalkLane</c> walks keeps it until it is back. An enemy its unit couldn't attack is set aside for 3 s, and the next best is picked.
+    /// from where that one starts; a fighter that <c>WalkLane</c> walks keeps it until it is back. An enemy its unit
+    /// couldn't attack is set aside for 3 s, and the next best is picked.
     /// </summary>
     public sealed class Fighter
     {
@@ -365,7 +366,7 @@ namespace Moonwell.AI.Combat
             var y = unit.Y;
             var fromX = hasSpot ? spotX : x;
             var fromY = hasSpot ? spotY : y;
-            var range = MeetRange > 0f ? MeetRange : Runtime.World.AcquireRangeOf(unit.Handle);
+            var range = MeetRange > 0f ? MeetRange : unit.AcquireRange;
             var fights = Fights;
             allies.Add(unit);
             AlliesNear = 1;
@@ -388,13 +389,13 @@ namespace Moonwell.AI.Combat
                         if (Meetable(owner, other, otherX, otherY, fromX, fromY))
                         {
                             Meet(other, otherX, otherY);
-                            if (!Runtime.World.IsStructure(other.Handle))
+                            if (!other.IsStructure)
                             {
                                 EnemiesNear++;
                             }
                         }
                     }
-                    else if (owner.IsAlly(otherOwner) && !Runtime.World.IsStructure(other.Handle))
+                    else if (owner.IsAlly(otherOwner) && !other.IsStructure)
                     {
                         allies.Add(other);
                         AlliesNear++;
@@ -461,7 +462,7 @@ namespace Moonwell.AI.Combat
         /// <summary>Whether an enemy is to be met: its owner's player sees it, which notes it as about, and it is within the leash of the spot.</summary>
         private bool Meetable(Player owner, Unit other, float otherX, float otherY, float fromX, float fromY)
         {
-            if (!Runtime.World.Sees(owner.Handle, other.Handle))
+            if (!owner.Sees(other))
             {
                 return false;
             }
@@ -650,7 +651,7 @@ namespace Moonwell.AI.Combat
                 case Combat.Target.WeakestRule:
                     return other.Life;
                 case Combat.Target.DangerRule:
-                    var cooldown = Runtime.World.AttackCooldownOf(other.Handle);
+                    var cooldown = other.LiveAttackCooldown;
                     var perSecond = cooldown > 0f ? Runtime.World.AverageDamageOf(other.Handle) / cooldown : 0f;
                     return Math.Max(DangerFloor, perSecond);
                 case Combat.Target.AttackerRule:

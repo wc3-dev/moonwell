@@ -11,6 +11,12 @@ namespace Moonwell
         /// <summary>Undefend, the game's own, given before a death and in a removal to a unit with Defend.</summary>
         private const int UndefendOrder = 852056;
 
+        /// <summary>Board, a unit's order to go into a transport, which Load gives the cargo.</summary>
+        internal const int BoardOrder = 852043;
+
+        /// <summary>Load, a transport's order to take a unit in, which the game gives the transport after a cargo's board.</summary>
+        private const int LoadOrder = 852046;
+
         /// <summary>Order reactions nested deeper than this are reported and run nothing.</summary>
         private const int MaxOrderDepth = 16;
 
@@ -65,6 +71,12 @@ namespace Moonwell
                 return;
             }
 
+            if (ordered.boarding != null && id != BoardOrder && !IsInstant(id))
+            {
+                // Another order ends the board Load gave (J177).
+                ordered.boarding = null;
+            }
+
             if (orderDepth >= MaxOrderDepth)
             {
                 Errors.Warn("Moonwell.Orders", new MoonwellException("orders given inside order reactions nested more than " + MaxOrderDepth + " deep, at " + Names.NameOf(ordered) + "; that order runs no reaction"));
@@ -98,7 +110,7 @@ namespace Moonwell
                 listener = null;
             }
 
-            listener?.Invoke(ordered, id, CodeOrders > 0);
+            listener?.Invoke(ordered, id, CodeOrders > 0 || LoadsBoarding(ordered, id, targetUnit));
             var order = new Order(ordered, id, Runtime.World.OrderName(id), kind, x, y, target, queue > 1);
             order.Previous = repeats ? last!.Previous : last;
             var carried = ordered.Carried;
@@ -155,6 +167,18 @@ namespace Moonwell
 
         /// <summary>Stop.</summary>
         private const int StopOrder = 851972;
+
+        /// <summary>Whether an order is the transport's load on a unit Load sent to board it: the game gives it after the cargo's board, outside Moonwell's call for all but the first, so it counts as code's (J178).</summary>
+        private static bool LoadsBoarding(Unit transport, int id, unit? targetUnit)
+        {
+            if (id != LoadOrder || targetUnit == null)
+            {
+                return false;
+            }
+
+            var cargo = KnownUnits.Find(targetUnit);
+            return cargo != null && cargo.boarding == transport;
+        }
 
         /// <summary>Whether an order is instant: using or moving an item in a slot, or a toggle or autocast, which leave what the unit does as it was.</summary>
         private static bool IsInstant(int id)
