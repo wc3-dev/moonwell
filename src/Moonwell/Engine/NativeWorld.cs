@@ -350,6 +350,8 @@ namespace Moonwell.Engine
                     return Natives.PLAYER_STATE_LUMBER_GATHERED;
                 case PlayerState.GoldUpkeepRate:
                     return Natives.PLAYER_STATE_GOLD_UPKEEP_RATE;
+                case PlayerState.HeroTokens:
+                    return Natives.PLAYER_STATE_RESOURCE_HERO_TOKENS;
                 default:
                     return Natives.PLAYER_STATE_LUMBER_UPKEEP_RATE;
             }
@@ -686,6 +688,22 @@ namespace Moonwell.Engine
             return Natives.GetLocalPlayer() == player;
         }
 
+        /// <summary>Every unit a player owns: GroupEnumUnitsOfPlayer, which hidden units are in too.</summary>
+        public List<unit> UnitsOf(player player)
+        {
+            var group = Natives.CreateGroup();
+            Natives.GroupEnumUnitsOfPlayer(group, player, null);
+            var count = Natives.BlzGroupGetSize(group);
+            var units = new List<unit>(count);
+            for (var i = 0; i < count; i++)
+            {
+                units.Add(Natives.BlzGroupUnitAt(group, i));
+            }
+
+            Natives.DestroyGroup(group);
+            return units;
+        }
+
         /// <summary>Every unit in the world, by player slot: the world's rect misses hidden and Locust units, a player's units do not.</summary>
         public List<unit> UnitsInWorld()
         {
@@ -949,6 +967,8 @@ namespace Moonwell.Engine
                     return Natives.IsUnitType(unit, Natives.UNIT_TYPE_TAUREN);
                 case UnitKind.Suicidal:
                     return Natives.IsUnitType(unit, Natives.UNIT_TYPE_SAPPER);
+                case UnitKind.Ranged:
+                    return Natives.IsUnitType(unit, Natives.UNIT_TYPE_RANGED_ATTACKER);
                 default:
                     return false;
             }
@@ -1355,6 +1375,24 @@ namespace Moonwell.Engine
         public float AcquireRangeOf(unit unit)
         {
             return Natives.GetUnitAcquireRange(unit);
+        }
+
+        /// <summary>The food a unit uses: GetUnitFoodUsed.</summary>
+        public int FoodUsedOf(unit unit)
+        {
+            return Natives.GetUnitFoodUsed(unit);
+        }
+
+        /// <summary>The gold a mine holds: GetResourceAmount.</summary>
+        public int ResourcesOf(unit unit)
+        {
+            return Natives.GetResourceAmount(unit);
+        }
+
+        /// <summary>Sets the gold a mine holds: SetResourceAmount.</summary>
+        public void SetResources(unit unit, int amount)
+        {
+            Natives.SetResourceAmount(unit, amount);
         }
 
         /// <summary>Sets a unit's acquisition range: SetUnitAcquireRange.</summary>
