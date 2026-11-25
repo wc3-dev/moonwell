@@ -673,7 +673,8 @@ removed inside runs no unload reaction.
 loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
 read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
 zeppelin). `transport.Load(unit)` orders the unit to board the transport, and a zeppelin comes for it; loading several
-in one instant takes them all, one after another, a burrow too. `Unload(unit)` and `UnloadAll(x, y)` are the
+in one instant takes them all, one after another, a burrow too. While a unit boards, its brains send it no orders, and
+a transport under a brain's full control lets the game's own load go on. `Unload(unit)` and `UnloadAll(x, y)` are the
 transport's orders.
 
 ```csharp

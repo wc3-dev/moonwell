@@ -1110,12 +1110,20 @@ namespace Moonwell
             }
         }
 
-        /// <summary>Loads a unit into this transport: the unit is ordered to board it, and a zeppelin comes for it; OnCargoLoaded runs once it is aboard. Several in one instant all go in, one after another, and a burrow takes them too (seen 11-24). False when the game refuses the order.</summary>
+        /// <summary>Loads a unit into this transport: the unit is ordered to board it, and a zeppelin comes for it; OnCargoLoaded runs once it is aboard. Several in one instant all go in, one after another, and a burrow takes them too (seen 11-24). While the unit boards, its brains send it no orders, and the load the game then gives the transport counts as code's, which full control leaves alone. False when the game refuses the order.</summary>
         public bool Load(Unit cargoUnit)
         {
             // The game's load order on the transport takes one unit at a time, a second replacing the first, and a burrow
-            // refuses it; the cargo's board order waits its turn (game facts, 11-24, J176).
-            return cargoUnit.OrderOn(Orders.Board, this);
+            // refuses it; the cargo's board order waits its turn (game facts, 11-24, J176). Marked first, as the game may give
+            // the transport its load inside the call (J177, J178).
+            cargoUnit.boarding = this;
+            var taken = cargoUnit.OrderOn(Orders.Board, this);
+            if (!taken && cargoUnit.boarding == this)
+            {
+                cargoUnit.boarding = null;
+            }
+
+            return taken;
         }
 
         /// <summary>Orders the transport to let one unit out where it is.</summary>
@@ -1356,6 +1364,12 @@ namespace Moonwell
 
         /// <summary>The units the transport carries, in load order; null while it carries none yet.</summary>
         internal List<Unit>? cargo;
+
+        /// <summary>The transport Load sent the unit to board, until it is given another order; null for none. Its brains send no orders while it still boards, and the transport's load on it counts as code's (J177, J178).</summary>
+        internal Unit? boarding;
+
+        /// <summary>Whether the unit still boards the transport Load sent it to: the mark is set, it is not aboard, and its order is still board.</summary>
+        internal bool IsBoarding => boarding != null && !IsGone && transport == null && Runtime.World.CurrentOrderOf(Handle) == Inbound.BoardOrder;
 
         /// <summary>Whether the unit let its cargo out as it ended: the game still has it aboard until RemoveUnit returns, so the pool must not keep this unit.</summary>
         internal bool droppedCargo;

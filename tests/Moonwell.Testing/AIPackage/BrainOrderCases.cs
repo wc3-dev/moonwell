@@ -106,6 +106,38 @@ namespace Moonwell.Testing
             Expect.Equal(8, world.Orders.Count, "then dropped");
         }
 
+        /// <summary>A unit Load sends to board a transport gets none of its brain's orders while it boards, so a brain thinking at every step doesn't take it off its way in (J177). Once the board ends, or another order ends Load's, they go through again.</summary>
+        public static void HeldWhileBoarding(FakeWorld world)
+        {
+            var unit = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            var zeppelin = Unit.Of(world.NewUnit(Footman, slot: 0))!;
+            unit.Add(new OrderEar());
+            var brain = unit.Add(new StepBrain());
+            brain.During = () => brain.OrderAt(Orders.Move, 500f, 0f);
+            brain.ThinkEvery = 0.02f;
+            BrainCases.Steps(world, 2);
+            Expect.Equal("move", unit.CurrentOrder, "the brain walks it");
+            world.Orders.Clear();
+
+            Expect.True(zeppelin.Load(unit), "the load taken");
+            BrainCases.Steps(world, 5);
+            Expect.Equal("target board", string.Join(", ", world.Orders.ToArray()), "the brain sends nothing while it boards");
+            Expect.Equal("board", unit.CurrentOrder, "so it still boards");
+            Expect.True(brain.OrderOn(Orders.Attack, zeppelin), "an order while it boards gives true");
+            Expect.Equal(1, world.Orders.Count, "and reaches nothing");
+
+            world.SetCurrentOrder(unit.Handle, 0);
+            BrainCases.Steps(world, 1);
+            Expect.Equal("target board, point move", string.Join(", ", world.Orders.ToArray()), "the board ended, the brain's order goes through");
+
+            zeppelin.Load(unit);
+            world.PlayerOrdersNone(unit.Handle, Orders.Stop);
+            world.SetCurrentOrder(unit.Handle, 852043);
+            world.Orders.Clear();
+            BrainCases.Steps(world, 1);
+            Expect.Equal("point move", string.Join(", ", world.Orders.ToArray()), "a stop ends Load's board, and a board read after it holds nothing");
+        }
+
         /// <summary>Target and plain orders: a new target is sent, a repeat is dropped while carried, sent again when idle with the target alive, and dropped once it is dead; a plain order is done once idle; a refused order is not remembered.</summary>
         public static void TargetAndPlainOrders(FakeWorld world)
         {
