@@ -2359,7 +2359,9 @@ unit.Add(new LaneWalker(road.Toward(camp))                // a Route: a procgen 
   still counts near.
 - `Fights = u => ...` keeps it to a set of units: asked at each think for every unit it finds, enemy or ally, an
   attacker too, a unit it says false for is neither met nor counted in `EnemiesNear`, `AlliesNear` or the outnumbering,
-  so an arena's walkers leave out units of the same players outside their battle. With none, every unit.
+  so an arena's walkers leave out units of the same players outside their battle. The default leaves out Neutral
+  Passive's units (a gold mine, critters, a shop), which count as enemies; a map's own filter replaces it, so one that
+  should still leave them out says so (`u => u.Owner != Player.NeutralPassive && ...`). Set to null, every unit.
 - It walks its route with `move`, which never fights on the way, taking it up at the point after the one nearest it, as
   `FollowRoute` does, so after a fight it goes on from where it is. With no route it stands and fights where it is,
   and walks back to where its fight started.
@@ -2403,7 +2405,8 @@ the best of them scores 1 and none scores 0:
   `To`, and stands there on hold position, or as near as it gets in a crowd. Only there does it judge again, and it
   comes back when its own reason is gone: pulled back hurt, at or above 70% of its life (`ComeBackAt`); outnumbered,
   once no longer outnumbered in its meet range where it stands, at any life. Then it is judged afresh. A `Below` and an
-  `Outnumbered` of 0 never pull back.
+  `Outnumbered` of 0 never pull back. The settings are read at each think, so a `Below` set to 0 while it walks back
+  for its life, or an `Outnumbered` set to 0 while it walks back outnumbered, lets it go at once, wherever it is.
 
 A map's own brain makes a `Fighter` and builds a tree of its own from the same nodes:
 
@@ -2492,7 +2495,8 @@ facts
 | `-brain Guard` | counts the brains of a class (in any case) and selects the next object holding one |
 | `-brainlog` | logs the selected object's brains; `-brainlog Guard` every brain of a class, those made later too; either again stops the log and writes it to `CustomMapData\Moonwell\brains.txt` |
 | `-force 3` | forces line 3: a `Select`'s or `Pick`'s child runs, the parent trying no other; a `When`'s condition reads true; a choice's option wins whatever the scores. `-force` alone lets go of every force on the selected object |
-| `-fact hurt true` | sets a written fact on the selected object's brains' blackboards: the value is the last word, read as the fact's `int`, `float`, `bool` (`true`, `false`, `1`, `0`) or `string` |
+| `-fact hurt true` | sets a written fact for the selected object's brains where each one's read finds it, up its chain (its own blackboard, its player's, the game's), or on its own when none holds it: the value is the last word, read as the fact's `int`, `float`, `bool` (`true`, `false`, `1`, `0`) or `string` |
+| `-fact game food 0` | sets it on the game's blackboard; `-fact player food 0` on the selected brain's player's, or with nothing selected yours |
 | `-wake` | wakes the selected object's brains |
 
 - The log keeps a line only when what won changes: a choice's `Current`, a `Select` or `Pick` running another child, or
@@ -2505,10 +2509,25 @@ facts
   ```
 
   One log runs at a time. It keeps the newest 2,000 lines, and the panel shows the last 5 while it runs.
+- A brain adds lines of its own reasoning with `Log(text)`, for a rule-based brain whose decisions are no choice or
+  tree: written in a think, a line is kept at the think's end, before its choices' and trees' changes, with the facts
+  read in that think; written anywhere else, at once with none. Nothing while the log doesn't follow the brain, and a
+  release build leaves the call out, text and all.
+
+  ```csharp
+  if (Read(FarmsMake) < Read(ColonyEats))
+  {
+      Log("farms short: " + Read(FarmsMake) + " for " + Read(ColonyEats));
+      PostFarm();
+  }
+  ```
+
 - A force holds until `-force` alone, with the mode off too. A `When` forced in a `Select` is both: the select runs it,
   and its condition reads true.
 - `-fact` finds the fact by its name, in any case, among the facts made so far. It refuses a worked-out fact, a name
-  two facts share, and a fact of another type.
+  two facts share, and a fact of another type. A fact whose own name starts with `game` or `player` is still found by
+  its whole name. Up the chain, `-fact food 0` on a unit whose player holds `food` changes it for every brain of that
+  player, as their reads find it there; a brain holding its own copy reads that first.
 - The commands answer only while the mode is on and are listed by `-help`; a map's own command of the same name wins.
   Everything they read and change is the same on every machine. A release build has none of it.
 
@@ -3072,7 +3091,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   `Image` shows a `Texture`; a piece, a colour or a round cut of one is a copy the build makes ([Assets](#assets)). A
   map's own panel inherits `Panel` and keeps its frames in fields.
 - A panel with a look catches the clicks on it, so they do not reach the units under it, unless `Enabled` is false.
-  Labels, images and empty panels let clicks through, until they are listened to for the mouse.
+  Labels, images and empty panels let clicks through, until they are listened to for the mouse. `CatchesClicks = true`
+  on an empty panel or an image catches them, by an empty text over it as a panel's look has, so a click on a panel of
+  the map's own art does not order the hero to walk there; the frames on the panel still take their own clicks.
 - A frame's events are C# events, run with the player, and a value where there is one, as synced events: so a handler
   may change the game. Every frame has `Wheel` (notches, up positive); `Button` has
   `Clicked` and `DoubleClicked` (two clicks by one player within 0.3 s), `IconButton` `Clicked`, `CheckBox` `Toggled`,
@@ -3167,6 +3188,9 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   ties itself to a piece with `Attach` too: `label.Attach(FramePoint.Bottom, player.GameUi().Minimap, FramePoint.Top)`,
   with the label added by `Screen.AddOver`, as the console's art covers a frame beneath the HUD there. The chat and the
   game's messages are not offered, nor moving the hero icons, as the game crashes or draws them wrong (seen).
+  `OpenMenu()`, `OpenAllies()`, `OpenQuests()` and `OpenLog()` open the game's menu, allies, quest log and message log
+  on that player's screen, as a click on the top bar's button does, even with the top bar or the HUD hidden, so a map's
+  own button can stand in for them: `menu.Clicked += who => who.GameUi().OpenMenu();`.
   `Portrait.Fill(frame)` puts the portrait, the first unit selected, on a map's frame at its place and size: the game
   places the portrait across the whole window's width, not the 4:3 middle, so Moonwell works out where the frame is
   from how the map placed it and squeezes it for the window's shape, again every second and when the window changes
@@ -3328,7 +3352,10 @@ heroes.Picked += (who, hero) => who.Select(hero);
   items move through them, with the wheel or the two buttons at its side. `Show` writes an item onto its row, a button
   (its text unless set), and `Picked` runs with a clicked row's item. After changing the list itself, call `Refresh()`.
 - `SlotGrid` is `Columns` by `Rows` icon slots (`IconSlot`, with its `Grid` and `Index`), 0.04 square unless
-  `SlotSize` is set, sized by them. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
+  `SlotSize` is set, sized by them. `new IconSlot()` is a slot the map places alone, as a paper doll's slots round the
+  hero: 0.04 square unless sized, its `Grid` null and `Index` -1, dragged and swapped as a grid's are, and its own
+  `Moved` runs when a slot is dropped on it. `EmptyIcon` is what a slot draws while it shows no icon, the game's black
+  unless set. A slot showing an icon can be dragged, as frames are, onto another slot of any grid,
   which runs that grid's `Moved` with the two slots; an empty slot only takes drops. The grid keeps nothing but icons,
   so the map moves what the slots hold. `from.SwapWith(to)` in `Moved` swaps the two slots' icons and tooltips, and
   the tooltips move and do not end, as one set in place of another does; a handler that does not call it leaves both
@@ -3342,6 +3369,19 @@ heroes.Picked += (who, hero) => who.Select(hero);
   `Orc`, `NightElf` and `Undead` show that race's to everyone. A theme is the template windows are made from and the
   colours of titles and text, so `new Theme { Window = "MyWindow" }` uses a window of the map's own `.fdf`. The build
   writes the four races' templates into a map that uses the kit, before the map's own `.fdf` files.
+- Every part, the HUD parts below too, takes `Kit.Theme` when it is made unless it is given a `Theme` of its own
+  (`new UnitFrame { Theme = wow }`), and passes it down to its pieces: a unit frame to its bars, buffs and stats, a
+  window to its title, close button and a ready window's tooltips, a talent window to its talents' tooltips. Setting
+  `Kit.Theme` changes only the parts made after.
+- A theme's `TitleSize`, `TextSize` and `BarTextSize` (in `Label.Size`'s units, 0 for the game's) and `Font` (a `.ttf`
+  in the map's assets, as `Label.Font`) are the parts' text: titles of windows and tooltips, other text, and the text
+  over a bar. A label takes them only when it is made, as the game reads a label's font and height from its template,
+  so give a part its `Theme` before it is added; set later, a part's colours and textures change and its text keeps
+  its size.
+- A window's close button is the game's dialog button with an X label inside it, which fits where the button's own
+  text was cut by its edge. `Theme.Close` names a texture for an icon button instead (WoW's red cross), at `CloseSize`
+  (0.024 unless set) and `CloseInset` from the top right corner (0.014); `CloseButton` is the one shown, which a map
+  may place again.
 - `ShopWindow` is a ready shop: `Sell(new ShopEntry { Icon, Name, Text, Cost })` puts a good in it (four a line unless
   `Columns` is set), as an icon button with a rich tooltip, and `Remove` takes one out. A click runs `Bought` with the
   player and the good; the shop takes no gold and gives nothing, so the map does both there. Inherit `ShopEntry` to
@@ -3458,7 +3498,9 @@ var party = Screen.Add(new SelectionList { Anchor = FramePoint.Left }, this, sho
 party.Follow(player);
 ```
 
-- `StatusBar` is a `Backing`, a `Bar`, an `OverlayBar` and a `Label` over both. `Follow(unit, Vital.Life)`, `Vital.Mana`
+- `StatusBar` is a `Backing`, a `Bar`, an `OverlayBar` and a `Label` over both. A texture the map gives one of them,
+  before or after `Follow`, is kept: following life, then mana, or another `Theme` changes only a piece still in the
+  theme's texture. `Follow(unit, Vital.Life)`, `Vital.Mana`
   or `Vital.Experience` follows a unit, read 20 times a second on one timer for every part, and drawn again only when it
   changed; a dead or gone unit reads 0, and `null` empties the bar. `Text` is `BarText.Values` (`123 / 450`, life
   rounded up as the game shows it), `Percent` or `None`.
@@ -3528,7 +3570,9 @@ party.Follow(player);
   `OnSelectionChanged` and drops a unit that dies or goes at once. It is as high as the entries showing, so it is best
   placed by its top (`Anchor = FramePoint.TopLeft`). A click on an entry selects that unit alone, for the player who
   clicked; frames do not see Shift, so there is no Shift-click. `Entry = () => new PartyFrame()` makes a
-  map's own `UnitFrame` class for each, set before `Follow`. The game's active subgroup (Tab) is not shown: no native
+  map's own `UnitFrame` class for each, set before `Follow`; `Compact()` lays a unit frame out as Kit's own entries are
+  (icon, name and two thin bars, 0.14 by 0.036), for an entry that adds a backing or textures to the default. Kit's own
+  entries take the list's `Theme`, the one of the moment the list was made. The game's active subgroup (Tab) is not shown: no native
   reads it.
 
 ## Boards and dialogs

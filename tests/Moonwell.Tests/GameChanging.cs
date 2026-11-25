@@ -30,6 +30,7 @@ internal static class GameChanging
         ["CinematicSounds"] = "SetCineModeVolumeGroupsBJ: a cinematic changes only its watchers' sound mix (decision 208)",
         ["MakeText"] = "CreateTextTag: one player's floating text is made on their machine only (decision 201); the game counts text tags apart from handle ids",
         ["EndText"] = "DestroyTextTag: ends a text made on this machine only (decision 201)",
+        ["IFramesWorld.ClickFrame"] = "BlzFrameClick on the game's top bar buttons: opens the menu, allies, quests or log dialog on that player's screen (J162; the map's own click, seen 11-20)",
         ["ReadPreload"] = "Preloader, through an ability's tooltips: a player's file is read on that player's machine, and what it holds is shared after",
     };
 

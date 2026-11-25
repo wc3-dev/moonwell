@@ -28,16 +28,27 @@ namespace Moonwell
 
         internal bool ticking;
 
+        internal Theme theme;
+
         /// <summary>Makes a list that follows no one yet, to be added to the screen or to another frame.</summary>
         public SelectionList()
         {
             Gap = 0.004f;
             CellWidth = 0.14f;
             CellHeight = 0.036f;
+            theme = Kit.Theme;
             KitTicks.Fit(this, 0);
         }
 
-        /// <summary>Makes each entry: a map's own UnitFrame class, as () => new PartyFrame(); Kit's small UnitFrame (icon, name, life and mana) unless set. Set it before Follow: entries made already stay.</summary>
+        /// <summary>The look of Kit's own entries, Kit.Theme as the list was made unless set, not as it first grows; entries made already keep theirs. A map's own Entry keeps the theme its maker gives it.</summary>
+        [LocalSafe]
+        public Theme Theme
+        {
+            get { return theme; }
+            set { theme = value; }
+        }
+
+        /// <summary>Makes each entry: a map's own UnitFrame class, as () => new PartyFrame(), which may start from UnitFrame.Compact(); Kit's small UnitFrame (icon, name, life and mana), in the list's Theme, unless set. Set it before Follow: entries made already stay.</summary>
         public Func<UnitFrame>? Entry { get; set; }
 
         /// <summary>The player whose selection the list follows; null when none.</summary>
@@ -155,7 +166,7 @@ namespace Moonwell
             }
             else
             {
-                entry = new UnitFrame();
+                entry = new UnitFrame { Theme = theme };
                 entry.Compact();
             }
 

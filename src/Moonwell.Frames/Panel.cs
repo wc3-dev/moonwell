@@ -3,7 +3,8 @@ namespace Moonwell
     /// <summary>
     /// A frame that holds others, with the game's window look (EscMenuBackdrop) unless Template says otherwise. A map's own
     /// panel inherits it, keeping its frames and their state together. A panel with a look catches the clicks on it, so they
-    /// do not reach the units under it; Template = "" makes an empty panel, which draws nothing and lets every click through.
+    /// do not reach the units under it; Template = "" makes an empty panel, which draws nothing and lets every click through,
+    /// unless CatchesClicks is set.
     /// </summary>
     public class Panel : Frame
     {
@@ -16,10 +17,18 @@ namespace Moonwell
             Template = "EscMenuBackdrop";
         }
 
+        /// <summary>Whether an empty panel catches the clicks on it, so a panel of the map's own art (images on an empty panel) keeps them from the world under it; false unless set. A panel with a look catches them anyway, and the frames on it still take their own.</summary>
+        [LocalSafe]
+        public bool CatchesClicks
+        {
+            get { return catchesClicks; }
+            set { CatchClicks(value); }
+        }
+
         /// <summary>A BACKDROP, which an empty panel is made as: a FRAME by type takes every click on the world, even turned off (seen 11-03).</summary>
         internal override string GameType => "BACKDROP";
 
-        /// <summary>Makes the catcher, before the frames added to the panel so it lies beneath them: on over a panel's look, and off over an empty panel, which is painted blank and draws nothing, until it is listened to or given a tooltip.</summary>
+        /// <summary>Makes the catcher, before the frames added to the panel so it lies beneath them: on over a panel's look, and off over an empty panel, which is painted blank and draws nothing, until it is listened to, given a tooltip or set to catch clicks.</summary>
         internal override void MakeParts()
         {
             var world = FramesSystem.World;
