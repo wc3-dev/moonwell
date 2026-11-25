@@ -70,7 +70,18 @@ namespace Moonwell.Testing
             AddAITools(list);
             AddSimulation(list);
             AddAbilitiesAndControl(list);
+            AddUnitPlayerReads(list);
             return list;
+        }
+
+        /// <summary>Adds the cases for the unit and player reads: a unit's food, attack numbers, range kind, a mine's gold and CanCast; a player's units, hero limits and Sees.</summary>
+        private static void AddUnitPlayerReads(List<Case> list)
+        {
+            list.Add(new Case { Name = "units.reads", Run = UnitPlayerReadCases.UnitReads });
+            list.Add(new Case { Name = "units.can-cast", Run = UnitPlayerReadCases.CanCast });
+            list.Add(new Case { Name = "players.units", Run = UnitPlayerReadCases.PlayerUnits });
+            list.Add(new Case { Name = "players.hero-limits", Run = UnitPlayerReadCases.PlayerHeroLimits });
+            list.Add(new Case { Name = "players.sees", Run = UnitPlayerReadCases.PlayerSees });
         }
 
         /// <summary>Adds the cases for a unit's abilities, the live numbers an ability keeps a base for, attack range as a stat, an owned damage in a simulated swing, the buff marks and the crowd control reduction.</summary>
