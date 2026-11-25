@@ -117,15 +117,6 @@ namespace Moonwell.AI.Combat
         }
 
         /// <summary>Whether the unit can cast it now: it has the ability, the ability's cooldown is over, and its mana is at least the ability's mana cost now.</summary>
-        internal bool Ready(Unit unit)
-        {
-            if (!unit.HasAbility(AbilityId))
-            {
-                return false;
-            }
-
-            var ability = unit.AbilityOf(AbilityId);
-            return ability.CooldownLeft <= 0f && unit.Mana >= ability.LiveManaCost;
-        }
+        internal bool Ready(Unit unit) => unit.CanCast(AbilityId);
     }
 }

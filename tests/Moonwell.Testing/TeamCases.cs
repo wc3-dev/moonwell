@@ -133,6 +133,9 @@ namespace Moonwell.Testing
             Expect.Equal("win 3 (no dialog)", world.Results[2], "a winner without the dialog");
             Expect.True(Player.Three.SlotState == SlotState.Left, "the loser's slot");
             Expect.True(Player.Two.SlotState == SlotState.Playing, "another plays on");
+            Expect.True(Player.One.HasWon && !Player.One.HasLost, "the winner has won");
+            Expect.True(Player.Three.HasLost && !Player.Three.HasWon, "the loser has lost");
+            Expect.True(!Player.Two.HasWon && !Player.Two.HasLost, "a player still playing has neither");
         }
 
         /// <summary>A second Win or Lose, or one for a player not in the game, is refused.</summary>
@@ -164,6 +167,7 @@ namespace Moonwell.Testing
             Expect.Equal("win 0", world.Results[1], "West's first");
             Expect.Equal("win 1", world.Results[2], "West's second");
             Expect.Equal(0, world.Logged.Count, "nothing refused");
+            Expect.True(Player.One.HasWon && Player.Two.HasWon && Player.Three.HasLost && Player.Four.HasLost, "the team won, the others lost");
         }
 
         /// <summary>Game.Over with one player: everyone else in the game loses, and the winner's dialog and scores are as given.</summary>

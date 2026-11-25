@@ -393,6 +393,58 @@ namespace Moonwell
             set { Runtime.World.SetState(Handle, PlayerState.LumberUpkeepRate, value); }
         }
 
+        /// <summary>The free heroes the player may still take (PLAYER_STATE_RESOURCE_HERO_TOKENS), as a melee start gives one for the first hero of an altar.</summary>
+        [LocalSafe]
+        public int HeroTokens
+        {
+            get { return Runtime.World.StateOf(Handle, PlayerState.HeroTokens); }
+            set { Runtime.World.SetState(Handle, PlayerState.HeroTokens, value); }
+        }
+
+        /// <summary>The id of the tech that limits a player's heroes, 'HERO', which SetPlayerMaxHeroesAllowed sets.</summary>
+        private const int HeroTech = 0x4845524F;
+
+        /// <summary>How many heroes the player may have, as SetPlayerMaxHeroesAllowed sets it (the limit of the 'HERO' tech); NoLimit unless the map limits it. Setting it does not take away heroes the player has.</summary>
+        [LocalSafe]
+        public int MaxHeroes
+        {
+            get { return Runtime.World.TechMaxOf(Handle, HeroTech); }
+            set { Runtime.World.SetTechMax(Handle, HeroTech, value); }
+        }
+
+        /// <summary>The player's living units, read from the game into a new list at each read (GroupEnumUnitsOfPlayer), in the game's order: hidden ones too (a unit inside a transport), dead ones and Moonwell's dummies and helper units left out. A unit Moonwell has not met yet is taken in by the read, so it is not for Local.For code.</summary>
+        public List<Unit> Units
+        {
+            get
+            {
+                var handles = Runtime.World.UnitsOf(Handle);
+                var found = new List<Unit>(handles.Count);
+                for (var i = 0; i < handles.Count; i++)
+                {
+                    var handle = handles[i];
+                    if (!Runtime.World.IsAlive(handle))
+                    {
+                        continue;
+                    }
+
+                    var unit = Unit.Of(handle);
+                    if (unit != null && !unit.IsGone)
+                    {
+                        found.Add(unit);
+                    }
+                }
+
+                return found;
+            }
+        }
+
+        /// <summary>Whether the player sees a unit now, so that the player's units may target it (IsUnitVisible): neither fog, black mask nor invisibility hides it from the player. False for a unit the game has removed. In a simulation, true unless the case hides it.</summary>
+        [LocalSafe]
+        public bool Sees(Unit unit)
+        {
+            return !unit.IsGone && Runtime.World.Sees(Handle, unit.Handle);
+        }
+
         /// <summary>Shows a line to the player, for the seconds, or for the game's own time without them; it changes nothing in the game.</summary>
         [LocalSafe]
         public void Print(string text, float seconds = -1.0f)
@@ -614,8 +666,16 @@ namespace Moonwell
             }
         }
 
+        /// <summary>Whether the player has won, by Win or Game.Over. Moonwell keeps it, as the game has no read of a player's result, so a victory the game gives by itself is not seen.</summary>
+        [LocalSafe]
+        public bool HasWon { get; private set; }
+
+        /// <summary>Whether the player has lost, by Lose or Game.Over; kept by Moonwell, as HasWon is. A loser's SlotState turns Left, as a player's who quit does.</summary>
+        [LocalSafe]
+        public bool HasLost { get; private set; }
+
         /// <summary>Whether the player has won or lost, by Win, Lose or Game.Over.</summary>
-        internal bool HasResult { get; private set; }
+        internal bool HasResult => HasWon || HasLost;
 
         /// <summary>
         /// Takes the player out of the game as a winner, as World Editor's Victory does. A person sees the victory box, which
@@ -625,7 +685,7 @@ namespace Moonwell
         /// </summary>
         public void Win(bool dialog = true, bool scores = true)
         {
-            if (TakesResult("Win"))
+            if (TakesResult("Win", true))
             {
                 Runtime.World.Win(Handle, dialog, scores);
             }
@@ -639,7 +699,7 @@ namespace Moonwell
         /// </summary>
         public void Lose(string message = "")
         {
-            if (TakesResult("Lose"))
+            if (TakesResult("Lose", false))
             {
                 Runtime.World.Lose(Handle, message);
             }
@@ -921,7 +981,7 @@ namespace Moonwell
         }
 
         // Whether the player can take a result: in the game, and none taken yet; it is taken if so.
-        private bool TakesResult(string action)
+        private bool TakesResult(string action, bool won)
         {
             if (HasResult)
             {
@@ -935,7 +995,15 @@ namespace Moonwell
                 return false;
             }
 
-            HasResult = true;
+            if (won)
+            {
+                HasWon = true;
+            }
+            else
+            {
+                HasLost = true;
+            }
+
             return true;
         }
 

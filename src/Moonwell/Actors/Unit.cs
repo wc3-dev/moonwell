@@ -142,6 +142,36 @@ namespace Moonwell
         [LocalSafe]
         public bool IsSuicidal => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Suicidal);
 
+        /// <summary>Whether the unit attacks from range (UNIT_TYPE_RANGED_ATTACKER), as the game reads it from the unit's attack now; false once the game has removed it. In a simulation, its type's first attack has a weapon type other than Normal.</summary>
+        [LocalSafe]
+        public bool IsRanged => !IsGone && Runtime.World.IsKind(Handle, UnitKind.Ranged);
+
+        /// <summary>The food the unit uses, read from the game now (GetUnitFoodUsed): its type's food cost; 0 once the game has removed it.</summary>
+        [LocalSafe]
+        public int FoodUsed => IsGone ? 0 : Runtime.World.FoodUsedOf(Handle);
+
+        /// <summary>The seconds between the unit's attacks with its first weapon, read from the game now (BlzGetUnitAttackCooldown): its own cooldown, which attack speed bonuses do not shorten; 0 once the game has removed it. A standard class's declared AttackCooldown is its type's, as an ability's LiveCooldown stands beside its Cooldown.</summary>
+        [LocalSafe]
+        public float LiveAttackCooldown => IsGone ? 0.0f : Runtime.World.AttackCooldownOf(Handle);
+
+        /// <summary>How far the unit looks for an enemy to attack when idle, its acquisition range read from the game now (GetUnitAcquireRange); 0 once the game has removed it. An attack range raised past it through Stat.AttackRange raises it too. A standard class's declared AcquisitionRange is its type's.</summary>
+        [LocalSafe]
+        public float AcquireRange => IsGone ? 0.0f : Runtime.World.AcquireRangeOf(Handle);
+
+        /// <summary>The gold a gold mine holds, read from the game now and set (GetResourceAmount, SetResourceAmount); 0 for a unit that holds none. A mine made in play starts with its Gold Mine ability's Max Gold. Once the game has removed the unit, 0, and setting does nothing.</summary>
+        [LocalSafe]
+        public int Resources
+        {
+            get => IsGone ? 0 : Runtime.World.ResourcesOf(Handle);
+            set
+            {
+                if (!IsGone)
+                {
+                    Runtime.World.SetResources(Handle, value);
+                }
+            }
+        }
+
         /// <summary>The default object of the unit's type, as Unreal's class default object: the values its class declares (a type no class of the map's declares, its values as World Editor made them, standard where World Editor left them), the same whatever this unit's are now and once it is gone. One per type, shared by its units, with no handle; it is gone, so its live actions do nothing. A unit that has morphed keeps the default object of the type it came in as, as it keeps its class.</summary>
         [LocalSafe]
         public Unit Default => ObjectTypes.DefaultOf(this, firstTypeId != 0 ? firstTypeId : DeclaredTypeId);
@@ -1643,6 +1673,26 @@ namespace Moonwell
         [LocalSafe]
         public bool HasAbility<T>()
             where T : Ability => HasAbility(ObjectTypes.IdOf<T>());
+
+        /// <summary>Whether the unit could cast an ability now: it has it, the ability's cooldown is over, and its mana is at least the ability's mana cost at its level, all read from the game. It does not ask whether the unit is stunned, silenced or paused, nor whether a target is in range. False once the game has removed the unit.</summary>
+        [LocalSafe]
+        public bool CanCast(int abilityId)
+        {
+            if (IsGone)
+            {
+                return false;
+            }
+
+            var level = Runtime.World.AbilityLevel(Handle, abilityId);
+            return level > 0
+                && Runtime.World.AbilityCooldownLeft(Handle, abilityId) <= 0.0f
+                && Runtime.World.ManaOf(Handle) >= Runtime.World.AbilityManaCost(Handle, abilityId, level - 1);
+        }
+
+        /// <summary>Whether the unit could cast an ability of a registered class now, as CanCast(id) says: <c>if (unit.CanCast&lt;StormBolt&gt;())</c>.</summary>
+        [LocalSafe]
+        public bool CanCast<T>()
+            where T : Ability => CanCast(ObjectTypes.IdOf<T>());
 
         /// <summary>Adds a flat amount to a stat while a scope holds it (decision 221), and returns the modifier, whose End takes it off sooner: Modify(Stat.Armor, 5, heldBy: Item.Carry). A holder that has ended adds nothing, reported in development builds. A group names what it stacks with: modifiers of one group on one stat of this unit stack by the stacking rule (with a group and no rule, Strongest: only the one farthest from no change counts, and when it ends the next does; Refresh: a new one ends the older ones; PerSource: as Refresh among those with the same source; Separate: all add up), and with no group all add up. A rule with no group is reported in development builds and ignored.</summary>
         public Modifier Modify(Stat stat, float amount, Scope heldBy, object? group = null, Stacking? stacking = null, Unit? source = null) => Stats.Add(stat, amount, 0.0f, 1.0f, 0.0f, heldBy, group, stacking, source, "Unit.Modify");
