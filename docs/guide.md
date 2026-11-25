@@ -3097,11 +3097,13 @@ public sealed class Shop : Panel // a window of the map's own, made for one buye
   everywhere, and shown on that player's. A frame added to it is shown to the same player. Seen in single player; with
   two players it is not checked yet.
 - Reads give what the map set, the same on every machine, so they are fine inside `Local.For`; setting, making and
-  adding are not. `label.ShowLocal(text)`, inside `Local.For`, shows a text on that machine only, as a number only one
-  player sees; `Text` keeps the shared text, and setting it shows that everywhere again. `label.ShowNameOf(unit)`,
-  outside `Local.For`, shows each machine its own name for a unit (a hero's proper name, else the unit's name, as both
-  are in each player's language), and `Text` reads the type's name. It shows the name at the call: call it again after
-  a rename.
+  adding are not, but for `Visible`: set inside `Local.For`, it shows or hides the frame on that machine only, as a
+  card that follows what one player sees; `Visible` keeps reading the shared value, and setting it outside
+  `Local.For` shows that everywhere again. `label.ShowLocal(text)`, inside `Local.For`, shows a text on that machine
+  only, as a number only one player sees; `Text` keeps the shared text, and setting it shows that everywhere again.
+  `label.ShowNameOf(unit)`, outside `Local.For`, shows each machine its own name for a unit (a hero's proper name, else
+  the unit's name, as both are in each player's language), and `Text` reads the type's name. It shows the name at the
+  call: call it again after a rename.
 - `End()` hides a frame with the frames added to it. Nothing is destroyed, as destroying a frame can desync (a claim):
   the next frame of its class and template is given the hidden one, with none of its old values. One sized on a
   template goes only to a frame given a size. One that a frame still showing is tied to is not given out again, so the
@@ -3850,8 +3852,8 @@ reset in a constructor needs no block. A local or an event cannot be marked.
 
 In a library project of your own, the marks also say what a map's `Local.For` may call. `[MachineLocal]` on a method
 works as above: its body is checked when the library is built. `[LocalSafe]` goes on a method, a constructor, a
-property (its getter only) or a class (every member), and says it only reads, or changes only what one player sees or
-hears. Nothing checks that: the analyzer takes the library's word, so a wrong `[LocalSafe]` desyncs with no error.
+property (its getter only), a property's setter (`[LocalSafe] set { ... }`) or a class (every member), and says it only
+reads, or changes only what one player sees or hears. Nothing checks that: the analyzer takes the library's word, so a wrong `[LocalSafe]` desyncs with no error.
 A library you cannot mark, such as someone else's package, is called from a block marked `[SyncUnchecked]` (next).
 
 `[SyncUnchecked]` on a method turns the checks off in its own body, except `decimal`; `Local.For` still follows a method
