@@ -8,6 +8,11 @@
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- tests\ holds test projects of the map's own, such as its build code's, which are no part of the map. -->
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Moonwell.Objects" Version="MOONWELL_VERSION" />
     <!-- For damage reactions in stages (before and after armor, lethal, landed), take the comment off the next line. -->
