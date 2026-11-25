@@ -59,6 +59,9 @@ namespace Moonwell.Engine
         /// <summary>SimpleInventoryCover, the SIMPLEFRAME whose texture covers the slots of a unit with no inventory; its texture, InventoryCoverTexture, is never looked up, as the game crashes reading it (seen 11-13).</summary>
         internal readonly framehandle InventoryCover;
 
+        /// <summary>The top bar's four buttons, UpperButtonBarMenuButton, AlliesButton, QuestsButton and ChatButton (the Log): clicked by GameUi's Open methods on one machine, as a click on them opens their dialog even while they are hidden (seen 11-20 for the menu).</summary>
+        internal readonly framehandle MenuButton, AlliesButton, QuestsButton, LogButton;
+
         /// <summary>Looks them up: the minimap by its name, as its origin frame is nil (seen 11-05), the rest by the game's ORIGIN_FRAME_ numbers or by name.</summary>
         internal HudFrames(IFramesWorld world)
         {
@@ -88,6 +91,10 @@ namespace Moonwell.Engine
             BuildingName = world.GameFrame("SimpleBuildingNameValue", 1)!;
             InventoryText = world.GameFrame("InventoryText")!;
             InventoryCover = world.GameFrame("SimpleInventoryCover")!;
+            MenuButton = world.GameFrame("UpperButtonBarMenuButton")!;
+            AlliesButton = world.GameFrame("UpperButtonBarAlliesButton")!;
+            QuestsButton = world.GameFrame("UpperButtonBarQuestsButton")!;
+            LogButton = world.GameFrame("UpperButtonBarChatButton")!;
         }
 
         /// <summary>Puts a frame far above the screen, where the map that found these put them, on this machine, at no size when sized; the way that frees a game frame's clicks and holds where hiding does not (seen 11-12 and 13). A String is never sized here.</summary>

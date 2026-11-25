@@ -206,7 +206,9 @@ namespace Moonwell
             var top = -lines.Count * LineHeight;
             line.Attach(FramePoint.TopLeft, body, FramePoint.TopLeft, 0.0f, top);
             line.Attach(FramePoint.TopRight, body, FramePoint.TopRight, 0.0f, top);
-            line.Add(new Label { Text = label, Anchor = FramePoint.Left, Alignment = FramePoint.Left, Color = theme.Text });
+            var name = new Label { Text = label, Anchor = FramePoint.Left, Alignment = FramePoint.Left, Color = theme.Text };
+            theme.Style(name, theme.TextSize);
+            line.Add(name);
             control.Anchor = FramePoint.Right;
             return line.Add(control);
         }

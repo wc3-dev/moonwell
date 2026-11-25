@@ -1,7 +1,7 @@
 namespace Moonwell
 {
     /// <summary>
-    /// The UI kit's look (decision 212): the template its windows and rich tooltips are made from, its text colours, and its HUD parts' border and bar textures (decision 334). The
+    /// The UI kit's look (decision 212): the template its windows and rich tooltips are made from, its text colours, sizes and font (read when a part's labels are made, decision 305), a window's close button, and its HUD parts' border and bar textures (decision 334). Every part takes Kit.Theme when it is made unless given its own Theme, which it passes down to its pieces. The
     /// four races' looks are the game's art; PlayersRace is the game's own window, which draws each player's race on their
     /// screen. A map's own theme names a template of its own .fdf.
     /// </summary>
@@ -76,5 +76,43 @@ namespace Moonwell
         /// <summary>A cast bar's fill once interrupted: the game's red team colour unless set.</summary>
         [LocalSafe]
         public string Interrupted { get; set; } = @"ReplaceableTextures\TeamColor\TeamColor00.blp";
+
+        /// <summary>The path in the map of a .ttf font in the map's assets for the parts' text (Label.Font); empty for the game's font unless set. Read when a part's labels are made.</summary>
+        [LocalSafe]
+        public string Font { get; set; } = "";
+
+        /// <summary>The height of titles (a window's, a rich tooltip's) in Label.Size's units; 0, the game's, unless set. Read when a part's labels are made.</summary>
+        [LocalSafe]
+        public float TitleSize { get; set; }
+
+        /// <summary>The height of other text (a unit's name and level, a tooltip's text and cost, a buff's time, a button's hotkey and count, a stat's row) in Label.Size's units; 0, the game's, unless set. Read when a part's labels are made.</summary>
+        [LocalSafe]
+        public float TextSize { get; set; }
+
+        /// <summary>The height of the text over a bar (a StatusBar's, a CastBar's) in Label.Size's units; 0, the game's, unless set. Read when a part's labels are made.</summary>
+        [LocalSafe]
+        public float BarTextSize { get; set; }
+
+        /// <summary>A window's close button: the texture of an icon button, as WoW's red cross; empty, unless set, for the game's dialog button with an X fitted inside it.</summary>
+        [LocalSafe]
+        public string Close { get; set; } = "";
+
+        /// <summary>The close button's side; 0.024 unless set.</summary>
+        [LocalSafe]
+        public float CloseSize { get; set; } = 0.024f;
+
+        /// <summary>How far the close button sits in from the window's top right corner, across and down; 0.014 unless set.</summary>
+        [LocalSafe]
+        public float CloseInset { get; set; } = 0.014f;
+
+        /// <summary>Gives a label the theme's font and a height, while it is not made yet; a label made already keeps its own, as the game takes them only when it is made.</summary>
+        internal void Style(Label label, float size)
+        {
+            if (label.handle == null && !label.HasEnded)
+            {
+                label.Size = size;
+                label.Font = Font;
+            }
+        }
     }
 }
