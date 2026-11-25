@@ -206,6 +206,173 @@ namespace Moonwell.Build.Tests
             Assert.Equal(new byte[] { 0, 10, 20, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, unpacked.ToArray());
         }
 
+        [Fact]
+        public void a_flood_fill_from_a_set_takes_every_piece_the_set_touches()
+        {
+            var cells = Grid(0f, 0f,
+                "..X..X.",
+                "..X..X.",
+                ".XX..X.");
+            var walkable = cells.Where(cell => cell.CanWalk);
+
+            // Starting cells in the left room and the right strip, one of them on the boundary, which is not in the set.
+            var starts = cells.In(0f, 64f, 32f, 96f).Or(cells.In(192f, 0f, 224f, 32f)).Or(cells.In(64f, 64f, 96f, 96f));
+            var reached = walkable.FloodFrom(starts);
+
+            Assert.Equal(5 + 3, reached.Count);
+            Assert.True(reached.Contains(16f, 16f));
+            Assert.True(reached.Contains(208f, 80f));
+            Assert.False(reached.Contains(112f, 48f));
+
+            // The same as flooding from each start and joining the pieces.
+            Assert.Equal(walkable.FloodFrom(16f, 80f).Or(walkable.FloodFrom(208f, 16f)).ToList(), reached.ToList());
+            Assert.True(walkable.FloodFrom(cells.Where(cell => !cell.CanWalk)).IsEmpty);
+            Assert.True(walkable.FloodFrom(Cells.Empty).IsEmpty);
+        }
+
+        [Fact]
+        public void the_empty_set_is_a_start_to_add_to_on_any_map()
+        {
+            var cells = Grid(0f, 0f,
+                "..~",
+                "...");
+            var water = cells.Where(cell => cell.IsWater);
+
+            Assert.True(Cells.Empty.IsEmpty);
+            Assert.Equal(0, Cells.Empty.Count);
+            Assert.Same(water, Cells.Empty.Or(water));
+            Assert.Same(water, water.Or(Cells.Empty));
+            Assert.Equal(water.ToList(), water.Except(Cells.Empty).ToList());
+            Assert.True(water.And(Cells.Empty).IsEmpty);
+            Assert.True(Cells.Empty.And(water).IsEmpty);
+            Assert.True(Cells.Empty.Except(water).IsEmpty);
+            Assert.True(Cells.Empty.In(-1000f, -1000f, 1000f, 1000f).IsEmpty);
+            Assert.True(Cells.Empty.Where(cell => true).IsEmpty);
+            Assert.True(Cells.Empty.FloodFrom(water).IsEmpty);
+            Assert.True(Cells.Empty.FloodFrom(16f, 16f).IsEmpty);
+            Assert.False(Cells.Empty.Contains(16f, 16f));
+            Assert.False(Cells.Empty.Contains(water.First()));
+            Assert.Empty(Cells.Empty);
+            Assert.True(Cells.Empty.LargestRectangle().IsEmpty);
+            Assert.Equal(float.PositiveInfinity, water.DistanceTo(Cells.Empty));
+            Assert.Equal(float.PositiveInfinity, Cells.Empty.DistanceTo(water));
+            Assert.Equal(float.PositiveInfinity, Cells.Empty.Distances()[water.First()]);
+
+            // Joined piece by piece from nothing, as a loop over regions does.
+            var joined = Cells.Empty;
+            foreach (var cell in water)
+            {
+                joined = joined.Or(cells.FloodFrom(cell.X, cell.Y).And(water));
+            }
+
+            Assert.Equal(water.ToList(), joined.ToList());
+        }
+
+        [Fact]
+        public void a_picture_of_a_part_takes_the_cells_it_reaches_into_at_a_scale()
+        {
+            var cells = Grid(-64f, -32f,
+                "....",
+                "~...",
+                "....");
+
+            // From the middle of the first column to just into the third, and the second row only.
+            var picture = new Picture(cells.Grid, -50f, 0f, 1f, 32f, 3).Fill(cells.Where(cell => cell.IsWater), System.Drawing.Color.FromArgb(10, 20, 30));
+
+            Assert.Equal((-64f, 0f, 32f, 32f), (picture.Left, picture.Bottom, picture.Right, picture.Top));
+            Assert.Equal((9, 3, 3), (picture.Width, picture.Height, picture.Scale));
+            var (width, height, pixels) = Pixels(picture.ToPng());
+            Assert.Equal((9, 3), (width, height));
+
+            // The water cell is the first three pixels of each of the three rows; the rest is black.
+            for (var row = 0; row < 3; row++)
+            {
+                for (var x = 0; x < 9; x++)
+                {
+                    Assert.Equal(x < 3 ? (10, 20, 30) : (0, 0, 0), Pixel(pixels, width, x, row));
+                }
+            }
+        }
+
+        [Fact]
+        public void a_picture_of_a_part_is_kept_to_the_map_and_refuses_what_shows_nothing()
+        {
+            var cells = Grid(0f, 0f,
+                "...",
+                "...");
+
+            var kept = new Picture(cells.Grid, -1000f, -1000f, 1000f, 1000f, 2);
+            Assert.Equal((0f, 0f, 96f, 64f, 6, 4), (kept.Left, kept.Bottom, kept.Right, kept.Top, kept.Width, kept.Height));
+
+            Assert.Contains("off the map", Assert.Throws<BuildFailure>(() => new Picture(cells.Grid, 200f, 0f, 300f, 64f, 1)).Message);
+            Assert.Contains("not past its left", Assert.Throws<BuildFailure>(() => new Picture(cells.Grid, 50f, 0f, 50f, 64f, 1)).Message);
+            Assert.Contains("1 and up", Assert.Throws<BuildFailure>(() => new Picture(cells.Grid, 0f, 0f, 64f, 64f, 0)).Message);
+            Assert.Contains("more than the 4096", Assert.Throws<BuildFailure>(() => new Picture(cells.Grid, 0f, 0f, 96f, 64f, 2000)).Message);
+        }
+
+        [Fact]
+        public void an_outline_is_a_line_a_pixel_wide_inside_the_sets_edge()
+        {
+            var cells = Grid(0f, 0f,
+                "....",
+                "....",
+                "....");
+            var white = System.Drawing.Color.White;
+
+            // A region of two by two cells in the middle of the bottom, drawn at a scale of 3.
+            var region = cells.In(32f, 0f, 96f, 64f);
+            var (width, height, pixels) = Pixels(new Picture(cells.Grid, 0f, 0f, 128f, 96f, 3).Outline(region, white).ToPng());
+            Assert.Equal((12, 9), (width, height));
+
+            // From the bottom: the region's pixels are x 3 to 8 and rows 0 to 5; its line is their edge, the inside blank.
+            for (var row = 0; row < 9; row++)
+            {
+                for (var x = 0; x < 12; x++)
+                {
+                    var inRegion = x >= 3 && x <= 8 && row <= 5;
+                    var onEdge = inRegion && (x == 3 || x == 8 || row == 0 || row == 5);
+                    Assert.True(onEdge == (Pixel(pixels, width, x, row) == (255, 255, 255)), $"pixel {x}, {row}");
+                }
+            }
+
+            // At a scale of 1 the line is the set's cells at its edge; a cell inside a bigger set is not on it.
+            var all = Pixels(new Picture(cells.Grid).Outline(cells, white).ToPng());
+            Assert.Equal((0, 0, 0), Pixel(all.Pixels, all.Width, 1, 1));
+            Assert.Equal((255, 255, 255), Pixel(all.Pixels, all.Width, 0, 1));
+
+            // A picture cut through a set draws no line where the set goes on past the cut.
+            var cut = Pixels(new Picture(cells.Grid, 0f, 0f, 64f, 96f, 1).Outline(cells, white).ToPng());
+            Assert.Equal((0, 0, 0), Pixel(cut.Pixels, cut.Width, 1, 1));
+        }
+
+        // A PNG's size and its pixels, three bytes each, the bottom row first.
+        private static (int Width, int Height, byte[] Pixels) Pixels(byte[] png)
+        {
+            var width = BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16));
+            var height = BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20));
+            var length = BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(33));
+            using var unpacked = new MemoryStream();
+            using (var packed = new ZLibStream(new MemoryStream(png, 41, length), CompressionMode.Decompress))
+            {
+                packed.CopyTo(unpacked);
+            }
+
+            var lines = unpacked.ToArray();
+            var pixels = new byte[width * height * 3];
+            for (var line = 0; line < height; line++)
+            {
+                Array.Copy(lines, (line * ((width * 3) + 1)) + 1, pixels, (height - 1 - line) * width * 3, width * 3);
+            }
+
+            return (width, height, pixels);
+        }
+
+        private static (int, int, int) Pixel(byte[] pixels, int width, int x, int row)
+        {
+            var at = ((row * width) + x) * 3;
+            return (pixels[at], pixels[at + 1], pixels[at + 2]);
+        }
+
         private static (bool Walk, bool Fly, bool Build, bool Water, bool Blight) Tests(Cell cell)
         {
             return (cell.CanWalk, cell.CanFly, cell.CanBuild, cell.IsWater, cell.IsBlighted);

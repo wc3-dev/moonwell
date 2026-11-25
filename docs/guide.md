@@ -1650,8 +1650,9 @@ if (Terrain.Raycast(from, to, out var hit)) { /* the missile meets the ground at
 - A height blends the four corners of each 128 tile, as the game does. It is the game's at the corners, and on Lost
   Temple it fit the game's within 0.05 on 8,536 of the 8,648 sloped tiles away from cliffs, ramps and water. Within 128
   of a cliff or ramp it is rough, up to 96 off, and it can miss at water's edge; over the rest of the ground it was 0.05
-  off on average and 77 at worst. `IsCliff` tells a cliff tile, for treating it as a wall. Water reads its surface where
-  that is above the ground. Over the water at the map's outer edge, far outside the playable area, heights can differ
+  off on average and 77 at worst. `IsCliff` tells a cliff tile, for treating it as a wall, and `CliffLevel(x, y)` the
+  cliff level of the corner nearest a point, the number World Editor saved (2 is the ground at height 0, each level 128
+  higher). Water reads its surface where that is above the ground. Over the water at the map's outer edge, far outside the playable area, heights can differ
   from the game's.
 - `IsWalkable`, `IsFlyable`, `IsBuildable` and `IsWater` are terrain only, as the game's own. After changing pathing with
   natives, call `Terrain.Refresh(area)`. `CanStand` also sees trees and buildings and needs walkable ground, but it
@@ -2594,7 +2595,8 @@ The `Moonwell.Simulation` package runs a map's own code in .NET on a fake of the
 components, brains, reactions and timers, with units that walk, chase and fight by their object data. A test plays a
 map's AI through a fight or a long game and checks what it decided. The same seed gives the same run.
 
-It goes in a test project beside the map project, not in its folder: the build compiles every `.cs` under the map
+It goes in a test project beside the map project, or in the map project's `tests` folder, which a new project's
+`.csproj` leaves out of the map (`<Compile Remove="tests/**" />`): the build compiles every other `.cs` under the map
 project into the map. Only the test project references `Moonwell.Simulation`; a package the map project uses goes into
 the map's Lua.
 
@@ -4252,6 +4254,7 @@ value and read it from `Data` in the object's constructor.
 | `Map.ImportedFiles`, `Map.TriggerStrings` | `war3map.imp` and `war3map.wts` |
 | `Map.ShadowMap`, `Map.PreviewIcons` | `war3map.shd` and `war3map.mmp` |
 | `Map.Bytes(name)`, `Map.Has(name)`, `Map.Files` | Any file by its name, as its bytes |
+| `Map.HeightAt(x, y)` | The ground's height at a point, as `Terrain.Height` gives it in the game: cliffs, ramps and water's surface counted, worked out from `war3map.w3e` by the rule the build writes the game's terrain with |
 
 - The files are read as World Editor saved them. What the map's `Map` class sets (the name, the slots, the tiles) is
   not in them yet.
@@ -4270,6 +4273,8 @@ value and read it from `Data` in the object's constructor.
 | `cells.Count`, `cells.IsEmpty`, `cells.Contains(x, y)` | How many, and whether a point's cell is one |
 | `a.And(b)`, `a.Or(b)`, `a.Except(b)` | The cells in both, in either, and in the first only |
 | `cells.FloodFrom(x, y)` | The cells joined to a point, stepping left, right, up and down inside the set |
+| `cells.FloodFrom(start)` | The cells joined to any cell of another set: every piece of the set that `start` touches, whole |
+| `Cells.Empty` | A set of no cells, to add pieces to with `Or` |
 | `water.Distances()` | How far every cell of the map is from the set: `toWater.At(x, y)`, `toWater[cell]` |
 | `cells.DistanceTo(water)` | The shortest straight line between two sets, centre to centre |
 | `cells.LargestRectangle()` | The largest rectangle of cells that fits in the set: `Columns`, `Rows`, and its sides in world coordinates |
@@ -4278,6 +4283,9 @@ value and read it from `Data` in the object's constructor.
 - The pathing file holds the ground, cliffs, water, doodads and bridges. Trees and other destructables, and placed
   units and buildings, are not in it: the game adds them while it runs. Take them from `Map.Doodads` and `Map.Units`.
 - `new Picture(Map).Fill(water, Color.Blue)` draws sets of cells, a pixel a cell, for `Report("water.png", picture)`.
+  `new Picture(Map, left, bottom, right, top, scale)` draws only the cells that rectangle reaches into, each `scale`
+  pixels across, and its `Left`, `Bottom`, `Right` and `Top` say what it shows. `Outline(cells, Color.White)` draws a
+  line a pixel wide round a set, such as a region's `Map.Cells.In(region)`. A picture is at most 4096 pixels a side.
 
 **What can be given.** A value is anything `System.Text.Json` writes: an anonymous object, a record, a list, a
 dictionary by name, a number, a text.
@@ -4299,6 +4307,88 @@ project in the editor after making the folder, so that it knows `BuildStep`.
 the last run, and otherwise keeps the last run's results and prints its warnings again. `moonwell watch` builds again
 on a change to build code as on any other. Write steps so that the same files give the same result: one that reads
 the clock or the network gives a map that differs from build to build.
+
+**Testing build code.** A test project compiles the `buildtime` files into itself and references the
+`Moonwell.BuildTime` package, not `Moonwell`, so the game's rules stay out of it. Put it in the map project's `tests`
+folder, which a new project's `.csproj` leaves out of the map (`<Compile Remove="tests/**" />`; add the line to an
+older project), so the tests sit in the map's repository:
+
+```
+MyMap\MyMap.csproj                          the map, with <Compile Remove="tests/**" />
+MyMap\buildtime\CreepPath.cs                the build code
+MyMap\tests\BuildTime\BuildTime.Tests.csproj
+MyMap\tests\BuildTime\CreepPathTests.cs
+```
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\buildtime\**\*.cs" LinkBase="buildtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Moonwell.BuildTime" Version="0.22.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>
+```
+
+`BuildSteps.Run` runs a step as the build would and gives back what it left:
+
+```csharp
+using Moonwell.BuildTime;
+using War3Net.Build.Environment;
+using Xunit;
+
+public class CreepPathTests
+{
+    private static readonly MapReader Map = new MapReader(@"..\..\..\..\..\map.w3x");   // from bin\Debug\net10.0
+
+    [Fact]
+    public void TheCreepsReachTheGoal()
+    {
+        var result = BuildSteps.Run<CreepPath>(Map);
+
+        Assert.False(result.Failed, result.Failure);
+        Assert.Empty(result.Warnings);
+        Assert.Contains("\"Goal\"", result.GivenJson["Trees"]);
+    }
+
+    [Fact]
+    public void AGoalBehindTheCliffStopsTheBuild()
+    {
+        var goal = new Region { Name = "Goal", Left = 2048, Bottom = 2048, Right = 2304, Top = 2304 };
+        var result = BuildSteps.Run<CreepPath>(Map.WithRegions(new[] { Map.Region("Spawn"), goal }));
+
+        Assert.Equal("the creeps cannot walk from Spawn to Goal", result.Failure);
+    }
+}
+```
+
+| On the result | What it holds |
+|---|---|
+| `Given["Trees"]` | A value as the step gave it, to cast to its type |
+| `GivenJson["Trees"]` | The same as the JSON the build writes `Data` from |
+| `Warnings` | Each warning, in order |
+| `Failed`, `Failure` | Whether it stopped the build, and its line; what it gave and warned before is kept |
+| `Reports["water.png"]`, `ReportText("trees.txt")` | A report's bytes, or a text report's text |
+
+- `BuildSteps.Run<CreepPath>(mapFolder)` reads a map folder, and `BuildSteps.Run(new CreepPath(), map)` runs a step a
+  test made itself.
+- `map.WithRegions(regions)` is the same map with a test's own regions in place of its `war3map.w3r`, and
+  `map.WithFile(name, bytes)` with one file added or stood in. The reader they come from is left as it was.
+- A `Fail`, or any `BuildFailure`, is kept as the result's `Failure`. Any other exception goes up to the test as it was
+  thrown, with its stack.
+- `dotnet test tests\BuildTime` runs them. `moonwell build` does not.
 
 ## Lua libraries
 

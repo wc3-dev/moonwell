@@ -22,7 +22,12 @@ namespace Moonwell.BuildTime
 
         private readonly Dictionary<string, object> parsed = new Dictionary<string, object>(StringComparer.Ordinal);
 
+        // Files a test stood in over the folders' (WithFile), by name.
+        private readonly Dictionary<string, byte[]> added;
+
         private Cells? cells;
+
+        private float[]? heights;
 
         /// <summary>Makes a reader of a World Editor map folder.</summary>
         /// <param name="mapFolder">The map's folder, <c>map</c> in a map project.</param>
@@ -31,6 +36,14 @@ namespace Moonwell.BuildTime
         {
             this.mapFolder = mapFolder;
             this.assetsFolder = assetsFolder != null && Directory.Exists(assetsFolder) ? assetsFolder : null;
+            added = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private MapReader(MapReader from, Dictionary<string, byte[]> added)
+        {
+            mapFolder = from.mapFolder;
+            assetsFolder = from.assetsFolder;
+            this.added = added;
         }
 
         /// <summary>The map's info, <c>war3map.w3i</c>: its name, players, size and playable area.</summary>
@@ -100,12 +113,28 @@ namespace Moonwell.BuildTime
         /// <exception cref="BuildFailure">The map has no pathing or ground file, or one cannot be read.</exception>
         public Cells Cells => cells ??= Cells.All(new PathingGrid(PathingMap, Environment));
 
-        /// <summary>The names of every file of the map, folders with <c>\</c>, in name order: those in <c>assets\</c> and those in <c>map.w3x\</c>.</summary>
+        /// <summary>
+        /// The ground's height at a point, as <c>Terrain.Height</c> gives it in the game before anything changes it: the four
+        /// corners of its 128 tile blended, each from <c>war3map.w3e</c> by the rule the build writes the game's terrain with
+        /// (cliff level 2 is 0, ramps raised as the game raises them, water's surface where it is above the ground). A point
+        /// outside the map reads its edge; on a bridge it reads the water or ground beneath, as <c>Terrain.Height</c> does.
+        /// </summary>
+        /// <param name="x">The point's x.</param>
+        /// <param name="y">The point's y.</param>
+        /// <exception cref="BuildFailure">The map has no ground file, or it cannot be read.</exception>
+        public float HeightAt(float x, float y)
+        {
+            var environment = Environment;
+            var corners = heights ??= Corners(environment);
+            return GroundHeights.Blend(GroundHeights.Columns(environment), GroundHeights.Rows(environment), environment.Left, environment.Bottom, x, y, index => corners[index]);
+        }
+
+        /// <summary>The names of every file of the map, folders with <c>\</c>, in name order: those in <c>assets\</c> and those in <c>map.w3x\</c>, and any a test added.</summary>
         public IReadOnlyList<string> Files
         {
             get
             {
-                var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+                var names = new SortedSet<string>(added.Keys, StringComparer.OrdinalIgnoreCase);
                 foreach (var folder in new[] { assetsFolder, mapFolder })
                 {
                     if (folder != null && Directory.Exists(folder))
@@ -125,7 +154,7 @@ namespace Moonwell.BuildTime
         /// <param name="name">The file's name, such as <c>war3map.shd</c> or <c>war3mapImported\Rules.txt</c>.</param>
         public bool Has(string name)
         {
-            return PathOf(name) != null;
+            return added.ContainsKey(Normal(name)) || PathOf(name) != null;
         }
 
         /// <summary>A file's bytes as they are: the one in <c>assets\</c> when there is one, else the map's.</summary>
@@ -133,6 +162,11 @@ namespace Moonwell.BuildTime
         /// <exception cref="BuildFailure">The map has no such file, or it cannot be read.</exception>
         public byte[] Bytes(string name)
         {
+            if (added.TryGetValue(Normal(name), out var bytes))
+            {
+                return bytes;
+            }
+
             var path = PathOf(name) ?? throw new BuildFailure($"the map has no file {name}");
             try
             {
@@ -159,6 +193,60 @@ namespace Moonwell.BuildTime
             throw new BuildFailure(names.Count == 0
                 ? $"the map has no region named {name}: it has no regions"
                 : $"the map has no region named {name}: it has {string.Join(", ", names)}");
+        }
+
+        /// <summary>
+        /// A reader of the same map with one file stood in over the map's and the assets' file of its name, or added: for a test
+        /// that runs a step on the map with a change of its own. This reader is left as it is.
+        /// </summary>
+        /// <param name="name">The file's name, such as <c>war3map.w3r</c> or <c>war3mapImported\Rules.txt</c>.</param>
+        /// <param name="bytes">The file's bytes.</param>
+        public MapReader WithFile(string name, byte[] bytes)
+        {
+            var files = new Dictionary<string, byte[]>(added, StringComparer.OrdinalIgnoreCase)
+            {
+                [Normal(name)] = bytes,
+            };
+            return new MapReader(this, files);
+        }
+
+        /// <summary>
+        /// A reader of the same map with these regions in place of the map's, as its <c>war3map.w3r</c>: for a test that runs a
+        /// step on regions of its own. This reader is left as it is.
+        /// </summary>
+        /// <param name="regions">The regions, such as <c>new Region { Name = "Harbor", Left = 0, Bottom = 0, Right = 512, Top = 512 }</c>.</param>
+        public MapReader WithRegions(IEnumerable<Region> regions)
+        {
+            var file = new MapRegions(MapRegionsFormatVersion.v5);
+            file.Regions.AddRange(regions);
+            using var bytes = new MemoryStream();
+            using (var writer = new BinaryWriter(bytes, Encoding.UTF8, true))
+            {
+                writer.Write(file);
+            }
+
+            return WithFile(MapRegions.FileName, bytes.ToArray());
+        }
+
+        // A file's name with \ between folders, as the map's names are listed.
+        private static string Normal(string name) => name.Replace('/', '\\');
+
+        // Every corner's height as the game's grid keeps it, worked out once.
+        private static float[] Corners(MapEnvironment environment)
+        {
+            var count = GroundHeights.Columns(environment) * GroundHeights.Rows(environment);
+            if (environment.TerrainTiles.Count != count)
+            {
+                throw new BuildFailure($"war3map.w3e lists {environment.TerrainTiles.Count} corners, but a map of {environment.Width} by {environment.Height} tiles has {count}");
+            }
+
+            var corners = new float[count];
+            for (var index = 0; index < count; index++)
+            {
+                corners[index] = GroundHeights.Kept(GroundHeights.Corner(environment, index, out _));
+            }
+
+            return corners;
         }
 
         private string? PathOf(string name)

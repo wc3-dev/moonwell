@@ -26,6 +26,12 @@ namespace Moonwell.BuildTime
             Count = inside.Count(one => one);
         }
 
+        /// <summary>
+        /// A set of no cells, of any map: a start to add to with <see cref="Or"/>. Every call on it gives an empty set, and
+        /// <c>Cells.Empty.Or(cells)</c> gives <c>cells</c>.
+        /// </summary>
+        public static Cells Empty { get; } = new Cells(new PathingGrid(0, 0, 0f, 0f, Array.Empty<byte>()), Array.Empty<bool>());
+
         /// <summary>How many cells the set holds; a cell is 32 by 32, so 16 of them are one 128 tile.</summary>
         public int Count { get; }
 
@@ -45,7 +51,7 @@ namespace Moonwell.BuildTime
         /// <param name="cell">A cell of the same map.</param>
         public bool Contains(Cell cell)
         {
-            return inside[cell.Index];
+            return Holds(cell.Index);
         }
 
         /// <summary>The set's cells inside a region, by their centres.</summary>
@@ -96,13 +102,23 @@ namespace Moonwell.BuildTime
         /// <param name="other">A set of the same map's cells.</param>
         public Cells And(Cells other)
         {
-            return Where(cell => other.inside[cell.Index]);
+            return Where(cell => other.Holds(cell.Index));
         }
 
         /// <summary>The cells in this set, another, or both.</summary>
         /// <param name="other">A set of the same map's cells.</param>
         public Cells Or(Cells other)
         {
+            if (IsBlank)
+            {
+                return other;
+            }
+
+            if (other.IsBlank)
+            {
+                return this;
+            }
+
             return new Cells(grid, inside.Select((one, index) => one || other.inside[index]).ToArray());
         }
 
@@ -110,7 +126,7 @@ namespace Moonwell.BuildTime
         /// <param name="other">A set of the same map's cells.</param>
         public Cells Except(Cells other)
         {
-            return Where(cell => !other.inside[cell.Index]);
+            return Where(cell => !other.Holds(cell.Index));
         }
 
         /// <summary>
@@ -121,16 +137,44 @@ namespace Moonwell.BuildTime
         /// <param name="y">The point's y.</param>
         public Cells FloodFrom(float x, float y)
         {
-            var reached = new bool[inside.Length];
             var start = grid.IndexAt(x, y);
-            if (start < 0 || !inside[start])
+            return Flood(start < 0 ? Array.Empty<int>() : new[] { start });
+        }
+
+        /// <summary>
+        /// The set's cells joined to any cell of another set: every cell of this set that is in the other and every cell reached
+        /// from those by steps to a cell beside it, left, right, up or down, without leaving this set. The whole of each piece
+        /// of this set that touches the other, in one call; empty when the two share no cell.
+        /// </summary>
+        /// <param name="from">A set of the same map's cells to start from, such as <c>ground.In(region)</c>.</param>
+        public Cells FloodFrom(Cells from)
+        {
+            var starts = new List<int>();
+            for (var index = 0; index < inside.Length; index++)
             {
-                return new Cells(grid, reached);
+                if (from.Holds(index))
+                {
+                    starts.Add(index);
+                }
             }
 
+            return Flood(starts);
+        }
+
+        // The cells of the set reached from the starts that are in it.
+        private Cells Flood(IReadOnlyList<int> starts)
+        {
+            var reached = new bool[inside.Length];
             var waiting = new Stack<int>();
-            reached[start] = true;
-            waiting.Push(start);
+            foreach (var start in starts)
+            {
+                if (inside[start] && !reached[start])
+                {
+                    reached[start] = true;
+                    waiting.Push(start);
+                }
+            }
+
             void Visit(int index)
             {
                 if (inside[index] && !reached[index])
@@ -180,6 +224,11 @@ namespace Moonwell.BuildTime
         /// <param name="other">A set of the same map's cells, such as its water.</param>
         public float DistanceTo(Cells other)
         {
+            if (IsEmpty || other.IsEmpty)
+            {
+                return float.PositiveInfinity;
+            }
+
             var distances = other.Distances();
             var nearest = float.PositiveInfinity;
             for (var index = 0; index < inside.Length; index++)
@@ -254,7 +303,11 @@ namespace Moonwell.BuildTime
 
         internal PathingGrid Grid => grid;
 
-        internal bool Holds(int index) => inside[index];
+        // Whether the set holds the cell of an index; false past its end, as Empty holds no cell of any map.
+        internal bool Holds(int index) => index < inside.Length && inside[index];
+
+        // Empty, or a set of no map: it adds nothing to another set and takes nothing from one.
+        private bool IsBlank => inside.Length == 0;
     }
 
     /// <summary>One 32 by 32 cell of a map's pathing, as World Editor saved it.</summary>
@@ -395,7 +448,7 @@ namespace Moonwell.BuildTime
 
         /// <summary>The distance from a cell to the nearest cell of the set; 0 for a cell of the set, infinite when the set is empty.</summary>
         /// <param name="cell">A cell of the same map.</param>
-        public float this[Cell cell] => distances[cell.Index];
+        public float this[Cell cell] => cell.Index < distances.Length ? distances[cell.Index] : float.PositiveInfinity;
 
         internal float this[int index] => distances[index];
 
