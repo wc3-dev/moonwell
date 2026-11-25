@@ -26,13 +26,41 @@ namespace Moonwell
 
         internal bool ticking;
 
+        internal Theme theme;
+
         /// <summary>Makes a list that shows nothing yet, to be added to the screen or to another frame.</summary>
         public StatList()
         {
             columns = 1;
             CellWidth = RowWidth;
             CellHeight = RowHeight;
+            theme = Kit.Theme;
             KitTicks.Fit(this, 0);
+        }
+
+        /// <summary>The list's look, Kit.Theme as it was made unless set: each row's name and value take its colours, size and font, and its tooltip the theme. Set it before the list is added, as the sizes and font are read when the labels are made.</summary>
+        [LocalSafe]
+        public Theme Theme
+        {
+            get { return theme; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                theme = value;
+                Dress();
+            }
+        }
+
+        private void Dress()
+        {
+            for (var i = 0; i < rows.Count; i++)
+            {
+                rows[i].Dress(theme);
+            }
         }
 
         /// <summary>The unit whose stats show; null when none.</summary>
@@ -110,7 +138,9 @@ namespace Moonwell
             {
                 if (i == rows.Count)
                 {
-                    rows.Add(Add(new StatRow()));
+                    var row = new StatRow();
+                    row.Dress(theme);
+                    rows.Add(Add(row));
                 }
 
                 rows[i].Show(unit!, stats[i]);
@@ -204,10 +234,20 @@ namespace Moonwell
             height = StatList.RowHeight;
             sized = true;
             Visible = false;
-            name = KitTicks.Place(this, new Label { Alignment = FramePoint.Left, Color = Kit.Theme.Title }, 0.0f, 0.0f, StatList.RowWidth * 0.6f, StatList.RowHeight);
-            value = KitTicks.Place(this, new Label { Alignment = FramePoint.Right, Color = Kit.Theme.Text }, StatList.RowWidth * 0.6f, 0.0f, StatList.RowWidth * 0.4f, StatList.RowHeight);
+            name = KitTicks.Place(this, new Label { Alignment = FramePoint.Left }, 0.0f, 0.0f, StatList.RowWidth * 0.6f, StatList.RowHeight);
+            value = KitTicks.Place(this, new Label { Alignment = FramePoint.Right }, StatList.RowWidth * 0.6f, 0.0f, StatList.RowWidth * 0.4f, StatList.RowHeight);
             tip = new RichTooltip();
             Tooltip = tip;
+        }
+
+        /// <summary>Gives the name, the value and the tooltip the list's theme.</summary>
+        internal void Dress(Theme theme)
+        {
+            name.Color = theme.Title;
+            value.Color = theme.Text;
+            theme.Style(name, theme.TextSize);
+            theme.Style(value, theme.TextSize);
+            tip.Theme = theme;
         }
 
         /// <summary>The stat's name, in the theme's Title colour.</summary>

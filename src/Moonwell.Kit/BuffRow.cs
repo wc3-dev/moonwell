@@ -22,6 +22,8 @@ namespace Moonwell
         /// <summary>Which buffs show: null all, true only the harmful, false only the others.</summary>
         internal bool? harmfulOnly;
 
+        internal Theme theme;
+
         internal bool ticking;
 
         /// <summary>Makes a row that shows no unit yet, to be added to the screen or to another frame.</summary>
@@ -31,7 +33,33 @@ namespace Moonwell
             CellWidth = IconSize;
             CellHeight = IconSize + TimeHeight;
             Gap = 0.003f;
+            theme = Kit.Theme;
             KitTicks.Fit(this, 0);
+        }
+
+        /// <summary>The row's look, Kit.Theme as it was made unless set: each slot's time text takes its colour, size and font. Set it before the row is added, as the sizes and font are read when the labels are made.</summary>
+        [LocalSafe]
+        public Theme Theme
+        {
+            get { return theme; }
+            set
+            {
+                if (HasEnded)
+                {
+                    return;
+                }
+
+                theme = value;
+                Dress();
+            }
+        }
+
+        private void Dress()
+        {
+            for (var i = 0; i < slots.Count; i++)
+            {
+                slots[i].Dress(theme);
+            }
         }
 
         /// <summary>The unit whose buffs show; null when none.</summary>
@@ -91,7 +119,9 @@ namespace Moonwell
 
                     if (shown == slots.Count)
                     {
-                        slots.Add(Add(new BuffSlot()));
+                        var slot = new BuffSlot();
+                        slot.Dress(theme);
+                        slots.Add(Add(slot));
                     }
 
                     slots[shown].Show(buff, icon);
@@ -124,7 +154,14 @@ namespace Moonwell
             height = BuffRow.IconSize + BuffRow.TimeHeight;
             sized = true;
             icon = KitTicks.Place(this, new Image(), 0.0f, 0.0f, BuffRow.IconSize, BuffRow.IconSize);
-            time = KitTicks.Place(this, new Label { Alignment = FramePoint.Top, Color = Kit.Theme.Text }, -0.01f, BuffRow.IconSize, BuffRow.IconSize + 0.02f, BuffRow.TimeHeight);
+            time = KitTicks.Place(this, new Label { Alignment = FramePoint.Top }, -0.01f, BuffRow.IconSize, BuffRow.IconSize + 0.02f, BuffRow.TimeHeight);
+        }
+
+        /// <summary>Gives the time text the row's theme.</summary>
+        internal void Dress(Theme theme)
+        {
+            time.Color = theme.Text;
+            theme.Style(time, theme.TextSize);
         }
 
         /// <summary>The buff's icon.</summary>
