@@ -10,7 +10,8 @@ namespace Moonwell.AI.Combat
     /// living enemy unit its <c>Fights</c> takes (by default none of Neutral Passive's), structures too, that its unit's
     /// owner sees, within its meet range or one that damaged its unit in the last 3 s however far, and none farther than its
     /// leash from where its fight started. That spot is forgotten when the fight is over, so the next fight's leash counts
-    /// from where that one starts; a fighter that <c>WalkLane</c> walks keeps it until it is back. An enemy its unit couldn't attack is set aside for 3 s, and the next best is picked.
+    /// from where that one starts; a fighter that <c>WalkLane</c> walks keeps it until it is back. An enemy its unit
+    /// couldn't attack is set aside for 3 s, and the next best is picked.
     /// </summary>
     public sealed class Fighter
     {
