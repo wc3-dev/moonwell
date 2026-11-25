@@ -9,4 +9,12 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
+  <!--
+    The analyzer leaves a test project's code alone (IsTestProject, set by the test SDKs): it runs only on .NET, as a
+    simulation's tests do, and never reaches the game. This hands the property to the analyzer.
+  -->
+  <ItemGroup>
+    <CompilerVisibleProperty Include="IsTestProject" />
+  </ItemGroup>
+
 </Project>

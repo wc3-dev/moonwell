@@ -2545,6 +2545,10 @@ MyMap.Tests\GuardTests.cs
 `dotnet test MyMap.Tests` runs them. A map whose code names `Data`, `Placed` or `Lua` needs a `moonwell build` first,
 which writes those classes for the compile.
 
+Moonwell's analyzer leaves a test project alone (one the test SDK marks with `IsTestProject`, as
+`Microsoft.NET.Test.Sdk` does): its code runs only on .NET, so a test may loop over a dictionary such as
+`sim.World.Files`. The map's own code is checked in the map's project as before.
+
 ```csharp
 using Moonwell;
 using MyMap;
@@ -2648,6 +2652,24 @@ public class GuardTests
   (a swing lands at once); what heroes' attributes add to damage, armor and attack speed; the game's own miss, crit and
   evasion; units placed in World Editor; and the Terrain, Areas, Input and Physics systems. A simulation shows how the
   map's own logic decides, not exactly how a fight goes in the game.
+- A raw native (`Natives.X`) is the game's own and has no body on .NET: a call throws there, so the map's code must not
+  reach one in a simulation. `Start`, `Run` and `RunUntil` throw it again as an `InvalidOperationException` naming the
+  native and the reaction it failed in. Keep each raw native inside `#if MOONWELL_LUA`, which the map's build defines,
+  with what the simulation should do in `#else`, best in one class of the map's:
+
+  ```csharp
+  public static class Raw // the map's raw natives
+  {
+      public static int CliffLevel(float x, float y)
+      {
+  #if MOONWELL_LUA
+          return Natives.GetTerrainCliffLevel(x, y);
+  #else
+          return 2; // flat ground in a simulation
+  #endif
+      }
+  }
+  ```
 - The game's runtime is one per process, so one simulation runs at a time: the `CollectionBehavior` line keeps xunit
   from running tests side by side.
 

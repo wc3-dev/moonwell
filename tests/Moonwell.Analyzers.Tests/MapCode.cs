@@ -59,6 +59,34 @@ internal static class MapCode
         return found.Select(d => d.Location.SourceTree!.FilePath + ": " + d.Id + ": " + d.Location.SourceTree.GetText().ToString(d.Location.SourceSpan)).ToList();
     }
 
+    /// <summary>
+    /// As <see cref="Check"/>, in a project whose build hands the analyzer IsTestProject with a value, as Moonwell's props do
+    /// for one the test SDK marks with "true".
+    /// </summary>
+    public static List<string> CheckWithTestProject(string value, string body)
+    {
+        var (tree, compilation) = Compile(Wrap(body, ""));
+        var options = new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, new GlobalOptionsOnly(new Dictionary<string, string> { ["build_property.istestproject"] = value }));
+        return Found((tree, compilation.WithAnalyzers(Analyzers, options).GetAnalyzerDiagnosticsAsync().Result));
+    }
+
+    /// <summary>Global options from a build, as the SDK writes them into its .editorconfig; no file has options of its own.</summary>
+    private sealed class GlobalOptionsOnly(Dictionary<string, string> values) : AnalyzerConfigOptionsProvider
+    {
+        private static readonly AnalyzerConfigOptions None = new Values([]);
+
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new Values(values);
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => None;
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => None;
+
+        private sealed class Values(Dictionary<string, string> values) : AnalyzerConfigOptions
+        {
+            public override bool TryGetValue(string key, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? value) => values.TryGetValue(key, out value);
+        }
+    }
+
     /// <summary>The messages of the analyzer's diagnostics for a project of several files, in file and source order.</summary>
     public static List<string> MessagesOfFiles(params (string Path, string Source)[] files)
     {
