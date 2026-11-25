@@ -130,6 +130,7 @@ namespace Moonwell.AI
         /// the brain sent: then nothing reaches the game and it gives true. A repeat is dropped while the unit's
         /// <c>CurrentOrder</c> is still the order it read just after that one (not idle), or while the unit is idle; once the
         /// unit's owner has changed, it is sent again.
+        /// While the unit boards a transport that <c>Load</c> sent it to, no order reaches the game, and it gives true.
         /// </summary>
         public bool Order(string order)
         {
@@ -142,6 +143,7 @@ namespace Moonwell.AI
         /// still the order it read just after that one (not idle), or while the unit is idle within 64 of the place asked for. A
         /// unit idle short of it gets the repeat once; idle again within 32 of where it stood then, the repeat is dropped. Once
         /// the unit's owner has changed, it is sent again.
+        /// While the unit boards a transport that <c>Load</c> sent it to, no order reaches the game, and it gives true.
         /// </summary>
         public bool OrderAt(string order, float x, float y)
         {
@@ -153,6 +155,7 @@ namespace Moonwell.AI
         /// last one the brain sent: the same order on the same target. A repeat is dropped, giving true, while the unit's
         /// <c>CurrentOrder</c> is still the order it read just after that one (not idle), or while the unit is idle and the
         /// target is dead or gone; once the unit's owner has changed, it is sent again.
+        /// While the unit boards a transport that <c>Load</c> sent it to, no order reaches the game, and it gives true.
         /// </summary>
         public bool OrderOn(string order, Widget target)
         {
@@ -191,11 +194,17 @@ namespace Moonwell.AI
         /// has done it even when it read idle just after the order, as when the order was cancelled in its own event. A unit
         /// idle short of its place gets the repeat once: idle again within 32 of where it stood then, it has done it, as a
         /// crowd jammed at one place would otherwise be ordered again at every think. An order that is no repeat, or a change
-        /// of owner, forgets that spot.
+        /// of owner, forgets that spot. A unit still boarding the transport <c>Load</c> sent it to is sent nothing, giving true,
+        /// so the brain's next think doesn't take it off its way in (J177).
         /// </summary>
         private bool Send(string order, int kind, float x, float y, Widget? target)
         {
             var unit = Unit;
+            if (unit.IsBoarding)
+            {
+                return true;
+            }
+
             var repeat = Repeats(order, kind, x, y, target);
             var retry = false;
             var standX = 0f;

@@ -175,5 +175,52 @@ namespace Moonwell.Testing
             b.Remove();
             Expect.Equal(false, zeppelin.Load(b), "a unit gone is not loaded");
         }
+
+        /// <summary>Load onto another player's transport, an ally's too, answers false and gives no order, so no boarding mark is left, and a development build reports it: the game answers the board true there and loads nothing (J182, seen 11-25). The fake answers a board as the game does.</summary>
+        public static void OtherPlayersTransport(FakeWorld world)
+        {
+            var zeppelin = Footman(world, 1);
+            var footman = Footman(world, 0);
+            var before = world.Printed.Count;
+            Expect.Equal(false, zeppelin.Load(footman), "another player's transport loads nothing");
+            Expect.Equal(0, world.Orders.Count, "no order given");
+            Expect.Same(null, footman.boarding, "no boarding mark");
+#if DEBUG
+            Expect.True(world.Printed.Count > before, "reported in a development build: " + string.Join(" | ", world.Logged));
+#else
+            Expect.Equal(before, world.Printed.Count, "a release build reports nothing");
+#endif
+
+            Expect.Equal(true, footman.OrderOn(Orders.Board, zeppelin), "the game answers the board itself true");
+            Expect.Equal(0, world.CurrentOrderOf(footman.Handle), "and drops it at once");
+
+            var own = Footman(world, 0);
+            Expect.Equal(true, own.Load(footman), "its own player's transport takes it");
+        }
+
+        /// <summary>Load onto a full transport, or of a unit too big for the room left, answers false and leaves no boarding mark, as the game refuses the board (seen 11-25); the same unit fits a transport with room.</summary>
+        public static void FullOrTooBig(FakeWorld world)
+        {
+            var zeppelin = Footman(world, 0);
+            zeppelin.CargoCapacity = 2;
+            var aboard = Footman(world, 0);
+            world.Load(aboard.Handle, zeppelin.Handle);
+            var big = Footman(world, 0);
+            world.CargoSizes[big.Handle] = 2;
+            Expect.Equal(false, zeppelin.Load(big), "a unit too big for the room left");
+            Expect.Same(null, big.boarding, "no boarding mark");
+            Expect.Equal(0, world.CurrentOrderOf(big.Handle), "and no board");
+
+            var second = Footman(world, 0);
+            world.Load(second.Handle, zeppelin.Handle);
+            var third = Footman(world, 0);
+            Expect.Equal(false, zeppelin.Load(third), "a full transport");
+            Expect.Same(null, third.boarding, "no boarding mark");
+
+            var empty = Footman(world, 0);
+            empty.CargoCapacity = 2;
+            Expect.Equal(true, empty.Load(big), "the big unit fits an empty transport");
+            Expect.Equal(852043, world.CurrentOrderOf(big.Handle), "and boards it");
+        }
     }
 }
