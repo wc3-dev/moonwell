@@ -14,6 +14,10 @@ public class NativeTagsTests
         type location extends agent
         type framehandle extends handle
         type hashtable extends agent
+        type weathereffect extends handle
+        type minimapicon extends handle
+        type quest extends agent
+        type texttag extends handle
 
         native GetLocalPlayer takes nothing returns player
         native GetCameraTargetPositionX takes nothing returns real
@@ -57,6 +61,15 @@ public class NativeTagsTests
         native BlzFrameGetParent takes framehandle frame returns framehandle
         native BlzFrameGetChild takes framehandle frame, integer index returns framehandle
         native BlzFrameGetChildrenCount takes framehandle frame returns integer
+        native EnableWeatherEffect takes weathereffect whichEffect, boolean enable returns nothing
+        native SetMinimapIconVisible takes minimapicon whichMinimapIcon, boolean visible returns nothing
+        native EnableOcclusion takes boolean flag returns nothing
+        native UnitAddIndicator takes unit whichUnit, integer red, integer green, integer blue, integer alpha returns nothing
+        native QuestSetEnabled takes quest whichQuest, boolean enable returns nothing
+        native CreateTextTag takes nothing returns texttag
+        native DestroyTextTag takes texttag t returns nothing
+        native Preloader takes string filename returns nothing
+        native MoveLocation takes location whichLocation, real newX, real newY returns nothing
         """;
 
     private const string Blizzard = """
@@ -171,6 +184,16 @@ public class NativeTagsTests
     [InlineData("BlzGetCameraAllowsHotkeyTargetLock", NativeTag.MachineLocal)]
     [InlineData("BlzSetCameraAllowsHotkeyTargetLock", NativeTag.None)]
     [InlineData("BlzSetThematicMusicAbsoluteVolume", NativeTag.None)]
+    // Moonwell's own one-machine natives (I71): those only drawn are local-safe, the rest keep their tags.
+    [InlineData("EnableWeatherEffect", NativeTag.None)]
+    [InlineData("SetMinimapIconVisible", NativeTag.None)]
+    [InlineData("EnableOcclusion", NativeTag.None)]
+    [InlineData("UnitAddIndicator", NativeTag.None)]
+    [InlineData("QuestSetEnabled", NativeTag.ChangesState)]
+    [InlineData("CreateTextTag", NativeTag.CreatesHandle)]
+    [InlineData("DestroyTextTag", NativeTag.ChangesState)]
+    [InlineData("Preloader", NativeTag.ChangesState)]
+    [InlineData("MoveLocation", NativeTag.ChangesState)]
     public void TagsNatives(string name, NativeTag expected)
     {
         Assert.Equal(expected, Tags()[name]);

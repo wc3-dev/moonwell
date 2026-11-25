@@ -102,6 +102,9 @@ namespace Moonwell
         /// <summary>Installs the package on a world; tests give a fake one. The game needs no call: the package installs itself on its native world on first use. The interactions package is installed first, on the game, if it is not; a test that gives it a fake world installs that first. A Runtime.Reset undoes the install.</summary>
         internal static void Install(IPhysicsWorld world)
         {
+#if !MOONWELL_LUA
+            world = Worlds.Wrap(world);
+#endif
             Interactions.EnsureInstalled();
             // Installed: interactions has not been installed afresh since, so the count pushes added to its Awake is still there.
             var kept = Installed();

@@ -6,9 +6,10 @@ using Moonwell.Hosting;
 namespace Moonwell.Tests;
 
 /// <summary>
-/// Which <see cref="IWorld"/> members change the game: those whose code in <see cref="NativeWorld"/> reaches a native
-/// tagged <c>[ChangesState]</c> or <c>[CreatesHandle]</c>, the tags the analyzer refuses inside <c>Local.For</c>. Read
-/// from the compiled code, so a new member is marked by the natives it calls.
+/// Which members of <see cref="IWorld"/> and the package worlds change the game: those whose code in the world's Native
+/// class (<see cref="NativeWorld"/>, <c>NativeFramesWorld</c> and the rest) reaches a native tagged <c>[ChangesState]</c>
+/// or <c>[CreatesHandle]</c>, the tags the analyzer refuses inside <c>Local.For</c>. Read from the compiled code, so a new
+/// member is marked by the natives it calls.
 /// </summary>
 internal static class GameChanging
 {
@@ -25,15 +26,48 @@ internal static class GameChanging
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> OneMachine = new Dictionary<string, string>
     {
-        ["ShowWeather"] = "EnableWeatherEffect: weather shown to one player is made on every machine and turned on at theirs",
-        ["ShowIcon"] = "SetMinimapIconVisible: a minimap icon shown to one player is made on every machine and hidden at the others",
         ["ShowQuest"] = "QuestSetEnabled: a quest shown to one player is made on every machine and enabled at theirs",
-        ["Letterbox"] = "EnableOcclusion, beside ShowInterface: a cinematic changes only its watchers' screens (decision 208)",
         ["CinematicSounds"] = "SetCineModeVolumeGroupsBJ: a cinematic changes only its watchers' sound mix (decision 208)",
         ["MakeText"] = "CreateTextTag: one player's floating text is made on their machine only (decision 201); the game counts text tags apart from handle ids",
         ["EndText"] = "DestroyTextTag: ends a text made on this machine only (decision 201)",
         ["ReadPreload"] = "Preloader, through an ability's tooltips: a player's file is read on that player's machine, and what it holds is shared after",
     };
+
+    /// <summary>
+    /// Every world the runtime and the packages talk to, each with the class that implements it on the game. A package
+    /// world added since is found by <c>TwinTests.Every_world_is_recorded</c>.
+    /// </summary>
+    public static readonly IReadOnlyList<Type> AllWorlds =
+    [
+        typeof(IWorld),
+        typeof(IAreaWorld),
+        typeof(IDamageWorld),
+        typeof(IFramesWorld),
+        typeof(IInputWorld),
+        typeof(IKeyWorld),
+        typeof(IInteractionWorld),
+        typeof(IPathingWorld),
+        typeof(IPhysicsWorld),
+        typeof(ITerrainWorld),
+#if DEBUG
+        typeof(IDebugWorld),
+#endif
+    ];
+
+    /// <summary>The class that implements a world on the game: the one Native class of its assembly that implements it.</summary>
+    public static Type NativeOf(Type world)
+    {
+        return world.Assembly.GetTypes().Single(type => type.IsClass && type.Name.StartsWith("Native", StringComparison.Ordinal) && world.IsAssignableFrom(type));
+    }
+
+    /// <summary>A member's name in the reviewed lists: its own name for IWorld's, its world's name and its own for a package world's.</summary>
+    public static string Name(MethodInfo member)
+    {
+        return member.DeclaringType == typeof(IWorld) ? member.Name : member.DeclaringType!.Name + "." + member.Name;
+    }
+
+    // Read before Members and OneMachineMembers, which are found from them.
+    private static readonly HashSet<Type> nativeWorlds = AllWorlds.Select(NativeOf).ToHashSet();
 
     /// <summary>Each member that changes the game on every machine, with the tagged natives it reaches.</summary>
     public static readonly IReadOnlyDictionary<MethodInfo, string[]> Members = Find(false);
@@ -44,21 +78,24 @@ internal static class GameChanging
     private static Dictionary<MethodInfo, string[]> Find(bool oneMachine)
     {
         var found = new Dictionary<MethodInfo, string[]>();
-        var map = typeof(NativeWorld).GetInterfaceMap(typeof(IWorld));
-        for (var i = 0; i < map.InterfaceMethods.Length; i++)
+        foreach (var world in AllWorlds)
         {
-            var natives = new SortedSet<string>(StringComparer.Ordinal);
-            Collect(map.TargetMethods[i], natives, new HashSet<MethodBase>());
-            if (natives.Count > 0 && OneMachine.ContainsKey(map.InterfaceMethods[i].Name) == oneMachine)
+            var map = NativeOf(world).GetInterfaceMap(world);
+            for (var i = 0; i < map.InterfaceMethods.Length; i++)
             {
-                found[map.InterfaceMethods[i]] = natives.ToArray();
+                var natives = new SortedSet<string>(StringComparer.Ordinal);
+                Collect(map.TargetMethods[i], natives, new HashSet<MethodBase>());
+                if (natives.Count > 0 && OneMachine.ContainsKey(Name(map.InterfaceMethods[i])) == oneMachine)
+                {
+                    found[map.InterfaceMethods[i]] = natives.ToArray();
+                }
             }
         }
 
         return found;
     }
 
-    // Follows calls and method references inside NativeWorld and the classes the compiler nests in it for lambdas.
+    // Follows calls and method references inside the Native worlds and the classes the compiler nests in them for lambdas.
     private static void Collect(MethodBase method, SortedSet<string> natives, HashSet<MethodBase> seen)
     {
         if (!seen.Add(method))
@@ -86,7 +123,7 @@ internal static class GameChanging
     {
         for (; type != null; type = type.DeclaringType)
         {
-            if (type == typeof(NativeWorld))
+            if (nativeWorlds.Contains(type))
             {
                 return true;
             }
