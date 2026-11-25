@@ -812,6 +812,9 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "debug.session.error-halts", Run = SessionCases.ErrorHalts });
             list.Add(new Case { Name = "debug.leaks.scope-grows", Run = ToolsCases.ScopeGrows });
             list.Add(new Case { Name = "debug.leaks.held", Run = ToolsCases.HeldCounted });
+            list.Add(new Case { Name = "debug.leaks.ended-pages-let-go", Run = ToolsCases.EndedPagesLetGo });
+            list.Add(new Case { Name = "debug.leaks.ended-pages-let-go-while-type-reads", Run = ToolsCases.EndedPagesLetGoWhileTypeReads });
+            list.Add(new Case { Name = "debug.leaks.held-names-holder", Run = ToolsCases.HeldNamesHolder });
             list.Add(new Case { Name = "debug.leaks.procgen-ground", Run = GrowingWorldCases.NoLeakReported });
             list.Add(new Case { Name = "debug.profile.timers-and-sections", Run = ToolsCases.ProfileTimersAndSections });
             list.Add(new Case { Name = "debug.profile.reactions", Run = ToolsCases.ProfileReactions });

@@ -95,6 +95,13 @@ namespace Moonwell
             return total;
         }
 
+        /// <summary>The tables that hold the objects the last Count found, each named by its path from the globals, the most first: "Map.Pages 300". Lua walks every table reachable from _G (moonwell.debug.lua); .NET has no such walk and gives "" (shortcut: a reflection walk over static fields could name .NET's too, if a case ever needs it).</summary>
+        /// @CSharpLua.Template = "MoonwellHeldHolders()"
+        internal static string Holders()
+        {
+            return string.Empty;
+        }
+
         /// <summary>The classes the last Count found, the most first: "Footman 120, Rage 30".</summary>
         /// @CSharpLua.Template = "MoonwellHeldSummary()"
         internal static string Summary()
