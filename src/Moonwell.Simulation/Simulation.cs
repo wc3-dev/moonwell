@@ -10,7 +10,8 @@ namespace Moonwell
     /// and mana, and stand 0.16 s at each order, while Moonwell's timers and reactions run as in the game. Each swing and
     /// each hit from code goes through the damage package's stages over the fake's armor, and a swing reads its unit's damage and
     /// attack speed bonus as they are then. The same seed gives the same run. Pathing, collision, missiles' flight, what spells
-    /// do, buffs, vision and turning are left to the game, and a hero's attributes add no damage, armor or attack speed. Its life counts its strength in a game started with a built map.
+    /// do, buffs, vision and turning are left to the game, and a hero's attributes add no damage, armor or attack speed. Find and
+    /// the interactions package answer from the fake's units. Its life counts its strength in a game started with a built map.
     /// </summary>
     public sealed class Simulation
     {
@@ -18,6 +19,15 @@ namespace Moonwell
         {
             World = world;
         }
+
+#if !MOONWELL_LUA
+        /// <summary>The first raw native's failure reported in the map's reactions and not yet thrown, with the native's name and the reaction; null for none.</summary>
+        private Exception? nativeFailure;
+
+        private string nativeName = string.Empty;
+
+        private string nativeWhere = string.Empty;
+#endif
 
         /// <summary>The fake world the game runs on. Its own Advance moves time without the play: units neither walk nor fight, and the steps Run counts fall behind, so it is not to be mixed with Run.</summary>
         public FakeWorld World { get; }
@@ -34,6 +44,7 @@ namespace Moonwell
             var simulation = Begin(seed);
 #if !MOONWELL_LUA
             Registry.RegisterStandard();
+            simulation.ThrowNative();
 #endif
             return simulation;
         }
@@ -45,9 +56,11 @@ namespace Moonwell
         /// build would, then every other standard class as an empty game does; in Lua it registers nothing. World Editor's placed units, and the terrain, areas, input and physics
         /// systems, are left out; the damage and stats packages run, as in a map that uses them. On .NET a hero's MaxLife, MaxMana and Mana read their totals by the hero bonus the map's last
         /// build wrote into its assembly, as the build reads them, so a hero starts with the life its strength gives; a map not
-        /// built yet has none, and they read their base fields. A hero's attributes add no damage or armor.
+        /// built yet has none, and they read their base fields. A hero's attributes add no damage or armor. Components given
+        /// start in place of the map's own starting components, in list order, each hearing OnGameStart, for a test of a part of
+        /// the map its start leaves out; the map's slots, classes and player components stay. An empty list starts none.
         /// </summary>
-        public static Simulation Start(Map map, int seed = 1)
+        public static Simulation Start(Map map, int seed = 1, List<GameComponent>? components = null)
         {
             var simulation = Begin(seed);
 #if !MOONWELL_LUA
@@ -56,13 +69,14 @@ namespace Moonwell
             Seat(simulation.World, map.StartSlots);
             Runtime.InstallSaveFolder(FolderOf(map));
 #if MOONWELL_LUA
-            Runtime.Begin(() => Runtime.Install(map, () => { }));
+            Runtime.Begin(() => Runtime.Install(map, () => { }, components));
 #else
             Runtime.Begin(() => Runtime.Install(map, () =>
             {
                 Registry.Register(map);
                 Registry.RegisterStandard();
-            }));
+            }, components));
+            simulation.ThrowNative();
 #endif
             return simulation;
         }
@@ -73,9 +87,14 @@ namespace Moonwell
             var world = FakeWorld.Install();
             world.StartPlay(seed);
             world.InstallDamage();
+            SimulatedInteractionWorld.Install(world);
             // The stats package acts on a unit only for a stat the map set, so a map that does not use it sees no change.
             StatsSystem.Install();
-            return new Simulation(world);
+            var simulation = new Simulation(world);
+#if !MOONWELL_LUA
+            Errors.Reported = simulation.Noted;
+#endif
+            return simulation;
         }
 
         /// <summary>Runs the seconds in whole steps: rounded to whole milliseconds, then to whole steps with a half step up, and at least one; none for 0 or less. Each step's time is its number of steps since the start, so a World.Advance between runs, which moves time without the play, is not to be mixed with it.</summary>
@@ -84,14 +103,14 @@ namespace Moonwell
             var steps = StepsOf(seconds);
             for (var i = 0; i < steps; i++)
             {
-                World.PlayOneStep();
+                PlayStep();
             }
         }
 
         /// <summary>Runs step by step, for at most the seconds as Run counts them, until the check holds: true when it held, before the first step too; false when it never did.</summary>
         public bool RunUntil(Func<bool> check, float seconds)
         {
-            if (check())
+            if (Holds(check))
             {
                 return true;
             }
@@ -99,8 +118,8 @@ namespace Moonwell
             var steps = StepsOf(seconds);
             for (var i = 0; i < steps; i++)
             {
-                World.PlayOneStep();
-                if (check())
+                PlayStep();
+                if (Holds(check))
                 {
                     return true;
                 }
@@ -108,6 +127,74 @@ namespace Moonwell
 
             return false;
         }
+
+        /// <summary>Plays one step; on .NET a raw native's failure in it, thrown or reported by a reaction, is thrown again with the native's name and the way round it.</summary>
+        private void PlayStep()
+        {
+#if MOONWELL_LUA
+            World.PlayOneStep();
+#else
+            try
+            {
+                World.PlayOneStep();
+            }
+            catch (BadImageFormatException error) when (RawNatives.NameOf(error) != null)
+            {
+                throw RawNatives.Explained(RawNatives.NameOf(error)!, string.Empty, error);
+            }
+
+            ThrowNative();
+#endif
+        }
+
+        /// <summary>Whether a RunUntil's check holds; on .NET a raw native's failure in it is thrown again as PlayStep throws one.</summary>
+        private static bool Holds(Func<bool> check)
+        {
+#if MOONWELL_LUA
+            return check();
+#else
+            try
+            {
+                return check();
+            }
+            catch (BadImageFormatException error) when (RawNatives.NameOf(error) != null)
+            {
+                throw RawNatives.Explained(RawNatives.NameOf(error)!, string.Empty, error);
+            }
+#endif
+        }
+
+#if !MOONWELL_LUA
+        /// <summary>Keeps the first raw native's failure among the errors the runtime reports, which it shows and goes on from, for the next ThrowNative.</summary>
+        private void Noted(string label, Exception error)
+        {
+            if (nativeFailure != null)
+            {
+                return;
+            }
+
+            var name = RawNatives.NameOf(error);
+            if (name != null)
+            {
+                nativeFailure = error;
+                nativeName = name;
+                nativeWhere = label;
+            }
+        }
+
+        /// <summary>Throws the raw native's failure kept since the last, with the native's name, the reaction it failed in and the way round it.</summary>
+        private void ThrowNative()
+        {
+            if (nativeFailure == null)
+            {
+                return;
+            }
+
+            var error = nativeFailure;
+            nativeFailure = null;
+            throw RawNatives.Explained(nativeName, nativeWhere, error);
+        }
+#endif
 
         /// <summary>Gives a unit type its numbers, for the units of the type made from now on; on .NET they replace what its object data gives. A unit takes its range, cooldown, damage, dice and acquisition range when it is made, though a swing adds the unit's green damage bonus and divides the cooldown by 1 + its attack speed bonus as they are then; its move speed and armor are read as they are at each step.</summary>
         public void SetNumbers(int typeId, UnitNumbers numbers)
