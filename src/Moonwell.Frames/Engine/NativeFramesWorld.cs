@@ -223,6 +223,12 @@ namespace Moonwell.Engine
             return Natives.BlzGetOriginFrame(Natives.ConvertOriginFrameType(kind), index);
         }
 
+        /// <summary>Clicks a frame: BlzFrameClick.</summary>
+        public void ClickFrame(framehandle frame)
+        {
+            Natives.BlzFrameClick(frame);
+        }
+
         /// <summary>Hides the game's HUD, or shows it: BlzHideOriginFrames.</summary>
         public void HideHud(bool hidden)
         {

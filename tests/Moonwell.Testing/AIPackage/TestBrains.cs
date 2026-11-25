@@ -43,11 +43,11 @@ namespace Moonwell.Testing
         /// <summary>The step of each think, in order.</summary>
         public List<int> Thought = new List<int>();
 
-        /// <summary>The name it writes in Log.</summary>
+        /// <summary>The name it writes in Shared.</summary>
         public string Label = "";
 
         /// <summary>A log several brains share; null for none.</summary>
-        public List<string>? Log;
+        public List<string>? Shared;
 
         /// <summary>Run in Think after the step is noted; null for nothing.</summary>
         public Action? During;
@@ -55,7 +55,7 @@ namespace Moonwell.Testing
         protected override void Think()
         {
             Thought.Add(Minds.Current().Step);
-            Log?.Add(Label);
+            Shared?.Add(Label);
             During?.Invoke();
         }
     }
