@@ -360,6 +360,8 @@ namespace Moonwell
             world.Restart();
             RealClock.Wanted = false;
             Interactions.ResetSettings();
+            // A world a Simulation made the interactions package's is let go, so no later case reads a world gone by.
+            Interactions.native = null;
             Physics.ResetSettings();
             Runtime.ListenForCarriers();
             return world;
@@ -3092,7 +3094,7 @@ namespace Moonwell
             return answer;
         }
 
-        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer, or a spell's; delivers the order event inside the call when listened for, then a spell's effect at the target and its place.</summary>
+        /// <summary>Records an order on a widget and gives the answer set in OrderAnswer, or a spell's; delivers the order event inside the call when listened for, then a spell's effect at the target and its place. A board answers as the game's does (seen 11-25): false on a transport whose set capacity has no room for the unit's size (CargoSizes), and true on another player's transport, the order then dropped at once.</summary>
         public bool OrderUnitOn(unit unit, string order, widget target)
         {
             NoteGone(unit);
@@ -3100,10 +3102,15 @@ namespace Moonwell
             OrderTargets.Add(target);
             var spell = Dummies.Answer(unit, order, SpellKind.Target, target as unit);
             var id = spell == null ? PlayId(unit, OrderIdOf(order)) : OrderIdOf(order);
-            var answer = spell ?? (OrderAnswer && id >= 0);
+            var boardsOn = spell == null && order == "board" ? target as unit : null;
+            var answer = spell ?? (OrderAnswer && id >= 0 && (boardsOn == null || HasRoomFor(boardsOn, unit)));
             if (answer)
             {
                 DeliverOrder(unit, id, OrderKind.Target, 0f, 0f, target as unit, target as item);
+                if (boardsOn != null && OwnerOf(boardsOn) != OwnerOf(unit) && currentOrders.TryGetValue(unit, out var now) && now == id)
+                {
+                    currentOrders[unit] = 0;
+                }
             }
 
             var aimed = target as unit;
@@ -3996,6 +4003,30 @@ namespace Moonwell
         public bool IsLoaded(unit unit)
         {
             return LoadedIn.ContainsKey(unit);
+        }
+
+        /// <summary>Each unit's transported size, how much of a cargo hold it takes; 1 for a unit not in it.</summary>
+        public Dictionary<unit, int> CargoSizes = new Dictionary<unit, int>();
+
+        /// <summary>Whether a transport has room for a unit: always for one whose capacity is not set, else when the sizes of the units in it and the unit's fit its capacity, as a full zeppelin and a unit too big for the room left are refused (seen 11-25).</summary>
+        private bool HasRoomFor(unit transport, unit cargo)
+        {
+            var capacity = CargoCapacity(transport);
+            if (capacity <= 0)
+            {
+                return true;
+            }
+
+            var used = 0;
+            foreach (var aboard in LoadedIn)
+            {
+                if (aboard.Value == transport)
+                {
+                    used += CargoSizes.TryGetValue(aboard.Key, out var size) ? size : 1;
+                }
+            }
+
+            return used + (CargoSizes.TryGetValue(cargo, out var own) ? own : 1) <= capacity;
         }
 
         /// <summary>A unit's cargo capacity: 0 until it is set.</summary>

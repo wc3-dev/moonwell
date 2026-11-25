@@ -673,9 +673,12 @@ removed inside runs no unload reaction.
 loaded; the game finds no loaded unit around a transport, so `Cargo` is the way to them. A loaded unit's `X` and `Y`
 read where it was loaded. `CargoCapacity` reads and sets how much the cargo hold holds, for this unit alone (8 for a
 zeppelin). `transport.Load(unit)` orders the unit to board the transport, and a zeppelin comes for it; loading several
-in one instant takes them all, one after another, a burrow too. While a unit boards, its brains send it no orders, and
-a transport under a brain's full control lets the game's own load go on. `Unload(unit)` and `UnloadAll(x, y)` are the
-transport's orders.
+in one instant takes them all, one after another, a burrow too. A ship stays where it is: the unit walks to the water's
+edge and is taken in from there. `Load` answers false for a full transport and for a unit too big for the room left,
+as the game refuses the order, and for another player's transport, an ally's too, which the game would take the order
+for and load nothing, so Moonwell gives no order and a development build reports it. While a unit boards, its brains
+send it no orders, and a transport under a brain's full control lets the game's own load go on. `Unload(unit)` and
+`UnloadAll(x, y)` are the transport's orders.
 
 ```csharp
 public sealed class Ferry : Unit
@@ -2663,6 +2666,12 @@ public class GuardTests
   `Unit.Create<Human.Units.Footman>(...)` and `ObjectTypes.IdOf<T>` work in both; the map's own classes, its
   `[Replaces]` ones too, are known only with the map's start. Either takes a `seed`: it gives the dice of the attacks,
   and the seed after it the map's own random numbers (`Game.Random` and a `Dice` made without a seed).
+- `Simulation.Start(map, components: [new Melee(), new MeleeAi()])` starts those components in place of the map's
+  `Components`, each with its `OnGameStart`, to test a mode the map's start leaves out; the map's slots, classes and
+  `PlayerComponents` stay. A component added after the start hears no `OnGameStart`, as in the game.
+- With the [Interactions](#interactions-and-finding) package in the map, `Find`, interactions and gizmos answer from the
+  simulation's units where they stand: a unit has a place while it is alive, shown and not in a transport, and an item
+  while it lies on the ground. No destructable is a tree there: `IsTree()` reads false.
 - With a map, a player's files go in the folder the build would pick: the map's `SaveFolder`, else its name, else the
   map project's name, in letters and digits only, so `sim.World.Files` holds `MyRpg\settings.txt`. An empty game writes
   under `Map`. A computer's slot has its `Slot`'s `Name`, as in the game; a person's slot stays `Player 1`, where the
