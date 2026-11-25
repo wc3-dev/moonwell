@@ -268,6 +268,13 @@ namespace Moonwell.Engine
             return IsWater(i, j) || IsWater(right, j) || IsWater(i, top) || IsWater(right, top);
         }
 
+        /// <summary>The cliff level of the corner nearest a point, which is first kept inside the grid.</summary>
+        internal int CliffLevelAt(float x, float y)
+        {
+            Locate(x, y, out var i, out var j, out var fx, out var fy);
+            return CliffLevel(fx < 0.5f ? i : i + 1, fy < 0.5f ? j : j + 1);
+        }
+
         /// <summary>
         /// Whether the tile that holds a point (kept inside the grid) is a cliff: on more than one cliff level, with no
         /// ramp corner.
