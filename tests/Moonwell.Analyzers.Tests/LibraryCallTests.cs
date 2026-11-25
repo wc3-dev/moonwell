@@ -25,6 +25,8 @@ public class LibraryCallTests
                 [LocalSafe]
                 public static int Limit { get; set; }
 
+                public static bool Shown { get; [LocalSafe] set; }
+
                 [MachineLocal]
                 public static void Flash() { }
             }
@@ -123,6 +125,13 @@ public class LibraryCallTests
     public void local_safe_on_a_property_covers_its_getter_only()
     {
         Assert.Equal(new[] { "MW0039: MyLib.Rules.Limit" }, MapCode.Check("Local.For(p, () => MyLib.Rules.Limit = 3);", library: Library));
+    }
+
+    [Fact]
+    public void local_safe_on_a_setter_covers_the_setter_only()
+    {
+        Assert.Empty(MapCode.Check("Local.For(p, () => MyLib.Rules.Shown = true);", library: Library));
+        Assert.Equal(new[] { "MW0039: MyLib.Rules.Shown" }, MapCode.Check("Local.For(p, () => { var shown = MyLib.Rules.Shown; });", library: Library));
     }
 
     [Fact]

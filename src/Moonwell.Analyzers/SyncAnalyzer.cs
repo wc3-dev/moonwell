@@ -737,7 +737,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
 
         private bool IsNative(ISymbol member) => natives != null && SymbolEqualityComparer.Default.Equals(member.ContainingType, natives);
 
-        /// <summary>Whether a member of Moonwell's or of a library is marked local-safe: itself (a property's getter only), or its class.</summary>
+        /// <summary>Whether a member of Moonwell's or of a library is marked local-safe: itself (on a property, its getter only), a property's setter marked itself, or its class.</summary>
         private bool IsLocalSafe(ISymbol member, bool write)
         {
             if (member is IMethodSymbol { AssociatedSymbol: IPropertySymbol property })
@@ -746,7 +746,7 @@ public sealed partial class SyncAnalyzer : DiagnosticAnalyzer
                 member = property;
             }
 
-            if (!write && Has(member, localSafe, false))
+            if (write ? member is IPropertySymbol { SetMethod: { } setter } && Has(setter, localSafe, false) : Has(member, localSafe, false))
             {
                 return true;
             }
