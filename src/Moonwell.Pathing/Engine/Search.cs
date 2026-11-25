@@ -36,6 +36,12 @@ namespace Moonwell.Engine
         /// <summary>A path for a square of so many cells from one point to another.</summary>
         internal static Route Find(int cells, Movement movement, float fromX, float fromY, float toX, float toY)
         {
+            return Find(cells, movement, fromX, fromY, toX, toY, false);
+        }
+
+        /// <summary>A path for a square of so many cells from one point to another; with walkEach, the turns found by walking every line from a turn with Clear, one after another, as before J173: the reference the band's shortcut is tested against (J181).</summary>
+        internal static Route Find(int cells, Movement movement, float fromX, float fromY, float toX, float toY, bool walkEach)
+        {
             var points = new List<Vector2> { new Vector2(fromX, fromY) };
             if (movement == Movement.Fly)
             {
@@ -74,7 +80,7 @@ namespace Moonwell.Engine
             while (i < keys.Count)
             {
                 var to = System.Math.Min(i + chunk - 1, keys.Count - 1);
-                var blocked = search.Blocked(anchor, keys, last, i, to);
+                var blocked = walkEach ? search.Walked(anchor, keys, last, i, to) : search.Blocked(anchor, keys, last, i, to);
                 if (blocked < 0)
                 {
                     i = to + 1;
@@ -129,20 +135,26 @@ namespace Moonwell.Engine
 
             if (to - from < 2)
             {
-                for (var j = from; j <= to; j++)
-                {
-                    if (!Clear(anchor, Point(keys, last, j)))
-                    {
-                        return j;
-                    }
-                }
-
-                return -1;
+                return Walked(anchor, keys, last, from, to);
             }
 
             var half = (from + to) / 2;
             var first = Blocked(anchor, keys, last, from, half);
             return first >= 0 ? first : Blocked(anchor, keys, last, half + 1, to);
+        }
+
+        /// <summary>The first of the path's cells from one to another whose line from the anchor is not clear, walking each line with Clear; -1 when all are.</summary>
+        private int Walked(Vector2 anchor, List<int> keys, Vector2 last, int from, int to)
+        {
+            for (var j = from; j <= to; j++)
+            {
+                if (!Clear(anchor, Point(keys, last, j)))
+                {
+                    return j;
+                }
+            }
+
+            return -1;
         }
 
         // The point of the path at one of its cells: the cell's middle, or for the last the route's end.

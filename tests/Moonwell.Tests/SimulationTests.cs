@@ -194,6 +194,29 @@ namespace Moonwell.Tests
             Expect.True(!footman.IsStructure && !footman.IsWorker && !footman.IsSummoned && !footman.IsMechanical, "the Footman");
         }
 
+        /// <summary>A unit's reads come from its type's object data: a Rifleman's food, attack cooldown, acquisition range and ranged attack, a Footman's melee one, a Gold Mine's gold; a player's units are those the simulation counts alive.</summary>
+        [Fact]
+        public void ReadsComeFromTheObjectData()
+        {
+            var sim = Simulation.Start();
+            var rifleman = Unit.Create(ObjectTypes.FourCC("hrif"), Player.One, 0.0f, 0.0f, Game.Instance);
+            var footman = Unit.Create(Footman, Player.One, 100.0f, 100.0f, Game.Instance);
+            var tower = Unit.Create(ObjectTypes.FourCC("hgtw"), Player.One, 600.0f, 0.0f, Game.Instance);
+            var mine = Unit.Create(ObjectTypes.FourCC("ngol"), Player.NeutralPassive, 1500.0f, 1500.0f, Game.Instance);
+            Expect.Equal(3, rifleman.FoodUsed, "the Rifleman's food");
+            Expect.Near(1.4f, rifleman.LiveAttackCooldown, "its attack cooldown");
+            Expect.Near(600.0f, rifleman.AcquireRange, "its acquisition range");
+            Expect.True(rifleman.IsRanged, "an instant weapon is a ranged one");
+            Expect.True(!footman.IsRanged && footman.FoodUsed == 2, "the Footman is melee and uses 2 food");
+            Expect.True(tower.IsRanged && tower.FoodUsed == 0, "a Guard Tower's missile is ranged, and it uses no food");
+            Expect.Equal(12500, mine.Resources, "the Gold Mine starts with its ability's Max Gold");
+            mine.Resources = 300;
+            Expect.Equal(300, mine.Resources, "and is set");
+            Expect.Equal(0, rifleman.Resources, "a unit with no Gold Mine ability holds none");
+            Expect.Equal(sim.Alive(Player.One), Player.One.Units.Count, "a player's units are those the simulation counts");
+            Expect.True(Player.One.Units.Contains(tower) && !Player.One.Units.Contains(mine), "its own only");
+        }
+
         /// <summary>Two footmen of enemy players, made by their id near each other, acquire each other and fight until one dies.</summary>
         [Fact]
         public void FootmenFightToADeath()
