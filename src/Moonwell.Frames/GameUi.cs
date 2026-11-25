@@ -166,6 +166,39 @@ namespace Moonwell
         [LocalSafe]
         public GamePiece BuildQueue { get; }
 
+        /// <summary>Opens the game's menu (F10) on the player's screen, as a click on the top bar's Menu button does, even while the HUD or the top bar is hidden (seen 11-20, by the map's own click). Not inside Local.For: call it for the player whose button was clicked, as button.Clicked += who => who.GameUi().OpenMenu().</summary>
+        public void OpenMenu()
+        {
+            Click(hud.MenuButton);
+        }
+
+        /// <summary>Opens the game's allies dialog (F11) on the player's screen, as a click on the top bar's Allies button does. Not inside Local.For.</summary>
+        public void OpenAllies()
+        {
+            Click(hud.AlliesButton);
+        }
+
+        /// <summary>Opens the game's quest log (F9) on the player's screen, as a click on the top bar's Quests button does. Not inside Local.For.</summary>
+        public void OpenQuests()
+        {
+            Click(hud.QuestsButton);
+        }
+
+        /// <summary>Opens the game's message log (F12) on the player's screen, as a click on the top bar's Log button does. Not inside Local.For.</summary>
+        public void OpenLog()
+        {
+            Click(hud.LogButton);
+        }
+
+        /// <summary>Clicks a top bar button on the player's machine alone.</summary>
+        private void Click(framehandle button)
+        {
+            if (Runtime.World.IsLocal(player.Handle))
+            {
+                FramesSystem.World.ClickFrame(button);
+            }
+        }
+
         /// <summary>Whether a piece shows now on its player's screen: set Visible, and the whole HUD shown or the piece set Visible over it.</summary>
         internal bool Shows(GamePiece piece)
         {

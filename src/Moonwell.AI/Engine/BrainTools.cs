@@ -22,7 +22,7 @@ namespace Moonwell.AI
             DebugTools.AddCommand("brain", "-brain <class>: count its brains, select the next", (player, rest) => SelectBrain(rest));
             DebugTools.AddCommand("brainlog", "-brainlog [class]: log the selected's brains or a class's", (player, rest) => ToggleLog(rest));
             DebugTools.AddCommand("force", "-force <n>: force line n of the brain view; alone, let go", (player, rest) => Force(rest));
-            DebugTools.AddCommand("fact", "-fact <name> <value>  -wake: on the selected's brains", (player, rest) => SetFact(rest));
+            DebugTools.AddCommand("fact", "-fact [game|player] <name> <value>  -wake: on the selected's brains", (player, rest) => SetFact(player, rest));
             DebugTools.AddCommand("wake", string.Empty, (player, rest) => Wake());
         }
 
@@ -368,24 +368,151 @@ namespace Moonwell.AI
             }
         }
 
-        /// <summary>-fact hurt true: sets a written fact, found by its name in any case, on the board of each of the selected object's brains. The value is the last word, and the name all before it.</summary>
-        private static void SetFact(string rest)
+        /// <summary>
+        /// -fact hurt true: sets a written fact, found by its name in any case, for each of the selected object's brains on the
+        /// board its read finds it on, up the chain, or on the brain's own when no board holds it. -fact game food 0 sets it on
+        /// the game's board, and -fact player food 0 on the board of the selected brain's player, or with nothing selected the
+        /// one who typed it. The value is the last word, and the name all before it.
+        /// </summary>
+        private static void SetFact(Player typed, string rest)
         {
-            var minds = SelectedMinds();
-            if (minds == null)
-            {
-                return;
-            }
-
             // LastIndexOf of an empty string throws in Lua.
             var space = rest.Length > 0 ? rest.LastIndexOf(' ') : -1;
             if (space <= 0)
             {
-                Game.Print("-fact takes a fact's name and a value: -fact hurt true.");
+                Game.Print("-fact takes a fact's name and a value: -fact hurt true, or -fact game food 0.");
                 return;
             }
 
             var name = rest.Substring(0, space).Trim();
+            var named = Named(name);
+            Blackboard? board = null;
+            if (named.Length > 0)
+            {
+                // A fact whose own name starts with the word is set as before: -fact player count 3 with a fact "player count".
+                var after = name.Substring(named.Length).Trim();
+                if (Counted(after) > 0 || Counted(name) == 0)
+                {
+                    name = after;
+                    board = BoardNamed(named, typed);
+                    if (board == null)
+                    {
+                        Game.Print("-fact player: the selected brain is the game's, which has no player: -fact game.");
+                        return;
+                    }
+                }
+            }
+
+            var fact = FactNamed(name);
+            if (fact == null)
+            {
+                return;
+            }
+
+            var text = rest.Substring(space + 1);
+            if (board != null)
+            {
+                SetOn(fact, board, text, board.player != null ? DebugPanel.NameOf(board.player) : "the game");
+                return;
+            }
+
+            var held = SelectedMinds();
+            if (held == null)
+            {
+                return;
+            }
+
+            Blackboard? first = null;
+            for (var i = 0; i < held.Count; i++)
+            {
+                var on = Holding(fact, held[i].Board);
+                first = first ?? on;
+                var refused = fact.SetFromText(on, text);
+                if (refused.Length > 0)
+                {
+                    Game.Print("-fact: " + refused + ".");
+                    return;
+                }
+            }
+
+            // As the view names a board up the chain: "food (Player 1) is 0 on Footman 3".
+            var where = first == held[0].Board ? string.Empty : " (" + (first!.player != null ? DebugPanel.NameOf(first.player) : "game") + ")";
+            Game.Print(fact.FactName() + where + " is " + fact.TextOn(first!.Number) + " on " + DebugPanel.NameOf(DebugSession.Selected!) + ".");
+        }
+
+        /// <summary>"game" or "player" when a -fact's name starts with that word and more follows; empty otherwise.</summary>
+        private static string Named(string name)
+        {
+            var space = name.IndexOf(' ');
+            if (space <= 0)
+            {
+                return string.Empty;
+            }
+
+            var first = name.Substring(0, space).ToLower();
+            return first == "game" || first == "player" ? first : string.Empty;
+        }
+
+        /// <summary>The game's board for "game"; for "player" the board of the selected brain's player, or with no brain selected the one who typed it, and null for a game brain.</summary>
+        private static Blackboard? BoardNamed(string named, Player typed)
+        {
+            if (named == "game")
+            {
+                return Minds.Current().GameBoard();
+            }
+
+            var selected = DebugSession.Selected;
+            var minds = selected != null && !selected.HasEnded ? MindsOf(selected) : null;
+            var player = minds != null && minds.Count > 0 ? minds[0].Board.Player : typed;
+            return player != null ? Minds.Current().BoardOf(player) : null;
+        }
+
+        /// <summary>How many facts have a name, in any case.</summary>
+        private static int Counted(string name)
+        {
+            var wanted = name.ToLower();
+            var count = 0;
+            for (var i = 0; i < facts.Count; i++)
+            {
+                if (facts[i].FactName().ToLower() == wanted)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>The board a read starting on a brain's board finds a fact on, up the chain; the brain's own when none holds it.</summary>
+        private static Blackboard Holding(IHeldFact fact, Blackboard board)
+        {
+            for (Blackboard? on = board; on != null; on = on.Up())
+            {
+                if (fact.TimeOn(on.Number) < float.MaxValue)
+                {
+                    return on;
+                }
+            }
+
+            return board;
+        }
+
+        /// <summary>-fact game food 0: sets a fact on a named board and says so.</summary>
+        private static void SetOn(IHeldFact fact, Blackboard board, string text, string shown)
+        {
+            var refused = fact.SetFromText(board, text);
+            if (refused.Length > 0)
+            {
+                Game.Print("-fact: " + refused + ".");
+                return;
+            }
+
+            Game.Print(fact.FactName() + " is " + fact.TextOn(board.Number) + " on " + shown + ".");
+        }
+
+        /// <summary>The one fact of a name, in any case; null, saying why, when none or more than one has it.</summary>
+        private static IHeldFact? FactNamed(string name)
+        {
             var wanted = name.ToLower();
             IHeldFact? fact = null;
             var named = 0;
@@ -401,27 +528,16 @@ namespace Moonwell.AI
             if (fact == null)
             {
                 Game.Print("No fact is named " + name + ".");
-                return;
+                return null;
             }
 
             if (named > 1)
             {
                 Game.Print(DebugPanel.Count(named) + " facts are named " + name + ", so -fact can't tell which: give them names of their own.");
-                return;
+                return null;
             }
 
-            var text = rest.Substring(space + 1);
-            for (var i = 0; i < minds.Count; i++)
-            {
-                var refused = fact.SetFromText(minds[i].Board, text);
-                if (refused.Length > 0)
-                {
-                    Game.Print("-fact: " + refused + ".");
-                    return;
-                }
-            }
-
-            Game.Print(fact.FactName() + " is " + fact.TextOn(minds[0].Board.Number) + " on " + DebugPanel.NameOf(DebugSession.Selected!) + ".");
+            return fact;
         }
 
         /// <summary>-wake: wakes the selected object's brains.</summary>

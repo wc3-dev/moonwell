@@ -451,6 +451,15 @@ namespace Moonwell.Testing
         /// <summary>Whether the game's HUD is hidden on this machine.</summary>
         public bool HudHidden;
 
+        /// <summary>The game's frames clicked on this machine, by the name they were looked up by, in order.</summary>
+        public List<string> Clicks = new List<string>();
+
+        /// <summary>Clicks a frame of the game's: kept by its name.</summary>
+        public void ClickFrame(framehandle frame)
+        {
+            Clicks.Add(frames[frame].Under);
+        }
+
         /// <summary>A frame of the game's HUD by name, the same fake at each lookup; one at another create context than 0 is kept as "name context".</summary>
         public framehandle? GameFrame(string name, int context = 0)
         {

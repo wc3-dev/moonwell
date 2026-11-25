@@ -690,6 +690,96 @@ namespace Moonwell.Testing
             Expect.True(Printed(world, printed, "quarry"), "saying so: " + Last(world));
         }
 
+        /// <summary>
+        /// -fact sets a fact where the selected brain's read finds it, up the chain (J53): on its owner's board when that
+        /// holds it, so the player's other brains read it too, and on the brain's own once that holds a copy. -fact player
+        /// and -fact game name the board: the selected brain's player, or with nothing selected the one who typed it, and the
+        /// game; a game brain has no player, which is refused, and a fact whose own name starts with the word is still found.
+        /// </summary>
+        public static void FactUpTheChain(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var brain = unit.Add(new ToolBrain());
+            var other = UnitOf(world).Add(new ToolBrain());
+            var owner = Player.Get(0).Blackboard();
+            owner.Set(ToolFacts.Rations, 12);
+            var debug = On(world);
+            DebugMode.Select(unit);
+            var printed = world.PrintedTexts.Count;
+            debug.Chat(0, "-fact rations 3");
+            Expect.Equal(3, owner.Read(ToolFacts.Rations), "set on the owner's board, where the brain's read finds it");
+            Expect.Equal(3, other.Read(ToolFacts.Rations), "so the player's other brain reads it too");
+            Expect.True(Printed(world, printed, "rations (" + DebugPanel.NameOf(Player.Get(0)) + ") is 3"), "saying where: " + Last(world));
+
+            brain.Blackboard.Set(ToolFacts.Rations, 8);
+            debug.Chat(0, "-fact rations 4");
+            Expect.Equal(4, brain.Read(ToolFacts.Rations), "the brain's own copy, which its read finds first");
+            Expect.Equal(3, owner.Read(ToolFacts.Rations), "the owner's left as it was");
+
+            debug.Chat(0, "-fact player rations 6");
+            Expect.Equal(6, owner.Read(ToolFacts.Rations), "-fact player sets the selected brain's player's board");
+            Expect.Equal(4, brain.Read(ToolFacts.Rations), "the brain still reads its own copy");
+            debug.Chat(0, "-fact GAME omen true");
+            Expect.Equal(true, Game.Instance.Blackboard().Read(ToolFacts.Omen), "-fact game sets the game's board, the word in any case");
+            Expect.Equal(true, brain.Read(ToolFacts.Omen), "which the brain reads up its chain");
+            debug.Chat(0, "-fact player count 2");
+            Expect.Equal(2, brain.Read(ToolFacts.PlayerCount), "a fact named \"player count\" is found by its whole name");
+            Expect.Equal(0, owner.Read(ToolFacts.PlayerCount), "and set as a fact no board holds is, on the brain's own");
+
+            DebugMode.Select(null);
+            debug.Chat(1, "-fact player rations 9");
+            Expect.Equal(9, Player.Get(1).Blackboard().Read(ToolFacts.Rations), "with nothing selected, -fact player sets the board of the one who typed it");
+            Expect.Equal(6, owner.Read(ToolFacts.Rations), "not the other player's");
+            debug.Chat(0, "-fact game omen false");
+            Expect.Equal(false, Game.Instance.Blackboard().Read(ToolFacts.Omen), "-fact game needs no selection");
+
+            Game.Instance.Add(new ToolGameBrain());
+            DebugMode.Select(Game.Instance);
+            printed = world.PrintedTexts.Count;
+            debug.Chat(0, "-fact player rations 1");
+            Expect.Equal(6, owner.Read(ToolFacts.Rations), "a game brain has no player: refused");
+            Expect.True(Printed(world, printed, "player"), "saying so: " + Last(world));
+        }
+
+        /// <summary>
+        /// A rule-based brain's own lines go into -brainlog with Log (J61): in a think, kept at its end with every fact read in
+        /// it, those read after the line too, shown in the panel's last five and written to the file; outside a think, at once
+        /// with no facts; and nothing while the log doesn't follow the brain.
+        /// </summary>
+        public static void LogWritten(FakeWorld world)
+        {
+            var unit = UnitOf(world);
+            var brain = unit.Add(new ReasonBrain());
+            var quiet = UnitOf(world).Add(new ReasonBrain());
+            Player.Get(0).Blackboard().Set(ToolFacts.Rations, 3);
+            Player.Get(0).Blackboard().Set(ToolFacts.Morale, 0.5f);
+            var debug = On(world);
+            Steps(debug, 2);
+            Expect.True(brain.Wrote > 0, "the brain reasons before any log");
+            var name = NameShown(debug, unit);
+            debug.Chat(0, "-brainlog");
+            Steps(debug, 1);
+            var shown = LogLines(Panel(debug));
+            Expect.Equal(1, shown.Count, "a line for the one logged think: " + debug.PanelText);
+            Expect.True(Holds(shown[0], "rations short: 3"), "the brain's own words: " + shown[0]);
+            Expect.True(Holds(shown[0], "rations 3") && Holds(shown[0], "morale 0.50"), "with the facts read in that think, morale after the line too: " + shown[0]);
+            Expect.True(Holds(shown[0], name), "naming the unit: " + shown[0]);
+            Steps(debug, 2);
+            Expect.Equal(3, LogLines(Panel(debug)).Count, "a line at each think that writes one, as reasoning has no change to wait for");
+
+            brain.Log("told outside a think");
+            quiet.Log("not followed");
+            Player.Get(0).Blackboard().Set(ToolFacts.Rations, 9);
+            Steps(debug, 3);
+            debug.Chat(0, "-brainlog");
+            var lines = Written(debug);
+            var all = string.Join(" | ", lines);
+            Expect.Equal(4, lines.Count, "three thinks and the line outside one, none with 9 rations: " + all);
+            Expect.True(Holds(lines[3], "told outside a think") && !Holds(lines[3], "rations 3"), "outside a think, at once and with no facts: " + lines[3]);
+            Expect.True(!Holds(all, "not followed"), "a brain the log doesn't follow writes nothing");
+            Expect.Equal(0, Logged(world, "Moonwell.Debug"), "the tools report no error");
+        }
+
         /// <summary>-wake has the selected unit's brains, both of them, think at the next step, within 0.02 s, and once.</summary>
         public static void Wake(FakeWorld world)
         {

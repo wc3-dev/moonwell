@@ -43,6 +43,9 @@ namespace Moonwell.Testing
         /// <summary>A written enum, which Lua keeps as a bare number.</summary>
         public static readonly Fact<ToolMood> Mood = new Fact<ToolMood>("mood");
 
+        /// <summary>A written count whose name starts with a word -fact takes for a board.</summary>
+        public static readonly Fact<int> PlayerCount = new Fact<int>("player count");
+
         /// <summary>A written nullable count.</summary>
         public static readonly Fact<int?> Spare = new Fact<int?>("spare");
 
@@ -307,6 +310,29 @@ namespace Moonwell.Testing
     {
         protected override void Think()
         {
+        }
+    }
+
+    /// <summary>A rule-based unit brain thinking every step, with no tree or choice: below 5 rations it writes its reasoning with Log, then reads morale too.</summary>
+    public sealed class ReasonBrain : UnitBrain
+    {
+        /// <summary>How many thinks it wrote a line in.</summary>
+        public int Wrote;
+
+        protected override void OnAdded()
+        {
+            ThinkEvery = 0.02f;
+        }
+
+        protected override void Think()
+        {
+            var rations = Read(ToolFacts.Rations);
+            if (rations < 5)
+            {
+                Log("rations short: " + rations);
+                Read(ToolFacts.Morale);
+                Wrote++;
+            }
         }
     }
 }
