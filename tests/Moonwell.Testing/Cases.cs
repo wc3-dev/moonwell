@@ -469,6 +469,18 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "file.read-file-here", Run = FileCases.ReadFileHere });
             list.Add(new Case { Name = "file.read-file-from-another-machine", Run = FileCases.ReadFileFromAnotherMachine });
             list.Add(new Case { Name = "file.read-file-missing", Run = FileCases.ReadFileMissing });
+            list.Add(new Case { Name = "seal.sha256-published", Run = SealCases.Sha256Published });
+            list.Add(new Case { Name = "seal.hmac-published", Run = SealCases.HmacPublished });
+            list.Add(new Case { Name = "seal.chacha-published", Run = SealCases.ChaChaPublished });
+            list.Add(new Case { Name = "seal.round-trip", Run = SealCases.RoundTrip });
+            list.Add(new Case { Name = "seal.refused", Run = SealCases.Refused });
+            list.Add(new Case { Name = "seal.pinned", Run = SealCases.Pinned });
+            list.Add(new Case { Name = "seal.letters", Run = SealCases.Letters });
+            list.Add(new Case { Name = "file.encrypted-round-trip", Run = FileCases.EncryptedRoundTrip });
+            list.Add(new Case { Name = "file.encrypted-shared", Run = FileCases.EncryptedShared });
+            list.Add(new Case { Name = "file.encrypted-changed", Run = FileCases.EncryptedChanged });
+            list.Add(new Case { Name = "file.encrypted-not-its-own", Run = FileCases.EncryptedNotItsOwn });
+            list.Add(new Case { Name = "file.encrypted-no-key", Run = FileCases.EncryptedNoKey });
             list.Add(new Case { Name = "share.each-type", Run = ShareCases.ShareEachType });
             list.Add(new Case { Name = "share.computer-default", Run = ShareCases.ShareComputer });
             list.Add(new Case { Name = "log.waits-for-the-replay-guard", Run = LogCases.WaitsForTheReplayGuard });
@@ -506,6 +518,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "save.no-plain-numbers", Run = SaveCases.NoPlainNumbers });
             list.Add(new Case { Name = "save.ids-take-four", Run = SaveCases.IdsTakeFour });
             list.Add(new Case { Name = "save.dashes", Run = SaveCases.Dashes });
+            list.Add(new Case { Name = "save.before-seals-loads", Run = SaveCases.BeforeSealsLoads });
             list.Add(new Case { Name = "save.load-from-file", Run = SaveCases.LoadFromFile });
             list.Add(new Case { Name = "save.load-missing", Run = SaveCases.LoadMissing });
             list.Add(new Case { Name = "save.load-edited", Run = SaveCases.LoadEdited });

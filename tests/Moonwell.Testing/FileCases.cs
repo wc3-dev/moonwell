@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 
 namespace Moonwell.Testing
@@ -234,6 +235,170 @@ namespace Moonwell.Testing
             Game.Instance.ReadFile(Player.One, "nothing.txt", text => got = text);
             world.Advance(0.1f);
             Expect.True(got == null, "null");
+        }
+
+        /// <summary>
+        /// An encrypted file keeps Base64 letters that show none of its text, and reads back on this machine with
+        /// <c>encrypted: true</c>.
+        /// </summary>
+        public static void EncryptedRoundTrip(FakeWorld world)
+        {
+            People(world, 1);
+            SaveGame.Key = "the case key";
+            PlayerFile.Write(Player.One, "unlocks.txt", Awkward, encrypted: true);
+            var kept = Kept(world, "Map\\unlocks.txt");
+            Expect.True(Seal.FromLetters(kept) != null && !kept.Contains("tab") && !kept.Contains("end"), "letters that show no text: " + kept);
+            string? got = null;
+            string? plain = "not read";
+            Local.For(Player.One, () =>
+            {
+                got = PlayerFile.Read("unlocks.txt", encrypted: true);
+                plain = PlayerFile.Read("unlocks.txt");
+            });
+            Expect.Equal(Awkward, got, "the text read back");
+            Expect.Equal(kept, plain, "read plain, it is the letters");
+
+            // The game finds a file in any case; the fake world's files are found by their exact name, so the copy stands for it.
+            if (world.Files.TryGetValue("Map\\unlocks.txt", out var pieces))
+            {
+                world.Files["Map\\Unlocks.txt"] = new List<string>(pieces);
+            }
+
+            Local.For(Player.One, () => { got = PlayerFile.Read("Unlocks.txt", encrypted: true); });
+            Expect.Equal(Awkward, got, "read under its name in another case");
+            Expect.Equal(0, world.Logged.Count, "nothing logged");
+
+            PlayerFile.Write(Player.One, "empty.txt", "", encrypted: true);
+            Local.For(Player.One, () => { got = PlayerFile.Read("empty.txt", encrypted: true); });
+            Expect.Equal("", got, "the empty text");
+        }
+
+        /// <summary>A scope's ReadFile shares an encrypted file as it is kept, and every machine opens it: here, and on another machine from the player's messages.</summary>
+        public static void EncryptedShared(FakeWorld world)
+        {
+            People(world, 2);
+            SaveGame.Key = "the case key";
+            PlayerFile.Write(Player.One, "unlocks.txt", Awkward, encrypted: true);
+            var kept = Kept(world, "Map\\unlocks.txt");
+            string? got = "not yet";
+            Game.Instance.ReadFile(Player.One, "unlocks.txt", text => got = text, encrypted: true);
+            Expect.Equal("not yet", got, "not before the message goes round");
+            world.Advance(0.1f);
+            Expect.Equal(Awkward, got, "the text here");
+            var sent = new StringBuilder();
+            foreach (var message in world.SentSync)
+            {
+                sent.Append(message);
+            }
+
+            Expect.True(sent.ToString().Contains(kept.Substring(0, 40)) && !sent.ToString().Contains("tab"), "sent as it is kept");
+
+            world.LocalSlot = 1;
+            got = "not yet";
+            Game.Instance.ReadFile(Player.One, "unlocks.txt", text => got = text, encrypted: true);
+            foreach (var message in Sharing.Messages(2, kept))
+            {
+                world.DeliverSync(Player.One, message);
+            }
+
+            Expect.Equal(Awkward, got, "the text on another machine");
+
+            got = "not yet";
+            Game.Instance.ReadFile(Player.One, "nothing.txt", text => got = text, encrypted: true);
+            foreach (var message in Sharing.Messages(3, null))
+            {
+                world.DeliverSync(Player.One, message);
+            }
+
+            Expect.True(got == null, "no file is null");
+            Expect.Equal(0, world.Logged.Count, "nothing logged");
+        }
+
+        /// <summary>An encrypted file changed by hand, and a plain file read as an encrypted one, give null and a line in the log.</summary>
+        public static void EncryptedChanged(FakeWorld world)
+        {
+            People(world, 1);
+            SaveGame.Key = "the case key";
+            PlayerFile.Write(Player.One, "unlocks.txt", "gold 100", encrypted: true);
+            // Only the writing player's machine has the file; at another the read gives null for no file.
+            if (world.Files.TryGetValue("Map\\unlocks.txt", out var pieces))
+            {
+                pieces[0] = pieces[0].Substring(0, 12) + (pieces[0][12] == 'A' ? 'B' : 'A') + pieces[0].Substring(13);
+            }
+
+            string? got = "not read";
+            Local.For(Player.One, () => { got = PlayerFile.Read("unlocks.txt", encrypted: true); });
+            Expect.True(got == null, "a changed letter");
+            Expect.True(world.Logged.Count == 1 && world.Logged[0].Contains("unlocks.txt") && world.Logged[0].Contains("fails its check"), "one line in the log, naming the file and its check");
+
+            PlayerFile.Write(Player.One, "plain.txt", "gold 9999");
+            got = "not yet";
+            Game.Instance.ReadFile(Player.One, "plain.txt", text => got = text, encrypted: true);
+            world.Advance(0.1f);
+            Expect.True(got == null, "a plain file");
+            Expect.Equal(2, world.Logged.Count, "a second line in the log");
+        }
+
+        /// <summary>An encrypted file is its player's and its name's: a copy under another name, another player's copy and one made under another key each fail.</summary>
+        public static void EncryptedNotItsOwn(FakeWorld world)
+        {
+            People(world, 2);
+            SaveGame.Key = "the case key";
+            PlayerFile.Write(Player.One, "unlocks.txt", "gold 100", encrypted: true);
+            if (world.Files.TryGetValue("Map\\unlocks.txt", out var pieces))
+            {
+                world.Files["Map\\other.txt"] = new List<string>(pieces);
+            }
+
+            string? got = "not read";
+            Local.For(Player.One, () => { got = PlayerFile.Read("other.txt", encrypted: true); });
+            Expect.True(got == null, "under another name");
+
+            world.LocalSlot = 1;
+            got = "not read";
+            Local.For(Player.Two, () => { got = PlayerFile.Read("unlocks.txt", encrypted: true); });
+            Expect.True(got == null, "as another player");
+
+            world.LocalSlot = 0;
+            SaveGame.Key = "another key";
+            got = "not read";
+            Local.For(Player.One, () => { got = PlayerFile.Read("unlocks.txt", encrypted: true); });
+            Expect.True(got == null, "under another key");
+            Expect.Equal(3, world.Logged.Count, "each in the log");
+        }
+
+        /// <summary>Without a SaveKey an encrypted file is not written or read, and a development build says so.</summary>
+        public static void EncryptedNoKey(FakeWorld world)
+        {
+            People(world, 1);
+            PlayerFile.Write(Player.One, "unlocks.txt", "gold 100", encrypted: true);
+            Expect.Equal(0, world.Files.Count, "nothing written");
+            string? got = "not read";
+            Local.For(Player.One, () => { got = PlayerFile.Read("unlocks.txt", encrypted: true); });
+            Expect.True(got == null, "null");
+            got = "not yet";
+            Game.Instance.ReadFile(Player.One, "unlocks.txt", text => got = text, encrypted: true);
+            world.Advance(0.1f);
+            Expect.True(got == null, "null through ReadFile");
+#if DEBUG
+            Expect.Equal(3, world.Logged.Count, "each reported");
+            Expect.True(world.Logged[0].Contains("PlayerFile.Write") && world.Logged[0].Contains("SaveKey"), "the report: " + world.Logged[0]);
+#endif
+        }
+
+        private static string Kept(FakeWorld world, string path)
+        {
+            // Only the writing player's machine has the file.
+            var text = new StringBuilder();
+            if (world.Files.TryGetValue(path, out var pieces))
+            {
+                foreach (var piece in pieces)
+                {
+                    text.Append(piece);
+                }
+            }
+
+            return text.ToString();
         }
 
         private static void People(FakeWorld world, int count)
