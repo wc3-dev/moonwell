@@ -18,13 +18,15 @@ namespace Moonwell.Build
 
         /// <summary>
         /// Writes the save code of a map with save classes, after checking its key and its record file, and gives the install
-        /// line; removes the file an earlier build wrote and gives none for a map without.
+        /// line; removes the file an earlier build wrote and gives none for a map without. A map without save classes that
+        /// encrypts a player file has its key checked and kept in the record the same way (J190).
         /// </summary>
-        /// <exception cref="BuildException">The map has a save class and no SaveKey, or its record stops the build.</exception>
+        /// <exception cref="BuildException">The map has a save class or an encrypted file and no SaveKey, or its record stops the build.</exception>
         public static IReadOnlyList<string> Write(string assemblyPath, MapProject project, MapSettings settings)
         {
             var classes = SaveClasses.Read(assemblyPath);
-            if (classes.Count == 0)
+            var encrypted = classes.Count == 0 ? FileStore.EncryptedBy(assemblyPath) : null;
+            if (classes.Count == 0 && encrypted == null)
             {
                 Delete(project);
                 return Array.Empty<string>();
@@ -32,10 +34,19 @@ namespace Moonwell.Build
 
             if (settings.SaveKey.Length == 0)
             {
-                throw new BuildException($"{classes[0].Name} is a save class, so the map needs a SaveKey: set SaveKey = \"a long private text, never changed\" in the constructor of {settings.TypeName} in Map.cs. Every save's check covers it, so a save loads only in this map");
+                var why = classes.Count > 0
+                    ? $"{classes[0].Name} is a save class, so the map needs a SaveKey: set SaveKey = \"a long private text, never changed\" in the constructor of {settings.TypeName} in Map.cs. Every save's check covers it, so a save loads only in this map"
+                    : $"{encrypted} passes encrypted: true for a player file, so the map needs a SaveKey: set SaveKey = \"a long private text, never changed\" in the constructor of {settings.TypeName} in Map.cs. Every encrypted file is sealed under it, so one opens only in this map";
+                throw new BuildException(why);
             }
 
             SaveRecord.Keep(project, classes, settings.SaveKey, FileStore.FolderOf(settings, project));
+            if (classes.Count == 0)
+            {
+                Delete(project);
+                return Array.Empty<string>();
+            }
+
             Directory.CreateDirectory(project.GeneratedFolder);
             File.WriteAllText(Path.Combine(project.GeneratedFolder, FileName), Code(classes));
             return new[] { Install };

@@ -4036,7 +4036,17 @@ player's hour.
 A replay runs the map again, but writes no files, so watching one leaves the players' files as they were. A file written
 in a game's first moments waits until Moonwell knows it is no replay.
 
-The player can open and change their files, so check what you read. `ByteWriter` writes whole numbers, floats, bools and
+The player can open and change a file, so check what you read, or write it encrypted: `PlayerFile.Write(player,
+"unlocks.txt", text, encrypted: true)`, read back with `ReadFile(player, "unlocks.txt", text => ..., encrypted: true)` or
+`PlayerFile.Read("unlocks.txt", encrypted: true)`. An encrypted file is sealed as a save is ([Saves](#saves)): under the
+map's `SaveKey`, which the build then requires and keeps a fingerprint of in `moonwell-saves.txt`, as for saves, for
+that player's name and that file name. On disk it is letters that show
+nothing of the text, and it holds about 29,000 characters. A file that was changed, copied from another player or
+another file, or never encrypted reads as null and writes a line to the log; no file reads as null alone. `ReadFile`
+shares it as it is on disk, and every machine opens it, so a player's own machine cannot hand the others a text it made
+up. Leave a file plain when the player may edit it, as settings.
+
+`ByteWriter` writes whole numbers, floats, bools and
 texts as compact bytes, and `ByteReader` reads them back in the same order; a read past the end throws a
 `FormatException`. `ToCode()` gives the bytes as letters easy to type, `X7KQ-M3PA`, and `ByteReader.FromCode(text)` reads
 them back, null for a text that is no code; it reads lower case too, and O for 0 and I or L for 1. `ToArray()` gives
@@ -4106,15 +4116,20 @@ Slots keep several saves apart, one file each: `"paladin"` and `"mage"` are lett
 slot named a save goes in one default slot. A code holds one save and can be loaded into any slot.
 
 The map hears `-load` with a chat command (under Players): `Command("load", (player, rest) => ...)` gives the code as
-`rest` for `FromCode`. A chat line holds 127 characters, so after `-load ` a code has 121: about 60 bytes of
+`rest` for `FromCode`. A chat line holds 127 characters, so after `-load ` a code has 121: 67 bytes of
 save, which a typical RPG save fits. A code longer than that drops its dashes. A development build reports a save
 too long for a chat line; it still loads from its file.
 
-A save is tied to the player's name and to the map's `SaveKey`. The check fails for anyone else, so a code is no use to
+A save is sealed under the map's `SaveKey` for the player's name and the save class: encrypted with ChaCha20, with a
+check of 8 bytes from HMAC-SHA256. Without the key a save cannot be read, changed or made, so a code is no use to
 another player, and a changed key fails every save made before. Single player names player 1 "Local Player", so a save
-made offline does not load online. A determined cheater can read the key from the map; the check stops casual edits,
-not them. A file that fails its check loads as null and writes a line to the log, so "no file" and "changed" can be told
-apart.
+made offline does not load online. A file that fails its check loads as null and writes a line to the log, so "no file"
+and "changed" can be told apart. A save made before 0.23, with its older and weaker check, still loads; saving again
+writes it the new way.
+
+What the seal cannot stop: the key is in the map's script, which anyone with the map can read, and the game has no
+server and gives a map nothing secret, so whoever reads the key there can make any save. Nor can it stop a player
+putting back an older save of their own.
 
 One save class may go without an id. Every other one has `[SaveId("settings")]`, never changed, so a code of one class
 fails for another.
