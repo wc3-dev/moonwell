@@ -251,16 +251,18 @@ namespace Moonwell.Build
         private static (string Name, string Text) CopyFolder(string source, string mapFolder)
         {
             (string, string)? script = null;
-            foreach (var path in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+            var files = Directory.GetFiles(source, "*", SearchOption.AllDirectories)
+                .Select(path => (Path: path, Relative: Path.GetRelativePath(source, path)))
+                .Select(file => (file.Path, file.Relative, Target: Target(source, mapFolder, file.Relative)))
+                .ToList();
+            foreach (var (path, relative, target) in files)
             {
-                var relative = Path.GetRelativePath(source, path);
                 if (ScriptNames.Contains(relative, StringComparer.OrdinalIgnoreCase))
                 {
                     script ??= (relative, File.ReadAllText(path));
                     continue;
                 }
 
-                var target = Path.Combine(mapFolder, relative);
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.Copy(path, target);
             }
@@ -293,14 +295,16 @@ namespace Moonwell.Build
                     }
                 }
 
+                // Every name is checked before a file is written, so a map naming one outside the map folder writes nothing (J188).
+                var names = Enumerable.Range(0, archive.Count)
+                    .Select(i => archive[i].FileName)
+                    .OfType<string>()
+                    .Where(name => !Skipped.Contains(name, StringComparer.OrdinalIgnoreCase))
+                    .Select(name => (Name: name, Target: Target(source, mapFolder, name)))
+                    .ToList();
                 (string, string)? script = null;
-                for (var i = 0; i < archive.Count; i++)
+                foreach (var (name, target) in names)
                 {
-                    if (archive[i].FileName is not { } name || Skipped.Contains(name, StringComparer.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
                     using var stream = archive.OpenFile(name);
                     if (ScriptNames.Contains(name, StringComparer.OrdinalIgnoreCase))
                     {
@@ -309,7 +313,6 @@ namespace Moonwell.Build
                         continue;
                     }
 
-                    var target = Path.Combine(mapFolder, name.Replace('\\', Path.DirectorySeparatorChar));
                     Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                     using var written = File.Create(target);
                     stream.CopyTo(written);
@@ -321,6 +324,25 @@ namespace Moonwell.Build
             {
                 throw new BuildException($"cannot read {source}: {failure.Message}");
             }
+        }
+
+        /// <summary>
+        /// Where a file the map names goes in the map folder. A name that is rooted, holds a drive, has <c>.</c> or <c>..</c> as a
+        /// part, or lands outside the map folder is refused, naming it: the names come from the map's own lists, and a map is
+        /// often someone else's download (J188).
+        /// </summary>
+        internal static string Target(string source, string mapFolder, string name)
+        {
+            var folder = Path.TrimEndingDirectorySeparator(Path.GetFullPath(mapFolder)) + Path.DirectorySeparatorChar;
+            var local = name.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+            var target = Path.GetFullPath(Path.Combine(folder, local));
+            if (Path.IsPathRooted(local) || name.Contains(':') || local.Split(Path.DirectorySeparatorChar).Any(part => part is "." or "..")
+                || !target.StartsWith(folder, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BuildException($"{source} names a file \"{name}\", which would be written outside the project's map folder, so it is not imported");
+            }
+
+            return target;
         }
 
         private static bool IsTriggers(string function) => function.StartsWith("Trig_", StringComparison.Ordinal) || function.StartsWith("InitTrig_", StringComparison.Ordinal);
