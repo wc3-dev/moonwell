@@ -43,6 +43,7 @@ namespace Moonwell
             RealClock.Reset();
             ReplayGuard.Reset();
             SaveGame.Reset();
+            Seal.Reset();
             PlayerFile.Folder = "Map";
             KnownUnits.Reset();
             UnitPool.Reset();

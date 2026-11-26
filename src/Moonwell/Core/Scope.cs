@@ -72,11 +72,21 @@ namespace Moonwell
         /// <summary>
         /// Reads a file on a player's computer, on their machine, and hands its text to every machine once it has arrived, as a
         /// child of this scope: nothing runs if the scope ends first. Null when there is no file, when the player leaves first,
-        /// or when they are not a person playing.
+        /// or when they are not a person playing. With <paramref name="encrypted"/> it reads a file written with
+        /// <c>encrypted: true</c>: the file is shared as it is kept and opened on every machine, and one that fails its check,
+        /// as a plain or changed file does, gives null and a line in the log.
         /// </summary>
-        public void ReadFile(Player player, string path, Action<string?> arrived)
+        public void ReadFile(Player player, string path, Action<string?> arrived, bool encrypted = false)
         {
-            Sharing.Request(this, player, () => PlayerFile.Read(path), arrived);
+            if (!encrypted)
+            {
+                Sharing.Request(this, player, () => PlayerFile.Read(path), arrived);
+                return;
+            }
+
+            const string label = "ReadFile";
+            var keyed = PlayerFile.Keyed(label);
+            Sharing.Request(this, player, () => keyed ? PlayerFile.Kept(path) : null, kept => arrived(kept == null ? null : PlayerFile.Opened(player, path, kept, label)));
         }
 
         /// <summary>

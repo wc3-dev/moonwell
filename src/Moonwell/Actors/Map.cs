@@ -25,8 +25,9 @@ namespace Moonwell
         public string SaveFolder { get; protected set; } = "";
 
         /// <summary>
-        /// The map's own private text that every save's check covers, so a save loads only in this map: required when the map
-        /// has a save class, and never changed, as a changed key fails every save made before (decision 183).
+        /// The map's own private text that every save and encrypted file is sealed under, so one loads only in this map:
+        /// required when the map has a save class or an encrypted file, and never changed, as a changed key fails every one
+        /// made before (decisions 183 and 398).
         /// </summary>
         public string SaveKey { get; protected set; } = "";
 

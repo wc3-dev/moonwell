@@ -7,8 +7,9 @@ namespace Moonwell
     /// <summary>
     /// A save the map writes, as Unreal's <c>USaveGame</c> (decisions 180 to 184): a class deriving from it, with
     /// <c>[Saved(n)]</c> on each field to keep. <see cref="Save"/> gives it a code the player can type and writes it to a file
-    /// on their computer; a scope's <c>Load</c> reads the file back, and <see cref="FromCode{T}"/> a typed code. A save is tied
-    /// to the player's name and the map's <c>SaveKey</c>, so it loads only for the player who made it.
+    /// on their computer; a scope's <c>Load</c> reads the file back, and <see cref="FromCode{T}"/> a typed code. A save is
+    /// sealed under the map's <c>SaveKey</c> and the player's name (decision 398), so it cannot be read or changed without
+    /// the key, and loads only for the player who made it.
     /// </summary>
     public abstract class SaveGame
     {
@@ -18,14 +19,18 @@ namespace Moonwell
         // A chat line holds 127 characters, and "-load " takes 6 (game facts, 11-03).
         private const int ChatLetters = 121;
 
-        private const int Format = 1;
+        // What a save's seal is made for, so that a sealed file of another kind is no save.
+        private const string Kind = "save";
+
+        // The format byte of a save made before 0.23, which still loads.
+        private const int FormatBefore = 1;
 
         private static Dictionary<Type, Codec>? codecs;
 
         // No initializer: a public type with static setup breaks a map's script in Lua (StaticSetupTests).
         private static string? key;
 
-        /// <summary>The map's SaveKey, which every save's check covers; set as the runtime installs the map.</summary>
+        /// <summary>The map's SaveKey, which every save and encrypted file is sealed under; set as the runtime installs the map.</summary>
         internal static string Key
         {
             get { return key ?? ""; }
@@ -109,7 +114,7 @@ namespace Moonwell
                 var save = (T?)Decode(codec, player, text);
                 if (save == null)
                 {
-                    Failed(label, "the file " + slot + ".pld of " + player.Name + " fails its check, so it gives null: it was changed, or made under another SaveKey, for another name or for another save class");
+                    Seal.Failed(label, "the file " + slot + ".pld of " + player.Name + " fails its check, so it gives null: it was changed, or made under another SaveKey, for another name or for another save class");
                 }
 
                 arrived(save);
@@ -119,12 +124,8 @@ namespace Moonwell
         private static string Encode(Codec codec, Player player, SaveGame save)
         {
             var writer = new SaveWriter();
-            writer.Bytes.Add(Format);
             codec.Write(save, writer);
-            var check = SaveCheck.Of(Key, codec.Id, player.StartName, writer.Bytes, 0);
-            var bytes = new List<int>(check);
-            bytes.AddRange(writer.Bytes);
-            SaveCheck.Mix(Key, check, bytes, 4);
+            var bytes = Seal.Close(Kind, codec.Id, player.StartName, writer.Bytes);
 
             var dashed = CodeLetters.Encode(bytes);
             if (dashed.Length <= ChatLetters)
@@ -144,7 +145,42 @@ namespace Moonwell
         private static SaveGame? Decode(Codec codec, Player player, string text)
         {
             var bytes = CodeLetters.Decode(text);
-            if (bytes == null || bytes.Count < 5)
+            if (bytes == null)
+            {
+                return null;
+            }
+
+            var body = Seal.Open(Kind, codec.Id, player.StartName, bytes);
+            var start = 0;
+            if (body == null)
+            {
+                // A save made before 0.23 (decision 183): its 32-bit check, then its bytes mixed with a stream from the key.
+                body = Before(codec, player, bytes);
+                start = 1;
+            }
+
+            if (body == null)
+            {
+                return null;
+            }
+
+            var save = codec.Make();
+            try
+            {
+                codec.Read(save, new SaveReader(new ByteReader(body, start, body.Count)));
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+
+            return save;
+        }
+
+        // The bytes of a save in the format before 0.23, from its format byte on; null when its check fails.
+        private static List<int>? Before(Codec codec, Player player, List<int> bytes)
+        {
+            if (bytes.Count < 5)
             {
                 return null;
             }
@@ -160,22 +196,13 @@ namespace Moonwell
                 }
             }
 
-            if (bytes[4] != Format)
+            if (bytes[4] != FormatBefore)
             {
                 return null;
             }
 
-            var save = codec.Make();
-            try
-            {
-                codec.Read(save, new SaveReader(new ByteReader(bytes, 5, bytes.Count)));
-            }
-            catch (FormatException)
-            {
-                return null;
-            }
-
-            return save;
+            bytes.RemoveRange(0, 4);
+            return bytes;
         }
 
         private static Codec? CodecOf(Type type, string label)
@@ -204,16 +231,6 @@ namespace Moonwell
             }
 
             return named;
-        }
-
-        // A file that fails its check is written to the log in every build, so "no file" and "changed" can be told apart.
-        private static void Failed(string label, string message)
-        {
-#if DEBUG
-            Dev.Report(label, message);
-#else
-            Runtime.World.Log("Moonwell: " + label + ": " + message);
-#endif
         }
 
         private sealed class Codec

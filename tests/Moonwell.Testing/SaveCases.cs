@@ -111,13 +111,13 @@ namespace Moonwell.Testing
             Expect.True(differ * 2 > a.Code.Length, "most letters differ: " + a.Code + " " + b.Code);
         }
 
-        /// <summary>An object id, which would take five bytes, takes four: the check, the format, the tag and the id.</summary>
+        /// <summary>An object id, which would take five bytes, takes four: the check, the tag and the id.</summary>
         public static void IdsTakeFour(FakeWorld world)
         {
             Register(world);
             var save = new CaseSettings { Volume = ObjectTypes.FourCC("I000") };
             SaveGame.Save(Player.One, save);
-            Expect.Equal(4 + 1 + 1 + 4, CodeLetters.Decode(save.Code)!.Count, "the bytes");
+            Expect.Equal(Seal.CheckBytes + 1 + 4, CodeLetters.Decode(save.Code)!.Count, "the bytes");
             Expect.Equal(ObjectTypes.FourCC("I000"), SaveGame.FromCode<CaseSettings>(Player.One, save.Code)!.Volume, "read back");
         }
 
@@ -130,11 +130,44 @@ namespace Moonwell.Testing
             Expect.True(small.Code.Contains("-"), "a short code has dashes: " + small.Code);
 
             // 62 bytes are 100 letters: 124 with dashes, past the 121 a chat line holds after "-load ".
-            var longer = new CaseSettings { Note = Letters(53) };
+            var longer = new CaseSettings { Note = Letters(50) };
             SaveGame.Save(Player.One, longer);
             Expect.True(!longer.Code.Contains("-") && longer.Code.Length == 100, "no dashes: " + longer.Code);
             Expect.Equal(longer.Note, SaveGame.FromCode<CaseSettings>(Player.One, longer.Code)!.Note, "read back");
             Expect.Equal(0, world.Logged.Count, "nothing reported");
+        }
+
+        /// <summary>
+        /// A save made before 0.23, with its 32-bit check and its bytes mixed from the key, still loads: for its own player,
+        /// class and key only, from a typed code and from its file.
+        /// </summary>
+        public static void BeforeSealsLoads(FakeWorld world)
+        {
+            Register(world);
+            var save = Filled();
+            var code = CodeBefore("", Player.One, save);
+            ExpectSame(save, SaveGame.FromCode<CaseSave>(Player.One, code));
+            Expect.True(SaveGame.FromCode<CaseSave>(Player.Two, code) == null, "another player");
+            Expect.True(SaveGame.FromCode<CaseSettings>(Player.One, code) == null, "another class");
+
+            var settings = new CaseSettings { Volume = 7, Note = "kept" };
+            var old = CodeBefore("settings", Player.One, settings);
+            Expect.Equal("GNJB-1PYX-038E-Y466-FZAF-J", old, "the code 0.22 gave these settings");
+            Expect.Equal("kept", SaveGame.FromCode<CaseSettings>(Player.One, old)!.Note, "read from the code");
+            var changed = old.Substring(0, 10) + (old[10] == 'A' ? 'B' : 'A') + old.Substring(11);
+            Expect.True(SaveGame.FromCode<CaseSettings>(Player.One, changed) == null, "a changed letter");
+
+            // The filled save's own code is too long for a chat line, which a development build has reported by now.
+            var logged = world.Logged.Count;
+            PlayerFile.Write(Player.One, "old.pld", old);
+            var volume = 0;
+            Game.Instance.Load<CaseSettings>(Player.One, "old", loaded => volume = loaded!.Volume);
+            world.Advance(0.1f);
+            Expect.Equal(7, volume, "loaded from its file");
+            Expect.Equal(logged, world.Logged.Count, "nothing logged");
+
+            SaveGame.Key = "another key";
+            Expect.True(SaveGame.FromCode<CaseSettings>(Player.One, old) == null, "another key");
         }
 
 #if DEBUG
@@ -374,6 +407,31 @@ namespace Moonwell.Testing
                     }
                 }
             });
+        }
+
+        // A save's code as 0.22 made it (decision 183): the format byte and the fields, a check of four bytes before them, and
+        // the bytes after the check mixed with a stream from the key and the check.
+        private static string CodeBefore(string id, Player player, SaveGame save)
+        {
+            var writer = new SaveWriter();
+            writer.Bytes.Add(1);
+            if (save is CaseSave whole)
+            {
+                SaveGame.Save(player, whole, "scratch");
+                writer.Bytes.AddRange(Seal.Open("save", id, player.StartName, CodeLetters.Decode(whole.Code)!)!);
+            }
+            else
+            {
+                var settings = (CaseSettings)save;
+                writer.Int(1, settings.Volume);
+                writer.String(2, settings.Note);
+            }
+
+            var check = SaveCheck.Of(SaveGame.Key, id, player.StartName, writer.Bytes, 0);
+            var bytes = new List<int>(check);
+            bytes.AddRange(writer.Bytes);
+            SaveCheck.Mix(SaveGame.Key, check, bytes, 4);
+            return CodeLetters.Encode(bytes);
         }
 
         private static void WritePart(CasePart part, SaveWriter writer)
