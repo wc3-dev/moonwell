@@ -237,6 +237,33 @@ namespace Moonwell.Build.Tests
             Assert.Equal(string.Empty, output);
         }
 
+        [Theory]
+        [InlineData("run")]
+        [InlineData("watch", "--run")]
+        public void a_map_path_the_game_never_loads_is_refused_before_the_build(params string[] command)
+        {
+            var game = Path.Combine(Path.GetTempPath(), "moonwell-game-" + Guid.NewGuid().ToString("N") + ".exe");
+            File.WriteAllText(game, string.Empty);
+            temporaryFiles.Add(game);
+
+            // A project whose build\Long.w3x is one character past what the game loads; it is never built.
+            var parent = folders.TemporaryFolderOutsideRepository();
+            var archiveEnd = Path.Combine("build", "Long.w3x").Length + 2;
+            var folder = Path.Combine(parent, new string('x', Cli.LongestMapPath + 1 - parent.Length - archiveEnd));
+            Directory.CreateDirectory(Path.Combine(folder, "map.w3x"));
+            File.WriteAllText(Path.Combine(folder, "Long.csproj"), "<Project />");
+            File.WriteAllText(Path.Combine(folder, "map.w3x", "war3map.w3i"), string.Empty);
+            var archive = Path.Combine(folder, "build", "Long.w3x");
+            Assert.Equal(Cli.LongestMapPath + 1, archive.Length);
+
+            var (exitCode, _, error, started) = Run(command.Take(1).Append(folder).Concat(command.Skip(1)).Concat(new[] { "--game", game }).ToArray());
+
+            Assert.Equal(1, exitCode);
+            Assert.Contains($"the built map's path is 174 characters ({archive}), and the game never loads one over 173: build from a shorter folder", error);
+            Assert.Empty(started);
+            Assert.False(Directory.Exists(Path.Combine(folder, "build")));
+        }
+
         [Fact]
         public void new_writes_the_template_under_the_maps_name()
         {
