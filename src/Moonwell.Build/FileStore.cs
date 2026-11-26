@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using System.Text;
 
 namespace Moonwell.Build
@@ -34,6 +35,88 @@ namespace Moonwell.Build
             return Declarations.ReferencesType(assemblyPath, "Moonwell", "PlayerFile")
                 || Declarations.ReferencesType(assemblyPath, "Moonwell", "SaveGame")
                 || CompiledFiles.MapAssemblies(assemblyPath).Any(ReadsFiles);
+        }
+
+        /// <summary>
+        /// The first type of the map's code, its own libraries among it, that may pass <c>encrypted: true</c> to
+        /// <c>PlayerFile.Write</c>, <c>PlayerFile.Read</c> or a scope's <c>ReadFile</c>; null when none does (J190). The flag is
+        /// the call's last argument, so a call whose argument just before it is anything but a constant false counts.
+        /// </summary>
+        public static string? EncryptedBy(string assemblyPath)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Select(EncryptedIn).FirstOrDefault(found => found != null);
+        }
+
+        private static string? EncryptedIn(string assemblyPath)
+        {
+            using var stream = File.OpenRead(assemblyPath);
+            using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
+            var metadata = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+            var calls = new HashSet<int>();
+            foreach (var handle in metadata.MemberReferences)
+            {
+                var member = metadata.GetMemberReference(handle);
+                if (member.Parent.Kind != System.Reflection.Metadata.HandleKind.TypeReference)
+                {
+                    continue;
+                }
+
+                var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
+                var owner = metadata.GetString(type.Namespace) == "Moonwell" ? metadata.GetString(type.Name) : null;
+                var name = metadata.GetString(member.Name);
+                if ((owner == "PlayerFile" && name is "Write" or "Read") || (owner == "Scope" && name == "ReadFile"))
+                {
+                    calls.Add(System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(handle));
+                }
+            }
+
+            if (calls.Count == 0)
+            {
+                return null;
+            }
+
+            foreach (var typeHandle in metadata.TypeDefinitions)
+            {
+                var type = metadata.GetTypeDefinition(typeHandle);
+                foreach (var methodHandle in type.GetMethods())
+                {
+                    var method = metadata.GetMethodDefinition(methodHandle);
+                    if (method.RelativeVirtualAddress == 0)
+                    {
+                        continue;
+                    }
+
+                    var il = pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!;
+                    var before = System.Reflection.Emit.OpCodes.Nop;
+                    for (var position = 0; position < il.Length;)
+                    {
+                        var code = il[position++];
+                        var opCode = SetterScan.OpCodesByValue[code == 0xFE ? unchecked((short)(0xFE00 | il[position++])) : code];
+                        if ((opCode == System.Reflection.Emit.OpCodes.Call || opCode == System.Reflection.Emit.OpCodes.Callvirt)
+                            && calls.Contains(BitConverter.ToInt32(il, position)) && before != System.Reflection.Emit.OpCodes.Ldc_I4_0)
+                        {
+                            return OuterName(metadata, type);
+                        }
+
+                        position += SetterScan.OperandSize(opCode.OperandType, il, position);
+                        before = opCode;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // The type's name, nested types after their outer type's; a type the compiler made (a lambda's) gives its outer type's.
+        private static string OuterName(System.Reflection.Metadata.MetadataReader metadata, System.Reflection.Metadata.TypeDefinition type)
+        {
+            while (type.IsNested && metadata.GetString(type.Name).StartsWith('<'))
+            {
+                type = metadata.GetTypeDefinition(type.GetDeclaringType());
+            }
+
+            var name = metadata.GetString(type.Name);
+            return type.IsNested ? OuterName(metadata, metadata.GetTypeDefinition(type.GetDeclaringType())) + "." + name : name;
         }
 
         // A call of ReadFile is a member reference whose parent is Moonwell's Scope, where it is declared.

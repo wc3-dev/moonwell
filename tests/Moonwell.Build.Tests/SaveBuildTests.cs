@@ -182,6 +182,37 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void A_map_with_an_encrypted_file_needs_a_key_and_keeps_it_in_the_record()
+        {
+            const string files = """
+                using Moonwell;
+
+                namespace Sample
+                {
+                    public static class Unlocks
+                    {
+                        public static void Keep(Player player) => PlayerFile.Write(player, "unlocks.txt", "1", encrypted: true);
+                    }
+                }
+                """;
+            var project = WithSaves(string.Empty, files);
+
+            var output = new StringWriter();
+            var error = new StringWriter();
+            var exitCode = Cli.Run(new[] { "build", project }, output, error, (_, _) => throw new InvalidOperationException("build starts nothing"));
+
+            Assert.True(exitCode == 1, "the build should fail: " + output);
+            Assert.Contains("Unlocks passes encrypted: true for a player file, so the map needs a SaveKey", error.ToString());
+
+            var map = Path.Combine(project, "Map.cs");
+            File.WriteAllText(map, File.ReadAllText(map).Replace("Name = \"Sample map\";", "Name = \"Sample map\";\n            SaveKey = \"files key\";"));
+            Build(project);
+
+            Assert.Contains("key " + SaveRecord.Fingerprint("files key"), File.ReadAllText(Path.Combine(project, SaveRecord.FileName)));
+            Assert.False(File.Exists(Path.Combine(project, "build", "generated", SaveCodecWriter.FileName)));
+        }
+
+        [Fact]
         public void A_map_without_saves_writes_nothing()
         {
             Assert.Equal(0, builds.Development.ExitCode);

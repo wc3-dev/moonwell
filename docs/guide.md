@@ -4039,7 +4039,8 @@ in a game's first moments waits until Moonwell knows it is no replay.
 The player can open and change a file, so check what you read, or write it encrypted: `PlayerFile.Write(player,
 "unlocks.txt", text, encrypted: true)`, read back with `ReadFile(player, "unlocks.txt", text => ..., encrypted: true)` or
 `PlayerFile.Read("unlocks.txt", encrypted: true)`. An encrypted file is sealed as a save is ([Saves](#saves)): under the
-map's `SaveKey`, which the map then needs, for that player's name and that file name. On disk it is letters that show
+map's `SaveKey`, which the build then requires and keeps a fingerprint of in `moonwell-saves.txt`, as for saves, for
+that player's name and that file name. On disk it is letters that show
 nothing of the text, and it holds about 29,000 characters. A file that was changed, copied from another player or
 another file, or never encrypted reads as null and writes a line to the log; no file reads as null alone. `ReadFile`
 shares it as it is on disk, and every machine opens it, so a player's own machine cannot hand the others a text it made
