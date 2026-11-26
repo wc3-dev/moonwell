@@ -154,6 +154,49 @@ namespace Moonwell.Build.Tests
             }
         }
 
+        [Theory]
+        [InlineData(@"..\..\escaped.txt")]
+        [InlineData(@"Textures\..\..\..\escaped.txt")]
+        public void an_archive_listing_a_file_outside_the_project_is_refused_before_anything_is_written(string escaping)
+        {
+            var parent = folders.TemporaryFolderOutsideRepository();
+            var project = NewMap.Write("Escaping", parent, "1.2.3");
+            var map = Path.Combine(TestFolders.Fixture("Sample"), "map");
+            var archive = Path.Combine(parent, "escaping.w3x");
+            var files = new[] { "war3map.w3i", "war3map.lua" }.Select(name => MpqFile.New(File.OpenRead(Path.Combine(map, name)), name)).ToList();
+            files.Add(MpqFile.New(new MemoryStream(new byte[] { 1, 2, 3 }), escaping));
+            using (MpqArchive.Create(archive, files, new MpqArchiveCreateOptions { AttributesCreateMode = MpqFileCreateMode.None }))
+            {
+            }
+
+            var refused = Assert.Throws<BuildException>(() => OldMapImport.Run(archive, project, new StringWriter()));
+
+            Assert.Contains(escaping, refused.Message);
+            Assert.False(File.Exists(Path.Combine(parent, "escaped.txt")));
+            Assert.False(File.Exists(Path.Combine(project, "map.w3x", "war3map.w3i")));
+        }
+
+        [Theory]
+        [InlineData(@"C:\escaped.txt")]
+        [InlineData(@"\escaped.txt")]
+        [InlineData(@"C:escaped.txt")]
+        [InlineData(@"Textures\.\x.blp")]
+        [InlineData(@"..")]
+        public void a_rooted_name_a_drive_or_a_dot_part_is_refused(string name)
+        {
+            var refused = Assert.Throws<BuildException>(() => OldMapImport.Target("old.w3x", Path.Combine(Path.GetTempPath(), "map.w3x"), name));
+
+            Assert.Contains(name, refused.Message);
+        }
+
+        [Fact]
+        public void a_name_inside_the_map_folder_goes_there()
+        {
+            var mapFolder = Path.Combine(Path.GetTempPath(), "map.w3x");
+
+            Assert.Equal(Path.Combine(mapFolder, "Textures", "x.blp"), OldMapImport.Target("old.w3x", mapFolder, @"Textures\x.blp"));
+        }
+
         // The JASS above as import makes it, with the names Moonwell's script for the Sample makes taken out.
         private static string Converted() =>
             OldMapImport.FromJass(Jass, new HashSet<string> { "main", "config", "CreateAllUnits" }, new HashSet<string> { "gg_unit_Hpal_0002" }).Replace("\r\n", "\n");
