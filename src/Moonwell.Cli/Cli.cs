@@ -179,11 +179,31 @@ namespace Moonwell.Tool
             }
         }
 
-        private static void Build(Options options, TextWriter output, TextWriter error, Action<string, string> start)
+        /// <summary>
+        /// The longest full path of a map the game loads with <c>-loadfile</c>: a longer one waits at "Opening map" and never
+        /// runs its <c>main</c> (<c>docs/game-facts.md</c>, 3.0.1.24371, 11-08).
+        /// </summary>
+        public const int LongestMapPath = 173;
+
+        // What the game needs before a build that starts it: the game, and a map path it loads (J185).
+        private static void CheckLaunch(Options options, MapProject project)
         {
-            if (options.Launch && !File.Exists(options.Game))
+            if (!File.Exists(options.Game))
             {
                 throw new BuildException($"the game is not at {options.Game}");
+            }
+
+            if (project.ArchivePath.Length > LongestMapPath)
+            {
+                throw new BuildException($"the built map's path is {project.ArchivePath.Length} characters ({project.ArchivePath}), and the game never loads one over {LongestMapPath}: build from a shorter folder");
+            }
+        }
+
+        private static void Build(Options options, TextWriter output, TextWriter error, Action<string, string> start)
+        {
+            if (options.Launch)
+            {
+                CheckLaunch(options, MapProject.Find(options.Folder));
             }
 
             var archive = BuildView.Show(output, error, options.Verbose, (log, step) => MapBuild.Run(options.Folder, new BuildOptions { Release = options.Release, Step = step }, log))
@@ -256,9 +276,9 @@ namespace Moonwell.Tool
         private static void Watch(Options options, TextWriter output, TextWriter error, Action<string, string> start, Action stop, CancellationToken cancel)
         {
             var project = MapProject.Find(options.Folder);
-            if (options.Launch && !File.Exists(options.Game))
+            if (options.Launch)
             {
-                throw new BuildException($"the game is not at {options.Game}");
+                CheckLaunch(options, project);
             }
 
             using var changed = new SemaphoreSlim(0);
