@@ -27,6 +27,8 @@
     <!-- Its built library, which the tests compile a small map assembly against. -->
     <ProjectReference Include="..\..\src\Moonwell.Input\Moonwell.Input.csproj" />
     <ProjectReference Include="..\..\src\Moonwell.Frames\Moonwell.Frames.csproj" />
+    <!-- The runner that plays a built map in the game with nobody at the keyboard (GameRunTests). -->
+    <ProjectReference Include="..\Moonwell.GameRun\Moonwell.GameRun.csproj" />
   </ItemGroup>
 
 </Project>

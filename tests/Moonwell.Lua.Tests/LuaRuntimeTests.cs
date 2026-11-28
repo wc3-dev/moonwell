@@ -85,7 +85,7 @@ public class LuaRuntimeTests
 
     // The cases of a build. The debug mode's cases exist only in a development build (Cases.AddDebug), whatever this test was
     // built as, so they are read from the source the script is compiled from.
-    private static IEnumerable<string> CaseNames(bool release)
+    internal static IEnumerable<string> CaseNames(bool release)
     {
         var names = Cases.All().Select(testCase => testCase.Name).Where(name => !name.StartsWith("debug.", StringComparison.Ordinal));
         if (release)
