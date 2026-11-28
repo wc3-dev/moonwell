@@ -44,10 +44,7 @@ namespace Moonwell.Build
         internal static void Write(string stagedFolder, string assetsFolder, bool kit)
         {
             WriteToc(Path.Combine(stagedFolder, FileName), GameFiles);
-            var own = (Directory.Exists(assetsFolder) ? Directory.GetFiles(assetsFolder, "*.fdf", SearchOption.AllDirectories) : Array.Empty<string>())
-                .Select(file => Path.GetRelativePath(assetsFolder, file).Replace('/', '\\'))
-                .OrderBy(file => file, StringComparer.Ordinal)
-                .ToList();
+            var own = AssetFiles.Find(assetsFolder, "*.fdf");
             if (kit)
             {
                 File.WriteAllBytes(Path.Combine(stagedFolder, KitFileName), Encoding.ASCII.GetBytes(KitTemplates()));
@@ -55,9 +52,7 @@ namespace Moonwell.Build
                 KitSweep.Write(stagedFolder);
             }
 
-            var fonts = (Directory.Exists(assetsFolder) ? Directory.GetFiles(assetsFolder, "*.ttf", SearchOption.AllDirectories) : Array.Empty<string>())
-                .Select(file => Path.GetRelativePath(assetsFolder, file).Replace('/', '\\'))
-                .OrderBy(file => file, StringComparer.Ordinal);
+            var fonts = AssetFiles.Find(assetsFolder, "*.ttf");
             File.WriteAllBytes(Path.Combine(stagedFolder, TextFileName), Encoding.ASCII.GetBytes(TextTemplates(fonts)));
             own.Insert(0, TextFileName);
             WriteToc(Path.Combine(stagedFolder, MapFileName), own.ToArray());

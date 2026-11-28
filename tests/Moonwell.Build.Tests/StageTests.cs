@@ -378,6 +378,28 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_file_in_an_unpacked_folder_is_neither_staged_nor_listed_nor_read()
+        {
+            var project = MapProject.Find(folders.TemporaryCopyOfSample());
+            var map = OpenWithPlaceholderScript(project);
+            Directory.Delete(project.AssetsFolder, true);
+            CopyImage("glass-32.png", project, @"game\Glass.png");
+            CopyImage("glass-32.png", project, @"game\unpacked\Glass.png");
+            Directory.CreateDirectory(Path.Combine(project.AssetsFolder, @"game\unpacked\Source"));
+            File.WriteAllBytes(Path.Combine(project.AssetsFolder, @"game\unpacked\FootArcher and Derivatives.zip"), new byte[] { 0x50, 0x4b, 5, 6 });
+            File.WriteAllText(Path.Combine(project.AssetsFolder, @"game\unpacked\Source\Bågskytt.txt"), "not ASCII, and not in the map");
+            Directory.CreateDirectory(Path.Combine(project.AssetsFolder, "Unpacked"));
+            File.WriteAllText(Path.Combine(project.AssetsFolder, @"Unpacked\Broken.looks.csv"), "Name,Nonsense\nx,y\n");
+
+            Stage.WriteWithoutObjects(project, map, TextWriter.Null);
+
+            Assert.True(File.Exists(Path.Combine(project.StagedFolder, @"game\Glass.blp")));
+            Assert.False(Directory.Exists(Path.Combine(project.StagedFolder, @"game\unpacked")));
+            Assert.False(Directory.Exists(Path.Combine(project.StagedFolder, "Unpacked")));
+            Assert.Equal(new[] { @"game\Glass.blp" }, ImportList.Paths(Path.Combine(project.StagedFolder, "war3map.imp")));
+        }
+
+        [Fact]
         public void a_map_with_no_assets_gets_no_import_list()
         {
             var project = MapProject.Find(folders.TemporaryCopyOfSample());
