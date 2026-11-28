@@ -25,6 +25,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Moonwell.Build\Moonwell.Build.csproj" />
     <ProjectReference Include="..\Moonwell.Testing\Moonwell.Testing.csproj" />
+    <!-- Plays the cases in the game's own Lua (LuaInTheGameTests). -->
+    <ProjectReference Include="..\Moonwell.GameRun\Moonwell.GameRun.csproj" />
   </ItemGroup>
 
 </Project>

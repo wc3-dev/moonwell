@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Plays a built map in the installed game with nobody at the keyboard: starts the game on it, gets it past the loading
+    screen, waits for the run's file to say the run is over, ends the game and gives the file's lines with a verdict.
+    The gate maps' script and the launch tests run it; it is no package.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Moonwell.GameData\Moonwell.GameData.csproj" />
+  </ItemGroup>
+
+</Project>
