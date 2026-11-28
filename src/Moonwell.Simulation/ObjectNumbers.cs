@@ -104,7 +104,50 @@ namespace Moonwell
                 Abilities = abilities,
                 Kinds = KindsOf(declared),
                 Gold = GoldOf(abilities),
+                TargetedAs = TargetsOf(Value(declared, "TargetedAs")),
+                AttacksEnabled = Convert.ToInt32(Value(declared, "AttacksEnabled") ?? 0),
+                AttackTargets = new[] { TargetsOf(Value(declared, "Attack1TargetsAllowed")), TargetsOf(Value(declared, "Attack2TargetsAllowed")) },
+                MagicAttacks = new[] { IsMagic(Value(declared, "AttackType")), IsMagic(Value(declared, "Attack2Type")) },
             };
+        }
+
+        /// <summary>Whether an attack type read from object data is magic.</summary>
+        private static bool IsMagic(object? attackType)
+        {
+            return attackType is AttackType type && type == AttackType.Magic;
+        }
+
+        /// <summary>
+        /// A Moonwell.Objects Targets value in the game's target flags: each member it holds by the game's word on its GameValue,
+        /// as the object data writes the list; 0 for none.
+        /// </summary>
+        internal static int TargetsOf(object? targets)
+        {
+            if (targets == null || !targets.GetType().IsEnum)
+            {
+                return 0;
+            }
+
+            var value = Convert.ToInt64(targets, CultureInfo.InvariantCulture);
+            var words = new List<string>();
+            foreach (var field in targets.GetType().GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                var bit = Convert.ToInt64(field.GetValue(null), CultureInfo.InvariantCulture);
+                if (bit == 0 || (value & bit) != bit)
+                {
+                    continue;
+                }
+
+                foreach (var data in field.GetCustomAttributesData())
+                {
+                    if (data.AttributeType.FullName == "Moonwell.Objects.GameValueAttribute" && data.ConstructorArguments.Count > 0 && data.ConstructorArguments[0].Value is string word)
+                    {
+                        words.Add(word);
+                    }
+                }
+            }
+
+            return TargetLists.Parse(string.Join(",", words));
         }
 
         /// <summary>The gold a unit type's abilities give a mine: the level 1 Max Gold of the first of them that has the field (the Gold Mine ability's), else 0.</summary>
@@ -189,11 +232,16 @@ namespace Moonwell
             var levels = Math.Max(1, Convert.ToInt32(Value(declared, "LevelCount")));
             var cooldown = Value(declared, "Cooldown");
             var manaCost = Value(declared, "ManaCost");
-            var numbers = new SpellNumbers { Order = Value(declared, "Order") as string ?? "", Cooldowns = new float[levels], ManaCosts = new int[levels] };
+            var targets = Value(declared, "TargetsAllowed");
+            var numbers = new SpellNumbers { Order = Value(declared, "Order") as string ?? "", Cooldowns = new float[levels], ManaCosts = new int[levels], Targets = new int[targets == null ? 0 : levels] };
             for (var level = 1; level <= levels; level++)
             {
                 numbers.Cooldowns[level - 1] = Convert.ToSingle(At(cooldown, level));
                 numbers.ManaCosts[level - 1] = Convert.ToInt32(At(manaCost, level));
+                if (targets != null)
+                {
+                    numbers.Targets[level - 1] = TargetsOf(At(targets, level));
+                }
             }
 
             return numbers;
@@ -286,6 +334,9 @@ namespace Moonwell
 
         /// <summary>The mana cost at each level, from level 1.</summary>
         internal int[] ManaCosts = Array.Empty<int>();
+
+        /// <summary>What it may target at each level, from level 1, in the game's target flags; none when its object data has no Targets Allowed.</summary>
+        internal int[] Targets = Array.Empty<int>();
 
         /// <summary>The index a level index reads, kept within the levels: the last past them.</summary>
         internal static int Index(int count, int levelIndex)
