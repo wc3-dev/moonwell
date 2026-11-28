@@ -82,6 +82,10 @@ namespace Moonwell.Testing
         {
             list.Add(new Case { Name = "units.reads", Run = UnitPlayerReadCases.UnitReads });
             list.Add(new Case { Name = "units.can-cast", Run = UnitPlayerReadCases.CanCast });
+            list.Add(new Case { Name = "units.can-target-spells", Run = TargetCases.SpellTargets });
+            list.Add(new Case { Name = "units.can-attack", Run = TargetCases.AttackTargets });
+            list.Add(new Case { Name = "units.can-attack-second-weapon", Run = TargetCases.SecondWeaponAndGone });
+            list.Add(new Case { Name = "units.can-target-levels", Run = TargetCases.AbilityLevelsAndRegistry });
             list.Add(new Case { Name = "players.units", Run = UnitPlayerReadCases.PlayerUnits });
             list.Add(new Case { Name = "players.hero-limits", Run = UnitPlayerReadCases.PlayerHeroLimits });
             list.Add(new Case { Name = "players.sees", Run = UnitPlayerReadCases.PlayerSees });

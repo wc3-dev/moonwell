@@ -47,5 +47,17 @@ namespace Moonwell
 
         /// <summary>The kinds a unit of the type is, from its object data's IsABuilding and classification on .NET; none for numbers a test gives.</summary>
         internal UnitKind[] Kinds = new UnitKind[0];
+
+        /// <summary>What a unit of the type is targeted as, in the game's target flags: on .NET its object data's Targeted As; 0 for numbers a test gives, which the world reads as ground, air or a structure.</summary>
+        internal int TargetedAs;
+
+        /// <summary>Which weapons are enabled, 1 the first and 2 the second: on .NET its object data's; the first for numbers a test gives.</summary>
+        internal int AttacksEnabled = 1;
+
+        /// <summary>What each weapon may attack, in the game's target flags: on .NET its object data's; any kind of unit for numbers a test gives.</summary>
+        internal int[] AttackTargets = { TargetLists.Kinds, 0 };
+
+        /// <summary>Whether each weapon's attack type is magic: on .NET its object data's; neither for numbers a test gives.</summary>
+        internal bool[] MagicAttacks = { false, false };
     }
 }

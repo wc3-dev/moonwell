@@ -198,6 +198,8 @@ namespace Moonwell
                 MakeKind(made, kind);
             }
 
+            SeedTargets(made, numbers);
+
             moveSpeeds[made] = numbers.MoveSpeed;
             armors[made] = numbers.Armor;
             averageDamages[made] = numbers.Damage + numbers.DamageDice * (numbers.DamageSides + 1) / 2.0f;

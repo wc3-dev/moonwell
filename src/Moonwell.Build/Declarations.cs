@@ -107,6 +107,39 @@ namespace Moonwell.Build
             return CompiledFiles.MapAssemblies(assemblyPath).Any(path => HasTypeReference(path, ns, name));
         }
 
+        /// <summary>Whether a map's code, or a library of the map's own, references a member of a type by name: a call of a method, a property or a field.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <param name="ns">The namespace of the type, such as <c>Moonwell</c>.</param>
+        /// <param name="type">The name of the type that declares the member, such as <c>Ability</c>.</param>
+        /// <param name="member">The member's name, such as <c>CanTarget</c>.</param>
+        public static bool ReferencesMember(string assemblyPath, string ns, string type, string member)
+        {
+            return CompiledFiles.MapAssemblies(assemblyPath).Any(path => HasMemberReference(path, ns, type, member));
+        }
+
+        private static bool HasMemberReference(string assemblyPath, string ns, string type, string member)
+        {
+            using var stream = File.OpenRead(assemblyPath);
+            using var pe = new PEReader(stream);
+            var metadata = pe.GetMetadataReader();
+            foreach (var handle in metadata.MemberReferences)
+            {
+                var reference = metadata.GetMemberReference(handle);
+                if (reference.Parent.Kind != HandleKind.TypeReference || metadata.GetString(reference.Name) != member)
+                {
+                    continue;
+                }
+
+                var parent = metadata.GetTypeReference((TypeReferenceHandle)reference.Parent);
+                if (metadata.GetString(parent.Name) == type && metadata.GetString(parent.Namespace) == ns)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static bool HasTypeReference(string assemblyPath, string ns, string name)
         {
             using var stream = File.OpenRead(assemblyPath);

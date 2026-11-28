@@ -556,6 +556,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `FoodUsed`, `LiveAttackCooldown`, `AcquireRange`, `IsRanged` | read from the game now: the food the unit uses; the seconds between its first weapon's attacks, which attack speed bonuses do not shorten; how far it looks for an enemy when idle; whether it attacks from range. A standard class's `AttackCooldown` and `AcquisitionRange` are its type's, as an ability's `Cooldown` stands beside its `LiveCooldown`. The attack range is `Get(Stat.AttackRange)` |
 | `Resources` | read and set; the gold a gold mine holds; a mine made in play starts with its Gold Mine ability's Max Gold |
 | `CanCast<StormBolt>()`, `CanCast(id)` | whether the unit could cast the ability now: it has it, its cooldown is over and its mana is at least the cost, all read from the game; a stun, a silence and the range to a target are not asked |
+| `CanAttack(target)` | whether an attack ordered at the target would start, as the game decides it: an enabled weapon's Targets Allowed takes the kind the target is targeted as (ground, air, a structure, a ward), invulnerable or not, a hero, a machine, a sapper, an ancient, each read live. An ordered attack takes a unit of any owner, the unit's own too, whatever the list names, and never a corpse. An ethereal unit attacks nothing, an ethereal target takes only a magic attack, and a spell-immune one any but a magic attack. False for a unit with no attack and for itself; range, sight and a stun are not asked |
 | `IsPaused`, `Scale`, `FlyHeight` | read and set; a paused unit takes no orders but still animates; `Scale` reads its type's scale until set; `FlyHeight` also lifts a ground unit |
 | `Name` | read inside `Local.For` only (each player's language), set anywhere outside it |
 | `Icon` | its type's icon path, read inside `Local.For` only, as the game picks a type's icon by each player's graphics mode (the game's Phoenix names one icon for Reforged and another for the other modes); set only in its declared class's constructor, as the game has no icon per unit |
@@ -1205,6 +1206,16 @@ hero.AbilityOf<Execute>().ResetCooldown();
   needed. A number you set becomes that base, and a percent from a package (the cooldown reduction of
   `Moonwell.Stats`) multiplies the base into what the game gets, so putting a percent again never compounds it. What
   the three read is always what the game has, scaled.
+- `ability.CanTarget(target)` asks whether the spell's order would take a unit, before trying it: its Targets Allowed at
+  its level on this unit, level 1's when the unit lacks it (for a `CastOn`), read against the target live. A list with
+  no owner takes any; neutral is Neutral Passive's units, Neutral Hostile's count as enemies, friend is the player's own
+  and its allies' but not the caster, and notself every owner but the caster. A list that names neither alive nor dead
+  takes the living, and neither vulnerable nor invulnerable the vulnerable; an empty list takes ground, air and
+  structures. A spell-immune unit is always refused. It does not ask `CanCast` (mana, cooldown), the range, sight, or a
+  spell's own rule beyond its list, such as Holy Light harming only the undead:
+  `if (unit.AbilityOf<HolyLight>().CanTarget(ally) && unit.CanCast<HolyLight>()) { unit.OrderOn("holybolt", ally); }`. The natives
+  read no ability's list, so the build writes them into a map whose code calls `CanTarget`, for the abilities its code
+  names and those of its object files; another ability answers false, and a development build reports it.
 - `unit.LiveAbilities` is the abilities the unit has in the game now, not the ones its type starts with, as the same objects `AbilityOf` gives, in the game's
   order. It is a new list each read, so a loop may add or remove abilities. Moonwell's own helper abilities are not in
   it: the three bonus abilities the stats use, a buff's carrier and its game buff, and the game buffs a buff class of

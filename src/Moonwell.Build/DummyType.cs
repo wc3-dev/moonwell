@@ -144,8 +144,9 @@ namespace Moonwell.Build
 
         /// <summary>
         /// The abilities of the source map's object files (World Editor's), main and skin, each as an object with its id (its
-        /// own, or a changed standard object's), its base, and what a dummy's cast needs of its changes: the base order id of a
-        /// Channel copy (<c>Ncl6</c>) and its requirements (<c>areq</c>, <c>arqa</c>), as the file's text.
+        /// own, or a changed standard object's), its base, and what a dummy's cast and <c>Ability.CanTarget</c> need of its changes:
+        /// the base order id of a Channel copy (<c>Ncl6</c>), its requirements (<c>areq</c>, <c>arqa</c>), its targets (<c>atar</c>)
+        /// and its levels (<c>alev</c>), as the file's text.
         /// </summary>
         /// <param name="mapFolder">The map folder that holds the object files.</param>
         /// <exception cref="BuildException">An object file cannot be read.</exception>
@@ -165,7 +166,7 @@ namespace Moonwell.Build
                         changes[id] = changed;
                     }
 
-                    foreach (var mod in entry.Mods.Where(mod => mod.Field == "Ncl6" || mod.Field == "areq" || mod.Field == "arqa"))
+                    foreach (var mod in entry.Mods.Where(mod => mod.Field == "Ncl6" || mod.Field == "areq" || mod.Field == "arqa" || mod.Field == "atar" || mod.Field == "alev"))
                     {
                         var key = mod.Level > 0 ? mod.Field + ":" + mod.Level.ToString(CultureInfo.InvariantCulture) : mod.Field;
                         changed[key] = Convert.ToString(SourceObjectFile.ValueOf(mod), CultureInfo.InvariantCulture);

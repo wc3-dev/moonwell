@@ -302,6 +302,34 @@ namespace Moonwell
             Runtime.World.StartAbilityCooldown(Unit.Handle, Id, seconds);
         }
 
+        /// <summary>
+        /// Whether the ability can target a unit, as the game decides it when the spell is ordered: its Targets Allowed at its
+        /// level on this unit (level 1 when the unit lacks it, as a dummy cast through CastOn uses it) take the target by the kind
+        /// it is targeted as, whose it is to this unit's owner, alive or dead, vulnerable or not, a hero, a machine, a sapper or an
+        /// ancient, read live from the game; a unit immune to spells is refused. False once either unit is gone, and for an ability
+        /// whose lists the map does not carry, which a development build reports: the build writes them for the abilities the
+        /// map's code names and those of its object files. It does not ask what CanCast does (mana, cooldown), the range, whether
+        /// the owner sees the target, nor a spell's own rule beyond its lists, such as Holy Light's harm only to the undead.
+        /// </summary>
+        [LocalSafe]
+        public bool CanTarget(Unit target)
+        {
+            if (Unit.IsGone || target.IsGone)
+            {
+                return false;
+            }
+
+            if (!Runtime.World.CarriesAbilityTargets(Id))
+            {
+                Dev.Report(Names.NameOf(this) + ".CanTarget", "the map does not carry the ability's targets, so it answered false: name its class in the map's code");
+                return false;
+            }
+
+            var level = Runtime.World.AbilityLevel(Unit.Handle, Id);
+            var list = Runtime.World.AbilityTargetsOf(Id, level > 0 ? level - 1 : 0);
+            return !Runtime.World.IsMagicImmune(target.Handle) && TargetLists.Allows(list, Unit, target, false);
+        }
+
         /// <summary>Whether the unit is in the game and has the ability.</summary>
         private bool Has()
         {

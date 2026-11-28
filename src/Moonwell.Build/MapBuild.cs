@@ -216,10 +216,14 @@ namespace Moonwell.Build
                 writtenIds = withBonuses;
             }
 
+            // A map whose code asks an ability's targets gets each list, which the natives cannot read; the source map's
+            // abilities are read for every map, as its copies of Channel are registered whether or not it casts.
+            var targeting = AbilityTargets.UsedBy(targetPath);
             var mapAbilities = DummyType.MapAbilities(project.MapFolder);
             var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
                 .Concat(BuffWatch.IconLines(declarations.Objects, standard, data.ValueSet))
-                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? mapAbilities : null))
+                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, mapAbilities))
+                .Concat(AbilityTargets.Lines(targeting, declarations.Used, declarations.Objects, ids, standard, data.ValueSet, mapAbilities))
                 .Concat(DummyType.ChannelLines(declarations.Objects, ids, mapAbilities))
                 .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
