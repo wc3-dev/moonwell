@@ -264,8 +264,9 @@ namespace Moonwell.Build.Tests
         {
             var script = ObjectLua.Values(compiled.Script, compiled.Declarations, NamedIds(), compiled.Standard, null, Array.Empty<MapType>());
 
-            Assert.DoesNotContain("MoonwellTrees", script);
-            Assert.DoesNotContain("MoonwellTrees", compiled.Script);
+            // The runtime's IsTree reads the table by name; the table itself is not written.
+            Assert.DoesNotContain("MoonwellTrees = {", script);
+            Assert.DoesNotContain("MoonwellTrees = {", compiled.Script);
         }
 
         [Fact]

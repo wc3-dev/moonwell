@@ -22,6 +22,12 @@ namespace Moonwell
         /// <summary>The squared distances of the results a Closest search has kept, in step with its results. Shared in the same way as the candidates.</summary>
         private static readonly List<float> distances = new List<float>();
 
+        /// <summary>The destructables ClosestTree asks the game for, cleared before it returns.</summary>
+        private static readonly List<destructable> treeHandles = new List<destructable>();
+
+        /// <summary>IsTree as a filter, made once.</summary>
+        private static readonly Func<Destructable, bool> IsTreeCheck = destructable => destructable.IsTree();
+
         /// <summary>The things of class T with their centre within range of a point, as a new list.</summary>
         [LocalSafe]
         public static List<T> InRange<T>(float x, float y, float range, Func<T, bool>? where = null)
@@ -373,6 +379,92 @@ namespace Moonwell
             where T : Actor
         {
             return Closest<T>(center.X, center.Y, maxRange, where);
+        }
+
+        /// <summary>
+        /// The nearest living tree within maxRange of a point (IsTree); null when there is none. It takes in only the tree it
+        /// returns: while destructables are not tracked (no Find has asked for them), it asks the game for the destructables in
+        /// the square round the point and reads the type, place and life of each one the runtime does not hold through the
+        /// game, so a map of thousands of trees takes in one. Once a Find has asked for destructables it is Closest with
+        /// IsTree, through the grid. Of two at the same distance, the one the game lists first (or the grid reads first). Inside
+        /// Local.For it takes nothing in and searches only the destructables the runtime holds, as Closest does there.
+        /// </summary>
+        [LocalSafe]
+        public static Destructable? ClosestTree(float x, float y, float maxRange)
+        {
+            if (maxRange < 0.0f)
+            {
+                return null;
+            }
+
+            if (Local.Depth > 0 || Tracking.Asked(Tracking.DestructableKind))
+            {
+                return Closest<Destructable>(x, y, maxRange, IsTreeCheck);
+            }
+
+            // A destructable is listed by the 32 cell holding its place, which must lie in the rect with its west and south
+            // edges strictly inside (game facts), so the square is a cell wider each way; the distance decides.
+            var pad = maxRange + 32.0f;
+            var world = Runtime.World;
+            world.DestructablesInRect(x - pad, y - pad, x + pad, y + pad, treeHandles);
+            var limit = maxRange * maxRange;
+            var bestSquared = limit;
+            destructable? best = null;
+            for (var i = 0; i < treeHandles.Count; i++)
+            {
+                var handle = treeHandles[i];
+                float px;
+                float py;
+                var held = KnownDestructables.Find(handle);
+                if (held != null)
+                {
+                    if (held.IsGone || held.HasEnded || !held.IsTree())
+                    {
+                        continue;
+                    }
+
+                    px = held.X;
+                    py = held.Y;
+                }
+                else
+                {
+                    var typeId = world.DestructableTypeId(handle);
+                    if (typeId == 0 || !world.IsTreeType(typeId))
+                    {
+                        continue;
+                    }
+
+                    px = world.DestructableX(handle);
+                    py = world.DestructableY(handle);
+                }
+
+                var dx = px - x;
+                var dy = py - y;
+                var squared = dx * dx + dy * dy;
+                if (squared > limit || (best != null && squared >= bestSquared))
+                {
+                    continue;
+                }
+
+                if (world.DestructableLifeOf(handle) <= 0.0f)
+                {
+                    continue;
+                }
+
+                best = handle;
+                bestSquared = squared;
+            }
+
+            // Cleared before the take-in, whose OnCreated may search again, and so that the list holds no handle after.
+            treeHandles.Clear();
+            return best == null ? null : Destructable.Of(best);
+        }
+
+        /// <summary>The nearest living tree within maxRange of a point, as ClosestTree with the point's x and y.</summary>
+        [LocalSafe]
+        public static Destructable? ClosestTree(Vector2 center, float maxRange)
+        {
+            return ClosestTree(center.X, center.Y, maxRange);
         }
 
         /// <summary>Clears the list and fills it with the nearest count things of class T within maxRange of a point, nearest first, and returns how many; things at the same distance come in the grid's order. The filter is asked only of a candidate that could be kept.</summary>

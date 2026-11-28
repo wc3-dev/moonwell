@@ -42,9 +42,6 @@ namespace Moonwell.Testing
         /// <summary>The destructables IsAlive throws for, as a world whose call fails.</summary>
         public List<destructable> Failing = new List<destructable>();
 
-        /// <summary>The destructable types IsTreeType answers true for.</summary>
-        public List<int> TreeTypes = new List<int>();
-
         /// <summary>The units IsHidden was asked about, in order: the units the package read.</summary>
         public List<unit> UnitReads = new List<unit>();
 
@@ -82,9 +79,6 @@ namespace Moonwell.Testing
 
             return !Dead.Contains(target);
         }
-
-        /// <summary>Whether a destructable type is a tree.</summary>
-        public bool IsTreeType(int typeId) => TreeTypes.Contains(typeId);
 
         /// <summary>The world's bounds; counts the read.</summary>
         public void WorldBounds(out float minX, out float minY, out float maxX, out float maxY)

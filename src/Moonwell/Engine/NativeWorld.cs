@@ -52,6 +52,9 @@ namespace Moonwell.Engine
         /// <summary>The destructables the last DestructablesInWorld call has found.</summary>
         private List<destructable> foundDestructables = new List<destructable>();
 
+        /// <summary>The rect DestructablesInRect lists in, made on its first call and moved to each call's rect after.</summary>
+        private rect? searchRect;
+
         /// <summary>The location GroundZ reads the ground through; made on the first read.</summary>
         private location? spot;
 
@@ -754,6 +757,37 @@ namespace Moonwell.Engine
             foundDestructables = new List<destructable>();
             Natives.EnumDestructablesInRect(bounds, null, CollectDestructable);
             return foundDestructables;
+        }
+
+        /// <summary>The destructables the game lists in a rect, through a rect kept for these calls and moved to each one.</summary>
+        public void DestructablesInRect(float minX, float minY, float maxX, float maxY, List<destructable> found)
+        {
+            found.Clear();
+            if (searchRect == null)
+            {
+                searchRect = Natives.Rect(minX, minY, maxX, maxY);
+            }
+            else
+            {
+                Natives.SetRect(searchRect, minX, minY, maxX, maxY);
+            }
+
+            var outer = foundDestructables;
+            foundDestructables = found;
+            Natives.EnumDestructablesInRect(searchRect, null, CollectDestructable);
+            foundDestructables = outer;
+        }
+
+        /// <summary>Whether a destructable type is a tree, by the table the build wrote.</summary>
+        public bool IsTreeType(int typeId) => TreeTypeOf(typeId);
+
+        // MoonwellTrees = { [typeId] = true }, written by the build only for a map that calls IsTree or references the
+        // interactions package; a read of a table makes nothing. False when there is no table or no entry (a template gives nil
+        // for a missing table otherwise).
+        /// @CSharpLua.Template = "(MoonwellTrees ~= nil and MoonwellTrees[{0}] == true)"
+        private static bool TreeTypeOf(int typeId)
+        {
+            return false;
         }
 
         /// <summary>Creates a unit of a type for an owner at a place and facing.</summary>

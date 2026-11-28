@@ -116,6 +116,12 @@ namespace Moonwell.Hosting
         /// <summary>Every destructable in the world.</summary>
         List<destructable> DestructablesInWorld();
 
+        /// <summary>Clears the list and fills it with the destructables the game lists in a rect (EnumDestructablesInRect), in its order: one is listed by the 32 cell that holds its place, so a caller pads the rect by a cell.</summary>
+        void DestructablesInRect(float minX, float minY, float maxX, float maxY, List<destructable> found);
+
+        /// <summary>Whether a destructable type is a tree, by the table of tree types the build writes into the map's object Lua; false for a map built without it.</summary>
+        bool IsTreeType(int typeId);
+
         /// <summary>Creates a unit of a type for an owner at a place and facing.</summary>
         unit SpawnUnit(player owner, int typeId, float x, float y, float facing);
 

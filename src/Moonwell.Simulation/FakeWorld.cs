@@ -101,6 +101,15 @@ namespace Moonwell
         /// <summary>The destructables DestructablesInWorld returns.</summary>
         public List<destructable> PlacedDestructables = new List<destructable>();
 
+        /// <summary>The destructable types IsTreeType answers true for; none unless a test adds them.</summary>
+        public List<int> TreeTypes = new List<int>();
+
+        /// <summary>How many times DestructablesInRect was called.</summary>
+        public int RectSearches;
+
+        /// <summary>Each destructable the world made, in the order made, which DestructablesInRect lists from.</summary>
+        private readonly List<destructable> madeDestructables = new List<destructable>();
+
         /// <summary>The type id of each unit the world made.</summary>
         private readonly Dictionary<unit, int> unitTypes = new Dictionary<unit, int>();
 
@@ -396,6 +405,7 @@ namespace Moonwell
         {
             var created = new destructable();
             destructableTypes[created] = typeId;
+            madeDestructables.Add(created);
             return created;
         }
 
@@ -1159,6 +1169,40 @@ namespace Moonwell
         public List<destructable> DestructablesInWorld()
         {
             return new List<destructable>(PlacedDestructables);
+        }
+
+        /// <summary>Clears the list and fills it with the destructables the fake made, in the order made, that the game has not removed and whose place (100, -50 unless placed) lies in the rect, its edges in; counts the call in RectSearches.</summary>
+        public void DestructablesInRect(float minX, float minY, float maxX, float maxY, List<destructable> found)
+        {
+            RectSearches++;
+            found.Clear();
+            for (var i = 0; i < madeDestructables.Count; i++)
+            {
+                var each = madeDestructables[i];
+                if (destructableTypes[each] == 0)
+                {
+                    continue;
+                }
+
+                var x = 100f;
+                var y = -50f;
+                if (destructablePlaces.TryGetValue(each, out var place))
+                {
+                    x = place[0];
+                    y = place[1];
+                }
+
+                if (x >= minX && x <= maxX && y >= minY && y <= maxY)
+                {
+                    found.Add(each);
+                }
+            }
+        }
+
+        /// <summary>Whether a destructable type is in TreeTypes: no type is a tree unless a test says so, as in a map built without the build's table of them.</summary>
+        public bool IsTreeType(int typeId)
+        {
+            return TreeTypes.Contains(typeId);
         }
 
         /// <summary>Makes a unit owned by the owner's slot at the place and facing, a hero when its type's id starts with a capital letter (the id decides, seen 10-28), and keeps the facing in LastFacing; null for a type in Unmakeable, as the game's CreateUnit gives for a type it cannot make.</summary>

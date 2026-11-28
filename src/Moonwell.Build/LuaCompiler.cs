@@ -38,7 +38,7 @@ namespace Moonwell.Build
         /// <param name="ids">The object id of each declared class.</param>
         /// <param name="standard">The standard data.</param>
         /// <param name="set">The tables values are read from (<see cref="GameData.ValueSet"/>): null for the base tables.</param>
-        /// <param name="trees">Whether the map references the interactions package, so that the script gets the table of its tree types.</param>
+        /// <param name="trees">Whether the map calls IsTree or references the interactions package, so that the script gets the table of tree types.</param>
         /// <returns>The script, also set on <paramref name="map"/>.</returns>
         /// <exception cref="BuildException">There is no game to read common.j and Blizzard.j from, the C# does not compile to Lua, a declared list names a class with no id, an object file cannot be read, or Lua does not load the script.</exception>
         public static string Compile(

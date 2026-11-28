@@ -271,6 +271,63 @@ namespace Moonwell.Testing
             Expect.True(near != null, "the other one at 150 exists");
         }
 
+        /// <summary>Makes a destructable of the game of a type at a place, not taken in.</summary>
+        private static destructable DestructableAt(FakeWorld world, string type, float x, float y)
+        {
+            var handle = world.NewDestructable(ObjectTypes.FourCC(type));
+            world.PlaceDestructable(handle, x, y);
+            return handle;
+        }
+
+        /// <summary>ClosestTree with destructables untracked asks the game for the square round the point and takes in only the tree it returns: not a nearer barrel or dead tree, not one out of range; of two at 150 the one the game lists first; a held tree that dies is passed over.</summary>
+        public static void ClosestTree(FakeWorld world)
+        {
+            Fresh();
+            world.TreeTypes.Add(ObjectTypes.FourCC("LTlt"));
+            var far = DestructableAt(world, "LTlt", 400.0f, 0.0f);
+            var near = DestructableAt(world, "LTlt", 0.0f, 150.0f);
+            var twin = DestructableAt(world, "LTlt", 0.0f, -150.0f);
+            DestructableAt(world, "LTbr", 50.0f, 0.0f);
+            var dead = DestructableAt(world, "LTlt", 100.0f, 0.0f);
+            world.PutDestructableLife(dead, 0.0f);
+            DestructableAt(world, "LTlt", 700.0f, 0.0f);
+
+            var found = Find.ClosestTree(0.0f, 0.0f, 500.0f);
+            Expect.True(found != null && found.Handle == near, "the nearest living tree, the first listed of the two at 150");
+            Expect.Equal(1, KnownDestructables.Live.Count, "only the tree it returns is taken in");
+            Expect.Equal(1, world.RectSearches, "one square asked of the game");
+            Expect.True(!Tracking.Asked(Tracking.DestructableKind), "destructables are not tracked");
+            Expect.Same(found!, Find.ClosestTree(new Vector2(0.0f, 0.0f), 500.0f), "the vector form, the same object");
+            Expect.True(Find.ClosestTree(0.0f, 0.0f, 100.0f) == null, "none within 100: the barrel is no tree and the tree at 100 is dead");
+            Expect.True(Find.ClosestTree(400.0f, 0.0f, 0.0f)!.Handle == far, "a range of 0 finds the tree on the point");
+            Expect.True(Find.ClosestTree(0.0f, 0.0f, -1.0f) == null, "a range below 0 gives null");
+
+            found!.Kill();
+            Expect.True(Find.ClosestTree(0.0f, 0.0f, 500.0f)!.Handle == twin, "a held tree that died is passed over");
+            Expect.Equal(3, KnownDestructables.Live.Count, "the near, far and twin trees, and nothing else");
+        }
+
+        /// <summary>Once a Find has asked for destructables, ClosestTree is Closest with IsTree through the grid, and asks the game for no square; inside Local.For it takes nothing in.</summary>
+        public static void ClosestTreeTracked(FakeWorld world)
+        {
+            Fresh();
+            world.TreeTypes.Add(ObjectTypes.FourCC("LTlt"));
+            var near = DestructableAt(world, "LTlt", 0.0f, 150.0f);
+            var barrel = DestructableAt(world, "LTbr", 50.0f, 0.0f);
+            var untaken = DestructableAt(world, "LTlt", 0.0f, -100.0f);
+            Destructable? local = null;
+            Local.For(Player.Get(0), () => { local = Find.ClosestTree(0.0f, 0.0f, 500.0f); });
+            Expect.True(local == null, "inside Local.For, with no destructable held, none is found and none taken in");
+            Expect.Equal(0, KnownDestructables.Live.Count, "nothing taken in");
+
+            world.PlacedDestructables.Add(near);
+            world.PlacedDestructables.Add(barrel);
+            Find.InRange<Destructable>(0.0f, 0.0f, 10.0f);
+            Expect.True(Find.ClosestTree(0.0f, 0.0f, 500.0f)!.Handle == near, "the tree, through the grid");
+            Expect.Equal(0, world.RectSearches, "no square asked of the game");
+            Expect.True(untaken != null, "one the game made later and nobody took in is not on the grid");
+        }
+
         /// <summary>The closest three of five, nearest first: ties in the grid's order, which is not the order the units were made in.</summary>
         public static void ClosestN(FakeWorld world)
         {
