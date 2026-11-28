@@ -28,7 +28,7 @@ namespace Moonwell
         [LocalSafe]
         public int Id { get; }
 
-        /// <summary>The game's string of the order (<c>"move"</c>, <c>"holybolt"</c>), "" for the few with none.</summary>
+        /// <summary>The game's string of the order (<c>"move"</c>, <c>"holybolt"</c>), the building's four-character id for an order to build one (<c>"hhou"</c>), "" for the few with none.</summary>
         [LocalSafe]
         public string Name { get; }
 

@@ -100,6 +100,84 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void a_map_that_asks_where_a_building_fits_gets_the_buildings_table_after_the_install()
+        {
+            var main = File.ReadAllText(Path.Combine(fixtures.Of("Pathing").Folder, "build", "generated", "MapMain.g.cs"));
+            var install = main.IndexOf(PathingTypes.Install, StringComparison.Ordinal);
+            var table = main.IndexOf("global::Moonwell.Paths.Buildings(\"", StringComparison.Ordinal);
+            Assert.True(install >= 0 && table > install, main);
+            var entries = main.Substring(table + "global::Moonwell.Paths.Buildings(\"".Length).Split('"')[0].Split(';');
+            Assert.Contains("hhou4x4,2,0,-", entries);
+            Assert.Contains("htow16x16,2,0,g", entries);
+            Assert.Contains("uzig6x6,2,1,-", entries);
+            Assert.Contains("ngol16x16,2,0,m", entries);
+            Assert.DoesNotContain(entries, entry => entry.StartsWith("hfoo", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public void the_buildings_table_reads_the_map_file_the_declared_classes_and_the_maps_own_textures()
+        {
+            var fixture = fixtures.Of("Pathing").Folder;
+            var standard = StandardData.Read(Directory.EnumerateFiles(fixture, "Moonwell.Objects.dll", SearchOption.AllDirectories).First());
+            var root = Directory.CreateTempSubdirectory("moonwell-building-types-");
+            try
+            {
+                File.WriteAllText(Path.Combine(root.FullName, "Buildings.csproj"), "<Project />");
+                Directory.CreateDirectory(Path.Combine(root.FullName, "map.w3x"));
+                File.WriteAllBytes(Path.Combine(root.FullName, "map.w3x", "war3map.w3i"), Array.Empty<byte>());
+                var project = MapProject.Find(root.FullName);
+                Directory.CreateDirectory(Path.Combine(project.AssetsFolder, "Textures"));
+
+                // A TGA of 2 by 2 whose lower left and upper right pixels are white: cells 0 and 3, hex 9.
+                var tga = new byte[18 + 4 * 3];
+                tga[2] = 2;
+                tga[12] = 2;
+                tga[14] = 2;
+                tga[16] = 24;
+                for (var k = 0; k < 3; k++)
+                {
+                    tga[18 + k] = 255;
+                    tga[18 + 9 + k] = 255;
+                }
+
+                File.WriteAllBytes(Path.Combine(project.AssetsFolder, "Textures", "Corners.tga"), tga);
+                var units = Moonwell.MapFiles.ObjectFile.Empty(Moonwell.GameData.Kind.Unit);
+                units.AddOriginal("hhou").Set("upat", 0, 0, new Moonwell.MapFiles.FieldValue.Text("PathTextures/8x8SimpleSolid.tga"));
+                units.AddCustom("hbar", "h000").Set("upat", 0, 0, new Moonwell.MapFiles.FieldValue.Text("Textures/Corners.tga"));
+                units.AddCustom("hfoo", "h003").Set("ubdg", 0, 0, new Moonwell.MapFiles.FieldValue.Int(1));
+                File.WriteAllBytes(Path.Combine(project.MapFolder, "war3map.w3u"), units.ToBytes());
+                var abilities = Moonwell.MapFiles.ObjectFile.Empty(Moonwell.GameData.Kind.Ability);
+                abilities.AddCustom("Argl", "A001");
+                File.WriteAllBytes(Path.Combine(project.MapFolder, "war3map.w3a"), abilities.ToBytes());
+                var declared = new List<DeclaredObject>
+                {
+                    new DeclaredObject("Objects.Keep", "unit", "hbar", false, null, null, new Dictionary<string, object?> { ["upar"] = 1, ["uabi"] = new List<string> { "Objects.Returns" } }, Array.Empty<string>()),
+                    new DeclaredObject("Objects.Returns", "ability", "Argl", false, null, null, new Dictionary<string, object?>(), Array.Empty<string>()),
+                    new DeclaredObject("Objects.Mill", "unit", "hlum", false, null, null, new Dictionary<string, object?> { ["uabi"] = new List<string> { "A001" } }, Array.Empty<string>()),
+                };
+                var ids = new Dictionary<string, string> { ["Objects.Keep"] = "h001", ["Objects.Returns"] = "A000", ["Objects.Mill"] = "h002" };
+                var entries = BuildingTypes.Table(standard, GameData.Of(0, 1), project, declared, ids, new Dictionary<string, string>()).Split(';');
+                Assert.Contains("hhou8x8,2,0,-", entries);
+                Assert.Contains("h0002x2:9,2,0,-", entries);
+                Assert.Contains("h00112x12,2,1,g", entries);
+                Assert.Contains("h00210x10,2,0,g", entries);
+                Assert.Contains("hbar12x12,2,0,-", entries);
+                Assert.Contains(entries, entry => entry.StartsWith("h003", StringComparison.Ordinal));
+                Assert.DoesNotContain(entries, entry => entry.StartsWith("hfoo", StringComparison.Ordinal));
+                Assert.Equal(entries.OrderBy(entry => entry.Substring(0, 4), StringComparer.Ordinal), entries);
+
+                units.AddCustom("hbar", "h004").Set("upat", 0, 0, new Moonwell.MapFiles.FieldValue.Text("Textures/Missing.tga"));
+                File.WriteAllBytes(Path.Combine(project.MapFolder, "war3map.w3u"), units.ToBytes());
+                var missing = Assert.Throws<BuildException>(() => BuildingTypes.Table(standard, GameData.Of(0, 1), project, declared, ids, new Dictionary<string, string>()));
+                Assert.Contains("h004", missing.Message);
+            }
+            finally
+            {
+                root.Delete(true);
+            }
+        }
+
+        [Fact]
         public void map_without_pathing_gets_no_helpers()
         {
             Assert.Equal(0, builds.Development.ExitCode);

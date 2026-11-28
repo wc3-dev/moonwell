@@ -265,6 +265,16 @@ namespace Moonwell.Testing
             Expect.Equal("patrol", unit.CurrentOrder, "a patrol under way");
         }
 
+        /// <summary>A worker going to lay a building down reads the building's type id, which the game names with nothing (seen 11-28): CurrentOrder gives the type's four characters.</summary>
+        public static void Building(FakeWorld world)
+        {
+            var unit = Arena(world, out _);
+            world.SetCurrentOrder(unit.Handle, ObjectTypes.FourCC("hhou"));
+            Expect.Equal("hhou", unit.CurrentOrder, "walking to lay a Farm down");
+            world.SetCurrentOrder(unit.Handle, 852008);
+            Expect.Equal(world.OrderName(852008), unit.CurrentOrder, "an order's own id keeps the game's name");
+        }
+
         /// <summary>A Shift-queued order is marked queued; cancelled, the earlier order is given back, as for any.</summary>
         public static void QueuedCancel(FakeWorld world)
         {

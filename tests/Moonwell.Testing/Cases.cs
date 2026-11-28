@@ -1309,6 +1309,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "orders.cancel-and-stop", Run = OrderCases.CancelAndStop });
             list.Add(new Case { Name = "orders.target-given-back", Run = OrderCases.TargetGivenBack });
             list.Add(new Case { Name = "orders.patrol-under-way", Run = OrderCases.PatrolUnderWay });
+            list.Add(new Case { Name = "orders.building", Run = OrderCases.Building });
         }
 
         /// <summary>Adds the input package's keyboard cases.</summary>
@@ -1495,6 +1496,16 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "pathing.moonwell-changes", Run = PathCases.MoonwellChanges });
             list.Add(new Case { Name = "pathing.walls", Run = PathCases.Walls });
             list.Add(new Case { Name = "pathing.cut-off-is-quick", Run = PathCases.CutOffIsQuick });
+            list.Add(new Case { Name = "pathing.build.place", Run = BuildCases.Place });
+            list.Add(new Case { Name = "pathing.build.buildings", Run = BuildCases.Buildings });
+            list.Add(new Case { Name = "pathing.build.ground", Run = BuildCases.Ground });
+            list.Add(new Case { Name = "pathing.build.trees", Run = BuildCases.Trees });
+            list.Add(new Case { Name = "pathing.build.units", Run = BuildCases.Units });
+            list.Add(new Case { Name = "pathing.build.blight", Run = BuildCases.Blight });
+            list.Add(new Case { Name = "pathing.build.edge", Run = BuildCases.Edge });
+            list.Add(new Case { Name = "pathing.build.mines", Run = BuildCases.Mines });
+            list.Add(new Case { Name = "pathing.build.shapes", Run = BuildCases.Shapes });
+            list.Add(new Case { Name = "pathing.build.spots", Run = BuildCases.Spots });
             list.Add(new Case { Name = "maths.actors.face-own-place", Run = FaceOwnPlaceCases.KeepsFacing });
             list.Add(new Case { Name = "terrain.bounce.flat", Run = GroundBounceCases.BounceFlat });
             list.Add(new Case { Name = "terrain.bounce.slope", Run = GroundBounceCases.BounceSlope });
