@@ -10,7 +10,7 @@ namespace Moonwell
         private static bool[] listening = new bool[EventCount];
 
         /// <summary>How many GameEvents there are.</summary>
-        private const int EventCount = 19;
+        private const int EventCount = 22;
 
         /// <summary>The reaction bits that some class overrides, once any has been needed.</summary>
         private static int wanted;
@@ -142,6 +142,24 @@ namespace Moonwell
             {
                 Listen(GameEvent.Research);
                 Listen(GameEvent.Sale);
+            }
+
+            if ((mask2 & Hook2.OnConstruction) != 0)
+            {
+                Listen(GameEvent.Construction);
+            }
+
+            if ((mask2 & Hook2.OnTrained) != 0)
+            {
+                Listen(GameEvent.Train);
+            }
+
+            if ((mask2 & Hook2.OnDelivered) != 0)
+            {
+                // The game has no delivery event: a player's gathered gold or lumber rising, then the worker's order back to harvest, tell it (seen 11-28).
+                Delivering.Active = true;
+                Listen(GameEvent.Delivery);
+                Listen(GameEvent.Order);
             }
 
             if ((mask & Hook.OnAllianceChanged) != 0)

@@ -159,6 +159,11 @@ namespace Moonwell
         internal static void Ordered(unit handle, int id, OrderKind kind, float x, float y, unit? targetUnit, item? targetItem, destructable? targetDestructable, int queue)
         {
             Enter("OnOrdered", handle);
+            if (Delivering.Active)
+            {
+                Delivering.Ordered(handle, id, targetUnit);
+            }
+
             HandleOrdered(handle, id, kind, x, y, targetUnit, targetItem, targetDestructable, queue);
             Leave();
         }
