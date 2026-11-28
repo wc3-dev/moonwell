@@ -215,6 +215,30 @@ namespace Moonwell.Hosting
         /// <summary>Whether a unit is of a kind, as IsUnitType reads it now.</summary>
         bool IsKind(unit unit, UnitKind kind);
 
+        /// <summary>Whether a unit is invulnerable now (BlzIsUnitInvulnerable).</summary>
+        bool IsInvulnerable(unit unit);
+
+        /// <summary>Whether a unit is immune to spells now (UNIT_TYPE_MAGIC_IMMUNE).</summary>
+        bool IsMagicImmune(unit unit);
+
+        /// <summary>Whether a unit is ethereal now, as Banish makes one (UNIT_TYPE_ETHEREAL).</summary>
+        bool IsEthereal(unit unit);
+
+        /// <summary>The kinds a unit is targeted as (its Targeted As), in the game's target flags.</summary>
+        int TargetedAsOf(unit unit);
+
+        /// <summary>Whether a unit's weapon, 0 for its first and 1 for its second, is enabled.</summary>
+        bool AttackEnabledOf(unit unit, int weapon);
+
+        /// <summary>What a unit's weapon may attack (its Targets Allowed), in the game's target flags.</summary>
+        int AttackTargetsOf(unit unit, int weapon);
+
+        /// <summary>The attack type of a unit's weapon, as JASS's ATTACK_TYPE_* number it (magic is 4).</summary>
+        int AttackTypeOf(unit unit, int weapon);
+
+        /// <summary>What an ability may target at a level index (its Targets Allowed), in the game's target flags; -1 when the map does not carry the list.</summary>
+        int AbilityTargetsOf(int abilityId, int levelIndex);
+
         /// <summary>The player that owns a unit; null a while after the game has removed it.</summary>
         player OwnerOf(unit unit);
 

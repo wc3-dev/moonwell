@@ -216,9 +216,13 @@ namespace Moonwell.Build
                 writtenIds = withBonuses;
             }
 
+            // A map whose code asks an ability's targets gets each list, which the natives cannot read.
+            var targeting = AbilityTargets.UsedBy(targetPath);
+            var mapAbilities = casts || targeting ? DummyType.MapAbilities(project.MapFolder) : null;
             var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
                 .Concat(BuffWatch.IconLines(declarations.Objects, standard, data.ValueSet))
-                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? DummyType.MapAbilities(project.MapFolder) : null))
+                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, mapAbilities))
+                .Concat(AbilityTargets.Lines(targeting, declarations.Used, declarations.Objects, ids, standard, data.ValueSet, mapAbilities))
                 .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             options.Step?.Invoke("Compile to Lua");

@@ -974,6 +974,54 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>BlzIsUnitInvulnerable.</summary>
+        public bool IsInvulnerable(unit unit)
+        {
+            return Natives.BlzIsUnitInvulnerable(unit);
+        }
+
+        /// <summary>IsUnitType with UNIT_TYPE_MAGIC_IMMUNE.</summary>
+        public bool IsMagicImmune(unit unit)
+        {
+            return Natives.IsUnitType(unit, Natives.UNIT_TYPE_MAGIC_IMMUNE);
+        }
+
+        /// <summary>IsUnitType with UNIT_TYPE_ETHEREAL.</summary>
+        public bool IsEthereal(unit unit)
+        {
+            return Natives.IsUnitType(unit, Natives.UNIT_TYPE_ETHEREAL);
+        }
+
+        /// <summary>BlzGetUnitIntegerField with UNIT_IF_TARGETED_AS.</summary>
+        public int TargetedAsOf(unit unit)
+        {
+            return Natives.BlzGetUnitIntegerField(unit, Natives.UNIT_IF_TARGETED_AS);
+        }
+
+        /// <summary>BlzGetUnitWeaponBooleanField with UNIT_WEAPON_BF_ATTACKS_ENABLED.</summary>
+        public bool AttackEnabledOf(unit unit, int weapon)
+        {
+            return Natives.BlzGetUnitWeaponBooleanField(unit, Natives.UNIT_WEAPON_BF_ATTACKS_ENABLED, weapon);
+        }
+
+        /// <summary>BlzGetUnitWeaponIntegerField with UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED.</summary>
+        public int AttackTargetsOf(unit unit, int weapon)
+        {
+            return Natives.BlzGetUnitWeaponIntegerField(unit, Natives.UNIT_WEAPON_IF_ATTACK_TARGETS_ALLOWED, weapon);
+        }
+
+        /// <summary>BlzGetUnitWeaponIntegerField with UNIT_WEAPON_IF_ATTACK_ATTACK_TYPE.</summary>
+        public int AttackTypeOf(unit unit, int weapon)
+        {
+            return Natives.BlzGetUnitWeaponIntegerField(unit, Natives.UNIT_WEAPON_IF_ATTACK_ATTACK_TYPE, weapon);
+        }
+
+        /// <summary>The list the build registered for the ability: the natives read no ability's targets (seen 10-20).</summary>
+        public int AbilityTargetsOf(int abilityId, int levelIndex)
+        {
+            return ObjectTypes.TargetsOf(abilityId, levelIndex);
+        }
+
         /// <summary>The player that owns a unit.</summary>
         public player OwnerOf(unit unit)
         {

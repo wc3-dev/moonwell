@@ -49,6 +49,9 @@ namespace Moonwell
         /// <summary>The unit types packages keep for themselves (HelperType).</summary>
         private static HashSet<int> helperTypes = new HashSet<int>();
 
+        /// <summary>What each ability may target at each level, in the game's target flags, keyed by the ability's id; a lookup only.</summary>
+        private static Dictionary<int, int[]> targetLists = new Dictionary<int, int[]>();
+
         /// <summary>The research each spell requires and at what level, keyed by the ability's id; a lookup only.</summary>
         private static Dictionary<int, List<(int Tech, int Level)>> requirements = new Dictionary<int, List<(int Tech, int Level)>>();
 
@@ -365,6 +368,30 @@ namespace Moonwell
             }
 
             list.Add((techId, level));
+        }
+
+        /// <summary>Registers what an ability may target at each level, from level 1, as its object data writes each list ("air,ground,enemies"): the natives read no ability's targets, so the build writes them for a map whose code asks Ability.CanTarget.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void TargetsAllowed(int abilityId, string[] levels)
+        {
+            var lists = new int[levels.Length];
+            for (var i = 0; i < levels.Length; i++)
+            {
+                lists[i] = TargetLists.Parse(levels[i]);
+            }
+
+            targetLists[abilityId] = lists;
+        }
+
+        /// <summary>What an ability may target at a level index, in the game's target flags, the last level's past its levels; -1 when none is registered.</summary>
+        internal static int TargetsOf(int abilityId, int levelIndex)
+        {
+            if (!targetLists.TryGetValue(abilityId, out var lists) || lists.Length == 0)
+            {
+                return -1;
+            }
+
+            return lists[levelIndex < 0 ? 0 : levelIndex >= lists.Length ? lists.Length - 1 : levelIndex];
         }
 
         /// <summary>The dummy's unit type; 0 when the map's code casts with none.</summary>
@@ -727,6 +754,7 @@ namespace Moonwell
             castOrders = new Dictionary<int, string>();
             landsOnCaster = new HashSet<int>();
             requirements = new Dictionary<int, List<(int Tech, int Level)>>();
+            targetLists = new Dictionary<int, int[]>();
             DummyTypeId = 0;
             helperTypes = new HashSet<int>();
             SpellBuffs.Reset();

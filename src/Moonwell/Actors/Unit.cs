@@ -1712,6 +1712,38 @@ namespace Moonwell
                 && Runtime.World.ManaOf(Handle) >= Runtime.World.AbilityManaCost(Handle, abilityId, level - 1);
         }
 
+        /// <summary>
+        /// Whether the unit can attack a target, as the game decides it when the attack is ordered: one of its enabled weapons
+        /// takes the target by its Targets Allowed (the kind the target is targeted as, whose it is, alive or dead, vulnerable or
+        /// not, a hero, a machine, a sapper or an ancient), read live from the game. An ethereal unit attacks nothing, and an
+        /// ethereal target takes only a magic attack. False for a unit with no attack, and once either unit is gone. It does not
+        /// ask the range, whether the owner sees the target, nor a stun or a pause.
+        /// </summary>
+        [LocalSafe]
+        public bool CanAttack(Unit target)
+        {
+            if (IsGone || target.IsGone || !Runtime.World.IsAlive(Handle) || Runtime.World.IsEthereal(Handle))
+            {
+                return false;
+            }
+
+            var ethereal = Runtime.World.IsEthereal(target.Handle);
+            for (var weapon = 0; weapon < 2; weapon++)
+            {
+                if (Runtime.World.AttackEnabledOf(Handle, weapon)
+                    && (!ethereal || Runtime.World.AttackTypeOf(Handle, weapon) == MagicAttackType)
+                    && TargetLists.Allows(Runtime.World.AttackTargetsOf(Handle, weapon), this, target))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>JASS's ATTACK_TYPE_MAGIC, as the natives read a weapon's attack type (seen 10-20).</summary>
+        private const int MagicAttackType = 4;
+
         /// <summary>Whether the unit could cast an ability of a registered class now, as CanCast(id) says: <c>if (unit.CanCast&lt;StormBolt&gt;())</c>.</summary>
         [LocalSafe]
         public bool CanCast<T>()
