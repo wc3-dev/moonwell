@@ -402,6 +402,29 @@ namespace Moonwell
             targetLists[abilityId] = lists;
         }
 
+        /// <summary>
+        /// Registers the lists of the standard abilities, in pairs: a list as the object data writes it, then the four-character
+        /// ids of the abilities that have it at every level, run together ("AHtbAHhb"). An ability already registered keeps its
+        /// own, which the build writes for those the map changes or whose levels differ.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void StandardTargets(string[] groups)
+        {
+            for (var i = 0; i + 1 < groups.Length; i += 2)
+            {
+                var lists = new[] { TargetLists.Parse(groups[i]) };
+                var ids = groups[i + 1];
+                for (var at = 0; at + 4 <= ids.Length; at += 4)
+                {
+                    var id = FourCC(ids.Substring(at, 4));
+                    if (!targetLists.ContainsKey(id))
+                    {
+                        targetLists[id] = lists;
+                    }
+                }
+            }
+        }
+
         /// <summary>Whether an ability's lists are registered.</summary>
         internal static bool CarriesTargets(int abilityId)
         {
