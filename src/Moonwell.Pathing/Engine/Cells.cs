@@ -126,7 +126,8 @@ namespace Moonwell.Engine
             buildings = new Dictionary<unit, Vector2>();
         }
 
-        private static bool ItemLies(int col, int row)
+        /// <summary>Whether an item lies at a cell's middle: no destructable or building stands on it. Kept, and dropped round a change.</summary>
+        internal static bool ItemLies(int col, int row)
         {
             var key = Key(col, row);
             if (!items.TryGetValue(key, out var lies))

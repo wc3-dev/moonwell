@@ -308,8 +308,9 @@ namespace Moonwell
         /// it is targeted as, whose it is to this unit's owner, alive or dead, vulnerable or not, a hero, a machine, a sapper or an
         /// ancient, read live from the game; a unit immune to spells is refused. False once either unit is gone, and for an ability
         /// whose lists the map does not carry, which a development build reports: the build writes them for the abilities the
-        /// map's code names and those of its object files. It does not ask what CanCast does (mana, cooldown), the range, whether
-        /// the owner sees the target, nor a spell's own rule beyond its lists, such as Holy Light's harm only to the undead.
+        /// map's code names, those of its object files and every standard one, so one a unit has only live answers too. It does
+        /// not ask what CanCast does (mana, cooldown), the range, whether the owner sees the target, nor a spell's own rule beyond
+        /// its lists, such as Holy Light's harm only to the undead.
         /// </summary>
         [LocalSafe]
         public bool CanTarget(Unit target)

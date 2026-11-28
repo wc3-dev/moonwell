@@ -66,5 +66,19 @@ namespace Moonwell
 
         /// <summary>Board a transport.</summary>
         public const string Board = "board";
+
+        /// <summary>
+        /// The name of an order by its id: the game's string, and for an order to build a type, which the game names with
+        /// nothing (OrderId2String gives "", seen 11-28), the type's four-character id: a worker walking to lay a Farm down
+        /// reads <c>"hhou"</c>.
+        /// </summary>
+        internal static string NameOf(int id)
+        {
+            var name = Runtime.World.OrderName(id);
+            return name.Length == 0 && id >= FirstTypeId ? Names.IdText(id) : name;
+        }
+
+        // The orders' own ids are below a million (851968 and up); a type's id is four characters, the first of them not 0.
+        private const int FirstTypeId = 0x01000000;
     }
 }

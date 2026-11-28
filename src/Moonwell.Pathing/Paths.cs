@@ -66,6 +66,17 @@ namespace Moonwell
             }
         }
 
+        /// <summary>
+        /// Takes in the building types' placement the build read from the map's object data, for <c>CanBuild</c>,
+        /// <c>BuildSpots</c> and <c>BuildPlace</c>: each type's id, its pathing texture's cells and the ground they must and must
+        /// not have. The generated Main calls it after Install, only in a map whose code asks where a building fits.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Buildings(string table)
+        {
+            Placement.Read(table);
+        }
+
         /// <summary>Installs the package on a world; tests give a fake one.</summary>
         internal static void Install(IPathingWorld host)
         {
@@ -76,6 +87,7 @@ namespace Moonwell
             typeSizes = new Dictionary<int, float>();
             typeMovements = new Dictionary<int, Movement>();
             Cells.Reset();
+            Placement.Reset();
             host.Listen(Cells.Changed);
             PathingHook.Changed = Cells.Changed;
             PathingHook.UnitChanged = Cells.UnitChanged;
@@ -210,6 +222,116 @@ namespace Moonwell
         private static ArgumentException NoType(int unitTypeId)
         {
             return new ArgumentException("the map's object data has no unit type " + unitTypeId + ", or the build wrote no unit types (it writes them for a map whose code calls Paths.CollisionOf, MovementOf or FindPathFor)", nameof(unitTypeId));
+        }
+
+        /// <summary>
+        /// Whether a building of a type can be laid down at a point, as the game's placement answers a worker's build order
+        /// (game facts 11-28): every cell of its pathing texture inside the playable area, on ground its object data allows
+        /// (buildable for most, blighted for those that need blight), clear of other buildings' cells (their unbuildable ring
+        /// too), trees and other destructables, and, for a town hall that takes gold in, 768 or more from every gold mine.
+        /// The point is moved onto the building's grid first, as the game does (see BuildPlace). Units count only with a
+        /// builder's player: then every ground unit on its cells refuses it but that player's own unpaused ones, which the game
+        /// pushes aside when the building is laid down. Without a player no unit counts. The player's gold, its tech and
+        /// whether a worker can reach the place are not asked.
+        /// </summary>
+        /// <exception cref="ArgumentException">The map's object data has no building of that type.</exception>
+        [ChangesState]
+        public static bool CanBuild<T>(float x, float y, Player? builder = null)
+            where T : Unit
+        {
+            return CanBuild(ObjectTypes.IdOf<T>(), x, y, builder);
+        }
+
+        /// <summary>Whether a building of a type, by its id, can be laid down at a point; as <c>CanBuild&lt;T&gt;</c>.</summary>
+        /// <exception cref="ArgumentException">The map's object data has no building of that id.</exception>
+        [ChangesState]
+        public static bool CanBuild(int typeId, float x, float y, Player? builder = null)
+        {
+            var type = Placement.TypeOf(typeId);
+            var placeX = Placement.Snap(x, type.Width);
+            var placeY = Placement.Snap(y, type.Height);
+            var around = Placement.Gather(type, placeX, placeY, placeX, placeY, builder == null ? -1 : builder.Slot);
+            return Placement.Fits(type, placeX, placeY, around);
+        }
+
+        /// <summary>Where a building of a type asked at a point stands: along each axis the 64 grid toward 0, and 32 further from 0 when half its cells that way is odd, as the game moves a building and a destructable (a Farm asked at (100, -100) stands at (64, -64), a Burrow at (96, -96)).</summary>
+        /// <exception cref="ArgumentException">The map's object data has no building of that type.</exception>
+        [LocalSafe]
+        public static Vector2 BuildPlace<T>(float x, float y)
+            where T : Unit
+        {
+            return BuildPlace(ObjectTypes.IdOf<T>(), x, y);
+        }
+
+        /// <summary>Where a building of a type, by its id, asked at a point stands; as <c>BuildPlace&lt;T&gt;</c>.</summary>
+        /// <exception cref="ArgumentException">The map's object data has no building of that id.</exception>
+        [LocalSafe]
+        public static Vector2 BuildPlace(int typeId, float x, float y)
+        {
+            var type = Placement.TypeOf(typeId);
+            return new Vector2(Placement.Snap(x, type.Width), Placement.Snap(y, type.Height));
+        }
+
+        /// <summary>
+        /// Up to count places nearest a point where buildings of a type can be laid down, nearest first, as Spots is for units:
+        /// each on the building's grid, each answering CanBuild, and none on another's cells, out to 16 steps of the grid (1,024)
+        /// each way. Fewer come back when fewer fit. Units count as for CanBuild.
+        /// </summary>
+        /// <exception cref="ArgumentException">The map's object data has no building of that type.</exception>
+        [ChangesState]
+        public static List<Vector2> BuildSpots<T>(float x, float y, int count, Player? builder = null)
+            where T : Unit
+        {
+            return BuildSpots(ObjectTypes.IdOf<T>(), x, y, count, builder);
+        }
+
+        /// <summary>Up to count places nearest a point where buildings of a type, by its id, can be laid down; as <c>BuildSpots&lt;T&gt;</c>.</summary>
+        /// <exception cref="ArgumentException">The map's object data has no building of that id.</exception>
+        [ChangesState]
+        public static List<Vector2> BuildSpots(int typeId, float x, float y, int count, Player? builder = null)
+        {
+            var type = Placement.TypeOf(typeId);
+            var spots = new List<Vector2>();
+            if (count <= 0)
+            {
+                return spots;
+            }
+
+            var baseX = Placement.Snap(x, type.Width);
+            var baseY = Placement.Snap(y, type.Height);
+            var span = SpotRings * 64f;
+            var around = Placement.Gather(type, baseX - span, baseY - span, baseX + span, baseY + span, builder == null ? -1 : builder.Slot);
+            var candidates = new List<Vector2>();
+            for (var i = -SpotRings; i <= SpotRings; i++)
+            {
+                for (var j = -SpotRings; j <= SpotRings; j++)
+                {
+                    candidates.Add(new Vector2(baseX + i * 64f, baseY + j * 64f));
+                }
+            }
+
+            // Ties go lowest first, then leftmost, so .NET and the game's Lua give the same order.
+            var point = new Vector2(x, y);
+            candidates.Sort((a, b) =>
+            {
+                var order = a.DistanceSquaredTo(point).CompareTo(b.DistanceSquaredTo(point));
+                return order != 0 ? order : a.Y != b.Y ? a.Y.CompareTo(b.Y) : a.X.CompareTo(b.X);
+            });
+            foreach (var candidate in candidates)
+            {
+                if (spots.Count >= count)
+                {
+                    break;
+                }
+
+                if (Placement.Fits(type, candidate.X, candidate.Y, around))
+                {
+                    spots.Add(candidate);
+                    around.Building(type, candidate.X, candidate.Y);
+                }
+            }
+
+            return spots;
         }
 
         /// <summary>Asks the game again where destructables and buildings stand in an area, for a map that changed them where Moonwell did not see it. Pathing set by code is seen at once.</summary>

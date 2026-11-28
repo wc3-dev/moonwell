@@ -14,7 +14,8 @@ namespace Moonwell.Build
         /// <summary>
         /// The registrations, for ObjectRegistry; none when the map's code does not ask <c>CanTarget</c>. One for each ability
         /// class the registry registers (the map's own and the standard ones its code names) and each ability of the source
-        /// map's object files, once each: its changes (a declared class's, else World Editor's) over its root's values.
+        /// map's object files, once each: its changes (a declared class's, else World Editor's) over its root's values. Then,
+        /// first in the list, one for every other standard ability of the set, grouped by list, as a unit may have any of them.
         /// </summary>
         /// <param name="asks">Whether the map's code asks <c>CanTarget</c>.</param>
         /// <param name="used">The used classes.</param>
@@ -73,6 +74,45 @@ namespace Moonwell.Build
             foreach (var one in mapAbilities ?? Array.Empty<DeclaredObject>())
             {
                 Add(one.PinnedId ?? one.StandardRoot, one, one.StandardRoot);
+            }
+
+            // Every other standard ability, as a unit's LiveAbilities may hold any of them: grouped by list, as the 1557 have 180
+            // lists and all but two the same at each level, which keep a line of their own: 9 to 13 KB of script, by the set.
+            var groups = new SortedDictionary<string, System.Text.StringBuilder>(StringComparer.Ordinal);
+            foreach (var id in standard.Ids("ability").OrderBy(id => id, StringComparer.Ordinal))
+            {
+                if (written.Contains(id) || id.Length != 4 || standard.IsMissing(id, set))
+                {
+                    continue;
+                }
+
+                var count = int.TryParse(standard.Value(id, "alev", 0, set), NumberStyles.Integer, CultureInfo.InvariantCulture, out var levels) && levels > 0 ? levels : 1;
+                var first = standard.Value(id, "atar", 1, set) ?? "";
+                var same = true;
+                for (var level = 2; level <= count && same; level++)
+                {
+                    same = (standard.Value(id, "atar", level, set) ?? "") == first;
+                }
+
+                if (!same)
+                {
+                    Add(id, null, id);
+                    continue;
+                }
+
+                if (!groups.TryGetValue(first, out var group))
+                {
+                    group = new System.Text.StringBuilder();
+                    groups[first] = group;
+                }
+
+                group.Append(id);
+            }
+
+            if (groups.Count > 0)
+            {
+                var texts = groups.SelectMany(group => new[] { ObjectLua.Quote(group.Key), ObjectLua.Quote(group.Value.ToString()) });
+                lines.Insert(0, $"{Types}.StandardTargets(new string[] {{ {string.Join(", ", texts)} }});");
             }
 
             return lines;

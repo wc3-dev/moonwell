@@ -40,12 +40,18 @@ namespace Moonwell.Build
         /// <summary>Whether the map's code, a library of its own, or a Moonwell package the map uses calls Paths.CollisionOf, MovementOf or FindPathFor, so it needs the unit types' table (J180: a package's call would otherwise throw in a map that makes none itself).</summary>
         public static bool TypesUsedBy(string assemblyPath)
         {
+            return Calls(assemblyPath, TypeMembers);
+        }
+
+        /// <summary>Whether the map's code, a library of its own, or a Moonwell package the map uses calls one of these members of Moonwell.Paths.</summary>
+        internal static bool Calls(string assemblyPath, IReadOnlyCollection<string> members)
+        {
             var folder = Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!;
             var packages = CompiledFiles.UsedPackages(assemblyPath)
                 .OrderBy(name => name, StringComparer.Ordinal)
                 .Select(name => Path.Combine(folder, name + ".dll"))
                 .Where(File.Exists);
-            return CompiledFiles.MapAssemblies(assemblyPath).Concat(packages).Any(AsksTypes);
+            return CompiledFiles.MapAssemblies(assemblyPath).Concat(packages).Any(assembly => Asks(assembly, members));
         }
 
         /// <summary>The line of the map's generated Main that gives the package the unit types' table, after Install.</summary>
@@ -126,7 +132,7 @@ namespace Moonwell.Build
             return float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ? number : 0f;
         }
 
-        private static bool AsksTypes(string assemblyPath)
+        private static bool Asks(string assemblyPath, IReadOnlyCollection<string> members)
         {
             using var stream = File.OpenRead(assemblyPath);
             using var pe = new System.Reflection.PortableExecutable.PEReader(stream);
@@ -140,7 +146,7 @@ namespace Moonwell.Build
                 }
 
                 var type = metadata.GetTypeReference((System.Reflection.Metadata.TypeReferenceHandle)member.Parent);
-                if (metadata.GetString(type.Name) == "Paths" && metadata.GetString(type.Namespace) == "Moonwell" && TypeMembers.Contains(metadata.GetString(member.Name)))
+                if (metadata.GetString(type.Name) == "Paths" && metadata.GetString(type.Namespace) == "Moonwell" && members.Contains(metadata.GetString(member.Name)))
                 {
                     return true;
                 }

@@ -554,8 +554,9 @@ namespace Moonwell
                 unitPlay.FromY = fromY;
                 unitPlay.Done = 0;
 
-                // A hair over a whole number of steps counts as it, so that float and double give the same steps.
-                var steps = Math.Sqrt(squared) * 50.0 / speed - 0.0001;
+                // A hair over a whole number of steps counts as it, so that float and double give the same steps. Maths.Sqrt, as the
+                // game's own square root is up to 2 parts in 100,000 high: 250 away at 250 read 50.0009 steps there, and 51.
+                var steps = Maths.Sqrt(squared) * 50.0 / speed - 0.0001;
                 unitPlay.Total = steps <= 1.0 ? 1 : (int)Math.Ceiling(steps);
             }
 
@@ -614,7 +615,7 @@ namespace Moonwell
                 return;
             }
 
-            var distance = (float)Math.Sqrt(squared);
+            var distance = Maths.Sqrt(squared);
             var step = speed / 50.0f;
             var towardX = dx / distance;
             var towardY = dy / distance;

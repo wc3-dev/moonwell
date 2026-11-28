@@ -111,7 +111,7 @@ namespace Moonwell
             }
 
             listener?.Invoke(ordered, id, CodeOrders > 0 || LoadsBoarding(ordered, id, targetUnit));
-            var order = new Order(ordered, id, Runtime.World.OrderName(id), kind, x, y, target, queue > 1);
+            var order = new Order(ordered, id, Orders.NameOf(id), kind, x, y, target, queue > 1);
             order.Previous = repeats ? last!.Previous : last;
             var carried = ordered.Carried;
             ordered.OrdersHeard++;

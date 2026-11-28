@@ -23,5 +23,8 @@ namespace Moonwell.Hosting
 
         /// <summary>Watches the deaths of the destructables standing in and near the cell at a point, once each.</summary>
         void WatchDeathsAround(float x, float y);
+
+        /// <summary>Adds the units standing in an area that placement sees: alive, shown and without Locust, buildings too.</summary>
+        void UnitsIn(float minX, float minY, float maxX, float maxY, System.Collections.Generic.List<Standing> into);
     }
 }

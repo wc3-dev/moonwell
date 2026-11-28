@@ -117,6 +117,42 @@ namespace Moonwell.Engine
             }
         }
 
+        /// <summary>The group and rect UnitsIn finds units with, made on first use.</summary>
+        private group? found;
+
+        private rect? area;
+
+        private static readonly int Locust = ObjectTypes.FourCC("Aloc");
+
+        public void UnitsIn(float minX, float minY, float maxX, float maxY, List<Standing> into)
+        {
+            found ??= Natives.CreateGroup();
+            area ??= Natives.Rect(0f, 0f, 0f, 0f);
+            Natives.SetRect(area, minX, minY, maxX, maxY);
+            Natives.GroupEnumUnitsInRect(found, area, null);
+            var next = Natives.FirstOfGroup(found);
+            while (next != null)
+            {
+                Natives.GroupRemoveUnit(found, next);
+                if (Natives.GetUnitTypeId(next) != 0 && !Natives.IsUnitType(next, Natives.UNIT_TYPE_DEAD) && !Natives.IsUnitHidden(next) && Natives.GetUnitAbilityLevel(next, Locust) == 0)
+                {
+                    into.Add(new Standing
+                    {
+                        Type = Natives.GetUnitTypeId(next),
+                        X = Natives.GetUnitX(next),
+                        Y = Natives.GetUnitY(next),
+                        Collision = Natives.BlzGetUnitCollisionSize(next),
+                        Owner = Natives.GetPlayerId(Natives.GetOwningPlayer(next)),
+                        Building = Natives.IsUnitType(next, Natives.UNIT_TYPE_STRUCTURE),
+                        Flies = Natives.IsUnitType(next, Natives.UNIT_TYPE_FLYING),
+                        Paused = Natives.IsUnitPaused(next),
+                    });
+                }
+
+                next = Natives.FirstOfGroup(found);
+            }
+        }
+
         public float CollisionOf(unit handle)
         {
             return Natives.BlzGetUnitCollisionSize(handle);
