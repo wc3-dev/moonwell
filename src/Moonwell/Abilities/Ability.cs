@@ -315,14 +315,14 @@ namespace Moonwell
                 return false;
             }
 
-            var level = Runtime.World.AbilityLevel(Unit.Handle, Id);
-            var list = Runtime.World.AbilityTargetsOf(Id, level > 0 ? level - 1 : 0);
-            if (list < 0)
+            if (!Runtime.World.CarriesAbilityTargets(Id))
             {
                 Dev.Report(Names.NameOf(this) + ".CanTarget", "the map does not carry the ability's targets, so it answered false: name its class in the map's code");
                 return false;
             }
 
+            var level = Runtime.World.AbilityLevel(Unit.Handle, Id);
+            var list = Runtime.World.AbilityTargetsOf(Id, level > 0 ? level - 1 : 0);
             return !Runtime.World.IsMagicImmune(target.Handle) && TargetLists.Allows(list, Unit, target);
         }
 

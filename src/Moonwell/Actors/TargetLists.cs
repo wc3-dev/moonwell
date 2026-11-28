@@ -37,9 +37,12 @@ namespace Moonwell
         internal const int Sapper = 1 << 29;
         internal const int NonAncient = 1 << 30;
         internal const int Ancient = 1 << 31;
-        internal const int NotSelf = 1 << 19;
-        internal const int Terrain = 1 << 11;
+
+        /// <summary>Friend: the player's own and its allies' (24576, seen 11-28).</summary>
         internal const int Friend = Player | Allies;
+
+        /// <summary>Not self: every owner but the unit itself, no flag of its own (122880, seen 11-28).</summary>
+        internal const int NotSelf = Player | Allies | Neutral | Enemies;
 
         /// <summary>The kinds of thing a list names; a unit's Targeted As holds the ones it is.</summary>
         internal const int Kinds = Ground | Air | Structure | Ward;
@@ -104,7 +107,6 @@ namespace Moonwell
             Add(found, Debris, "debris", "debr");
             Add(found, Decoration, "decoration", "deco");
             Add(found, Bridge, "bridge");
-            Add(found, Terrain, "terrain", "terr");
             Add(found, Self, "self");
             Add(found, Player, "player", "play");
             Add(found, Allies, "allies", "alli", "ally");
@@ -136,18 +138,14 @@ namespace Moonwell
         {
             var world = Runtime.World;
             var handle = target.Handle;
-            if ((list & world.TargetedAsOf(handle) & Kinds) == 0)
+
+            // An empty list takes every kind, as the game's does (seen 11-28); "none" takes nothing.
+            if (((list == 0 ? Kinds : list) & world.TargetedAsOf(handle) & Kinds) == 0)
             {
                 return false;
             }
 
-            var self = target == source;
-            if (self && (list & NotSelf) != 0)
-            {
-                return false;
-            }
-
-            if ((list & Owners) != 0 && (list & OwnerOf(source, target, self)) == 0)
+            if ((list & Owners) != 0 && (list & OwnerOf(source, target)) == 0)
             {
                 return false;
             }
@@ -171,27 +169,31 @@ namespace Moonwell
                 && Either(list, Ancient, NonAncient, world.IsKind(handle, UnitKind.Ancient));
         }
 
-        /// <summary>The owner flag a target has to a unit: itself, its player's, an ally's, an enemy's, or neutral (neither).</summary>
-        private static int OwnerOf(Unit source, Unit target, bool self)
+        /// <summary>
+        /// The owner flag a target has to a unit: itself, its player's, Neutral Passive's (which the game counts as neutral though
+        /// IsPlayerAlly reads it an ally), an ally's, or an enemy's, Neutral Hostile's among them (seen 11-28).
+        /// </summary>
+        private static int OwnerOf(Unit source, Unit target)
         {
-            if (self)
+            if (target == source)
             {
                 return Self;
             }
 
-            var mine = Runtime.World.OwnerOf(source.Handle);
-            var theirs = Runtime.World.OwnerOf(target.Handle);
+            var world = Runtime.World;
+            var mine = world.OwnerOf(source.Handle);
+            var theirs = world.OwnerOf(target.Handle);
             if (mine == theirs)
             {
                 return Player;
             }
 
-            if (Runtime.World.IsAllyOf(mine, theirs))
+            if (world.SlotOf(theirs) == world.NeutralPassiveSlot())
             {
-                return Allies;
+                return Neutral;
             }
 
-            return Runtime.World.IsEnemyOf(mine, theirs) ? Enemies : Neutral;
+            return world.IsAllyOf(mine, theirs) ? Allies : Enemies;
         }
 
         /// <summary>Whether a pair of flags takes a target that is the first (is) or the second: the side the list names, or either when it names neither.</summary>

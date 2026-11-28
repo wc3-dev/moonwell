@@ -383,12 +383,18 @@ namespace Moonwell
             targetLists[abilityId] = lists;
         }
 
-        /// <summary>What an ability may target at a level index, in the game's target flags, the last level's past its levels; -1 when none is registered.</summary>
+        /// <summary>Whether an ability's lists are registered.</summary>
+        internal static bool CarriesTargets(int abilityId)
+        {
+            return targetLists.TryGetValue(abilityId, out var lists) && lists.Length > 0;
+        }
+
+        /// <summary>What an ability may target at a level index, in the game's target flags (negative with Ancient, the top bit), the last level's past its levels; 0 when none is registered.</summary>
         internal static int TargetsOf(int abilityId, int levelIndex)
         {
             if (!targetLists.TryGetValue(abilityId, out var lists) || lists.Length == 0)
             {
-                return -1;
+                return 0;
             }
 
             return lists[levelIndex < 0 ? 0 : levelIndex >= lists.Length ? lists.Length - 1 : levelIndex];

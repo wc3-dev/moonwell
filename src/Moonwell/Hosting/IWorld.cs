@@ -236,7 +236,10 @@ namespace Moonwell.Hosting
         /// <summary>The attack type of a unit's weapon, as JASS's ATTACK_TYPE_* number it (magic is 4).</summary>
         int AttackTypeOf(unit unit, int weapon);
 
-        /// <summary>What an ability may target at a level index (its Targets Allowed), in the game's target flags; -1 when the map does not carry the list.</summary>
+        /// <summary>Whether the map carries an ability's Targets Allowed, which AbilityTargetsOf reads.</summary>
+        bool CarriesAbilityTargets(int abilityId);
+
+        /// <summary>What an ability may target at a level index (its Targets Allowed), in the game's target flags, the last level's past its levels; 0 when the map does not carry the list.</summary>
         int AbilityTargetsOf(int abilityId, int levelIndex);
 
         /// <summary>The player that owns a unit; null a while after the game has removed it.</summary>

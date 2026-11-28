@@ -119,7 +119,25 @@ namespace Moonwell
         /// <summary>A weapon's attack type as the natives number it: 4 (magic) for a magic weapon, else 1 (World Editor's normal).</summary>
         public int AttackTypeOf(unit unit, int weapon) => weapons.TryGetValue(unit, out var held) && weapon >= 0 && weapon < 2 && held.Magic[weapon] ? 4 : 1;
 
-        /// <summary>What an ability may target at a level index: SetAbilityTargets's lists, else on .NET its object data's, else what the map registered; -1 for none.</summary>
+        /// <summary>Whether an ability has lists: SetAbilityTargets's, on .NET its object data's, or the map's registered ones.</summary>
+        public bool CarriesAbilityTargets(int abilityId)
+        {
+            if (abilityTargets.TryGetValue(abilityId, out var lists) && lists.Length > 0)
+            {
+                return true;
+            }
+
+#if !MOONWELL_LUA
+            var numbers = SpellOf(abilityId);
+            if (numbers != null && numbers.Targets.Length > 0)
+            {
+                return true;
+            }
+#endif
+            return ObjectTypes.CarriesTargets(abilityId);
+        }
+
+        /// <summary>What an ability may target at a level index: SetAbilityTargets's lists, else on .NET its object data's, else what the map registered; 0 for none.</summary>
         public int AbilityTargetsOf(int abilityId, int levelIndex)
         {
             if (abilityTargets.TryGetValue(abilityId, out var lists) && lists.Length > 0)

@@ -1016,7 +1016,13 @@ namespace Moonwell.Engine
             return Natives.BlzGetUnitWeaponIntegerField(unit, Natives.UNIT_WEAPON_IF_ATTACK_ATTACK_TYPE, weapon);
         }
 
-        /// <summary>The list the build registered for the ability: the natives read no ability's targets (seen 10-20).</summary>
+        /// <summary>Whether the build registered the ability's lists: the natives read no ability's targets (seen 10-20).</summary>
+        public bool CarriesAbilityTargets(int abilityId)
+        {
+            return ObjectTypes.CarriesTargets(abilityId);
+        }
+
+        /// <summary>The list the build registered for the ability.</summary>
         public int AbilityTargetsOf(int abilityId, int levelIndex)
         {
             return ObjectTypes.TargetsOf(abilityId, levelIndex);
