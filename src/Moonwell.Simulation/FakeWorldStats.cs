@@ -29,6 +29,12 @@ namespace Moonwell
         /// <summary>The cast ranges set, by unit, ability and level index; 0 when none was set.</summary>
         private readonly Dictionary<unit, Dictionary<long, float>> abilityRanges = new Dictionary<unit, Dictionary<long, float>>();
 
+        /// <summary>The casting times set, by unit, ability and level index; 0 when none was set.</summary>
+        private readonly Dictionary<unit, Dictionary<long, float>> castTimes = new Dictionary<unit, Dictionary<long, float>>();
+
+        /// <summary>The follow through times set, by unit, ability and level index; 0 when none was set.</summary>
+        private readonly Dictionary<unit, Dictionary<long, float>> followThroughs = new Dictionary<unit, Dictionary<long, float>>();
+
         /// <summary>The units made structures.</summary>
         private readonly HashSet<unit> structures = new HashSet<unit>();
 
@@ -115,6 +121,46 @@ namespace Moonwell
         public void SetCastBackswing(unit unit, float seconds)
         {
             castBackswings[unit] = seconds;
+        }
+
+        /// <summary>The casting time set for a unit's ability at a level; 0 until set.</summary>
+        public float AbilityCastTime(unit unit, int abilityId, int levelIndex)
+        {
+            return LevelValue(castTimes, unit, abilityId, levelIndex);
+        }
+
+        /// <summary>Sets the casting time of a unit's ability at a level, as the object data would give it.</summary>
+        public void SetAbilityCastTime(unit unit, int abilityId, int levelIndex, float seconds)
+        {
+            SetLevelValue(castTimes, unit, abilityId, levelIndex, seconds);
+        }
+
+        /// <summary>The follow through time set for a unit's ability at a level; 0 until set.</summary>
+        public float AbilityFollowThrough(unit unit, int abilityId, int levelIndex)
+        {
+            return LevelValue(followThroughs, unit, abilityId, levelIndex);
+        }
+
+        /// <summary>Sets the follow through time of a unit's ability at a level, as the object data would give it.</summary>
+        public void SetAbilityFollowThrough(unit unit, int abilityId, int levelIndex, float seconds)
+        {
+            SetLevelValue(followThroughs, unit, abilityId, levelIndex, seconds);
+        }
+
+        private static float LevelValue(Dictionary<unit, Dictionary<long, float>> values, unit unit, int abilityId, int levelIndex)
+        {
+            return values.TryGetValue(unit, out var set) && set.TryGetValue(LevelKey(abilityId, levelIndex), out var value) ? value : 0.0f;
+        }
+
+        private static void SetLevelValue(Dictionary<unit, Dictionary<long, float>> values, unit unit, int abilityId, int levelIndex, float value)
+        {
+            if (!values.TryGetValue(unit, out var set))
+            {
+                set = new Dictionary<long, float>();
+                values[unit] = set;
+            }
+
+            set[LevelKey(abilityId, levelIndex)] = value;
         }
 
         /// <summary>The cast range set for a unit's ability at a level; 0 until set.</summary>

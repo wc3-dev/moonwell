@@ -153,6 +153,55 @@ namespace Moonwell.Testing
             Expect.Equal("casting,cast", string.Join(",", TestLog.Lines), "no OnFinished ran");
         }
 
+        /// <summary>A cast's Ended runs once as it ends, with TookEffect and RanToEnd saying how it went: run to its finish, stopped after its effect, or stopped before it.</summary>
+        public static void CastSaysHowItEnded(FakeWorld world)
+        {
+            var picky = Arena(world);
+            System.Action<Cast> log = cast => TestLog.Lines.Add("ended " + cast.TookEffect + " " + cast.RanToEnd + " " + cast.HasEnded);
+            world.StartCasting(picky.Unit.Handle, Id);
+            Expect.True(!picky.Casting!.TookEffect, "not taken effect while casting");
+            picky.Casting.Ended += log;
+            world.TakeEffect(picky.Unit.Handle, Id);
+            Expect.True(picky.Given!.TookEffect, "taken effect");
+            Inbound.SpellFinished(picky.Unit.Handle, Id);
+            Expect.True(picky.Given.RanToEnd, "ran to its end at the finish");
+            Inbound.SpellEnded(picky.Unit.Handle, Id);
+            Inbound.SpellEnded(picky.Unit.Handle, Id);
+            world.StartCasting(picky.Unit.Handle, Id);
+            world.TakeEffect(picky.Unit.Handle, Id);
+            picky.Given.Ended += log;
+            Inbound.SpellEnded(picky.Unit.Handle, Id);
+            world.StartCasting(picky.Unit.Handle, Id);
+            picky.Casting.Ended += log;
+            picky.Unit.Order("stop");
+            Expect.Equal("casting,cast,finished,ended True True False,casting,cast,ended True False False,casting,ended False False False", string.Join(",", TestLog.Lines), "how each ended, once");
+        }
+
+        /// <summary>A cast's CastSeconds and ChannelSeconds are the game's casting and follow through times at the cast's level, read at each read; LiveCastTime the casting time at the ability's level now; all 0 once the caster is gone.</summary>
+        public static void CastAndChannelSeconds(FakeWorld world)
+        {
+            var picky = Arena(world);
+            var caster = picky.Unit;
+            world.SetAbilityCastTime(caster.Handle, Id, 0, 1.5f);
+            world.SetAbilityCastTime(caster.Handle, Id, 1, 2f);
+            world.SetAbilityFollowThrough(caster.Handle, Id, 0, 4f);
+            world.StartCasting(caster.Handle, Id);
+            world.TakeEffect(caster.Handle, Id);
+            var cast = picky.Given!;
+            Expect.Near(1.5f, cast.CastSeconds, "the casting time at level 1");
+            Expect.Near(4f, cast.ChannelSeconds, "the follow through time at level 1");
+            Expect.Near(1.5f, picky.LiveCastTime, "the ability's casting time now");
+            world.SetAbilityFollowThrough(caster.Handle, Id, 0, 5f);
+            Expect.Near(5f, cast.ChannelSeconds, "read at each read");
+            world.SetAbilityLevel(caster.Handle, Id, 2);
+            Expect.Near(2f, picky.LiveCastTime, "the ability's casting time at level 2");
+            Expect.Near(1.5f, cast.CastSeconds, "the cast keeps its own level");
+            caster.Remove();
+            Expect.Near(0f, cast.CastSeconds, "0 once the caster is gone");
+            Expect.Near(0f, cast.ChannelSeconds, "0 once the caster is gone");
+            Expect.Near(0f, picky.LiveCastTime, "0 once the unit is gone");
+        }
+
         /// <summary>An ability whose only reaction is OnFinished makes the world deliver spells.</summary>
         public static void FinishedListens(FakeWorld world)
         {

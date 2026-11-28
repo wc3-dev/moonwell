@@ -1183,6 +1183,15 @@ hero.AbilityOf<Execute>().ResetCooldown();
 - A cast stopped before it takes effect ends with no `OnCast`. `OnFinished` runs before the cast ends, when a channel
   ran its whole time or another spell its casting animation; one stopped early, by a stun, an order or a death, ends
   without it.
+- A cast says how it went: `cast.Ended += c => ...` runs once as it ends, with the cast, at the spell's end, at the
+  caster's next cast, at a refusal or when the caster leaves. There `TookEffect` is false for a cast stopped before its
+  effect, which spent nothing, and `RanToEnd` is true for one that reached its finish, as `OnFinished` did. A spell
+  with no finish, as Mirror Image, ends with `RanToEnd` false.
+- `cast.CastSeconds` is the spell's casting time at the cast's level, the seconds the caster goes on casting after the
+  effect before it finishes (Flame Strike's 1.33), and `cast.ChannelSeconds` how long it channels: the follow through
+  time of a spell based on Channel (`ANcl`). The game's own channels, as Blizzard and Starfall, have no such field and
+  read 0. Both are read from the game, so a field a map changes counts; `ability.LiveCastTime` reads the casting time at
+  the ability's level now, beside the declared `CastTime`.
 - These run on the ability class only, not on the caster's components or the game's, and a dummy's cast runs none.
 - Cooldown and mana, per unit: `CooldownLeft` reads what is left; `StartCooldown(seconds)` starts it at any length,
   shown on the button, and 0 makes the spell ready, as `ResetCooldown()` does. `LiveCooldown` and `LiveManaCost` read
@@ -3556,7 +3565,10 @@ fire.Cooldown(8f);                              // dark, then uncovered clockwis
 fire.Count = 3;
 
 var cast = Screen.Add(new CastBar(), this, shownTo: player);
-cast.Start("Fireball", 2.5f, @"ReplaceableTextures\CommandButtons\BTNFireBolt.blp");
+cast.Follow(hero);                              // the hero's casts and channels, as the game runs them
+cast.Start("Fireball", 2.5f, @"ReplaceableTextures\CommandButtons\BTNFireBolt.blp");  // or driven by the map
+cast.Channel("Drain Life", 5f);                 // drains over 5 s
+cast.Stop();                                    // hidden, no interrupted look
 cast.Interrupt();                               // red, "Interrupted", faded out
 
 var party = Screen.Add(new SelectionList { Anchor = FramePoint.Left }, this, shownTo: player);
@@ -3608,10 +3620,21 @@ party.Follow(player);
   }
   ```
 
-- `CastBar` is driven by the map: `Start(name, seconds, icon)` shows it and fills it over the seconds, then hides it;
-  `Interrupt()` fills it in the theme's `Interrupted` texture, says `InterruptedText` and fades it out over half a
-  second. A `Start` replaces a cast running or fading. It does not follow a unit's own game casts. Its bar starts at
-  the icon's edge and runs to inside the theme's `Hud` border, or, in a theme with none (`Hud = ""`), across the rest.
+- `CastBar.Follow(unit)` shows the unit's casts as the game runs them, from each spell's effect: a casting time
+  (`cast.CastSeconds`, as Flame Strike's) fills the bar, and a channel (`cast.ChannelSeconds`, a spell based on
+  Channel) drains it; a spell with both shows its casting time, and an instant spell, or a game channel with no follow
+  through time such as Blizzard, shows nothing. The spell's name and icon are the game's, each machine its own, as the
+  name is in each player's language (`label.ShowNameOf(ability)` shows it; reading it yourself is MW0002 outside
+  `Local.For`), so `Label.Text` reads empty. The bar then waits, full or empty, for the spell's end: one that ran to its
+  end hides it, and one stopped early, by a stun, an order, a death or the unit's next cast, shows `Interrupted`.
+  `Follow(null)` follows none, and following another unit hides a followed cast on the bar. `Followed` reads the unit.
+- The map can drive it too: `Start(name, seconds, icon)` shows it and fills it over the seconds, then hides it;
+  `Channel(name, seconds, icon)` starts it full and drains it the same way; `Stop()` hides it at once with no
+  interrupted look; `Interrupt()` fills it in the theme's `Interrupted` texture, says `InterruptedText` and fades it
+  out over half a second. A `Start` or `Channel` replaces a cast running or fading, a followed one too, until the
+  unit's next cast. `Casting` reads whether a cast or channel is on the bar, `Channeling` whether it drains. Its bar
+  starts at the icon's edge and runs to inside the theme's `Hud` border, or, in a theme with none (`Hud = ""`), across
+  the rest.
 - `BuffRow.Show(unit)` shows the unit's buffs that have an icon, in the order they came on, with the seconds left under
   each (`2m` from a minute on, nothing for a buff with no expiry). `Show(unit, harmful: true)` shows only the buffs
   marked `IsHarmful` (crowd control reads harmful too) and `harmful: false` only the others, for a row of buffs and

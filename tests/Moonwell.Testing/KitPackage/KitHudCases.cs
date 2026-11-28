@@ -191,6 +191,118 @@ namespace Moonwell.Testing
             Expect.Equal(Kit.Theme.CastBar, cast.Bar.Texture, "in the cast texture again");
         }
 
+        /// <summary>A channel starts the bar full and drains it over the seconds, then hides it; Stop hides a cast at once with no interrupted look, and stops the fade of an interrupted one.</summary>
+        public static void CastBarChannelsAndStops(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var cast = Screen.Add(new CastBar(), Game.Instance);
+            cast.Channel("Drain Life", 1f);
+            Expect.Equal(true, frames.FrameOf(cast.Handle!).Shown, "shown");
+            Expect.True(cast.Casting && cast.Channeling, "a channel on the bar");
+            Expect.Near(1f, cast.Bar.Value, "full at the start");
+            world.Advance(0.51f);
+            Expect.True(cast.Bar.Value > 0.45f && cast.Bar.Value < 0.55f, "half drained");
+            world.Advance(0.6f);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "hidden at the end");
+            Expect.True(!cast.Casting && !cast.Channeling, "none on the bar");
+            cast.Start("Fireball", 2f);
+            Expect.True(cast.Casting && !cast.Channeling, "a cast fills");
+            world.Advance(0.5f);
+            cast.Stop();
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "hidden at once");
+            Expect.Equal(false, cast.Casting, "no cast");
+            Expect.Equal(Kit.Theme.CastBar, cast.Bar.Texture, "not interrupted");
+            Expect.Equal("Fireball", frames.FrameOf(cast.Label.Handle!).Text, "the name kept, not Interrupted");
+            cast.Start("Frost", 2f);
+            cast.Interrupt();
+            cast.Stop();
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "an interrupted cast hidden at once");
+            cast.Start("Again", 1f);
+            world.Advance(0.6f);
+            Expect.Equal(true, frames.FrameOf(cast.Handle!).Shown, "the stopped fade does not hide the next cast");
+            Expect.Equal(255, frames.FrameOf(cast.Handle!).Alpha, "not faded");
+        }
+
+        /// <summary>A bar following a unit shows a casting time filling and a channel draining from the effect, with the game's name and icon, waits for the spell's end, hides at a finish and interrupts at a stop or the next cast; an instant spell shows nothing, Follow(null) hides a followed cast, and the map's Start takes the bar over.</summary>
+        public static void CastBarFollows(FakeWorld world)
+        {
+            var frames = FrameCases.Installed();
+            var strike = ObjectTypes.FourCC("AHfs");
+            var drain = ObjectTypes.FourCC("ANcl");
+            var bolt = ObjectTypes.FourCC("AHtb");
+            var icon = @"ReplaceableTextures\CommandButtons\BTNWallOfFire.blp";
+            var hero = Footman(world);
+            world.SetAbilityLevel(hero.Handle, strike, 1);
+            world.SetAbilityLevel(hero.Handle, drain, 1);
+            world.SetAbilityLevel(hero.Handle, bolt, 1);
+            world.SetAbilityCastTime(hero.Handle, strike, 0, 1f);
+            world.SetAbilityFollowThrough(hero.Handle, drain, 0, 2f);
+            world.SetObjectName(strike, "Flame Strike");
+            world.SetIcon(strike, icon);
+            var cast = Screen.Add(new CastBar(), Game.Instance);
+            cast.Follow(hero);
+            Expect.Same(hero, cast.Followed, "the unit followed");
+
+            world.StartCasting(hero.Handle, strike);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "nothing before the effect");
+            world.TakeEffect(hero.Handle, strike);
+            Expect.Equal(true, frames.FrameOf(cast.Handle!).Shown, "shown at the effect");
+            Expect.Equal("Flame Strike", frames.FrameOf(cast.Label.Handle!).Text, "the game's name");
+            Expect.Equal("", cast.Label.Text, "the shared text is empty");
+            Expect.Equal(icon, frames.FrameOf(cast.Icon.Handle!).Texture, "the game's icon");
+            Expect.Equal(true, frames.FrameOf(cast.Icon.Handle!).Shown, "the icon shown");
+            world.Advance(0.51f);
+            Expect.True(cast.Bar.Value > 0.45f && cast.Bar.Value < 0.55f, "half filled");
+            world.Advance(0.7f);
+            Expect.Equal(true, frames.FrameOf(cast.Handle!).Shown, "waits for the spell's end");
+            Expect.Near(1f, cast.Bar.Value, "full while it waits");
+            Inbound.SpellFinished(hero.Handle, strike);
+            Inbound.SpellEnded(hero.Handle, strike);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "hidden at the end");
+            Expect.Equal(Kit.Theme.CastBar, cast.Bar.Texture, "not interrupted");
+
+            world.StartCasting(hero.Handle, drain);
+            world.TakeEffect(hero.Handle, drain);
+            Expect.True(cast.Channeling, "a channel drains");
+            world.Advance(0.5f);
+            Expect.True(cast.Bar.Value > 1.4f && cast.Bar.Value < 1.6f, "a quarter drained");
+            Inbound.SpellEnded(hero.Handle, drain);
+            Expect.Equal(Kit.Theme.Interrupted, cast.Bar.Texture, "stopped early, interrupted");
+            Expect.Equal("Interrupted", frames.FrameOf(cast.Label.Handle!).Text, "says so");
+            world.Advance(0.6f);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "faded out");
+
+            world.StartCasting(hero.Handle, bolt);
+            world.TakeEffect(hero.Handle, bolt);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "an instant spell shows nothing");
+            Inbound.SpellEnded(hero.Handle, bolt);
+
+            world.StartCasting(hero.Handle, strike);
+            world.TakeEffect(hero.Handle, strike);
+            world.StartCasting(hero.Handle, drain);
+            world.TakeEffect(hero.Handle, drain);
+            Expect.True(cast.Channeling, "the next cast replaces the first");
+            Expect.Equal(255, frames.FrameOf(cast.Handle!).Alpha, "not faded");
+            Expect.Equal(Kit.Theme.CastBar, cast.Bar.Texture, "in the cast texture");
+
+            cast.Follow(null);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "Follow(null) hides a followed cast");
+            Expect.True(cast.Followed == null, "follows none");
+            Inbound.SpellEnded(hero.Handle, drain);
+            world.StartCasting(hero.Handle, strike);
+            world.TakeEffect(hero.Handle, strike);
+            Expect.Equal(false, frames.FrameOf(cast.Handle!).Shown, "no cast shows after");
+            Inbound.SpellEnded(hero.Handle, strike);
+
+            cast.Follow(hero);
+            world.StartCasting(hero.Handle, drain);
+            world.TakeEffect(hero.Handle, drain);
+            cast.Start("Mine", 1f);
+            Inbound.SpellEnded(hero.Handle, drain);
+            Expect.Equal(Kit.Theme.CastBar, cast.Bar.Texture, "the map's Start takes the bar over");
+            Expect.Equal("Mine", frames.FrameOf(cast.Label.Handle!).Text, "the map's name");
+        }
+
         /// <summary>A buff row shows the buffs with an icon and their time left, leaves out one with no icon, and hides a slot when its buff ends.</summary>
         public static void BuffRowShows(FakeWorld world)
         {
