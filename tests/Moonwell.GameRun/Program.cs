@@ -11,7 +11,7 @@ const string Usage = """
                             [--limit <s>] [--load-limit <s>] [--stall <s>] [--wait-free <s>] [--game <exe>] [--docs <folder>]
       --file        the run's Preload file, relative to Documents\Warcraft III\CustomMapData
       --over        the line that ends the run (default "-- run over")
-      --loading     the line the map writes while it loads (default "-- loading"); space is posted while it is the last
+      --loading     a line the map may write while it loads (default "-- loading"); space is posted while it is the last
       --fail        a start of a line that fails the run; repeatable (default ERROR and FAIL)
       --limit       seconds the whole run may take (default 300)
       --load-limit  seconds the file may take to come (default 120)

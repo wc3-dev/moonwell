@@ -6,7 +6,7 @@ public enum RunAction
     /// <summary>Nothing yet: look again on the next turn.</summary>
     Wait,
 
-    /// <summary>Post the space bar to the game's window: the loading screen waits for a key.</summary>
+    /// <summary>Post the space bar to the game's window: the loading screen waits for a key ("Press any key to continue").</summary>
     PostSpace,
 
     /// <summary>Resume a game that may be paused, as a person does: F10 (the game's menu), then Escape. Asked once a run.</summary>
@@ -25,7 +25,7 @@ public enum RunOutcome
     /// <summary>The file holds the over line.</summary>
     Over,
 
-    /// <summary>No file written after the game's start came within the load limit: the game never loaded the map, or the map writes no loading line.</summary>
+    /// <summary>No file written after the game's start came within the load limit: see <see cref="RunWatch.MapOpenedAt"/> for whether the game loaded the map.</summary>
     NoFile,
 
     /// <summary>The file kept its loading line: the game did not get past the loading screen.</summary>
@@ -47,13 +47,13 @@ public enum RunOutcome
 /// <summary>The times and lines a run is watched by.</summary>
 public sealed record RunRules
 {
-    /// <summary>The line a map writes in its file while it loads, so that the runner knows the loading screen waits for a key.</summary>
+    /// <summary>The line a map may write in its file while it loads; space is posted while it is the file's last line.</summary>
     public const string DefaultLoadingLine = "-- loading";
 
     /// <summary>The line a map writes last, when its run is over (the step runner's).</summary>
     public const string DefaultOverLine = "-- run over";
 
-    /// <summary>The line written while the map loads; the runner posts space only while it is the file's last line.</summary>
+    /// <summary>The line a map may write while it loads (a Moonwell map's components are added only once the loading screen is past, so it cannot); space is posted while it is the file's last line.</summary>
     public string LoadingLine { get; init; } = DefaultLoadingLine;
 
     /// <summary>The line that ends the run.</summary>
@@ -73,11 +73,16 @@ public sealed record RunRules
 
     /// <summary>How often space is posted while the loading screen waits.</summary>
     public TimeSpan SpaceEvery { get; init; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>How long after the game opened the map the first space is posted: the game opens it behind its door screen, a moment before the loading screen.</summary>
+    public TimeSpan SpaceAfterOpen { get; init; } = TimeSpan.FromSeconds(2);
 }
 
 /// <summary>
 /// The runner's watch of one run, with no game or clock of its own: each turn it is given the time since the game's start,
-/// the run's lines (null while no file written since the start is there) and whether the game still runs, and says what to do.
+/// the run's lines (null while no file written since the start is there), whether the game still runs and whether it holds
+/// the map open, and says what to do. The game opens the map once it has logged in (it holds the file open from then on),
+/// and its loading screen then waits for a key: space is posted from the open until the file shows the game started.
 /// </summary>
 public sealed class RunWatch
 {
@@ -99,6 +104,9 @@ public sealed class RunWatch
     /// <summary>The run's lines last seen; empty while there is no file.</summary>
     public IReadOnlyList<string> Lines => last ?? Array.Empty<string>();
 
+    /// <summary>When the game was first seen holding the map open, from the game's start; null while it has not been.</summary>
+    public TimeSpan? MapOpenedAt { get; private set; }
+
     /// <summary>When the file was first seen, from the game's start; null while it has not been.</summary>
     public TimeSpan? FileAt { get; private set; }
 
@@ -118,7 +126,8 @@ public sealed class RunWatch
     /// <param name="elapsed">The time since the game was started.</param>
     /// <param name="lines">The file's lines, or null when no file written since the start is there.</param>
     /// <param name="gameRuns">Whether the game's process still runs.</param>
-    public RunAction Look(TimeSpan elapsed, IReadOnlyList<string>? lines, bool gameRuns)
+    /// <param name="mapOpen">Whether the game holds the map open (it has opened it).</param>
+    public RunAction Look(TimeSpan elapsed, IReadOnlyList<string>? lines, bool gameRuns, bool mapOpen)
     {
         if (Outcome != RunOutcome.None)
         {
@@ -131,6 +140,11 @@ public sealed class RunWatch
             FileAt ??= elapsed;
             last = lines;
             changedAt = elapsed;
+        }
+
+        if (mapOpen)
+        {
+            MapOpenedAt ??= elapsed;
         }
 
         var loading = last != null && last.Count > 0 && last[last.Count - 1] == rules.LoadingLine;
@@ -156,7 +170,12 @@ public sealed class RunWatch
 
         if (last == null)
         {
-            return elapsed >= rules.LoadLimit ? Stop(RunOutcome.NoFile) : RunAction.Wait;
+            if (elapsed >= rules.LoadLimit)
+            {
+                return Stop(RunOutcome.NoFile);
+            }
+
+            return MapOpenedAt is { } opened && elapsed - opened >= rules.SpaceAfterOpen ? Space(elapsed) : RunAction.Wait;
         }
 
         if (elapsed - changedAt >= rules.Stall && (!resumedAt.HasValue || elapsed - resumedAt.Value >= rules.Stall))
@@ -170,14 +189,7 @@ public sealed class RunWatch
             return Stop(loading ? RunOutcome.StuckLoading : RunOutcome.Stalled);
         }
 
-        if (loading && (!spacedAt.HasValue || elapsed - spacedAt.Value >= rules.SpaceEvery))
-        {
-            spacedAt = elapsed;
-            Spaces++;
-            return RunAction.PostSpace;
-        }
-
-        return RunAction.Wait;
+        return loading ? Space(elapsed) : RunAction.Wait;
     }
 
     /// <summary>Ends the watch with an outcome found outside it (another game ran).</summary>
@@ -187,6 +199,19 @@ public sealed class RunWatch
         {
             Outcome = outcome;
         }
+    }
+
+    // Space, when the last was SpaceEvery ago or more.
+    private RunAction Space(TimeSpan elapsed)
+    {
+        if (spacedAt.HasValue && elapsed - spacedAt.Value < rules.SpaceEvery)
+        {
+            return RunAction.Wait;
+        }
+
+        spacedAt = elapsed;
+        Spaces++;
+        return RunAction.PostSpace;
     }
 
     private RunAction Stop(RunOutcome outcome)

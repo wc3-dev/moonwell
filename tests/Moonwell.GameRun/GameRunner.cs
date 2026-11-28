@@ -60,7 +60,8 @@ public sealed record GameRunOptions
 /// <param name="Failing">The lines that start with one of <see cref="GameRunOptions.FailWhen"/>.</param>
 /// <param name="Detail">What the runner saw: when the file came, when the game started, how many keys were posted, how long it took.</param>
 /// <param name="GameVersion">The game program's file version.</param>
-public sealed record GameRunResult(RunOutcome Outcome, IReadOnlyList<string> Lines, IReadOnlyList<string> Failing, string Detail, string? GameVersion)
+/// <param name="MapOpened">Whether the game opened the map (it logged in and loaded it).</param>
+public sealed record GameRunResult(RunOutcome Outcome, IReadOnlyList<string> Lines, IReadOnlyList<string> Failing, string Detail, string? GameVersion, bool MapOpened = true)
 {
     /// <summary>Whether the run passed: it is over and no line fails.</summary>
     public bool Passed => Outcome == RunOutcome.Over && Failing.Count == 0;
@@ -74,7 +75,8 @@ public sealed record GameRunResult(RunOutcome Outcome, IReadOnlyList<string> Lin
             {
                 RunOutcome.Over when Failing.Count == 0 => $"the run is over; {Lines.Count} line(s), none failing",
                 RunOutcome.Over => $"the run is over; {Failing.Count} of {Lines.Count} line(s) failing",
-                RunOutcome.NoFile => "no run file came from this game: it never loaded the map (is the Battle.net app running and logged in? started from a sandboxed shell the game may never log in: start the run from PowerShell or a normal terminal), or the map writes no loading line while it loads",
+                RunOutcome.NoFile when MapOpened => "the game loaded the map, but no run file came: the map wrote none (a Lua error before it?), or the game never got past its loading screen",
+                RunOutcome.NoFile => "the game never opened the map: is the Battle.net app running and logged in? (started from a sandboxed shell the game may never log in: start the run from PowerShell or a normal terminal)",
                 RunOutcome.StuckLoading => "the run's file kept its loading line, also after the game was resumed: the game did not get past its loading screen, or the map wrote nothing after it",
                 RunOutcome.Stalled => "the run's file stopped changing, also after the game was resumed: no game time passes, or the map waits for something (a step waits for Esc?)",
                 RunOutcome.TimedOut => "the time limit was over before the run was",
@@ -89,8 +91,9 @@ public sealed record GameRunResult(RunOutcome Outcome, IReadOnlyList<string> Lin
 
 /// <summary>
 /// Plays a built map in the game with nobody at the keyboard. It waits until no Warcraft III runs (two games at once do not
-/// both report) and takes the machine's turn, starts the game on the map in a job of its own, posts space while the run's
-/// file says the map is loading (its last line is the loading line), resumes a game whose file stops changing once, and ends
+/// both report) and takes the machine's turn, starts the game on the map in a job of its own, posts space from the moment
+/// the game opens the map until the run's file shows the game started (no file yet, or only the loading line), resumes a game
+/// whose file stops changing once, and ends
 /// the game and what it started as soon as the file holds the over line, the game ends, another game starts, or a limit is over.
 /// </summary>
 public static class GameRunner
@@ -176,7 +179,7 @@ public static class GameRunner
             while (true)
             {
                 var elapsed = clock.Elapsed;
-                var action = watch.Look(elapsed, RunFile.ReadIfWrittenSince(path, started), !game.HasExited);
+                var action = watch.Look(elapsed, RunFile.ReadIfWrittenSince(path, started), !game.HasExited, watch.MapOpenedAt.HasValue || HeldOpen(map));
                 if (watch.Changed)
                 {
                     say($"{elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)} s: the file holds {watch.Lines.Count} line(s), the last \"{watch.Lines.LastOrDefault()}\"");
@@ -217,12 +220,27 @@ public static class GameRunner
         var lines = watch.Lines;
         var detail = string.Join(
             "; ",
+            $"map opened {Seconds(watch.MapOpenedAt)}",
             $"file {Seconds(watch.FileAt)}",
             $"game started {Seconds(watch.StartedAt)}",
             $"{watch.Spaces} space(s) posted",
             watch.Resumed ? "resumed once" : "not resumed",
             $"run took {clock.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)} s");
-        return new GameRunResult(watch.Outcome, lines, FailingLines(lines, options.FailWhen), detail, version);
+        return new GameRunResult(watch.Outcome, lines, FailingLines(lines, options.FailWhen), detail, version, watch.MapOpenedAt.HasValue);
+    }
+
+    // Whether another process holds the file open: the game holds the map from the moment it opens it (once it has logged in).
+    private static bool HeldOpen(string path)
+    {
+        try
+        {
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+            return false;
+        }
+        catch (IOException)
+        {
+            return true;
+        }
     }
 
     private static string Seconds(TimeSpan? at)

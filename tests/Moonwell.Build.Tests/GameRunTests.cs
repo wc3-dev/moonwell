@@ -71,21 +71,40 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
-        public void space_is_posted_every_two_seconds_while_the_loading_line_is_last_and_never_before_the_file()
+        public void space_is_posted_every_two_seconds_from_two_seconds_after_the_game_opens_the_map_until_it_has_started()
         {
             var watch = new RunWatch(Rules);
-            var loading = new[] { "-- loading" };
 
-            Assert.Equal(RunAction.Wait, watch.Look(At(10), null, true));
-            Assert.Equal(RunAction.PostSpace, watch.Look(At(20), loading, true));
-            Assert.Equal(RunAction.Wait, watch.Look(At(21), loading, true));
-            Assert.Equal(RunAction.PostSpace, watch.Look(At(22), loading, true));
-            Assert.Equal(RunAction.Wait, watch.Look(At(23), new[] { "started" }, true));
-            Assert.Equal(RunAction.Wait, watch.Look(At(25), new[] { "started" }, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(10), null, true, false));
+            Assert.Equal(RunAction.Wait, watch.Look(At(15), null, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(16), null, true, true));
+            Assert.Equal(RunAction.PostSpace, watch.Look(At(17), null, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(18), null, true, true));
+            Assert.Equal(RunAction.PostSpace, watch.Look(At(19), new[] { "-- loading" }, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(20), new[] { "-- loading" }, true, true));
+            Assert.Equal(RunAction.PostSpace, watch.Look(At(21), new[] { "-- loading" }, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(23), new[] { "started" }, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(25), new[] { "started" }, true, true));
 
-            Assert.Equal(2, watch.Spaces);
-            Assert.Equal(At(20), watch.FileAt);
+            Assert.Equal(3, watch.Spaces);
+            Assert.Equal(At(15), watch.MapOpenedAt);
+            Assert.Equal(At(19), watch.FileAt);
             Assert.Equal(At(23), watch.StartedAt);
+        }
+
+        [Fact]
+        public void no_space_is_posted_before_the_game_opens_the_map()
+        {
+            var watch = new RunWatch(Rules);
+            for (var second = 1; second < 120; second++)
+            {
+                Assert.Equal(RunAction.Wait, watch.Look(At(second), null, true, false));
+            }
+
+            Assert.Equal(RunAction.Stop, watch.Look(At(120), null, true, false));
+            Assert.Equal(RunOutcome.NoFile, watch.Outcome);
+            Assert.Null(watch.MapOpenedAt);
+            Assert.Equal(0, watch.Spaces);
         }
 
         [Fact]
@@ -93,42 +112,32 @@ namespace Moonwell.Build.Tests
         {
             var watch = new RunWatch(Rules);
 
-            Assert.Equal(RunAction.Stop, watch.Look(At(30), new[] { "started", "-- run over" }, false));
+            Assert.Equal(RunAction.Stop, watch.Look(At(30), new[] { "started", "-- run over" }, false, true));
             Assert.Equal(RunOutcome.Over, watch.Outcome);
             Assert.Equal(At(30), watch.StartedAt);
-            Assert.Equal(RunAction.Stop, watch.Look(At(31), null, true));
+            Assert.Equal(RunAction.Stop, watch.Look(At(31), null, true, true));
         }
 
         [Fact]
         public void a_game_that_ends_before_the_over_line_stops_the_run()
         {
             var watch = new RunWatch(Rules);
-            watch.Look(At(20), new[] { "started" }, true);
+            watch.Look(At(20), new[] { "started" }, true, true);
 
-            Assert.Equal(RunAction.Stop, watch.Look(At(21), new[] { "started" }, false));
+            Assert.Equal(RunAction.Stop, watch.Look(At(21), new[] { "started" }, false, true));
             Assert.Equal(RunOutcome.GameEnded, watch.Outcome);
-        }
-
-        [Fact]
-        public void no_file_within_the_load_limit_stops_the_run()
-        {
-            var watch = new RunWatch(Rules);
-
-            Assert.Equal(RunAction.Wait, watch.Look(At(119), null, true));
-            Assert.Equal(RunAction.Stop, watch.Look(At(120), null, true));
-            Assert.Equal(RunOutcome.NoFile, watch.Outcome);
         }
 
         [Fact]
         public void a_file_that_stops_changing_is_resumed_once_and_then_given_up()
         {
             var watch = new RunWatch(Rules);
-            watch.Look(At(20), new[] { "started" }, true);
+            watch.Look(At(20), new[] { "started" }, true, true);
 
-            Assert.Equal(RunAction.Wait, watch.Look(At(49), new[] { "started" }, true));
-            Assert.Equal(RunAction.Resume, watch.Look(At(50), new[] { "started" }, true));
-            Assert.Equal(RunAction.Wait, watch.Look(At(79), new[] { "started" }, true));
-            Assert.Equal(RunAction.Stop, watch.Look(At(80), new[] { "started" }, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(49), new[] { "started" }, true, true));
+            Assert.Equal(RunAction.Resume, watch.Look(At(50), new[] { "started" }, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(79), new[] { "started" }, true, true));
+            Assert.Equal(RunAction.Stop, watch.Look(At(80), new[] { "started" }, true, true));
             Assert.Equal(RunOutcome.Stalled, watch.Outcome);
             Assert.True(watch.Resumed);
         }
@@ -137,12 +146,12 @@ namespace Moonwell.Build.Tests
         public void a_file_that_changes_after_the_resume_runs_on()
         {
             var watch = new RunWatch(Rules);
-            watch.Look(At(20), new[] { "-- loading" }, true);
+            watch.Look(At(20), new[] { "-- loading" }, true, true);
 
-            Assert.Equal(RunAction.Resume, watch.Look(At(50), new[] { "-- loading" }, true));
-            Assert.Equal(RunAction.Wait, watch.Look(At(55), new[] { "started" }, true));
-            Assert.Equal(RunAction.Wait, watch.Look(At(84), new[] { "started" }, true));
-            Assert.Equal(RunAction.Stop, watch.Look(At(85), new[] { "started" }, true));
+            Assert.Equal(RunAction.Resume, watch.Look(At(50), new[] { "-- loading" }, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(55), new[] { "started" }, true, true));
+            Assert.Equal(RunAction.Wait, watch.Look(At(84), new[] { "started" }, true, true));
+            Assert.Equal(RunAction.Stop, watch.Look(At(85), new[] { "started" }, true, true));
             Assert.Equal(RunOutcome.Stalled, watch.Outcome);
         }
 
@@ -151,10 +160,10 @@ namespace Moonwell.Build.Tests
         {
             var watch = new RunWatch(Rules);
             var loading = new[] { "-- loading" };
-            watch.Look(At(20), loading, true);
-            watch.Look(At(50), loading, true);
+            watch.Look(At(20), loading, true, true);
+            watch.Look(At(50), loading, true, true);
 
-            Assert.Equal(RunAction.Stop, watch.Look(At(80), loading, true));
+            Assert.Equal(RunAction.Stop, watch.Look(At(80), loading, true, true));
             Assert.Equal(RunOutcome.StuckLoading, watch.Outcome);
         }
 
@@ -164,10 +173,10 @@ namespace Moonwell.Build.Tests
             var watch = new RunWatch(Rules);
             for (var second = 20; second < 300; second += 10)
             {
-                Assert.Equal(RunAction.Wait, watch.Look(At(second), new[] { "line " + second }, true));
+                Assert.Equal(RunAction.Wait, watch.Look(At(second), new[] { "line " + second }, true, true));
             }
 
-            Assert.Equal(RunAction.Stop, watch.Look(At(300), new[] { "line 300" }, true));
+            Assert.Equal(RunAction.Stop, watch.Look(At(300), new[] { "line 300" }, true, true));
             Assert.Equal(RunOutcome.TimedOut, watch.Outcome);
         }
 
@@ -185,9 +194,8 @@ namespace Moonwell.Build.Tests
         }
 
         /// <summary>
-        /// The fixture InTheGame, built and played in the game with nobody at the keyboard: it writes its loading line under the
-        /// loading screen and, once the game has started, what it measured and the over line. Its path in the test's copy is
-        /// longer than the game loads, so the runner plays a short copy.
+        /// The fixture InTheGame, built and played in the game with nobody at the keyboard: once the runner has got the game past
+        /// its loading screen, the map writes what it measured and the over line.
         /// </summary>
         [LaunchFact]
         public void a_print_only_map_plays_in_the_game_start_to_finish()
