@@ -124,7 +124,7 @@ namespace Moonwell
         /// Shows the unit's casts from now on, as the game runs them, in place of the unit followed before; null follows none.
         /// From the spell's effect, a casting time (cast.CastSeconds, as Flame Strike's) fills the bar, and a channel's follow
         /// through time (cast.ChannelSeconds, a spell based on Channel) drains it; a spell with both shows its casting time,
-        /// and one with neither shows nothing. The name and icon are the game's, each machine its own (label.ShowNameOf), as
+        /// and one with neither shows nothing; the game's own channels have no channel time (Blizzard shows its casting time). The name and icon are the game's, each machine its own (label.ShowNameOf), as
         /// both differ by machine. The bar then waits, full or empty, for the spell's end: a spell that ran to its end hides
         /// it, one stopped early, by a stun, an order, a death or the unit's next cast, interrupts it. A followed cast on the
         /// bar is hidden when the bar follows another unit or none; Start, Channel and Stop take the bar over from it.

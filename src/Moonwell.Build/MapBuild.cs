@@ -216,9 +216,11 @@ namespace Moonwell.Build
                 writtenIds = withBonuses;
             }
 
+            var mapAbilities = DummyType.MapAbilities(project.MapFolder);
             var watch = BuffWatch.Lines(declarations.Objects, ids, declarations.StandardClassIds, BuffWatch.StandardLists(standard, data.ValueSet, declarations.Objects))
                 .Concat(BuffWatch.IconLines(declarations.Objects, standard, data.ValueSet))
-                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? DummyType.MapAbilities(project.MapFolder) : null))
+                .Concat(DummyType.Lines(casts, declarations.Used, declarations.Objects, ids, declarations.StandardClassIds, standard, data.ValueSet, casts ? mapAbilities : null))
+                .Concat(DummyType.ChannelLines(declarations.Objects, ids, mapAbilities))
                 .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             options.Step?.Invoke("Compile to Lua");

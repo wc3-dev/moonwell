@@ -1189,8 +1189,9 @@ hero.AbilityOf<Execute>().ResetCooldown();
   with no finish, as Mirror Image, ends with `RanToEnd` false.
 - `cast.CastSeconds` is the spell's casting time at the cast's level, the seconds the caster goes on casting after the
   effect before it finishes (Flame Strike's 1.33), and `cast.ChannelSeconds` how long it channels: the follow through
-  time of a spell based on Channel (`ANcl`). The game's own channels, as Blizzard and Starfall, have no such field and
-  read 0. Both are read from the game, so a field a map changes counts; `ability.LiveCastTime` reads the casting time at
+  time of a spell based on Channel (`ANcl`), declared or from World Editor; any other spell reads 0, as the game's
+  own channels, Blizzard and Starfall, have no such time (the game's field reads another spell's first number: Flame
+  Strike's damage). Both are read from the game, so a field a map changes counts; `ability.LiveCastTime` reads the casting time at
   the ability's level now, beside the declared `CastTime`.
 - These run on the ability class only, not on the caster's components or the game's, and a dummy's cast runs none.
 - Cooldown and mana, per unit: `CooldownLeft` reads what is left; `StartCooldown(seconds)` starts it at any length,
@@ -3622,8 +3623,8 @@ party.Follow(player);
 
 - `CastBar.Follow(unit)` shows the unit's casts as the game runs them, from each spell's effect: a casting time
   (`cast.CastSeconds`, as Flame Strike's) fills the bar, and a channel (`cast.ChannelSeconds`, a spell based on
-  Channel) drains it; a spell with both shows its casting time, and an instant spell, or a game channel with no follow
-  through time such as Blizzard, shows nothing. The spell's name and icon are the game's, each machine its own, as the
+  Channel) drains it; a spell with both shows its casting time, and an instant spell shows nothing. The game's own
+  channels have no channel time to drain: Blizzard fills over its casting time (1 s) and stays full until it ends. The spell's name and icon are the game's, each machine its own, as the
   name is in each player's language (`label.ShowNameOf(ability)` shows it; reading it yourself is MW0002 outside
   `Local.For`), so `Label.Text` reads empty. The bar then waits, full or empty, for the spell's end: one that ran to its
   end hides it, and one stopped early, by a stun, an order, a death or the unit's next cast, shows `Interrupted`.

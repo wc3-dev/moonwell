@@ -118,6 +118,22 @@ namespace Moonwell.Build.Tests
         }
 
         [Fact]
+        public void the_maps_channels_are_registered_whether_or_not_it_casts()
+        {
+            var declared = new[] { Ability("Map.Drain", "ANcl"), Ability("Map.FrostBolt", "AHtb") };
+            var ids = new Dictionary<string, string> { ["Map.Drain"] = "A0C1", ["Map.FrostBolt"] = "A010" };
+            var lines = DummyType.ChannelLines(declared, ids, new[] { MapAbility("A001", "ANcl"), MapAbility("A000", "ANab"), MapAbility("ANcl", "ANcl") });
+
+            Assert.Equal(
+                new[]
+                {
+                    "global::Moonwell.ObjectTypes.Channel(global::Moonwell.ObjectTypes.FourCC(\"A001\"));",
+                    "global::Moonwell.ObjectTypes.Channel(global::Moonwell.ObjectTypes.FourCC(\"A0C1\"));",
+                },
+                lines);
+        }
+
+        [Fact]
         public void a_world_editor_abilitys_own_requirements_count()
         {
             var free = MapLines(MapAbility("A002", "Aply", new Dictionary<string, object?> { ["areq"] = "" }));

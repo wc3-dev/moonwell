@@ -55,9 +55,9 @@ namespace Moonwell
         [LocalSafe]
         public float CastSeconds => Caster.IsGone || Ability.Level <= 0 ? 0.0f : Runtime.World.AbilityCastTime(Caster.Handle, Ability.Id, Level - 1);
 
-        /// <summary>How long the spell channels at the cast's level: the Follow Through Time of a spell based on Channel (ANcl), read from the game at each read; 0 for a spell without the field, as the game's own channels (Blizzard, Starfall) have none, and once the caster is gone or lacks the ability.</summary>
+        /// <summary>How long the spell channels at the cast's level: the Follow Through Time of a spell based on Channel (ANcl), read from the game at each read; 0 for any other spell, as the game's own channels (Blizzard, Starfall) have no such time, and once the caster is gone or lacks the ability.</summary>
         [LocalSafe]
-        public float ChannelSeconds => Caster.IsGone || Ability.Level <= 0 ? 0.0f : Runtime.World.AbilityFollowThrough(Caster.Handle, Ability.Id, Level - 1);
+        public float ChannelSeconds => !ObjectTypes.IsChannel(Ability.Id) || Caster.IsGone || Ability.Level <= 0 ? 0.0f : Runtime.World.AbilityFollowThrough(Caster.Handle, Ability.Id, Level - 1);
 
         /// <summary>The text of a refusal, set by Refuse in OnCasting; null while the cast goes on.</summary>
         internal string? Refusal;

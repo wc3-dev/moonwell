@@ -43,6 +43,9 @@ namespace Moonwell
         /// <summary>The order string a dummy casts each spell with, keyed by the ability's id; a lookup only.</summary>
         private static Dictionary<int, string> castOrders = new Dictionary<int, string>();
 
+        /// <summary>The map's abilities based on Channel (ANcl), whose follow through time is how long they channel.</summary>
+        private static HashSet<int> channels = new HashSet<int>();
+
         /// <summary>The spells whose targets are only their caster, which land on the dummy; by the ability's id.</summary>
         private static HashSet<int> landsOnCaster = new HashSet<int>();
 
@@ -353,6 +356,22 @@ namespace Moonwell
                 landsOnCaster.Add(abilityId);
             }
         }
+
+        /// <summary>Registers an ability of the map's based on Channel (ANcl), declared or from World Editor, so that its cast reads its follow through time.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Channel(int abilityId)
+        {
+            channels.Add(abilityId);
+        }
+
+        /// <summary>Whether an ability is Channel (ANcl) or based on it: only its follow through time is how long it channels, as the game reads that field from every spell's first data field (Flame Strike's gave its damage, seen 11-28).</summary>
+        internal static bool IsChannel(int abilityId)
+        {
+            return abilityId == ChannelId || channels.Contains(abilityId);
+        }
+
+        /// <summary>The standard Channel's id, ANcl.</summary>
+        private const int ChannelId = 0x414E636C;
 
         /// <summary>Registers a research a spell requires, at the level it requires, for the report of a refused dummy cast.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -725,6 +744,7 @@ namespace Moonwell
             carriers = new Dictionary<object, int>();
             helperAbilities = new HashSet<int>();
             castOrders = new Dictionary<int, string>();
+            channels = new HashSet<int>();
             landsOnCaster = new HashSet<int>();
             requirements = new Dictionary<int, List<(int Tech, int Level)>>();
             DummyTypeId = 0;

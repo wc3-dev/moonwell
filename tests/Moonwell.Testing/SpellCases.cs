@@ -188,6 +188,8 @@ namespace Moonwell.Testing
             world.StartCasting(caster.Handle, Id);
             world.TakeEffect(caster.Handle, Id);
             var cast = picky.Given!;
+            Expect.Near(0f, cast.ChannelSeconds, "0 for a spell not based on Channel, whatever the field reads");
+            ObjectTypes.Channel(Id);
             Expect.Near(1.5f, cast.CastSeconds, "the casting time at level 1");
             Expect.Near(4f, cast.ChannelSeconds, "the follow through time at level 1");
             Expect.Near(1.5f, picky.LiveCastTime, "the ability's casting time now");
