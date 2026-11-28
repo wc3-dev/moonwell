@@ -124,6 +124,32 @@ public sealed class InstallTests : IClassFixture<InstallTests.Install>
     }
 
     [InstallFact]
+    public void a_texture_named_with_a_tilesets_letter_is_found_in_that_tilesets_module()
+    {
+        var files = _install.Files!;
+
+        // Hive models name a tileset's own textures with its letter in front; the storage keeps them in the tileset's
+        // module without it (J191).
+        Assert.Equal(
+            "War3.w3mod:_tilesets/n.w3mod:ReplaceableTextures/Splats/HumanTownHallUberSplat.dds",
+            files.Find(@"ReplaceableTextures\Splats\N_HumanTownHallUberSplat.blp"),
+            StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(
+            "War3.w3mod:_tilesets/a.w3mod:ReplaceableTextures/Water/Water00.dds",
+            files.Find(@"ReplaceableTextures\Water\A_Water00.blp"),
+            StringComparer.OrdinalIgnoreCase);
+        Assert.NotNull(files.Read(@"ReplaceableTextures\Water\A_Water00.blp"));
+
+        // Every other step comes first: a file stored under its lettered name is that file.
+        Assert.EndsWith(
+            ".w3mod:Textures/N_ShorelineParticleXY.dds",
+            files.Find(@"Textures\N_ShorelineParticleXY.blp"),
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Null(files.Find(@"ReplaceableTextures\Splats\N_NoSuchSplat.blp"));
+        Assert.Null(files.Find(@"ReplaceableTextures\Splats\NHumanTownHallUberSplat.blp"));
+    }
+
+    [InstallFact]
     public void the_icons_and_models_can_be_listed()
     {
         var files = _install.Files!;

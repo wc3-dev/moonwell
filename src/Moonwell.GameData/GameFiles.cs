@@ -9,6 +9,8 @@ namespace Moonwell.GameData;
 /// <c>.mdx</c>, a <c>.blp</c> or <c>.tif</c> texture as its <c>.dds</c> (most are stored as DDS); and the game's
 /// <c>FileAliases.json</c>, which moves some textures (Sven, 2026-10-27). A file only the Reforged tiers hold (the
 /// <c>_HD</c>, then the <c>_DE</c> files: <c>BTNPriestV1</c>, the icon the data gives the Priest) is read from there.
+/// Last, a name with a tileset's letter in front (<c>N_HumanTownHallUberSplat.blp</c>) is read from that tileset's
+/// module without the letter (<c>_tilesets/n.w3mod:</c>, J191).
 /// </summary>
 public sealed class GameFiles : IDisposable
 {
@@ -84,7 +86,27 @@ public sealed class GameFiles : IDisposable
         }
 
         return First(prefixes, Candidates(normalized).ToList())
-            ?? (_aliases.TryGetValue(normalized, out var moved) ? First(prefixes, Candidates(moved).ToList()) : null);
+            ?? (_aliases.TryGetValue(normalized, out var moved) ? First(prefixes, Candidates(moved).ToList()) : null)
+            ?? InTileset(normalized, prefixes);
+    }
+
+    // A tileset's own file named with the tileset's letter in front (Hive models: N_HumanTownHallUberSplat.blp,
+    // A_Water00), which the storage keeps in that tileset's module without the letter
+    // (_tilesets/n.w3mod:ReplaceableTextures/Splats/HumanTownHallUberSplat.dds, J191). Each tier has its own tileset
+    // modules; they are tried in the mode's order (Classic, then _HD, in Classic), after every other step.
+    private string? InTileset(string path, string[] prefixes)
+    {
+        var slash = path.LastIndexOf('/');
+        var name = path[(slash + 1)..];
+        if (name.Length < 3 || name[1] != '_' || !char.IsAsciiLetter(name[0]))
+        {
+            return null;
+        }
+
+        var module = $"_tilesets/{char.ToLowerInvariant(name[0])}.w3mod:";
+        var unlettered = Candidates(path[..(slash + 1)] + name[2..]).ToList();
+        var tiers = prefixes.Where(prefix => prefix is Root or Hd or De).Select(tier => tier + module).ToArray();
+        return First(tiers, unlettered);
     }
 
     // The first tier that stores any of the candidates: a tier's fallback extension comes before a later tier's own.
