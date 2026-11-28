@@ -395,7 +395,8 @@ public sealed class KillCounter : UnitComponent
   component hears them for every unit; a player's components only for its own player's units: the unit's owner (the
   caster's for `OnUnitCast`), for `OnUnitDamaged` the damaged unit's owner, then the source's, and for `OnUnitDied` the
   dying unit's owner, then the killer's. A reaction to every unit goes on a game component.
-  `OnUnitSelected` and `OnUnitDeselected` go there too, and run for the selecting player's components ([Players](#players)).
+  `OnUnitSelected` and `OnUnitDeselected` go there too, and run for the selecting player's components ([Players](#players)),
+  and so do a building's construction reactions and `OnDelivered` ([Construction, training and deliveries](#construction-training-and-deliveries)).
   `OnUnitCreated` runs once for each unit, when it comes into the game (one that came in before anything wanted it
   runs none); a unit's own is `OnCreated`. `OnDawn` and `OnDusk` go on a game component only (see the time of day
   below), and so does `OnGameLoaded`, which runs once when a game saved with the game's own Save Game is loaded, after
@@ -3896,6 +3897,44 @@ public sealed class Smithy : Human.Units.Blacksmith
 - The building's three reactions run on it and on its components; `upgrade` is the upgrade class's object, or a plain
   `Upgrade` with its `TypeId` for an upgrade with no class.
 - A requirement of the map's own ("needs 10 kills") is `SetMaxAllowed<T>`: 0 hides the button, the level count shows it.
+
+### Construction, training and deliveries
+
+A building hears its own construction, the units it trains and the gold and lumber workers bring to it, and the map's
+components hear every construction and delivery:
+
+```csharp
+[ObjectId("h000")]
+public sealed class Mill : Human.Units.LumberMill
+{
+    public override void OnConstructionStarted() { }
+    public override void OnConstructionCancelled() { }  // the game removes it right after
+    public override void OnConstructionFinished() { }
+    public override void OnTrained(Unit trainedUnit) { }
+    public override void OnDelivered(Unit worker, int gold, int lumber) => Owner.Print("+" + lumber);
+}
+
+public sealed class Tally : GameComponent
+{
+    public override void OnConstructionFinished(Unit building) { }
+    public override void OnDelivered(Unit worker, Unit building, int gold, int lumber) { }
+}
+```
+
+- Each runs on the building's class, then its components, then the game's components, then a player's: the building's
+  owner's for a construction, the worker's player's for a delivery. `OnTrained` runs on the building and its
+  components only; the map hears the trained unit with `OnUnitCreated`.
+- A construction's start runs as the builder lays the building down, before the game's enter for it; Moonwell takes the
+  building in first, so its `OnCreated` and the map's `OnUnitCreated` have run. A cancel runs after the building's
+  death (its `OnDeath` and `OnUnitDied` come first), with the refund already given, and the game removes it at once.
+  Upgrading a Town Hall to a Keep is no construction and runs none of the three.
+- `OnTrained`'s unit has come into the game: its `OnCreated` and the map's `OnUnitCreated` have run.
+- The game has no delivery event, so Moonwell reads one from two that come in the same instant: the player's gathered
+  gold or lumber rises, then the game orders the worker back to its mine or tree. The building is the one the worker's
+  way back went to (or that a player right-clicked it on), else the player's nearest building within 400. `gold` is the
+  rise of the player's gathered gold, which upkeep may make less than the load. Gold or lumber that comes in with no
+  trip (a wisp's lumber, an acolyte's or an entangled mine's gold) and gold set by code run none: read the player's
+  `GoldGathered` and `LumberGathered` for those. A map with `OnDelivered` listens for every unit's orders.
 
 ### The 3.0 bag and equipment slots
 

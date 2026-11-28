@@ -43,6 +43,15 @@ namespace Moonwell
         {
         }
 
+        /// <summary>Runs when a worker brings gold or lumber in to a building, after the building and its components have seen it: on the game's components for every worker, and on the worker's player's for its own (J109; see Unit.OnDelivered). Gold or lumber that comes in with no trip (a wisp's lumber, an acolyte's gold) runs none.</summary>
+        /// <param name="worker">The worker that brought it.</param>
+        /// <param name="building">The building it was brought to.</param>
+        /// <param name="gold">The gold brought in; 0 for lumber.</param>
+        /// <param name="lumber">The lumber brought in; 0 for gold.</param>
+        public virtual void OnDelivered(Unit worker, Unit building, int gold, int lumber)
+        {
+        }
+
         /// <summary>Runs when the game starts.</summary>
         public virtual void OnGameStart()
         {

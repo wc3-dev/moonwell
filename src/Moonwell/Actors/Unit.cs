@@ -1981,6 +1981,14 @@ namespace Moonwell
         {
         }
 
+        /// <summary>Runs when a worker brings gold or lumber in to this building, as the game adds it to the player's gathered gold or lumber, before its components and the map's components see it (J109). The game has no delivery event: Moonwell reads one from the player's gathered gold and lumber and the order back to harvest that the game gives the worker in the same instant (probe, 11-28).</summary>
+        /// <param name="worker">The worker that brought it.</param>
+        /// <param name="gold">The gold brought in; 0 for lumber.</param>
+        /// <param name="lumber">The lumber brought in; 0 for gold.</param>
+        public virtual void OnDelivered(Unit worker, int gold, int lumber)
+        {
+        }
+
         /// <summary>Runs when this shop sells an item, to a player's click or to IssueNeutralImmediateOrder: inside the game's sale, with the gold and lumber already taken and before the buyer's pick-up, so the item has no owner yet (seen 11-08). Before its components see it (decision 214).</summary>
         /// <param name="item">The item sold.</param>
         /// <param name="buyer">The unit that receives it.</param>

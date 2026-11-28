@@ -116,6 +116,14 @@ namespace Moonwell
         {
         }
 
+        /// <summary>Runs when a worker brings gold or lumber in to the unit, a building, after its class has seen it (see Unit.OnDelivered).</summary>
+        /// <param name="worker">The worker that brought it.</param>
+        /// <param name="gold">The gold brought in; 0 for lumber.</param>
+        /// <param name="lumber">The lumber brought in; 0 for gold.</param>
+        public virtual void OnDelivered(Unit worker, int gold, int lumber)
+        {
+        }
+
         /// <summary>Runs when the unit, a shop, sells an item, after its class has seen it (see Unit.OnItemSold).</summary>
         /// <param name="item">The item sold.</param>
         /// <param name="buyer">The unit that receives it.</param>

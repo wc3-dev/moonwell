@@ -65,5 +65,8 @@ namespace Moonwell.Hosting
 
         /// <summary>A building finishes training a unit.</summary>
         Train,
+
+        /// <summary>A player's gathered gold or lumber rises: the game's part of a worker's delivery.</summary>
+        Delivery,
     }
 }
