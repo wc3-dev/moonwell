@@ -59,5 +59,11 @@ namespace Moonwell.Hosting
 
         /// <summary>The game is about to write a saved game.</summary>
         Saving,
+
+        /// <summary>A building's construction starts, is cancelled or finishes.</summary>
+        Construction,
+
+        /// <summary>A building finishes training a unit.</summary>
+        Train,
     }
 }

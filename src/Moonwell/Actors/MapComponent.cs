@@ -18,11 +18,29 @@ namespace Moonwell
             {
                 if (mapHooks == null)
                 {
-                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnSelectionChanged", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport }, names2: new[] { "OnUnitStatChanged", "OnPlayerStatChanged" }, bits2: new[] { Hook2.OnStatChanged, Hook2.OnStatChanged });
+                    mapHooks = new HookTable(typeof(MapComponent), new[] { "OnGameStart", "OnUnitCreated", "OnUnitDamaged", "OnUnitDied", "OnUnitCast", "OnLeave", "OnHeroLevelUp", "OnHeroSkillLearned", "OnUnitOrdered", "OnUnitSelected", "OnUnitDeselected", "OnSelectionChanged", "OnAllianceChanged", "OnUnitSummoned", "OnUnitLoaded", "OnUnitUnloaded" }, new[] { Hook.OnGameStart, Hook.OnUnitCreated, Hook.OnUnitDamaged, Hook.OnUnitDied, Hook.OnUnitCast, Hook.OnLeave, Hook.OnHeroLevelUp, Hook.OnHeroSkillLearned, Hook.OnUnitOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSelection, Hook.OnAllianceChanged, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport }, names2: new[] { "OnUnitStatChanged", "OnPlayerStatChanged", "OnConstructionStarted", "OnConstructionCancelled", "OnConstructionFinished", "OnDelivered" }, bits2: new[] { Hook2.OnStatChanged, Hook2.OnStatChanged, Hook2.OnConstruction, Hook2.OnConstruction, Hook2.OnConstruction, Hook2.OnDelivered });
                 }
 
                 return mapHooks;
             }
+        }
+
+        /// <summary>Runs when a building's construction starts, after the building and its components have seen it: on the game's components for every building, and on its owner's for its own (J55).</summary>
+        /// <param name="building">The building under construction.</param>
+        public virtual void OnConstructionStarted(Unit building)
+        {
+        }
+
+        /// <summary>Runs when a building's construction is cancelled, after the building and its components have seen it; the game removes the building right after.</summary>
+        /// <param name="building">The building whose construction was cancelled.</param>
+        public virtual void OnConstructionCancelled(Unit building)
+        {
+        }
+
+        /// <summary>Runs when a building's construction finishes, after the building and its components have seen it.</summary>
+        /// <param name="building">The building finished.</param>
+        public virtual void OnConstructionFinished(Unit building)
+        {
         }
 
         /// <summary>Runs when the game starts.</summary>

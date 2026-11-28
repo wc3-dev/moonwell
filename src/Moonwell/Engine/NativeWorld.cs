@@ -198,6 +198,14 @@ namespace Moonwell.Engine
                     Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_CANCEL, () => ResearchAction(Researching.Cancelled));
                     Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_FINISH, () => ResearchAction(Researching.Finished));
                     break;
+                case GameEvent.Construction:
+                    Register(Natives.EVENT_PLAYER_UNIT_CONSTRUCT_START, () => ConstructionAction(Constructing.Started));
+                    Register(Natives.EVENT_PLAYER_UNIT_CONSTRUCT_CANCEL, () => ConstructionAction(Constructing.Cancelled));
+                    Register(Natives.EVENT_PLAYER_UNIT_CONSTRUCT_FINISH, () => ConstructionAction(Constructing.Finished));
+                    break;
+                case GameEvent.Train:
+                    Register(Natives.EVENT_PLAYER_UNIT_TRAIN_FINISH, TrainAction);
+                    break;
                 case GameEvent.Sale:
                     Register(Natives.EVENT_PLAYER_UNIT_SELL_ITEM, () => SaleAction(Selling.ItemSold));
                     Register(Natives.EVENT_PLAYER_UNIT_PAWN_ITEM, () => SaleAction(Selling.ItemPawned));
@@ -2939,6 +2947,33 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Research", error);
+            }
+        }
+
+        /// <summary>Hands a construction's start, cancel or finish to Constructing: the building is the event's own unit (GetConstructingStructure, GetCancelledStructure, GetConstructedStructure).</summary>
+        private static void ConstructionAction(int kind)
+        {
+            try
+            {
+                var building = kind == Constructing.Started ? Natives.GetConstructingStructure() : kind == Constructing.Cancelled ? Natives.GetCancelledStructure() : Natives.GetConstructedStructure();
+                Constructing.FromGame(building, kind);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Construction", error);
+            }
+        }
+
+        /// <summary>Hands a finished training to Constructing: the trigger unit is the building, GetTrainedUnit the unit.</summary>
+        private static void TrainAction()
+        {
+            try
+            {
+                Constructing.Trained(Natives.GetTriggerUnit(), Natives.GetTrainedUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Train", error);
             }
         }
 
