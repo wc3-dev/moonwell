@@ -287,7 +287,8 @@ namespace Moonwell.Testing
         /// <summary>
         /// CanTarget reads the list of the ability's level on its unit, level 1's when the unit lacks it and the last past its
         /// lists; the build's registration (ObjectTypes.TargetsAllowed) gives the lists when the world has none, an ancient's top
-        /// bit included; an ability with no lists answers false.
+        /// bit included, and the grouped registration of the standard abilities (ObjectTypes.StandardTargets); an ability with no
+        /// lists answers false.
         /// </summary>
         public static void AbilityLevelsAndRegistry(FakeWorld world)
         {
@@ -312,6 +313,14 @@ namespace Moonwell.Testing
 
             var unknown = caster.AbilityOf(F("A0T3"));
             Expect.True(!unknown.CanTarget(air) && !unknown.CanTarget(ancient), "no lists, no target");
+
+            // The build's grouped registration of the standard abilities (J195): each id of a group takes its list, an empty list
+            // answers as one, and an ability registered on its own keeps its list.
+            ObjectTypes.TargetsAllowed(F("A0T5"), new[] { "air" });
+            ObjectTypes.StandardTargets(new[] { "air,ground", "A0T4A0T5", "", "A0T6" });
+            Expect.True(caster.AbilityOf(F("A0T4")).CanTarget(air) && caster.AbilityOf(F("A0T4")).CanTarget(caster), "a grouped ability's list");
+            Expect.True(caster.AbilityOf(F("A0T6")).CanTarget(caster), "a grouped empty list takes ground");
+            Expect.True(caster.AbilityOf(F("A0T5")).CanTarget(air) && !caster.AbilityOf(F("A0T5")).CanTarget(caster), "its own list kept");
         }
     }
 }

@@ -1215,7 +1215,9 @@ hero.AbilityOf<Execute>().ResetCooldown();
   spell's own rule beyond its list, such as Holy Light harming only the undead:
   `if (unit.AbilityOf<HolyLight>().CanTarget(ally) && unit.CanCast<HolyLight>()) { unit.OrderOn("holybolt", ally); }`. The natives
   read no ability's list, so the build writes them into a map whose code calls `CanTarget`, for the abilities its code
-  names and those of its object files; another ability answers false, and a development build reports it.
+  names, those of its object files and every standard ability, so one a unit has only through `LiveAbilities` answers
+  too. The standard ones cost about 9 to 13 KB of the map's script, before the map's compression. Another ability
+  answers false, and a development build reports it.
 - `unit.LiveAbilities` is the abilities the unit has in the game now, not the ones its type starts with, as the same objects `AbilityOf` gives, in the game's
   order. It is a new list each read, so a loop may add or remove abilities. Moonwell's own helper abilities are not in
   it: the three bonus abilities the stats use, a buff's carrier and its game buff, and the game buffs a buff class of

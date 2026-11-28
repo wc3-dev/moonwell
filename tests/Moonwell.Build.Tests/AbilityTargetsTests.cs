@@ -22,6 +22,75 @@ namespace Moonwell.Build.Tests
 
         private const string StormBolt = "air,ground,debris,enemy,neutral,organic";
 
+        private const string Table = "global::Moonwell.ObjectTypes.StandardTargets(";
+
+        // The lines of the abilities the map names, not the grouped table of the other standard ones, nor those of the
+        // standard abilities whose lists differ by level, which the table leaves to lines of their own.
+        private IReadOnlyList<string> Named(IReadOnlyList<string> lines)
+        {
+            Assert.StartsWith(Table, lines[0], StringComparison.Ordinal);
+            var own = Standard().Where(line => !line.StartsWith(Table, StringComparison.Ordinal)).ToHashSet(StringComparer.Ordinal);
+            return lines.Skip(1).Where(line => !own.Contains(line)).ToList();
+        }
+
+        // The lines the build writes for the standard abilities when the map names none.
+        private IReadOnlyList<string> Standard() =>
+            AbilityTargets.Lines(true, Array.Empty<UsedClass>(), Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), built.Standard, null);
+
+        // The groups of the table line: each list with the ids that have it, run together.
+        private static Dictionary<string, string> Groups(string table)
+        {
+            var texts = System.Text.RegularExpressions.Regex.Matches(table, "\"([^\"]*)\"").Select(match => match.Groups[1].Value).ToList();
+            var groups = new Dictionary<string, string>(StringComparer.Ordinal);
+            for (var i = 0; i + 1 < texts.Count; i += 2)
+            {
+                groups[texts[i]] = texts[i + 1];
+            }
+
+            return groups;
+        }
+
+        private static string? GroupOf(Dictionary<string, string> groups, string id) =>
+            groups.Where(group => Enumerable.Range(0, group.Value.Length / 4).Any(i => group.Value.Substring(i * 4, 4) == id)).Select(group => group.Key).FirstOrDefault();
+
+        [Fact]
+        public void every_other_standard_ability_is_in_one_grouped_table_first()
+        {
+            var lines = Standard();
+            var groups = Groups(lines[0]);
+
+            Assert.StartsWith(Table, lines[0], StringComparison.Ordinal);
+            Assert.Equal(StormBolt, GroupOf(groups, "AHtb"));
+            Assert.Equal("air,ground,friend,self,vuln,invu", GroupOf(groups, "AHab"));
+            var ids = string.Concat(groups.Values);
+            Assert.Equal(0, ids.Length % 4);
+            var all = Enumerable.Range(0, ids.Length / 4).Select(i => ids.Substring(i * 4, 4)).ToList();
+            Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
+            Assert.All(lines.Skip(1), line => Assert.StartsWith("global::Moonwell.ObjectTypes.TargetsAllowed(", line, StringComparison.Ordinal));
+            Assert.Equal(built.Standard.Ids("ability").Count(id => id.Length == 4 && !built.Standard.IsMissing(id, null)), all.Count + lines.Count - 1);
+        }
+
+        [Fact]
+        public void a_standard_ability_whose_lists_differ_by_level_keeps_a_line_of_its_own()
+        {
+            var lines = Standard();
+            var groups = Groups(lines[0]);
+
+            // Chemical Rage's (ANcr) and a Shockwave's (ANsh) lists are empty past level 1.
+            Assert.Equal(new[] { Line("ANcr", "self", "", ""), Line("ANsh", "ground,structure", "", "") }, lines.Skip(1));
+            Assert.Null(GroupOf(groups, "ANcr"));
+            Assert.Null(GroupOf(groups, "ANsh"));
+        }
+
+        [Fact]
+        public void the_table_leaves_out_the_abilities_the_map_names()
+        {
+            var lines = AbilityTargets.Lines(true, new[] { Used("Moonwell.Objects.Human.Abilities.StormBolt", "AHtb") }, Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), built.Standard, null);
+
+            Assert.Null(GroupOf(Groups(lines[0]), "AHtb"));
+            Assert.Equal("air,ground,organic,notself,invu,vuln,nonancient", GroupOf(Groups(lines[0]), "AHhb"));
+        }
+
         [Fact]
         public void a_map_that_does_not_ask_registers_nothing()
         {
@@ -33,7 +102,7 @@ namespace Moonwell.Build.Tests
         {
             var lines = AbilityTargets.Lines(true, new[] { Used("Moonwell.Objects.Human.Abilities.StormBolt", "AHtb") }, Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), built.Standard, null);
 
-            Assert.Equal(Line("AHtb", StormBolt, StormBolt, StormBolt), Assert.Single(lines));
+            Assert.Equal(Line("AHtb", StormBolt, StormBolt, StormBolt), Assert.Single(Named(lines)));
         }
 
         [Fact]
@@ -48,7 +117,7 @@ namespace Moonwell.Build.Tests
 
             var lines = AbilityTargets.Lines(true, new[] { Used("Map.Hammer") }, new[] { copy }, new Dictionary<string, string> { ["Map.Hammer"] = "A050" }, built.Standard, null);
 
-            Assert.Equal(Line("A050", "air", StormBolt), Assert.Single(lines));
+            Assert.Equal(Line("A050", "air", StormBolt), Assert.Single(Named(lines)));
         }
 
         [Fact]
@@ -59,7 +128,7 @@ namespace Moonwell.Build.Tests
 
             var lines = AbilityTargets.Lines(true, new[] { Used("Moonwell.Objects.Human.Abilities.StormBolt", "AHtb") }, Array.Empty<DeclaredObject>(), new Dictionary<string, string>(), built.Standard, null, new[] { edited, other });
 
-            Assert.Equal(new[] { Line("AHtb", "ground,enemies", StormBolt, StormBolt), Line("A060", "") }, lines);
+            Assert.Equal(new[] { Line("AHtb", "ground,enemies", StormBolt, StormBolt), Line("A060", "") }, Named(lines));
         }
 
         [Fact]
