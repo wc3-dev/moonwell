@@ -339,6 +339,8 @@ namespace Moonwell
 
         private readonly Dictionary<int, string> unitIcons = new Dictionary<int, string>();
 
+        private readonly Dictionary<int, string> objectNames = new Dictionary<int, string>();
+
         /// <summary>The proper name of each hero, "" until set.</summary>
         private readonly Dictionary<unit, string> properNames = new Dictionary<unit, string>();
 
@@ -2880,6 +2882,18 @@ namespace Moonwell
         public string IconOf(int typeId)
         {
             return unitIcons.TryGetValue(typeId, out var icon) ? icon : "";
+        }
+
+        /// <summary>The name of an object type; "" until set with <see cref="SetObjectName"/>.</summary>
+        public string ObjectNameOf(int objectId)
+        {
+            return objectNames.TryGetValue(objectId, out var name) ? name : "";
+        }
+
+        /// <summary>Sets the name the game gives for an object type, as an ability's.</summary>
+        public void SetObjectName(int objectId, string name)
+        {
+            objectNames[objectId] = name;
         }
 
         /// <summary>Sets the icon the game gives for a unit type.</summary>

@@ -496,7 +496,7 @@ namespace Moonwell
             }
         }
 
-        /// <summary>A unit's spell runs to its end (the game's finish event): the ability's OnFinished, when the cast it is making is live, has taken effect and is for this ability.</summary>
+        /// <summary>A unit's spell runs to its end (the game's finish event): the cast ran to its end, and the ability's OnFinished runs, when the cast it is making is live, has taken effect and is for this ability.</summary>
         private static void HandleSpellFinished(unit caster, int abilityId)
         {
             var by = KnownUnits.Find(caster);
@@ -506,6 +506,7 @@ namespace Moonwell
                 return;
             }
 
+            cast.RanToEnd = true;
             var ability = cast.Ability;
             if (ability.HasEnded || (ability.Mask & Hook.OnCast) == 0)
             {

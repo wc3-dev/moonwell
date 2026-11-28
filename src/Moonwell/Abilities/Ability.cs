@@ -272,6 +272,10 @@ namespace Moonwell
             }
         }
 
+        /// <summary>The ability's casting time at its level now, on this unit, read from the game at each read: the seconds the caster goes on casting after the spell takes effect, before it finishes, as Flame Strike's (seen 11-19); 0 when it has none, when the unit lacks it or is gone. A declared ability's CastTime is the object data it declares.</summary>
+        [LocalSafe]
+        public float LiveCastTime => Has() ? Runtime.World.AbilityCastTime(Unit.Handle, Id, Level - 1) : 0.0f;
+
         /// <summary>Makes the ability ready at once on this unit, ending its cooldown.</summary>
         public void ResetCooldown()
         {

@@ -265,6 +265,19 @@ namespace Moonwell
             Write();
         }
 
+        /// <summary>Shows an ability's name, called anywhere outside Local.For: each machine shows its own, as the game gives it (GetObjectName) in each player's language, and Text reads empty, as no name is the same everywhere. Does nothing once the label has ended.</summary>
+        public void ShowNameOf(Ability ability)
+        {
+            if (HasEnded)
+            {
+                return;
+            }
+
+            text = "";
+            local = Runtime.World.ObjectNameOf(ability.Id);
+            Write();
+        }
+
         /// <summary>A label's Scale sizes its text only: the game scales a TEXT's offset and box with it (seen 11-12), so they are given divided by it.</summary>
         internal override float PlaceScale => scale;
 
@@ -294,7 +307,7 @@ namespace Moonwell
         /// <summary>Gives the game the label's text and alignment, then its points and looks.</summary>
         internal override void Place()
         {
-            if (text.Length > 0)
+            if (text.Length > 0 || local != null)
             {
                 Write();
             }

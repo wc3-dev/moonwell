@@ -1296,6 +1296,18 @@ namespace Moonwell.Engine
             return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_CAST_RANGE, levelIndex);
         }
 
+        /// <summary>The casting time of a unit's ability at a level: BlzGetAbilityRealLevelField of ABILITY_RLF_CASTING_TIME.</summary>
+        public float AbilityCastTime(unit unit, int abilityId, int levelIndex)
+        {
+            return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_CASTING_TIME, levelIndex);
+        }
+
+        /// <summary>The follow through time of a unit's ability at a level: BlzGetAbilityRealLevelField of ABILITY_RLF_FOLLOW_THROUGH_TIME.</summary>
+        public float AbilityFollowThrough(unit unit, int abilityId, int levelIndex)
+        {
+            return Natives.BlzGetAbilityRealLevelField(Natives.BlzGetUnitAbility(unit, abilityId), Natives.ABILITY_RLF_FOLLOW_THROUGH_TIME, levelIndex);
+        }
+
         /// <summary>Sets the cast range of a unit's own copy of an ability at a level: BlzSetAbilityRealLevelField of ABILITY_RLF_CAST_RANGE.</summary>
         public void SetAbilityRange(unit unit, int abilityId, int levelIndex, float range)
         {
@@ -1603,6 +1615,12 @@ namespace Moonwell.Engine
         public void RenameUnit(unit unit, string name)
         {
             Natives.BlzSetUnitName(unit, name);
+        }
+
+        /// <summary>The name of an object type, from the game: GetObjectName.</summary>
+        public string ObjectNameOf(int objectId)
+        {
+            return Natives.GetObjectName(objectId);
         }
 
         /// <summary>The icon of a unit type, from the game: BlzGetAbilityIcon, which takes a unit type too.</summary>

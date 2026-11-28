@@ -356,6 +356,12 @@ namespace Moonwell.Hosting
         /// <summary>Sets the cast range of a unit's own copy of an ability at a level counted from 0, for its next casts.</summary>
         void SetAbilityRange(unit unit, int abilityId, int levelIndex, float range);
 
+        /// <summary>The casting time of a unit's ability at a level counted from 0: the seconds the caster goes on casting after the effect, before the spell finishes.</summary>
+        float AbilityCastTime(unit unit, int abilityId, int levelIndex);
+
+        /// <summary>The follow through time of a unit's ability at a level counted from 0: how long a Channel-based spell channels; 0 for a spell without the field.</summary>
+        float AbilityFollowThrough(unit unit, int abilityId, int levelIndex);
+
         /// <summary>The ids of the abilities a unit has now, in the game's order, the helper abilities Moonwell gave it included; empty for a unit with none.</summary>
         List<int> AbilityIdsOf(unit unit);
 
@@ -496,6 +502,9 @@ namespace Moonwell.Hosting
 
         /// <summary>The icon of a unit type, as this machine's graphics mode reads it.</summary>
         string IconOf(int typeId);
+
+        /// <summary>The name of an object type, as an ability's, in this machine's language.</summary>
+        string ObjectNameOf(int objectId);
 
         /// <summary>A hero's proper name.</summary>
         string ProperNameOf(unit hero);

@@ -112,6 +112,37 @@ namespace Moonwell.Build
         }
 
         /// <summary>
+        /// The registrations of the map's abilities based on Channel (<c>ANcl</c>), for ObjectRegistry, whether or not the code casts:
+        /// each declared class whose root is Channel, by its id, and each ability of the source map's object files based on it, so
+        /// that a cast's ChannelSeconds reads the follow through time only where it is one. The standard Channel needs none.
+        /// </summary>
+        /// <param name="declared">The declared objects.</param>
+        /// <param name="ids">The object id of each declared class.</param>
+        /// <param name="mapAbilities">The abilities of the source map's object files (<see cref="MapAbilities"/>).</param>
+        public static IReadOnlyList<string> ChannelLines(IReadOnlyList<DeclaredObject> declared, IReadOnlyDictionary<string, string> ids, IReadOnlyList<DeclaredObject> mapAbilities)
+        {
+            var found = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (var one in declared.Where(one => one.Kind == "ability" && one.StandardRoot == Channel))
+            {
+                if (ids.TryGetValue(one.ClassName, out var id) && id != Channel)
+                {
+                    found.Add(id);
+                }
+            }
+
+            foreach (var one in mapAbilities.Where(one => one.StandardRoot == Channel))
+            {
+                var id = one.PinnedId ?? one.StandardRoot;
+                if (id != Channel)
+                {
+                    found.Add(id);
+                }
+            }
+
+            return found.Select(id => $"{Types}.Channel({FourCC(id)});").ToList();
+        }
+
+        /// <summary>
         /// The abilities of the source map's object files (World Editor's), main and skin, each as an object with its id (its
         /// own, or a changed standard object's), its base, and what a dummy's cast and <c>Ability.CanTarget</c> need of its changes:
         /// the base order id of a Channel copy (<c>Ncl6</c>), its requirements (<c>areq</c>, <c>arqa</c>), its targets (<c>atar</c>)

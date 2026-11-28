@@ -1992,6 +1992,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "kit.unit-frame-shows", Run = KitHudCases.UnitFrameShows });
             list.Add(new Case { Name = "kit.action-button-cooldown", Run = KitHudCases.ActionButtonCooldown });
             list.Add(new Case { Name = "kit.cast-bar-runs", Run = KitHudCases.CastBarRuns });
+            list.Add(new Case { Name = "kit.cast-bar-channels-and-stops", Run = KitHudCases.CastBarChannelsAndStops });
+            list.Add(new Case { Name = "kit.cast-bar-follows", Run = KitHudCases.CastBarFollows });
             list.Add(new Case { Name = "kit.buff-row-shows", Run = KitHudCases.BuffRowShows });
             list.Add(new Case { Name = "kit.selection-list-follows", Run = KitHudCases.SelectionListFollows });
             list.Add(new Case { Name = "kit.selection-list-entry", Run = KitHudCases.SelectionListEntry });
@@ -2155,6 +2157,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "spells.stopped-before-effect", Run = SpellCases.StoppedBeforeEffect });
             list.Add(new Case { Name = "spells.finished-before-end", Run = SpellCases.FinishedBeforeEnd });
             list.Add(new Case { Name = "spells.stopped-is-not-finished", Run = SpellCases.StoppedIsNotFinished });
+            list.Add(new Case { Name = "spells.cast-says-how-it-ended", Run = SpellCases.CastSaysHowItEnded });
+            list.Add(new Case { Name = "spells.cast-and-channel-seconds", Run = SpellCases.CastAndChannelSeconds });
             list.Add(new Case { Name = "spells.finished-listens", Run = SpellCases.FinishedListens });
             list.Add(new Case { Name = "spells.cooldown-and-mana", Run = SpellCases.CooldownAndMana });
             list.Add(new Case { Name = "spells.cooldown-of-missing-ability", Run = SpellCases.CooldownOfMissingAbility });
