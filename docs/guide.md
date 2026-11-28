@@ -568,7 +568,7 @@ quarter second before Moonwell notices a removal, a read that gives 0 on a remov
 | `AddAnimationTag(tag)`, `RemoveAnimationTag(tag)` | `AnimationTag.Defend`, `Alternate`, `Gold`, `Lumber`, `Work`, or any tag the game takes (`"upgrade first"`): the unit's animations play with it until it is removed |
 | `Order(order)`, `OrderAt(order, x, y)`, `OrderOn(order, target)`, `Stop()` | orders by the game's order string, `Orders.Move` and the other constants, or a spell's (`"holybolt"`) |
 | `UseItem(item)`, `UseItemAt(item, x, y)`, `UseItemOn(item, target)` | use an item the unit carries, as a click on it does, giving the game's answer; false once the unit, the item or the target is gone |
-| `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle; the last order worth giving again (below); gives it again |
+| `CurrentOrder`, `LastOrder`, `Reissue()` | the name of what the game says the unit does now, "" when idle, a building's id (`"hhou"`) while a worker goes to lay it down; the last order worth giving again (below); gives it again |
 | `InventorySize`, `ItemIn(slot)`, `Give(item)`, `Give(item, slot)`, `Drop(item)` | the inventory, slots from 0; `Give` and `Drop` run the pick-up and drop reactions inside the call; `Give` answers false, with no reaction, for a full inventory; giving an item the unit holds runs a drop and then a pick-up, but giving it into a slot only moves it, swapping with the item there |
 | `AddAbility<T>()`, `RemoveAbility<T>()`, `HasAbility<T>()` | give an ability at level 1, kept through a morph, and return its object; take one, its type's own too; whether the unit has it, a carried item's included. Each takes an id too |
 | `CastOn<T>(target, scope)`, `CastAt<T>(x, y, scope)` | cast a real spell for the unit through a hidden dummy ([below](#casting-real-spells)) |
@@ -1747,6 +1747,9 @@ var route = unit.FindPath(x, y);                   // route.Points, route.Length
 var lane = Paths.FindPathFor(kind, x1, y1, x2, y2); // the route a unit of a type would get, with no unit made
 if (unit.CanReach(x, y)) { /* it can walk there and stand */ }
 Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cross it while the scope holds it
+if (Paths.CanBuild<Human.Units.Farm>(x, y, player)) { /* the game would take a Farm there */ }
+var sites = Paths.BuildSpots<Human.Units.Barracks>(x, y, 3, player); // three places, nearest first, not overlapping
+var stands = Paths.BuildPlace<Human.Units.Farm>(x, y);            // where a Farm asked at (x, y) stands
 ```
 
 - A unit takes a square of the game's 32 cells by its collision size: below 16 one cell, 16 to 31 two, 32 to 47 three,
@@ -1771,7 +1774,29 @@ Paths.Wall(x1, y1, x2, y2, cast);                  // walkers and ships can't cr
 - A path search keeps what the game said of each cell. Moonwell's own destructable changes, the buildings it sees come
   and go, a building's death, and the death of a destructable next to a cell a search found blocked all drop it. After
   changing destructables or buildings with natives, call `Paths.Refresh(area)`.
-- These calls move a hidden helper or item, so they change game state and are not for `Local.For`.
+- `Paths.CanBuild<T>(x, y)` (or `CanBuild(typeId, x, y)`) answers as the game's placement answers a worker's build
+  order, checked against the game at 69,221 places: the building takes every cell of its pathing texture, the
+  unbuildable ring of a Town Hall's or a Barracks' texture too, so two such buildings stand 512 or 384 apart, not
+  touching; every cell must be in the playable area, on ground its object data allows (buildable for most, every cell
+  blighted for a Ziggurat; cells that are only unwalkable don't matter), clear of other buildings' cells, trees and
+  other destructables; and a building that takes gold in (a Town Hall or Great Hall, with Return Gold and Lumber) stands
+  768 or more from every gold mine. The place is first moved onto the building's grid, as the game moves it:
+  `BuildPlace` gives it (a Farm asked at (100, -100) stands at (64, -64), a Burrow at (96, -96)).
+- Units count only when a builder's player is given: then every ground unit on the building's cells refuses it,
+  but that player's own unpaused units, which the game pushes aside when the building is laid down. Fliers and hidden
+  units never count. Without a player, no unit does.
+- `Paths.BuildSpots<T>(x, y, count)` is to buildings what `Spots` is to units: up to `count` places nearest the point,
+  each one `CanBuild` takes, none on another's cells, out to 1,024 each way. It looks at the units round the area once,
+  so ten Farms take about 10 ms in the game and four Town Halls about 30 ms; one `CanBuild` takes 35 microseconds for a
+  Farm and 0.3 ms for a Town Hall.
+- They don't ask about the player's gold, its tech or whether a worker can reach the place, and they don't check a
+  shipyard's water, which their object data asks for in a way not yet measured. The build writes the buildings' cells
+  and rules into a map whose code calls one of them, from the game's own pathing textures or the map's own TGA in its
+  folder or assets.
+- While a worker walks to lay a building down, `unit.CurrentOrder` (and the order reactions' `order.Name`) is the
+  building's four-character id, `"hhou"` for a Farm: the game gives that order no name of its own.
+- These calls move a hidden helper or item, so they change game state and are not for `Local.For`; `BuildPlace` only
+  reads the table.
 
 ## Procedural terrain
 

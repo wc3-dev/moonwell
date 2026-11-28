@@ -1306,7 +1306,7 @@ namespace Moonwell
         /// <summary>What the game reads for a patrol under way (seen 11-03), a number with no name.</summary>
         private const int PatrolUnderWay = 851991;
 
-        /// <summary>The game's string of the order the unit carries out now, as the game says (GetUnitCurrentOrder); "" when it is idle or gone, and "patrol" for a patrol under way, which the game reads as a number with no name. Compare it with the constants: <c>unit.CurrentOrder == Orders.Move</c>.</summary>
+        /// <summary>The game's string of the order the unit carries out now, as the game says (GetUnitCurrentOrder); "" when it is idle or gone, "patrol" for a patrol under way, which the game reads as a number with no name, and the building's four-character id while a worker goes to lay one down (<c>"hhou"</c> for a Farm), which the game reads as the type's id with no name. Compare it with the constants: <c>unit.CurrentOrder == Orders.Move</c>.</summary>
         [LocalSafe]
         public string CurrentOrder
         {
@@ -1323,7 +1323,7 @@ namespace Moonwell
                     return Orders.Patrol;
                 }
 
-                return id == 0 ? "" : Runtime.World.OrderName(id);
+                return id == 0 ? "" : Orders.NameOf(id);
             }
         }
 

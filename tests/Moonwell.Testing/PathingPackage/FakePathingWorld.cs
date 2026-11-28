@@ -117,6 +117,36 @@ namespace Moonwell.Testing
             Watched.Add(new Vector2(x, y));
         }
 
+        /// <summary>The units placement finds, as UnitsIn gives them: those a case put with Put.</summary>
+        internal List<Standing> Units = new List<Standing>();
+
+        /// <summary>How many times UnitsIn was asked.</summary>
+        public int UnitsAsked;
+
+        /// <summary>Takes every unit Put put away.</summary>
+        public void Clear()
+        {
+            Units.Clear();
+        }
+
+        /// <summary>Puts a unit or building where placement finds it: a type, a place, a collision size, an owner's slot.</summary>
+        public void Put(int type, float x, float y, float collision = 31f, int owner = 0, bool building = false, bool flies = false, bool paused = false)
+        {
+            Units.Add(new Standing { Type = type, X = x, Y = y, Collision = collision, Owner = owner, Building = building, Flies = flies, Paused = paused });
+        }
+
+        void IPathingWorld.UnitsIn(float minX, float minY, float maxX, float maxY, List<Standing> into)
+        {
+            UnitsAsked++;
+            foreach (var one in Units)
+            {
+                if (one.X >= minX && one.X <= maxX && one.Y >= minY && one.Y <= maxY)
+                {
+                    into.Add(one);
+                }
+            }
+        }
+
         public float CollisionOf(unit handle)
         {
             return Collisions.TryGetValue(handle, out var size) ? size : 31f;

@@ -10,12 +10,13 @@ const string Usage = """
       Moonwell.Generator objects <repository root> --export <war3.w3mod folder> <game version>
       Moonwell.Generator tiles <repository root> [--install <game folder>]
       Moonwell.Generator frames <repository root> [--install <game folder>]
+      Moonwell.Generator footprints <repository root> [--install <game folder>]
 
     Without --install, the install is the folder MOONWELL_WAR3 names, else the usual folder. The game version is the
     install's own.
     """;
 
-if (args.Length < 2 || (args[0] != "natives" && args[0] != "objects" && args[0] != "tiles" && args[0] != "frames"))
+if (args.Length < 2 || (args[0] != "natives" && args[0] != "objects" && args[0] != "tiles" && args[0] != "frames" && args[0] != "footprints"))
 {
     Console.Error.WriteLine(Usage);
     return 2;
@@ -58,6 +59,21 @@ if (command == "tiles")
     Directory.CreateDirectory(Path.GetDirectoryName(target)!);
     File.WriteAllText(target, TilesWriter.Write(terrain, files.Build.Version));
     Console.WriteLine($"{terrain.Count} tiles");
+    return 0;
+}
+
+if (command == "footprints")
+{
+    // Every pathing texture of the game's, as the cells a building of it takes (game facts 11-28).
+    var lines = new List<string> { $"# Written by Moonwell.Generator footprints from the game's PathTextures, game {files.Build.Version}. Do not edit.", "# key<TAB>cells: w x h, then the cells as hex when not every one is taken (Moonwell.GameData.PathTextures)." };
+    foreach (var path in files.List("PathTextures/", "sd", ".tga"))
+    {
+        lines.Add(PathTextures.Key(path) + "\t" + PathTextures.Read(files.Read(path)!).Text());
+    }
+
+    var target = Path.Combine(root, "src", "Moonwell.GameData", "path-textures.txt");
+    File.WriteAllText(target, string.Join("\n", lines) + "\n");
+    Console.WriteLine($"{lines.Count - 2} pathing textures");
     return 0;
 }
 

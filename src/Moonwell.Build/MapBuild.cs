@@ -166,6 +166,12 @@ namespace Moonwell.Build
                 {
                     installs.Add(PathingTypes.TypesInstall(PathingTypes.Table(standard, data, project.MapFolder, declarations.Objects, ids)));
                 }
+
+                // A map that asks where a building fits gets the buildings' cells and placement rules (J60).
+                if (BuildingTypes.UsedBy(targetPath))
+                {
+                    installs.Add(BuildingTypes.Install(BuildingTypes.Table(standard, data, project, declarations.Objects, ids, declarations.StandardClassIds)));
+                }
             }
 
             EntryWriter.Write(project, settings, true, installs, Loading(targetPath));
