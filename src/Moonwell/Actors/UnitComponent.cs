@@ -13,7 +13,7 @@ namespace Moonwell
             {
                 if (componentHooks == null)
                 {
-                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnStatChanged" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnStatChanged });
+                    componentHooks = new HookTable(typeof(UnitComponent), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnLevelUp", "OnSkillLearned", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnLevelUp, Hook.OnSkillLearned, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnStatChanged", "OnConstructionStarted", "OnConstructionCancelled", "OnConstructionFinished", "OnTrained", "OnDelivered" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnStatChanged, Hook2.OnConstruction, Hook2.OnConstruction, Hook2.OnConstruction, Hook2.OnTrained, Hook2.OnDelivered });
                 }
 
                 return componentHooks;
@@ -92,6 +92,35 @@ namespace Moonwell
         /// <summary>Runs when the unit's research finishes, after its class has seen it (see Unit.OnResearchFinished).</summary>
         /// <param name="upgrade">The upgrade researched.</param>
         public virtual void OnResearchFinished(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when the unit's construction starts, after its class has seen it (see Unit.OnConstructionStarted).</summary>
+        public virtual void OnConstructionStarted()
+        {
+        }
+
+        /// <summary>Runs when the unit's construction is cancelled, after its class has seen it.</summary>
+        public virtual void OnConstructionCancelled()
+        {
+        }
+
+        /// <summary>Runs when the unit's construction finishes, after its class has seen it.</summary>
+        public virtual void OnConstructionFinished()
+        {
+        }
+
+        /// <summary>Runs when the unit, a building, finishes training a unit, after its class has seen it (see Unit.OnTrained).</summary>
+        /// <param name="trainedUnit">The unit trained.</param>
+        public virtual void OnTrained(Unit trainedUnit)
+        {
+        }
+
+        /// <summary>Runs when a worker brings gold or lumber in to the unit, a building, after its class has seen it (see Unit.OnDelivered).</summary>
+        /// <param name="worker">The worker that brought it.</param>
+        /// <param name="gold">The gold brought in; 0 for lumber.</param>
+        /// <param name="lumber">The lumber brought in; 0 for gold.</param>
+        public virtual void OnDelivered(Unit worker, int gold, int lumber)
         {
         }
 

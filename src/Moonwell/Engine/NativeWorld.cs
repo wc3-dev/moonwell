@@ -198,6 +198,21 @@ namespace Moonwell.Engine
                     Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_CANCEL, () => ResearchAction(Researching.Cancelled));
                     Register(Natives.EVENT_PLAYER_UNIT_RESEARCH_FINISH, () => ResearchAction(Researching.Finished));
                     break;
+                case GameEvent.Construction:
+                    Register(Natives.EVENT_PLAYER_UNIT_CONSTRUCT_START, () => ConstructionAction(Constructing.Started));
+                    Register(Natives.EVENT_PLAYER_UNIT_CONSTRUCT_CANCEL, () => ConstructionAction(Constructing.Cancelled));
+                    Register(Natives.EVENT_PLAYER_UNIT_CONSTRUCT_FINISH, () => ConstructionAction(Constructing.Finished));
+                    break;
+                case GameEvent.Train:
+                    Register(Natives.EVENT_PLAYER_UNIT_TRAIN_FINISH, TrainAction);
+                    break;
+                case GameEvent.Delivery:
+                    for (var slot = 0; slot < Natives.bj_MAX_PLAYERS; slot++)
+                    {
+                        WatchGathered(slot);
+                    }
+
+                    break;
                 case GameEvent.Sale:
                     Register(Natives.EVENT_PLAYER_UNIT_SELL_ITEM, () => SaleAction(Selling.ItemSold));
                     Register(Natives.EVENT_PLAYER_UNIT_PAWN_ITEM, () => SaleAction(Selling.ItemPawned));
@@ -2993,6 +3008,62 @@ namespace Moonwell.Engine
             catch (Exception error)
             {
                 Errors.Report("Moonwell.Research", error);
+            }
+        }
+
+        /// <summary>Hands a construction's start, cancel or finish to Constructing: the building is the event's own unit (GetConstructingStructure, GetCancelledStructure, GetConstructedStructure).</summary>
+        private static void ConstructionAction(int kind)
+        {
+            try
+            {
+                var building = kind == Constructing.Started ? Natives.GetConstructingStructure() : kind == Constructing.Cancelled ? Natives.GetCancelledStructure() : Natives.GetConstructedStructure();
+                Constructing.FromGame(building, kind);
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Construction", error);
+            }
+        }
+
+        /// <summary>Hands a finished training to Constructing: the trigger unit is the building, GetTrainedUnit the unit.</summary>
+        private static void TrainAction()
+        {
+            try
+            {
+                Constructing.Trained(Natives.GetTriggerUnit(), Natives.GetTrainedUnit());
+            }
+            catch (Exception error)
+            {
+                Errors.Report("Moonwell.Train", error);
+            }
+        }
+
+        /// <summary>Hands each rise of a player's gathered gold or lumber to Delivering: a state event of at least 0 fires at every change (seen 11-08), and the rise is the change from the last value read.</summary>
+        private static void WatchGathered(int slot)
+        {
+            var player = Natives.Player(slot);
+            var states = new[] { Natives.PLAYER_STATE_GOLD_GATHERED, Natives.PLAYER_STATE_LUMBER_GATHERED };
+            for (var i = 0; i < states.Length; i++)
+            {
+                var state = states[i];
+                var isGold = i == 0;
+                var last = Natives.GetPlayerState(player, state);
+                var watch = Natives.CreateTrigger();
+                Natives.TriggerRegisterPlayerStateEvent(watch, player, state, Natives.GREATER_THAN_OR_EQUAL, 0.0f);
+                Natives.TriggerAddAction(watch, () =>
+                {
+                    try
+                    {
+                        var now = Natives.GetPlayerState(player, state);
+                        var added = now - last;
+                        last = now;
+                        Delivering.Gathered(slot, isGold ? added : 0, isGold ? 0 : added);
+                    }
+                    catch (Exception error)
+                    {
+                        Errors.Report("Moonwell.Delivery", error);
+                    }
+                });
             }
         }
 

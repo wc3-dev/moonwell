@@ -17,7 +17,7 @@ namespace Moonwell
             {
                 if (unitHooks == null)
                 {
-                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnStatChanged" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnStatChanged });
+                    unitHooks = new HookTable(typeof(Unit), new string[] { "OnItemPickedUp", "OnItemDropped", "OnDamaged", "OnDealtDamage", "OnDeath", "OnKill", "OnCast", "OnOrdered", "OnSelected", "OnDeselected", "OnSummon", "OnLoaded", "OnUnloaded", "OnCargoLoaded", "OnCargoUnloaded", "OnItemEquipped", "OnItemUnequipped" }, new int[] { Hook.OnItemPickedUp, Hook.OnItemDropped, Hook.OnDamaged, Hook.OnDealtDamage, Hook.OnDeath, Hook.OnKill, Hook.OnCast, Hook.OnOrdered, Hook.OnSelection, Hook.OnSelection, Hook.OnSummon, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnTransport, Hook.OnItemPickedUp, Hook.OnItemDropped }, names2: new string[] { "OnResearchStarted", "OnResearchCancelled", "OnResearchFinished", "OnItemSold", "OnItemPawned", "OnUnitSold", "OnStatChanged", "OnConstructionStarted", "OnConstructionCancelled", "OnConstructionFinished", "OnTrained", "OnDelivered" }, bits2: new int[] { Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnResearchOrSale, Hook2.OnStatChanged, Hook2.OnConstruction, Hook2.OnConstruction, Hook2.OnConstruction, Hook2.OnTrained, Hook2.OnDelivered });
                 }
 
                 return unitHooks;
@@ -1996,6 +1996,35 @@ namespace Moonwell
         /// <summary>Runs when this building's research finishes, after the upgrade's OnResearched for the new level, before its components see it.</summary>
         /// <param name="upgrade">The upgrade researched.</param>
         public virtual void OnResearchFinished(Upgrade upgrade)
+        {
+        }
+
+        /// <summary>Runs when this building's construction starts, as its builder lays it down, before its components and the map's components see it (J55). The building has come into the game: its OnCreated has run.</summary>
+        public virtual void OnConstructionStarted()
+        {
+        }
+
+        /// <summary>Runs when this building's construction is cancelled, before its components and the map's components see it; the game removes the building right after.</summary>
+        public virtual void OnConstructionCancelled()
+        {
+        }
+
+        /// <summary>Runs when this building's construction finishes, before its components and the map's components see it. An upgrade (a Town Hall to a Keep) is not a construction and runs none.</summary>
+        public virtual void OnConstructionFinished()
+        {
+        }
+
+        /// <summary>Runs when this building finishes training a unit, before its components see it; the trained unit has come into the game (its OnCreated and the map's OnUnitCreated have run).</summary>
+        /// <param name="trainedUnit">The unit trained.</param>
+        public virtual void OnTrained(Unit trainedUnit)
+        {
+        }
+
+        /// <summary>Runs when a worker brings gold or lumber in to this building, as the game adds it to the player's gathered gold or lumber, before its components and the map's components see it (J109). The game has no delivery event: Moonwell reads one from the player's gathered gold and lumber and the order back to harvest that the game gives the worker in the same instant (probe, 11-28).</summary>
+        /// <param name="worker">The worker that brought it.</param>
+        /// <param name="gold">The gold brought in; 0 for lumber.</param>
+        /// <param name="lumber">The lumber brought in; 0 for gold.</param>
+        public virtual void OnDelivered(Unit worker, int gold, int lumber)
         {
         }
 

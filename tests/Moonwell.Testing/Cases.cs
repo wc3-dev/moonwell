@@ -26,6 +26,7 @@ namespace Moonwell.Testing
             AddSpells(list);
             AddSummons(list);
             AddResearch(list);
+            AddConstruction(list);
             AddShops(list);
             AddInventory(list);
             AddLast(list);
@@ -2234,6 +2235,20 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "research.lowered-inside-stops", Run = ResearchCases.LoweredInsideStops });
             list.Add(new Case { Name = "research.game-research", Run = ResearchCases.GameResearch });
             list.Add(new Case { Name = "research.plain-upgrade", Run = ResearchCases.PlainUpgrade });
+        }
+
+        /// <summary>Adds the cases for construction and training (J55) and deliveries (J109).</summary>
+        private static void AddConstruction(List<Case> list)
+        {
+            list.Add(new Case { Name = "construction.reaction-order", Run = ConstructionCases.ReactionOrder });
+            list.Add(new Case { Name = "construction.plain-building-taken-in", Run = ConstructionCases.PlainBuildingTakenIn });
+            list.Add(new Case { Name = "construction.throwing-reaction-is-reported", Run = ConstructionCases.ThrowingReactionIsReported });
+            list.Add(new Case { Name = "construction.trained-on-building", Run = ConstructionCases.TrainedOnBuilding });
+            list.Add(new Case { Name = "construction.trained-by-unheld-building", Run = ConstructionCases.TrainedByUnheldBuilding });
+            list.Add(new Case { Name = "delivery.reaction-order", Run = DeliveryCases.ReactionOrder });
+            list.Add(new Case { Name = "delivery.untaken-is-let-go", Run = DeliveryCases.UntakenIsLetGo });
+            list.Add(new Case { Name = "delivery.nearest-building-and-own-player", Run = DeliveryCases.NearestBuildingAndOwnPlayer });
+            list.Add(new Case { Name = "delivery.right-click-on-own-building", Run = DeliveryCases.RightClickOnOwnBuilding });
         }
 
         /// <summary>The summons' cases (decision 227).</summary>
