@@ -2726,7 +2726,8 @@ public class GuardTests
   `PlayerComponents` stay. A component added after the start hears no `OnGameStart`, as in the game.
 - With the [Interactions](#interactions-and-finding) package in the map, `Find`, interactions and gizmos answer from the
   simulation's units where they stand: a unit has a place while it is alive, shown and not in a transport, and an item
-  while it lies on the ground. No destructable is a tree there: `IsTree()` reads false.
+  while it lies on the ground.
+- No destructable type is a tree in a simulation until a test adds it to `sim.World.TreeTypes`: `IsTree()` reads false.
 - With a map, a player's files go in the folder the build would pick: the map's `SaveFolder`, else its name, else the
   map project's name, in letters and digits only, so `sim.World.Files` holds `MyRpg\settings.txt`. An empty game writes
   under `Map`. A computer's slot has its `Slot`'s `Name`, as in the game; a person's slot stays `Player 1`, where the
@@ -2864,13 +2865,21 @@ var near = Find.InRange<Unit>(x, y, 500f);                // a new list; or Find
   class when that is what is meant. The holder of an interaction is tracked on its own: a tree that holds one takes
   in no other destructable. Past 2,000 destructables taken in, the check for those a raw native removed takes turns, so
   it notices one later: up to 2.5 s on a map of 18,600, where `Remove()` is at once.
+- `Find.ClosestTree(x, y, range)` gives the nearest living tree, and takes in only that one while nothing has asked
+  for destructables: it asks the game for the square round the point and reads the rest through the game, so a lumber
+  mill on a generated forest takes in only the trees it is given. Once something has asked for destructables
+  it searches the grid as `Closest` does. Inside `Local.For` it takes nothing in and finds only the trees Moonwell knows.
 - A check or `Find` reads every cell of its box, empty or not: a `Range` of 5,000 is about 6,400 cells, near 2.6 ms a
   check (estimated). Keep a range to what the interaction needs, and a search of the whole map for a rare moment.
-- `Find` has `InRange`, `InRect`, `InPolygon`, `AlongLine` and `Closest`. Each gives a new list, or fills a list the
-  map keeps (which makes none; use it every tick); `Closest` gives the nearest one, or the nearest few into a list.
+- `Find` has `InRange`, `InRect`, `InPolygon`, `AlongLine`, `Closest` and `ClosestTree`. Each gives a new list, or
+  fills a list the map keeps (which makes none; use it every tick); `Closest` gives the nearest one, or the nearest few
+  into a list.
 - `Interactions.CellSize` (128), `CellCheck` (0.1), `Slack` (64) and `Step` (1/32) are set in the map's constructor.
 - `Find` is fine inside `Local.For`: it reads and changes nothing there (a kind nothing outside has asked for yet is
-  searched through the objects Moonwell knows, slower). `IsTree()` needs `Moonwell.Objects`; the build warns if missing.
+  searched through the objects Moonwell knows, slower).
+- `destructable.IsTree()` is core's, so a map needs no package for it: whether the type's "Targeted As" holds tree, read
+  from a table the build writes for a map that calls it or references this package. It needs `Moonwell.Objects`, whose
+  standard data makes the table; the build warns if it is missing.
 
 ## Physics and missiles
 

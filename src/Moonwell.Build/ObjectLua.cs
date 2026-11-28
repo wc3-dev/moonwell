@@ -353,8 +353,8 @@ namespace Moonwell.Build
         /// When the map reads <c>Default</c> (<see cref="DeclarationSet.TypeFields"/>), appends <c>MoonwellTypeValues</c> too: by type
         /// id, the shared fields the map's code reads of every unit, hero and item type of the data set, of every type the map makes
         /// or changes in World Editor and of every class of the map, which a type's default object with no class of the map's reads.
-        /// When the map references the interactions package (<paramref name="trees"/>), appends <c>MoonwellTrees</c>: the ids of the
-        /// destructable types whose "Targeted As" holds tree, which <c>IsTree</c> reads.
+        /// When the map calls <c>IsTree</c> or references the interactions package (<paramref name="trees"/>), appends
+        /// <c>MoonwellTrees</c>: the ids of the destructable types whose "Targeted As" holds tree, which <c>IsTree</c> reads.
         /// </summary>
         /// <param name="script">The compiled script, with the library before its compiled code; the fields read are found after the library.</param>
         /// <param name="declarations">The used classes, the declared objects, the map's hero bonuses and the fields read of a type's default object.</param>
@@ -362,7 +362,7 @@ namespace Moonwell.Build
         /// <param name="standard">The standard data.</param>
         /// <param name="set">The tables standard values are read from (<see cref="GameData.ValueSet"/>): null for the base tables.</param>
         /// <param name="mapTypes">The types the map makes or changes in World Editor (<see cref="MapTypes.Read"/>).</param>
-        /// <param name="trees">Whether the map references the interactions package, which reads the table of tree types.</param>
+        /// <param name="trees">Whether the map calls IsTree or references the interactions package, which reads the table of tree types.</param>
         /// <returns>The script with the values table at its end.</returns>
         /// <exception cref="BuildException">A declared list or reference names a class that has no object id.</exception>
         public static string Values(

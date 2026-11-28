@@ -5,8 +5,8 @@ namespace Moonwell
     /// <summary>
     /// The interactions package's world in a Simulation, so that Find, interactions and gizmos answer from the fake's own units,
     /// items and destructables: a unit has a place while it is alive, shown and not in a transport, an item while it lies on
-    /// the ground, a destructable while its life is above 0, and the world runs from -4096 to 4096 both ways. No destructable
-    /// type is a tree, as in a map built without the build's table of them. Pathing and terrain stay the game's (decision 313).
+    /// the ground, a destructable while its life is above 0, and the world runs from -4096 to 4096 both ways. Pathing and
+    /// terrain stay the game's (decision 313).
     /// </summary>
     internal sealed class SimulatedInteractionWorld : IInteractionWorld
     {
@@ -45,12 +45,6 @@ namespace Moonwell
         public bool IsAlive(destructable target)
         {
             return world.DestructableLifeOf(target) > 0.0f;
-        }
-
-        /// <summary>No type is a tree: the fake has no table of them.</summary>
-        public bool IsTreeType(int typeId)
-        {
-            return false;
         }
 
         /// <summary>The fake's world bounds.</summary>

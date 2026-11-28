@@ -327,6 +327,49 @@ namespace Moonwell.Build
             return (named, placed);
         }
 
+        /// <summary>Whether a map's built assembly, or a library of its own, calls a method of a Moonwell class by name, from the calls in its methods' bodies, however the code names them: <c>Destructable.IsTree</c>, which reads the table of tree types.</summary>
+        /// <param name="assemblyPath">The map's built assembly.</param>
+        /// <param name="type">The class's name, in the Moonwell namespace.</param>
+        /// <param name="member">The method's name.</param>
+        public static bool Calls(string assemblyPath, string type, string member)
+        {
+            foreach (var path in CompiledFiles.MapAssemblies(assemblyPath))
+            {
+                using var stream = File.OpenRead(path);
+                using var pe = new PEReader(stream);
+                var metadata = pe.GetMetadataReader();
+                foreach (var handle in metadata.MethodDefinitions)
+                {
+                    var method = metadata.GetMethodDefinition(handle);
+                    if (method.RelativeVirtualAddress == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (var token in CalledMethods(pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!))
+                    {
+                        var called = MetadataTokens.EntityHandle(token);
+                        if (called.Kind != HandleKind.MemberReference)
+                        {
+                            continue;
+                        }
+
+                        var reference = metadata.GetMemberReference((MemberReferenceHandle)called);
+                        if (reference.Parent.Kind == HandleKind.TypeReference && metadata.GetString(reference.Name) == member)
+                        {
+                            var parent = metadata.GetTypeReference((TypeReferenceHandle)reference.Parent);
+                            if (metadata.GetString(parent.Name) == type && metadata.GetString(parent.Namespace) == "Moonwell")
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         // Whether a type is one Placed.g.cs writes: Moonwell.Placed, a class inside it, or a part in Moonwell.PlacedParts.
         private static bool IsPlacedClass(MetadataReader metadata, TypeDefinitionHandle handle)
         {

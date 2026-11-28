@@ -980,6 +980,8 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.find.along-slanted-line", Run = FindCases.AlongSlantedLine });
             list.Add(new Case { Name = "interactions.find.closest", Run = FindCases.Closest });
             list.Add(new Case { Name = "interactions.find.closest-n", Run = FindCases.ClosestN });
+            list.Add(new Case { Name = "interactions.find.closest-tree", Run = FindCases.ClosestTree });
+            list.Add(new Case { Name = "interactions.find.closest-tree-tracked", Run = FindCases.ClosestTreeTracked });
             list.Add(new Case { Name = "interactions.find.stale", Run = FindCases.Stale });
             list.Add(new Case { Name = "interactions.find.no-place", Run = FindCases.NoPlace });
             list.Add(new Case { Name = "interactions.find.order", Run = FindCases.Order });
@@ -1029,7 +1031,6 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "interactions.pair.stop", Run = PairCases.Stop });
             list.Add(new Case { Name = "interactions.pair.data-and-since", Run = PairCases.DataAndSince });
             list.Add(new Case { Name = "interactions.pair.pair-owns", Run = PairCases.PairOwns });
-            list.Add(new Case { Name = "interactions.tree", Run = TreeCases.Tree });
             list.Add(new Case { Name = "interactions.regrow", Run = TreeCases.Regrows });
             list.Add(new Case { Name = "interactions.regrow-restored-early", Run = TreeCases.RegrowRestoredEarly });
         }
@@ -2652,6 +2653,7 @@ namespace Moonwell.Testing
             list.Add(new Case { Name = "destructables.gate-restore", Run = DestructableLiveCases.GateRestore });
             list.Add(new Case { Name = "destructables.looks", Run = DestructableLiveCases.Looks });
             list.Add(new Case { Name = "destructables.doodad-animations", Run = DestructableLiveCases.DoodadAnimations });
+            list.Add(new Case { Name = "destructable.is-tree", Run = DestructableCases.IsTree });
         }
 
         /// <summary>Adds the cases for what the compiler writes. A function of more than 200 cases does not load: each is a local in its Lua.</summary>

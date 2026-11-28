@@ -50,6 +50,17 @@ namespace Moonwell.Testing
             Expect.Near(-50f, found.Y, "Y after Remove");
         }
 
+        /// <summary>IsTree reads the table of tree types the build writes, here the fake world's: a destructable of a tree type is a tree, one of another type is not, and with no table none is.</summary>
+        public static void IsTree(FakeWorld world)
+        {
+            var tree = Destructable.Of(world.NewDestructable(ObjectTypes.FourCC("LTlt")))!;
+            var barrel = Destructable.Of(world.NewDestructable(ObjectTypes.FourCC("LTbr")))!;
+            Expect.True(!tree.IsTree(), "no type is a tree before the table names it");
+            world.TreeTypes.Add(ObjectTypes.FourCC("LTlt"));
+            Expect.True(tree.IsTree(), "a destructable of a tree type is a tree");
+            Expect.True(!barrel.IsTree(), "a destructable of another type is not");
+        }
+
         /// <summary>A destructable that vanishes is ended by the sweep, and the game is not asked to remove it.</summary>
         public static void SweepDetectsRemoval(FakeWorld world)
         {

@@ -234,10 +234,17 @@ namespace Moonwell.Build
                 .ToList();
             RegistryWriter.Write(project, declarations.Used, declarations.Objects, ids, watch);
             options.Step?.Invoke("Compile to Lua");
-            LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, Declarations.References(targetPath, InteractionsAssemblyName));
+            LuaCompiler.Compile(project, map, targetPath, options.Release, declarations, ids, standard, data.ValueSet, ReadsTrees(targetPath));
             options.Step?.Invoke("Pack the map");
             StageWith(project, () => Stage.Write(project, map, written, writtenIds, declarations.StandardClassIds, standard, log));
             return declarations.Objects;
+        }
+
+        // Whether the map reads the table of tree types: its code calls Destructable.IsTree, or it references the interactions
+        // package, whose Find.ClosestTree calls it.
+        private static bool ReadsTrees(string targetPath)
+        {
+            return Declarations.References(targetPath, InteractionsAssemblyName) || PlacedWriter.Calls(targetPath, "Destructable", "IsTree");
         }
 
         // The ids of the units, items, destructables and doodads placed on the map in World Editor.
@@ -263,9 +270,9 @@ namespace Moonwell.Build
             HeroBonusWriter.Delete(project);
 
             // The table of tree types is made from the standard destructable data, which only Moonwell.Objects carries.
-            if (Declarations.References(targetPath, InteractionsAssemblyName))
+            if (ReadsTrees(targetPath))
             {
-                log.WriteLine("warning: the map uses Moonwell.Interactions without Moonwell.Objects: IsTree needs Moonwell.Objects (its standard data makes the table of tree types), so it is false for every destructable");
+                log.WriteLine("warning: the map calls IsTree or uses Moonwell.Interactions without Moonwell.Objects: IsTree needs Moonwell.Objects (its standard data makes the table of tree types), so it is false for every destructable and Find.ClosestTree finds none");
             }
 
             // The build reads no declarations, but a unit's Level is still set only in a declared class's constructor.

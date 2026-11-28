@@ -195,6 +195,13 @@ namespace Moonwell
         [LocalSafe]
         public bool IsAlive => !IsGone && Runtime.World.DestructableLifeOf(Handle) > 0.0f;
 
+        /// <summary>Whether the destructable is a tree: its type's "Targeted As" holds tree, which the build writes into the map's object Lua for a map that calls IsTree or uses the interactions package. False in a map built without that table (one with no <c>Moonwell.Objects</c>). A read of a table; it makes nothing and changes nothing.</summary>
+        [LocalSafe]
+        public bool IsTree()
+        {
+            return Runtime.World.IsTreeType(TypeId);
+        }
+
         /// <summary>The facing of a destructable made without one, in degrees, as a unit's. A type with a fixed rotation keeps its own.</summary>
         public const float DefaultFacing = 270.0f;
 
