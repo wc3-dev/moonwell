@@ -63,11 +63,9 @@ namespace Moonwell.Build
         {
             var script = map.Script ?? throw new BuildException("the map has no script to stage");
 
-            CheckNames(project.MapName, project.MapFolder);
-            if (Directory.Exists(project.AssetsFolder))
-            {
-                CheckNames("assets", project.AssetsFolder);
-            }
+            CheckNames(project.MapName, RelativeFiles(project.MapFolder));
+            var assets = AssetFiles.Find(project.AssetsFolder);
+            CheckNames("assets", assets);
 
             if (Directory.Exists(project.StagedFolder))
             {
@@ -101,7 +99,7 @@ namespace Moonwell.Build
 
                 // A file that replaces one of the map's is listed already, or is no import (war3map.wts).
                 var imported = new List<string>();
-                foreach (var file in RelativeFiles(project.AssetsFolder))
+                foreach (var file in assets)
                 {
                     // A looks table is read by the build, not packed (decision 321).
                     if (file.EndsWith(LookFiles.Extension, StringComparison.OrdinalIgnoreCase))
@@ -207,9 +205,9 @@ namespace Moonwell.Build
 
         // War3Net packs a file under a hash of its name's UTF-16 letters, and Storm, the game's archive reader, hashes the name's bytes:
         // the two agree on ASCII only. From U+0200 War3Net cannot pack the name at all.
-        private static void CheckNames(string folderName, string folder)
+        private static void CheckNames(string folderName, IEnumerable<string> files)
         {
-            foreach (var file in RelativeFiles(folder))
+            foreach (var file in files)
             {
                 foreach (var letter in file.EnumerateRunes())
                 {

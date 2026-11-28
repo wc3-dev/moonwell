@@ -4520,6 +4520,11 @@ MW0005; its floats have no NaN or infinity to rely on (MW0042), and a raw `MathF
 A file in `assets/` goes into the map at the same path: `assets\war3mapImported\Fire.mdx` is
 `war3mapImported\Fire.mdx` to object data and code. A file at one of the game's own paths replaces the game's.
 
+A folder named `unpacked`, anywhere in `assets/`, stays out of the map: the build does not pack it, name it in the import
+list or read it, so downloads and source art can sit beside the files made from them, as
+`assets\game\unpacked\FootArcher and Derivatives.zip`. Its files may have any name. A path that object data or code
+names in it is warned of as missing, as for a file the map does not have.
+
 - A PNG goes in as a BLP, the game's texture format, at the same path: code and object data name
   `war3mapImported\BTNFire.blp` for `assets\war3mapImported\BTNFire.png`. Each side must be a power of two (64 by 64
   for an icon), and a see-through part stays see-through. A PNG and a BLP of the same name are refused.

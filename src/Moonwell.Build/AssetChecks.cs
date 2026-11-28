@@ -204,9 +204,7 @@ namespace Moonwell.Build
             // The import list names every asset, so it says nothing of which are used.
             var mentions = staged.Where(file => !string.Equals(file, ImportList.FileName, StringComparison.OrdinalIgnoreCase)).ToDictionary(file => file, file => Mentions(Path.Combine(project.StagedFolder, file)), StringComparer.OrdinalIgnoreCase);
             var unused = new List<string>();
-            foreach (var file in Directory.GetFiles(project.AssetsFolder, "*", SearchOption.AllDirectories)
-                .Select(file => Path.GetRelativePath(project.AssetsFolder, file).Replace('/', '\\'))
-                .OrderBy(file => file, StringComparer.Ordinal))
+            foreach (var file in AssetFiles.Find(project.AssetsFolder))
             {
                 var packed = Images.PackedName(file);
                 // A texture with a looks table beside it is the source of its copies (decision 321).

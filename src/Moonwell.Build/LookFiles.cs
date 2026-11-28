@@ -115,9 +115,7 @@ namespace Moonwell.Build
             }
 
             var classes = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var file in Directory.GetFiles(project.AssetsFolder, "*" + Extension, SearchOption.AllDirectories)
-                .Select(file => Path.GetRelativePath(project.AssetsFolder, file).Replace('/', '\\'))
-                .OrderBy(file => file, StringComparer.Ordinal))
+            foreach (var file in AssetFiles.Find(project.AssetsFolder, "*" + Extension))
             {
                 string text;
                 try
