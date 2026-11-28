@@ -129,30 +129,33 @@ namespace Moonwell
             return found;
         }
 
+        /// <summary>What an empty list takes: ground, air and structures, not wards (an attack's, seen 11-28; a spell's took the first three, its ward was immune to spells).</summary>
+        internal const int EmptyKinds = Ground | Air | Structure;
+
         /// <summary>
-        /// Whether a list takes a unit as a target of a unit's: the kind it is targeted as, whose it is, alive or dead,
-        /// vulnerable or not, and a hero, a machine, a sapper or an ancient, each read live from the game. A pair the list names
-        /// neither side of takes both, but for life, which takes the living, and vulnerability, which takes the vulnerable.
+        /// Whether a list takes a unit as a target of a unit's, as the game took orders in probe-targets (11-28): the kind it is
+        /// targeted as, whose it is, alive or dead, vulnerable or not, and a hero, a machine, a sapper or an ancient, each read live
+        /// from the game. A pair the list names neither side of takes both, but for life, which takes the living, and vulnerability,
+        /// which takes the vulnerable. An attack (attack true) takes any owner whatever the list names, and never a corpse.
         /// </summary>
-        internal static bool Allows(int list, Unit source, Unit target)
+        internal static bool Allows(int list, Unit source, Unit target, bool attack)
         {
             var world = Runtime.World;
             var handle = target.Handle;
-
-            // An empty list takes every kind, as the game's does (seen 11-28); "none" takes nothing.
-            if (((list == 0 ? Kinds : list) & world.TargetedAsOf(handle) & Kinds) == 0)
+            if (((list == 0 ? EmptyKinds : list) & world.TargetedAsOf(handle) & Kinds) == 0)
             {
                 return false;
             }
 
-            if ((list & Owners) != 0 && (list & OwnerOf(source, target)) == 0)
+            if (!attack && (list & Owners) != 0 && (list & OwnerOf(source, target)) == 0)
             {
                 return false;
             }
 
-            // A list that names neither alive nor dead takes the living; neither vulnerable nor invulnerable, the vulnerable.
+            // A list that names neither alive nor dead takes the living; neither vulnerable nor invulnerable, the vulnerable. An
+            // attack whose list names dead alone takes nothing: never a corpse, and not the living it does not name.
             var alive = world.IsAlive(handle);
-            if (!((list & (Alive | Dead)) == 0 ? alive : Either(list, Dead, Alive, !alive)))
+            if (!((list & (Alive | Dead)) == 0 ? alive : Either(list, Dead, Alive, !alive)) || (attack && !alive))
             {
                 return false;
             }

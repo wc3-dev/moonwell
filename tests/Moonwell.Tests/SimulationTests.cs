@@ -204,6 +204,28 @@ namespace Moonwell.Tests
             Expect.True(!footman.IsStructure && !footman.IsWorker && !footman.IsSummoned && !footman.IsMechanical, "the Footman");
         }
 
+        /// <summary>
+        /// CanAttack and CanTarget read the object data's lists in a simulation: a Footman attacks a Grunt and a Farm but not a
+        /// Gryphon Rider, a Rifleman the rider too; a Paladin's Holy Light (organic, not self) targets a Footman but not a Steam
+        /// Tank nor the Paladin, and the standard class's list is found with no registration.
+        /// </summary>
+        [Fact]
+        public void TargetListsComeFromTheObjectData()
+        {
+            Simulation.Start();
+            var footman = Unit.Create(Footman, Player.One, 0.0f, 0.0f, Game.Instance);
+            var rifleman = Unit.Create(ObjectTypes.FourCC("hrif"), Player.One, 100.0f, 0.0f, Game.Instance);
+            var paladin = Unit.Create(ObjectTypes.FourCC("Hpal"), Player.One, 200.0f, 0.0f, Game.Instance);
+            var grunt = Unit.Create(ObjectTypes.FourCC("ogru"), Player.Two, 900.0f, 0.0f, Game.Instance);
+            var farm = Unit.Create(ObjectTypes.FourCC("hhou"), Player.Two, 900.0f, 900.0f, Game.Instance);
+            var rider = Unit.Create(ObjectTypes.FourCC("hgry"), Player.Two, 1500.0f, 0.0f, Game.Instance);
+            var tank = Unit.Create(ObjectTypes.FourCC("hmtt"), Player.One, 300.0f, 300.0f, Game.Instance);
+            Expect.True(footman.CanAttack(grunt) && footman.CanAttack(farm) && !footman.CanAttack(rider), "a Footman: ground and structures, no air");
+            Expect.True(rifleman.CanAttack(rider) && rifleman.CanAttack(grunt), "a Rifleman: air too");
+            var holyLight = paladin.AbilityOf(ObjectTypes.FourCC("AHhb"));
+            Expect.True(holyLight.CanTarget(footman) && !holyLight.CanTarget(tank) && !holyLight.CanTarget(paladin), "Holy Light: organic, not self");
+        }
+
         /// <summary>A unit's reads come from its type's object data: a Rifleman's food, attack cooldown, acquisition range and ranged attack, a Footman's melee one, a Gold Mine's gold; a player's units are those the simulation counts alive.</summary>
         [Fact]
         public void ReadsComeFromTheObjectData()

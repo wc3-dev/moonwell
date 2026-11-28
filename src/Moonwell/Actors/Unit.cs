@@ -1713,26 +1713,33 @@ namespace Moonwell
         }
 
         /// <summary>
-        /// Whether the unit can attack a target, as the game decides it when the attack is ordered: one of its enabled weapons
-        /// takes the target by its Targets Allowed (the kind the target is targeted as, whose it is, alive or dead, vulnerable or
-        /// not, a hero, a machine, a sapper or an ancient), read live from the game. An ethereal unit attacks nothing, and an
-        /// ethereal target takes only a magic attack. False for a unit with no attack, and once either unit is gone. It does not
-        /// ask the range, whether the owner sees the target, nor a stun or a pause.
+        /// Whether the unit can attack a target when ordered to, as the game decides it: one of its enabled weapons takes the
+        /// target by its Targets Allowed (the kind the target is targeted as, vulnerable or not, a hero, a machine, a sapper or an
+        /// ancient), read live from the game. An ordered attack takes a unit of any owner, the unit's own too, whatever the list
+        /// names, and never a corpse. An ethereal unit attacks nothing; an ethereal target takes only a magic attack, and a unit
+        /// immune to spells any but a magic one. False for a unit with no attack, for the unit itself (my call: the game was not
+        /// asked), and once either unit is gone. It does not ask the range, whether the owner sees the target, nor a stun or a
+        /// pause.
         /// </summary>
         [LocalSafe]
         public bool CanAttack(Unit target)
         {
-            if (IsGone || target.IsGone || !Runtime.World.IsAlive(Handle) || Runtime.World.IsEthereal(Handle))
+            if (IsGone || target.IsGone || target == this || !Runtime.World.IsAlive(Handle) || Runtime.World.IsEthereal(Handle))
             {
                 return false;
             }
 
             var ethereal = Runtime.World.IsEthereal(target.Handle);
+            var immune = Runtime.World.IsMagicImmune(target.Handle);
             for (var weapon = 0; weapon < 2; weapon++)
             {
-                if (Runtime.World.AttackEnabledOf(Handle, weapon)
-                    && (!ethereal || Runtime.World.AttackTypeOf(Handle, weapon) == MagicAttackType)
-                    && TargetLists.Allows(Runtime.World.AttackTargetsOf(Handle, weapon), this, target))
+                if (!Runtime.World.AttackEnabledOf(Handle, weapon))
+                {
+                    continue;
+                }
+
+                var magic = Runtime.World.AttackTypeOf(Handle, weapon) == MagicAttackType;
+                if ((magic ? !immune : !ethereal) && TargetLists.Allows(Runtime.World.AttackTargetsOf(Handle, weapon), this, target, true))
                 {
                     return true;
                 }

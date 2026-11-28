@@ -323,7 +323,7 @@ namespace Moonwell
 
             var level = Runtime.World.AbilityLevel(Unit.Handle, Id);
             var list = Runtime.World.AbilityTargetsOf(Id, level > 0 ? level - 1 : 0);
-            return !Runtime.World.IsMagicImmune(target.Handle) && TargetLists.Allows(list, Unit, target);
+            return !Runtime.World.IsMagicImmune(target.Handle) && TargetLists.Allows(list, Unit, target, false);
         }
 
         /// <summary>Whether the unit is in the game and has the ability.</summary>
